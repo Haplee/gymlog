@@ -45,7 +45,12 @@ export const useAuthStore = create<AuthState>((set) => ({
     return { error: null, needsVerification: !data.user };
   },
   signInWithGoogle: async () => {
-    await supabase.auth.signInWithOAuth({ provider: 'google' });
+    await supabase.auth.signInWithOAuth({ 
+      provider: 'google',
+      options: {
+        redirectTo: 'https://pesos-wine.vercel.app',
+      }
+    });
   },
   signOut: async () => {
     await supabase.auth.signOut();
