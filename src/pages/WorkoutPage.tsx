@@ -71,7 +71,7 @@ export function WorkoutPage() {
 
   return (
     <Layout>
-      <div className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-2xl p-4 mb-4">
+      <div className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-2xl p-4 mb-4 slide-up">
         <select
           value={selectedExerciseId || (customInput ? '__custom__' : '')}
           onChange={handleExerciseChange}
@@ -101,7 +101,7 @@ export function WorkoutPage() {
 
       <RestTimer />
 
-      <div className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-2xl p-4">
+      <div className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-2xl p-4 slide-up">
         <div className="text-[1.1rem] font-semibold mb-3">
           {selectedExercise ? `Series — ${selectedExercise.name}` : customExerciseName ? `Series — ${customExerciseName}` : 'Series'}
         </div>

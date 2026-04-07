@@ -9,6 +9,7 @@ PWA para registrar entrenamientos de gimnasio. Desplegado en **https://pesos-win
 - **Estado**: Zustand
 - **Datos**: TanStack Query + Supabase
 - **Charts**: Recharts
+- **Auth**: Supabase Auth (email + Google)
 
 ## Estructura
 
@@ -60,13 +61,14 @@ npx vercel --prod
 
 ## Funcionalidades
 
-- 🔐 Autenticación con Supabase Auth
+- 🔐 Autenticación con Supabase Auth (email + Google)
 - 🏋️ Registro de ejercicios y series
 - ⏱️ Timer de descanso
 - 📊 Estadísticas y gráfico semanal
 - 📋 Historial de entrenamientos
 - 🔢 Calculadora 1RM (Brzycki)
 - 📱 PWA instalable
+- 💾 Sesión persistente (recuerda al usuario)
 
 ## PWA
 

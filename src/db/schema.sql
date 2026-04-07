@@ -15,7 +15,9 @@ DROP TABLE IF EXISTS public.profiles          CASCADE;
 -- ============================================================
 CREATE TABLE public.profiles (
   id         UUID        REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
-  username   TEXT,
+  email      TEXT,
+  full_name TEXT,
+  username  TEXT,
   avatar_url TEXT,
   bio        TEXT,
   updated_at TIMESTAMPTZ DEFAULT NOW()

@@ -62,7 +62,7 @@ export function HistoryPage() {
         </select>
       </div>
 
-      <div className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-2xl overflow-hidden">
+      <div className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-2xl overflow-hidden slide-up">
         {filteredSets.length === 0 ? (
           <div className="text-center py-8 text-[#606068]">Sin registros</div>
         ) : (

@@ -54,25 +54,25 @@ export function StatsPage() {
   return (
     <Layout>
       <div className="grid grid-cols-2 gap-3 mb-4">
-        <div className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-xl p-3 text-center">
+        <div className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-xl p-3 text-center slide-up">
           <div className="text-[1.6rem] font-extrabold text-[#c8ff00]">{uniqueDays}</div>
           <div className="text-[0.75rem] text-[#606068] uppercase font-semibold">Días</div>
         </div>
-        <div className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-xl p-3 text-center">
+        <div className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-xl p-3 text-center slide-up">
           <div className="text-[1.6rem] font-extrabold text-[#c8ff00]">{totalSets}</div>
           <div className="text-[0.75rem] text-[#606068] uppercase font-semibold">Series</div>
         </div>
-        <div className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-xl p-3 text-center">
+        <div className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-xl p-3 text-center slide-up">
           <div className="text-[1.6rem] font-extrabold text-[#c8ff00]">{(totalVol / 1000).toFixed(1)}t</div>
           <div className="text-[0.75rem] text-[#606068] uppercase font-semibold">Volumen</div>
         </div>
-        <div className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-xl p-3 text-center">
+        <div className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-xl p-3 text-center slide-up">
           <div className="text-[1.6rem] font-extrabold text-[#c8ff00]">{uniqueExs}</div>
           <div className="text-[0.75rem] text-[#606068] uppercase font-semibold">Ejercicios</div>
         </div>
       </div>
 
-      <div className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-2xl p-4 mb-4">
+      <div className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-2xl p-4 mb-4 slide-up">
         <div className="text-[1.1rem] font-semibold mb-3">Esta semana</div>
         {totalSets === 0 ? (
           <div className="text-center py-8 text-[#606068]">Sin datos</div>
@@ -99,7 +99,7 @@ export function StatsPage() {
         )}
       </div>
 
-      <div className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-2xl p-4">
+      <div className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-2xl p-4 slide-up">
         <div className="text-[1.1rem] font-semibold mb-3">Calculadora 1RM (Brzycki)</div>
         <div className="grid grid-cols-2 gap-3">
           <div>
