@@ -37,6 +37,6 @@ git push origin main
 
 ## Notas
 
-- Los datos se almacenan en localStorage del navegador
-- Cada usuario tiene sus datos aislados
-- No hay backend - todo funciona offline
+- Supabase: proyecto eoltmipoklizewxdpzfa
+- Tablas: profiles, exercises, workouts, workout_sets, personal_records
+- Autenticación: Supabase Auth
