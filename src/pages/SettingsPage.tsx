@@ -182,7 +182,7 @@ export function SettingsPage() {
 
       <div className="fade-in-up rounded-2xl p-4" style={{ backgroundColor: bgCard, border: `1px solid ${border}`, animationDelay: '0.4s', opacity: 0 }}>
         <div className="text-[1rem] font-semibold mb-2" style={{ color: textPrimary }}>Acerca de</div>
-        <div className="text-[0.85rem]" style={{ color: textMuted }}>GymLog v1.6</div>
+        <div className="text-[0.85rem]" style={{ color: textMuted }}>GymLog v1.8</div>
         <div className="text-[0.75rem] mt-1" style={{ color: textMuted }}>Tu compañero de entrenamiento</div>
       </div>
     </Layout>

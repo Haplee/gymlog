@@ -9,7 +9,11 @@ export function RestTimer() {
 
   const notifyTimerEnd = useCallback(() => {
     if (vibration && 'vibrate' in navigator) {
-      navigator.vibrate([300, 100, 300, 100, 300]);
+      try {
+        navigator.vibrate([200, 100, 200, 100, 200, 100, 400]);
+      } catch (e) {
+        console.warn('[Vibration] Error:', e);
+      }
     }
     if (sound) playBeep();
     if ('Notification' in window && Notification.permission === 'granted') {
@@ -44,14 +48,16 @@ export function RestTimer() {
   };
 
   return (
-    <div className="flex items-center gap-2 mb-4 p-3 rounded-xl" style={{ backgroundColor: '#1c1c22' }}>
-      <button onClick={() => startRest(60)} className="py-2 px-3 text-[0.9rem] bg-transparent border rounded-lg cursor-pointer" style={{ borderColor: 'rgba(255,255,255,0.12)', color: '#a0a0a8' }}>1m</button>
-      <button onClick={() => startRest(90)} className="py-2 px-3 text-[0.9rem] bg-transparent border rounded-lg cursor-pointer" style={{ borderColor: 'rgba(255,255,255,0.12)', color: '#a0a0a8' }}>1:30</button>
-      <button onClick={() => startRest(120)} className="py-2 px-3 text-[0.9rem] bg-transparent border rounded-lg cursor-pointer" style={{ borderColor: 'rgba(255,255,255,0.12)', color: '#a0a0a8' }}>2m</button>
-      <div className="flex-1 text-center text-[1.3rem] font-bold min-w-[50px]" style={{ color: '#c8ff00' }}>
+    <div className="flex items-center gap-1.5 mb-3 p-2 rounded-lg" style={{ backgroundColor: '#1c1c22' }}>
+      <button onClick={() => startRest(60)} className="py-1.5 px-2.5 text-xs bg-transparent border rounded cursor-pointer" style={{ borderColor: 'rgba(255,255,255,0.12)', color: '#a0a0a8' }}>1m</button>
+      <button onClick={() => startRest(90)} className="py-1.5 px-2.5 text-xs bg-transparent border rounded cursor-pointer" style={{ borderColor: 'rgba(255,255,255,0.12)', color: '#a0a0a8' }}>1:30</button>
+      <button onClick={() => startRest(120)} className="py-1.5 px-2.5 text-xs bg-transparent border rounded cursor-pointer" style={{ borderColor: 'rgba(255,255,255,0.12)', color: '#a0a0a8' }}>2m</button>
+      <div className="flex-1 text-center text-lg font-bold" style={{ color: '#c8ff00' }}>
         {isRunning ? formatTime(seconds) : '--'}
       </div>
-      <button onClick={stopRest} className="w-10 h-10 bg-transparent border rounded-lg cursor-pointer text-xl flex items-center justify-center" style={{ borderColor: 'rgba(255,255,255,0.06)', color: '#606068' }}>×</button>
+      {isRunning && (
+        <button onClick={stopRest} className="w-7 h-7 bg-transparent border rounded cursor-pointer text-base flex items-center justify-center" style={{ borderColor: 'rgba(255,255,255,0.06)', color: '#606068' }}>×</button>
+      )}
     </div>
   );
 }

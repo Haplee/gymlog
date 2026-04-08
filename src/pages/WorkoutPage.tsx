@@ -70,12 +70,22 @@ export function WorkoutPage() {
     } else {
       setMessage('✓ Entreno guardado');
       if (vibration) {
-        navigator.vibrate([50, 30, 100]);
+        triggerVibration([100, 50, 100, 50, 200, 50, 300]);
       }
       if (sound) {
         playFeedbackSound();
       }
       setTimeout(() => setMessage(''), 2500);
+    }
+  };
+
+  const triggerVibration = (pattern: number[]) => {
+    if ('vibrate' in navigator && typeof navigator.vibrate === 'function') {
+      try {
+        navigator.vibrate(pattern);
+      } catch (e) {
+        console.warn('[Vibration] Error:', e);
+      }
     }
   };
 
@@ -131,14 +141,14 @@ export function WorkoutPage() {
 
   return (
     <Layout>
-      <div className="rounded-2xl p-4 mb-4 slide-up" style={{ backgroundColor: bgCard, border: `1px solid ${border}` }}>
+      <div className="rounded-xl p-3 mb-3 slide-up" style={{ backgroundColor: bgCard, border: `1px solid ${border}` }}>
         <select
           value={selectedExerciseId || (customInput ? '__custom__' : '')}
           onChange={handleExerciseChange}
-          className="w-full rounded-xl text-[1.1rem] p-4 outline-none appearance-none"
+          className="w-full rounded-lg text-sm p-2.5 outline-none appearance-none"
           style={{ backgroundColor: bgCard, border: `1px solid ${border}`, color: textPrimary }}
         >
-          <option value="">-Ejercicio-</option>
+          <option value="">- Ejercicio -</option>
           {Object.entries(groups).map(([group, exs]) => (
             <optgroup key={group} label={group}>
               {exs.map(ex => (
@@ -152,10 +162,10 @@ export function WorkoutPage() {
         {customInput && (
           <input
             type="text"
-            placeholder="ejercicio"
+            placeholder="Nombre del ejercicio"
             value={customExerciseName}
             onChange={(e) => setCustomExerciseName(e.target.value)}
-            className="w-full rounded-xl text-[1.1rem] p-4 outline-none mt-4"
+            className="w-full rounded-lg text-sm p-2.5 outline-none mt-2"
             style={{ backgroundColor: bgCard, border: `1px solid ${border}`, color: textPrimary }}
           />
         )}
@@ -169,16 +179,16 @@ export function WorkoutPage() {
 
       <RestTimer />
 
-      <div className="rounded-2xl p-4 slide-up" style={{ backgroundColor: bgCard, border: `1px solid ${border}` }}>
-        <div className="text-[1.1rem] font-semibold mb-3" style={{ color: textPrimary }}>
+      <div className="rounded-xl p-3 slide-up" style={{ backgroundColor: bgCard, border: `1px solid ${border}` }}>
+        <div className="text-sm font-medium mb-2" style={{ color: textPrimary }}>
           {selectedExercise ? `Series — ${selectedExercise.name}` : customExerciseName ? `Series — ${customExerciseName}` : 'Series'}
         </div>
 
-        <div className="grid grid-cols-[32px_1fr_1fr_36px] gap-1 sm:gap-2 mb-2 text-[0.7rem] sm:text-[0.75rem] font-semibold uppercase" style={{ color: textMuted }}>
-          <div></div>
-          <div>Reps</div>
-          <div>Kg</div>
-          <div></div>
+        <div className="flex gap-2 mb-1.5 text-[0.65rem] font-semibold uppercase" style={{ color: textMuted }}>
+          <div className="w-6"></div>
+          <div className="flex-1 text-center">Reps</div>
+          <div className="flex-1 text-center">Kg</div>
+          <div className="w-6"></div>
         </div>
 
         {sets.length === 0 ? (
@@ -188,32 +198,32 @@ export function WorkoutPage() {
             const isNewPR = checkIsNewPR(s.weight, s.reps);
             return (
               <div key={i}>
-                <div className="grid grid-cols-[32px_1fr_1fr_36px] gap-1 sm:gap-2 items-center mb-2">
-                  <div className="text-center font-semibold text-sm" style={{ color: textSecondary }}>{i + 1}</div>
+                <div className="flex gap-2 items-center mb-2">
+                  <div className="w-6 text-center text-sm font-medium" style={{ color: textSecondary }}>{i + 1}</div>
                   <input
                     type="number"
-                    placeholder="reps"
+                    placeholder="0"
                     value={s.reps}
                     onChange={(e) => updateSet(i, { reps: e.target.value })}
-                    className="rounded-lg sm:rounded-xl text-base sm:text-[1.1rem] p-2 sm:p-3 outline-none"
+                    className="flex-1 rounded-lg text-sm p-2 outline-none text-center"
                     style={{ backgroundColor: bgCard, border: `1px solid ${border}`, color: textPrimary }}
                   />
-                  <div className="relative">
+                  <div className="relative flex-1">
                     <input
                       type="number"
-                      placeholder="kg"
+                      placeholder="0"
                       value={s.weight}
                       onChange={(e) => updateSet(i, { weight: e.target.value })}
-                      className="rounded-lg sm:rounded-xl text-base sm:text-[1.1rem] p-2 sm:p-3 outline-none w-full"
+                      className="w-full rounded-lg text-sm p-2 outline-none text-center"
                       style={{ backgroundColor: bgCard, border: `1px solid ${border}`, color: textPrimary }}
                     />
                     {isNewPR && (
-                      <span className="absolute -top-1 -right-1 text-[0.65rem] sm:text-[0.7rem]">🏆</span>
+                      <span className="absolute -top-1 -right-1 text-xs">🏆</span>
                     )}
                   </div>
                   <button
                     onClick={() => removeSet(i)}
-                    className="w-8 h-8 sm:w-10 sm:h-10 bg-transparent border rounded-lg sm:rounded-xl cursor-pointer text-lg sm:text-xl flex items-center justify-center"
+                    className="w-6 h-8 bg-transparent border rounded-lg cursor-pointer text-lg flex items-center justify-center"
                     style={{ borderColor: 'rgba(255,255,255,0.06)', color: textMuted }}
                   >
                     ×
@@ -243,13 +253,13 @@ export function WorkoutPage() {
           })
         )}
 
-        <div className="flex gap-2 sm:gap-3 mt-4">
+        <div className="flex gap-2 mt-4">
           <button
             onClick={addSet}
-            className="flex-1 py-2 sm:py-3 px-3 sm:px-4 border border-dashed rounded-lg sm:rounded-xl text-sm sm:text-[1rem] font-semibold cursor-pointer"
+            className="flex-1 py-2 px-3 border border-dashed rounded-lg text-sm font-medium cursor-pointer"
             style={{ borderColor: border, color: textSecondary }}
           >
-            Serie
+            + Serie
           </button>
           <button
             onClick={handleSave}

@@ -9,8 +9,7 @@ interface LayoutProps {
 const colors = {
   bgMain: '#0a0a0c',
   bgCard: '#141418',
-  bgHeader: 'rgba(10,10,12,0.95)',
-  border: 'rgba(255,255,255,0.06)',
+  bgHeader: '#0a0a0c',
   textPrimary: '#fafafa',
   textSecondary: '#a1a1aa',
   textMuted: '#606068',
@@ -31,46 +30,48 @@ export function Layout({ children }: LayoutProps) {
 
   return (
     <div className="min-h-screen min-h-[100dvh] flex flex-col" style={{ backgroundColor: colors.bgMain }}>
-      <div 
-        className="flex items-center justify-between px-4 py-3 border-b sticky top-0 z-100 safe-area-top"
-        style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
-      >
-        <div className="flex items-center gap-3">
-          <img 
-            src="/gimnasia.png" 
-            className="w-8 h-8 rounded-lg object-contain" 
-            alt="logo" 
-          />
-          <div>
-            <div className="text-[1.1rem] font-extrabold" style={{ color: colors.textPrimary }}>
-              Gym<span style={{ color: colors.accent }}>Log</span>
+      <header className="px-4 pt-6 pb-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: colors.accent }}>
+              <span className="text-lg font-bold" style={{ color: '#0a0a0c' }}>G</span>
             </div>
-            <div className="text-[0.85rem]" style={{ color: colors.textMuted }}>
-              {user?.email?.split('@')[0]}
+            <div>
+              <div className="text-[1.15rem] font-bold" style={{ color: colors.textPrimary }}>
+                Gym<span style={{ color: colors.accent }}>Log</span>
+              </div>
+              {user && (
+                <div className="text-[0.75rem]" style={{ color: colors.textMuted }}>
+                  {user.email?.split('@')[0]}
+                </div>
+              )}
             </div>
           </div>
         </div>
-      </div>
+      </header>
 
-      <div className="flex border-b" style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}>
-        {tabs.map((tab) => (
-          <Link
-            key={tab.path}
-            to={tab.path}
-            className="flex-1 py-4 px-2 text-[0.85rem] sm:text-[1rem] text-center cursor-pointer font-semibold border-b-2 transition-colors"
-            style={{
-              color: location.pathname === tab.path ? colors.accent : colors.textMuted,
-              borderColor: location.pathname === tab.path ? colors.accent : 'transparent'
-            }}
-          >
-            {tab.label}
-          </Link>
-        ))}
-      </div>
+      <nav className="flex px-2 gap-1 overflow-x-auto">
+        {tabs.map((tab) => {
+          const isActive = location.pathname === tab.path;
+          return (
+            <Link
+              key={tab.path}
+              to={tab.path}
+              className="flex-1 py-3 px-1 text-[0.8rem] text-center font-medium whitespace-nowrap transition-all rounded-lg"
+              style={{
+                color: isActive ? colors.bgMain : colors.textMuted,
+                backgroundColor: isActive ? colors.accent : 'transparent',
+              }}
+            >
+              {tab.label}
+            </Link>
+          );
+        })}
+      </nav>
 
-      <div className="flex-1 p-4 overflow-y-auto pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <main className="flex-1 px-4 pt-4 pb-8 overflow-y-auto">
         {children}
-      </div>
+      </main>
     </div>
   );
 }
