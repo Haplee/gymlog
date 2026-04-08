@@ -1,28 +1,34 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
-import { useRoutineStore } from '../stores/routineStore';
+import { useRoutineStore, dayLabels } from '../stores/routineStore';
 import { useWorkoutStore } from '../stores/workoutStore';
 import { Layout } from '../components/Layout';
+import type { Routine, DayOfWeek } from '../stores/routineStore';
 
-const DAYS = [
-  { key: 'monday', label: 'Lunes' },
-  { key: 'tuesday', label: 'Martes' },
-  { key: 'wednesday', label: 'Miércoles' },
-  { key: 'thursday', label: 'Jueves' },
-  { key: 'friday', label: 'Viernes' },
-  { key: 'saturday', label: 'Sábado' },
-  { key: 'sunday', label: 'Domingo' },
-] as const;
+const DAYS = Object.keys(dayLabels) as DayOfWeek[];
 
 export function RoutinePage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { routine, setRoutine, saveToDb, loadFromDb, getTodayExercises, getDayName } = useRoutineStore();
+  const {
+    routines,
+    activeRoutineId,
+    setActiveRoutine,
+    addRoutine,
+    deleteRoutine,
+    loadFromDb,
+    checkAndBackup,
+    getActiveRoutine,
+    getTodayRoutine,
+    getDayName
+  } = useRoutineStore();
+  
   const { exercises, loadExercises } = useWorkoutStore();
-  const [selectedDay, setSelectedDay] = useState(getDayName());
-  const [newExercise, setNewExercise] = useState('');
-  const [showAdd, setShowAdd] = useState(false);
+  const [selectedDay, setSelectedDay] = useState<DayOfWeek>(getDayName());
+  const [showCreate, setShowCreate] = useState(false);
+  const [newRoutineName, setNewRoutineName] = useState('');
+  const [newRoutineDesc, setNewRoutineDesc] = useState('');
 
   useEffect(() => {
     if (!user) {
@@ -31,136 +37,293 @@ export function RoutinePage() {
     }
     loadExercises(user.id);
     loadFromDb(user.id);
-  }, [user, navigate, loadExercises, loadFromDb]);
+    checkAndBackup(user.id);
+  }, [user, navigate, loadExercises, loadFromDb, checkAndBackup]);
 
-  const todayExercises = getTodayExercises();
-  const todayKey = getDayName();
-  const todayLabel = DAYS.find(d => d.key === todayKey)?.label || '';
+  const activeRoutine = getActiveRoutine();
+  const todayRoutine = getTodayRoutine();
 
-  const availableExercises = exercises.map(e => e.name).filter(
-    name => !routine[selectedDay].exercises.includes(name)
-  );
-
-  const addExercise = async () => {
-    if (!newExercise) return;
-    const updated = {
-      ...routine,
-      [selectedDay]: {
-        exercises: [...routine[selectedDay].exercises, newExercise]
-      }
-    };
-    setRoutine(updated);
-    if (user) await saveToDb(user.id);
-    setNewExercise('');
-    setShowAdd(false);
+  const handleSelectRoutine = (routineId: string) => {
+    setActiveRoutine(routineId);
+    if (user) {
+      useRoutineStore.getState().saveToDb(user.id);
+    }
   };
 
-  const removeExercise = async (exercise: string) => {
-    const updated = {
-      ...routine,
-      [selectedDay]: {
-        exercises: routine[selectedDay].exercises.filter(e => e !== exercise)
+  const handleCreateRoutine = () => {
+    if (!newRoutineName.trim()) return;
+    
+    const newRoutine: Routine = {
+      id: `custom-${Date.now()}`,
+      name: newRoutineName,
+      description: newRoutineDesc || 'Rutina personalizada',
+      isCustom: true,
+      createdAt: new Date().toISOString(),
+      days: {
+        monday: { name: 'Lunes', exercises: [] },
+        tuesday: { name: 'Martes', exercises: [] },
+        wednesday: { name: 'Miércoles', exercises: [] },
+        thursday: { name: 'Jueves', exercises: [] },
+        friday: { name: 'Viernes', exercises: [] },
+        saturday: { name: 'Sábado', exercises: [] },
+        sunday: { name: 'Domingo', exercises: [] },
       }
     };
-    setRoutine(updated);
-    if (user) await saveToDb(user.id);
+    
+    addRoutine(newRoutine);
+    setActiveRoutine(newRoutine.id);
+    setNewRoutineName('');
+    setNewRoutineDesc('');
+    setShowCreate(false);
+    
+    if (user) {
+      useRoutineStore.getState().saveToDb(user.id);
+    }
+  };
+
+  const handleDeleteRoutine = (id: string) => {
+    if (confirm('¿Eliminar esta rutina?')) {
+      deleteRoutine(id);
+      if (user) {
+        useRoutineStore.getState().saveToDb(user.id);
+      }
+    }
+  };
+
+  const exerciseNames = exercises.map(e => e.name);
+
+  const addExerciseToDay = (day: DayOfWeek, exerciseName: string) => {
+    if (!activeRoutine) return;
+    
+    const updatedDays = { ...activeRoutine.days };
+    updatedDays[day] = {
+      ...updatedDays[day],
+      exercises: [...updatedDays[day].exercises, { name: exerciseName, sets: 3, reps: '10-12' }]
+    };
+    
+    useRoutineStore.getState().updateRoutine(activeRoutine.id, { days: updatedDays });
+    
+    if (user) {
+      useRoutineStore.getState().saveToDb(user.id);
+    }
+  };
+
+  const removeExerciseFromDay = (day: DayOfWeek, index: number) => {
+    if (!activeRoutine) return;
+    
+    const updatedDays = { ...activeRoutine.days };
+    updatedDays[day].exercises = updatedDays[day].exercises.filter((_, i) => i !== index);
+    
+    useRoutineStore.getState().updateRoutine(activeRoutine.id, { days: updatedDays });
+    
+    if (user) {
+      useRoutineStore.getState().saveToDb(user.id);
+    }
   };
 
   return (
     <Layout>
-      <div className="text-[1.2rem] font-extrabold mb-4" style={{ color: '#c8ff00' }}>Rutina Semanal</div>
+      <div className="text-lg font-bold mb-4" style={{ color: '#c8ff00' }}>Rutinas</div>
 
-      <div className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-2xl p-4 mb-4">
-        <div className="text-[1rem] font-semibold mb-3" style={{ color: '#fafafa' }}>Hoy: {todayLabel}</div>
-        {todayExercises.length === 0 ? (
-          <div className="text-[#606068] text-center py-4">No hay ejercicios asignados</div>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {todayExercises.map((ex, i) => (
-              <div 
-                key={i} 
-                className="bg-[#1c1c22] px-3 py-2 rounded-lg text-[0.9rem]"
-                style={{ color: selectedDay === todayKey ? '#c8ff00' : '#a1a1aa' }}
+      {!activeRoutineId ? (
+        <>
+          <div className="text-sm mb-3" style={{ color: '#a1a1aa' }}>Selecciona una rutina</div>
+          
+          <div className="space-y-2">
+            {routines.map(routine => (
+              <div
+                key={routine.id}
+                onClick={() => handleSelectRoutine(routine.id)}
+                className="p-3 rounded-lg cursor-pointer transition-all"
+                style={{ 
+                  backgroundColor: '#141418',
+                  border: '1px solid rgba(255,255,255,0.06)'
+                }}
               >
-                {ex}
+                <div className="flex justify-between items-center">
+                  <div>
+                    <div className="font-medium" style={{ color: '#fafafa' }}>{routine.name}</div>
+                    <div className="text-xs" style={{ color: '#606068' }}>{routine.description}</div>
+                  </div>
+                  {!routine.isCustom && (
+                    <span className="text-xs px-2 py-1 rounded" style={{ backgroundColor: 'rgba(200,255,0,0.1)', color: '#c8ff00' }}>
+                      Predefinida
+                    </span>
+                  )}
+                </div>
               </div>
             ))}
           </div>
-        )}
-      </div>
 
-      <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
-        {DAYS.map(day => (
           <button
-            key={day.key}
-            onClick={() => setSelectedDay(day.key)}
-            className="flex-shrink-0 px-4 py-2 rounded-xl text-[0.85rem] font-semibold transition-all"
-            style={{
-              backgroundColor: selectedDay === day.key ? '#c8ff00' : '#141418',
-              color: selectedDay === day.key ? '#0a0a0c' : '#a1a1aa',
-              border: `1px solid ${selectedDay === day.key ? '#c8ff00' : 'rgba(255,255,255,0.06)'}`
-            }}
+            onClick={() => setShowCreate(true)}
+            className="w-full mt-4 py-3 rounded-lg font-medium"
+            style={{ backgroundColor: '#c8ff00', color: '#0a0a0c' }}
           >
-            {day.label}
+            + Crear rutina personalizada
           </button>
-        ))}
-      </div>
-
-      <div className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-2xl p-4">
-        <div className="flex justify-between items-center mb-3">
-          <div className="text-[1rem] font-semibold" style={{ color: '#fafafa' }}>
-            Ejercicios - {DAYS.find(d => d.key === selectedDay)?.label}
-          </div>
-          <button
-            onClick={() => setShowAdd(!showAdd)}
-            className="text-[#c8ff00] text-[0.85rem] font-semibold"
-          >
-            + Añadir
-          </button>
-        </div>
-
-        {showAdd && (
-          <div className="mb-4 flex gap-2">
-            <select
-              value={newExercise}
-              onChange={(e) => setNewExercise(e.target.value)}
-              className="flex-1 bg-[#1c1c22] border border-[rgba(255,255,255,0.12)] rounded-lg text-white text-[0.95rem] p-2 outline-none"
-            >
-              <option value="">Seleccionar ejercicio</option>
-              {availableExercises.map(ex => (
-                <option key={ex} value={ex}>{ex}</option>
-              ))}
-            </select>
+        </>
+      ) : (
+        <>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <div className="text-lg font-bold" style={{ color: '#fafafa' }}>{activeRoutine?.name}</div>
+              <div className="text-xs" style={{ color: '#606068' }}>{activeRoutine?.description}</div>
+            </div>
             <button
-              onClick={addExercise}
-              className="px-4 py-2 bg-[#c8ff00] text-black rounded-lg font-semibold"
+              onClick={() => setActiveRoutine(null)}
+              className="text-sm px-3 py-1 rounded"
+              style={{ backgroundColor: '#1c1c22', color: '#a1a1aa' }}
             >
-              +
+              Cambiar
             </button>
           </div>
-        )}
 
-        {routine[selectedDay].exercises.length === 0 ? (
-          <div className="text-[#606068] text-center py-4">Sin ejercicios</div>
-        ) : (
-          <div className="space-y-2">
-            {routine[selectedDay].exercises.map((ex, i) => (
-              <div 
-                key={i} 
-                className="flex items-center justify-between p-3 bg-[#1c1c22] rounded-lg"
-              >
-                <span className="text-[0.95rem]" style={{ color: '#fafafa' }}>{ex}</span>
-                <button
-                  onClick={() => removeExercise(ex)}
-                  className="text-[#606068] text-lg bg-transparent border-none cursor-pointer"
-                >
-                  ×
-                </button>
+          {todayRoutine && todayRoutine.exercises.length > 0 && (
+            <div className="mb-4 p-3 rounded-lg" style={{ backgroundColor: 'rgba(200,255,0,0.1)' }}>
+              <div className="text-xs font-medium mb-2" style={{ color: '#c8ff00' }}>HOY - {todayRoutine.name}</div>
+              <div className="flex flex-wrap gap-1.5">
+                {todayRoutine.exercises.map((ex, i) => (
+                  <span 
+                    key={i} 
+                    className="text-xs px-2 py-1 rounded"
+                    style={{ backgroundColor: '#1c1c22', color: '#fafafa' }}
+                  >
+                    {ex.name}
+                  </span>
+                ))}
               </div>
+            </div>
+          )}
+
+          <div className="flex gap-1 mb-3 overflow-x-auto">
+            {DAYS.map(day => (
+              <button
+                key={day}
+                onClick={() => setSelectedDay(day)}
+                className="flex-shrink-0 px-3 py-1.5 text-xs rounded-lg font-medium transition-all"
+                style={{
+                  backgroundColor: selectedDay === day ? '#c8ff00' : '#141418',
+                  color: selectedDay === day ? '#0a0a0c' : '#a1a1aa',
+                }}
+              >
+                {dayLabels[day].slice(0, 3)}
+              </button>
             ))}
           </div>
-        )}
-      </div>
+
+          <div className="rounded-lg p-3" style={{ backgroundColor: '#141418' }}>
+            <div className="flex justify-between items-center mb-3">
+              <div className="text-sm font-medium" style={{ color: '#fafafa' }}>
+                {dayLabels[selectedDay]}
+              </div>
+              {activeRoutine?.isCustom && (
+                <select
+                  value=""
+                  onChange={(e) => e.target.value && addExerciseToDay(selectedDay, e.target.value)}
+                  className="text-xs p-1 rounded"
+                  style={{ backgroundColor: '#1c1c22', color: '#c8ff00', border: 'none' }}
+                >
+                  <option value="">+ Añadir</option>
+                  {exerciseNames.filter(name => 
+                    !activeRoutine.days[selectedDay].exercises.some(e => e.name === name)
+                  ).map(name => (
+                    <option key={name} value={name}>{name}</option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            {activeRoutine?.days[selectedDay].exercises.length === 0 ? (
+              <div className="text-center py-4 text-xs" style={{ color: '#606068' }}>
+                {activeRoutine?.isCustom 
+                  ? 'Añade ejercicios' 
+                  : 'Descanso'}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {activeRoutine?.days[selectedDay].exercises.map((ex, i) => (
+                  <div 
+                    key={i} 
+                    className="flex items-center justify-between p-2 rounded"
+                    style={{ backgroundColor: '#1c1c22' }}
+                  >
+                    <div>
+                      <div className="text-sm" style={{ color: '#fafafa' }}>{ex.name}</div>
+                      {ex.sets && (
+                        <div className="text-xs" style={{ color: '#606068' }}>
+                          {ex.sets} series × {ex.reps}
+                        </div>
+                      )}
+                    </div>
+                    {activeRoutine?.isCustom && (
+                      <button
+                        onClick={() => removeExerciseFromDay(selectedDay, i)}
+                        className="text-lg text-[#606068] bg-transparent border-none"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {activeRoutine?.isCustom && (
+            <button
+              onClick={() => handleDeleteRoutine(activeRoutine.id)}
+              className="mt-4 text-sm"
+              style={{ color: '#ff5252' }}
+            >
+              Eliminar rutina
+            </button>
+          )}
+        </>
+      )}
+
+      {showCreate && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+          <div className="rounded-xl p-4 w-full max-w-sm" style={{ backgroundColor: '#141418' }}>
+            <div className="text-lg font-bold mb-4" style={{ color: '#fafafa' }}>Nueva Rutina</div>
+            
+            <input
+              type="text"
+              placeholder="Nombre"
+              value={newRoutineName}
+              onChange={(e) => setNewRoutineName(e.target.value)}
+              className="w-full p-2 rounded-lg text-sm mb-2"
+              style={{ backgroundColor: '#1c1c22', color: '#fafafa', border: '1px solid rgba(255,255,255,0.1)' }}
+            />
+            
+            <input
+              type="text"
+              placeholder="Descripción (opcional)"
+              value={newRoutineDesc}
+              onChange={(e) => setNewRoutineDesc(e.target.value)}
+              className="w-full p-2 rounded-lg text-sm mb-4"
+              style={{ backgroundColor: '#1c1c22', color: '#fafafa', border: '1px solid rgba(255,255,255,0.1)' }}
+            />
+            
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowCreate(false)}
+                className="flex-1 py-2 rounded-lg text-sm"
+                style={{ backgroundColor: '#1c1c22', color: '#a1a1aa' }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleCreateRoutine}
+                className="flex-1 py-2 rounded-lg text-sm font-medium"
+                style={{ backgroundColor: '#c8ff00', color: '#0a0a0c' }}
+              >
+                Crear
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }

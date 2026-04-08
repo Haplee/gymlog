@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { useWorkoutStore } from '../stores/workoutStore';
 import { useSettingsStore } from '../stores/settingsStore';
+import { useRoutineStore } from '../stores/routineStore';
 import { useWakeLock } from '../hooks/useWakeLock';
 import { Layout } from '../components/Layout';
 import { RestTimer } from '../components/RestTimer';
@@ -28,11 +29,12 @@ export function WorkoutPage() {
     saveWorkout
   } = useWorkoutStore();
 
+  const { vibration, sound } = useSettingsStore();
+  const { getActiveRoutine, getTodayRoutine, checkAndBackup } = useRoutineStore();
+
   const [message, setMessage] = useState('');
   const [customInput, setCustomInput] = useState(false);
   const [expandedNotes, setExpandedNotes] = useState<number[]>([]);
-
-  const { vibration, sound } = useSettingsStore();
 
   useWakeLock(sets.length > 0);
 
@@ -50,10 +52,14 @@ export function WorkoutPage() {
     loadExercises(user.id);
     loadRecentSets(user.id);
     loadPersonalRecords(user.id);
-  }, [user, navigate, loadExercises, loadRecentSets, loadPersonalRecords]);
+    checkAndBackup(user.id);
+  }, [user, navigate, loadExercises, loadRecentSets, loadPersonalRecords, checkAndBackup]);
 
   const selectedExercise = exercises.find(e => e.id === selectedExerciseId);
   const currentPR = selectedExerciseId ? personalRecords[selectedExerciseId] : null;
+
+  const activeRoutine = getActiveRoutine();
+  const todayRoutine = getTodayRoutine();
 
   const groups: Record<string, typeof exercises> = {};
   exercises.forEach(ex => {
@@ -141,6 +147,22 @@ export function WorkoutPage() {
 
   return (
     <Layout>
+      {activeRoutine && todayRoutine && todayRoutine.exercises.length > 0 && (
+        <div className="mb-3 p-2 rounded-lg" style={{ backgroundColor: 'rgba(200,255,0,0.08)', border: '1px solid rgba(200,255,0,0.2)' }}>
+          <div className="text-xs font-medium mb-1" style={{ color: '#c8ff00' }}>{todayRoutine.name}</div>
+          <div className="flex flex-wrap gap-1">
+            {todayRoutine.exercises.slice(0, 4).map((ex, i) => (
+              <span key={i} className="text-xs px-1.5 py-0.5 rounded" style={{ backgroundColor: '#1c1c22', color: '#a1a1aa' }}>
+                {ex.name}
+              </span>
+            ))}
+            {todayRoutine.exercises.length > 4 && (
+              <span className="text-xs" style={{ color: '#606068' }}>+{todayRoutine.exercises.length - 4}</span>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="rounded-xl p-3 mb-3 slide-up" style={{ backgroundColor: bgCard, border: `1px solid ${border}` }}>
         <select
           value={selectedExerciseId || (customInput ? '__custom__' : '')}
