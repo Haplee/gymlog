@@ -10,7 +10,7 @@ export function RestTimer() {
       navigator.vibrate([200, 100, 200]);
     }
 
-    if (document.visibilityState === 'hidden' && 'Notification' in window && Notification.permission === 'granted') {
+    if ('Notification' in window && Notification.permission === 'granted') {
       new Notification('GymLog', {
         body: '⏱️ Descanso terminado — ¡Siguiente serie!',
         icon: '/gimnasia.png',
@@ -20,9 +20,6 @@ export function RestTimer() {
   }, []);
 
   const startRest = (sec: number) => {
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
     stopRest();
     setSeconds(sec);
     setIsRunning(true);
@@ -94,8 +91,19 @@ function playBeep() {
     osc.connect(gain);
     gain.connect(ctx.destination);
     osc.frequency.value = 880;
-    gain.gain.value = 0.2;
+    gain.gain.value = 0.5;
     osc.start();
-    osc.stop(ctx.currentTime + 0.2);
+    osc.stop(ctx.currentTime + 0.3);
+    
+    setTimeout(() => {
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.frequency.value = 880;
+      gain2.gain.value = 0.5;
+      osc2.start();
+      osc2.stop(ctx.currentTime + 0.3);
+    }, 150);
   } catch (e) {}
 }

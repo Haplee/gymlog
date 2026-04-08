@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuthStore } from '../stores/authStore';
 
 export function AuthPage() {
@@ -13,6 +13,11 @@ export function AuthPage() {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,20 +54,20 @@ export function AuthPage() {
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6">
       {/* Logo */}
-      <div className="text-center mb-6 slide-up">
-        <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center">
-          <svg className="w-6 h-6 text-lime-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <div className={`text-center mb-6 ${mounted ? 'bounce-in' : 'opacity-0'}`}>
+        <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center shadow-lg shadow-lime-400/10">
+          <svg className="w-7 h-7 text-lime-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
             <path d="M6.5 6.5h11M6.5 17.5h11M4 9.5h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1z" />
             <path d="M18 9.5h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1z" />
             <path d="M6.5 8v8M17.5 8v8" />
           </svg>
         </div>
-        <h1 className="text-xl font-semibold text-white">GymLog</h1>
-        <p className="text-zinc-500 text-sm mt-1">{isSignUp ? 'Crea tu cuenta' : 'Inicia sesión'}</p>
+        <h1 className="text-2xl font-bold text-white tracking-tight">GymLog</h1>
+        <p className="text-zinc-500 text-sm mt-2">{isSignUp ? 'Crea tu cuenta' : 'Inicia sesión'}</p>
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="w-full max-w-[280px] space-y-3">
+      <form onSubmit={handleSubmit} className={`w-full max-w-[280px] space-y-3 ${mounted ? 'slide-up' : 'opacity-0'}`}>
         {/* Name (only for signup) */}
         {isSignUp && (
           <div className="relative">
@@ -149,9 +154,17 @@ export function AuthPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3 bg-lime-400 text-black rounded-lg text-base font-semibold disabled:opacity-50"
+          className="w-full py-3 bg-lime-400 text-black rounded-lg text-base font-bold disabled:opacity-50 transition-transform active:scale-[0.98]"
         >
-          {loading ? '...' : isSignUp ? 'Crear cuenta' : 'Entrar'}
+          {loading ? (
+            <span className="inline-flex items-center gap-2">
+              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              Cargando...
+            </span>
+          ) : isSignUp ? 'Crear cuenta' : 'Entrar'}
         </button>
 
         {/* Google divider */}
@@ -165,7 +178,7 @@ export function AuthPage() {
         <button
           type="button"
           onClick={signInWithGoogle}
-          className="w-full py-3 bg-zinc-900 border border-zinc-800 text-white rounded-lg text-base flex items-center justify-center gap-2"
+          className="w-full py-3 bg-zinc-900 border border-zinc-800 text-white rounded-lg text-base flex items-center justify-center gap-2 transition-colors hover:bg-zinc-800"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -181,14 +194,14 @@ export function AuthPage() {
           <button
             type="button"
             onClick={() => { setIsSignUp(!isSignUp); setError(''); setMessage(''); setFullName(''); setUsername(''); }}
-            className="text-lime-400 text-sm bg-transparent border-none"
+            className="text-lime-400 text-sm bg-transparent border-none hover:underline"
           >
-            {isSignUp ? '¿Ya tienes cuenta?' : '¿Sin cuenta?'}
+            {isSignUp ? '¿Ya tienes cuenta? Inicia sesión' : '¿Sin cuenta? Crea una'}
           </button>
         </div>
       </form>
 
-      <p className="text-zinc-600 text-xs mt-6">Tus datos están seguros</p>
+      <p className="text-zinc-600 text-xs mt-8">Tus datos están seguros</p>
     </div>
   );
 }

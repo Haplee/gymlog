@@ -1,21 +1,26 @@
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
-import { AuthPage } from './pages/AuthPage';
-import { AuthCallback } from './pages/AuthCallback';
-import { WorkoutPage } from './pages/WorkoutPage';
-import { StatsPage } from './pages/StatsPage';
-import { HistoryPage } from './pages/HistoryPage';
+
+const AuthPage = lazy(() => import('./pages/AuthPage').then(m => ({ default: m.AuthPage })));
+const AuthCallback = lazy(() => import('./pages/AuthCallback').then(m => ({ default: m.AuthCallback })));
+const WorkoutPage = lazy(() => import('./pages/WorkoutPage').then(m => ({ default: m.WorkoutPage })));
+const StatsPage = lazy(() => import('./pages/StatsPage').then(m => ({ default: m.StatsPage })));
+const HistoryPage = lazy(() => import('./pages/HistoryPage').then(m => ({ default: m.HistoryPage })));
+
+function Loading() {
+  return (
+    <div className="min-h-screen bg-[#09090b] flex items-center justify-center">
+      <div className="text-[#c8ff00]">Cargando...</div>
+    </div>
+  );
+}
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuthStore();
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-[#09090b] flex items-center justify-center">
-        <div className="text-[#c8ff00]">Cargando...</div>
-      </div>
-    );
+    return <Loading />;
   }
 
   if (!user) {
@@ -35,22 +40,20 @@ function AppRoutes() {
   }, [initialized]);
 
   if (!initialized || loading) {
-    return (
-      <div className="min-h-screen bg-[#09090b] flex items-center justify-center">
-        <div className="text-[#c8ff00]">Cargando...</div>
-      </div>
-    );
+    return <Loading />;
   }
 
   return (
-    <Routes>
-      <Route path="/login" element={user ? <Navigate to="/" replace /> : <AuthPage />} />
-      <Route path="/auth/callback" element={<AuthCallback />} />
-      <Route path="/" element={<ProtectedRoute><WorkoutPage /></ProtectedRoute>} />
-      <Route path="/stats" element={<ProtectedRoute><StatsPage /></ProtectedRoute>} />
-      <Route path="/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <Suspense fallback={<Loading />}>
+      <Routes>
+        <Route path="/login" element={user ? <Navigate to="/" replace /> : <AuthPage />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/" element={<ProtectedRoute><WorkoutPage /></ProtectedRoute>} />
+        <Route path="/stats" element={<ProtectedRoute><StatsPage /></ProtectedRoute>} />
+        <Route path="/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
   );
 }
 

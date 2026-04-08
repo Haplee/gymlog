@@ -78,8 +78,8 @@ export function HistoryPage() {
           onChange={(e) => setView(e.target.value as 'sets' | 'workouts')}
           className="bg-[#141418] border border-[rgba(255,255,255,0.12)] rounded-lg text-[#a0a0a8] text-[0.95rem] p-2 cursor-pointer"
         >
-          <option value="sets">series</option>
-          <option value="workouts">entrenos</option>
+          <option value="sets">Series</option>
+          <option value="workouts">Entrenos</option>
         </select>
         
         {view === 'sets' && (
@@ -89,7 +89,7 @@ export function HistoryPage() {
               onChange={(e) => setFilterExercise(e.target.value)}
               className="bg-[#141418] border border-[rgba(255,255,255,0.12)] rounded-lg text-[#a0a0a8] text-[0.95rem] p-2 cursor-pointer"
             >
-              <option value="">todos</option>
+              <option value="">Todos</option>
               {exercises.map(ex => (
                 <option key={ex} value={ex}>{ex}</option>
               ))}
@@ -99,8 +99,8 @@ export function HistoryPage() {
               onChange={(e) => setSortCol(e.target.value)}
               className="bg-[#141418] border border-[rgba(255,255,255,0.12)] rounded-lg text-[#a0a0a8] text-[0.95rem] p-2 cursor-pointer"
             >
-              <option value="date">recientes</option>
-              <option value="exercise">ejercicio</option>
+              <option value="date">Recientes</option>
+              <option value="exercise">Ejercicios</option>
             </select>
           </>
         )}
