@@ -17,7 +17,7 @@ interface GroupedWorkout {
 export function HistoryPage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { recentSets, loadRecentSets, workouts, loadWorkouts, repeatWorkout } = useWorkoutStore();
+  const { recentSets, loadRecentSets, workouts, loadWorkouts, repeatWorkout, exercises: exerciseList } = useWorkoutStore();
   const [view, setView] = useState<'sets' | 'workouts'>('sets');
   const [filterExercise, setFilterExercise] = useState('');
   const [sortCol, setSortCol] = useState('date');
@@ -107,7 +107,7 @@ export function HistoryPage() {
 
   const importFromCsv = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !user) return;
 
     const reader = new FileReader();
     reader.onload = async (event) => {
@@ -115,6 +115,7 @@ export function HistoryPage() {
       const lines = text.split('\n');
       
       let imported = 0;
+      let createdWorkoutId = null;
       
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i].trim();
@@ -136,11 +137,42 @@ export function HistoryPage() {
         if (!cols[0] || cols[0].startsWith('xxx')) continue;
         
         const ejercicio = cols[0].replace(/"/g, '').trim();
-        const peso = cols[2]?.replace(/"/g, '').replace(/[^0-9,.]/g, '').replace(',', '.') || '';
+        const pesoStr = cols[2]?.replace(/"/g, '').replace(/[^0-9,.]/g, '').replace(',', '.') || '';
+        const peso = parseFloat(pesoStr);
         
-        if (ejercicio && peso && !isNaN(parseFloat(peso))) {
-          imported++;
+        if (ejercicio && peso && !isNaN(peso)) {
+          const existingEx = exerciseList.find(ex => ex && ex.name && ex.name.toLowerCase() === ejercicio.toLowerCase());
+          
+          if (existingEx && existingEx.id) {
+            if (!createdWorkoutId) {
+              const { data: workoutData } = await supabase
+                .from('workouts')
+                .insert({ user_id: user.id })
+                .select()
+                .single();
+              
+              if (workoutData) {
+                createdWorkoutId = workoutData.id;
+              }
+            }
+            
+            if (createdWorkoutId) {
+              await supabase.from('workout_sets').insert({
+                workout_id: createdWorkoutId,
+                exercise_id: existingEx.id,
+                weight: peso,
+                reps: 10,
+                set_num: 1
+              });
+              imported++;
+            }
+          }
         }
+      }
+      
+      if (imported > 0) {
+        await loadRecentSets(user.id);
+        await loadWorkouts(user.id);
       }
       
       setToast(`Importado: ${imported} ejercicios`);
