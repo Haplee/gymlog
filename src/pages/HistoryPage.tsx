@@ -74,29 +74,42 @@ export function HistoryPage() {
   const exportToExcel = () => {
     const data = filteredSets.map(s => ({
       ejercicio: s.exercise?.name || '',
-      fecha: s.workout?.started_at ? new Date(s.workout.started_at).toLocaleDateString() : '',
+      fecha: s.workout?.started_at ? new Date(s.workout.started_at).toISOString().split('T')[0] : '',
       peso: s.weight,
       reps: s.reps,
     }));
 
+    const allDates = new Set<string>();
+    data.forEach(row => {
+      if (row.fecha) allDates.add(row.fecha);
+    });
+    allDates.add(new Date().toISOString().split('T')[0]);
+
+    const sortedDates = Array.from(allDates).sort().reverse();
+    
     let csv = '';
     
-    const groupedByExercise: Record<string, { fecha: string; peso: number; reps: number }[]> = {};
-    data.forEach(row => {
-      if (!row.ejercicio) return;
-      if (!groupedByExercise[row.ejercicio]) groupedByExercise[row.ejercicio] = [];
-      groupedByExercise[row.ejercicio].push({ fecha: row.fecha, peso: row.peso, reps: row.reps });
-    });
-
-    const exercises = Object.keys(groupedByExercise).sort();
-    exercises.forEach(ex => {
-      const dates = [...new Set(groupedByExercise[ex].map(d => d.fecha))].filter(Boolean);
-      dates.forEach(fecha => {
-        const row = groupedByExercise[ex].find(r => r.fecha === fecha);
-        if (row) {
-          csv += `${ex},${fecha},${row.peso}\n`;
-        }
-      });
+    sortedDates.forEach(date => {
+      const parts = date.split('-');
+      const dateFormatted = `${parts[2]}/${parts[1]}/${parts[0]}`;
+      
+      csv += `Tren superior,${dateFormatted},\n`;
+      
+      const dayData = data.filter(r => r.fecha === date);
+      
+      if (dayData.length === 0) {
+        csv += `Bíceps,"no hay registros",\n`;
+      } else {
+        const exercises = dayData.map(r => r.ejercicio).sort();
+        exercises.forEach(exName => {
+          const row = dayData.find(r => r.ejercicio === exName);
+          if (row) {
+            csv += `${row.ejercicio},,${row.peso}\n`;
+          }
+        });
+      }
+      
+      csv += '\n';
     });
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -223,12 +236,19 @@ export function HistoryPage() {
           return headers.some(h => lower.includes(h));
         };
 
-        const isSkipLine = (firstCol: string): boolean => {
+        const isSkipLine = (firstCol: string, secondCol: string): boolean => {
           const lower = firstCol.toLowerCase().trim();
+          const lowerSecond = secondCol.toLowerCase().trim();
           const skipWords = ['no', 'ninguno', 'n/a', '-', 'x', 'xxx', 'xxxx', 'pendiente', 'descanso'];
+          const skipPhrases = ['no hay registros', 'sin registros', 'sin datos', 'descanso', 'libre', 'sin entrenamiento', 'sin ejercicio', 'no se entrenó'];
+          
           if (skipWords.includes(lower)) return true;
           if (lower.startsWith('xxx')) return true;
           if (firstCol.replace(/[0-9]/g, '').trim().length === 0) return true;
+          
+          if (skipPhrases.some(p => lowerSecond.includes(p))) return true;
+          if (lowerSecond === '-' || lowerSecond === '' || lowerSecond === ' ') return true;
+          
           return false;
         };
 
@@ -283,7 +303,7 @@ export function HistoryPage() {
             continue;
           }
           
-          if (isSkipLine(firstCol)) {
+          if (isSkipLine(firstCol, secondCol)) {
             skipped++;
             continue;
           }

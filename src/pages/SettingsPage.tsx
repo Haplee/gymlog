@@ -1,8 +1,33 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { Layout } from '../components/Layout';
+
+const playSound = (freq: number, duration: number, delay: number, ctx: AudioContext) => {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.frequency.value = freq;
+  osc.type = 'square';
+  gain.gain.setValueAtTime(0.9, ctx.currentTime + delay);
+  gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + delay + duration);
+  osc.start(ctx.currentTime + delay);
+  osc.stop(ctx.currentTime + delay + duration);
+};
+
+const triggerVibration = (pattern: number[]): boolean => {
+  if ('vibrate' in navigator && typeof navigator.vibrate === 'function') {
+    try {
+      return navigator.vibrate(pattern);
+    } catch (e) {
+      console.warn('[Vibration] Not supported:', e);
+      return false;
+    }
+  }
+  return false;
+};
 
 export function SettingsPage() {
   const navigate = useNavigate();
@@ -10,10 +35,53 @@ export function SettingsPage() {
   const { vibration, sound, restTimerDefault, setVibration, setSound, setRestTimerDefault } = useSettingsStore();
   const [animVibration, setAnimVibration] = useState(false);
   const [animSound, setAnimSound] = useState(false);
+  const [vibrationSupported, setVibrationSupported] = useState(true);
+  const [soundSupported, setSoundSupported] = useState(true);
 
   useEffect(() => {
     if (!user) navigate('/login');
   }, [user, navigate]);
+
+  useEffect(() => {
+    setVibrationSupported('vibrate' in navigator && typeof navigator.vibrate === 'function');
+    setSoundSupported(typeof AudioContext !== 'undefined' || typeof (window as any).webkitAudioContext !== 'undefined');
+  }, []);
+
+  const playFeedbackSound = useCallback(() => {
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) {
+        console.warn('[Sound] Not supported');
+        setSoundSupported(false);
+        return;
+      }
+      const ctx = new AudioContextClass();
+      playSound(1200, 0.25, 0, ctx);
+      playSound(1500, 0.25, 0.15, ctx);
+      playSound(1800, 0.35, 0.30, ctx);
+    } catch (e) {
+      console.error('[Sound] Error:', e);
+      setSoundSupported(false);
+    }
+  }, []);
+
+  const handleToggle = (type: 'vibration' | 'sound') => {
+    if (type === 'vibration') {
+      if (!vibrationSupported) return;
+      const newValue = !vibration;
+      setAnimVibration(true);
+      setVibration(newValue);
+      triggerVibration([200, 100, 200, 100, 300]);
+      setTimeout(() => setAnimVibration(false), 300);
+    } else {
+      if (!soundSupported) return;
+      const newValue = !sound;
+      setAnimSound(true);
+      setSound(newValue);
+      if (newValue) playFeedbackSound();
+      setTimeout(() => setAnimSound(false), 300);
+    }
+  };
 
   const bgCard = '#141418';
   const border = 'rgba(255,255,255,0.06)';
@@ -23,70 +91,6 @@ export function SettingsPage() {
   const toggleOn = '#c8ff00';
   const toggleOff = '#3a3a42';
   const danger = '#ff5252';
-
-  const triggerVibration = () => {
-    if ('vibrate' in navigator && navigator.vibrate) {
-      navigator.vibrate([200, 100, 200, 100, 300, 100, 400]);
-    }
-  };
-
-  const playClickSound = () => {
-    try {
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.frequency.value = 1200;
-      osc.type = 'square';
-      gain.gain.setValueAtTime(0.9, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.3);
-      
-      setTimeout(() => {
-        const osc2 = ctx.createOscillator();
-        const gain2 = ctx.createGain();
-        osc2.connect(gain2);
-        gain2.connect(ctx.destination);
-        osc2.frequency.value = 1500;
-        osc2.type = 'square';
-        gain2.gain.setValueAtTime(0.9, ctx.currentTime);
-        gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-        osc2.start(ctx.currentTime);
-        osc2.stop(ctx.currentTime + 0.3);
-      }, 150);
-      
-      setTimeout(() => {
-        const osc3 = ctx.createOscillator();
-        const gain3 = ctx.createGain();
-        osc3.connect(gain3);
-        gain3.connect(ctx.destination);
-        osc3.frequency.value = 1800;
-        osc3.type = 'square';
-        gain3.gain.setValueAtTime(0.9, ctx.currentTime);
-        gain3.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
-        osc3.start(ctx.currentTime);
-        osc3.stop(ctx.currentTime + 0.4);
-      }, 300);
-    } catch (e) {}
-  };
-
-  const handleToggle = (type: 'vibration' | 'sound') => {
-    if (type === 'vibration') {
-      const newValue = !vibration;
-      setAnimVibration(true);
-      setVibration(newValue);
-      triggerVibration();
-      setTimeout(() => setAnimVibration(false), 300);
-    } else {
-      const newValue = !sound;
-      setAnimSound(true);
-      setSound(newValue);
-      if (newValue) playClickSound();
-      setTimeout(() => setAnimSound(false), 300);
-    }
-  };
 
   return (
     <Layout>

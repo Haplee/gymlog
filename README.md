@@ -7,7 +7,7 @@ PWA para registrar entrenamientos de gimnasio. Desplegado en **https://pesos-win
 - **Frontend**: React 19 + TypeScript + Vite
 - **Estilos**: Tailwind CSS v4
 - **Estado**: Zustand
-- **Datos**: TanStack Query + Supabase
+- **Datos**: Supabase
 - **Charts**: Recharts
 - **Auth**: Supabase Auth (email + Google)
 
@@ -15,12 +15,12 @@ PWA para registrar entrenamientos de gimnasio. Desplegado en **https://pesos-win
 
 ```
 src/
-├── components/     # Componentes reutilizables
-├── pages/          # Páginas de la app
-├── stores/         # Estado global (Zustand)
-├── lib/            # Config Supabase y tipos
-├── db/             # Schema de la DB
-└── assets/         # Imágenes y recursos
+├── components/     # Componentes reutilizables (Layout, RestTimer, PermissionRequests)
+├── pages/          # Páginas de la app (WorkoutPage, StatsPage, HistoryPage, etc.)
+├── stores/         # Estado global (Zustand: auth, workout, settings, routine)
+├── lib/            # Config Supabase, tipos TypeScript, utilidades
+├── hooks/          # Custom hooks (useWakeLock)
+└── public/         # PWA (manifest.json, sw.js, iconos)
 ```
 
 ## Scripts
@@ -29,22 +29,31 @@ src/
 # Desarrollo
 npm run dev
 
-# Build
+# Build producción
 npm run build
 
 # Preview
 npm run preview
-```
-
-## Despliegue
-
-```bash
-# Deploy a Vercel
-npx vercel
 
 # Deploy a producción
-npx vercel --prod
+npx vercel deploy --prod
 ```
+
+## Funcionalidades
+
+- 🔐 Autenticación con Supabase Auth (email + Google)
+- 🏋️ Registro de ejercicios y series con validación
+- 📋 Rutina semanal (asigna ejercicios por día)
+- ⏱️ Timer de descanso con notificaciones
+- 📊 Estadísticas, gráficos semanales y progresión por ejercicio
+- 📜 Historial de entrenamientos con filtros
+- 📥 Importar/Exportar CSV (formato compatible)
+- 🔢 Calculadora 1RM (Fórmula Brzycki)
+- 🔊 Sonido configurable (Web Audio API)
+- 📳 Vibración configurable (Navigator Vibration API)
+- ⚙️ Configuración persistente (vibración, sonido, timer)
+- 📱 PWA instalable con offline
+- 💾 Sesión persistente
 
 ## Supabase
 
@@ -53,29 +62,34 @@ npx vercel --prod
 
 ### Tablas
 
-- `profiles` → Usuarios
-- `exercises` → Ejercicios disponibles
-- `workouts` → Sesiones de entrenamiento
-- `workout_sets` → Series registradas
-- `personal_records` → Récords personales
-
-## Funcionalidades
-
-- 🔐 Autenticación con Supabase Auth (email + Google)
-- 🏋️ Registro de ejercicios y series
-- 📋 Rutina semanal (asigna ejercicios por día)
-- ⏱️ Timer de descanso personalizable
-- 📊 Estadísticas y gráfico semanal
-- 📜 Historial de entrenamientos
-- 📥 Exportar a CSV
-- 🔢 Calculadora 1RM (Brzycki)
-- ⚙️ Configuración (vibración, sonido)
-- 📱 PWA instalable
-- 💾 Sesión persistente
+- `profiles` → Usuarios (username, full_name)
+- `exercises` → Ejercicios disponibles (user_id, muscle_group)
+- `workouts` → Sesiones de entrenamiento (user_id, started_at)
+- `workout_sets` → Series registradas (weight, reps, set_num)
+- `personal_records` → Récords personales (weight, reps)
+- `user_routines` → Rutina semanal por usuario
 
 ## PWA
 
-Archivos en `public/`:
-- `manifest.json` → Configuración PWA
-- `sw.js` → Service Worker offline
-- `gimnasia.png` → Icono de la app
+La app funciona offline mediante Service Worker:
+
+- `manifest.json` → Configuración (nombre, iconos, theme)
+- `sw.js` → Cacheo stale-while-revalidate
+
+Para instalación:
+- Chrome/Android: "Añadir a pantalla de inicio"
+- iOS: Compartir → "Añadir a pantalla de inicio"
+
+## Build Optimizado
+
+- Code splitting automático por página
+- Lazy loading de componentes
+- CSS mínimo con Tailwind v4
+- Bundle ~500KB (gzipped ~150KB)
+
+## Contributing
+
+1. Fork del repositorio
+2. Crear branch `feature/xxx`
+3. Commit con cambios
+4. Push y abrir PR
