@@ -1,13 +1,19 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useSettingsStore } from '../stores/settingsStore';
 
 export function RestTimer() {
   const [seconds, setSeconds] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const intervalRef = useRef<number | null>(null);
+  const { vibration, sound, restTimerDefault } = useSettingsStore();
 
   const notifyTimerEnd = useCallback(async () => {
-    if ('vibrate' in navigator) {
+    if (vibration && 'vibrate' in navigator) {
       navigator.vibrate([200, 100, 200]);
+    }
+
+    if (sound) {
+      playBeep();
     }
 
     if ('Notification' in window && Notification.permission === 'granted') {
@@ -17,7 +23,7 @@ export function RestTimer() {
         badge: '/gimnasia.png'
       });
     }
-  }, []);
+  }, [vibration, sound]);
 
   const startRest = (sec: number) => {
     stopRest();
@@ -40,7 +46,7 @@ export function RestTimer() {
         setSeconds(s => {
           if (s <= 1) {
             stopRest();
-            playBeep();
+            if (sound) playBeep();
             notifyTimerEnd();
             return 0;
           }
@@ -51,7 +57,7 @@ export function RestTimer() {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [isRunning, notifyTimerEnd]);
+  }, [isRunning, notifyTimerEnd, sound]);
 
   const formatTime = (s: number) => {
     const mins = Math.floor(s / 60);

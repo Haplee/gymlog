@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
+import { useSettingsStore } from '../stores/settingsStore';
 
 interface LayoutProps {
   children: ReactNode;
@@ -14,11 +15,12 @@ export function Layout({ children }: LayoutProps) {
     { path: '/', label: '🏋️ Entrenar', id: 'train' },
     { path: '/stats', label: '📊 Stats', id: 'stats' },
     { path: '/history', label: '📋 Historial', id: 'history' },
+    { path: '/settings', label: '⚙️ Ajustes', id: 'settings' },
   ];
 
   return (
-    <div className="min-h-screen bg-[#0a0a0c] flex flex-col">
-      <div className="flex items-center justify-between px-4 py-3 bg-[rgba(10,10,12,0.95)] border-b border-[rgba(255,255,255,0.06)] sticky top-0 z-100">
+    <div className="min-h-screen min-h-[100dvh] bg-[#0a0a0c] flex flex-col">
+      <div className="flex items-center justify-between px-4 py-3 bg-[rgba(10,10,12,0.95)] border-b border-[rgba(255,255,255,0.06)] sticky top-0 z-100 safe-area-top">
         <div className="flex items-center gap-3">
           <img src="/gimnasia.png" className="w-8 h-8 rounded-lg object-contain bg-[#141418] border border-[#c8ff00]" alt="logo" />
           <div>
@@ -43,7 +45,7 @@ export function Layout({ children }: LayoutProps) {
           <Link
             key={tab.path}
             to={tab.path}
-            className={`flex-1 py-4 px-2 text-[1rem] text-center cursor-pointer font-semibold border-b-2 transition-colors ${
+            className={`flex-1 py-4 px-2 text-[0.85rem] sm:text-[1rem] text-center cursor-pointer font-semibold border-b-2 transition-colors ${
               location.pathname === tab.path
                 ? 'text-[#c8ff00] border-b-[#c8ff00]'
                 : 'text-[#606068] border-b-transparent'
@@ -54,7 +56,7 @@ export function Layout({ children }: LayoutProps) {
         ))}
       </div>
 
-      <div className="flex-1 p-4 overflow-y-auto">
+      <div className="flex-1 p-4 overflow-y-auto pb-[max(1rem,env(safe-area-inset-bottom))]">
         {children}
       </div>
     </div>
