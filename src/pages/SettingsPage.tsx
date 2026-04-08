@@ -25,8 +25,8 @@ export function SettingsPage() {
   const danger = '#ff5252';
 
   const triggerVibration = () => {
-    if ('vibrate' in navigator) {
-      navigator.vibrate([100, 50, 100, 50, 200]);
+    if ('vibrate' in navigator && navigator.vibrate) {
+      navigator.vibrate([200, 100, 200, 100, 300, 100, 400]);
     }
   };
 
@@ -37,25 +37,38 @@ export function SettingsPage() {
       const gain = ctx.createGain();
       osc.connect(gain);
       gain.connect(ctx.destination);
-      osc.frequency.value = 880;
+      osc.frequency.value = 1200;
       osc.type = 'square';
-      gain.gain.setValueAtTime(0.5, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+      gain.gain.setValueAtTime(0.9, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
       osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.2);
+      osc.stop(ctx.currentTime + 0.3);
       
       setTimeout(() => {
         const osc2 = ctx.createOscillator();
         const gain2 = ctx.createGain();
         osc2.connect(gain2);
         gain2.connect(ctx.destination);
-        osc2.frequency.value = 1100;
+        osc2.frequency.value = 1500;
         osc2.type = 'square';
-        gain2.gain.setValueAtTime(0.5, ctx.currentTime);
-        gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+        gain2.gain.setValueAtTime(0.9, ctx.currentTime);
+        gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
         osc2.start(ctx.currentTime);
-        osc2.stop(ctx.currentTime + 0.2);
-      }, 100);
+        osc2.stop(ctx.currentTime + 0.3);
+      }, 150);
+      
+      setTimeout(() => {
+        const osc3 = ctx.createOscillator();
+        const gain3 = ctx.createGain();
+        osc3.connect(gain3);
+        gain3.connect(ctx.destination);
+        osc3.frequency.value = 1800;
+        osc3.type = 'square';
+        gain3.gain.setValueAtTime(0.9, ctx.currentTime);
+        gain3.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+        osc3.start(ctx.currentTime);
+        osc3.stop(ctx.currentTime + 0.4);
+      }, 300);
     } catch (e) {}
   };
 

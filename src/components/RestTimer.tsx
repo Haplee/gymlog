@@ -9,7 +9,7 @@ export function RestTimer() {
 
   const notifyTimerEnd = useCallback(() => {
     if (vibration && 'vibrate' in navigator) {
-      navigator.vibrate([200, 100, 200]);
+      navigator.vibrate([300, 100, 300, 100, 300]);
     }
     if (sound) playBeep();
     if ('Notification' in window && Notification.permission === 'granted') {
@@ -59,28 +59,20 @@ export function RestTimer() {
 function playBeep() {
   try {
     const ctx = new AudioContext();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.frequency.value = 880;
-    osc.type = 'square';
-    gain.gain.setValueAtTime(0.6, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.3);
-    
-    setTimeout(() => {
-      const osc2 = ctx.createOscillator();
-      const gain2 = ctx.createGain();
-      osc2.connect(gain2);
-      gain2.connect(ctx.destination);
-      osc2.frequency.value = 1100;
-      osc2.type = 'square';
-      gain2.gain.setValueAtTime(0.6, ctx.currentTime);
-      gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-      osc2.start();
-      osc2.stop(ctx.currentTime + 0.3);
-    }, 200);
+    const playFreq = (freq: number, delay: number) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = freq;
+      osc.type = 'square';
+      gain.gain.setValueAtTime(0.8, ctx.currentTime + delay);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + delay + 0.25);
+      osc.start(ctx.currentTime + delay);
+      osc.stop(ctx.currentTime + delay + 0.25);
+    };
+    playFreq(1200, 0);
+    playFreq(1500, 0.15);
+    playFreq(1800, 0.30);
   } catch (e) {}
 }

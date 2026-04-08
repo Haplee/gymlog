@@ -17,7 +17,7 @@ interface GroupedWorkout {
 export function HistoryPage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { recentSets, loadRecentSets, workouts, loadWorkouts, repeatWorkout, exercises: exerciseList } = useWorkoutStore();
+  const { recentSets, loadRecentSets, workouts, loadWorkouts, repeatWorkout } = useWorkoutStore();
   const [view, setView] = useState<'sets' | 'workouts'>('sets');
   const [filterExercise, setFilterExercise] = useState('');
   const [sortCol, setSortCol] = useState('date');
@@ -31,6 +31,7 @@ export function HistoryPage() {
     }
     loadRecentSets(user.id);
     loadWorkouts(user.id);
+    useWorkoutStore.getState().loadExercises(user.id);
   }, [user, navigate, loadRecentSets, loadWorkouts]);
 
   const handleRepeat = (workout: WorkoutWithSets) => {
@@ -107,108 +108,126 @@ export function HistoryPage() {
 
   const importFromCsv = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !user) return;
+    if (!file || !user) {
+      setToast('Error: No se pudo procesar el archivo');
+      setTimeout(() => setToast(null), 3000);
+      return;
+    }
 
     const reader = new FileReader();
     reader.onload = async (event) => {
-      const text = event.target?.result as string;
-      const lines = text.split('\n');
-      
-      let imported = 0;
-      const dateWorkoutMap: Record<string, string> = {};
-      
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (!line) continue;
+      try {
+        const text = event.target?.result as string;
+        const lines = text.split('\n').filter(l => l.trim());
         
-        const cols = line.split(',');
-        const firstCol = cols[0]?.trim().toLowerCase() || '';
+        if (lines.length === 0) {
+          setToast('El archivo está vacío');
+          setTimeout(() => setToast(null), 3000);
+          return;
+        }
+
+        await useWorkoutStore.getState().loadExercises(user.id);
         
-        if (firstCol.includes('tren superior') || firstCol.includes('tren inferior') || 
-            firstCol.includes('pecho') || firstCol.includes('espalda') || 
-            firstCol.includes('hombro') || firstCol.includes('multiarticulares') ||
-            firstCol.includes('isquio') || firstCol.includes('femoral') ||
-            firstCol.includes('abductores') || firstCol.includes('adductores') ||
-            firstCol.includes('cuádriceps') || firstCol.includes('gemelos') ||
-            firstCol.includes('tibiales')) {
-          if (cols[1]?.trim()) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const exerciseList = useWorkoutStore.getState().exercises;
+        let imported = 0;
+        const dateWorkoutMap: Record<string, string> = {};
+        
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
+          
+          const cols = line.split(',');
+          const firstCol = cols[0]?.trim().toLowerCase() || '';
+          
+          if (firstCol.includes('tren superior') || firstCol.includes('tren inferior') || 
+              firstCol.includes('pecho') || firstCol.includes('espalda') || 
+              firstCol.includes('hombro') || firstCol.includes('multiarticulares') ||
+              firstCol.includes('isquio') || firstCol.includes('femoral') ||
+              firstCol.includes('abductores') || firstCol.includes('adductores') ||
+              firstCol.includes('cuádriceps') || firstCol.includes('gemelos') ||
+              firstCol.includes('tibiales')) {
             continue;
           }
-          continue;
-        }
-        
-        if (!cols[0] || cols[0].startsWith('xxx')) continue;
-        
-        const ejercicio = cols[0].replace(/"/g, '').trim();
-        const fechaCsv = cols[1]?.trim() || '';
-        const pesoStr = cols[2]?.replace(/"/g, '').replace(/[^0-9,.]/g, '').replace(',', '.') || '';
-        const peso = parseFloat(pesoStr);
-        
-        if (ejercicio && peso && !isNaN(peso) && fechaCsv) {
-          let exerciseId = null;
-          const existingEx = exerciseList.find(ex => ex && ex.name && ex.name.toLowerCase() === ejercicio.toLowerCase());
           
-          if (existingEx && existingEx.id) {
-            exerciseId = existingEx.id;
-          } else {
-            const { data: newEx } = await supabase
-              .from('exercises')
-              .insert({ name: ejercicio, user_id: user.id, muscle_group: 'Importado' })
-              .select('id')
-              .single();
+          if (!cols[0] || cols[0].startsWith('xxx')) continue;
+          
+          const ejercicio = cols[0].replace(/"/g, '').trim();
+          const fechaCsv = cols[1]?.trim() || '';
+          const pesoStr = cols[2]?.replace(/"/g, '').replace(/[^0-9,.]/g, '').replace(',', '.') || '';
+          const peso = parseFloat(pesoStr);
+          
+          if (ejercicio && peso && !isNaN(peso) && fechaCsv) {
+            let exerciseId: string | null = null;
+            const existingEx = exerciseList.find(ex => ex && ex.name && ex.name.toLowerCase() === ejercicio.toLowerCase());
             
-            if (newEx) {
-              exerciseId = newEx.id;
-            }
-          }
-          
-          if (exerciseId) {
-            if (!dateWorkoutMap[fechaCsv]) {
-              const fechaParts = fechaCsv.split('/');
-              const fechaIso = fechaParts.length === 3 
-                ? `${fechaParts[2]}-${fechaParts[1]}-${fechaParts[0]}`
-                : new Date().toISOString();
-              
-              const { data: workoutData } = await supabase
-                .from('workouts')
-                .insert({ user_id: user.id, started_at: fechaIso })
+            if (existingEx && existingEx.id) {
+              exerciseId = existingEx.id;
+            } else {
+              const { data: newEx } = await supabase
+                .from('exercises')
+                .insert({ name: ejercicio, user_id: user.id, muscle_group: 'Importado' })
                 .select('id')
                 .single();
               
-              if (workoutData) {
-                dateWorkoutMap[fechaCsv] = workoutData.id;
+              if (newEx) {
+                exerciseId = newEx.id;
               }
             }
             
-            if (dateWorkoutMap[fechaCsv]) {
-              const existingSets = await supabase
-                .from('workout_sets')
-                .select('id')
-                .eq('workout_id', dateWorkoutMap[fechaCsv])
-                .eq('exercise_id', exerciseId);
+            if (exerciseId) {
+              if (!dateWorkoutMap[fechaCsv]) {
+                const fechaParts = fechaCsv.split('/');
+                const fechaIso = fechaParts.length === 3 
+                  ? `${fechaParts[2]}-${fechaParts[1]}-${fechaParts[0]}`
+                  : new Date().toISOString();
+                
+                const { data: workoutData } = await supabase
+                  .from('workouts')
+                  .insert({ user_id: user.id, started_at: fechaIso })
+                  .select('id')
+                  .single();
+                
+                if (workoutData) {
+                  dateWorkoutMap[fechaCsv] = workoutData.id;
+                }
+              }
               
-              if (!existingSets.data || existingSets.data.length === 0) {
-                await supabase.from('workout_sets').insert({
-                  workout_id: dateWorkoutMap[fechaCsv],
-                  exercise_id: exerciseId,
-                  weight: peso,
-                  reps: 10,
-                  set_num: 1
-                });
-                imported++;
+              if (dateWorkoutMap[fechaCsv]) {
+                const existingSets = await supabase
+                  .from('workout_sets')
+                  .select('id')
+                  .eq('workout_id', dateWorkoutMap[fechaCsv])
+                  .eq('exercise_id', exerciseId);
+                
+                if (!existingSets.data || existingSets.data.length === 0) {
+                  await supabase.from('workout_sets').insert({
+                    workout_id: dateWorkoutMap[fechaCsv],
+                    exercise_id: exerciseId,
+                    weight: peso,
+                    reps: 10,
+                    set_num: 1
+                  });
+                  imported++;
+                }
               }
             }
           }
         }
+        
+        if (imported > 0) {
+          await loadRecentSets(user.id);
+          await loadWorkouts(user.id);
+        }
+        
+        setToast(`Importado: ${imported} ejercicios`);
+        setTimeout(() => setToast(null), 3000);
+      } catch (err) {
+        console.error('Import error:', err);
+        setToast('Error al importar. Verifica el formato del CSV.');
+        setTimeout(() => setToast(null), 3000);
       }
-      
-      if (imported > 0) {
-        await loadRecentSets(user.id);
-        await loadWorkouts(user.id);
-      }
-      
-      setToast(`Importado: ${imported} ejercicios`);
-      setTimeout(() => setToast(null), 3000);
     };
     reader.readAsText(file);
     e.target.value = '';
