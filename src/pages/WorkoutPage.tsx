@@ -86,9 +86,9 @@ export function WorkoutPage() {
       const gain = ctx.createGain();
       osc.connect(gain);
       gain.connect(ctx.destination);
-      osc.frequency.value = 800;
-      osc.type = 'sine';
-      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      osc.frequency.value = 660;
+      osc.type = 'square';
+      gain.gain.setValueAtTime(0.5, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
       osc.start(ctx.currentTime);
       osc.stop(ctx.currentTime + 0.15);
@@ -98,13 +98,13 @@ export function WorkoutPage() {
         const gain2 = ctx.createGain();
         osc2.connect(gain2);
         gain2.connect(ctx.destination);
-        osc2.frequency.value = 1000;
-        osc2.type = 'sine';
-        gain2.gain.setValueAtTime(0.3, ctx.currentTime);
-        gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+        osc2.frequency.value = 880;
+        osc2.type = 'square';
+        gain2.gain.setValueAtTime(0.5, ctx.currentTime);
+        gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
         osc2.start(ctx.currentTime);
-        osc2.stop(ctx.currentTime + 0.15);
-      }, 100);
+        osc2.stop(ctx.currentTime + 0.2);
+      }, 120);
     } catch (e) {}
   }, []);
 

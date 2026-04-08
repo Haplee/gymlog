@@ -21,6 +21,7 @@ interface WorkoutState {
   loadRecentSets: (userId: string) => Promise<void>;
   loadWorkouts: (userId: string) => Promise<void>;
   loadPersonalRecords: (userId: string) => Promise<void>;
+  getLastWeight: (exerciseId: string) => string;
   repeatWorkout: (workout: WorkoutWithSets) => void;
   setSelectedExercise: (id: string | null) => void;
   setCustomExerciseName: (name: string) => void;
@@ -39,6 +40,15 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
   customExerciseName: '',
   sets: [],
   loading: false,
+  
+  getLastWeight: (exerciseId: string) => {
+    const sets = get().recentSets;
+    const exerciseSets = sets.filter(s => s.exercise_id === exerciseId);
+    if (exerciseSets.length > 0) {
+      return String(exerciseSets[0].weight);
+    }
+    return '';
+  },
   
   loadExercises: async (userId?: string) => {
     let exercises: Exercise[] = [];

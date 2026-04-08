@@ -18,7 +18,7 @@ const colors = {
 };
 
 export function Layout({ children }: LayoutProps) {
-  const { user, signOut } = useAuthStore();
+  const { user } = useAuthStore();
   const location = useLocation();
 
   const tabs = [
@@ -49,17 +49,6 @@ export function Layout({ children }: LayoutProps) {
             </div>
           </div>
         </div>
-        <button
-          onClick={signOut}
-          className="py-2 px-3 text-[0.8rem] rounded-lg cursor-pointer"
-          style={{ 
-            backgroundColor: 'transparent', 
-            border: `1px solid ${colors.border}`, 
-            color: colors.textMuted 
-          }}
-        >
-          Salir
-        </button>
       </div>
 
       <div className="flex border-b" style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}>

@@ -70,6 +70,28 @@ export function HistoryPage() {
     setDeleteId(null);
   };
 
+  const exportToExcel = () => {
+    const data = filteredSets.map(s => ({
+      fecha: s.workout?.started_at ? new Date(s.workout.started_at).toLocaleDateString() : '-',
+      ejercicio: s.exercise?.name || '',
+      serie: s.set_num,
+      reps: s.reps,
+      peso: s.weight,
+      volumen: s.reps * s.weight
+    }));
+
+    const csv = [
+      ['Fecha', 'Ejercicio', 'Serie', 'Reps', 'Peso (kg)', 'Volumen'].join(','),
+      ...data.map(row => Object.values(row).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `gymlog_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+  };
+
   return (
     <Layout>
       <div className="flex gap-2 mb-3 flex-wrap">
@@ -102,6 +124,12 @@ export function HistoryPage() {
               <option value="date">Recientes</option>
               <option value="exercise">Ejercicios</option>
             </select>
+            <button
+              onClick={exportToExcel}
+              className="bg-[#141418] border border-[rgba(255,255,255,0.12)] rounded-lg text-[#c8ff00] text-[0.95rem] px-3 py-2 cursor-pointer font-semibold"
+            >
+              Exportar CSV
+            </button>
           </>
         )}
       </div>

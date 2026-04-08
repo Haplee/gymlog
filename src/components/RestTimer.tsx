@@ -64,8 +64,23 @@ function playBeep() {
     osc.connect(gain);
     gain.connect(ctx.destination);
     osc.frequency.value = 880;
-    gain.gain.value = 0.5;
+    osc.type = 'square';
+    gain.gain.setValueAtTime(0.6, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
     osc.start();
     osc.stop(ctx.currentTime + 0.3);
+    
+    setTimeout(() => {
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.frequency.value = 1100;
+      osc2.type = 'square';
+      gain2.gain.setValueAtTime(0.6, ctx.currentTime);
+      gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+      osc2.start();
+      osc2.stop(ctx.currentTime + 0.3);
+    }, 200);
   } catch (e) {}
 }

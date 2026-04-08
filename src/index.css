@@ -204,3 +204,37 @@ input[type=number] {
 .safe-area-right {
   padding-right: env(safe-area-inset-right);
 }
+
+@keyframes toggle-on {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1.1); }
+}
+
+@keyframes toggle-pulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(200, 255, 0, 0.3); }
+  50% { box-shadow: 0 0 16px rgba(200, 255, 0, 0.6); }
+}
+
+@keyframes button-press {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+@keyframes fade-in-up {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.btn-press {
+  animation: button-press 0.15s ease-out;
+}
+
+.toggle-on {
+  animation: toggle-pulse 1.5s ease-in-out infinite;
+}
+
+.fade-in-up {
+  animation: fade-in-up 0.3s ease-out forwards;
+}
