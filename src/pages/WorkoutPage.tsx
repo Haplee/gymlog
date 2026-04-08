@@ -103,23 +103,35 @@ export function WorkoutPage() {
     return estimated1RM > currentPR.weight;
   };
 
-  const bgCard = theme === 'light' ? '#f4f3ec' : '#141418';
-  const borderColor = theme === 'light' ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.12)';
-  const borderDashed = theme === 'light' ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.12)';
-  const textPrimary = theme === 'light' ? '#08060d' : '#fafafa';
-  const textSecondary = theme === 'light' ? '#6b6375' : '#a1a1aa';
-  const textMuted = theme === 'light' ? '#a0a0a8' : '#606068';
-  const accent = '#c8ff00';
-  const inputBg = theme === 'light' ? '#f4f3ec' : '#141418';
+  const isLight = theme === 'light';
+  const colors = isLight ? {
+    bgCard: '#ffffff',
+    border: '#e5e5e5',
+    borderDashed: '#d4d4d4',
+    textPrimary: '#171717',
+    textSecondary: '#525252',
+    textMuted: '#a3a3a3',
+    accent: '#22c55e',
+    inputBg: '#f5f5f5',
+  } : {
+    bgCard: '#141418',
+    border: 'rgba(255,255,255,0.12)',
+    borderDashed: 'rgba(255,255,255,0.12)',
+    textPrimary: '#fafafa',
+    textSecondary: '#a1a1aa',
+    textMuted: '#606068',
+    accent: '#c8ff00',
+    inputBg: '#141418',
+  };
 
   return (
     <Layout>
-      <div className="rounded-2xl p-4 mb-4 slide-up" style={{ backgroundColor: bgCard, border: `1px solid ${borderColor}` }}>
+      <div className="rounded-2xl p-4 mb-4 slide-up" style={{ backgroundColor: colors.bgCard, border: `1px solid ${colors.border}` }}>
         <select
           value={selectedExerciseId || (customInput ? '__custom__' : '')}
           onChange={handleExerciseChange}
           className="w-full rounded-xl text-[1.1rem] p-4 outline-none appearance-none"
-          style={{ backgroundColor: inputBg, border: `1px solid ${borderColor}`, color: textPrimary }}
+          style={{ backgroundColor: colors.inputBg, border: `1px solid ${colors.border}`, color: colors.textPrimary }}
         >
           <option value="">-Ejercicio-</option>
           {Object.entries(groups).map(([group, exs]) => (
@@ -139,12 +151,12 @@ export function WorkoutPage() {
             value={customExerciseName}
             onChange={(e) => setCustomExerciseName(e.target.value)}
             className="w-full rounded-xl text-[1.1rem] p-4 outline-none mt-4"
-            style={{ backgroundColor: inputBg, border: `1px solid ${borderColor}`, color: textPrimary }}
+            style={{ backgroundColor: colors.inputBg, border: `1px solid ${colors.border}`, color: colors.textPrimary }}
           />
         )}
 
         {currentPR && (
-          <div className="mt-3 text-[0.85rem]" style={{ color: accent }}>
+          <div className="mt-3 text-[0.85rem]" style={{ color: colors.accent }}>
             🏆 PR: {currentPR.weight} kg × {currentPR.reps} reps
           </div>
         )}
@@ -152,12 +164,12 @@ export function WorkoutPage() {
 
       <RestTimer />
 
-      <div className="rounded-2xl p-4 slide-up" style={{ backgroundColor: bgCard, border: `1px solid ${borderColor}` }}>
-        <div className="text-[1.1rem] font-semibold mb-3" style={{ color: textPrimary }}>
+      <div className="rounded-2xl p-4 slide-up" style={{ backgroundColor: colors.bgCard, border: `1px solid ${colors.border}` }}>
+        <div className="text-[1.1rem] font-semibold mb-3" style={{ color: colors.textPrimary }}>
           {selectedExercise ? `Series — ${selectedExercise.name}` : customExerciseName ? `Series — ${customExerciseName}` : 'Series'}
         </div>
 
-        <div className="grid grid-cols-[32px_1fr_1fr_36px] gap-1 sm:gap-2 mb-2 text-[0.7rem] sm:text-[0.75rem] font-semibold uppercase" style={{ color: textMuted }}>
+        <div className="grid grid-cols-[32px_1fr_1fr_36px] gap-1 sm:gap-2 mb-2 text-[0.7rem] sm:text-[0.75rem] font-semibold uppercase" style={{ color: colors.textMuted }}>
           <div></div>
           <div>Reps</div>
           <div>Kg</div>
@@ -165,21 +177,21 @@ export function WorkoutPage() {
         </div>
 
         {sets.length === 0 ? (
-          <div className="text-center py-8" style={{ color: textMuted }}>Añade una serie</div>
+          <div className="text-center py-8" style={{ color: colors.textMuted }}>Añade una serie</div>
         ) : (
           sets.map((s, i) => {
             const isNewPR = checkIsNewPR(s.weight, s.reps);
             return (
               <div key={i}>
                 <div className="grid grid-cols-[32px_1fr_1fr_36px] gap-1 sm:gap-2 items-center mb-2">
-                  <div className="text-center font-semibold text-sm" style={{ color: textSecondary }}>{i + 1}</div>
+                  <div className="text-center font-semibold text-sm" style={{ color: colors.textSecondary }}>{i + 1}</div>
                   <input
                     type="number"
                     placeholder="reps"
                     value={s.reps}
                     onChange={(e) => updateSet(i, { reps: e.target.value })}
                     className="rounded-lg sm:rounded-xl text-base sm:text-[1.1rem] p-2 sm:p-3 outline-none"
-                    style={{ backgroundColor: inputBg, border: `1px solid ${borderColor}`, color: textPrimary }}
+                    style={{ backgroundColor: colors.inputBg, border: `1px solid ${colors.border}`, color: colors.textPrimary }}
                   />
                   <div className="relative">
                     <input
@@ -188,7 +200,7 @@ export function WorkoutPage() {
                       value={s.weight}
                       onChange={(e) => updateSet(i, { weight: e.target.value })}
                       className="rounded-lg sm:rounded-xl text-base sm:text-[1.1rem] p-2 sm:p-3 outline-none w-full"
-                      style={{ backgroundColor: inputBg, border: `1px solid ${borderColor}`, color: textPrimary }}
+                      style={{ backgroundColor: colors.inputBg, border: `1px solid ${colors.border}`, color: colors.textPrimary }}
                     />
                     {isNewPR && (
                       <span className="absolute -top-1 -right-1 text-[0.65rem] sm:text-[0.7rem]">🏆</span>
@@ -197,7 +209,7 @@ export function WorkoutPage() {
                   <button
                     onClick={() => removeSet(i)}
                     className="w-8 h-8 sm:w-10 sm:h-10 bg-transparent border rounded-lg sm:rounded-xl cursor-pointer text-lg sm:text-xl flex items-center justify-center"
-                    style={{ borderColor: theme === 'light' ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)', color: textMuted }}
+                    style={{ borderColor: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)', color: colors.textMuted }}
                   >
                     ×
                   </button>
@@ -210,14 +222,14 @@ export function WorkoutPage() {
                     value={s.notes || ''}
                     onChange={(e) => updateSet(i, { notes: e.target.value })}
                     className="w-full rounded-xl text-[0.9rem] p-2 outline-none mb-2"
-                    style={{ backgroundColor: inputBg, border: `1px solid ${borderColor.replace('0.12', '0.08')}`, color: textSecondary }}
+                    style={{ backgroundColor: colors.inputBg, border: `1px solid ${colors.border}`, color: colors.textSecondary }}
                   />
                 )}
 
                 <button
                   onClick={() => toggleNotes(i)}
                   className="text-[0.75rem] bg-transparent border-none cursor-pointer mb-3"
-                  style={{ color: textMuted }}
+                  style={{ color: colors.textMuted }}
                 >
                   {expandedNotes.includes(i) ? '▲ ocultar notas' : '▼ añadir nota'}
                 </button>
@@ -230,21 +242,21 @@ export function WorkoutPage() {
           <button
             onClick={addSet}
             className="flex-1 py-2 sm:py-3 px-3 sm:px-4 border border-dashed rounded-lg sm:rounded-xl text-sm sm:text-[1rem] font-semibold cursor-pointer"
-            style={{ borderColor: borderDashed, color: textSecondary }}
+            style={{ borderColor: colors.borderDashed, color: colors.textSecondary }}
           >
             Serie
           </button>
           <button
             onClick={handleSave}
             className="flex-1 py-2 sm:py-3 px-3 sm:px-4 rounded-lg sm:rounded-xl text-sm sm:text-[1rem] font-bold cursor-pointer"
-            style={{ backgroundColor: accent, color: '#0a0a0c', border: 'none' }}
+            style={{ backgroundColor: colors.accent, color: isLight ? '#fff' : '#0a0a0c', border: 'none' }}
           >
             Guardar
           </button>
         </div>
 
         {message && (
-          <div className={`mt-4 text-center text-sm`} style={{ color: message.startsWith('✓') ? accent : '#ff5252' }}>
+          <div className={`mt-4 text-center text-sm`} style={{ color: message.startsWith('✓') ? colors.accent : '#ff5252' }}>
             {message}
           </div>
         )}

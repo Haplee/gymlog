@@ -1,63 +1,41 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useSettingsStore } from '../stores/settingsStore';
+import { useRestTimerStore } from '../stores/restTimerStore';
 
 export function RestTimer() {
-  const [seconds, setSeconds] = useState(0);
-  const [isRunning, setIsRunning] = useState(false);
   const intervalRef = useRef<number | null>(null);
   const { vibration, sound } = useSettingsStore();
+  const { seconds, isRunning, setSeconds, stopRest } = useRestTimerStore();
 
-  const notifyTimerEnd = useCallback(async () => {
+  const notifyTimerEnd = useCallback(() => {
     if (vibration && 'vibrate' in navigator) {
       navigator.vibrate([200, 100, 200]);
     }
-
-    if (sound) {
-      playBeep();
-    }
-
+    if (sound) playBeep();
     if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification('GymLog', {
-        body: '⏱️ Descanso terminado — ¡Siguiente serie!',
-        icon: '/gimnasia.png',
-        badge: '/gimnasia.png'
-      });
+      new Notification('GymLog', { body: '⏱️ Descanso terminado', icon: '/gimnasia.png' });
     }
   }, [vibration, sound]);
 
   const startRest = (sec: number) => {
-    stopRest();
-    setSeconds(sec);
-    setIsRunning(true);
-  };
-
-  const stopRest = () => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-    setIsRunning(false);
-    setSeconds(0);
+    useRestTimerStore.getState().startRest(sec);
   };
 
   useEffect(() => {
     if (isRunning && seconds > 0) {
       intervalRef.current = window.setInterval(() => {
-        setSeconds(s => {
-          if (s <= 1) {
-            stopRest();
-            if (sound) playBeep();
-            notifyTimerEnd();
-            return 0;
-          }
-          return s - 1;
-        });
+        const current = useRestTimerStore.getState().seconds;
+        if (current <= 1) {
+          stopRest();
+          if (sound) playBeep();
+          notifyTimerEnd();
+        } else {
+          setSeconds(current - 1);
+        }
       }, 1000);
     }
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [isRunning, notifyTimerEnd, sound]);
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, [isRunning, seconds, sound, notifyTimerEnd, stopRest, setSeconds]);
 
   const formatTime = (s: number) => {
     const mins = Math.floor(s / 60);
@@ -66,25 +44,14 @@ export function RestTimer() {
   };
 
   return (
-    <div className="flex items-center gap-2 mb-4 p-3 bg-[#1c1c22] rounded-xl">
-      <button onClick={() => startRest(60)} className="py-2 px-3 text-[0.9rem] bg-transparent border border-[rgba(255,255,255,0.12)] rounded-lg text-[#a0a0a8] cursor-pointer">
-        1m
-      </button>
-      <button onClick={() => startRest(90)} className="py-2 px-3 text-[0.9rem] bg-transparent border border-[rgba(255,255,255,0.12)] rounded-lg text-[#a0a0a8] cursor-pointer">
-        1:30
-      </button>
-      <button onClick={() => startRest(120)} className="py-2 px-3 text-[0.9rem] bg-transparent border border-[rgba(255,255,255,0.12)] rounded-lg text-[#a0a0a8] cursor-pointer">
-        2m
-      </button>
-      <div className="flex-1 text-center text-[1.3rem] text-[#c8ff00] font-bold min-w-[50px]">
+    <div className="flex items-center gap-2 mb-4 p-3 rounded-xl" style={{ backgroundColor: '#1c1c22' }}>
+      <button onClick={() => startRest(60)} className="py-2 px-3 text-[0.9rem] bg-transparent border rounded-lg cursor-pointer" style={{ borderColor: 'rgba(255,255,255,0.12)', color: '#a0a0a8' }}>1m</button>
+      <button onClick={() => startRest(90)} className="py-2 px-3 text-[0.9rem] bg-transparent border rounded-lg cursor-pointer" style={{ borderColor: 'rgba(255,255,255,0.12)', color: '#a0a0a8' }}>1:30</button>
+      <button onClick={() => startRest(120)} className="py-2 px-3 text-[0.9rem] bg-transparent border rounded-lg cursor-pointer" style={{ borderColor: 'rgba(255,255,255,0.12)', color: '#a0a0a8' }}>2m</button>
+      <div className="flex-1 text-center text-[1.3rem] font-bold min-w-[50px]" style={{ color: '#c8ff00' }}>
         {isRunning ? formatTime(seconds) : '--'}
       </div>
-      <button
-        onClick={stopRest}
-        className="w-10 h-10 bg-transparent border border-[rgba(255,255,255,0.06)] text-[#606068] rounded-lg cursor-pointer text-xl flex items-center justify-center"
-      >
-        ×
-      </button>
+      <button onClick={stopRest} className="w-10 h-10 bg-transparent border rounded-lg cursor-pointer text-xl flex items-center justify-center" style={{ borderColor: 'rgba(255,255,255,0.06)', color: '#606068' }}>×</button>
     </div>
   );
 }
@@ -100,16 +67,5 @@ function playBeep() {
     gain.gain.value = 0.5;
     osc.start();
     osc.stop(ctx.currentTime + 0.3);
-    
-    setTimeout(() => {
-      const osc2 = ctx.createOscillator();
-      const gain2 = ctx.createGain();
-      osc2.connect(gain2);
-      gain2.connect(ctx.destination);
-      osc2.frequency.value = 880;
-      gain2.gain.value = 0.5;
-      osc2.start();
-      osc2.stop(ctx.currentTime + 0.3);
-    }, 150);
   } catch (e) {}
 }

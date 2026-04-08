@@ -68,11 +68,11 @@ export default function App() {
     if (theme === 'light') {
       document.documentElement.classList.remove('dark');
       document.documentElement.classList.add('light');
-      document.body.style.background = '#ffffff';
+      document.body.style.background = '#f5f5f5';
     } else {
       document.documentElement.classList.remove('light');
       document.documentElement.classList.add('dark');
-      document.body.style.background = '#09090b';
+      document.body.style.background = '#0a0a0c';
     }
   }, [theme]);
 
