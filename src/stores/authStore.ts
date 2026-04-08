@@ -48,7 +48,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     await supabase.auth.signInWithOAuth({ 
       provider: 'google',
       options: {
-        redirectTo: 'https://eoltmipoklizewxdpzfa.supabase.co/auth/v1/callback',
+        redirectTo: 'https://pesos-wine.vercel.app',
       }
     });
   },
