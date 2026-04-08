@@ -14,6 +14,57 @@ interface GroupedWorkout {
   totalVolume: number;
 }
 
+function ExerciseRow({ 
+  exercise, 
+  sets, 
+  onDelete 
+}: { 
+  exercise: string; 
+  sets: any[]; 
+  onDelete: (id: string) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const sortedSets = [...sets].sort((a, b) => a.set_num - b.set_num);
+  const firstSet = sortedSets[0];
+
+  return (
+    <div className="border-b border-[rgba(255,255,255,0.06)] last:border-b-0">
+      <div 
+        onClick={() => setExpanded(!expanded)}
+        className="p-3 flex justify-between items-center cursor-pointer hover:bg-[rgba(255,255,255,0.02)] transition-colors"
+      >
+        <div className="flex items-center gap-3">
+          <span className={`text-[#a0a0a8] text-[1.2rem] transition-transform ${expanded ? 'rotate-90' : ''}`}>▶</span>
+          <span className="font-semibold text-white">{exercise}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[#c8ff00] font-bold">{sortedSets.length} series</span>
+          <button
+            onClick={(e) => { e.stopPropagation(); onDelete(firstSet.id); }}
+            className="bg-transparent border-none cursor-pointer text-xl transition-all hover:scale-125 ml-2"
+            style={{ color: '#606068' }}
+          >
+            ×
+          </button>
+        </div>
+      </div>
+      {expanded && (
+        <div className="px-3 pb-3 space-y-2 fade-in">
+          {sortedSets.map((s) => (
+            <div key={s.id} className="flex justify-between items-center bg-[#1c1c22] p-2 rounded-lg ml-6">
+              <div className="flex items-center gap-3">
+                <span className="text-[#606068] text-[0.85rem]">Serie {s.set_num}</span>
+                <span className="text-[#a0a0a8] text-[0.9rem]">{s.reps} reps</span>
+              </div>
+              <span className="text-[#c8ff00] font-bold">{s.weight} kg</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function HistoryPage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
@@ -399,44 +450,40 @@ export function HistoryPage() {
           {filteredSets.length === 0 ? (
             <div className="text-center py-8 text-[#606068] fade-in">Sin registros</div>
           ) : (
-            <table className="w-full text-[0.95rem]">
-              <thead>
-                <tr>
-                  <th className="bg-[#141418] p-3 text-left text-[0.75rem] font-semibold text-[#606068] uppercase border-b border-[rgba(255,255,255,0.06)]">Fecha</th>
-                  <th className="bg-[#141418] p-3 text-left text-[0.75rem] font-semibold text-[#606068] uppercase border-b border-[rgba(255,255,255,0.06)]">Ejercicio</th>
-                  <th className="bg-[#141418] p-3 text-left text-[0.75rem] font-semibold text-[#606068] uppercase border-b border-[rgba(255,255,255,0.06)]">S</th>
-                  <th className="bg-[#141418] p-3 text-left text-[0.75rem] font-semibold text-[#606068] uppercase border-b border-[rgba(255,255,255,0.06)]">Kg</th>
-                  <th className="bg-[#141418] p-3 w-10"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredSets.map(s => (
-                  <tr key={s.id} className="fade-in">
-                    <td className="p-3 border-b border-[rgba(255,255,255,0.06)] text-[#606068] text-[0.85rem]">
-                      {s.workout?.started_at ? new Date(s.workout.started_at).toLocaleDateString() : '-'}
-                    </td>
-                    <td className="p-3 border-b border-[rgba(255,255,255,0.06)] font-semibold">
-                      {s.exercise?.name}
-                    </td>
-                    <td className="p-3 border-b border-[rgba(255,255,255,0.06)] text-[#606068] text-[0.85rem]">
-                      {s.set_num}
-                    </td>
-                    <td className="p-3 border-b border-[rgba(255,255,255,0.06)] text-[#c8ff00] font-bold">
-                      {s.weight}
-                    </td>
-                    <td className="p-3 border-b border-[rgba(255,255,255,0.06)]">
-                      <button
-                        onClick={() => setDeleteId(s.id)}
-                        className="bg-transparent border-none cursor-pointer text-xl transition-all hover:scale-125"
-                        style={{ color: '#606068' }}
-                      >
-                        ×
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            (() => {
+              const grouped: Record<string, Record<string, typeof filteredSets>> = {};
+              filteredSets.forEach(s => {
+                const date = s.workout?.started_at ? new Date(s.workout.started_at).toLocaleDateString() : 'Sin fecha';
+                const exercise = s.exercise?.name || 'Desconocido';
+                if (!grouped[date]) grouped[date] = {};
+                if (!grouped[date][exercise]) grouped[date][exercise] = [];
+                grouped[date][exercise].push(s);
+              });
+
+              const sortedDates = Object.keys(grouped).sort((a, b) => 
+                new Date(b).getTime() - new Date(a).getTime()
+              );
+
+              return (
+                <div className="divide-y divide-[rgba(255,255,255,0.06)]">
+                  {sortedDates.map(date => (
+                    <div key={date}>
+                      <div className="bg-[#141418] p-3 text-[0.75rem] font-semibold text-[#606068] uppercase border-b border-[rgba(255,255,255,0.06)]">
+                        {date}
+                      </div>
+                      {Object.entries(grouped[date]).map(([exercise, sets]) => (
+                        <ExerciseRow
+                          key={exercise}
+                          exercise={exercise}
+                          sets={sets}
+                          onDelete={(id) => setDeleteId(id)}
+                        />
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              );
+            })()
           )}
         </div>
       ) : (
