@@ -1,17 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 
-const SB_URL = import.meta.env.VITE_SUPABASE_URL as string;
-const SB_KEY = import.meta.env.VITE_SUPABASE_KEY as string;
+export const SB_URL = import.meta.env.VITE_SUPABASE_URL || '';
+export const SB_KEY = import.meta.env.VITE_SUPABASE_KEY || '';
 
 if (!SB_URL || !SB_KEY) {
-  console.error(
-    '[GymLog] Faltan VITE_SUPABASE_URL o VITE_SUPABASE_KEY.\n' +
-    'En local: comprueba que existe el fichero .env con esas variables.\n' +
-    'En Vercel: añádelas en Settings → Environment Variables y redespliega.'
-  );
+  console.warn('[GymLog] Faltan variables de entorno VITE_SUPABASE_URL o VITE_SUPABASE_KEY');
 }
 
-export const supabase = createClient(SB_URL ?? '', SB_KEY ?? '', {
+export const supabase = createClient(SB_URL, SB_KEY, {
   auth: {
     persistSession: true,
     storageKey: 'gymlog-auth',

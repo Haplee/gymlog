@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { User } from '@supabase/supabase-js';
 import type { Subscription } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
+import { supabase, SB_URL, SB_KEY } from '../lib/supabase';
 
 // Guardamos la subscripción fuera del store para que HMR y StrictMode
 // no acumulen múltiples listeners de onAuthStateChange.
@@ -24,13 +24,18 @@ export const useAuthStore = create<AuthState>((set) => ({
   initialized: false,
 
   init: async () => {
-    // Evitar doble subscripción en HMR / StrictMode
     if (_authSubscription) {
       _authSubscription.unsubscribe();
       _authSubscription = null;
     }
 
     try {
+      if (!SB_URL || !SB_KEY) {
+        console.warn('[GymLog] Supabase no configurado');
+        set({ user: null, loading: false, initialized: true });
+        return;
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       set({ user: session?.user ?? null, loading: false, initialized: true });
 
@@ -39,7 +44,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       });
 
       _authSubscription = subscription;
-    } catch {
+    } catch (err) {
+      console.error('[GymLog] Error initializing auth:', err);
       set({ loading: false, initialized: true });
     }
   },

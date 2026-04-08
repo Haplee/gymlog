@@ -30,9 +30,9 @@ export function StatsPage() {
   const now = new Date();
   const weekStart = new Date(now);
   weekStart.setDate(now.getDate() - now.getDay());
-  
+
   const chartData = Array(7).fill(0).map((_, i) => ({ label: days[i], vol: 0 }));
-  
+
   recentSets.forEach(s => {
     const d = new Date(s.workout?.started_at);
     if (d >= weekStart) {
@@ -81,7 +81,7 @@ export function StatsPage() {
               <BarChart data={chartData}>
                 <XAxis dataKey="label" tick={{ fill: '#606068', fontSize: 12 }} axisLine={false} tickLine={false} />
                 <YAxis hide />
-                <Tooltip 
+                <Tooltip
                   contentStyle={{ background: '#1c1c22', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8 }}
                   labelStyle={{ color: '#a0a0a8' }}
                 />
@@ -99,7 +99,7 @@ export function StatsPage() {
       </div>
 
       <div className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-2xl p-4 slide-up">
-        <div className="text-[1.1rem] font-semibold mb-3">Calculadora 1RM (Brzycki)</div>
+        <div className="text-[1.1rem] font-semibold mb-3">Calculadora 1RM</div>
         <div className="grid grid-cols-2 gap-3">
           <div>
             <div className="text-[0.85rem] font-semibold text-[#a0a0a8] mb-2">Peso (kg)</div>
