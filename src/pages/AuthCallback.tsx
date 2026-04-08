@@ -2,24 +2,47 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 
-export function AuthCallback() {
+export default function AuthCallback() {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const handleCallback = async () => {
-      const { error } = await supabase.auth.getSession();
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
 
-      if (error) {
-        setError(error.message);
-        return;
+        if (error) {
+          setError(error.message);
+          setLoading(false);
+          return;
+        }
+
+        if (session) {
+          navigate('/', { replace: true });
+        } else {
+          navigate('/login', { replace: true });
+        }
+      } catch (err) {
+        setError('Error al procesar la autenticación');
+      } finally {
+        setLoading(false);
       }
-
-      navigate('/');
     };
 
     handleCallback();
   }, [navigate]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#09090b] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 mx-auto mb-4 rounded-full border-2 border-[#c8ff00] border-t-transparent animate-spin"></div>
+          <p className="text-[#c8ff00]">Verificando...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (error) {
     return (
@@ -35,9 +58,5 @@ export function AuthCallback() {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-[#09090b] flex items-center justify-center">
-      <div className="text-[#c8ff00]">Verificando...</div>
-    </div>
-  );
+  return null;
 }

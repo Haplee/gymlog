@@ -1,9 +1,10 @@
 import { useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
+import { PermissionRequests } from './components/PermissionRequests';
 
 const AuthPage = lazy(() => import('./pages/AuthPage').then(m => ({ default: m.AuthPage })));
-const AuthCallback = lazy(() => import('./pages/AuthCallback').then(m => ({ default: m.AuthCallback })));
+const AuthCallback = lazy(() => import('./pages/AuthCallback'));
 const WorkoutPage = lazy(() => import('./pages/WorkoutPage').then(m => ({ default: m.WorkoutPage })));
 const StatsPage = lazy(() => import('./pages/StatsPage').then(m => ({ default: m.StatsPage })));
 const HistoryPage = lazy(() => import('./pages/HistoryPage').then(m => ({ default: m.HistoryPage })));
@@ -60,6 +61,7 @@ function AppRoutes() {
 export default function App() {
   return (
     <BrowserRouter>
+      <PermissionRequests />
       <AppRoutes />
     </BrowserRouter>
   );
