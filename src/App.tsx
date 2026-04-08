@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuthStore } from './stores/authStore';
 import { AuthPage } from './pages/AuthPage';
+import { AuthCallback } from './pages/AuthCallback';
 import { WorkoutPage } from './pages/WorkoutPage';
 import { StatsPage } from './pages/StatsPage';
 import { HistoryPage } from './pages/HistoryPage';
@@ -45,6 +46,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <AuthPage />} />
+      <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/" element={<ProtectedRoute><WorkoutPage /></ProtectedRoute>} />
       <Route path="/stats" element={<ProtectedRoute><StatsPage /></ProtectedRoute>} />
       <Route path="/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
