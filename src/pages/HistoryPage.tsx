@@ -115,7 +115,7 @@ export function HistoryPage() {
       const lines = text.split('\n');
       
       let imported = 0;
-      let createdWorkoutId = null;
+      const dateWorkoutMap: Record<string, string> = {};
       
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i].trim();
@@ -131,40 +131,72 @@ export function HistoryPage() {
             firstCol.includes('abductores') || firstCol.includes('adductores') ||
             firstCol.includes('cuádriceps') || firstCol.includes('gemelos') ||
             firstCol.includes('tibiales')) {
+          if (cols[1]?.trim()) {
+            continue;
+          }
           continue;
         }
         
         if (!cols[0] || cols[0].startsWith('xxx')) continue;
         
         const ejercicio = cols[0].replace(/"/g, '').trim();
+        const fechaCsv = cols[1]?.trim() || '';
         const pesoStr = cols[2]?.replace(/"/g, '').replace(/[^0-9,.]/g, '').replace(',', '.') || '';
         const peso = parseFloat(pesoStr);
         
-        if (ejercicio && peso && !isNaN(peso)) {
+        if (ejercicio && peso && !isNaN(peso) && fechaCsv) {
+          let exerciseId = null;
           const existingEx = exerciseList.find(ex => ex && ex.name && ex.name.toLowerCase() === ejercicio.toLowerCase());
           
           if (existingEx && existingEx.id) {
-            if (!createdWorkoutId) {
+            exerciseId = existingEx.id;
+          } else {
+            const { data: newEx } = await supabase
+              .from('exercises')
+              .insert({ name: ejercicio, user_id: user.id, muscle_group: 'Importado' })
+              .select('id')
+              .single();
+            
+            if (newEx) {
+              exerciseId = newEx.id;
+            }
+          }
+          
+          if (exerciseId) {
+            if (!dateWorkoutMap[fechaCsv]) {
+              const fechaParts = fechaCsv.split('/');
+              const fechaIso = fechaParts.length === 3 
+                ? `${fechaParts[2]}-${fechaParts[1]}-${fechaParts[0]}`
+                : new Date().toISOString();
+              
               const { data: workoutData } = await supabase
                 .from('workouts')
-                .insert({ user_id: user.id })
-                .select()
+                .insert({ user_id: user.id, started_at: fechaIso })
+                .select('id')
                 .single();
               
               if (workoutData) {
-                createdWorkoutId = workoutData.id;
+                dateWorkoutMap[fechaCsv] = workoutData.id;
               }
             }
             
-            if (createdWorkoutId) {
-              await supabase.from('workout_sets').insert({
-                workout_id: createdWorkoutId,
-                exercise_id: existingEx.id,
-                weight: peso,
-                reps: 10,
-                set_num: 1
-              });
-              imported++;
+            if (dateWorkoutMap[fechaCsv]) {
+              const existingSets = await supabase
+                .from('workout_sets')
+                .select('id')
+                .eq('workout_id', dateWorkoutMap[fechaCsv])
+                .eq('exercise_id', exerciseId);
+              
+              if (!existingSets.data || existingSets.data.length === 0) {
+                await supabase.from('workout_sets').insert({
+                  workout_id: dateWorkoutMap[fechaCsv],
+                  exercise_id: exerciseId,
+                  weight: peso,
+                  reps: 10,
+                  set_num: 1
+                });
+                imported++;
+              }
             }
           }
         }
