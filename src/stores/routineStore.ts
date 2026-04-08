@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { supabase } from '../lib/supabase';
 
 type DayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
 
@@ -19,7 +20,10 @@ interface WeeklyRoutine {
 
 interface RoutineStore {
   routine: WeeklyRoutine;
+  loading: boolean;
   setRoutine: (routine: WeeklyRoutine) => void;
+  saveToDb: (userId: string) => Promise<void>;
+  loadFromDb: (userId: string) => Promise<void>;
   getTodayExercises: () => string[];
   getDayName: () => DayOfWeek;
 }
@@ -48,8 +52,36 @@ export const useRoutineStore = create<RoutineStore>()(
   persist(
     (set, get) => ({
       routine: defaultRoutine,
+      loading: false,
       
       setRoutine: (routine) => set({ routine }),
+      
+      saveToDb: async (userId: string) => {
+        const { routine } = get();
+        const { error } = await supabase
+          .from('user_routines')
+          .upsert({
+            user_id: userId,
+            routine: routine,
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'user_id' });
+        
+        if (error) console.error('Error saving routine:', error);
+      },
+      
+      loadFromDb: async (userId: string) => {
+        set({ loading: true });
+        const { data } = await supabase
+          .from('user_routines')
+          .select('routine')
+          .eq('user_id', userId)
+          .single();
+        
+        if (data?.routine) {
+          set({ routine: data.routine });
+        }
+        set({ loading: false });
+      },
       
       getTodayExercises: () => {
         const day = get().getDayName();

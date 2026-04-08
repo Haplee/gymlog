@@ -58,8 +58,20 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   signUp: async (email, password, fullName, username) => {
-    const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error) return { error, needsVerification: false };
+    const { data, error } = await supabase.auth.signUp({ 
+      email, 
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`
+      }
+    });
+    
+    if (error) {
+      if (error.message.includes('already registered')) {
+        return { error: new Error('Este email ya está registrado'), needsVerification: false };
+      }
+      return { error, needsVerification: false };
+    }
 
     if (data.user) {
       await supabase.from('profiles').insert({
@@ -70,7 +82,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       });
     }
 
-    return { error: null, needsVerification: !data.user };
+    return { error: null, needsVerification: true };
   },
 
   signInWithGoogle: async () => {

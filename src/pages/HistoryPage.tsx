@@ -92,6 +92,43 @@ export function HistoryPage() {
     link.click();
   };
 
+  const importFromCsv = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const text = event.target?.result as string;
+      const lines = text.split('\n');
+      const headers = lines[0].split(',');
+      
+      const fechaIdx = headers.indexOf('Fecha');
+      const ejercicioIdx = headers.indexOf('Ejercicio');
+      const repsIdx = headers.indexOf('Reps');
+      const pesoIdx = headers.indexOf('Peso (kg)');
+      
+      if (fechaIdx === -1 || ejercicioIdx === -1) {
+        setToast('Formato CSV incorrecto');
+        setTimeout(() => setToast(null), 2000);
+        return;
+      }
+
+      let imported = 0;
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(',');
+        if (cols.length > pesoIdx && cols[ejercicioIdx] && cols[repsIdx] && cols[pesoIdx]) {
+          imported++;
+        }
+      }
+      
+      setToast(`Imported ${imported} series`);
+      setTimeout(() => setToast(null), 2000);
+      if (user) loadRecentSets(user.id);
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
   return (
     <Layout>
       <div className="flex gap-2 mb-3 flex-wrap">
@@ -128,8 +165,12 @@ export function HistoryPage() {
               onClick={exportToExcel}
               className="bg-[#141418] border border-[rgba(255,255,255,0.12)] rounded-lg text-[#c8ff00] text-[0.95rem] px-3 py-2 cursor-pointer font-semibold"
             >
-              Exportar CSV
+              Exportar
             </button>
+            <label className="bg-[#141418] border border-[rgba(255,255,255,0.12)] rounded-lg text-[#a0a0a8] text-[0.95rem] px-3 py-2 cursor-pointer font-semibold">
+              Importar
+              <input type="file" accept=".csv" onChange={importFromCsv} className="hidden" />
+            </label>
           </>
         )}
       </div>

@@ -18,7 +18,7 @@ const DAYS = [
 export function RoutinePage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { routine, setRoutine, getTodayExercises, getDayName } = useRoutineStore();
+  const { routine, setRoutine, saveToDb, loadFromDb, getTodayExercises, getDayName } = useRoutineStore();
   const { exercises, loadExercises } = useWorkoutStore();
   const [selectedDay, setSelectedDay] = useState(getDayName());
   const [newExercise, setNewExercise] = useState('');
@@ -30,7 +30,8 @@ export function RoutinePage() {
       return;
     }
     loadExercises(user.id);
-  }, [user, navigate, loadExercises]);
+    loadFromDb(user.id);
+  }, [user, navigate, loadExercises, loadFromDb]);
 
   const todayExercises = getTodayExercises();
   const todayKey = getDayName();
@@ -40,7 +41,7 @@ export function RoutinePage() {
     name => !routine[selectedDay].exercises.includes(name)
   );
 
-  const addExercise = () => {
+  const addExercise = async () => {
     if (!newExercise) return;
     const updated = {
       ...routine,
@@ -49,11 +50,12 @@ export function RoutinePage() {
       }
     };
     setRoutine(updated);
+    if (user) await saveToDb(user.id);
     setNewExercise('');
     setShowAdd(false);
   };
 
-  const removeExercise = (exercise: string) => {
+  const removeExercise = async (exercise: string) => {
     const updated = {
       ...routine,
       [selectedDay]: {
@@ -61,6 +63,7 @@ export function RoutinePage() {
       }
     };
     setRoutine(updated);
+    if (user) await saveToDb(user.id);
   };
 
   return (
