@@ -1,7 +1,6 @@
 import { useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
-import { useSettingsStore } from './stores/settingsStore';
 import { PermissionRequests } from './components/PermissionRequests';
 
 const AuthPage = lazy(() => import('./pages/AuthPage').then(m => ({ default: m.AuthPage })));
@@ -13,7 +12,7 @@ const SettingsPage = lazy(() => import('./pages/SettingsPage').then(m => ({ defa
 
 function Loading() {
   return (
-    <div className="min-h-screen bg-[#09090b] flex items-center justify-center">
+    <div className="min-h-screen bg-[#0a0a0c] flex items-center justify-center">
       <div className="text-[#c8ff00]">Cargando...</div>
     </div>
   );
@@ -62,20 +61,6 @@ function AppRoutes() {
 }
 
 export default function App() {
-  const { theme } = useSettingsStore();
-
-  useEffect(() => {
-    if (theme === 'light') {
-      document.documentElement.classList.remove('dark');
-      document.documentElement.classList.add('light');
-      document.body.style.background = '#f5f5f5';
-    } else {
-      document.documentElement.classList.remove('light');
-      document.documentElement.classList.add('dark');
-      document.body.style.background = '#0a0a0c';
-    }
-  }, [theme]);
-
   return (
     <BrowserRouter>
       <PermissionRequests />

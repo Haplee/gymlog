@@ -1,42 +1,25 @@
 import type { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
-import { useSettingsStore } from '../stores/settingsStore';
 
 interface LayoutProps {
   children: ReactNode;
 }
 
+const colors = {
+  bgMain: '#0a0a0c',
+  bgCard: '#141418',
+  bgHeader: 'rgba(10,10,12,0.95)',
+  border: 'rgba(255,255,255,0.06)',
+  textPrimary: '#fafafa',
+  textSecondary: '#a1a1aa',
+  textMuted: '#606068',
+  accent: '#c8ff00',
+};
+
 export function Layout({ children }: LayoutProps) {
   const { user, signOut } = useAuthStore();
-  const { theme } = useSettingsStore();
   const location = useLocation();
-
-  const isLight = theme === 'light';
-  
-  const colors = isLight ? {
-    bgMain: '#ffffff',
-    bgCard: '#f5f5f5',
-    bgHeader: 'rgba(255,255,255,0.95)',
-    border: '#e5e5e5',
-    textPrimary: '#1a1a1a',
-    textSecondary: '#666666',
-    textMuted: '#999999',
-    accent: '#10b981',
-    accentText: '#ffffff',
-    inputBg: '#f5f5f5',
-  } : {
-    bgMain: '#0a0a0c',
-    bgCard: '#141418',
-    bgHeader: 'rgba(10,10,12,0.95)',
-    border: 'rgba(255,255,255,0.06)',
-    textPrimary: '#fafafa',
-    textSecondary: '#a1a1aa',
-    textMuted: '#606068',
-    accent: '#c8ff00',
-    accentText: '#0a0a0c',
-    inputBg: '#141418',
-  };
 
   const tabs = [
     { path: '/', label: '🏋️', id: 'train' },
