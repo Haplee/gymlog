@@ -5,7 +5,7 @@ export function RestTimer() {
   const [seconds, setSeconds] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const intervalRef = useRef<number | null>(null);
-  const { vibration, sound, restTimerDefault } = useSettingsStore();
+  const { vibration, sound } = useSettingsStore();
 
   const notifyTimerEnd = useCallback(async () => {
     if (vibration && 'vibrate' in navigator) {

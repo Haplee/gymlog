@@ -1,7 +1,6 @@
 import { useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
-import { useSettingsStore } from './stores/settingsStore';
 import { PermissionRequests } from './components/PermissionRequests';
 
 const AuthPage = lazy(() => import('./pages/AuthPage').then(m => ({ default: m.AuthPage })));

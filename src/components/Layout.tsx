@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
-import { useSettingsStore } from '../stores/settingsStore';
 
 interface LayoutProps {
   children: ReactNode;
