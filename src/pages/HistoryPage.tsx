@@ -72,18 +72,31 @@ export function HistoryPage() {
 
   const exportToExcel = () => {
     const data = filteredSets.map(s => ({
-      fecha: s.workout?.started_at ? new Date(s.workout.started_at).toLocaleDateString() : '-',
       ejercicio: s.exercise?.name || '',
-      serie: s.set_num,
-      reps: s.reps,
+      fecha: s.workout?.started_at ? new Date(s.workout.started_at).toLocaleDateString() : '',
       peso: s.weight,
-      volumen: s.reps * s.weight
+      reps: s.reps,
     }));
 
-    const csv = [
-      ['Fecha', 'Ejercicio', 'Serie', 'Reps', 'Peso (kg)', 'Volumen'].join(','),
-      ...data.map(row => Object.values(row).join(','))
-    ].join('\n');
+    let csv = '';
+    
+    const groupedByExercise: Record<string, { fecha: string; peso: number; reps: number }[]> = {};
+    data.forEach(row => {
+      if (!row.ejercicio) return;
+      if (!groupedByExercise[row.ejercicio]) groupedByExercise[row.ejercicio] = [];
+      groupedByExercise[row.ejercicio].push({ fecha: row.fecha, peso: row.peso, reps: row.reps });
+    });
+
+    const exercises = Object.keys(groupedByExercise).sort();
+    exercises.forEach(ex => {
+      const dates = [...new Set(groupedByExercise[ex].map(d => d.fecha))].filter(Boolean);
+      dates.forEach(fecha => {
+        const row = groupedByExercise[ex].find(r => r.fecha === fecha);
+        if (row) {
+          csv += `${ex},${fecha},${row.peso}\n`;
+        }
+      });
+    });
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
@@ -100,30 +113,38 @@ export function HistoryPage() {
     reader.onload = async (event) => {
       const text = event.target?.result as string;
       const lines = text.split('\n');
-      const headers = lines[0].split(',');
       
-      const fechaIdx = headers.indexOf('Fecha');
-      const ejercicioIdx = headers.indexOf('Ejercicio');
-      const repsIdx = headers.indexOf('Reps');
-      const pesoIdx = headers.indexOf('Peso (kg)');
-      
-      if (fechaIdx === -1 || ejercicioIdx === -1) {
-        setToast('Formato CSV incorrecto');
-        setTimeout(() => setToast(null), 2000);
-        return;
-      }
-
       let imported = 0;
-      for (let i = 1; i < lines.length; i++) {
-        const cols = lines[i].split(',');
-        if (cols.length > pesoIdx && cols[ejercicioIdx] && cols[repsIdx] && cols[pesoIdx]) {
+      
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        
+        const cols = line.split(',');
+        const firstCol = cols[0]?.trim().toLowerCase() || '';
+        
+        if (firstCol.includes('tren superior') || firstCol.includes('tren inferior') || 
+            firstCol.includes('pecho') || firstCol.includes('espalda') || 
+            firstCol.includes('hombro') || firstCol.includes('multiarticulares') ||
+            firstCol.includes('isquio') || firstCol.includes('femoral') ||
+            firstCol.includes('abductores') || firstCol.includes('adductores') ||
+            firstCol.includes('cuádriceps') || firstCol.includes('gemelos') ||
+            firstCol.includes('tibiales')) {
+          continue;
+        }
+        
+        if (!cols[0] || cols[0].startsWith('xxx')) continue;
+        
+        const ejercicio = cols[0].replace(/"/g, '').trim();
+        const peso = cols[2]?.replace(/"/g, '').replace(/[^0-9,.]/g, '').replace(',', '.') || '';
+        
+        if (ejercicio && peso && !isNaN(parseFloat(peso))) {
           imported++;
         }
       }
       
-      setToast(`Imported ${imported} series`);
-      setTimeout(() => setToast(null), 2000);
-      if (user) loadRecentSets(user.id);
+      setToast(`Importado: ${imported} ejercicios`);
+      setTimeout(() => setToast(null), 3000);
     };
     reader.readAsText(file);
     e.target.value = '';
@@ -169,7 +190,7 @@ export function HistoryPage() {
             </button>
             <label className="bg-[#141418] border border-[rgba(255,255,255,0.12)] rounded-lg text-[#a0a0a8] text-[0.95rem] px-3 py-2 cursor-pointer font-semibold">
               Importar
-              <input type="file" accept=".csv" onChange={importFromCsv} className="hidden" />
+              <input type="file" accept=".csv,.txt" onChange={importFromCsv} className="hidden" />
             </label>
           </>
         )}
