@@ -20,18 +20,20 @@ export function HistoryPage() {
   const { recentSets, loadRecentSets, workouts, loadWorkouts, repeatWorkout } = useWorkoutStore();
   const [view, setView] = useState<'sets' | 'workouts'>('sets');
   const [filterExercise, setFilterExercise] = useState('');
-  const [sortCol, setSortCol] = useState('date');
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) {
       navigate('/login');
       return;
     }
-    loadRecentSets(user.id);
-    loadWorkouts(user.id);
-    useWorkoutStore.getState().loadExercises(user.id);
+    Promise.all([
+      loadRecentSets(user.id),
+      loadWorkouts(user.id),
+      useWorkoutStore.getState().loadExercises(user.id)
+    ]).then(() => setLoading(false));
   }, [user, navigate, loadRecentSets, loadWorkouts]);
 
   const handleRepeat = (workout: WorkoutWithSets) => {
@@ -43,12 +45,7 @@ export function HistoryPage() {
 
   const filteredSets = recentSets
     .filter(s => !filterExercise || s.exercise?.name === filterExercise)
-    .sort((a, b) => {
-      if (sortCol === 'date') {
-        return new Date(b.workout?.started_at).getTime() - new Date(a.workout?.started_at).getTime();
-      }
-      return (a.exercise?.name || '').localeCompare(b.exercise?.name || '');
-    })
+    .sort((a, b) => new Date(b.workout?.started_at).getTime() - new Date(a.workout?.started_at).getTime())
     .slice(0, 30);
 
   const groupedWorkouts: GroupedWorkout[] = workouts.reduce((acc: GroupedWorkout[], wo) => {
@@ -130,7 +127,7 @@ export function HistoryPage() {
     const validExtensions = ['.csv', '.txt'];
     const fileName = file.name.toLowerCase();
     if (!validExtensions.some(ext => fileName.endsWith(ext))) {
-      setToast('Error: Formato no válido. Usa CSV o TXT');
+      setToast('Error: Formato no válido');
       setTimeout(() => setToast(null), 3000);
       return;
     }
@@ -154,7 +151,7 @@ export function HistoryPage() {
           return;
         }
 
-        setToast('Cargando ejercicios...');
+        setToast('Cargando...');
         await useWorkoutStore.getState().loadExercises(user.id);
         await new Promise(resolve => setTimeout(resolve, 500));
         const exerciseList = useWorkoutStore.getState().exercises;
@@ -180,15 +177,11 @@ export function HistoryPage() {
               .select('id')
               .single();
             
-            if (error || !newEx) {
-              console.warn('Error creating exercise:', error);
-              return null;
-            }
+            if (error || !newEx) return null;
             
             exerciseList.push({ id: newEx.id, name: cleanName, muscle_group: 'Importado', user_id: user.id, created_at: '' });
             return newEx.id;
           } catch (e) {
-            console.warn('Error creating exercise:', e);
             return null;
           }
         };
@@ -240,7 +233,6 @@ export function HistoryPage() {
         };
 
         let imported = 0;
-        let skipped = 0;
         let errors: string[] = [];
         const dateWorkoutMap: Record<string, string> = {};
         let currentDate = new Date().toISOString().split('T')[0];
@@ -249,10 +241,7 @@ export function HistoryPage() {
           const lineNum = i + 1;
           const line = lines[i];
           
-          if (line.length > 1000) {
-            skipped++;
-            continue;
-          }
+          if (line.length > 1000) continue;
           
           let cols: string[] = [];
           let inQuotes = false;
@@ -279,26 +268,18 @@ export function HistoryPage() {
           
           if (isHeaderLine(firstCol)) {
             const parsedDate = parseDate(secondCol) || parseDate(thirdCol);
-            if (parsedDate) {
-              currentDate = parsedDate;
-            }
+            if (parsedDate) currentDate = parsedDate;
             continue;
           }
           
-          if (!firstCol || firstCol.length < 2) {
-            continue;
-          }
+          if (!firstCol || firstCol.length < 2) continue;
           
           const skipPhrases = ['no hay registros', 'sin registros', 'sin datos', 'descanso', 'libre'];
-          if (skipPhrases.some(p => secondCol.toLowerCase().includes(p))) {
-            continue;
-          }
+          if (skipPhrases.some(p => secondCol.toLowerCase().includes(p))) continue;
           
           const peso = parseNumber(secondCol) || parseNumber(thirdCol);
           
-          if (!peso) {
-            continue;
-          }
+          if (!peso) continue;
           
           if (!dateWorkoutMap[currentDate]) {
             const { data: workoutData, error: woError } = await supabase
@@ -330,10 +311,7 @@ export function HistoryPage() {
             set_num: 1
           });
           
-          if (insertError) {
-            errors.push(`Fila ${lineNum}: Error guardando "${firstCol}"`);
-            continue;
-          }
+          if (insertError) continue;
           
           imported++;
         }
@@ -344,19 +322,17 @@ export function HistoryPage() {
         }
         
         let message = imported > 0 
-          ? `Importados: ${imported} ejercicios` 
-          : 'No se pudieron importar ejercicios';
+          ? `Importados: ${imported}` 
+          : 'No se pudieron importar';
         
-        if (errors.length > 0) {
-          message += ` (${errors.length} errores)`;
-        }
+        if (errors.length > 0) message += ` (${errors.length} errores)`;
         
         setToast(message);
         setTimeout(() => setToast(null), 3000);
         
       } catch (err) {
         console.error('Import error:', err);
-        setToast('Error inesperado. Verifica el archivo.');
+        setToast('Error inesperado');
         setTimeout(() => setToast(null), 3000);
       }
     };
@@ -370,13 +346,23 @@ export function HistoryPage() {
     e.target.value = '';
   };
 
+  if (loading) {
+    return (
+      <Layout>
+        <div className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-2xl overflow-hidden">
+          <div className="skeleton h-12 w-full"></div>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <div className="flex gap-2 mb-3 flex-wrap">
         <select
           value={view}
           onChange={(e) => setView(e.target.value as 'sets' | 'workouts')}
-          className="bg-[#141418] border border-[rgba(255,255,255,0.12)] rounded-lg text-[#a0a0a8] text-[0.95rem] p-2 cursor-pointer"
+          className="bg-[#141418] border border-[rgba(255,255,255,0.12)] rounded-lg text-[#a0a0a8] text-[0.95rem] p-2 cursor-pointer transition-all hover:scale-[1.02]"
         >
           <option value="sets">Series</option>
           <option value="workouts">Entrenos</option>
@@ -387,28 +373,20 @@ export function HistoryPage() {
             <select
               value={filterExercise}
               onChange={(e) => setFilterExercise(e.target.value)}
-              className="bg-[#141418] border border-[rgba(255,255,255,0.12)] rounded-lg text-[#a0a0a8] text-[0.95rem] p-2 cursor-pointer"
+              className="bg-[#141418] border border-[rgba(255,255,255,0.12)] rounded-lg text-[#a0a0a8] text-[0.95rem] p-2 cursor-pointer transition-all hover:scale-[1.02]"
             >
               <option value="">Todos</option>
               {exercises.map(ex => (
                 <option key={ex} value={ex}>{ex}</option>
               ))}
             </select>
-            <select
-              value={sortCol}
-              onChange={(e) => setSortCol(e.target.value)}
-              className="bg-[#141418] border border-[rgba(255,255,255,0.12)] rounded-lg text-[#a0a0a8] text-[0.95rem] p-2 cursor-pointer"
-            >
-              <option value="date">Recientes</option>
-              <option value="exercise">Ejercicios</option>
-            </select>
             <button
               onClick={exportToExcel}
-              className="bg-[#141418] border border-[rgba(255,255,255,0.12)] rounded-lg text-[#c8ff00] text-[0.95rem] px-3 py-2 cursor-pointer font-semibold"
+              className="bg-[#141418] border border-[rgba(255,255,255,0.12)] rounded-lg text-[#c8ff00] text-[0.95rem] px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               Exportar
             </button>
-            <label className="bg-[#141418] border border-[rgba(255,255,255,0.12)] rounded-lg text-[#a0a0a8] text-[0.95rem] px-3 py-2 cursor-pointer font-semibold">
+            <label className="bg-[#141418] border border-[rgba(255,255,255,0.12)] rounded-lg text-[#a0a0a8] text-[0.95rem] px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]">
               Importar
               <input type="file" accept=".csv,.txt" onChange={importFromCsv} className="hidden" />
             </label>
@@ -417,9 +395,9 @@ export function HistoryPage() {
       </div>
 
       {view === 'sets' ? (
-        <div className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-2xl overflow-hidden slide-up">
+        <div className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-2xl overflow-hidden scale-in">
           {filteredSets.length === 0 ? (
-            <div className="text-center py-8 text-[#606068]">Sin registros</div>
+            <div className="text-center py-8 text-[#606068] fade-in">Sin registros</div>
           ) : (
             <table className="w-full text-[0.95rem]">
               <thead>
@@ -433,7 +411,7 @@ export function HistoryPage() {
               </thead>
               <tbody>
                 {filteredSets.map(s => (
-                  <tr key={s.id}>
+                  <tr key={s.id} className="fade-in">
                     <td className="p-3 border-b border-[rgba(255,255,255,0.06)] text-[#606068] text-[0.85rem]">
                       {s.workout?.started_at ? new Date(s.workout.started_at).toLocaleDateString() : '-'}
                     </td>
@@ -449,7 +427,8 @@ export function HistoryPage() {
                     <td className="p-3 border-b border-[rgba(255,255,255,0.06)]">
                       <button
                         onClick={() => setDeleteId(s.id)}
-                        style={{ background: 'none', border: 'none', color: '#606068', cursor: 'pointer', fontSize: '1.2rem' }}
+                        className="bg-transparent border-none cursor-pointer text-xl transition-all hover:scale-125"
+                        style={{ color: '#606068' }}
                       >
                         ×
                       </button>
@@ -463,10 +442,10 @@ export function HistoryPage() {
       ) : (
         <div className="space-y-3">
           {groupedWorkouts.length === 0 ? (
-            <div className="text-center py-8 text-[#606068]">Sin registros</div>
+            <div className="text-center py-8 text-[#606068] fade-in">Sin registros</div>
           ) : (
             groupedWorkouts.map((group, gi) => (
-              <div key={gi} className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-2xl overflow-hidden slide-up">
+              <div key={gi} className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-2xl overflow-hidden scale-in" style={{ animationDelay: `${gi * 0.1}s` }}>
                 <div className="p-3 border-b border-[rgba(255,255,255,0.06)] flex justify-between items-center">
                   <span className="font-semibold text-white">{group.date}</span>
                   <span className="text-[#606068] text-[0.85rem]">{group.totalSets} series · {group.totalVolume.toLocaleString()} kg</span>
@@ -480,7 +459,7 @@ export function HistoryPage() {
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleRepeat(wo)}
-                          className="text-[#c8ff00] text-[0.8rem] font-semibold bg-transparent border-none cursor-pointer"
+                          className="text-[#c8ff00] text-[0.8rem] font-semibold bg-transparent border-none cursor-pointer transition-all hover:scale-105"
                         >
                           Repetir
                         </button>
@@ -494,10 +473,10 @@ export function HistoryPage() {
                               totalVolume: volume,
                               date: new Date(wo.started_at).toLocaleDateString()
                             });
-                            setToast(success ? '✓ Compartido' : 'Error al compartir');
+                            setToast(success ? '✓ Compartido' : 'Error');
                             setTimeout(() => setToast(null), 2000);
                           }}
-                          className="text-[#a0a0a8] text-[0.8rem] font-semibold bg-transparent border-none cursor-pointer"
+                          className="text-[#a0a0a8] text-[0.8rem] font-semibold bg-transparent border-none cursor-pointer transition-all hover:scale-105"
                         >
                           Compartir
                         </button>
@@ -519,20 +498,20 @@ export function HistoryPage() {
       )}
 
       {deleteId && (
-        <div className="fixed inset-0 bg-black/90 z-200 flex items-center justify-center p-4">
-          <div className="bg-[#1c1c22] border border-[rgba(255,255,255,0.12)] rounded-2xl p-6 max-w-[320px] w-full">
+        <div className="fixed inset-0 bg-black/90 z-200 flex items-center justify-center p-4 fade-in">
+          <div className="bg-[#1c1c22] border border-[rgba(255,255,255,0.12)] rounded-2xl p-6 max-w-[320px] w-full scale-in">
             <div className="text-[1.3rem] font-bold mb-2">¿Eliminar?</div>
             <div className="text-[#a0a0a8] mb-4">Esta acción no se puede deshacer</div>
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => setDeleteId(null)}
-                className="py-2 px-4 bg-transparent border border-[rgba(255,255,255,0.12)] rounded-lg text-[#a0a0a8] cursor-pointer font-semibold"
+                className="py-2 px-4 bg-transparent border border-[rgba(255,255,255,0.12)] rounded-lg text-[#a0a0a8] cursor-pointer font-semibold transition-all hover:scale-[1.02]"
               >
                 Cancelar
               </button>
               <button
                 onClick={() => handleDelete(deleteId)}
-                className="py-2 px-4 bg-transparent border border-[#ff5252] rounded-lg text-[#ff5252] cursor-pointer font-semibold"
+                className="py-2 px-4 bg-transparent border border-[#ff5252] rounded-lg text-[#ff5252] cursor-pointer font-semibold transition-all hover:scale-[1.02]"
               >
                 Eliminar
               </button>
@@ -542,7 +521,7 @@ export function HistoryPage() {
       )}
 
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-[#1c1c22] border border-[rgba(255,255,255,0.12)] text-white px-4 py-2 rounded-lg text-[0.9rem] z-300">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-[#1c1c22] border border-[rgba(255,255,255,0.12)] text-white px-4 py-2 rounded-lg text-[0.9rem] z-300 scale-in">
           {toast}
         </div>
       )}

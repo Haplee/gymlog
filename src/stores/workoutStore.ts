@@ -5,7 +5,6 @@ import type { Exercise, WorkoutSetWithDetails, WorkoutWithSets, PersonalRecord }
 interface SetData {
   reps: string;
   weight: string;
-  notes?: string;
 }
 
 interface WorkoutState {
@@ -29,11 +28,10 @@ interface WorkoutState {
   addSet: () => void;
   updateSet: (index: number, data: Partial<SetData>) => void;
   removeSet: (index: number) => void;
-  saveWorkout: (userId: string) => Promise<{ error: Error | null }>;
-  clearError: () => void;
+  saveWorkout: (userId: string) => Promise<{ error: Error | null; success: boolean }>;
 }
 
-const initialSet = { reps: '', weight: '', notes: '' };
+const initialSet: SetData = { reps: '', weight: '' };
 
 export const useWorkoutStore = create<WorkoutState>((set, get) => ({
   exercises: [],
@@ -45,9 +43,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
   sets: [],
   loading: false,
   error: null,
-  
-  clearError: () => set({ error: null }),
-  
+
   getLastWeight: (exerciseId: string) => {
     const sets = get().recentSets;
     const exerciseSets = sets.filter(s => s.exercise_id === exerciseId);
@@ -56,7 +52,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
     }
     return '';
   },
-  
+
   loadExercises: async (userId?: string) => {
     try {
       let exercises: Exercise[] = [];
@@ -123,7 +119,9 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
       const { data: workoutIds, error: woError } = await supabase
         .from('workouts')
         .select('id')
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .order('started_at', { ascending: false })
+        .limit(10);
 
       if (woError) throw woError;
 
@@ -139,7 +137,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
         .select('*, exercise:exercises(name), workout:workouts(started_at)')
         .in('workout_id', ids)
         .order('created_at', { ascending: false })
-        .limit(100);
+        .limit(50);
 
       if (setsError) throw setsError;
 
@@ -226,8 +224,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
       customExerciseName: '',
       sets: workout.sets.map(s => ({
         reps: String(s.reps),
-        weight: String(s.weight),
-        notes: s.notes || ''
+        weight: String(s.weight)
       }))
     });
   },
@@ -237,7 +234,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
   
   addSet: () => {
     const last = get().sets[get().sets.length - 1];
-    set({ sets: [...get().sets, last ? { reps: last.reps, weight: last.weight, notes: '' } : { ...initialSet }] });
+    set({ sets: [...get().sets, last ? { reps: last.reps, weight: last.weight } : { ...initialSet }] });
   },
   
   updateSet: (index, data) => {
@@ -261,15 +258,15 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
         .upsert({ name: customExerciseName.trim(), user_id: userId, muscle_group: 'Personalizado' })
         .select()
         .single();
-      if (error) return { error };
+      if (error) return { error, success: false };
       exerciseId = data.id;
       await get().loadExercises();
     }
     
-    if (!exerciseId) return { error: new Error('Selecciona un ejercicio') };
+    if (!exerciseId) return { error: new Error('Selecciona un ejercicio'), success: false };
     
     const validSets = setData.filter(s => s.reps && s.weight);
-    if (!validSets.length) return { error: new Error('Añade reps y kg') };
+    if (!validSets.length) return { error: new Error('Añade reps y kg'), success: false };
     
     try {
       const { data: wo, error: woError } = await supabase
@@ -287,7 +284,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
         set_num: i + 1,
         reps: Number(s.reps),
         weight: Number(s.weight),
-        notes: s.notes || null
+        notes: null
       }));
       
       const { error: insertError } = await supabase.from('workout_sets').insert(setsToInsert);
@@ -296,11 +293,11 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
       set({ sets: [], selectedExerciseId: null, customExerciseName: '' });
       await get().loadRecentSets(userId);
       
-      return { error: null };
+      return { error: null, success: true };
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Error guardando';
       console.error('[WorkoutStore] saveWorkout:', message);
-      return { error: new Error(message) };
+      return { error: new Error(message), success: false };
     }
   }
 }));

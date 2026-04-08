@@ -4,9 +4,7 @@ import { useAuthStore } from '../stores/authStore';
 import { useWorkoutStore } from '../stores/workoutStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useRoutineStore } from '../stores/routineStore';
-import { useWakeLock } from '../hooks/useWakeLock';
 import { Layout } from '../components/Layout';
-import { RestTimer } from '../components/RestTimer';
 import { calcular1RM } from '../lib/brzycki';
 
 export function WorkoutPage() {
@@ -29,20 +27,16 @@ export function WorkoutPage() {
     saveWorkout
   } = useWorkoutStore();
 
-  const { vibration, sound } = useSettingsStore();
+  const { sound } = useSettingsStore();
   const { getActiveRoutine, getTodayRoutine, checkAndBackup } = useRoutineStore();
 
   const [message, setMessage] = useState('');
   const [customInput, setCustomInput] = useState(false);
-  const [expandedNotes, setExpandedNotes] = useState<number[]>([]);
-
-  useWakeLock(sets.length > 0);
-
-  const toggleNotes = (index: number) => {
-    setExpandedNotes(prev =>
-      prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]
-    );
-  };
+  const [saving, setSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [inputFocus, setInputFocus] = useState<number | null>(null);
+  const [newSetIndex, setNewSetIndex] = useState<number | null>(null);
+  const [removingSet, setRemovingSet] = useState<number | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -67,37 +61,11 @@ export function WorkoutPage() {
     groups[ex.muscle_group].push(ex);
   });
 
-  const handleSave = async () => {
-    if (!user) return;
-    setMessage('');
-    const result = await saveWorkout(user.id);
-    if (result.error) {
-      setMessage(result.error.message);
-    } else {
-      setMessage('✓ Entreno guardado');
-      if (vibration) {
-        triggerVibration([100, 50, 100, 50, 200, 50, 300]);
-      }
-      if (sound) {
-        playFeedbackSound();
-      }
-      setTimeout(() => setMessage(''), 2500);
-    }
-  };
-
-  const triggerVibration = (pattern: number[]) => {
-    if ('vibrate' in navigator && typeof navigator.vibrate === 'function') {
-      try {
-        navigator.vibrate(pattern);
-      } catch (e) {
-        console.warn('[Vibration] Error:', e);
-      }
-    }
-  };
-
   const playFeedbackSound = useCallback(() => {
     try {
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+      const ctx = new AudioContextClass();
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.connect(gain);
@@ -124,12 +92,48 @@ export function WorkoutPage() {
     } catch (e) {}
   }, []);
 
+  const handleSave = async () => {
+    if (!user || saving) return;
+    setMessage('');
+    setSaving(true);
+    const result = await saveWorkout(user.id);
+    setSaving(false);
+    
+    if (result.error) {
+      setMessage(result.error.message);
+    } else {
+      setSaveSuccess(true);
+      if (sound) playFeedbackSound();
+      setTimeout(() => setMessage(''), 2500);
+      setTimeout(() => setSaveSuccess(false), 300);
+    }
+  };
+
+  const handleAddSet = () => {
+    const index = sets.length;
+    addSet();
+    setNewSetIndex(index);
+    setTimeout(() => setNewSetIndex(null), 300);
+  };
+
+  const handleRemoveSet = (index: number) => {
+    setRemovingSet(index);
+    setTimeout(() => {
+      removeSet(index);
+      setRemovingSet(null);
+    }, 200);
+  };
+
   const handleExerciseChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;
     const isCustom = val === '__custom__';
     setCustomInput(isCustom);
     setSelectedExercise(isCustom ? null : val || null);
-    if (val && !isCustom && !sets.length) addSet();
+    if (val && !isCustom && !sets.length) {
+      addSet();
+      setNewSetIndex(0);
+      setTimeout(() => setNewSetIndex(null), 300);
+    }
   };
 
   const checkIsNewPR = (weight: string, reps: string): boolean => {
@@ -148,7 +152,7 @@ export function WorkoutPage() {
   return (
     <Layout>
       {activeRoutine && todayRoutine && todayRoutine.exercises.length > 0 && (
-        <div className="mb-3 p-2 rounded-lg" style={{ backgroundColor: 'rgba(200,255,0,0.08)', border: '1px solid rgba(200,255,0,0.2)' }}>
+        <div className="mb-3 p-2 rounded-lg scale-in" style={{ backgroundColor: 'rgba(200,255,0,0.08)', border: '1px solid rgba(200,255,0,0.2)' }}>
           <div className="text-xs font-medium mb-1" style={{ color: '#c8ff00' }}>{todayRoutine.name}</div>
           <div className="flex flex-wrap gap-1">
             {todayRoutine.exercises.slice(0, 4).map((ex, i) => (
@@ -163,11 +167,11 @@ export function WorkoutPage() {
         </div>
       )}
 
-      <div className="rounded-xl p-3 mb-3 slide-up" style={{ backgroundColor: bgCard, border: `1px solid ${border}` }}>
+      <div className="rounded-xl p-3 mb-3 scale-in" style={{ backgroundColor: bgCard, border: `1px solid ${border}` }}>
         <select
           value={selectedExerciseId || (customInput ? '__custom__' : '')}
           onChange={handleExerciseChange}
-          className="w-full rounded-lg text-sm p-2.5 outline-none appearance-none"
+          className="w-full rounded-lg text-sm p-2.5 outline-none appearance-none transition-all focus:scale-[1.01]"
           style={{ backgroundColor: bgCard, border: `1px solid ${border}`, color: textPrimary }}
         >
           <option value="">- Ejercicio -</option>
@@ -187,21 +191,19 @@ export function WorkoutPage() {
             placeholder="Nombre del ejercicio"
             value={customExerciseName}
             onChange={(e) => setCustomExerciseName(e.target.value)}
-            className="w-full rounded-lg text-sm p-2.5 outline-none mt-2"
+            className="w-full rounded-lg text-sm p-2.5 outline-none mt-2 transition-all"
             style={{ backgroundColor: bgCard, border: `1px solid ${border}`, color: textPrimary }}
           />
         )}
 
         {currentPR && (
-          <div className="mt-3 text-[0.85rem]" style={{ color: accent }}>
-            🏆 PR: {currentPR.weight} kg × {currentPR.reps} reps
+          <div className="mt-3 text-[0.85rem] fade-in" style={{ color: accent }}>
+            PR: {currentPR.weight} kg × {currentPR.reps} reps
           </div>
         )}
       </div>
 
-      <RestTimer />
-
-      <div className="rounded-xl p-3 slide-up" style={{ backgroundColor: bgCard, border: `1px solid ${border}` }}>
+      <div className={`rounded-xl p-3 slide-up ${saveSuccess ? 'success-pulse' : ''}`} style={{ backgroundColor: bgCard, border: `1px solid ${border}` }}>
         <div className="text-sm font-medium mb-2" style={{ color: textPrimary }}>
           {selectedExercise ? `Series — ${selectedExercise.name}` : customExerciseName ? `Series — ${customExerciseName}` : 'Series'}
         </div>
@@ -214,12 +216,19 @@ export function WorkoutPage() {
         </div>
 
         {sets.length === 0 ? (
-          <div className="text-center py-8" style={{ color: textMuted }}>Añade una serie</div>
+          <div className="text-center py-8 fade-in" style={{ color: textMuted }}>Añade una serie</div>
         ) : (
           sets.map((s, i) => {
             const isNewPR = checkIsNewPR(s.weight, s.reps);
+            const isNew = newSetIndex === i;
+            const isRemoving = removingSet === i;
+            
             return (
-              <div key={i}>
+              <div 
+                key={i} 
+                className={`${isNew ? 'scale-in' : ''} ${isRemoving ? 'scale-out' : ''}`}
+                style={{ animationDuration: isNew || isRemoving ? '0.2s' : '0.3s' }}
+              >
                 <div className="flex gap-2 items-center mb-2">
                   <div className="w-6 text-center text-sm font-medium" style={{ color: textSecondary }}>{i + 1}</div>
                   <input
@@ -227,8 +236,15 @@ export function WorkoutPage() {
                     placeholder="0"
                     value={s.reps}
                     onChange={(e) => updateSet(i, { reps: e.target.value })}
-                    className="flex-1 rounded-lg text-sm p-2 outline-none text-center"
-                    style={{ backgroundColor: bgCard, border: `1px solid ${border}`, color: textPrimary }}
+                    onFocus={() => setInputFocus(i * 2)}
+                    onBlur={() => setInputFocus(null)}
+                    className={`flex-1 rounded-lg text-sm p-2 outline-none text-center transition-all ${inputFocus === i * 2 ? 'input-focus' : ''}`}
+                    style={{ 
+                      backgroundColor: bgCard, 
+                      border: `1px solid ${inputFocus === i * 2 ? accent : border}`, 
+                      color: textPrimary,
+                      boxShadow: inputFocus === i * 2 ? `0 0 0 2px ${accent}30` : 'none'
+                    }}
                   />
                   <div className="relative flex-1">
                     <input
@@ -236,40 +252,28 @@ export function WorkoutPage() {
                       placeholder="0"
                       value={s.weight}
                       onChange={(e) => updateSet(i, { weight: e.target.value })}
-                      className="w-full rounded-lg text-sm p-2 outline-none text-center"
-                      style={{ backgroundColor: bgCard, border: `1px solid ${border}`, color: textPrimary }}
+                      onFocus={() => setInputFocus(i * 2 + 1)}
+                      onBlur={() => setInputFocus(null)}
+                      className={`w-full rounded-lg text-sm p-2 outline-none text-center transition-all ${inputFocus === i * 2 + 1 ? 'input-focus' : ''}`}
+                      style={{ 
+                        backgroundColor: bgCard, 
+                        border: `1px solid ${inputFocus === i * 2 + 1 ? accent : border}`, 
+                        color: textPrimary,
+                        boxShadow: inputFocus === i * 2 + 1 ? `0 0 0 2px ${accent}30` : 'none'
+                      }}
                     />
                     {isNewPR && (
-                      <span className="absolute -top-1 -right-1 text-xs">🏆</span>
+                      <span className="absolute -top-1 -right-1 text-xs success-pulse">🏆</span>
                     )}
                   </div>
                   <button
-                    onClick={() => removeSet(i)}
-                    className="w-6 h-8 bg-transparent border rounded-lg cursor-pointer text-lg flex items-center justify-center"
+                    onClick={() => handleRemoveSet(i)}
+                    className="w-6 h-8 bg-transparent border rounded-lg cursor-pointer text-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95"
                     style={{ borderColor: 'rgba(255,255,255,0.06)', color: textMuted }}
                   >
                     ×
                   </button>
                 </div>
-
-                {expandedNotes.includes(i) && (
-                  <input
-                    type="text"
-                    placeholder="fallo muscular, asistido..."
-                    value={s.notes || ''}
-                    onChange={(e) => updateSet(i, { notes: e.target.value })}
-                    className="w-full rounded-xl text-[0.9rem] p-2 outline-none mb-2"
-                    style={{ backgroundColor: bgCard, border: `1px solid ${border}`, color: textSecondary }}
-                  />
-                )}
-
-                <button
-                  onClick={() => toggleNotes(i)}
-                  className="text-[0.75rem] bg-transparent border-none cursor-pointer mb-3"
-                  style={{ color: textMuted }}
-                >
-                  {expandedNotes.includes(i) ? '▲ ocultar notas' : '▼ añadir nota'}
-                </button>
               </div>
             );
           })
@@ -277,23 +281,24 @@ export function WorkoutPage() {
 
         <div className="flex gap-2 mt-4">
           <button
-            onClick={addSet}
-            className="flex-1 py-2 px-3 border border-dashed rounded-lg text-sm font-medium cursor-pointer"
+            onClick={handleAddSet}
+            className="flex-1 py-2 px-3 border border-dashed rounded-lg text-sm font-medium cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98] hover:bg-[rgba(255,255,255,0.03)]"
             style={{ borderColor: border, color: textSecondary }}
           >
             + Serie
           </button>
           <button
             onClick={handleSave}
-            className="flex-1 py-2 sm:py-3 px-3 sm:px-4 rounded-lg sm:rounded-xl text-sm sm:text-[1rem] font-bold cursor-pointer"
-            style={{ backgroundColor: accent, color: '#0a0a0c', border: 'none' }}
+            disabled={saving}
+            className="flex-1 py-2 sm:py-3 px-3 sm:px-4 rounded-lg sm:rounded-xl text-sm sm:text-[1rem] font-bold cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ backgroundColor: saveSuccess ? '#22c55e' : accent, color: '#0a0a0c', border: 'none' }}
           >
-            Guardar
+            {saving ? 'Guardando...' : saveSuccess ? '✓ Listo' : 'Guardar'}
           </button>
         </div>
 
         {message && (
-          <div className={`mt-4 text-center text-sm`} style={{ color: message.startsWith('✓') ? accent : '#ff5252' }}>
+          <div className={`mt-4 text-center text-sm error-shake`} style={{ color: message.startsWith('✓') ? accent : '#ff5252' }}>
             {message}
           </div>
         )}

@@ -9,9 +9,7 @@ interface LayoutProps {
 const colors = {
   bgMain: '#0a0a0c',
   bgCard: '#141418',
-  bgHeader: '#0a0a0c',
   textPrimary: '#fafafa',
-  textSecondary: '#a1a1aa',
   textMuted: '#606068',
   accent: '#c8ff00',
 };
@@ -22,7 +20,6 @@ export function Layout({ children }: LayoutProps) {
 
   const tabs = [
     { path: '/', label: '🏋️', id: 'train' },
-    { path: '/routine', label: '📋', id: 'routine' },
     { path: '/stats', label: '📊', id: 'stats' },
     { path: '/history', label: '📜', id: 'history' },
     { path: '/settings', label: '⚙️', id: 'settings' },
@@ -32,8 +29,8 @@ export function Layout({ children }: LayoutProps) {
     <div className="min-h-screen min-h-[100dvh] flex flex-col" style={{ backgroundColor: colors.bgMain }}>
       <header className="px-4 pt-6 pb-2">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: colors.accent }}>
+          <div className="flex items-center gap-3 scale-in">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:scale-105" style={{ backgroundColor: colors.accent }}>
               <span className="text-lg font-bold" style={{ color: '#0a0a0c' }}>G</span>
             </div>
             <div>
@@ -51,16 +48,18 @@ export function Layout({ children }: LayoutProps) {
       </header>
 
       <nav className="flex px-2 gap-1 overflow-x-auto">
-        {tabs.map((tab) => {
+        {tabs.map((tab, index) => {
           const isActive = location.pathname === tab.path;
           return (
             <Link
               key={tab.path}
               to={tab.path}
-              className="flex-1 py-3 px-1 text-[0.8rem] text-center font-medium whitespace-nowrap transition-all rounded-lg"
+              className={`flex-1 py-3 px-1 text-[0.8rem] text-center font-medium whitespace-nowrap transition-all rounded-lg ${isActive ? 'scale-in' : 'fade-in-up'}`}
               style={{
                 color: isActive ? colors.bgMain : colors.textMuted,
                 backgroundColor: isActive ? colors.accent : 'transparent',
+                animationDelay: `${index * 0.05}s`,
+                transform: isActive ? 'scale(1.02)' : 'scale(1)',
               }}
             >
               {tab.label}
