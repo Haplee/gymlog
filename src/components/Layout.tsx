@@ -30,9 +30,7 @@ export function Layout({ children }: LayoutProps) {
       <header className="px-4 pt-6 pb-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 scale-in">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:scale-105" style={{ backgroundColor: colors.accent }}>
-              <span className="text-lg font-bold" style={{ color: '#0a0a0c' }}>G</span>
-            </div>
+            <img src="/gimnasia.png" alt="GymLog" className="w-9 h-9 rounded-xl object-contain" style={{ backgroundColor: colors.accent }} />
             <div>
               <div className="text-[1.15rem] font-bold" style={{ color: colors.textPrimary }}>
                 Gym<span style={{ color: colors.accent }}>Log</span>

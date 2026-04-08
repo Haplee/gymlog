@@ -77,13 +77,13 @@ export function AuthPage() {
     <div className="min-h-screen flex flex-col items-center justify-center p-6" style={{ backgroundColor: bgColor }}>
       <div className="text-center mb-8 scale-in">
         <div 
-          className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center shadow-lg"
+          className="w-16 h-16 mx-auto mb-4 rounded-2xl shadow-lg"
           style={{ 
             backgroundColor: accent,
             boxShadow: `0 0 30px ${accent}40`
           }}
         >
-          <span className="text-2xl font-bold" style={{ color: '#0a0a0c' }}>G</span>
+          <img src="/gimnasia.png" alt="GymLog" className="w-full h-full rounded-2xl object-contain" />
         </div>
         <h1 className="text-3xl font-extrabold tracking-tight fade-in-up" style={{ color: textPrimary, animationDelay: '0.1s' }}>
           Gym<span style={{ color: accent }}>Log</span>
