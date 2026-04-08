@@ -1,10 +1,16 @@
 import { create } from 'zustand';
 import type { User } from '@supabase/supabase-js';
+import type { Subscription } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+
+// Guardamos la subscripción fuera del store para que HMR y StrictMode
+// no acumulen múltiples listeners de onAuthStateChange.
+let _authSubscription: Subscription | null = null;
 
 interface AuthState {
   user: User | null;
   loading: boolean;
+  initialized: boolean;
   init: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string, username: string) => Promise<{ error: Error | null; needsVerification: boolean }>;
@@ -15,43 +21,61 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   loading: true,
+  initialized: false,
+
   init: async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    set({ user: session?.user ?? null, loading: false });
-    
-    supabase.auth.onAuthStateChange((_event, session) => {
-      set({ user: session?.user ?? null });
-    });
+    // Evitar doble subscripción en HMR / StrictMode
+    if (_authSubscription) {
+      _authSubscription.unsubscribe();
+      _authSubscription = null;
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      set({ user: session?.user ?? null, loading: false, initialized: true });
+
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        set({ user: session?.user ?? null, loading: false });
+      });
+
+      _authSubscription = subscription;
+    } catch {
+      set({ loading: false, initialized: true });
+    }
   },
+
   signIn: async (email, password) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) return { error };
     set({ user: data.user });
     return { error: null };
   },
+
   signUp: async (email, password, fullName, username) => {
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) return { error, needsVerification: false };
-    
+
     if (data.user) {
       await supabase.from('profiles').insert({
         id: data.user.id,
-        email: email,
+        email,
         full_name: fullName,
-        username: username
+        username,
       });
     }
-    
+
     return { error: null, needsVerification: !data.user };
   },
+
   signInWithGoogle: async () => {
-    await supabase.auth.signInWithOAuth({ 
+    await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: 'https://pesos-wine.vercel.app/auth/callback',
-      }
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
     });
   },
+
   signOut: async () => {
     await supabase.auth.signOut();
     set({ user: null });

@@ -40,12 +40,11 @@ export function StatsPage() {
     }
   });
 
-  const calcRM = () => {
-    const w = parseFloat(rmWeight);
-    const r = parseInt(rmReps);
+  const calcRM = (weight: string, reps: string) => {
+    const w = parseFloat(weight);
+    const r = parseInt(reps);
     if (w && r) {
-      const rm = w / (1.0278 - (0.0278 * r));
-      setRmResult(rm);
+      setRmResult(w / (1.0278 - 0.0278 * r));
     } else {
       setRmResult(null);
     }
@@ -108,7 +107,7 @@ export function StatsPage() {
               type="number"
               placeholder="100"
               value={rmWeight}
-              onChange={(e) => { setRmWeight(e.target.value); calcRM(); }}
+              onChange={(e) => { setRmWeight(e.target.value); calcRM(e.target.value, rmReps); }}
               className="w-full bg-[#141418] border border-[rgba(255,255,255,0.12)] rounded-xl text-white text-[1.1rem] p-3 outline-none"
             />
           </div>
@@ -118,7 +117,7 @@ export function StatsPage() {
               type="number"
               placeholder="10"
               value={rmReps}
-              onChange={(e) => { setRmReps(e.target.value); calcRM(); }}
+              onChange={(e) => { setRmReps(e.target.value); calcRM(rmWeight, e.target.value); }}
               className="w-full bg-[#141418] border border-[rgba(255,255,255,0.12)] rounded-xl text-white text-[1.1rem] p-3 outline-none"
             />
           </div>

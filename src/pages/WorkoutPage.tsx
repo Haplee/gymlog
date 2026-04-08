@@ -57,16 +57,10 @@ export function WorkoutPage() {
 
   const handleExerciseChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;
-    setCustomInput(val === '__custom__');
-    setSelectedExercise(val === '__custom__' ? null : val);
-    if (!val) {
-      // reset when cleared
-    } else if (val === '__custom__') {
-      setCustomInput(true);
-    } else {
-      setCustomInput(false);
-      if (!sets.length) addSet();
-    }
+    const isCustom = val === '__custom__';
+    setCustomInput(isCustom);
+    setSelectedExercise(isCustom ? null : val || null);
+    if (val && !isCustom && !sets.length) addSet();
   };
 
   return (

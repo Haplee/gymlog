@@ -38,11 +38,27 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
   },
   
   loadRecentSets: async (userId: string) => {
+    // Primero obtenemos los workout IDs del usuario, luego los sets.
+    // El filtro .eq sobre una foreign table no funciona en Supabase JS v2.
+    const { data: workoutIds } = await supabase
+      .from('workouts')
+      .select('id')
+      .eq('user_id', userId);
+
+    if (!workoutIds || workoutIds.length === 0) {
+      set({ recentSets: [] });
+      return;
+    }
+
+    const ids = workoutIds.map((w) => w.id);
+
     const { data } = await supabase
       .from('workout_sets')
       .select('*, exercise:exercises(name), workout:workouts(started_at)')
-      .eq('workout:workouts.user_id', userId)
-      .order('created_at', { ascending: false });
+      .in('workout_id', ids)
+      .order('created_at', { ascending: false })
+      .limit(100);
+
     set({ recentSets: (data as WorkoutSetWithDetails[]) || [] });
   },
   
