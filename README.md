@@ -1,4 +1,4 @@
-# GymLog v1.2
+# GymLog v1.8
 
 PWA para registrar entrenamientos de gimnasio. Desplegado en **https://pesos-wine.vercel.app**
 
@@ -63,13 +63,15 @@ npx vercel --prod
 
 - 🔐 Autenticación con Supabase Auth (email + Google)
 - 🏋️ Registro de ejercicios y series
+- 📋 Rutina semanal (asigna ejercicios por día)
 - ⏱️ Timer de descanso personalizable
 - 📊 Estadísticas y gráfico semanal
-- 📋 Historial de entrenamientos
+- 📜 Historial de entrenamientos
+- 📥 Exportar a CSV
 - 🔢 Calculadora 1RM (Brzycki)
-- ⚙️ Configuración (tema, vibración, sonido)
+- ⚙️ Configuración (vibración, sonido)
 - 📱 PWA instalable
-- 💾 Sesión persistente (recuerda al usuario)
+- 💾 Sesión persistente
 
 ## PWA
 

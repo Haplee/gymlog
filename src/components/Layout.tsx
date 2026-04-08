@@ -23,8 +23,9 @@ export function Layout({ children }: LayoutProps) {
 
   const tabs = [
     { path: '/', label: '🏋️', id: 'train' },
+    { path: '/routine', label: '📋', id: 'routine' },
     { path: '/stats', label: '📊', id: 'stats' },
-    { path: '/history', label: '📋', id: 'history' },
+    { path: '/history', label: '📜', id: 'history' },
     { path: '/settings', label: '⚙️', id: 'settings' },
   ];
 

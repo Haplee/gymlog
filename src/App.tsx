@@ -8,6 +8,7 @@ const AuthCallback = lazy(() => import('./pages/AuthCallback'));
 const WorkoutPage = lazy(() => import('./pages/WorkoutPage').then(m => ({ default: m.WorkoutPage })));
 const StatsPage = lazy(() => import('./pages/StatsPage').then(m => ({ default: m.StatsPage })));
 const HistoryPage = lazy(() => import('./pages/HistoryPage').then(m => ({ default: m.HistoryPage })));
+const RoutinePage = lazy(() => import('./pages/RoutinePage').then(m => ({ default: m.RoutinePage })));
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
 
 function Loading() {
@@ -53,6 +54,7 @@ function AppRoutes() {
         <Route path="/" element={<ProtectedRoute><WorkoutPage /></ProtectedRoute>} />
         <Route path="/stats" element={<ProtectedRoute><StatsPage /></ProtectedRoute>} />
         <Route path="/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
+        <Route path="/routine" element={<ProtectedRoute><RoutinePage /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
