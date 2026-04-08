@@ -105,13 +105,13 @@ export function WorkoutPage() {
 
   const isLight = theme === 'light';
   const colors = isLight ? {
-    bgCard: '#ffffff',
+    bgCard: '#f5f5f5',
     border: '#e5e5e5',
     borderDashed: '#d4d4d4',
-    textPrimary: '#171717',
-    textSecondary: '#525252',
-    textMuted: '#a3a3a3',
-    accent: '#22c55e',
+    textPrimary: '#1a1a1a',
+    textSecondary: '#666666',
+    textMuted: '#999999',
+    accent: '#10b981',
     inputBg: '#f5f5f5',
   } : {
     bgCard: '#141418',

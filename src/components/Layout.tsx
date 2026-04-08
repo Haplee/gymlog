@@ -8,17 +8,17 @@ interface LayoutProps {
 }
 
 export function Layout({ children }: LayoutProps) {
-  const { user } = useAuthStore();
+  const { user, signOut } = useAuthStore();
   const { theme } = useSettingsStore();
   const location = useLocation();
 
   const isLight = theme === 'light';
   
   const colors = isLight ? {
-    bgMain: '#f5f5f5',
-    bgCard: '#ffffff',
-    bgHeader: '#ffffff',
-    border: '#e0e0e0',
+    bgMain: '#ffffff',
+    bgCard: '#f5f5f5',
+    bgHeader: 'rgba(255,255,255,0.95)',
+    border: '#e5e5e5',
     textPrimary: '#1a1a1a',
     textSecondary: '#666666',
     textMuted: '#999999',
@@ -52,12 +52,11 @@ export function Layout({ children }: LayoutProps) {
         style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
       >
         <div className="flex items-center gap-3">
-          <div 
-            className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-lg shadow-sm"
-            style={{ backgroundColor: colors.accent, color: colors.accentText }}
-          >
-            G
-          </div>
+          <img 
+            src="/gimnasia.png" 
+            className="w-8 h-8 rounded-lg object-contain" 
+            alt="logo" 
+          />
           <div>
             <div className="text-[1.1rem] font-extrabold" style={{ color: colors.textPrimary }}>
               Gym<span style={{ color: colors.accent }}>Log</span>
@@ -67,6 +66,17 @@ export function Layout({ children }: LayoutProps) {
             </div>
           </div>
         </div>
+        <button
+          onClick={signOut}
+          className="py-2 px-3 text-[0.8rem] rounded-lg cursor-pointer"
+          style={{ 
+            backgroundColor: 'transparent', 
+            border: `1px solid ${colors.border}`, 
+            color: colors.textMuted 
+          }}
+        >
+          Salir
+        </button>
       </div>
 
       <div className="flex border-b" style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}>

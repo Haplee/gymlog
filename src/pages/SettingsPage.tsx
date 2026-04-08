@@ -15,14 +15,14 @@ export function SettingsPage() {
 
   const isLight = theme === 'light';
   const colors = isLight ? {
-    bgCard: '#ffffff',
-    border: '#e0e0e0',
+    bgCard: '#f5f5f5',
+    border: '#e5e5e5',
     textPrimary: '#1a1a1a',
     textSecondary: '#666666',
     textMuted: '#999999',
     accent: '#10b981',
     toggleOn: '#10b981',
-    toggleOff: '#cccccc',
+    toggleOff: '#d1d1d1',
   } : {
     bgCard: '#141418',
     border: 'rgba(255,255,255,0.06)',
@@ -34,6 +34,21 @@ export function SettingsPage() {
     toggleOff: '#3a3a42',
   };
 
+  const Toggle = ({ on }: { on: boolean }) => (
+    <div 
+      className="w-11 h-6 rounded-full transition-colors relative"
+      style={{ backgroundColor: on ? colors.toggleOn : colors.toggleOff }}
+    >
+      <div 
+        className="absolute top-1 w-5 h-5 rounded-full transition-transform"
+        style={{ 
+          left: on ? '22px' : '4px',
+          backgroundColor: on ? (isLight ? '#fff' : '#000') : '#fff'
+        }}
+      />
+    </div>
+  );
+
   return (
     <Layout>
       <div className="text-[1.2rem] font-extrabold mb-4" style={{ color: colors.accent }}>Configuración</div>
@@ -43,15 +58,10 @@ export function SettingsPage() {
         
         <button onClick={() => setTheme(isLight ? 'dark' : 'light')} className="w-full flex items-center justify-between py-3">
           <div>
-            <div className="text-[0.95rem]" style={{ color: colors.textPrimary }}>Tema oscuro</div>
-            <div className="text-[0.75rem]" style={{ color: colors.textMuted }}>{isLight ? 'Modo claro activo' : 'Modo oscuro activo'}</div>
+            <div className="text-[0.95rem]" style={{ color: colors.textPrimary }}>Modo oscuro</div>
+            <div className="text-[0.75rem]" style={{ color: colors.textMuted }}>{isLight ? 'Desactivado' : 'Activado'}</div>
           </div>
-          <div className={`w-12 h-7 rounded-full transition-colors relative`} style={{ backgroundColor: isLight ? colors.toggleOff : colors.toggleOn }}>
-            <div className="absolute top-1 w-5 h-5 rounded-full transition-transform" style={{ 
-              left: isLight ? '4px' : '26px',
-              backgroundColor: isLight ? '#fff' : '#000'
-            }} />
-          </div>
+          <Toggle on={!isLight} />
         </button>
       </div>
 
@@ -63,12 +73,7 @@ export function SettingsPage() {
             <div className="text-[0.95rem]" style={{ color: colors.textPrimary }}>Vibración</div>
             <div className="text-[0.75rem]" style={{ color: colors.textMuted }}>Vibrar al completar serie</div>
           </div>
-          <div className={`w-12 h-7 rounded-full transition-colors relative`} style={{ backgroundColor: vibration ? colors.toggleOn : colors.toggleOff }}>
-            <div className="absolute top-1 w-5 h-5 rounded-full transition-transform" style={{ 
-              left: vibration ? '26px' : '4px',
-              backgroundColor: vibration ? (isLight ? '#fff' : '#000') : '#fff'
-            }} />
-          </div>
+          <Toggle on={vibration} />
         </button>
 
         <button onClick={() => setSound(!sound)} className="w-full flex items-center justify-between py-3">
@@ -76,12 +81,7 @@ export function SettingsPage() {
             <div className="text-[0.95rem]" style={{ color: colors.textPrimary }}>Sonido</div>
             <div className="text-[0.75rem]" style={{ color: colors.textMuted }}>Reproducir sonido al completar serie</div>
           </div>
-          <div className={`w-12 h-7 rounded-full transition-colors relative`} style={{ backgroundColor: sound ? colors.toggleOn : colors.toggleOff }}>
-            <div className="absolute top-1 w-5 h-5 rounded-full transition-transform" style={{ 
-              left: sound ? '26px' : '4px',
-              backgroundColor: sound ? (isLight ? '#fff' : '#000') : '#fff'
-            }} />
-          </div>
+          <Toggle on={sound} />
         </button>
       </div>
 
@@ -105,7 +105,7 @@ export function SettingsPage() {
 
       <div className="rounded-2xl p-4" style={{ backgroundColor: colors.bgCard, border: `1px solid ${colors.border}` }}>
         <div className="text-[1rem] font-semibold mb-2" style={{ color: colors.textPrimary }}>Acerca de</div>
-        <div className="text-[0.85rem]" style={{ color: colors.textMuted }}>GymLog v1.2</div>
+        <div className="text-[0.85rem]" style={{ color: colors.textMuted }}>GymLog v1.3</div>
         <div className="text-[0.75rem] mt-1" style={{ color: colors.textMuted }}>Tu compañero de entrenamiento</div>
       </div>
     </Layout>
