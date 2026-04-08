@@ -69,24 +69,43 @@ export function WorkoutPage() {
       setMessage(result.error.message);
     } else {
       setMessage('✓ Entreno guardado');
-      if (vibration) navigator.vibrate(100);
-      if (sound) playFeedbackSound();
+      if (vibration) {
+        navigator.vibrate([50, 30, 100]);
+      }
+      if (sound) {
+        playFeedbackSound();
+      }
       setTimeout(() => setMessage(''), 2500);
     }
   };
 
   const playFeedbackSound = useCallback(() => {
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.frequency.value = 800;
-    osc.type = 'sine';
-    gain.gain.setValueAtTime(0.3, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.15);
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = 800;
+      osc.type = 'sine';
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.15);
+      
+      setTimeout(() => {
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.frequency.value = 1000;
+        osc2.type = 'sine';
+        gain2.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+        osc2.start(ctx.currentTime);
+        osc2.stop(ctx.currentTime + 0.15);
+      }, 100);
+    } catch (e) {}
   }, []);
 
   const handleExerciseChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
