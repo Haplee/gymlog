@@ -1,13 +1,15 @@
 import type { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
+import { useSettingsStore } from '../stores/settingsStore';
 
 interface LayoutProps {
   children: ReactNode;
 }
 
 export function Layout({ children }: LayoutProps) {
-  const { user, signOut } = useAuthStore();
+  const { user } = useAuthStore();
+  const { theme } = useSettingsStore();
   const location = useLocation();
 
   const tabs = [
@@ -17,38 +19,40 @@ export function Layout({ children }: LayoutProps) {
     { path: '/settings', label: '⚙️ Ajustes', id: 'settings' },
   ];
 
+  const bgMain = theme === 'light' ? '#ffffff' : '#0a0a0c';
+  const bgCard = theme === 'light' ? '#f4f3ec' : '#141418';
+  const bgHeader = theme === 'light' ? 'rgba(255,255,255,0.95)' : 'rgba(10,10,12,0.95)';
+  const borderColor = theme === 'light' ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)';
+  const textPrimary = theme === 'light' ? '#08060d' : '#fafafa';
+  const textMuted = theme === 'light' ? '#a0a0a8' : '#606068';
+  const accent = '#c8ff00';
+
   return (
-    <div className="min-h-screen min-h-[100dvh] bg-[#0a0a0c] flex flex-col">
-      <div className="flex items-center justify-between px-4 py-3 bg-[rgba(10,10,12,0.95)] border-b border-[rgba(255,255,255,0.06)] sticky top-0 z-100 safe-area-top">
+    <div className="min-h-screen min-h-[100dvh] flex flex-col" style={{ backgroundColor: bgMain }}>
+      <div className="flex items-center justify-between px-4 py-3 border-b sticky top-0 z-100 safe-area-top" style={{ backgroundColor: bgHeader, borderColor }}>
         <div className="flex items-center gap-3">
-          <img src="/gimnasia.png" className="w-8 h-8 rounded-lg object-contain bg-[#141418] border border-[#c8ff00]" alt="logo" />
+          <img src="/gimnasia.png" className="w-8 h-8 rounded-lg object-contain border" style={{ backgroundColor: bgCard, borderColor: accent }} alt="logo" />
           <div>
-            <div className="text-[1.1rem] font-extrabold">
-              Gym<span className="text-[#c8ff00]">Log</span>
+            <div className="text-[1.1rem] font-extrabold" style={{ color: textPrimary }}>
+              Gym<span style={{ color: accent }}>Log</span>
             </div>
-            <div className="text-[0.85rem] text-[#a0a0a8]">
+            <div className="text-[0.85rem]" style={{ color: textMuted }}>
               {user?.email?.split('@')[0]}
             </div>
           </div>
         </div>
-        <button
-          onClick={() => signOut()}
-          className="py-2 px-3 text-[0.8rem] bg-transparent border border-[rgba(255,255,255,0.12)] rounded-lg text-[#a0a0a8] cursor-pointer"
-        >
-          Salir
-        </button>
       </div>
 
-      <div className="flex bg-[#141418] border-b border-[rgba(255,255,255,0.06)]">
+      <div className="flex border-b" style={{ backgroundColor: bgCard, borderColor }}>
         {tabs.map((tab) => (
           <Link
             key={tab.path}
             to={tab.path}
-            className={`flex-1 py-4 px-2 text-[0.85rem] sm:text-[1rem] text-center cursor-pointer font-semibold border-b-2 transition-colors ${
-              location.pathname === tab.path
-                ? 'text-[#c8ff00] border-b-[#c8ff00]'
-                : 'text-[#606068] border-b-transparent'
-            }`}
+            className={`flex-1 py-4 px-2 text-[0.85rem] sm:text-[1rem] text-center cursor-pointer font-semibold border-b-2 transition-colors`}
+            style={{
+              color: location.pathname === tab.path ? accent : textMuted,
+              borderColor: location.pathname === tab.path ? accent : 'transparent'
+            }}
           >
             {tab.label}
           </Link>

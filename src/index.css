@@ -23,7 +23,7 @@
 
   font: 16px/160% var(--sans);
   letter-spacing: 0;
-  color-scheme: light dark;
+  color-scheme: light;
   color: var(--text);
   background: var(--bg);
   font-synthesis: none;
@@ -32,24 +32,40 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #a1a1aa;
-    --text-h: #fafafa;
-    --bg: #09090b;
-    --border: #27272a;
-    --code-bg: #18181b;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
+:root.dark {
+  --text: #a1a1aa;
+  --text-h: #fafafa;
+  --bg: #09090b;
+  --border: #27272a;
+  --code-bg: #18181b;
+  --accent: #c084fc;
+  --accent-bg: rgba(192, 132, 252, 0.15);
+  --accent-border: rgba(192, 132, 252, 0.5);
+  --social-bg: rgba(47, 48, 58, 0.5);
+  --shadow:
+    rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+  color-scheme: dark;
+}
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+:root,
+:root.light {
+  --bg-main: #ffffff;
+  --bg-card: #f4f3ec;
+  --bg-input: #f4f3ec;
+  --text-primary: #08060d;
+  --text-secondary: #6b6375;
+  --text-muted: #a0a0a8;
+  --border-color: #e5e4e7;
+}
+
+:root.dark {
+  --bg-main: #0a0a0c;
+  --bg-card: #141418;
+  --bg-input: #141418;
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1aa;
+  --text-muted: #606068;
+  --border-color: #27272a;
 }
 
 #root {

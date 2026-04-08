@@ -12,12 +12,18 @@
     <link rel="manifest" href="/manifest.json" />
     <title>GymLog</title>
     <style>
+      :root {
+        --bg-main: #09090b;
+      }
+      :root.light {
+        --bg-main: #ffffff;
+      }
       html, body, #root {
         margin: 0;
         padding: 0;
         min-height: 100vh;
         min-height: 100dvh;
-        background: #09090b;
+        background: var(--bg-main);
         touch-action: manipulation;
         -webkit-tap-highlight-color: transparent;
       }

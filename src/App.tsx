@@ -1,6 +1,7 @@
 import { useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
+import { useSettingsStore } from './stores/settingsStore';
 import { PermissionRequests } from './components/PermissionRequests';
 
 const AuthPage = lazy(() => import('./pages/AuthPage').then(m => ({ default: m.AuthPage })));
@@ -61,6 +62,20 @@ function AppRoutes() {
 }
 
 export default function App() {
+  const { theme } = useSettingsStore();
+
+  useEffect(() => {
+    if (theme === 'light') {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('light');
+      document.body.style.background = '#ffffff';
+    } else {
+      document.documentElement.classList.remove('light');
+      document.documentElement.classList.add('dark');
+      document.body.style.background = '#09090b';
+    }
+  }, [theme]);
+
   return (
     <BrowserRouter>
       <PermissionRequests />
