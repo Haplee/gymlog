@@ -27,6 +27,7 @@ export interface WorkoutSet {
   reps: number;
   weight: number;
   created_at: string;
+  notes?: string;
   exercise?: { name: string } | Exercise;
   workout?: { started_at: string } | Workout;
 }
@@ -43,4 +44,11 @@ export interface PersonalRecord {
   weight: number;
   reps: number;
   created_at: string;
+}
+
+export interface WorkoutWithSets {
+  id: string;
+  started_at: string;
+  ended_at?: string;
+  sets: WorkoutSetWithDetails[];
 }

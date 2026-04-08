@@ -1,11 +1,28 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 export function RestTimer() {
   const [seconds, setSeconds] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const intervalRef = useRef<number | null>(null);
 
+  const notifyTimerEnd = useCallback(async () => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate([200, 100, 200]);
+    }
+
+    if (document.visibilityState === 'hidden' && 'Notification' in window && Notification.permission === 'granted') {
+      new Notification('GymLog', {
+        body: '⏱️ Descanso terminado — ¡Siguiente serie!',
+        icon: '/gimnasia.png',
+        badge: '/gimnasia.png'
+      });
+    }
+  }, []);
+
   const startRest = (sec: number) => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
     stopRest();
     setSeconds(sec);
     setIsRunning(true);
@@ -27,6 +44,7 @@ export function RestTimer() {
           if (s <= 1) {
             stopRest();
             playBeep();
+            notifyTimerEnd();
             return 0;
           }
           return s - 1;
@@ -36,7 +54,7 @@ export function RestTimer() {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [isRunning]);
+  }, [isRunning, notifyTimerEnd]);
 
   const formatTime = (s: number) => {
     const mins = Math.floor(s / 60);
