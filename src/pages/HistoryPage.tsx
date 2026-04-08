@@ -169,34 +169,37 @@ export function HistoryPage() {
           
           if (existing?.id) return existing.id;
           
-          const { data: newEx, error } = await supabase
-            .from('exercises')
-            .insert({ 
-              name: cleanName, 
-              user_id: user.id, 
-              muscle_group: 'Importado' 
-            })
-            .select('id')
-            .single();
-          
-          if (error || !newEx) {
-            console.error('Error creating exercise:', error);
+          try {
+            const { data: newEx, error } = await supabase
+              .from('exercises')
+              .insert({ 
+                name: cleanName, 
+                user_id: user.id, 
+                muscle_group: 'Importado' 
+              })
+              .select('id')
+              .single();
+            
+            if (error || !newEx) {
+              console.warn('Error creating exercise:', error);
+              return null;
+            }
+            
+            exerciseList.push({ id: newEx.id, name: cleanName, muscle_group: 'Importado', user_id: user.id, created_at: '' });
+            return newEx.id;
+          } catch (e) {
+            console.warn('Error creating exercise:', e);
             return null;
           }
-          
-          exerciseList.push({ id: newEx.id, name: cleanName, muscle_group: 'Importado', user_id: user.id, created_at: '' });
-          return newEx.id;
         };
 
         const parseNumber = (val: string | undefined): number | null => {
           if (!val) return null;
           
-          const cleaned = val
-            .replace(/["']/g, '')
-            .replace(/\s+/g, '')
-            .replace(/[a-zA-Z]/g, ' ')
-            .replace(/[^\d,.\-]/g, '')
-            .replace(/,/g, '.');
+          let cleaned = val.replace(/["']/g, '').trim();
+          if (cleaned === '' || cleaned === '-' || cleaned.toLowerCase() === 'no') return null;
+          
+          cleaned = cleaned.replace(/\s+/g, ' ').replace(/[a-zA-Z]/g, ' ').replace(/[^\d,.\-]/g, '').replace(/,/g, '.');
           
           const match = cleaned.match(/^(\d+\.?\d*)/);
           if (!match) return null;
@@ -206,7 +209,7 @@ export function HistoryPage() {
         };
 
         const parseDate = (dateStr: string): string | null => {
-          if (!dateStr || !dateStr.includes('/')) return null;
+          if (!dateStr || dateStr.trim() === '' || !dateStr.includes('/')) return null;
           
           const parts = dateStr.split('/');
           if (parts.length !== 3) return null;
@@ -234,22 +237,6 @@ export function HistoryPage() {
             'brazo', 'espalda baja', 'glúteos', 'core', 'abdomen'
           ];
           return headers.some(h => lower.includes(h));
-        };
-
-        const isSkipLine = (firstCol: string, secondCol: string): boolean => {
-          const lower = firstCol.toLowerCase().trim();
-          const lowerSecond = secondCol.toLowerCase().trim();
-          const skipWords = ['no', 'ninguno', 'n/a', '-', 'x', 'xxx', 'xxxx', 'pendiente', 'descanso'];
-          const skipPhrases = ['no hay registros', 'sin registros', 'sin datos', 'descanso', 'libre', 'sin entrenamiento', 'sin ejercicio', 'no se entrenó'];
-          
-          if (skipWords.includes(lower)) return true;
-          if (lower.startsWith('xxx')) return true;
-          if (firstCol.replace(/[0-9]/g, '').trim().length === 0) return true;
-          
-          if (skipPhrases.some(p => lowerSecond.includes(p))) return true;
-          if (lowerSecond === '-' || lowerSecond === '' || lowerSecond === ' ') return true;
-          
-          return false;
         };
 
         let imported = 0;
@@ -287,8 +274,8 @@ export function HistoryPage() {
           while (cols.length < 3) cols.push('');
           
           const firstCol = cols[0].trim();
-          const secondCol = cols[1].trim();
-          const thirdCol = cols[2].trim();
+          const secondCol = cols[1]?.trim() || '';
+          const thirdCol = cols[2]?.trim() || '';
           
           if (isHeaderLine(firstCol)) {
             const parsedDate = parseDate(secondCol) || parseDate(thirdCol);
@@ -299,19 +286,17 @@ export function HistoryPage() {
           }
           
           if (!firstCol || firstCol.length < 2) {
-            skipped++;
             continue;
           }
           
-          if (isSkipLine(firstCol, secondCol)) {
-            skipped++;
+          const skipPhrases = ['no hay registros', 'sin registros', 'sin datos', 'descanso', 'libre'];
+          if (skipPhrases.some(p => secondCol.toLowerCase().includes(p))) {
             continue;
           }
           
           const peso = parseNumber(secondCol) || parseNumber(thirdCol);
           
           if (!peso) {
-            skipped++;
             continue;
           }
           
@@ -358,20 +343,16 @@ export function HistoryPage() {
           await loadWorkouts(user.id);
         }
         
-        let message = `Importados: ${imported}`;
-        if (skipped > 0) message += ` | Omitidos: ${skipped}`;
-        if (errors.length > 0 && errors.length <= 3) message += ` | Errors: ${errors.length}`;
+        let message = imported > 0 
+          ? `Importados: ${imported} ejercicios` 
+          : 'No se pudieron importar ejercicios';
+        
+        if (errors.length > 0) {
+          message += ` (${errors.length} errores)`;
+        }
         
         setToast(message);
-        
-        if (errors.length > 3) {
-          setTimeout(() => {
-            setToast(`Algunos errores: ${errors.slice(0, 3).join(', ')}...`);
-            setTimeout(() => setToast(null), 4000);
-          }, 3500);
-        } else {
-          setTimeout(() => setToast(null), 3000);
-        }
+        setTimeout(() => setToast(null), 3000);
         
       } catch (err) {
         console.error('Import error:', err);
