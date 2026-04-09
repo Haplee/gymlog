@@ -1,6 +1,40 @@
 import { supabase } from '../lib/supabase';
 import type { WorkoutWithSets, WorkoutSetWithDetails, PersonalRecord, Exercise } from '../lib/types';
 
+export const fetchWorkoutsAndSets = async (userId: string) => {
+  const { data: workoutIds, error } = await supabase
+    .from('workouts')
+    .select('id, started_at, ended_at')
+    .eq('user_id', userId)
+    .order('started_at', { ascending: false })
+    .limit(20);
+
+  if (error) throw error;
+  if (!workoutIds || workoutIds.length === 0) return { workouts: [], sets: [] };
+
+  const ids = workoutIds.map(w => w.id);
+
+  const { data: allSets, error: setsError } = await supabase
+    .from('workout_sets')
+    .select('*, exercise:exercises(name), workout:workouts(started_at)')
+    .in('workout_id', ids)
+    .order('created_at', { ascending: false });
+
+  if (setsError) throw setsError;
+
+  const workouts: WorkoutWithSets[] = workoutIds.map(wo => {
+    const sets = (allSets || []).filter(s => s.workout_id === wo.id);
+    return {
+      id: wo.id,
+      started_at: wo.started_at,
+      ended_at: wo.ended_at,
+      sets: sets as WorkoutSetWithDetails[]
+    };
+  });
+
+  return { workouts, sets: (allSets as WorkoutSetWithDetails[]) || [] };
+};
+
 export const fetchWorkouts = async (userId: string): Promise<WorkoutWithSets[]> => {
   const { data: workoutIds, error } = await supabase
     .from('workouts')

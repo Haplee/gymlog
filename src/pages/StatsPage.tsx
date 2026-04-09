@@ -5,7 +5,8 @@ import { useAuthStore } from '../stores/authStore';
 import { Layout } from '../components/Layout';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { format, subWeeks, startOfWeek, eachWeekOfInterval, parseISO } from 'date-fns';
-import { fetchWorkouts, fetchRecentSets } from '../api/queries';
+import { fetchWorkoutsAndSets } from '../api/queries';
+import { calcular1RM } from '../lib/brzycki';
 
 interface ExerciseStats {
   name: string;
@@ -21,19 +22,16 @@ export function StatsPage() {
   const [rmResult, setRmResult] = useState<number | null>(null);
   const [selectedExercise, setSelectedExercise] = useState<string>('');
 
-  const { data: workouts = [], isLoading: loadingWorkouts } = useQuery({
-    queryKey: ['workouts', user?.id],
-    queryFn: () => fetchWorkouts(user!.id),
+  const { data, isLoading } = useQuery({
+    queryKey: ['workoutsAndSets', user?.id],
+    queryFn: () => fetchWorkoutsAndSets(user!.id),
     enabled: !!user?.id
   });
 
-  const { data: recentSets = [], isLoading: loadingSets } = useQuery({
-    queryKey: ['recentSets', user?.id],
-    queryFn: () => fetchRecentSets(user!.id),
-    enabled: !!user?.id
-  });
+  const workouts = data?.workouts || [];
+  const recentSets = data?.sets || [];
 
-  const loading = loadingWorkouts || loadingSets;
+  const loading = isLoading;
 
   if (!user) {
     navigate('/login');
@@ -147,7 +145,7 @@ export function StatsPage() {
     const w = parseFloat(weight);
     const r = parseInt(reps);
     if (w && r) {
-      setRmResult(w / (1.0278 - 0.0278 * r));
+      setRmResult(calcular1RM(w, r));
     } else {
       setRmResult(null);
     }
@@ -323,7 +321,6 @@ export function StatsPage() {
         <div className="mt-4 text-[1.2rem] font-extrabold text-[#c8ff00] text-center success-pulse">
           1RM: {rmResult ? `${rmResult.toFixed(1)} kg` : '-- kg'}
         </div>
-        <div className="text-center text-[#606068] text-[0.7rem] mt-1">Fórmula: Brzycki</div>
       </div>
     </Layout>
   );
