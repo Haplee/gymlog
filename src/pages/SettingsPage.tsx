@@ -29,6 +29,7 @@ export function SettingsPage() {
 
   const playFeedbackSound = useCallback(() => {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
       if (!AudioContextClass) return;
       const ctx = new AudioContextClass();

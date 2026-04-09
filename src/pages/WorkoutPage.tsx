@@ -1,24 +1,22 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../stores/authStore';
 import { useWorkoutStore } from '../stores/workoutStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useRoutineStore } from '../stores/routineStore';
 import { Layout } from '../components/Layout';
 import { calcular1RM } from '../lib/brzycki';
+import { fetchExercises, fetchPersonalRecords } from '../api/queries';
 
 export function WorkoutPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const {
-    exercises,
     selectedExerciseId,
     customExerciseName,
     sets,
-    personalRecords,
-    loadExercises,
-    loadRecentSets,
-    loadPersonalRecords,
     setSelectedExercise,
     setCustomExerciseName,
     addSet,
@@ -38,16 +36,29 @@ export function WorkoutPage() {
   const [newSetIndex, setNewSetIndex] = useState<number | null>(null);
   const [removingSet, setRemovingSet] = useState<number | null>(null);
 
+  const { data: exercises = [] } = useQuery({
+    queryKey: ['exercises', user?.id],
+    queryFn: () => fetchExercises(user!.id),
+    enabled: !!user?.id
+  });
+
+  const { data: personalRecordsList = [] } = useQuery({
+    queryKey: ['personalRecords', user?.id],
+    queryFn: () => fetchPersonalRecords(user!.id),
+    enabled: !!user?.id
+  });
+
+  const personalRecords = Object.fromEntries(
+    personalRecordsList.map((pr) => [pr.exercise_id, pr])
+  );
+
   useEffect(() => {
     if (!user) {
       navigate('/login');
       return;
     }
-    loadExercises(user.id);
-    loadRecentSets(user.id);
-    loadPersonalRecords(user.id);
     checkAndBackup(user.id);
-  }, [user, navigate, loadExercises, loadRecentSets, loadPersonalRecords, checkAndBackup]);
+  }, [user, navigate, checkAndBackup]);
 
   const selectedExercise = exercises.find(e => e.id === selectedExerciseId);
   const currentPR = selectedExerciseId ? personalRecords[selectedExerciseId] : null;
@@ -63,6 +74,7 @@ export function WorkoutPage() {
 
   const playFeedbackSound = useCallback(() => {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
       if (!AudioContextClass) return;
       const ctx = new AudioContextClass();
@@ -89,7 +101,9 @@ export function WorkoutPage() {
         osc2.start(ctx.currentTime);
         osc2.stop(ctx.currentTime + 0.2);
       }, 120);
-    } catch (e) {}
+    } catch {
+      // ignore audio errors
+    }
   }, []);
 
   const handleSave = async () => {
@@ -104,6 +118,10 @@ export function WorkoutPage() {
     } else {
       setSaveSuccess(true);
       if (sound) playFeedbackSound();
+      queryClient.invalidateQueries({ queryKey: ['exercises'] });
+      queryClient.invalidateQueries({ queryKey: ['workouts'] });
+      queryClient.invalidateQueries({ queryKey: ['recentSets'] });
+      queryClient.invalidateQueries({ queryKey: ['personalRecords'] });
       setTimeout(() => setMessage(''), 2500);
       setTimeout(() => setSaveSuccess(false), 300);
     }

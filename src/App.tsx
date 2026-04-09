@@ -1,5 +1,7 @@
 import { useEffect, lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import type { Transition } from 'framer-motion';
 import { useAuthStore } from './stores/authStore';
 import { PermissionRequests } from './components/PermissionRequests';
 
@@ -9,6 +11,7 @@ const WorkoutPage = lazy(() => import('./pages/WorkoutPage').then(m => ({ defaul
 const StatsPage = lazy(() => import('./pages/StatsPage').then(m => ({ default: m.StatsPage })));
 const HistoryPage = lazy(() => import('./pages/HistoryPage').then(m => ({ default: m.HistoryPage })));
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
+const RoutinePage = lazy(() => import('./pages/RoutinePage').then(m => ({ default: m.RoutinePage })));
 
 function Loading() {
   return (
@@ -32,8 +35,68 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+const pageVariants = {
+  initial: { opacity: 0, scale: 0.98 },
+  in: { opacity: 1, scale: 1 },
+  out: { opacity: 0, scale: 1.02 }
+};
+
+const pageTransition: Transition = {
+  type: 'tween',
+  ease: 'anticipate',
+  duration: 0.3
+};
+
+function AnimatedRoutes() {
+  const location = useLocation();
+  const { user } = useAuthStore();
+
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route path="/login" element={
+          <motion.div initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
+            {user ? <Navigate to="/" replace /> : <AuthPage />}
+          </motion.div>
+        } />
+        <Route path="/auth/callback" element={
+          <motion.div initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
+            <AuthCallback />
+          </motion.div>
+        } />
+        <Route path="/" element={
+          <motion.div initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
+            <ProtectedRoute><WorkoutPage /></ProtectedRoute>
+          </motion.div>
+        } />
+        <Route path="/routines" element={
+          <motion.div initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
+            <ProtectedRoute><RoutinePage /></ProtectedRoute>
+          </motion.div>
+        } />
+        <Route path="/stats" element={
+          <motion.div initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
+            <ProtectedRoute><StatsPage /></ProtectedRoute>
+          </motion.div>
+        } />
+        <Route path="/history" element={
+          <motion.div initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
+            <ProtectedRoute><HistoryPage /></ProtectedRoute>
+          </motion.div>
+        } />
+        <Route path="/settings" element={
+          <motion.div initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
+            <ProtectedRoute><SettingsPage /></ProtectedRoute>
+          </motion.div>
+        } />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </AnimatePresence>
+  );
+}
+
 function AppRoutes() {
-  const { user, loading, initialized } = useAuthStore();
+  const { loading, initialized } = useAuthStore();
 
   useEffect(() => {
     if (!initialized) {
@@ -47,15 +110,7 @@ function AppRoutes() {
 
   return (
     <Suspense fallback={<Loading />}>
-      <Routes>
-        <Route path="/login" element={user ? <Navigate to="/" replace /> : <AuthPage />} />
-        <Route path="/auth/callback" element={<AuthCallback />} />
-        <Route path="/" element={<ProtectedRoute><WorkoutPage /></ProtectedRoute>} />
-        <Route path="/stats" element={<ProtectedRoute><StatsPage /></ProtectedRoute>} />
-        <Route path="/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
-        <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <AnimatedRoutes />
     </Suspense>
   );
 }

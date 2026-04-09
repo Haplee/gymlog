@@ -23,7 +23,7 @@ export default function AuthCallback() {
         } else {
           navigate('/login', { replace: true });
         }
-      } catch (err) {
+      } catch {
         setError('Error al procesar la autenticación');
       } finally {
         setLoading(false);

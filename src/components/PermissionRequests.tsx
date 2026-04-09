@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 interface PermissionRequest {
   key: string;
@@ -17,15 +17,11 @@ const PERMISSIONS: PermissionRequest[] = [
 ];
 
 export function PermissionRequests() {
-  const [showModal, setShowModal] = useState(false);
-  const [requested, setRequested] = useState<string[]>([]);
-
-  useEffect(() => {
+  const [showModal, setShowModal] = useState(() => {
     const hasSeen = localStorage.getItem('gymlog_permissions_seen');
-    if (!hasSeen && 'Notification' in window && Notification.permission === 'default') {
-      setShowModal(true);
-    }
-  }, []);
+    return !hasSeen && 'Notification' in window && Notification.permission === 'default';
+  });
+  const [requested, setRequested] = useState<string[]>([]);
 
   const requestPermission = async (key: string) => {
     if (key === 'notifications' && 'Notification' in window) {

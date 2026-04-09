@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../stores/authStore';
 import { useWorkoutStore } from '../stores/workoutStore';
 import { Layout } from '../components/Layout';
 import { supabase } from '../lib/supabase';
 import { shareWorkout } from '../lib/share';
-import type { WorkoutWithSets } from '../lib/types';
+import type { WorkoutWithSets, WorkoutSetWithDetails } from '../lib/types';
+import { fetchWorkouts, fetchRecentSets, fetchExercises } from '../api/queries';
 
 interface GroupedWorkout {
   date: string;
@@ -20,7 +22,7 @@ function ExerciseRow({
   onDelete 
 }: { 
   exercise: string; 
-  sets: any[]; 
+  sets: WorkoutSetWithDetails[]; 
   onDelete: (id: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -68,24 +70,31 @@ function ExerciseRow({
 export function HistoryPage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { recentSets, loadRecentSets, workouts, loadWorkouts, repeatWorkout } = useWorkoutStore();
+  const { repeatWorkout } = useWorkoutStore();
   const [view, setView] = useState<'sets' | 'workouts'>('sets');
   const [filterExercise, setFilterExercise] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+
+  const { data: workouts = [], isLoading: loadingWorkouts, refetch: refetchWorkouts } = useQuery({
+    queryKey: ['workouts', user?.id],
+    queryFn: () => fetchWorkouts(user!.id),
+    enabled: !!user?.id
+  });
+
+  const { data: recentSets = [], isLoading: loadingSets, refetch: refetchSets } = useQuery({
+    queryKey: ['recentSets', user?.id],
+    queryFn: () => fetchRecentSets(user!.id),
+    enabled: !!user?.id
+  });
+
+  const loading = loadingWorkouts || loadingSets;
 
   useEffect(() => {
     if (!user) {
       navigate('/login');
-      return;
     }
-    Promise.all([
-      loadRecentSets(user.id),
-      loadWorkouts(user.id),
-      useWorkoutStore.getState().loadExercises(user.id)
-    ]).then(() => setLoading(false));
-  }, [user, navigate, loadRecentSets, loadWorkouts]);
+  }, [user, navigate]);
 
   const handleRepeat = (workout: WorkoutWithSets) => {
     repeatWorkout(workout);
@@ -115,7 +124,7 @@ export function HistoryPage() {
 
   const handleDelete = async (id: string) => {
     await supabase.from('workout_sets').delete().eq('id', id);
-    if (user) loadRecentSets(user.id);
+    if (user) refetchSets();
     setDeleteId(null);
   };
 
@@ -203,100 +212,99 @@ export function HistoryPage() {
         }
 
         setToast('Cargando...');
-        await useWorkoutStore.getState().loadExercises(user.id);
-        await new Promise(resolve => setTimeout(resolve, 500));
-        const exerciseList = useWorkoutStore.getState().exercises;
+        const exerciseList = await fetchExercises(user.id);
         
-        const getExerciseId = async (name: string): Promise<string | null> => {
-          const cleanName = name.replace(/["']/g, '').trim();
-          if (!cleanName || cleanName.length < 2) return null;
-          
-          const existing = exerciseList.find(ex => 
-            ex && ex.name && ex.name.toLowerCase() === cleanName.toLowerCase()
-          );
-          
-          if (existing?.id) return existing.id;
-          
-          try {
-            const { data: newEx, error } = await supabase
-              .from('exercises')
-              .insert({ 
-                name: cleanName, 
-                user_id: user.id, 
-                muscle_group: 'Importado' 
-              })
-              .select('id')
-              .single();
-            
-            if (error || !newEx) return null;
-            
-            exerciseList.push({ id: newEx.id, name: cleanName, muscle_group: 'Importado', user_id: user.id, created_at: '' });
-            return newEx.id;
-          } catch (e) {
-            return null;
-          }
-        };
-
-        const parseNumber = (val: string | undefined): number | null => {
-          if (!val) return null;
-          
-          let cleaned = val.replace(/["']/g, '').trim();
-          if (cleaned === '' || cleaned === '-' || cleaned.toLowerCase() === 'no') return null;
-          
-          cleaned = cleaned.replace(/\s+/g, ' ').replace(/[a-zA-Z]/g, ' ').replace(/[^\d,.\-]/g, '').replace(/,/g, '.');
-          
-          const match = cleaned.match(/^(\d+\.?\d*)/);
-          if (!match) return null;
-          
-          const num = parseFloat(match[1]);
-          return (!isNaN(num) && num > 0 && num < 1000) ? Math.round(num * 10) / 10 : null;
-        };
-
-        const parseDate = (dateStr: string): string | null => {
-          if (!dateStr || dateStr.trim() === '' || !dateStr.includes('/')) return null;
-          
-          const parts = dateStr.split('/');
-          if (parts.length !== 3) return null;
-          
-          const day = parseInt(parts[0], 10);
-          const month = parseInt(parts[1], 10);
-          const year = parseInt(parts[2], 10);
-          
-          if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
-          
-          const fullYear = year < 100 ? 2000 + year : year;
-          const finalYear = fullYear > 2026 ? fullYear - 100 : fullYear;
-          
-          if (day < 1 || day > 31 || month < 1 || month > 12) return null;
-          
-          return `${finalYear}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        };
-
-        const isHeaderLine = (firstCol: string): boolean => {
-          const lower = firstCol.toLowerCase();
-          const headers = [
-            'tren superior', 'tren inferior', 'pecho', 'espalda', 'hombro',
-            'multiarticulares', 'isquio', 'femoral', 'abductores', 'adductores',
-            'cuádriceps', 'gemelos', 'tibiales', 'bíceps', 'tríceps', 'piernas',
-            'brazo', 'espalda baja', 'glúteos', 'core', 'abdomen'
-          ];
-          return headers.some(h => lower.includes(h));
-        };
-
-        let imported = 0;
-        let errors: string[] = [];
-        const dateWorkoutMap: Record<string, string> = {};
-        let currentDate = new Date().toISOString().split('T')[0];
         
-        for (let i = 0; i < lines.length; i++) {
-          const lineNum = i + 1;
-          const line = lines[i];
-          
-          if (line.length > 1000) continue;
-          
-          let cols: string[] = [];
-          let inQuotes = false;
-          let current = '';
+    const getExerciseId = async (name: string): Promise<string | null> => {
+      const cleanName = name.replace(/["']/g, '').trim();
+      if (!cleanName || cleanName.length < 2) return null;
+      
+      const existing = exerciseList.find(ex => 
+        ex && ex.name && ex.name.toLowerCase() === cleanName.toLowerCase()
+      );
+      
+      if (existing?.id) return existing.id;
+      
+      try {
+        const { data: newEx, error } = await supabase
+          .from('exercises')
+          .insert({ 
+            name: cleanName, 
+            user_id: user.id, 
+            muscle_group: 'Otro' 
+          })
+          .select('id')
+          .single();
+        
+        if (error || !newEx) return null;
+        
+        exerciseList.push({ id: newEx.id, name: cleanName, muscle_group: 'Otro', user_id: user.id, created_at: '' });
+        return newEx.id;
+      } catch {
+        return null;
+      }
+    };
+
+    const parseNumber = (val: string | undefined): number | null => {
+      if (!val) return null;
+      
+      let cleaned = val.replace(/["']/g, '').trim();
+      if (cleaned === '' || cleaned === '-' || cleaned.toLowerCase() === 'no') return null;
+      
+      cleaned = cleaned.replace(/\s+/g, ' ').replace(/[a-zA-Z]/g, ' ').replace(/[^\d,.-]/g, '').replace(/,/g, '.');
+      
+      const match = cleaned.match(/^(\d+\.?\d*)/);
+      if (!match) return null;
+      
+      const num = parseFloat(match[1]);
+      return (!isNaN(num) && num > 0 && num < 1000) ? Math.round(num * 10) / 10 : null;
+    };
+
+    const parseDate = (dateStr: string): string | null => {
+      if (!dateStr || dateStr.trim() === '' || !dateStr.includes('/')) return null;
+      
+      const parts = dateStr.split('/');
+      if (parts.length !== 3) return null;
+      
+      const day = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10);
+      const year = parseInt(parts[2], 10);
+      
+      if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
+      
+      const fullYear = year < 100 ? 2000 + year : year;
+      const finalYear = fullYear > 2026 ? fullYear - 100 : fullYear;
+      
+      if (day < 1 || day > 31 || month < 1 || month > 12) return null;
+      
+      return `${finalYear}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    };
+
+    const isHeaderLine = (firstCol: string): boolean => {
+      const lower = firstCol.toLowerCase();
+      const headers = [
+        'tren superior', 'tren inferior', 'pecho', 'espalda', 'hombro',
+        'multiarticulares', 'isquio', 'femoral', 'abductores', 'adductores',
+        'cuádriceps', 'gemelos', 'tibiales', 'bíceps', 'tríceps', 'piernas',
+        'brazo', 'espalda baja', 'glúteos', 'core', 'abdomen'
+      ];
+      return headers.some(h => lower.includes(h));
+    };
+
+    let imported = 0;
+    const errors: string[] = [];
+    const dateWorkoutMap: Record<string, string> = {};
+    let currentDate = new Date().toISOString().split('T')[0];
+    
+    for (let i = 0; i < lines.length; i++) {
+      const lineNum = i + 1;
+      const line = lines[i];
+      
+      if (line.length > 1000) continue;
+      
+      const cols: string[] = [];
+      let inQuotes = false;
+      let current = '';
           
           for (let j = 0; j < line.length; j++) {
             const char = line[j];
@@ -368,8 +376,8 @@ export function HistoryPage() {
         }
         
         if (imported > 0) {
-          await loadRecentSets(user.id);
-          await loadWorkouts(user.id);
+          await refetchSets();
+          await refetchWorkouts();
         }
         
         let message = imported > 0 

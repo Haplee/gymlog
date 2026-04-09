@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../stores/authStore';
 import { useRoutineStore, dayLabels } from '../stores/routineStore';
-import { useWorkoutStore } from '../stores/workoutStore';
 import { Layout } from '../components/Layout';
 import type { Routine, DayOfWeek } from '../stores/routineStore';
+import { fetchExercises } from '../api/queries';
 
 const DAYS = Object.keys(dayLabels) as DayOfWeek[];
 
@@ -24,7 +25,12 @@ export function RoutinePage() {
     getDayName
   } = useRoutineStore();
   
-  const { exercises, loadExercises } = useWorkoutStore();
+  const { data: exercises = [] } = useQuery({
+    queryKey: ['exercises', user?.id],
+    queryFn: () => fetchExercises(user!.id),
+    enabled: !!user?.id
+  });
+
   const [selectedDay, setSelectedDay] = useState<DayOfWeek>(getDayName());
   const [showCreate, setShowCreate] = useState(false);
   const [newRoutineName, setNewRoutineName] = useState('');
@@ -35,10 +41,9 @@ export function RoutinePage() {
       navigate('/login');
       return;
     }
-    loadExercises(user.id);
     loadFromDb(user.id);
     checkAndBackup(user.id);
-  }, [user, navigate, loadExercises, loadFromDb, checkAndBackup]);
+  }, [user, navigate, loadFromDb, checkAndBackup]);
 
   const activeRoutine = getActiveRoutine();
   const todayRoutine = getTodayRoutine();

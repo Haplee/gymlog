@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../stores/authStore';
-import { useWorkoutStore } from '../stores/workoutStore';
 import { Layout } from '../components/Layout';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { format, subWeeks, startOfWeek, eachWeekOfInterval, parseISO } from 'date-fns';
+import { fetchWorkouts, fetchRecentSets } from '../api/queries';
 
 interface ExerciseStats {
   name: string;
@@ -15,39 +16,41 @@ interface ExerciseStats {
 export function StatsPage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { recentSets, loadRecentSets, loadWorkouts, workouts } = useWorkoutStore();
   const [rmWeight, setRmWeight] = useState('');
   const [rmReps, setRmReps] = useState('');
   const [rmResult, setRmResult] = useState<number | null>(null);
   const [selectedExercise, setSelectedExercise] = useState<string>('');
-  const [exerciseStats, setExerciseStats] = useState<ExerciseStats[]>([]);
-  const [currentStreak, setCurrentStreak] = useState(0);
-  const [maxStreak, setMaxStreak] = useState(0);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!user) {
-      navigate('/login');
-      return;
-    }
-    loadRecentSets(user.id).then(() => setLoading(false));
-    loadWorkouts(user.id);
-  }, [user, navigate, loadRecentSets, loadWorkouts]);
+  const { data: workouts = [], isLoading: loadingWorkouts } = useQuery({
+    queryKey: ['workouts', user?.id],
+    queryFn: () => fetchWorkouts(user!.id),
+    enabled: !!user?.id
+  });
 
-  useEffect(() => {
-    if (recentSets.length === 0) return;
-    
-    const uniqueExs = [...new Set(recentSets.map(s => s.exercise?.name).filter(Boolean))];
-    if (uniqueExs.length > 0 && !selectedExercise) {
-      setSelectedExercise(uniqueExs[0]);
-    }
+  const { data: recentSets = [], isLoading: loadingSets } = useQuery({
+    queryKey: ['recentSets', user?.id],
+    queryFn: () => fetchRecentSets(user!.id),
+    enabled: !!user?.id
+  });
+
+  const loading = loadingWorkouts || loadingSets;
+
+  if (!user) {
+    navigate('/login');
+    return null;
+  }
+
+  const uniqueExs = useMemo(() => {
+    return [...new Set(recentSets.map(s => s.exercise?.name).filter(Boolean))] as string[];
   }, [recentSets]);
 
-  useEffect(() => {
-    if (!selectedExercise || recentSets.length === 0) return;
+  const activeExercise = selectedExercise || (uniqueExs.length > 0 ? uniqueExs[0] : '');
+
+  const exerciseStats = useMemo(() => {
+    if (!activeExercise || recentSets.length === 0) return [];
 
     const exerciseSets = recentSets
-      .filter(s => s.exercise?.name === selectedExercise)
+      .filter(s => s.exercise?.name === activeExercise)
       .sort((a, b) => new Date(a.workout?.started_at).getTime() - new Date(b.workout?.started_at).getTime());
 
     const stats: ExerciseStats[] = [];
@@ -61,14 +64,14 @@ export function StatsPage() {
     });
 
     Object.entries(byDate).forEach(([date, maxWeight]) => {
-      stats.push({ name: selectedExercise, maxWeight, date });
+      stats.push({ name: activeExercise, maxWeight, date });
     });
 
-    setExerciseStats(stats);
-  }, [selectedExercise, recentSets]);
+    return stats;
+  }, [activeExercise, recentSets]);
 
-  useEffect(() => {
-    if (workouts.length === 0) return;
+  const { currentStreak, maxStreak } = useMemo(() => {
+    if (workouts.length === 0) return { currentStreak: 0, maxStreak: 0 };
 
     const dates = workouts
       .map(w => new Date(w.started_at).toISOString().split('T')[0])
@@ -95,8 +98,7 @@ export function StatsPage() {
     max = Math.max(max, temp);
     if (dates[0] === today) current = temp;
 
-    setCurrentStreak(current);
-    setMaxStreak(max);
+    return { currentStreak: current, maxStreak: max };
   }, [workouts]);
 
   const totalVol = recentSets.reduce((a, s) => a + (s.reps * s.weight), 0);
