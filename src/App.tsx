@@ -221,11 +221,6 @@ function AppRoutes() {
   // Inicializar tema al arrancar
   useEffect(() => {
     applyTheme();
-    // Reaccionar a cambios del sistema
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const listener = () => applyTheme();
-    mq.addEventListener('change', listener);
-    return () => mq.removeEventListener('change', listener);
   }, [applyTheme]);
 
   useEffect(() => {

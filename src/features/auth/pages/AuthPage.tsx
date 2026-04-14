@@ -77,10 +77,15 @@ export function AuthPage() {
     setAnimKey((prev) => prev + 1);
   };
 
+  const accent = '#c8ff00';
+
   return (
     <div className="min-h-screen min-h-[100dvh] flex flex-col items-center justify-center p-6 bg-[var(--bg-base)]">
       <div className="text-center mb-8 scale-in">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-[var(--radius-lg)] bg-[var(--interactive-primary)] flex items-center justify-center shadow-[--shadow-fab]">
+        <div
+          className="w-16 h-16 mx-auto mb-4 rounded-[var(--radius-lg)] flex items-center justify-center"
+          style={{ backgroundColor: accent, boxShadow: `0 0 30px ${accent}40` }}
+        >
           <img
             src="/gimnasia.png"
             alt="GymLog"
@@ -88,7 +93,7 @@ export function AuthPage() {
           />
         </div>
         <h1 className="text-[1.875rem] font-extrabold tracking-tight fade-in-up text-[var(--text-primary)]">
-          Gym<span className="text-[var(--interactive-primary)]">Log</span>
+          Gym<span style={{ color: accent }}>Log</span>
         </h1>
         <p className="text-[0.875rem] mt-2 fade-in-up text-[var(--text-tertiary)]">
           {isSignUp ? 'Crea tu cuenta' : 'Inicia sesión'}
@@ -199,7 +204,8 @@ export function AuthPage() {
                 ? 'Crear cuenta'
                 : 'Iniciar sesión'
           }
-          className="w-full py-4 rounded-[var(--radius-lg)] text-base font-bold transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 bg-[var(--interactive-primary)] text-[var(--interactive-primary-fg)]"
+          className="w-full py-4 rounded-[var(--radius-lg)] text-base font-bold transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+          style={{ backgroundColor: isBlocked ? '#444' : accent, color: '#0a0a0c' }}
         >
           {loading ? (
             <span className="inline-flex items-center gap-2">
@@ -286,7 +292,8 @@ export function AuthPage() {
           <button
             type="button"
             onClick={toggleMode}
-            className="text-sm bg-transparent border-none transition-all hover:scale-105 text-[var(--interactive-primary)]"
+            className="text-sm bg-transparent border-none transition-all hover:scale-105"
+            style={{ color: accent }}
           >
             {isSignUp ? '¿Ya tienes cuenta? Inicia sesión' : '¿Sin cuenta? Crea una'}
           </button>

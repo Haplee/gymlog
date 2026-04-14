@@ -23,7 +23,7 @@ export function SettingsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, signOut } = useAuthStore();
-  const { sound, setSound, theme, setTheme, language, setLanguage } = useSettingsStore();
+  const { sound, setSound, language, setLanguage } = useSettingsStore();
   const [notifEnabled, setNotifEnabled] = useState(
     'Notification' in window && Notification.permission === 'granted',
   );
@@ -85,28 +85,6 @@ export function SettingsPage() {
                 className="flex-1"
               >
                 {lang === 'es' ? 'Español' : 'English'}
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        {/* Tema */}
-        <div
-          className="rounded-2xl p-4 scale-in"
-          style={{ backgroundColor: bgCard, border: `1px solid ${border}` }}
-        >
-          <div className="text-sm font-medium mb-3" style={{ color: 'var(--text-primary)' }}>
-            {t('settings.theme')}
-          </div>
-          <div className="flex gap-2">
-            {(['light', 'dark', 'system'] as const).map((tVal) => (
-              <Button
-                key={tVal}
-                variant={theme === tVal ? 'primary' : 'secondary'}
-                onClick={() => setTheme(tVal)}
-                className="flex-1 text-xs"
-              >
-                {tVal.toUpperCase()}
               </Button>
             ))}
           </div>
