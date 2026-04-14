@@ -1,0 +1,144 @@
+{
+  "app": {
+    "name": "GymLog",
+    "loading": "Cargando...",
+    "error": "Ha ocurrido un error",
+    "retry": "Reintentar",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "close": "Cerrar",
+    "confirm": "Confirmar",
+    "back": "Volver",
+    "next": "Siguiente",
+    "finish": "Finalizar",
+    "share": "Compartir",
+    "compare": "Comparar"
+  },
+  "auth": {
+    "login": "Iniciar sesión",
+    "register": "Registrarse",
+    "logout": "Cerrar sesión",
+    "email": "Email",
+    "password": "Contraseña",
+    "fullName": "Nombre completo",
+    "username": "Nombre de usuario",
+    "loginWithGoogle": "Continuar con Google",
+    "noAccount": "¿No tienes cuenta?",
+    "hasAccount": "¿Ya tienes cuenta?",
+    "verificationSent": "Revisa tu email para verificar la cuenta",
+    "rateLimitExceeded": "Demasiados intentos. Espera {{seconds}}s",
+    "errors": {
+      "invalidCredentials": "Email o contraseña incorrectos",
+      "emailInUse": "Este email ya está registrado",
+      "generic": "Error al autenticar. Inténtalo de nuevo"
+    }
+  },
+  "workout": {
+    "title": "Entrenamiento",
+    "addExercise": "Añadir ejercicio",
+    "selectExercise": "Seleccionar ejercicio",
+    "customExercise": "Ejercicio personalizado",
+    "exerciseName": "Nombre del ejercicio",
+    "addSet": "Añadir serie",
+    "saveWorkout": "Guardar entrenamiento",
+    "reps": "Reps",
+    "weight": "Peso (kg)",
+    "rpe": "RPE",
+    "warmup": "Calentamiento",
+    "notes": "Notas",
+    "saved": "Entrenamiento guardado 💪",
+    "prBeat": "¡Nuevo récord personal! 🏆",
+    "errors": {
+      "noExercise": "Selecciona un ejercicio",
+      "noSets": "Añade reps y kg",
+      "saveFailed": "Error al guardar"
+    },
+    "emptyState": {
+      "title": "¡Empieza a entrenar!",
+      "subtitle": "Selecciona un ejercicio y registra tus series"
+    }
+  },
+  "history": {
+    "title": "Historial",
+    "noWorkouts": "Sin entrenamientos",
+    "noWorkoutsSubtitle": "Guarda tu primer entrenamiento y aparecerá aquí",
+    "deleteConfirm": "¿Eliminar este entrenamiento?",
+    "sets": "series",
+    "volume": "Volumen",
+    "duration": "Duración",
+    "rating": "Valoración",
+    "comparison": {
+      "title": "Comparar entrenamientos",
+      "select": "Selecciona dos entrenamientos para comparar",
+      "totalVolume": "Volumen total",
+      "totalSets": "Series totales"
+    }
+  },
+  "stats": {
+    "title": "Estadísticas",
+    "weeklyVolume": "Volumen semanal",
+    "byMuscle": "Por grupo muscular",
+    "personalRecords": "Récords personales",
+    "noStats": "Sin estadísticas",
+    "noStatsSubtitle": "Completa entrenamientos para ver tus progresos",
+    "oneRepMax": "1RM estimado",
+    "radarChart": {
+      "title": "Volumen por músculo (semana actual)"
+    }
+  },
+  "routine": {
+    "title": "Mi rutina",
+    "noRoutine": "Sin rutina configurada",
+    "noRoutineSubtitle": "Planifica tu semana de entrenamiento",
+    "days": {
+      "0": "Lunes",
+      "1": "Martes",
+      "2": "Miércoles",
+      "3": "Jueves",
+      "4": "Viernes",
+      "5": "Sábado",
+      "6": "Domingo"
+    }
+  },
+  "settings": {
+    "title": "Ajustes",
+    "theme": "Tema",
+    "dark": "Oscuro",
+    "light": "Claro",
+    "notifications": "Notificaciones",
+    "pushNotifications": "Notificaciones push",
+    "reminderTime": "Hora de recordatorio",
+    "language": "Idioma",
+    "account": "Cuenta",
+    "profile": "Perfil",
+    "deleteAccount": "Eliminar cuenta",
+    "version": "Versión"
+  },
+  "onboarding": {
+    "step1": {
+      "title": "¿Cuál es tu objetivo?",
+      "volume": "Ganar masa muscular",
+      "strength": "Aumentar fuerza",
+      "endurance": "Mejorar resistencia",
+      "fat_loss": "Perder grasa"
+    },
+    "step2": {
+      "title": "¿Cuántos días entrenas?",
+      "days": "días por semana"
+    },
+    "step3": {
+      "title": "¿Qué equipamiento tienes?",
+      "barbell": "Barra",
+      "dumbbell": "Mancuernas",
+      "machine": "Máquinas",
+      "bodyweight": "Peso corporal",
+      "cable": "Poleas"
+    }
+  },
+  "pwa": {
+    "updateAvailable": "Nueva versión disponible",
+    "updateNow": "Actualizar ahora"
+  }
+}

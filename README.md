@@ -1,95 +1,80 @@
-# GymLog v1.8
+# GymLog v2.0
 
-PWA para registrar entrenamientos de gimnasio. Desplegado en **https://pesos-wine.vercel.app**
+PWA para registrar entrenamientos de gimnasio con enfoque en rendimiento, seguridad y experiencia de usuario premium.
 
-## Tech Stack
+Desplegado en: **https://pesos-wine.vercel.app**
 
-- **Frontend**: React 19 + TypeScript + Vite
-- **Estilos**: Tailwind CSS v4
-- **Estado**: Zustand
-- **Datos**: Supabase
-- **Charts**: Recharts
-- **Auth**: Supabase Auth (email + Google)
+## 🚀 Novedades v2.0
 
-## Estructura
+- **Arquitectura Feature-based**: Código organizado por funcionalidades (`auth`, `workout`, `routine`, `stats`) para mayor escalabilidad.
+- **TanStack Query v5**: Gestión de estado asíncrono, caché inteligente y optimizaciones de red.
+- **Design System Premium**: Tokens de diseño, componentes accesibles (WCAG 2.1) y animaciones fluidas.
+- **Seguridad Reforzada**: Rate limiting en autenticación y políticas de seguridad (CSP) estrictas.
+- **Gráficos Avanzados**: Incorporación de `RadarChart` para análisis de volumen por grupo muscular.
 
-```
+## 🛠️ Tech Stack
+
+- **Frontend**: React 19 + TypeScript (Strict Mode) + Vite
+- **Estilos**: Tailwind CSS v4 + Custom Design Tokens (HSL)
+- **Estado**: Zustand (Global) + TanStack Query (Server State)
+- **Base de Datos**: Supabase (PostgreSQL)
+- **PWA**: Vite PWA Plugin + Custom Update Banner
+- **Testing**: Vitest (Unit) + Playwright (E2E)
+
+## 📁 Estructura del Proyecto
+
+```text
 src/
-├── components/     # Componentes reutilizables (Layout, RestTimer, PermissionRequests)
-├── pages/          # Páginas de la app (WorkoutPage, StatsPage, HistoryPage, etc.)
-├── stores/         # Estado global (Zustand: auth, workout, settings, routine)
-├── lib/            # Config Supabase, tipos TypeScript, utilidades
-├── hooks/          # Custom hooks (useWakeLock)
-└── public/         # PWA (manifest.json, sw.js, iconos)
+├── app/              # Configuración global, providers y layout
+├── features/         # Módulos de negocio (auth, workout, routine, stats)
+│   ├── [feature]/
+│   │   ├── pages/    # Vistas de la funcionalidad
+│   │   └── stores/   # Estado específico del módulo
+├── shared/           # Recursos comunes
+│   ├── api/          # Queries y mutaciones unificadas
+│   ├── components/   # UI Kit y componentes comunes
+│   ├── hooks/        # Hooks reutilizables
+│   ├── lib/          # Utilidades, tipos y esquemas (Zod)
+│   └── styles/       # Tokens de diseño y CSS global
 ```
 
-## Scripts
+## 📦 Instalación y Desarrollo
 
 ```bash
-# Desarrollo
+# Instalar dependencias
+npm install
+
+# Iniciar servidor de desarrollo
 npm run dev
 
-# Build producción
+# Ejecutar tests unitarios
+npm run test
+
+# Ejecutar tests E2E
+npx playwright test
+
+# Build de producción
 npm run build
-
-# Preview
-npm run preview
-
-# Deploy a producción
-npx vercel deploy --prod
 ```
 
-## Funcionalidades
+## 🔒 Seguridad y Rendimiento
 
-- 🔐 Autenticación con Supabase Auth (email + Google)
-- 🏋️ Registro de ejercicios y series con validación
-- 📋 Rutina semanal (asigna ejercicios por día)
-- ⏱️ Timer de descanso con notificaciones
-- 📊 Estadísticas, gráficos semanales y progresión por ejercicio
-- 📜 Historial de entrenamientos con filtros
-- 📥 Importar/Exportar CSV (formato compatible)
-- 🔢 Calculadora 1RM (Fórmula Brzycki)
-- 🔊 Sonido configurable (Web Audio API)
-- 📳 Vibración configurable (Navigator Vibration API)
-- ⚙️ Configuración persistente (vibración, sonido, timer)
-- 📱 PWA instalable con offline
-- 💾 Sesión persistente
+- **CSP**: Cabeceras de seguridad configuradas en `vercel.json`.
+- **Rate Limit**: Protección contra fuerza bruta en formularios de acceso.
+- **PWA Update**: Sistema de actualización controlada para evitar pérdida de datos.
+- **Optimization**: Code splitting, lazy loading y bundle analysis integrado.
 
-## Supabase
+## 📊 Base de Datos
 
-- **Proyecto**: eoltmipoklizewxdpzfa
-- **URL**: https://eoltmipoklizewxdpzfa.supabase.co
+El esquema se encuentra en `supabase/migrations/v2.sql`. Incluye tablas para:
 
-### Tablas
+- `profiles` (Usuarios)
+- `exercises` (Catálogo extendido v2)
+- `workouts` (Sesiones)
+- `workout_sets` (Datos técnicos de series)
+- `personal_records` (Brzycki formula)
+- `user_routines` (Planificación semanal)
 
-- `profiles` → Usuarios (username, full_name)
-- `exercises` → Ejercicios disponibles (user_id, muscle_group)
-- `workouts` → Sesiones de entrenamiento (user_id, started_at)
-- `workout_sets` → Series registradas (weight, reps, set_num)
-- `personal_records` → Récords personales (weight, reps)
-- `user_routines` → Rutina semanal por usuario
+---
 
-## PWA
-
-La app funciona offline mediante Service Worker:
-
-- `manifest.json` → Configuración (nombre, iconos, theme)
-- `sw.js` → Cacheo stale-while-revalidate
-
-Para instalación:
-- Chrome/Android: "Añadir a pantalla de inicio"
-- iOS: Compartir → "Añadir a pantalla de inicio"
-
-## Build Optimizado
-
-- Code splitting automático por página
-- Lazy loading de componentes
-- CSS mínimo con Tailwind v4
-- Bundle ~500KB (gzipped ~150KB)
-
-## Contributing
-
-1. Fork del repositorio
-2. Crear branch `feature/xxx`
-3. Commit con cambios
-4. Push y abrir PR
+Desarrollado con ❤️ por [Haplee](https://github.com/Haplee)

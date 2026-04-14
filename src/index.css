@@ -1,5 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import 'tailwindcss';
+@import './shared/styles/tokens.css';
 
 :root {
   --text: #6b6375;
@@ -11,8 +12,7 @@
   --accent-bg: rgba(170, 59, 255, 0.1);
   --accent-border: rgba(170, 59, 255, 0.5);
   --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  --shadow: rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
   --header-height: 44px;
   --tab-height: 52px;
   --bottom-nav-height: 83px;
@@ -42,8 +42,7 @@
   --accent-bg: rgba(192, 132, 252, 0.15);
   --accent-border: rgba(192, 132, 252, 0.5);
   --social-bg: rgba(47, 48, 58, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+  --shadow: rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
   color-scheme: dark;
 }
 
@@ -138,19 +137,36 @@ code {
 }
 
 @keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 @keyframes bounce-in {
-  0% { opacity: 0; transform: scale(0.9); }
-  50% { transform: scale(1.02); }
-  100% { opacity: 1; transform: scale(1); }
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .slide-up {
@@ -169,13 +185,15 @@ code {
   animation: bounce-in 0.5s ease-out forwards;
 }
 
-input, select {
+input,
+select {
   -webkit-appearance: none;
   appearance: none;
   touch-action: manipulation;
 }
 
-input:focus, select:focus {
+input:focus,
+select:focus {
   outline: none;
 }
 
@@ -185,7 +203,7 @@ input:focus, select:focus {
   margin: 0;
 }
 
-input[type=number] {
+input[type='number'] {
   -moz-appearance: textfield;
 }
 
@@ -206,25 +224,48 @@ input[type=number] {
 }
 
 @keyframes toggle-on {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.2); }
-  100% { transform: scale(1.1); }
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1.1);
+  }
 }
 
 @keyframes toggle-pulse {
-  0%, 100% { box-shadow: 0 0 8px rgba(200, 255, 0, 0.3); }
-  50% { box-shadow: 0 0 16px rgba(200, 255, 0, 0.6); }
+  0%,
+  100% {
+    box-shadow: 0 0 8px rgba(200, 255, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(200, 255, 0, 0.6);
+  }
 }
 
 @keyframes button-press {
-  0% { transform: scale(1); }
-  50% { transform: scale(0.95); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 @keyframes fade-in-up {
-  0% { opacity: 0; transform: translateY(10px); }
-  100% { opacity: 1; transform: translateY(0); }
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .btn-press {
@@ -240,16 +281,33 @@ input[type=number] {
 }
 
 @keyframes timer-pulse {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.05); opacity: 0.9; }
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
 }
 
 @keyframes timer-complete {
-  0% { transform: scale(1); }
-  25% { transform: scale(1.2); }
-  50% { transform: scale(0.95); }
-  75% { transform: scale(1.1); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(1.2);
+  }
+  50% {
+    transform: scale(0.95);
+  }
+  75% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .timer-pulse {
@@ -261,8 +319,14 @@ input[type=number] {
 }
 
 @keyframes ripple {
-  0% { transform: scale(0); opacity: 0.5; }
-  100% { transform: scale(2); opacity: 0; }
+  0% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
 }
 
 .ripple {
@@ -273,61 +337,133 @@ input[type=number] {
 }
 
 @keyframes slide-in-right {
-  from { opacity: 0; transform: translateX(20px); }
-  to { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 @keyframes slide-out-left {
-  from { opacity: 1; transform: translateX(0); }
-  to { opacity: 0; transform: translateX(-20px); }
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
 }
 
 @keyframes scale-in {
-  from { opacity: 0; transform: scale(0.9); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 @keyframes scale-out {
-  from { opacity: 1; transform: scale(1); }
-  to { opacity: 0; transform: scale(0.9); }
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.9);
+  }
 }
 
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 @keyframes success-pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.1); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 @keyframes error-shake {
-  0%, 100% { transform: translateX(0); }
-  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
-  20%, 40%, 60%, 80% { transform: translateX(4px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-4px);
+  }
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(4px);
+  }
 }
 
 @keyframes input-focus {
-  0% { box-shadow: 0 0 0 0 rgba(200, 255, 0, 0); }
-  50% { box-shadow: 0 0 0 3px rgba(200, 255, 0, 0.2); }
-  100% { box-shadow: 0 0 0 0 rgba(200, 255, 0, 0); }
+  0% {
+    box-shadow: 0 0 0 0 rgba(200, 255, 0, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 3px rgba(200, 255, 0, 0.2);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(200, 255, 0, 0);
+  }
 }
 
 @keyframes skeleton-loading {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
-.slide-in-right { animation: slide-in-right 0.3s ease-out forwards; }
-.slide-out-left { animation: slide-out-left 0.2s ease-out forwards; }
-.scale-in { animation: scale-in 0.3s ease-out forwards; }
-.scale-out { animation: scale-out 0.2s ease-out forwards; }
-.shimmer { animation: shimmer 1.5s infinite; }
-.success-pulse { animation: success-pulse 0.3s ease-out; }
-.error-shake { animation: error-shake 0.4s ease-out; }
-.skeleton { 
+.slide-in-right {
+  animation: slide-in-right 0.3s ease-out forwards;
+}
+.slide-out-left {
+  animation: slide-out-left 0.2s ease-out forwards;
+}
+.scale-in {
+  animation: scale-in 0.3s ease-out forwards;
+}
+.scale-out {
+  animation: scale-out 0.2s ease-out forwards;
+}
+.shimmer {
+  animation: shimmer 1.5s infinite;
+}
+.success-pulse {
+  animation: success-pulse 0.3s ease-out;
+}
+.error-shake {
+  animation: error-shake 0.4s ease-out;
+}
+.skeleton {
   background: linear-gradient(90deg, #1c1c22 25%, #2a2a32 50%, #1c1c22 75%);
   background-size: 200% 100%;
   animation: skeleton-loading 1.5s infinite;

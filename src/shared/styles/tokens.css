@@ -1,0 +1,152 @@
+/* ════════════════════════════════════════════════
+   GymLog v2.0 — Design System Tokens
+   ════════════════════════════════════════════════ */
+
+:root,
+:root.light {
+  /* ── Colores primarios ───────────────────────── */
+  --color-primary: hsl(75 100% 50%); /* #c8ff00 — lima eléctrico */
+  --color-primary-dim: hsl(75 100% 40%);
+  --color-primary-subtle: hsl(75 100% 50% / 0.12);
+  --color-primary-border: hsl(75 100% 50% / 0.35);
+
+  /* ── Colores secundarios ─────────────────────── */
+  --color-secondary: hsl(270 85% 68%); /* violeta */
+  --color-secondary-dim: hsl(270 85% 55%);
+  --color-secondary-subtle: hsl(270 85% 68% / 0.12);
+
+  /* ── Acento ──────────────────────────────────── */
+  --color-accent: hsl(195 100% 55%); /* cian */
+  --color-accent-subtle: hsl(195 100% 55% / 0.12);
+
+  /* ── Semánticos ──────────────────────────────── */
+  --color-success: hsl(142 71% 45%);
+  --color-success-subtle: hsl(142 71% 45% / 0.12);
+  --color-warning: hsl(38 92% 50%);
+  --color-warning-subtle: hsl(38 92% 50% / 0.12);
+  --color-error: hsl(0 84% 60%);
+  --color-error-subtle: hsl(0 84% 60% / 0.12);
+  --color-info: hsl(221 83% 60%);
+  --color-info-subtle: hsl(221 83% 60% / 0.12);
+
+  /* ── Fondos (modo claro) ─────────────────────── */
+  --bg-base: hsl(0 0% 100%);
+  --bg-surface: hsl(240 5% 96%);
+  --bg-elevated: hsl(240 5% 92%);
+  --bg-overlay: hsl(0 0% 0% / 0.4);
+
+  /* ── Texto (modo claro) ──────────────────────── */
+  --text-primary: hsl(240 10% 4%);
+  --text-secondary: hsl(240 5% 42%);
+  --text-muted: hsl(240 4% 62%);
+  --text-inverse: hsl(0 0% 100%);
+
+  /* ── Bordes (modo claro) ─────────────────────── */
+  --border-default: hsl(240 6% 90%);
+  --border-strong: hsl(240 6% 78%);
+
+  /* ── Mapeo backward-compat ───────────────────── */
+  --bg: var(--bg-base);
+  --bg-main: var(--bg-base);
+  --bg-card: var(--bg-surface);
+  --bg-input: var(--bg-surface);
+  --text-h: var(--text-primary);
+  --text: var(--text-secondary);
+  --text-muted: var(--text-muted);
+  --border-color: var(--border-default);
+  --accent: var(--color-primary);
+  --accent-bg: var(--color-primary-subtle);
+  --accent-border: var(--color-primary-border);
+}
+
+:root.dark {
+  /* ── Fondos (modo oscuro) ────────────────────── */
+  --bg-base: hsl(240 10% 4%); /* #09090b */
+  --bg-surface: hsl(240 6% 9%); /* #141418 */
+  --bg-elevated: hsl(240 5% 14%); /* #1c1c22 */
+  --bg-overlay: hsl(0 0% 0% / 0.6);
+
+  /* ── Texto (modo oscuro) ─────────────────────── */
+  --text-primary: hsl(0 0% 98%);
+  --text-secondary: hsl(240 5% 65%);
+  --text-muted: hsl(240 4% 38%);
+  --text-inverse: hsl(240 10% 4%);
+
+  /* ── Bordes (modo oscuro) ────────────────────── */
+  --border-default: hsl(240 4% 16%);
+  --border-strong: hsl(240 4% 28%);
+
+  /* ── Mapeo backward-compat ───────────────────── */
+  --bg: var(--bg-base);
+  --bg-main: var(--bg-base);
+  --bg-card: var(--bg-surface);
+  --bg-input: var(--bg-surface);
+  --text-h: var(--text-primary);
+  --text: var(--text-secondary);
+  --text-muted: var(--text-muted);
+  --border-color: var(--border-default);
+  --accent: var(--color-primary);
+  --accent-bg: var(--color-primary-subtle);
+  --accent-border: var(--color-primary-border);
+}
+
+/* ── Tipografía ────────────────────────────────── */
+:root {
+  --font-sans: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, Consolas, 'Cascadia Code', monospace;
+
+  --text-xs: 0.75rem; /* 12px */
+  --text-sm: 0.875rem; /* 14px */
+  --text-md: 1rem; /* 16px */
+  --text-lg: 1.125rem; /* 18px */
+  --text-xl: 1.25rem; /* 20px */
+  --text-2xl: 1.5rem; /* 24px */
+  --text-3xl: 1.875rem; /* 30px */
+  --text-4xl: 2.25rem; /* 36px */
+
+  --leading-tight: 1.2;
+  --leading-normal: 1.5;
+  --leading-loose: 1.75;
+
+  /* ── Espaciado ───────────────────────────────── */
+  --space-1: 0.25rem; /*  4px */
+  --space-2: 0.5rem; /*  8px */
+  --space-3: 0.75rem; /* 12px */
+  --space-4: 1rem; /* 16px */
+  --space-5: 1.25rem; /* 20px */
+  --space-6: 1.5rem; /* 24px */
+  --space-8: 2rem; /* 32px */
+  --space-10: 2.5rem; /* 40px */
+  --space-12: 3rem; /* 48px */
+  --space-16: 4rem; /* 64px */
+
+  /* ── Border radius ───────────────────────────── */
+  --radius-sm: 0.25rem; /*  4px */
+  --radius-md: 0.5rem; /*  8px */
+  --radius-lg: 0.75rem; /* 12px */
+  --radius-xl: 1rem; /* 16px */
+  --radius-2xl: 1.5rem; /* 24px */
+  --radius-full: 9999px;
+
+  /* ── Sombras ─────────────────────────────────── */
+  --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.05);
+  --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.1), 0 2px 4px -2px hsl(0 0% 0% / 0.1);
+  --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.15), 0 4px 6px -4px hsl(0 0% 0% / 0.1);
+  --shadow-glow: 0 0 16px hsl(75 100% 50% / 0.25);
+
+  /* ── Transiciones ────────────────────────────── */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 400ms ease;
+
+  /* ── Z-index ─────────────────────────────────── */
+  --z-base: 0;
+  --z-raised: 10;
+  --z-floating: 100;
+  --z-modal: 200;
+  --z-toast: 300;
+
+  /* ── Layout ──────────────────────────────────── */
+  --header-height: 44px;
+  --bottom-nav-height: 83px;
+}
