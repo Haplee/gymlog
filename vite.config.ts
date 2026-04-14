@@ -80,5 +80,6 @@ export default defineConfig(({ mode }) => ({
         gzipSize: true,
         brotliSize: true,
       }),
-  ].filter(Boolean),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ].filter(Boolean) as any[],
 }));
