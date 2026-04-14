@@ -3,10 +3,27 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { Layout } from '@app/components/Layout';
-import { format, subWeeks, startOfWeek, eachWeekOfInterval, parseISO } from 'date-fns';
+import { format, subWeeks, startOfWeek, eachWeekOfInterval, parseISO, subDays } from 'date-fns';
 import { fetchWorkoutsAndSets } from '@shared/api/queries';
 import { calcular1RM } from '@shared/lib/brzycki';
-import { EmptyStats } from '@shared/components/EmptyStates';
+import { Skeleton } from '@shared/components/ui/Skeleton';
+import { KPICard } from '../components/KPICards';
+import { ConsistencyHeatmap } from '../components/ConsistencyHeatmap';
+import { FatigueAnalysis } from '../components/FatigueAnalysis';
+import {
+  calculateCurrentStreak,
+  calculateMaxStreak,
+  calculateWeeklyVolume,
+  calculatePreviousWeekVolume,
+  calculateSessionCountLast30Days,
+  calculateVolumeChangePercent,
+} from '../utils/kpiCalculations';
+import { buildProgressionData } from '../utils/progressionMetrics';
+import {
+  analyzeMuscleRecovery,
+  getSuggestedMuscleGroup,
+  getDaysSinceLastWorkout,
+} from '../utils/fatigueAnalysis';
 
 const BarChart = lazy(() => import('recharts').then((m) => ({ default: m.BarChart })));
 const Bar = lazy(() => import('recharts').then((m) => ({ default: m.Bar })));
@@ -18,24 +35,25 @@ const ResponsiveContainer = lazy(() =>
 );
 const LineChart = lazy(() => import('recharts').then((m) => ({ default: m.LineChart })));
 const Line = lazy(() => import('recharts').then((m) => ({ default: m.Line })));
-const RadarChart = lazy(() => import('recharts').then((m) => ({ default: m.RadarChart })));
-const Radar = lazy(() => import('recharts').then((m) => ({ default: m.Radar })));
-const PolarGrid = lazy(() => import('recharts').then((m) => ({ default: m.PolarGrid })));
-const PolarAngleAxis = lazy(() => import('recharts').then((m) => ({ default: m.PolarAngleAxis })));
 
-interface ExerciseStats {
-  name: string;
-  maxWeight: number;
-  date: string;
-}
+type PeriodFilter = '4semanas' | '3meses' | '6meses' | '1año';
+
+const PERIOD_LABELS: Record<PeriodFilter, string> = {
+  '4semanas': '4 sem',
+  '3meses': '3 mes',
+  '6meses': '6 mes',
+  '1año': '1 año',
+};
 
 export function StatsPage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const [selectedExercise, setSelectedExercise] = useState<string>('');
+  const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('4semanas');
+  const [metricFilter, setMetricFilter] = useState<'1rm' | 'maxWeight' | 'volume'>('1rm');
   const [rmWeight, setRmWeight] = useState('');
   const [rmReps, setRmReps] = useState('');
   const [rmResult, setRmResult] = useState<number | null>(null);
-  const [selectedExercise, setSelectedExercise] = useState<string>('');
 
   const { data, isLoading } = useQuery({
     queryKey: ['workoutsAndSets', user?.id],
@@ -46,145 +64,71 @@ export function StatsPage() {
   const workouts = data?.workouts || [];
   const recentSets = data?.sets || [];
 
-  const loading = isLoading;
+  const currentStreak = useMemo(() => calculateCurrentStreak(workouts), [workouts]);
+  const maxStreak = useMemo(() => calculateMaxStreak(workouts), [workouts]);
+  const weeklyVolume = useMemo(() => calculateWeeklyVolume(recentSets), [recentSets]);
+  const prevWeekVolume = useMemo(() => calculatePreviousWeekVolume(recentSets), [recentSets]);
+  const volumeChange = useMemo(
+    () => calculateVolumeChangePercent(weeklyVolume, prevWeekVolume),
+    [weeklyVolume, prevWeekVolume],
+  );
+  const sessionCount = useMemo(() => calculateSessionCountLast30Days(workouts), [workouts]);
+  const daysSinceLast = useMemo(() => getDaysSinceLastWorkout(workouts), [workouts]);
 
-  const uniqueExs = useMemo(() => {
+  const muscleRecovery = useMemo(() => analyzeMuscleRecovery(recentSets), [recentSets]);
+  const suggestedGroup = useMemo(() => getSuggestedMuscleGroup(muscleRecovery), [muscleRecovery]);
+
+  const uniqueExercises = useMemo(() => {
     return [...new Set(recentSets.map((s) => s.exercise?.name).filter(Boolean))] as string[];
   }, [recentSets]);
 
-  const activeExercise = selectedExercise || (uniqueExs.length > 0 ? uniqueExs[0] : '');
+  const activeExercise = selectedExercise || uniqueExercises[0] || '';
 
-  const exerciseStats = useMemo(() => {
-    if (!activeExercise || recentSets.length === 0) return [];
+  const periodWeeks: Record<PeriodFilter, number> = {
+    '4semanas': 4,
+    '3meses': 12,
+    '6meses': 24,
+    '1año': 52,
+  };
 
-    const exerciseSets = recentSets
-      .filter((s) => s.exercise?.name === activeExercise)
-      .sort(
-        (a, b) =>
-          new Date(a.workout?.started_at).getTime() - new Date(b.workout?.started_at).getTime(),
-      );
+  const weeklyVolumeData = useMemo(() => {
+    const weeks = periodWeeks[periodFilter];
+    const now = new Date();
+    const start = subWeeks(now, weeks);
+    const weekStarts = eachWeekOfInterval({ start, end: now }).map((w) => startOfWeek(w));
 
-    const stats: ExerciseStats[] = [];
-    const byDate: Record<string, number> = {};
+    return weekStarts
+      .map((weekStart, i) => {
+        const weekEnd = subDays(weekStart, -7);
+        const vol = recentSets
+          .filter((s) => {
+            const d = new Date(s.workout?.started_at);
+            return d >= weekStart && d < weekEnd;
+          })
+          .reduce((sum, s) => sum + s.reps * s.weight, 0);
 
-    exerciseSets.forEach((s) => {
-      const date = new Date(s.workout?.started_at).toISOString().split('T')[0];
-      if (!byDate[date] || s.weight > byDate[date]) {
-        byDate[date] = s.weight;
-      }
-    });
-
-    Object.entries(byDate).forEach(([date, maxWeight]) => {
-      stats.push({ name: activeExercise, maxWeight, date });
-    });
-
-    return stats;
-  }, [activeExercise, recentSets]);
-
-  const { currentStreak, maxStreak } = useMemo(() => {
-    if (workouts.length === 0) return { currentStreak: 0, maxStreak: 0 };
-
-    const dates = workouts
-      .map((w) => new Date(w.started_at).toISOString().split('T')[0])
-      .filter((v, i, a) => a.indexOf(v) === i)
-      .sort()
-      .reverse();
-
-    let current = 0;
-    let max = 0;
-    let temp = 0;
-    const today = new Date().toISOString().split('T')[0];
-
-    for (let i = 0; i < dates.length; i++) {
-      const diff =
-        i === 0
-          ? 0
-          : (new Date(dates[i - 1]).getTime() - new Date(dates[i]).getTime()) /
-            (1000 * 60 * 60 * 24);
-
-      if (diff === 1 || (i === 0 && dates[0] === today)) {
-        temp++;
-        if (i === 0 || dates[0] === today) current = temp;
-      } else {
-        max = Math.max(max, temp);
-        temp = 1;
-      }
-    }
-    max = Math.max(max, temp);
-    if (dates[0] === today) current = temp;
-
-    return { currentStreak: current, maxStreak: max };
-  }, [workouts]);
-
-  const radarData = useMemo(() => {
-    if (!recentSets || recentSets.length === 0) return [];
-
-    const muscleVolumes: Record<string, number> = {};
-    recentSets.forEach((set) => {
-      const mg = set.exercise?.muscle_group || 'Otro';
-      muscleVolumes[mg] = (muscleVolumes[mg] || 0) + set.weight * set.reps;
-    });
-
-    return Object.entries(muscleVolumes).map(([subject, A]) => ({
-      subject,
-      A,
-    }));
-  }, [recentSets]);
-
-  const totalVol = useMemo(
-    () => recentSets.reduce((a, s) => a + s.reps * s.weight, 0),
-    [recentSets],
-  );
-  const totalSets = recentSets.length;
-
-  const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-  const now = new Date();
-  const weekStart = useMemo(() => {
-    const d = new Date(now);
-    d.setDate(now.getDate() - now.getDay());
-    return d;
-  }, [now]);
-
-  const chartData = useMemo(() => {
-    const data = Array(7)
-      .fill(0)
-      .map((_, i) => ({ label: days[i], vol: 0 }));
-
-    recentSets.forEach((s) => {
-      const d = new Date(s.workout?.started_at);
-      if (d >= weekStart) {
-        data[d.getDay()].vol += s.reps * s.weight;
-      }
-    });
-    return data;
-  }, [recentSets, weekStart, days]);
-
-  const weeklyVolume = useMemo(() => {
-    const weeks = eachWeekOfInterval({
-      start: subWeeks(now, 7),
-      end: now,
-    }).map((w) => startOfWeek(w));
-
-    return weeks
-      .map((weekStart2, i) => {
-        const weekEnd = new Date(weekStart2);
-        weekEnd.setDate(weekEnd.getDate() + 6);
-
-        let vol = 0;
-        recentSets.forEach((s) => {
-          const d = new Date(s.workout?.started_at);
-          if (d >= weekStart2 && d <= weekEnd) {
-            vol += s.reps * s.weight;
-          }
-        });
-
-        return {
-          week: `S${i + 1}`,
-          vol,
-        };
+        return { week: `S${i + 1}`, vol };
       })
       .reverse();
-  }, [recentSets, now]);
+  }, [recentSets, periodFilter]);
+
+  const progressionData = useMemo(() => {
+    return buildProgressionData(recentSets, activeExercise, metricFilter);
+  }, [recentSets, activeExercise, metricFilter]);
+
+  const heatmapData = useMemo(() => {
+    const yearAgo = subDays(new Date(), 365);
+    const days: { date: string; volume: number; sessions: number }[] = [];
+
+    for (let d = yearAgo; d <= new Date(); d.setDate(d.getDate() + 1)) {
+      const dateStr = d.toISOString().split('T')[0];
+      const daySets = recentSets.filter((s) => s.workout?.started_at?.startsWith(dateStr));
+      const volume = daySets.reduce((sum, s) => sum + s.reps * s.weight, 0);
+      days.push({ date: dateStr, volume, sessions: daySets.length });
+    }
+
+    return days;
+  }, [recentSets]);
 
   const calcRM = (weight: string, reps: string) => {
     const w = parseFloat(weight);
@@ -196,25 +140,20 @@ export function StatsPage() {
     }
   };
 
-  const exerciseOptions = [...new Set(recentSets.map((s) => s.exercise?.name).filter(Boolean))];
-
   if (!user) {
     navigate('/login');
     return null;
   }
 
-  if (loading) {
+  const periodButtons: PeriodFilter[] = ['4semanas', '3meses', '6meses', '1año'];
+  const metricButtons: ('1rm' | 'maxWeight' | 'volume')[] = ['1rm', 'maxWeight', 'volume'];
+
+  if (isLoading) {
     return (
       <Layout>
-        <div className="grid grid-cols-2 gap-3 mb-4">
+        <div className="grid grid-cols-2 gap-3">
           {[1, 2, 3, 4].map((i) => (
-            <div
-              key={i}
-              className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-xl p-3"
-            >
-              <div className="skeleton h-8 w-16 rounded mb-2"></div>
-              <div className="skeleton h-3 w-20 rounded"></div>
-            </div>
+            <Skeleton key={i} className="h-24" />
           ))}
         </div>
       </Layout>
@@ -224,196 +163,117 @@ export function StatsPage() {
   return (
     <Layout>
       <div className="grid grid-cols-2 gap-3 mb-4">
-        <div className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-xl p-3 text-center scale-in">
-          <div className="text-[1.6rem] font-extrabold text-[#c8ff00]">{currentStreak}</div>
-          <div className="text-[0.75rem] text-[#606068] uppercase font-semibold">Racha actual</div>
-        </div>
-        <div
-          className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-xl p-3 text-center scale-in"
-          style={{ animationDelay: '0.1s' }}
-        >
-          <div className="text-[1.6rem] font-extrabold text-[#c8ff00]">{maxStreak}</div>
-          <div className="text-[0.75rem] text-[#606068] uppercase font-semibold">Racha máxima</div>
-        </div>
-        <div
-          className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-xl p-3 text-center scale-in"
-          style={{ animationDelay: '0.2s' }}
-        >
-          <div className="text-[1.6rem] font-extrabold text-[#c8ff00]">{totalSets}</div>
-          <div className="text-[0.75rem] text-[#606068] uppercase font-semibold">Series</div>
-        </div>
-        <div
-          className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-xl p-3 text-center scale-in"
-          style={{ animationDelay: '0.3s' }}
-        >
-          <div className="text-[1.6rem] font-extrabold text-[#c8ff00]">
-            {(totalVol / 1000).toFixed(1)}t
+        <KPICard
+          title="Racha actual"
+          value={currentStreak}
+          subtitle="semanas seguidas"
+          icon="flame"
+          isNewPR={currentStreak >= 3}
+        />
+        <KPICard
+          title="Volumen semanal"
+          value={`${(weeklyVolume / 1000).toFixed(1)}t`}
+          subtitle="esta semana"
+          icon="volume"
+          trend={volumeChange}
+        />
+        <KPICard
+          title="Frecuencia"
+          value={sessionCount}
+          subtitle="sesiones (30 días)"
+          icon="frequency"
+        />
+        <KPICard title="Racha máxima" value={maxStreak} subtitle="semanas" icon="prs" />
+      </div>
+
+      <div className="bg-[var(--bg-surface)] rounded-[var(--radius-lg)] p-4 mb-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="text-[0.8125rem] font-medium text-[var(--text-secondary)]">
+            Volumen semanal
           </div>
-          <div className="text-[0.75rem] text-[#606068] uppercase font-semibold">Volumen</div>
+          <div className="flex gap-1">
+            {periodButtons.map((p) => (
+              <button
+                key={p}
+                onClick={() => setPeriodFilter(p)}
+                className={`text-[0.6875rem] px-2 py-1 rounded-[var(--radius-pill)] transition-colors ${
+                  periodFilter === p
+                    ? 'bg-[var(--interactive-primary)] text-[var(--interactive-primary-fg)]'
+                    : 'bg-[var(--bg-surface-2)] text-[var(--text-tertiary)]'
+                }`}
+              >
+                {PERIOD_LABELS[p]}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="h-[120px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={weeklyVolumeData}>
+              <XAxis
+                dataKey="week"
+                tick={{ fill: 'var(--text-tertiary)', fontSize: 10 }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis hide />
+              <Tooltip
+                contentStyle={{
+                  background: 'var(--bg-surface-3)',
+                  border: '1px solid var(--border-default)',
+                  borderRadius: 8,
+                }}
+                labelStyle={{ color: 'var(--text-secondary)' }}
+                formatter={(value) => [`${Number(value).toLocaleString()} kg`, 'Volumen']}
+              />
+              <Bar dataKey="vol" fill="var(--interactive-primary)" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
-      <div
-        className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-2xl p-4 mb-4 scale-in"
-        style={{ animationDelay: '0.1s' }}
-      >
-        <div className="text-[1.1rem] font-semibold mb-3">Esta semana</div>
-        {totalSets === 0 ? (
-          <div className="text-center py-8 text-[#606068] fade-in">Sin datos</div>
-        ) : (
-          <div className="h-[100px] fade-in">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData}>
-                <XAxis
-                  dataKey="label"
-                  tick={{ fill: '#606068', fontSize: 12 }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis hide />
-                <Tooltip
-                  contentStyle={{
-                    background: '#1c1c22',
-                    border: '1px solid rgba(255,255,255,0.12)',
-                    borderRadius: 8,
-                  }}
-                  labelStyle={{ color: '#a0a0a8' }}
-                />
-                <Bar
-                  dataKey="vol"
-                  fill="url(#barGradient)"
-                  radius={[4, 4, 0, 0]}
-                  animationDuration={800}
-                />
-                <defs>
-                  <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#c8ff00" />
-                    <stop offset="100%" stopColor="rgba(200,255,0,0.5)" />
-                  </linearGradient>
-                </defs>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-      </div>
-
-      <div
-        className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-2xl p-4 mb-4 scale-in"
-        style={{ animationDelay: '0.2s' }}
-      >
-        <div className="text-[1.1rem] font-semibold mb-3">Volumen semanal</div>
-        {totalSets === 0 ? (
-          <div className="text-center py-8 text-[#606068] fade-in">Sin datos</div>
-        ) : (
-          <div className="h-[120px] fade-in">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={weeklyVolume}>
-                <XAxis
-                  dataKey="week"
-                  tick={{ fill: '#606068', fontSize: 10 }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis hide />
-                <Tooltip
-                  contentStyle={{
-                    background: '#1c1c22',
-                    border: '1px solid rgba(255,255,255,0.12)',
-                    borderRadius: 8,
-                  }}
-                  labelStyle={{ color: '#a0a0a8' }}
-                  formatter={(value) => [`${Number(value).toLocaleString()} kg`, 'Volumen']}
-                />
-                <Bar
-                  dataKey="vol"
-                  fill="url(#barGradient2)"
-                  radius={[4, 4, 0, 0]}
-                  animationDuration={800}
-                />
-                <defs>
-                  <linearGradient id="barGradient2" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#c8ff00" />
-                    <stop offset="100%" stopColor="rgba(200,255,0,0.5)" />
-                  </linearGradient>
-                </defs>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-      </div>
-
-      <div
-        className="bg-[--bg-surface] border border-[--border-default] rounded-[--radius-2xl] p-4 mb-4 scale-in"
-        style={{ animationDelay: '0.25s' }}
-      >
-        <div className="text-[--text-lg] font-semibold text-[--text-primary] mb-3">
-          Distribución muscular
+      <div className="bg-[var(--bg-surface)] rounded-[var(--radius-lg)] p-4 mb-4">
+        <div className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-3">
+          Progresión
         </div>
-        {radarData.length === 0 ? (
-          <EmptyStats />
-        ) : (
-          <div className="h-[220px] fade-in">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart cx="50%" cy="50%" outerRadius="75%" data={radarData}>
-                <PolarGrid stroke="var(--border-strong)" />
-                <PolarAngleAxis
-                  dataKey="subject"
-                  tick={{ fill: 'var(--text-secondary)', fontSize: 11 }}
-                />
-                <Tooltip
-                  contentStyle={{
-                    background: 'var(--bg-elevated)',
-                    border: '1px solid var(--border-default)',
-                    borderRadius: 8,
-                  }}
-                  labelStyle={{ color: 'var(--text-secondary)' }}
-                  formatter={(value) => [`${Number(value).toLocaleString()} kg`, 'Volumen']}
-                />
-                <Radar
-                  name="Volumen"
-                  dataKey="A"
-                  stroke="var(--color-primary)"
-                  fill="var(--color-primary)"
-                  fillOpacity={0.4}
-                  animationDuration={800}
-                />
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-      </div>
 
-      <div
-        className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-2xl p-4 mb-4 scale-in"
-        style={{ animationDelay: '0.3s' }}
-      >
-        <div className="text-[1.1rem] font-semibold mb-3">Progresión</div>
-        {exerciseOptions.length === 0 ? (
-          <div className="text-center py-8 text-[#606068] fade-in">Sin datos</div>
-        ) : (
+        {uniqueExercises.length > 0 && (
           <>
             <select
               value={selectedExercise}
               onChange={(e) => setSelectedExercise(e.target.value)}
-              className="w-full bg-[#141418] border border-[rgba(255,255,255,0.12)] rounded-xl text-white text-[1rem] p-3 outline-none mb-4 transition-all focus:scale-[1.01]"
+              className="w-full bg-[var(--bg-surface-2)] border border-[var(--border-default)] rounded-[var(--radius-md)] text-[var(--text-primary)] text-sm p-3 mb-3"
             >
-              {exerciseOptions.map((ex) => (
+              {uniqueExercises.map((ex) => (
                 <option key={ex} value={ex}>
                   {ex}
                 </option>
               ))}
             </select>
-            {exerciseStats.length < 2 ? (
-              <div className="text-center py-4 text-[#606068] fade-in">
-                Necesitas al menos 2 sesiones
-              </div>
-            ) : (
-              <div className="h-[150px] fade-in">
+
+            <div className="flex gap-1 mb-3">
+              {metricButtons.map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setMetricFilter(m)}
+                  className={`flex-1 text-[0.6875rem] py-1.5 rounded-[var(--radius-md)] transition-colors ${
+                    metricFilter === m
+                      ? 'bg-[var(--interactive-primary)] text-[var(--interactive-primary-fg)]'
+                      : 'bg-[var(--bg-surface-2)] text-[var(--text-tertiary)]'
+                  }`}
+                >
+                  {m === '1rm' ? '1RM' : m === 'maxWeight' ? 'Peso máx' : 'Volumen'}
+                </button>
+              ))}
+            </div>
+
+            {progressionData.length >= 2 ? (
+              <div className="h-[150px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={exerciseStats}>
+                  <LineChart data={progressionData}>
                     <XAxis
                       dataKey="date"
-                      tick={{ fill: '#606068', fontSize: 10 }}
+                      tick={{ fill: 'var(--text-tertiary)', fontSize: 10 }}
                       axisLine={false}
                       tickLine={false}
                       tickFormatter={(v) => format(parseISO(v), 'dd/MM')}
@@ -421,37 +281,54 @@ export function StatsPage() {
                     <YAxis hide domain={['dataMin - 5', 'dataMax + 5']} />
                     <Tooltip
                       contentStyle={{
-                        background: '#1c1c22',
-                        border: '1px solid rgba(255,255,255,0.12)',
+                        background: 'var(--bg-surface-3)',
+                        border: '1px solid var(--border-default)',
                         borderRadius: 8,
                       }}
-                      labelStyle={{ color: '#a0a0a8' }}
-                      formatter={(value) => [`${Number(value)} kg`, 'Peso máx']}
+                      labelStyle={{ color: 'var(--text-secondary)' }}
+                      formatter={(value) => [
+                        `${Number(value)} kg`,
+                        metricFilter === '1rm'
+                          ? '1RM estimado'
+                          : metricFilter === 'maxWeight'
+                            ? 'Peso máx'
+                            : 'Volumen',
+                      ]}
                     />
                     <Line
                       type="monotone"
-                      dataKey="maxWeight"
-                      stroke="#c8ff00"
+                      dataKey="value"
+                      stroke="var(--interactive-primary)"
                       strokeWidth={2}
-                      dot={{ fill: '#c8ff00', strokeWidth: 0, r: 4 }}
-                      animationDuration={800}
+                      dot={false}
                     />
                   </LineChart>
                 </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-[var(--text-tertiary)] text-sm">
+                Necesitas al menos 2 sesiones
               </div>
             )}
           </>
         )}
       </div>
 
-      <div
-        className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-2xl p-4 scale-in"
-        style={{ animationDelay: '0.4s' }}
-      >
-        <div className="text-[1.1rem] font-semibold mb-3">Calculadora 1RM</div>
+      <ConsistencyHeatmap data={heatmapData} />
+
+      <FatigueAnalysis
+        muscleGroups={muscleRecovery}
+        daysSinceLastWorkout={daysSinceLast}
+        suggestedGroup={suggestedGroup}
+      />
+
+      <div className="bg-[var(--bg-surface)] rounded-[var(--radius-lg)] p-4 mt-4">
+        <div className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-3">
+          Calculadora 1RM
+        </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <div className="text-[0.85rem] font-semibold text-[#a0a0a8] mb-2">Peso (kg)</div>
+            <div className="text-[0.75rem] text-[var(--text-tertiary)] mb-1">Peso (kg)</div>
             <input
               type="number"
               placeholder="100"
@@ -460,11 +337,11 @@ export function StatsPage() {
                 setRmWeight(e.target.value);
                 calcRM(e.target.value, rmReps);
               }}
-              className="w-full bg-[#141418] border border-[rgba(255,255,255,0.12)] rounded-xl text-white text-[1.1rem] p-3 outline-none transition-all"
+              className="w-full bg-[var(--bg-surface-2)] border border-[var(--border-default)] rounded-[var(--radius-md)] text-[var(--text-primary)] text-base p-3"
             />
           </div>
           <div>
-            <div className="text-[0.85rem] font-semibold text-[#a0a0a8] mb-2">Reps</div>
+            <div className="text-[0.75rem] text-[var(--text-tertiary)] mb-1">Reps</div>
             <input
               type="number"
               placeholder="10"
@@ -473,11 +350,11 @@ export function StatsPage() {
                 setRmReps(e.target.value);
                 calcRM(rmWeight, e.target.value);
               }}
-              className="w-full bg-[#141418] border border-[rgba(255,255,255,0.12)] rounded-xl text-white text-[1.1rem] p-3 outline-none transition-all"
+              className="w-full bg-[var(--bg-surface-2)] border border-[var(--border-default)] rounded-[var(--radius-md)] text-[var(--text-primary)] text-base p-3"
             />
           </div>
         </div>
-        <div className="mt-4 text-[1.2rem] font-extrabold text-[#c8ff00] text-center success-pulse">
+        <div className="mt-4 text-center text-lg font-semibold text-[var(--interactive-primary)]">
           1RM: {rmResult ? `${rmResult.toFixed(1)} kg` : '-- kg'}
         </div>
       </div>

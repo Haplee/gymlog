@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useWorkoutStore } from '@features/workout/stores/workoutStore';
 import { Layout } from '@app/components/Layout';
@@ -11,6 +12,7 @@ import { toast } from 'sonner';
 import { fetchWorkouts, fetchRecentSets, fetchExercises } from '@shared/api/queries';
 import { EmptyHistory } from '@shared/components/EmptyStates';
 import { Modal, Button } from '@shared/components/ui';
+import { ChevronRight, Trash2, Repeat, Share2 } from 'lucide-react';
 
 interface GroupedWorkout {
   date: string;
@@ -33,45 +35,47 @@ function ExerciseRow({
   const firstSet = sortedSets[0];
 
   return (
-    <div className="border-b border-[rgba(255,255,255,0.06)] last:border-b-0">
+    <div className="border-b border-[var(--border-subtle)] last:border-b-0">
       <div
         onClick={() => setExpanded(!expanded)}
-        className="p-3 flex justify-between items-center cursor-pointer hover:bg-[rgba(255,255,255,0.02)] transition-colors"
+        className="p-3 flex justify-between items-center cursor-pointer hover:bg-[var(--interactive-hover)] transition-colors"
       >
         <div className="flex items-center gap-3">
-          <span
-            className={`text-[#a0a0a8] text-[1.2rem] transition-transform ${expanded ? 'rotate-90' : ''}`}
-          >
-            ▶
-          </span>
-          <span className="font-semibold text-white">{exercise}</span>
+          <ChevronRight
+            className="w-4 h-4 text-[var(--text-tertiary)]"
+            style={{ transform: expanded ? 'rotate(90deg)' : 'none' }}
+          />
+          <span className="font-medium text-[var(--text-primary)]">{exercise}</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[#c8ff00] font-bold">{sortedSets.length} series</span>
+          <span className="text-[var(--interactive-primary)] font-medium text-[0.8125rem]">
+            {sortedSets.length} series
+          </span>
           <button
             onClick={(e) => {
               e.stopPropagation();
               onDelete(firstSet.id);
             }}
-            className="bg-transparent border-none cursor-pointer text-xl transition-all hover:scale-125 ml-2"
-            style={{ color: '#606068' }}
+            className="bg-transparent border-none cursor-pointer transition-all hover:scale-125 ml-2"
           >
-            ×
+            <Trash2 className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
           </button>
         </div>
       </div>
       {expanded && (
-        <div className="px-3 pb-3 space-y-2 fade-in">
+        <div className="px-3 pb-3 space-y-2">
           {sortedSets.map((s) => (
             <div
               key={s.id}
-              className="flex justify-between items-center bg-[#1c1c22] p-2 rounded-lg ml-6"
+              className="flex justify-between items-center bg-[var(--bg-surface-2)] p-2 rounded-[var(--radius-md)] ml-6"
             >
               <div className="flex items-center gap-3">
-                <span className="text-[#606068] text-[0.85rem]">Serie {s.set_num}</span>
-                <span className="text-[#a0a0a8] text-[0.9rem]">{s.reps} reps</span>
+                <span className="text-[var(--text-tertiary)] text-[0.8125rem]">
+                  Serie {s.set_num}
+                </span>
+                <span className="text-[var(--text-secondary)] text-[0.875rem]">{s.reps} reps</span>
               </div>
-              <span className="text-[#c8ff00] font-bold">{s.weight} kg</span>
+              <span className="text-[var(--interactive-primary)] font-medium">{s.weight} kg</span>
             </div>
           ))}
         </div>
@@ -504,7 +508,7 @@ export function HistoryPage() {
       </div>
 
       {view === 'sets' ? (
-        <div className="bg-[--bg-surface] border border-[--border-default] rounded-[--radius-2xl] overflow-hidden scale-in">
+        <div className="bg-[var(--bg-surface)] rounded-[var(--radius-lg)] overflow-hidden">
           {filteredSets.length === 0 ? (
             <EmptyHistory />
           ) : (
@@ -525,17 +529,17 @@ export function HistoryPage() {
               );
 
               return (
-                <div className="divide-y divide-[rgba(255,255,255,0.06)]">
+                <div className="divide-y divide-[var(--border-subtle)]">
                   {sortedDates.map((date) => (
                     <div key={date}>
-                      <div className="bg-[#141418] p-3 text-[0.75rem] font-semibold text-[#606068] uppercase border-b border-[rgba(255,255,255,0.06)]">
+                      <div className="bg-[var(--bg-surface)] p-3 text-[0.6875rem] font-semibold text-[var(--text-tertiary)] uppercase border-b border-[var(--border-subtle)]">
                         {date}
                       </div>
-                      {Object.entries(grouped[date]).map(([exercise, sets]) => (
+                      {Object.entries(grouped[date]).map(([exercise, exerciseSets]) => (
                         <ExerciseRow
                           key={exercise}
                           exercise={exercise}
-                          sets={sets}
+                          sets={exerciseSets}
                           onDelete={(id) => setDeleteId(id)}
                         />
                       ))}
@@ -552,24 +556,26 @@ export function HistoryPage() {
             <EmptyHistory />
           ) : (
             groupedWorkouts.map((group, gi) => (
-              <div
+              <motion.div
                 key={gi}
-                className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-2xl overflow-hidden scale-in"
-                style={{ animationDelay: `${gi * 0.1}s` }}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: gi * 0.05 }}
+                className="bg-[var(--bg-surface)] rounded-[var(--radius-lg)] overflow-hidden"
               >
-                <div className="p-3 border-b border-[rgba(255,255,255,0.06)] flex justify-between items-center">
-                  <span className="font-semibold text-white">{group.date}</span>
-                  <span className="text-[#606068] text-[0.85rem]">
+                <div className="p-3 border-b border-[var(--border-subtle)] flex justify-between items-center">
+                  <span className="font-medium text-[var(--text-primary)]">{group.date}</span>
+                  <span className="text-[var(--text-tertiary)] text-[0.8125rem]">
                     {group.totalSets} series · {group.totalVolume.toLocaleString()} kg
                   </span>
                 </div>
                 {group.workouts.map((wo) => (
                   <div
                     key={wo.id}
-                    className="p-3 border-b border-[rgba(255,255,255,0.06)] last:border-b-0"
+                    className="p-3 border-b border-[var(--border-subtle)] last:border-b-0"
                   >
                     <div className="flex justify-between items-center mb-2">
-                      <span className="text-[#a0a0a8] text-[0.9rem]">
+                      <span className="text-[var(--text-secondary)] text-[0.875rem]">
                         {new Date(wo.started_at).toLocaleTimeString([], {
                           hour: '2-digit',
                           minute: '2-digit',
@@ -578,8 +584,9 @@ export function HistoryPage() {
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleRepeat(wo)}
-                          className="text-[#c8ff00] text-[0.8rem] font-semibold bg-transparent border-none cursor-pointer transition-all hover:scale-105"
+                          className="text-[var(--interactive-primary)] text-[0.8rem] font-medium bg-transparent border-none cursor-pointer transition-all hover:scale-105"
                         >
+                          <Repeat className="w-3.5 h-3.5 mr-1" />
                           Repetir
                         </button>
                         <button
@@ -597,8 +604,9 @@ export function HistoryPage() {
                             if (success) toast.success('Workout compartido');
                             else toast.error('Error al compartir');
                           }}
-                          className="text-[#a0a0a8] text-[0.8rem] font-semibold bg-transparent border-none cursor-pointer transition-all hover:scale-105"
+                          className="text-[var(--text-secondary)] text-[0.8rem] font-medium bg-transparent border-none cursor-pointer transition-all hover:scale-105"
                         >
+                          <Share2 className="w-3.5 h-3.5 mr-1" />
                           Compartir
                         </button>
                       </div>
@@ -607,7 +615,7 @@ export function HistoryPage() {
                       {wo.sets.map((s: WorkoutSetWithDetails, si) => (
                         <span
                           key={si}
-                          className="bg-[#1c1c22] px-2 py-1 rounded-lg text-[0.8rem] text-[#a0a0a8]"
+                          className="bg-[var(--bg-surface-2)] px-2 py-1 rounded-[var(--radius-pill)] text-[0.8rem] text-[var(--text-secondary)]"
                         >
                           {s.exercise?.name}: {s.reps}×{s.weight}
                         </span>
@@ -615,14 +623,14 @@ export function HistoryPage() {
                     </div>
                   </div>
                 ))}
-              </div>
+              </motion.div>
             ))
           )}
         </div>
       )}
 
       <Modal open={!!deleteId} onClose={() => setDeleteId(null)} title="¿Eliminar registro?">
-        <p className="text-[--text-secondary] mb-6">Esta acción no se puede deshacer.</p>
+        <p className="text-[var(--text-secondary)] mb-6">Esta acción no se puede deshacer.</p>
         <div className="flex gap-3 justify-end mt-4">
           <Button variant="secondary" onClick={() => setDeleteId(null)}>
             Cancelar
