@@ -1,4 +1,9 @@
-## [2026-04-14] — Arquitectura v2.0 y Seguridad PWA
+## [2026-04-14] — Corrección de gráficos y RadarChart
+
+- Solucionado bug de Recharts: los componentes `lazy` rompían la inspección de hijos de la librería, causando gráficos en blanco.
+- Restaurado `RadarChart` para la distribución de volumen muscular (mencionado en el diario pero ausente en el JSX).
+- Cambiadas las importaciones de Recharts a estáticas para asegurar la compatibilidad con el motor de renderizado.
+- Estado: /stats operativo, verificado en entorno de desarrollo.
 
 - Implementada nueva arquitectura orientada a features en `src/features/` y `src/shared/`.
 - Actualizados y simplificados todos los imports usando aliases de TypeScript (`@features`, `@shared`, `@app`).

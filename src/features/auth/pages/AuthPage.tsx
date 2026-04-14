@@ -9,7 +9,6 @@ export function AuthPage() {
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
   const [isRevealing, setIsRevealing] = useState(false);
-  const [focusedField, setFocusedField] = useState<string | null>(null);
   const [animKey, setAnimKey] = useState(0);
   const { signIn, signUp, signInWithGoogle } = useAuthStore();
   const [error, setError] = useState('');
@@ -78,39 +77,20 @@ export function AuthPage() {
     setAnimKey((prev) => prev + 1);
   };
 
-  const bgColor = '#0a0a0c';
-  const cardBg = '#141418';
-  const border = 'rgba(255,255,255,0.12)';
-  const accent = '#c8ff00';
-  const textPrimary = '#fafafa';
-  const textMuted = '#606068';
-
   return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-center p-6"
-      style={{ backgroundColor: bgColor }}
-    >
+    <div className="min-h-screen min-h-[100dvh] flex flex-col items-center justify-center p-6 bg-[var(--bg-base)]">
       <div className="text-center mb-8 scale-in">
-        <div
-          className="w-16 h-16 mx-auto mb-4 rounded-2xl shadow-lg"
-          style={{
-            backgroundColor: accent,
-            boxShadow: `0 0 30px ${accent}40`,
-          }}
-        >
+        <div className="w-16 h-16 mx-auto mb-4 rounded-[var(--radius-lg)] bg-[var(--interactive-primary)] flex items-center justify-center shadow-[--shadow-fab]">
           <img
             src="/gimnasia.png"
             alt="GymLog"
-            className="w-full h-full rounded-2xl object-contain"
+            className="w-full h-full rounded-[var(--radius-lg)] object-contain"
           />
         </div>
-        <h1
-          className="text-3xl font-extrabold tracking-tight fade-in-up"
-          style={{ color: textPrimary, animationDelay: '0.1s' }}
-        >
-          Gym<span style={{ color: accent }}>Log</span>
+        <h1 className="text-[1.875rem] font-extrabold tracking-tight fade-in-up text-[var(--text-primary)]">
+          Gym<span className="text-[var(--interactive-primary)]">Log</span>
         </h1>
-        <p className="text-sm mt-2 fade-in-up" style={{ color: textMuted, animationDelay: '0.2s' }}>
+        <p className="text-[0.875rem] mt-2 fade-in-up text-[var(--text-tertiary)]">
           {isSignUp ? 'Crea tu cuenta' : 'Inicia sesión'}
         </p>
       </div>
@@ -119,88 +99,54 @@ export function AuthPage() {
         onSubmit={handleSubmit}
         key={animKey}
         className="w-full max-w-[300px] space-y-4 fade-in-up"
-        style={{ animationDelay: '0.3s' }}
       >
         {isSignUp && (
-          <div className="fade-in-up" style={{ animationDelay: '0.15s' }}>
+          <div className="fade-in-up">
             <input
               type="text"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              onFocus={() => setFocusedField('fullName')}
-              onBlur={() => setFocusedField(null)}
-              className="w-full rounded-xl text-base py-3.5 px-4 outline-none transition-all"
-              style={{
-                backgroundColor: cardBg,
-                border: `1px solid ${focusedField === 'fullName' ? accent : border}`,
-                color: textPrimary,
-                boxShadow: focusedField === fullName ? `0 0 0 2px ${accent}30` : 'none',
-              }}
+              className="w-full rounded-[var(--radius-lg)] text-base py-3.5 px-4 outline-none transition-all bg-[var(--bg-surface)] border border-[var(--border-default)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--interactive-primary)] focus:shadow-[0_0_0_2px_var(--interactive-primary)]/30"
               placeholder="Nombre completo"
             />
           </div>
         )}
 
         {isSignUp && (
-          <div className="fade-in-up" style={{ animationDelay: '0.2s' }}>
+          <div className="fade-in-up">
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              onFocus={() => setFocusedField('username')}
-              onBlur={() => setFocusedField(null)}
-              className="w-full rounded-xl text-base py-3.5 px-4 outline-none transition-all"
-              style={{
-                backgroundColor: cardBg,
-                border: `1px solid ${focusedField === 'username' ? accent : border}`,
-                color: textPrimary,
-                boxShadow: focusedField === 'username' ? `0 0 0 2px ${accent}30` : 'none',
-              }}
+              className="w-full rounded-[var(--radius-lg)] text-base py-3.5 px-4 outline-none transition-all bg-[var(--bg-surface)] border border-[var(--border-default)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--interactive-primary)] focus:shadow-[0_0_0_2px_var(--interactive-primary)]/30"
               placeholder="Nombre de usuario"
             />
           </div>
         )}
 
-        <div className="fade-in-up" style={{ animationDelay: '0.25s' }}>
+        <div className="fade-in-up">
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            onFocus={() => setFocusedField('email')}
-            onBlur={() => setFocusedField(null)}
-            className="w-full rounded-xl text-base py-3.5 px-4 outline-none transition-all"
-            style={{
-              backgroundColor: cardBg,
-              border: `1px solid ${focusedField === 'email' ? accent : border}`,
-              color: textPrimary,
-              boxShadow: focusedField === 'email' ? `0 0 0 2px ${accent}30` : 'none',
-            }}
+            className="w-full rounded-[var(--radius-lg)] text-base py-3.5 px-4 outline-none transition-all bg-[var(--bg-surface)] border border-[var(--border-default)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--interactive-primary)] focus:shadow-[0_0_0_2px_var(--interactive-primary)]/30"
             placeholder="Email"
           />
         </div>
 
-        <div className="fade-in-up" style={{ animationDelay: '0.3s' }}>
+        <div className="fade-in-up">
           <div className="relative">
             <input
               type={isRevealing ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              onFocus={() => setFocusedField('password')}
-              onBlur={() => setFocusedField(null)}
-              className="w-full rounded-xl text-base py-3.5 px-4 outline-none transition-all pr-12"
-              style={{
-                backgroundColor: cardBg,
-                border: `1px solid ${focusedField === 'password' ? accent : border}`,
-                color: textPrimary,
-                boxShadow: focusedField === 'password' ? `0 0 0 2px ${accent}30` : 'none',
-              }}
+              className="w-full rounded-[var(--radius-lg)] text-base py-3.5 px-4 outline-none transition-all pr-12 bg-[var(--bg-surface)] border border-[var(--border-default)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--interactive-primary)] focus:shadow-[0_0_0_2px_var(--interactive-primary)]/30"
               placeholder="Contraseña"
             />
             <button
               type="button"
               onClick={() => setIsRevealing(!isRevealing)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 bg-transparent border-none p-1 transition-all hover:scale-110"
-              style={{ color: textMuted }}
+              className="absolute right-4 top-1/2 -translate-y-1/2 bg-transparent border-none p-1 transition-all hover:scale-110 text-[var(--text-tertiary)]"
             >
               {isRevealing ? (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -232,19 +178,13 @@ export function AuthPage() {
         </div>
 
         {error && (
-          <div
-            className="fade-in-up text-center text-sm py-2 rounded-lg error-shake"
-            style={{ backgroundColor: 'rgba(255,82,82,0.1)', color: '#ff5252' }}
-          >
+          <div className="fade-in-up text-center text-sm py-2 rounded-[var(--radius-md)] bg-[var(--error)]/10 text-[var(--error)] error-shake">
             {error}
           </div>
         )}
 
         {message && (
-          <div
-            className="fade-in-up text-center text-sm py-2 rounded-lg success-pulse"
-            style={{ backgroundColor: `${accent}20`, color: accent }}
-          >
+          <div className="fade-in-up text-center text-sm py-2 rounded-[var(--radius-md)] bg-[var(--success)]/10 text-[var(--success)] success-pulse">
             {message}
           </div>
         )}
@@ -259,8 +199,7 @@ export function AuthPage() {
                 ? 'Crear cuenta'
                 : 'Iniciar sesión'
           }
-          className="w-full py-4 rounded-xl text-base font-bold transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
-          style={{ backgroundColor: isBlocked ? '#444' : accent, color: '#0a0a0c' }}
+          className="w-full py-4 rounded-[var(--radius-lg)] text-base font-bold transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 bg-[var(--interactive-primary)] text-[var(--interactive-primary-fg)]"
         >
           {loading ? (
             <span className="inline-flex items-center gap-2">
@@ -292,19 +231,16 @@ export function AuthPage() {
         </button>
 
         <div className="relative flex items-center py-2">
-          <div className="flex-grow" style={{ borderTop: `1px solid ${border}` }}></div>
-          <span className="mx-4 text-xs" style={{ color: textMuted }}>
-            o
-          </span>
-          <div className="flex-grow" style={{ borderTop: `1px solid ${border}` }}></div>
+          <div className="flex-grow border-t border-[var(--border-default)]"></div>
+          <span className="mx-4 text-xs text-[var(--text-tertiary)]">o</span>
+          <div className="flex-grow border-t border-[var(--border-default)]"></div>
         </div>
 
         <button
           type="button"
           onClick={handleGoogleLogin}
           disabled={googleLoading}
-          className="w-full py-4 rounded-xl text-base flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
-          style={{ backgroundColor: cardBg, border: `1px solid ${border}`, color: textPrimary }}
+          className="w-full py-4 rounded-[var(--radius-lg)] text-base flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 bg-[var(--bg-surface)] border border-[var(--border-default)] text-[var(--text-primary)]"
         >
           {googleLoading ? (
             <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
@@ -350,17 +286,14 @@ export function AuthPage() {
           <button
             type="button"
             onClick={toggleMode}
-            className="text-sm bg-transparent border-none transition-all hover:scale-105"
-            style={{ color: accent }}
+            className="text-sm bg-transparent border-none transition-all hover:scale-105 text-[var(--interactive-primary)]"
           >
             {isSignUp ? '¿Ya tienes cuenta? Inicia sesión' : '¿Sin cuenta? Crea una'}
           </button>
         </div>
       </form>
 
-      <p className="text-xs mt-8 fade-in-up" style={{ color: textMuted, animationDelay: '0.5s' }}>
-        Tus datos están seguros
-      </p>
+      <p className="text-xs mt-8 fade-in-up text-[var(--text-tertiary)]">Tus datos están seguros</p>
     </div>
   );
 }

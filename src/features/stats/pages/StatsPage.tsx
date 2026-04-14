@@ -1,4 +1,4 @@
-import { useState, useMemo, lazy, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@features/auth/stores/authStore';
@@ -26,16 +26,20 @@ import {
 } from '../utils/fatigueAnalysis';
 import { toast } from 'sonner';
 
-const BarChart = lazy(() => import('recharts').then((m) => ({ default: m.BarChart })));
-const Bar = lazy(() => import('recharts').then((m) => ({ default: m.Bar })));
-const XAxis = lazy(() => import('recharts').then((m) => ({ default: m.XAxis })));
-const YAxis = lazy(() => import('recharts').then((m) => ({ default: m.YAxis })));
-const Tooltip = lazy(() => import('recharts').then((m) => ({ default: m.Tooltip })));
-const ResponsiveContainer = lazy(() =>
-  import('recharts').then((m) => ({ default: m.ResponsiveContainer })),
-);
-const LineChart = lazy(() => import('recharts').then((m) => ({ default: m.LineChart })));
-const Line = lazy(() => import('recharts').then((m) => ({ default: m.Line })));
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  Radar,
+} from 'recharts';
 
 type PeriodFilter = '4semanas' | '3meses' | '6meses' | '1año';
 
@@ -63,11 +67,11 @@ export function StatsPage() {
   });
 
   useEffect(() => {
-    if (error) {
+    if (error && data === undefined) {
       console.error('Error fetching stats data:', error);
       toast.error('Error al cargar las estadísticas');
     }
-  }, [error]);
+  }, [error, data]);
 
   const workouts = data?.workouts || [];
   const recentSets = data?.sets || [];
@@ -320,6 +324,30 @@ export function StatsPage() {
             )}
           </>
         )}
+      </div>
+
+      <div className="bg-[var(--bg-surface)] rounded-[var(--radius-lg)] p-4 mb-4">
+        <div className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-3">
+          Distribución muscular
+        </div>
+        <div className="h-[200px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <RadarChart cx="50%" cy="50%" outerRadius="70%" data={muscleRecovery}>
+              <PolarGrid stroke="var(--border-default)" />
+              <PolarAngleAxis
+                dataKey="name"
+                tick={{ fill: 'var(--text-tertiary)', fontSize: 10 }}
+              />
+              <Radar
+                name="Volumen"
+                dataKey="daysSinceLast"
+                stroke="var(--interactive-primary)"
+                fill="var(--interactive-primary)"
+                fillOpacity={0.3}
+              />
+            </RadarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
       <ConsistencyHeatmap data={heatmapData} />
