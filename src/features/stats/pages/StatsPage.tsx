@@ -67,11 +67,11 @@ export function StatsPage() {
   });
 
   useEffect(() => {
-    if (error && data === undefined) {
+    if (error) {
       console.error('Error fetching stats data:', error);
       toast.error('Error al cargar las estadísticas');
     }
-  }, [error, data]);
+  }, [error]);
 
   const workouts = data?.workouts || [];
   const recentSets = data?.sets || [];
