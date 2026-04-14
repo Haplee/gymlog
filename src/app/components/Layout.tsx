@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@features/auth/stores/authStore';
+import { queryClient } from '@app/queryClient';
+import { fetchWorkoutsAndSets, fetchWorkouts, fetchRecentSets } from '@shared/api/queries';
 
 interface LayoutProps {
   children: ReactNode;
@@ -12,6 +14,37 @@ const colors = {
   textPrimary: '#fafafa',
   textMuted: '#606068',
   accent: '#c8ff00',
+};
+
+const prefetchPageData = (path: string, userId: string) => {
+  if (path === '/') {
+    queryClient.prefetchQuery({
+      queryKey: ['recentSets', userId],
+      queryFn: () => fetchRecentSets(userId),
+    });
+  } else if (path === '/stats') {
+    queryClient.prefetchQuery({
+      queryKey: ['workoutsAndSets', userId],
+      queryFn: () => fetchWorkoutsAndSets(userId),
+    });
+  } else if (path === '/history') {
+    queryClient.prefetchQuery({
+      queryKey: ['workouts', userId],
+      queryFn: () => fetchWorkouts(userId),
+    });
+  }
+};
+
+const preloadChunk = (path: string) => {
+  if (path === '/') {
+    import('@features/workout/pages/WorkoutPage');
+  } else if (path === '/stats') {
+    import('@features/stats/pages/StatsPage');
+  } else if (path === '/history') {
+    import('@features/stats/pages/HistoryPage');
+  } else if (path === '/settings') {
+    import('@features/auth/pages/SettingsPage');
+  }
 };
 
 export function Layout({ children }: LayoutProps) {
@@ -60,6 +93,12 @@ export function Layout({ children }: LayoutProps) {
             <Link
               key={tab.path}
               to={tab.path}
+              onPointerEnter={() => {
+                if (user?.id) {
+                  prefetchPageData(tab.path, user.id);
+                  preloadChunk(tab.path);
+                }
+              }}
               className={`flex-1 py-3 px-1 text-[0.8rem] text-center font-medium whitespace-nowrap transition-all rounded-lg ${isActive ? 'scale-in' : 'fade-in-up'}`}
               style={{
                 color: isActive ? colors.bgMain : colors.textMuted,

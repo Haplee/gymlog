@@ -40,13 +40,13 @@ export const fetchWorkoutsAndSets = async (userId: string) => {
   return { workouts, sets: (allSets as WorkoutSetWithDetails[]) || [] };
 };
 
-export const fetchWorkouts = async (userId: string): Promise<WorkoutWithSets[]> => {
+export const fetchWorkouts = async (userId: string, limit = 20): Promise<WorkoutWithSets[]> => {
   const { data: workoutIds, error } = await supabase
     .from('workouts')
     .select('id, started_at, ended_at')
     .eq('user_id', userId)
     .order('started_at', { ascending: false })
-    .limit(20);
+    .limit(limit);
 
   if (error) throw error;
   if (!workoutIds || workoutIds.length === 0) return [];
@@ -55,7 +55,9 @@ export const fetchWorkouts = async (userId: string): Promise<WorkoutWithSets[]> 
 
   const { data: allSets, error: setsError } = await supabase
     .from('workout_sets')
-    .select('*, exercise:exercises(name)')
+    .select(
+      'id, weight, reps, set_num, exercise_id, workout_id, created_at, exercise:exercises(name)',
+    )
     .in('workout_id', ids);
 
   if (setsError) throw setsError;
@@ -66,12 +68,15 @@ export const fetchWorkouts = async (userId: string): Promise<WorkoutWithSets[]> 
       id: wo.id,
       started_at: wo.started_at,
       ended_at: wo.ended_at,
-      sets: sets as WorkoutSetWithDetails[],
+      sets: sets as unknown as WorkoutSetWithDetails[],
     };
   });
 };
 
-export const fetchRecentSets = async (userId: string): Promise<WorkoutSetWithDetails[]> => {
+export const fetchRecentSets = async (
+  userId: string,
+  limit = 50,
+): Promise<WorkoutSetWithDetails[]> => {
   const { data: workoutIds, error: woError } = await supabase
     .from('workouts')
     .select('id')
@@ -86,14 +91,16 @@ export const fetchRecentSets = async (userId: string): Promise<WorkoutSetWithDet
 
   const { data, error: setsError } = await supabase
     .from('workout_sets')
-    .select('*, exercise:exercises(name), workout:workouts(started_at)')
+    .select(
+      'id, weight, reps, set_num, exercise_id, workout_id, created_at, exercise:exercises(name), workout:workouts(started_at)',
+    )
     .in('workout_id', ids)
     .order('created_at', { ascending: false })
-    .limit(50);
+    .limit(limit);
 
   if (setsError) throw setsError;
 
-  return (data as WorkoutSetWithDetails[]) || [];
+  return (data as unknown as WorkoutSetWithDetails[]) || [];
 };
 
 export const fetchExercises = async (userId: string | undefined): Promise<Exercise[]> => {
@@ -123,14 +130,14 @@ export const fetchExercises = async (userId: string | undefined): Promise<Exerci
 
     const { data: userExData, error: userDataError } = await supabase
       .from('exercises')
-      .select('*')
+      .select('id, name, muscle_group, user_id, created_at')
       .eq('user_id', userId);
 
     if (userDataError) throw userDataError;
 
     const { data: globalExData, error: globalError } = await supabase
       .from('exercises')
-      .select('*')
+      .select('id, name, muscle_group, user_id, created_at')
       .is('user_id', null)
       .order('name');
 
@@ -139,15 +146,21 @@ export const fetchExercises = async (userId: string | undefined): Promise<Exerci
     const allEx = [...(userExData || []), ...(globalExData || [])];
     return allEx.sort((a, b) => (usage[b.id] || 0) - (usage[a.id] || 0));
   } else {
-    const { data, error } = await supabase.from('exercises').select('*').order('name');
+    const { data, error } = await supabase
+      .from('exercises')
+      .select('id, name, muscle_group, user_id, created_at')
+      .order('name');
     if (error) throw error;
     return data || [];
   }
 };
 
 export const fetchPersonalRecords = async (userId: string): Promise<PersonalRecord[]> => {
-  const { data, error } = await supabase.from('personal_records').select('*').eq('user_id', userId);
+  const { data, error } = await supabase
+    .from('personal_records')
+    .select('id, user_id, exercise_id, weight, reps, created_at, estimated_1rm, achieved_at')
+    .eq('user_id', userId);
 
   if (error) throw error;
-  return data || [];
+  return (data as unknown as PersonalRecord[]) || [];
 };

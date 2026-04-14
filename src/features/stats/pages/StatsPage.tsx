@@ -1,26 +1,27 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, lazy } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { Layout } from '@app/components/Layout';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  RadarChart,
-  Radar,
-  PolarGrid,
-  PolarAngleAxis,
-} from 'recharts';
 import { format, subWeeks, startOfWeek, eachWeekOfInterval, parseISO } from 'date-fns';
 import { fetchWorkoutsAndSets } from '@shared/api/queries';
 import { calcular1RM } from '@shared/lib/brzycki';
 import { EmptyStats } from '@shared/components/EmptyStates';
+
+const BarChart = lazy(() => import('recharts').then((m) => ({ default: m.BarChart })));
+const Bar = lazy(() => import('recharts').then((m) => ({ default: m.Bar })));
+const XAxis = lazy(() => import('recharts').then((m) => ({ default: m.XAxis })));
+const YAxis = lazy(() => import('recharts').then((m) => ({ default: m.YAxis })));
+const Tooltip = lazy(() => import('recharts').then((m) => ({ default: m.Tooltip })));
+const ResponsiveContainer = lazy(() =>
+  import('recharts').then((m) => ({ default: m.ResponsiveContainer })),
+);
+const LineChart = lazy(() => import('recharts').then((m) => ({ default: m.LineChart })));
+const Line = lazy(() => import('recharts').then((m) => ({ default: m.Line })));
+const RadarChart = lazy(() => import('recharts').then((m) => ({ default: m.RadarChart })));
+const Radar = lazy(() => import('recharts').then((m) => ({ default: m.Radar })));
+const PolarGrid = lazy(() => import('recharts').then((m) => ({ default: m.PolarGrid })));
+const PolarAngleAxis = lazy(() => import('recharts').then((m) => ({ default: m.PolarAngleAxis })));
 
 interface ExerciseStats {
   name: string;
@@ -130,45 +131,49 @@ export function StatsPage() {
     }));
   }, [recentSets]);
 
-  if (!user) {
-    navigate('/login');
-    return null;
-  }
-
-  const totalVol = recentSets.reduce((a, s) => a + s.reps * s.weight, 0);
+  const totalVol = useMemo(
+    () => recentSets.reduce((a, s) => a + s.reps * s.weight, 0),
+    [recentSets],
+  );
   const totalSets = recentSets.length;
 
   const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
   const now = new Date();
-  const weekStart = new Date(now);
-  weekStart.setDate(now.getDate() - now.getDay());
+  const weekStart = useMemo(() => {
+    const d = new Date(now);
+    d.setDate(now.getDate() - now.getDay());
+    return d;
+  }, [now]);
 
-  const chartData = Array(7)
-    .fill(0)
-    .map((_, i) => ({ label: days[i], vol: 0 }));
+  const chartData = useMemo(() => {
+    const data = Array(7)
+      .fill(0)
+      .map((_, i) => ({ label: days[i], vol: 0 }));
 
-  recentSets.forEach((s) => {
-    const d = new Date(s.workout?.started_at);
-    if (d >= weekStart) {
-      chartData[d.getDay()].vol += s.reps * s.weight;
-    }
-  });
+    recentSets.forEach((s) => {
+      const d = new Date(s.workout?.started_at);
+      if (d >= weekStart) {
+        data[d.getDay()].vol += s.reps * s.weight;
+      }
+    });
+    return data;
+  }, [recentSets, weekStart, days]);
 
-  const weeklyVolume = () => {
+  const weeklyVolume = useMemo(() => {
     const weeks = eachWeekOfInterval({
       start: subWeeks(now, 7),
       end: now,
     }).map((w) => startOfWeek(w));
 
     return weeks
-      .map((weekStart, i) => {
-        const weekEnd = new Date(weekStart);
+      .map((weekStart2, i) => {
+        const weekEnd = new Date(weekStart2);
         weekEnd.setDate(weekEnd.getDate() + 6);
 
         let vol = 0;
         recentSets.forEach((s) => {
           const d = new Date(s.workout?.started_at);
-          if (d >= weekStart && d <= weekEnd) {
+          if (d >= weekStart2 && d <= weekEnd) {
             vol += s.reps * s.weight;
           }
         });
@@ -179,7 +184,7 @@ export function StatsPage() {
         };
       })
       .reverse();
-  };
+  }, [recentSets, now]);
 
   const calcRM = (weight: string, reps: string) => {
     const w = parseFloat(weight);
@@ -192,6 +197,11 @@ export function StatsPage() {
   };
 
   const exerciseOptions = [...new Set(recentSets.map((s) => s.exercise?.name).filter(Boolean))];
+
+  if (!user) {
+    navigate('/login');
+    return null;
+  }
 
   if (loading) {
     return (
@@ -297,7 +307,7 @@ export function StatsPage() {
         ) : (
           <div className="h-[120px] fade-in">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={weeklyVolume()}>
+              <BarChart data={weeklyVolume}>
                 <XAxis
                   dataKey="week"
                   tick={{ fill: '#606068', fontSize: 10 }}

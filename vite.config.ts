@@ -14,6 +14,18 @@ export default defineConfig(({ mode }) => ({
       '@app': path.resolve(__dirname, './src/app'),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          recharts: ['recharts'],
+          supabase: ['@supabase/supabase-js'],
+          motion: ['framer-motion'],
+          query: ['@tanstack/react-query'],
+        },
+      },
+    },
+  },
   plugins: [
     react(),
     tailwindcss(),
