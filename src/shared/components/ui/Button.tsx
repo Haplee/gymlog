@@ -12,30 +12,19 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<Variant, string> = {
   primary:
-    'bg-[--color-primary] text-[--text-inverse] font-semibold hover:brightness-110 active:scale-95 shadow-[--shadow-glow]',
-  secondary:
-    'bg-[--bg-elevated] text-[--text-primary] border border-[--border-default] hover:border-[--color-primary] hover:text-[--color-primary]',
-  ghost:
-    'bg-transparent text-[--text-secondary] hover:bg-[--bg-elevated] hover:text-[--text-primary]',
-  danger:
-    'bg-[--color-error-subtle] text-[--color-error] border border-[--color-error]/30 hover:bg-[--color-error] hover:text-white',
-  icon: 'bg-transparent text-[--text-secondary] hover:bg-[--bg-elevated] hover:text-[--color-primary] aspect-square',
+    'bg-[var(--interactive-primary)] text-[var(--interactive-primary-fg)] font-semibold active:scale-[0.97]',
+  secondary: 'bg-[var(--bg-surface-2)] text-[var(--text-primary)] active:scale-[0.97]',
+  ghost: 'bg-transparent text-[var(--text-secondary)] hover:bg-[var(--interactive-hover)]',
+  danger: 'bg-[var(--error)] text-[var(--interactive-primary-fg)] active:scale-[0.97]',
+  icon: 'bg-transparent text-[var(--text-tertiary)] hover:bg-[var(--interactive-hover)] aspect-square',
 };
 
 const sizeStyles: Record<Size, string> = {
-  sm: 'h-8 px-3 text-[--text-sm] rounded-[--radius-md]',
-  md: 'h-10 px-4 text-[--text-md] rounded-[--radius-lg]',
-  lg: 'h-12 px-6 text-[--text-lg] rounded-[--radius-xl]',
+  sm: 'h-9 px-3 text-[0.8125rem] rounded-[var(--radius-pill)]',
+  md: 'h-11 px-5 text-[0.9375rem] rounded-[var(--radius-pill)]',
+  lg: 'h-12 px-6 text-[0.9375rem] rounded-[var(--radius-pill)]',
 };
 
-/**
- * Botón reutilizable con variantes, tamaños y estado loading.
- *
- * @example
- * <Button variant="primary" size="md" loading={isSaving}>
- *   Guardar
- * </Button>
- */
 export function Button({
   variant = 'primary',
   size = 'md',
@@ -51,9 +40,9 @@ export function Button({
     <button
       disabled={isDisabled}
       className={[
-        'inline-flex items-center justify-center gap-2 cursor-pointer',
-        'transition-all duration-[--transition-fast]',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--color-primary] focus-visible:ring-offset-2 focus-visible:ring-offset-[--bg-base]',
+        'inline-flex items-center justify-center gap-2 cursor-pointer font-medium',
+        'transition-all duration-100',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--interactive-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-base)]',
         'disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none',
         variantStyles[variant],
         sizeStyles[size],

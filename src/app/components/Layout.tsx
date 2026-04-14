@@ -3,18 +3,11 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { queryClient } from '@app/queryClient';
 import { fetchWorkoutsAndSets, fetchWorkouts, fetchRecentSets } from '@shared/api/queries';
+import { Dumbbell, BarChart3, History, Settings } from 'lucide-react';
 
 interface LayoutProps {
   children: ReactNode;
 }
-
-const colors = {
-  bgMain: '#0a0a0c',
-  bgCard: '#141418',
-  textPrimary: '#fafafa',
-  textMuted: '#606068',
-  accent: '#c8ff00',
-};
 
 const prefetchPageData = (path: string, userId: string) => {
   if (path === '/') {
@@ -52,32 +45,27 @@ export function Layout({ children }: LayoutProps) {
   const location = useLocation();
 
   const tabs = [
-    { path: '/', label: '🏋️', id: 'train' },
-    { path: '/stats', label: '📊', id: 'stats' },
-    { path: '/history', label: '📜', id: 'history' },
-    { path: '/settings', label: '⚙️', id: 'settings' },
+    { path: '/', Icon: Dumbbell, label: 'Entrenar', id: 'train' },
+    { path: '/stats', Icon: BarChart3, label: 'Estadísticas', id: 'stats' },
+    { path: '/history', Icon: History, label: 'Historial', id: 'history' },
+    { path: '/settings', Icon: Settings, label: 'Ajustes', id: 'settings' },
   ];
 
   return (
-    <div
-      className="min-h-screen min-h-[100dvh] flex flex-col"
-      style={{ backgroundColor: colors.bgMain }}
-    >
-      <header className="px-4 pt-6 pb-2">
+    <div className="min-h-screen min-h-[100dvh] flex flex-col bg-[var(--bg-base)]">
+      <header className="px-5 pt-5 pb-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3 scale-in">
-            <img
-              src="/gimnasia.png"
-              alt="GymLog"
-              className="w-9 h-9 rounded-xl object-contain"
-              style={{ backgroundColor: colors.accent }}
-            />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-[var(--radius-lg)] bg-[var(--interactive-primary)] flex items-center justify-center">
+              <Dumbbell
+                className="w-5 h-5 text-[var(--interactive-primary-fg)]"
+                strokeWidth={2.5}
+              />
+            </div>
             <div>
-              <div className="text-[1.15rem] font-bold" style={{ color: colors.textPrimary }}>
-                Gym<span style={{ color: colors.accent }}>Log</span>
-              </div>
+              <div className="text-[1.25rem] font-semibold text-[var(--text-primary)]">GymLog</div>
               {user && (
-                <div className="text-[0.75rem]" style={{ color: colors.textMuted }}>
+                <div className="text-[0.8125rem] text-[var(--text-tertiary)]">
                   {user.email?.split('@')[0]}
                 </div>
               )}
@@ -86,9 +74,10 @@ export function Layout({ children }: LayoutProps) {
         </div>
       </header>
 
-      <nav className="flex px-2 gap-1 overflow-x-auto">
-        {tabs.map((tab, index) => {
+      <nav className="flex px-4 gap-1 border-t border-[var(--border-subtle)]">
+        {tabs.map((tab) => {
           const isActive = location.pathname === tab.path;
+          const { Icon, label } = tab;
           return (
             <Link
               key={tab.path}
@@ -99,15 +88,22 @@ export function Layout({ children }: LayoutProps) {
                   preloadChunk(tab.path);
                 }
               }}
-              className={`flex-1 py-3 px-1 text-[0.8rem] text-center font-medium whitespace-nowrap transition-all rounded-lg ${isActive ? 'scale-in' : 'fade-in-up'}`}
-              style={{
-                color: isActive ? colors.bgMain : colors.textMuted,
-                backgroundColor: isActive ? colors.accent : 'transparent',
-                animationDelay: `${index * 0.05}s`,
-                transform: isActive ? 'scale(1.02)' : 'scale(1)',
-              }}
+              className="flex-1 py-3 flex flex-col items-center gap-1 relative"
             >
-              {tab.label}
+              <Icon
+                className="w-5 h-5"
+                strokeWidth={1.5}
+                style={{ color: isActive ? 'var(--text-primary)' : 'var(--text-tertiary)' }}
+              />
+              <span
+                className="text-[0.625rem] font-medium"
+                style={{ color: isActive ? 'var(--text-primary)' : 'var(--text-tertiary)' }}
+              >
+                {label}
+              </span>
+              {isActive && (
+                <div className="absolute bottom-1 w-1 h-1 rounded-full bg-[var(--interactive-primary)]" />
+              )}
             </Link>
           );
         })}

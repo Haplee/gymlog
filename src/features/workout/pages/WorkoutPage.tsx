@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useWorkoutStore } from '@features/workout/stores/workoutStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
@@ -9,6 +10,7 @@ import { Layout } from '@app/components/Layout';
 import { calcular1RM } from '@shared/lib/brzycki';
 import { fetchExercises, fetchPersonalRecords } from '@shared/api/queries';
 import confetti from 'canvas-confetti';
+import { Trophy, X } from 'lucide-react';
 
 export function WorkoutPage() {
   const navigate = useNavigate();
@@ -33,9 +35,6 @@ export function WorkoutPage() {
   const [customInput, setCustomInput] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [inputFocus, setInputFocus] = useState<number | null>(null);
-  const [newSetIndex, setNewSetIndex] = useState<number | null>(null);
-  const [removingSet, setRemovingSet] = useState<number | null>(null);
 
   const { data: exercises = [] } = useQuery({
     queryKey: ['exercises', user?.id],
@@ -129,7 +128,7 @@ export function WorkoutPage() {
           particleCount: 150,
           spread: 70,
           origin: { y: 0.6 },
-          colors: ['#c8ff00', '#fafafa', '#22c55e'],
+          colors: ['#FFFFFF', '#fafafa', '#22c55e'],
         });
       }
 
@@ -139,18 +138,11 @@ export function WorkoutPage() {
   };
 
   const handleAddSet = () => {
-    const index = sets.length;
     addSet();
-    setNewSetIndex(index);
-    setTimeout(() => setNewSetIndex(null), 300);
   };
 
   const handleRemoveSet = (index: number) => {
-    setRemovingSet(index);
-    setTimeout(() => {
-      removeSet(index);
-      setRemovingSet(null);
-    }, 200);
+    removeSet(index);
   };
 
   const handleExerciseChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -160,8 +152,6 @@ export function WorkoutPage() {
     setSelectedExercise(isCustom ? null : val || null);
     if (val && !isCustom && !sets.length) {
       addSet();
-      setNewSetIndex(0);
-      setTimeout(() => setNewSetIndex(null), 300);
     }
   };
 
@@ -171,47 +161,54 @@ export function WorkoutPage() {
     return estimated1RM > currentPR.weight;
   };
 
-  const bgCard = '#141418';
-  const border = 'rgba(255,255,255,0.12)';
-  const textPrimary = '#fafafa';
-  const textSecondary = '#a1a1aa';
-  const textMuted = '#606068';
-  const accent = '#c8ff00';
+  const bgCard = 'var(--bg-surface)';
+  const border = 'var(--border-subtle)';
+  const textPrimary = 'var(--text-primary)';
+  const textSecondary = 'var(--text-secondary)';
+  const textMuted = 'var(--text-tertiary)';
+  const accent = 'var(--interactive-primary)';
+
+  const containerVariants = {
+    hidden: { opacity: 0, y: 12 },
+    show: { opacity: 1, y: 0 },
+  };
 
   return (
     <Layout>
       {activeRoutine && todayRoutine && todayRoutine.exercises.length > 0 && (
-        <div
-          className="mb-3 p-2 rounded-lg scale-in"
-          style={{
-            backgroundColor: 'rgba(200,255,0,0.08)',
-            border: '1px solid rgba(200,255,0,0.2)',
-          }}
+        <motion.div
+          variants={containerVariants}
+          className="mb-3 p-3 rounded-[var(--radius-lg)]"
+          style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}
         >
-          <div className="text-xs font-medium mb-1" style={{ color: '#c8ff00' }}>
+          <div
+            className="text-[0.8125rem] font-medium mb-1"
+            style={{ color: 'var(--interactive-primary)' }}
+          >
             {todayRoutine.name}
           </div>
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1.5">
             {todayRoutine.exercises.slice(0, 4).map((ex, i) => (
               <span
                 key={i}
-                className="text-xs px-1.5 py-0.5 rounded"
-                style={{ backgroundColor: '#1c1c22', color: '#a1a1aa' }}
+                className="text-[0.6875rem] px-2 py-1 rounded-[var(--radius-pill)]"
+                style={{ backgroundColor: 'var(--bg-surface-2)', color: 'var(--text-secondary)' }}
               >
                 {ex.name}
               </span>
             ))}
             {todayRoutine.exercises.length > 4 && (
-              <span className="text-xs" style={{ color: '#606068' }}>
+              <span className="text-[0.6875rem]" style={{ color: 'var(--text-tertiary)' }}>
                 +{todayRoutine.exercises.length - 4}
               </span>
             )}
           </div>
-        </div>
+        </motion.div>
       )}
 
-      <div
-        className="rounded-xl p-3 mb-3 scale-in"
+      <motion.div
+        variants={containerVariants}
+        className="rounded-[var(--radius-lg)] p-4 mb-3"
         style={{ backgroundColor: bgCard, border: `1px solid ${border}` }}
       >
         <select
@@ -245,17 +242,18 @@ export function WorkoutPage() {
         )}
 
         {currentPR && (
-          <div className="mt-3 text-[0.85rem] fade-in" style={{ color: accent }}>
+          <div className="mt-3 text-[0.85rem]" style={{ color: accent }}>
             PR: {currentPR.weight} kg × {currentPR.reps} reps
           </div>
         )}
-      </div>
+      </motion.div>
 
-      <div
-        className={`rounded-xl p-3 slide-up ${saveSuccess ? 'success-pulse' : ''}`}
+      <motion.div
+        variants={containerVariants}
+        className={`rounded-[var(--radius-lg)] p-4 ${saveSuccess ? 'success-pulse' : ''}`}
         style={{ backgroundColor: bgCard, border: `1px solid ${border}` }}
       >
-        <div className="text-sm font-medium mb-2" style={{ color: textPrimary }}>
+        <div className="text-[0.9375rem] font-medium mb-2" style={{ color: textPrimary }}>
           {selectedExercise
             ? `Series — ${selectedExercise.name}`
             : customExerciseName
@@ -274,72 +272,64 @@ export function WorkoutPage() {
         </div>
 
         {sets.length === 0 ? (
-          <div className="text-center py-8 fade-in" style={{ color: textMuted }}>
+          <div className="text-center py-8" style={{ color: textMuted }}>
             Añade una serie
           </div>
         ) : (
           sets.map((s, i) => {
             const isNewPR = checkIsNewPR(s.weight, s.reps);
-            const isNew = newSetIndex === i;
-            const isRemoving = removingSet === i;
-
             return (
-              <div
+              <motion.div
                 key={i}
-                className={`${isNew ? 'scale-in' : ''} ${isRemoving ? 'scale-out' : ''}`}
-                style={{ animationDuration: isNew || isRemoving ? '0.2s' : '0.3s' }}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex gap-2 items-center mb-2"
               >
-                <div className="flex gap-2 items-center mb-2">
-                  <div
-                    className="w-6 text-center text-sm font-medium"
-                    style={{ color: textSecondary }}
-                  >
-                    {i + 1}
-                  </div>
+                <div
+                  className="w-6 text-center text-sm font-medium"
+                  style={{ color: textSecondary }}
+                >
+                  {i + 1}
+                </div>
+                <input
+                  type="number"
+                  placeholder="0"
+                  value={s.reps}
+                  onChange={(e) => updateSet(i, { reps: e.target.value })}
+                  className="flex-1 rounded-lg text-sm p-2 outline-none text-center"
+                  style={{
+                    backgroundColor: bgCard,
+                    border: `1px solid ${border}`,
+                    color: textPrimary,
+                  }}
+                />
+                <div className="relative flex-1">
                   <input
                     type="number"
                     placeholder="0"
-                    value={s.reps}
-                    onChange={(e) => updateSet(i, { reps: e.target.value })}
-                    onFocus={() => setInputFocus(i * 2)}
-                    onBlur={() => setInputFocus(null)}
-                    className={`flex-1 rounded-lg text-sm p-2 outline-none text-center transition-all ${inputFocus === i * 2 ? 'input-focus' : ''}`}
+                    value={s.weight}
+                    onChange={(e) => updateSet(i, { weight: e.target.value })}
+                    className="w-full rounded-lg text-sm p-2 outline-none text-center"
                     style={{
                       backgroundColor: bgCard,
-                      border: `1px solid ${inputFocus === i * 2 ? accent : border}`,
+                      border: `1px solid ${border}`,
                       color: textPrimary,
-                      boxShadow: inputFocus === i * 2 ? `0 0 0 2px ${accent}30` : 'none',
                     }}
                   />
-                  <div className="relative flex-1">
-                    <input
-                      type="number"
-                      placeholder="0"
-                      value={s.weight}
-                      onChange={(e) => updateSet(i, { weight: e.target.value })}
-                      onFocus={() => setInputFocus(i * 2 + 1)}
-                      onBlur={() => setInputFocus(null)}
-                      className={`w-full rounded-lg text-sm p-2 outline-none text-center transition-all ${inputFocus === i * 2 + 1 ? 'input-focus' : ''}`}
-                      style={{
-                        backgroundColor: bgCard,
-                        border: `1px solid ${inputFocus === i * 2 + 1 ? accent : border}`,
-                        color: textPrimary,
-                        boxShadow: inputFocus === i * 2 + 1 ? `0 0 0 2px ${accent}30` : 'none',
-                      }}
-                    />
-                    {isNewPR && (
-                      <span className="absolute -top-1 -right-1 text-xs success-pulse">🏆</span>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => handleRemoveSet(i)}
-                    className="w-6 h-8 bg-transparent border rounded-lg cursor-pointer text-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95"
-                    style={{ borderColor: 'rgba(255,255,255,0.06)', color: textMuted }}
-                  >
-                    ×
-                  </button>
+                  {isNewPR && (
+                    <span className="absolute -top-1 -right-1">
+                      <Trophy className="w-3 h-3" style={{ color: 'var(--interactive-primary)' }} />
+                    </span>
+                  )}
                 </div>
-              </div>
+                <button
+                  onClick={() => handleRemoveSet(i)}
+                  className="w-6 h-8 bg-transparent border rounded-lg cursor-pointer text-lg flex items-center justify-center"
+                  style={{ borderColor: 'var(--border-subtle)', color: textMuted }}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </motion.div>
             );
           })
         )}
@@ -347,7 +337,7 @@ export function WorkoutPage() {
         <div className="flex gap-2 mt-4">
           <button
             onClick={handleAddSet}
-            className="flex-1 py-2 px-3 border border-dashed rounded-lg text-sm font-medium cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98] hover:bg-[rgba(255,255,255,0.03)]"
+            className="flex-1 py-2 px-3 border border-dashed rounded-[var(--radius-lg)] text-sm font-medium cursor-pointer"
             style={{ borderColor: border, color: textSecondary }}
           >
             + Serie
@@ -355,10 +345,10 @@ export function WorkoutPage() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex-1 py-2 sm:py-3 px-3 sm:px-4 rounded-lg sm:rounded-xl text-sm sm:text-[1rem] font-bold cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 py-3 px-4 rounded-[var(--radius-pill)] text-[0.9375rem] font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             style={{
-              backgroundColor: saveSuccess ? '#22c55e' : accent,
-              color: '#0a0a0c',
+              backgroundColor: saveSuccess ? 'var(--success)' : 'var(--interactive-primary)',
+              color: 'var(--interactive-primary-fg)',
               border: 'none',
             }}
           >
@@ -368,13 +358,13 @@ export function WorkoutPage() {
 
         {message && (
           <div
-            className={`mt-4 text-center text-sm error-shake`}
-            style={{ color: message.startsWith('✓') ? accent : '#ff5252' }}
+            className="mt-4 text-center text-sm"
+            style={{ color: message.startsWith('✓') ? 'var(--success)' : 'var(--error)' }}
           >
             {message}
           </div>
         )}
-      </div>
+      </motion.div>
     </Layout>
   );
 }

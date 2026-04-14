@@ -8,17 +8,6 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   iconRight?: ReactNode;
 }
 
-/**
- * Input con label flotante, helper text, estado error e iconos opcionales.
- *
- * @example
- * <Input
- *   label="Email"
- *   type="email"
- *   error={errors.email}
- *   iconLeft={<MailIcon />}
- * />
- */
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   { label, helperText, error, iconLeft, iconRight, id, className = '', ...props },
   ref,
@@ -27,23 +16,20 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   const hasError = Boolean(error);
 
   return (
-    <div className="relative flex flex-col gap-1">
-      {/* Label */}
+    <div className="relative flex flex-col gap-1.5">
       {label && (
         <label
           htmlFor={inputId}
-          className={`text-[--text-sm] font-medium transition-colors ${
-            hasError ? 'text-[--color-error]' : 'text-[--text-secondary]'
-          }`}
+          className="text-[0.6875rem] font-medium"
+          style={{ color: hasError ? 'var(--error)' : 'var(--text-secondary)' }}
         >
           {label}
         </label>
       )}
 
-      {/* Input wrapper */}
       <div className="relative flex items-center">
         {iconLeft && (
-          <span className="absolute left-3 text-[--text-muted] pointer-events-none">
+          <span className="absolute left-3.5 text-[var(--text-tertiary)] pointer-events-none">
             {iconLeft}
           </span>
         )}
@@ -56,36 +42,31 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           }
           aria-invalid={hasError}
           className={[
-            'w-full bg-[--bg-surface] text-[--text-primary] placeholder:text-[--text-muted]',
-            'border rounded-[--radius-lg] px-3 py-2.5 text-[--text-md]',
-            'transition-all duration-[--transition-fast]',
-            'focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-offset-[--bg-base]',
+            'w-full bg-[var(--bg-surface-2)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)]',
+            'border border-[var(--border-default)] rounded-[var(--radius-md)] px-4 py-3.5 text-[0.9375rem]',
+            'transition-all duration-150',
+            'focus:outline-none focus:border-[var(--interactive-primary)]',
             'disabled:opacity-50 disabled:cursor-not-allowed',
             iconLeft ? 'pl-10' : '',
             iconRight ? 'pr-10' : '',
-            hasError
-              ? 'border-[--color-error] focus:ring-[--color-error]'
-              : 'border-[--border-default] focus:border-[--color-primary] focus:ring-[--color-primary]',
+            hasError ? 'border-[var(--error)]' : '',
             className,
           ].join(' ')}
           {...props}
         />
 
-        {iconRight && <span className="absolute right-3 text-[--text-muted]">{iconRight}</span>}
+        {iconRight && (
+          <span className="absolute right-3.5 text-[var(--text-tertiary)]">{iconRight}</span>
+        )}
       </div>
 
-      {/* Error / Helper */}
       {error && (
-        <p
-          id={`${inputId}-error`}
-          role="alert"
-          className="text-[--text-xs] text-[--color-error] flex items-center gap-1"
-        >
-          <span aria-hidden="true">⚠</span> {error}
+        <p id={`${inputId}-error`} role="alert" className="text-[0.6875rem] text-[var(--error)]">
+          {error}
         </p>
       )}
       {helperText && !error && (
-        <p id={`${inputId}-helper`} className="text-[--text-xs] text-[--text-muted]">
+        <p id={`${inputId}-helper`} className="text-[0.6875rem] text-[var(--text-tertiary)]">
           {helperText}
         </p>
       )}
