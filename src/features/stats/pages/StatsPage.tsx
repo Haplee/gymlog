@@ -1,4 +1,4 @@
-import { useState, useMemo, lazy } from 'react';
+import { useState, useMemo, lazy, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@features/auth/stores/authStore';
@@ -24,6 +24,7 @@ import {
   getSuggestedMuscleGroup,
   getDaysSinceLastWorkout,
 } from '../utils/fatigueAnalysis';
+import { toast } from 'sonner';
 
 const BarChart = lazy(() => import('recharts').then((m) => ({ default: m.BarChart })));
 const Bar = lazy(() => import('recharts').then((m) => ({ default: m.Bar })));
@@ -55,11 +56,18 @@ export function StatsPage() {
   const [rmReps, setRmReps] = useState('');
   const [rmResult, setRmResult] = useState<number | null>(null);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['workoutsAndSets', user?.id],
     queryFn: () => fetchWorkoutsAndSets(user!.id),
     enabled: !!user?.id,
   });
+
+  useEffect(() => {
+    if (error) {
+      console.error('Error fetching stats data:', error);
+      toast.error('Error al cargar las estadísticas');
+    }
+  }, [error]);
 
   const workouts = data?.workouts || [];
   const recentSets = data?.sets || [];

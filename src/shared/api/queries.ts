@@ -6,13 +6,13 @@ import type {
   Exercise,
 } from '@shared/lib/types';
 
-export const fetchWorkoutsAndSets = async (userId: string) => {
+export const fetchWorkoutsAndSets = async (userId: string, limit = 200) => {
   const { data: workoutIds, error } = await supabase
     .from('workouts')
     .select('id, started_at, ended_at')
     .eq('user_id', userId)
     .order('started_at', { ascending: false })
-    .limit(20);
+    .limit(limit);
 
   if (error) throw error;
   if (!workoutIds || workoutIds.length === 0) return { workouts: [], sets: [] };
@@ -21,7 +21,7 @@ export const fetchWorkoutsAndSets = async (userId: string) => {
 
   const { data: allSets, error: setsError } = await supabase
     .from('workout_sets')
-    .select('*, exercise:exercises(name), workout:workouts(started_at)')
+    .select('*, exercise:exercises(name, muscle_group), workout:workouts(started_at)')
     .in('workout_id', ids)
     .order('created_at', { ascending: false });
 
