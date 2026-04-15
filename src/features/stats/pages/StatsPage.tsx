@@ -62,8 +62,14 @@ export function StatsPage() {
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['workoutsAndSets', user?.id],
-    queryFn: () => fetchWorkoutsAndSets(user!.id),
+    queryFn: async () => {
+      if (!user?.id) throw new Error('No user');
+      const result = await fetchWorkoutsAndSets(user.id);
+      if (!result) return { workouts: [], sets: [] };
+      return result;
+    },
     enabled: !!user?.id,
+    retry: 1,
   });
 
   useEffect(() => {
