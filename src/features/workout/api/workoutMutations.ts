@@ -74,7 +74,10 @@ export async function addExerciseToWorkout(
 export async function removeExerciseFromWorkout(workoutExerciseId: string): Promise<void> {
   const { error } = await supabase.from('workout_exercises').delete().eq('id', workoutExerciseId);
 
-  if (error) throw error;
+  if (error) {
+    console.error('Error removing exercise from workout:', error);
+    throw error;
+  }
 }
 
 export async function updateExerciseNotes(
@@ -88,7 +91,10 @@ export async function updateExerciseNotes(
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error('Error updating exercise notes:', error);
+    throw error;
+  }
   return data;
 }
 

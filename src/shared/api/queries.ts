@@ -8,37 +8,48 @@ import type {
 } from '@shared/lib/types';
 
 export const fetchWorkoutsAndSets = async (userId: string, limit = 200) => {
-  const { data: workoutIds, error } = await supabase
-    .from('workouts')
-    .select('id, started_at, ended_at')
-    .eq('user_id', userId)
-    .order('started_at', { ascending: false })
-    .limit(limit);
+  try {
+    const { data: workoutIds, error } = await supabase
+      .from('workouts')
+      .select('id, started_at, finished_at')
+      .eq('user_id', userId)
+      .order('started_at', { ascending: false })
+      .limit(limit);
 
-  if (error) throw error;
-  if (!workoutIds || workoutIds.length === 0) return { workouts: [], sets: [] };
+    if (error) {
+      console.error('Error fetching workouts:', error);
+      throw error;
+    }
+    if (!workoutIds || workoutIds.length === 0) return { workouts: [], sets: [] };
 
-  const ids = workoutIds.map((w) => w.id);
+    const ids = workoutIds.map((w) => w.id);
 
-  const { data: allSets, error: setsError } = await supabase
-    .from('workout_sets')
-    .select('*, exercise:exercises(name, muscle_group), workout:workouts(started_at)')
-    .in('workout_id', ids)
-    .order('created_at', { ascending: false });
+    const { data: allSets, error: setsError } = await supabase
+      .from('workout_sets')
+      .select('*, exercise:exercises(name, muscle_group), workout:workouts(started_at)')
+      .in('workout_id', ids)
+      .order('created_at', { ascending: false });
 
-  if (setsError) throw setsError;
+    if (setsError) {
+      console.error('Error fetching sets:', setsError);
+      throw setsError;
+    }
 
-  const workouts: WorkoutWithSets[] = workoutIds.map((wo) => {
-    const sets = (allSets || []).filter((s) => s.workout_id === wo.id);
-    return {
-      id: wo.id,
-      started_at: wo.started_at,
-      ended_at: wo.ended_at,
-      sets: sets as WorkoutSetWithDetails[],
-    };
-  });
+    const workouts: WorkoutWithSets[] = workoutIds.map((wo) => {
+      const sets = (allSets || []).filter((s) => s.workout_id === wo.id);
+      return {
+        id: wo.id,
+        started_at: wo.started_at,
+        ended_at: wo.finished_at,
+        sets: sets as unknown as WorkoutSetWithDetails[],
+      };
+    });
 
-  return { workouts, sets: (allSets as WorkoutSetWithDetails[]) || [] };
+    return { workouts, sets: (allSets as WorkoutSetWithDetails[]) || [] };
+  } catch (err) {
+    console.error('fetchWorkoutsAndSets error:', err);
+    throw err;
+  }
 };
 
 export const fetchWorkouts = async (userId: string, limit = 20): Promise<WorkoutWithSets[]> => {
