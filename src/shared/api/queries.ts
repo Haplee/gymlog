@@ -55,7 +55,7 @@ export const fetchWorkoutsAndSets = async (userId: string, limit = 200) => {
 export const fetchWorkouts = async (userId: string, limit = 20): Promise<WorkoutWithSets[]> => {
   const { data: workoutIds, error } = await supabase
     .from('workouts')
-    .select('id, started_at, ended_at')
+    .select('id, started_at, finished_at, status, total_volume, total_sets, duration_min')
     .eq('user_id', userId)
     .order('started_at', { ascending: false })
     .limit(limit);
@@ -79,7 +79,7 @@ export const fetchWorkouts = async (userId: string, limit = 20): Promise<Workout
     return {
       id: wo.id,
       started_at: wo.started_at,
-      ended_at: wo.ended_at,
+      ended_at: wo.finished_at,
       sets: sets as unknown as WorkoutSetWithDetails[],
     };
   });
@@ -89,30 +89,41 @@ export const fetchRecentSets = async (
   userId: string,
   limit = 50,
 ): Promise<WorkoutSetWithDetails[]> => {
-  const { data: workoutIds, error: woError } = await supabase
-    .from('workouts')
-    .select('id')
-    .eq('user_id', userId)
-    .order('started_at', { ascending: false })
-    .limit(10);
+  try {
+    const { data: workoutIds, error: woError } = await supabase
+      .from('workouts')
+      .select('id')
+      .eq('user_id', userId)
+      .order('started_at', { ascending: false })
+      .limit(10);
 
-  if (woError) throw woError;
-  if (!workoutIds || workoutIds.length === 0) return [];
+    if (woError) {
+      console.error('Error fetching workout IDs:', woError);
+      throw woError;
+    }
+    if (!workoutIds || workoutIds.length === 0) return [];
 
-  const ids = workoutIds.map((w) => w.id);
+    const ids = workoutIds.map((w) => w.id);
 
-  const { data, error: setsError } = await supabase
-    .from('workout_sets')
-    .select(
-      'id, weight, reps, set_num, exercise_id, workout_id, created_at, exercise:exercises(name), workout:workouts(started_at)',
-    )
-    .in('workout_id', ids)
-    .order('created_at', { ascending: false })
-    .limit(limit);
+    const { data, error: setsError } = await supabase
+      .from('workout_sets')
+      .select(
+        'id, weight, reps, set_num, exercise_id, workout_id, created_at, exercise:exercises(name), workout:workouts(started_at)',
+      )
+      .in('workout_id', ids)
+      .order('created_at', { ascending: false })
+      .limit(limit);
 
-  if (setsError) throw setsError;
+    if (setsError) {
+      console.error('Error fetching recent sets:', setsError);
+      throw setsError;
+    }
 
-  return (data as unknown as WorkoutSetWithDetails[]) || [];
+    return (data as unknown as WorkoutSetWithDetails[]) || [];
+  } catch (err) {
+    console.error('fetchRecentSets error:', err);
+    throw err;
+  }
 };
 
 export const fetchExercises = async (userId: string | undefined): Promise<Exercise[]> => {
@@ -170,10 +181,13 @@ export const fetchExercises = async (userId: string | undefined): Promise<Exerci
 export const fetchPersonalRecords = async (userId: string): Promise<PersonalRecord[]> => {
   const { data, error } = await supabase
     .from('personal_records')
-    .select('id, user_id, exercise_id, weight, reps, created_at, estimated_1rm, achieved_at')
+    .select('id, user_id, exercise_id, weight, reps, one_rm, workout_set_id, achieved_at')
     .eq('user_id', userId);
 
-  if (error) throw error;
+  if (error) {
+    console.error('Error fetching personal records:', error);
+    throw error;
+  }
   return (data as unknown as PersonalRecord[]) || [];
 };
 
