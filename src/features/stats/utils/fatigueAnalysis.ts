@@ -5,7 +5,7 @@ export interface MuscleGroupStatus {
 }
 
 export function analyzeMuscleRecovery(
-  sets: { exercise?: { muscle_group?: string }; workout?: { started_at: string } }[],
+  sets: { exercise?: { muscle_group?: string }; workout?: { started_at: string | null } }[],
 ): MuscleGroupStatus[] {
   const muscleGroups = ['Pecho', 'Espalda', 'Piernas', 'Hombros', 'Brazos', 'Otro'];
   const now = new Date();
@@ -47,11 +47,11 @@ export function getSuggestedMuscleGroup(recoveryData: MuscleGroupStatus[]): stri
   return null;
 }
 
-export function getDaysSinceLastWorkout(workouts: { started_at: string }[]): number {
+export function getDaysSinceLastWorkout(workouts: { started_at: string | null }[]): number {
   if (workouts.length === 0) return -1;
 
   const lastWorkout = workouts.reduce((latest, w) => {
-    const d = new Date(w.started_at);
+    const d = new Date(w.started_at ?? '');
     return d > latest ? d : latest;
   }, new Date(0));
 

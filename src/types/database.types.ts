@@ -14,6 +14,7 @@ export interface Database {
           weight_unit: string;
           updated_at: string | null;
           goal: string | null;
+          days_per_week: number | null;
         };
         Insert: {
           id: string;
@@ -25,6 +26,7 @@ export interface Database {
           weight_unit?: string;
           updated_at?: string | null;
           goal?: string | null;
+          days_per_week?: number | null;
         };
         Update: {
           id?: string;
@@ -36,6 +38,7 @@ export interface Database {
           weight_unit?: string;
           updated_at?: string | null;
           goal?: string | null;
+          days_per_week?: number | null;
         };
       };
       exercises: {
@@ -230,6 +233,55 @@ export interface Database {
           user_id?: string;
           exercise_id?: string;
           note?: string;
+          created_at?: string | null;
+        };
+      };
+      user_routines: {
+        Row: {
+          id: string;
+          user_id: string;
+          name: string;
+          config: Json;
+          created_at: string | null;
+          is_active: boolean;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          name: string;
+          config?: Json;
+          created_at?: string | null;
+          is_active?: boolean;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          name?: string;
+          config?: Json;
+          created_at?: string | null;
+          is_active?: boolean;
+        };
+      };
+      body_measurements: {
+        Row: {
+          id: string;
+          user_id: string;
+          weight: number | null;
+          body_fat: number | null;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          weight?: number | null;
+          body_fat?: number | null;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          weight?: number | null;
+          body_fat?: number | null;
           created_at?: string | null;
         };
       };

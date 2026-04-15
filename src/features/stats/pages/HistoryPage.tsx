@@ -131,12 +131,13 @@ export function HistoryPage() {
     .filter((s) => !filterExercise || s.exercise?.name === filterExercise)
     .sort(
       (a, b) =>
-        new Date(b.workout?.started_at).getTime() - new Date(a.workout?.started_at).getTime(),
+        new Date(b.workout?.started_at ?? '').getTime() -
+        new Date(a.workout?.started_at ?? '').getTime(),
     )
     .slice(0, 30);
 
   const groupedWorkouts: GroupedWorkout[] = workouts.reduce((acc: GroupedWorkout[], wo) => {
-    const date = new Date(wo.started_at).toLocaleDateString();
+    const date = new Date(wo.started_at ?? '').toLocaleDateString();
     const existing = acc.find((g) => g.date === date);
     const volume = wo.sets.reduce((sum, s) => sum + s.reps * s.weight, 0);
     if (existing) {
@@ -266,6 +267,10 @@ export function HistoryPage() {
               id: newEx.id,
               name: cleanName,
               muscle_group: 'Otro',
+              muscle_detail: null,
+              equipment: 'Gimnasio',
+              movement: null,
+              is_bilateral: true,
               user_id: user.id,
               created_at: '',
             });
@@ -576,7 +581,7 @@ export function HistoryPage() {
                   >
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-[var(--text-secondary)] text-[0.875rem]">
-                        {new Date(wo.started_at).toLocaleTimeString([], {
+                        {new Date(wo.started_at ?? '').toLocaleTimeString([], {
                           hour: '2-digit',
                           minute: '2-digit',
                         })}
@@ -599,7 +604,7 @@ export function HistoryPage() {
                               exerciseCount: uniqueExercises,
                               totalSets: wo.sets.length,
                               totalVolume: volume,
-                              date: new Date(wo.started_at).toLocaleDateString(),
+                              date: new Date(wo.started_at ?? '').toLocaleDateString(),
                             });
                             if (success) toast.success('Workout compartido');
                             else toast.error('Error al compartir');

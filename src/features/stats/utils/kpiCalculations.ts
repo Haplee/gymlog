@@ -4,7 +4,7 @@ export function calculateCurrentStreak(workouts: WorkoutWithSets[]): number {
   if (workouts.length === 0) return 0;
 
   const dates = [
-    ...new Set(workouts.map((w) => new Date(w.started_at).toISOString().split('T')[0])),
+    ...new Set(workouts.map((w) => new Date(w.started_at ?? '').toISOString().split('T')[0])),
   ]
     .sort()
     .reverse();
@@ -32,7 +32,7 @@ export function calculateMaxStreak(workouts: WorkoutWithSets[]): number {
   if (workouts.length === 0) return 0;
 
   const dates = [
-    ...new Set(workouts.map((w) => new Date(w.started_at).toISOString().split('T')[0])),
+    ...new Set(workouts.map((w) => new Date(w.started_at ?? '').toISOString().split('T')[0])),
   ]
     .sort()
     .reverse();
@@ -56,7 +56,7 @@ export function calculateMaxStreak(workouts: WorkoutWithSets[]): number {
 }
 
 export function calculateWeeklyVolume(
-  sets: { weight: number; reps: number; workout?: { started_at: string } }[],
+  sets: { weight: number; reps: number; workout?: { started_at: string | null } }[],
 ): number {
   const now = new Date();
   const weekStart = new Date(now);
@@ -64,12 +64,12 @@ export function calculateWeeklyVolume(
   weekStart.setHours(0, 0, 0, 0);
 
   return sets
-    .filter((s) => s.workout && new Date(s.workout.started_at) >= weekStart)
+    .filter((s) => s.workout?.started_at && new Date(s.workout.started_at) >= weekStart)
     .reduce((sum, s) => sum + s.weight * s.reps, 0);
 }
 
 export function calculatePreviousWeekVolume(
-  sets: { weight: number; reps: number; workout?: { started_at: string } }[],
+  sets: { weight: number; reps: number; workout?: { started_at: string | null } }[],
 ): number {
   const now = new Date();
   const thisWeekStart = new Date(now);
@@ -84,8 +84,9 @@ export function calculatePreviousWeekVolume(
 
   return sets
     .filter((s) => {
-      if (!s.workout) return false;
-      const d = new Date(s.workout.started_at);
+      const startedAt = s.workout?.started_at;
+      if (!startedAt) return false;
+      const d = new Date(startedAt);
       return d >= lastWeekStart && d <= lastWeekEnd;
     })
     .reduce((sum, s) => sum + s.weight * s.reps, 0);
@@ -95,7 +96,7 @@ export function calculateSessionCountLast30Days(workouts: WorkoutWithSets[]): nu
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-  return workouts.filter((w) => new Date(w.started_at) >= thirtyDaysAgo).length;
+  return workouts.filter((w) => new Date(w.started_at ?? '') >= thirtyDaysAgo).length;
 }
 
 export function calculateVolumeChangePercent(current: number, previous: number): number {

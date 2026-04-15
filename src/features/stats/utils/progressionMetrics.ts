@@ -24,7 +24,7 @@ export function buildProgressionData(
     weight: number;
     reps: number;
     exercise?: { name?: string };
-    workout?: { started_at: string };
+    workout?: { started_at: string | null };
   }[],
   exerciseName: string,
   metric: '1rm' | 'maxWeight' | 'volume' = '1rm',

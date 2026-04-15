@@ -11,7 +11,7 @@ export const fetchWorkoutsAndSets = async (userId: string, limit = 200) => {
   try {
     const { data: workoutIds, error } = await supabase
       .from('workouts')
-      .select('id, started_at, finished_at')
+      .select('*')
       .eq('user_id', userId)
       .order('started_at', { ascending: false })
       .limit(limit);
@@ -38,11 +38,11 @@ export const fetchWorkoutsAndSets = async (userId: string, limit = 200) => {
     const workouts: WorkoutWithSets[] = workoutIds.map((wo) => {
       const sets = (allSets || []).filter((s) => s.workout_id === wo.id);
       return {
-        id: wo.id,
+        ...wo,
         started_at: wo.started_at,
         ended_at: wo.finished_at,
         sets: sets as unknown as WorkoutSetWithDetails[],
-      };
+      } as unknown as WorkoutWithSets;
     });
 
     return { workouts, sets: (allSets as WorkoutSetWithDetails[]) || [] };
@@ -53,17 +53,17 @@ export const fetchWorkoutsAndSets = async (userId: string, limit = 200) => {
 };
 
 export const fetchWorkouts = async (userId: string, limit = 20): Promise<WorkoutWithSets[]> => {
-  const { data: workoutIds, error } = await supabase
+  const { data: workouts, error } = await supabase
     .from('workouts')
-    .select('id, started_at, finished_at, status, total_volume, total_sets, duration_min')
+    .select('*')
     .eq('user_id', userId)
     .order('started_at', { ascending: false })
     .limit(limit);
 
   if (error) throw error;
-  if (!workoutIds || workoutIds.length === 0) return [];
+  if (!workouts || workouts.length === 0) return [];
 
-  const ids = workoutIds.map((w) => w.id);
+  const ids = workouts.map((w) => w.id);
 
   const { data: allSets, error: setsError } = await supabase
     .from('workout_sets')
@@ -74,14 +74,14 @@ export const fetchWorkouts = async (userId: string, limit = 20): Promise<Workout
 
   if (setsError) throw setsError;
 
-  return workoutIds.map((wo) => {
+  return workouts.map((wo) => {
     const sets = (allSets || []).filter((s) => s.workout_id === wo.id);
     return {
-      id: wo.id,
+      ...wo,
       started_at: wo.started_at,
       ended_at: wo.finished_at,
       sets: sets as unknown as WorkoutSetWithDetails[],
-    };
+    } as unknown as WorkoutWithSets;
   });
 };
 
@@ -167,14 +167,11 @@ export const fetchExercises = async (userId: string | undefined): Promise<Exerci
     if (globalError) throw globalError;
 
     const allEx = [...(userExData || []), ...(globalExData || [])];
-    return allEx.sort((a, b) => (usage[b.id] || 0) - (usage[a.id] || 0));
+    return allEx.sort((a, b) => (usage[b.id] || 0) - (usage[a.id] || 0)) as unknown as Exercise[];
   } else {
-    const { data, error } = await supabase
-      .from('exercises')
-      .select('id, name, muscle_group, user_id, created_at')
-      .order('name');
+    const { data, error } = await supabase.from('exercises').select('*').order('name');
     if (error) throw error;
-    return data || [];
+    return (data as unknown as Exercise[]) || [];
   }
 };
 

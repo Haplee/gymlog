@@ -17,7 +17,6 @@ export function OnboardingModal({ user, onComplete }: OnboardingModalProps) {
   const [data, setData] = useState<Partial<Profile>>({
     goal: 'volume',
     days_per_week: 3,
-    equipment_available: ['dumbbell', 'barbell'],
   });
 
   const handleFinish = async () => {

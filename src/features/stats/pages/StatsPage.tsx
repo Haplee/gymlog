@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { Layout } from '@app/components/Layout';
 import { format, subWeeks, startOfWeek, eachWeekOfInterval, parseISO, subDays } from 'date-fns';
-import { fetchWorkoutsAndSets } from '@shared/api/queries';
+import { fetchWorkoutsAndSets, fetchVolumeByMuscleGroup } from '@shared/api/queries';
 import { calcular1RM } from '@shared/lib/brzycki';
 import { Skeleton } from '@shared/components/ui/Skeleton';
 import { KPICard } from '../components/KPICards';
@@ -127,7 +127,9 @@ export function StatsPage() {
         const weekEnd = subDays(weekStart, -7);
         const vol = recentSets
           .filter((s) => {
-            const d = new Date(s.workout?.started_at);
+            const dateStr = s.workout?.started_at ?? '';
+            if (!dateStr) return false;
+            const d = new Date(dateStr);
             return d >= weekStart && d < weekEnd;
           })
           .reduce((sum, s) => sum + s.reps * s.weight, 0);
@@ -147,7 +149,7 @@ export function StatsPage() {
 
     for (let d = yearAgo; d <= new Date(); d.setDate(d.getDate() + 1)) {
       const dateStr = d.toISOString().split('T')[0];
-      const daySets = recentSets.filter((s) => s.workout?.started_at?.startsWith(dateStr));
+      const daySets = recentSets.filter((s) => (s.workout?.started_at ?? '').startsWith(dateStr));
       const volume = daySets.reduce((sum, s) => sum + s.reps * s.weight, 0);
       days.push({ date: dateStr, volume, sessions: daySets.length });
     }
