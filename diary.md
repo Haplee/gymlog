@@ -37,3 +37,12 @@
 - **Calidad de Datos (Zod)**: Implementada validación estricta de series en `WorkoutPage.tsx` con Zod. Añadido filtrado de series vacías antes del guardado.
 - **Rendimiento**: Verificada carga perezosa (`React.lazy`) y aplicada memoización (`React.memo`) en componentes críticos de estadísticas (`KPICards`, `ConsistencyHeatmap`).
 - **Estado actual**: Refactorización técnica completada. Sistema más robusto, seguro y eficiente.
+
+## [2026-04-15] — Resolución de bloqueos de producción y corrección de tipos
+
+- Corregidos errores de compilación (`tsc`) que bloqueaban el despliegue en Vercel.
+- Sincronizado `database.types.ts` con el esquema real (añadidos `days_per_week`, `user_routines`, etc.).
+- Implementado manejo robusto de `null` en fechas (`started_at`) en `HistoryPage`, `StatsPage` y utilidades de KPIs.
+- Ajustados los mapeos de `queries.ts` para cumplir con las interfaces estrictas de `WorkoutWithSets` y `Exercise`.
+- Verificado éxito del build local (`npm run build`) y subido a producción.
+- Estado: **Producción estable y desplegada.**
