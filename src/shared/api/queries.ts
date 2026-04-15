@@ -4,6 +4,7 @@ import type {
   WorkoutSetWithDetails,
   PersonalRecord,
   Exercise,
+  ExerciseNote,
 } from '@shared/lib/types';
 
 export const fetchWorkoutsAndSets = async (userId: string, limit = 200) => {
@@ -163,4 +164,44 @@ export const fetchPersonalRecords = async (userId: string): Promise<PersonalReco
 
   if (error) throw error;
   return (data as unknown as PersonalRecord[]) || [];
+};
+
+export const fetchExerciseNotes = async (
+  userId: string,
+  exerciseId: string,
+): Promise<ExerciseNote[]> => {
+  const { data, error } = await supabase
+    .from('exercise_notes')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('exercise_id', exerciseId)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return (data as unknown as ExerciseNote[]) || [];
+};
+
+export const saveExerciseNote = async (
+  userId: string,
+  exerciseId: string,
+  note: string,
+): Promise<ExerciseNote> => {
+  const { data, error } = await supabase
+    .from('exercise_notes')
+    .insert({ user_id: userId, exercise_id: exerciseId, note })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as unknown as ExerciseNote;
+};
+
+export const deleteExerciseNote = async (noteId: string): Promise<void> => {
+  const { error } = await supabase.from('exercise_notes').delete().eq('id', noteId);
+  if (error) throw error;
+};
+
+export const deleteExercise = async (exerciseId: string): Promise<void> => {
+  const { error } = await supabase.from('exercises').delete().eq('id', exerciseId);
+  if (error) throw error;
 };

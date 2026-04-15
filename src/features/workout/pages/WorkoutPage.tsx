@@ -8,9 +8,16 @@ import { useSettingsStore } from '@shared/stores/settingsStore';
 import { useRoutineStore } from '@features/routine/stores/routineStore';
 import { Layout } from '@app/components/Layout';
 import { calcular1RM } from '@shared/lib/brzycki';
-import { fetchExercises, fetchPersonalRecords } from '@shared/api/queries';
+import {
+  fetchExercises,
+  fetchPersonalRecords,
+  fetchExerciseNotes,
+  saveExerciseNote,
+  deleteExerciseNote,
+  deleteExercise,
+} from '@shared/api/queries';
 import confetti from 'canvas-confetti';
-import { Trophy, X } from 'lucide-react';
+import { Trophy, X, Trash2, Plus, StickyNote } from 'lucide-react';
 
 export function WorkoutPage() {
   const navigate = useNavigate();
@@ -25,6 +32,7 @@ export function WorkoutPage() {
     addSet,
     updateSet,
     removeSet,
+    removeAllSets,
     saveWorkout,
   } = useWorkoutStore();
 
@@ -35,6 +43,8 @@ export function WorkoutPage() {
   const [customInput, setCustomInput] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [showNotes, setShowNotes] = useState(false);
+  const [noteText, setNoteText] = useState('');
 
   const { data: exercises = [] } = useQuery({
     queryKey: ['exercises', user?.id],
@@ -46,6 +56,12 @@ export function WorkoutPage() {
     queryKey: ['personalRecords', user?.id],
     queryFn: () => fetchPersonalRecords(user!.id),
     enabled: !!user?.id,
+  });
+
+  const { data: exerciseNotes = [], refetch: refetchNotes } = useQuery({
+    queryKey: ['exerciseNotes', user?.id, selectedExerciseId],
+    queryFn: () => fetchExerciseNotes(user!.id, selectedExerciseId!),
+    enabled: !!user?.id && !!selectedExerciseId,
   });
 
   const personalRecords = Object.fromEntries(personalRecordsList.map((pr) => [pr.exercise_id, pr]));
@@ -145,6 +161,44 @@ export function WorkoutPage() {
     removeSet(index);
   };
 
+  const handleRemoveAllSets = () => {
+    if (confirm('¿Eliminar todas las series?')) {
+      removeAllSets();
+    }
+  };
+
+  const handleSaveNote = async () => {
+    if (!user || !selectedExerciseId || !noteText.trim()) return;
+    try {
+      await saveExerciseNote(user.id, selectedExerciseId, noteText.trim());
+      setNoteText('');
+      refetchNotes();
+    } catch (err) {
+      console.error('Error saving note:', err);
+    }
+  };
+
+  const handleDeleteNote = async (noteId: string) => {
+    if (!confirm('¿Eliminar esta nota?')) return;
+    try {
+      await deleteExerciseNote(noteId);
+      refetchNotes();
+    } catch (err) {
+      console.error('Error deleting note:', err);
+    }
+  };
+
+  const handleDeleteExercise = async (exId: string) => {
+    if (!confirm('¿Eliminar este ejercicio? Se borrarán todos los registros asociados.')) return;
+    try {
+      await deleteExercise(exId);
+      queryClient.invalidateQueries({ queryKey: ['exercises'] });
+      setSelectedExercise(null);
+    } catch (err) {
+      console.error('Error deleting exercise:', err);
+    }
+  };
+
   const handleExerciseChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;
     const isCustom = val === '__custom__';
@@ -239,6 +293,89 @@ export function WorkoutPage() {
             className="w-full rounded-lg text-sm p-2.5 outline-none mt-2 transition-all"
             style={{ backgroundColor: bgCard, border: `1px solid ${border}`, color: textPrimary }}
           />
+        )}
+
+        {selectedExercise && selectedExercise.user_id && (
+          <div className="flex gap-2 mt-2">
+            <button
+              onClick={() => setShowNotes(!showNotes)}
+              className="flex-1 py-1.5 px-2 rounded-lg text-xs flex items-center justify-center gap-1"
+              style={{
+                backgroundColor: bgCard,
+                border: `1px solid ${border}`,
+                color: textSecondary,
+              }}
+            >
+              <StickyNote className="w-3 h-3" />
+              Notas ({exerciseNotes.length})
+            </button>
+            <button
+              onClick={() => handleDeleteExercise(selectedExercise.id)}
+              className="py-1.5 px-2 rounded-lg text-xs flex items-center gap-1"
+              style={{
+                backgroundColor: bgCard,
+                border: `1px solid ${border}`,
+                color: 'var(--error)',
+              }}
+            >
+              <Trash2 className="w-3 h-3" />
+            </button>
+          </div>
+        )}
+
+        {showNotes && selectedExerciseId && (
+          <div
+            className="mt-3 p-3 rounded-lg"
+            style={{ backgroundColor: bgCard, border: `1px solid ${border}` }}
+          >
+            <div className="text-xs font-medium mb-2" style={{ color: textSecondary }}>
+              Anotaciones
+            </div>
+            {exerciseNotes.length > 0 && (
+              <div className="space-y-2 mb-3 max-h-24 overflow-y-auto">
+                {exerciseNotes.map((note) => (
+                  <div
+                    key={note.id}
+                    className="flex items-start justify-between p-2 rounded"
+                    style={{ backgroundColor: 'var(--bg-surface-2)' }}
+                  >
+                    <div className="text-xs" style={{ color: textPrimary }}>
+                      {note.note}
+                    </div>
+                    <button
+                      onClick={() => handleDeleteNote(note.id)}
+                      className="text-xs ml-2"
+                      style={{ color: 'var(--error)' }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Nueva nota..."
+                value={noteText}
+                onChange={(e) => setNoteText(e.target.value)}
+                className="flex-1 rounded-lg text-xs p-2 outline-none"
+                style={{
+                  backgroundColor: bgCard,
+                  border: `1px solid ${border}`,
+                  color: textPrimary,
+                }}
+              />
+              <button
+                onClick={handleSaveNote}
+                disabled={!noteText.trim()}
+                className="p-2 rounded-lg"
+                style={{ backgroundColor: accent, color: 'var(--interactive-primary-fg)' }}
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
         )}
 
         {currentPR && (
@@ -342,6 +479,16 @@ export function WorkoutPage() {
           >
             + Serie
           </button>
+          {sets.length > 1 && (
+            <button
+              onClick={handleRemoveAllSets}
+              className="py-2 px-3 border border-dashed rounded-[var(--radius-lg)] text-sm font-medium cursor-pointer"
+              style={{ borderColor: border, color: 'var(--error)' }}
+              title="Eliminar todas las series"
+            >
+              × Todas
+            </button>
+          )}
           <button
             onClick={handleSave}
             disabled={saving}

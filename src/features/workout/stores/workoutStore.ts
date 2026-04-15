@@ -19,6 +19,7 @@ interface WorkoutState {
   addSet: () => void;
   updateSet: (index: number, data: Partial<SetData>) => void;
   removeSet: (index: number) => void;
+  removeAllSets: () => void;
   saveWorkout: (userId: string) => Promise<{ error: Error | null; success: boolean }>;
 }
 
@@ -65,6 +66,10 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
 
   removeSet: (index) => {
     set({ sets: get().sets.filter((_, i) => i !== index) });
+  },
+
+  removeAllSets: () => {
+    set({ sets: [] });
   },
 
   saveWorkout: async (userId) => {
