@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { supabase } from '@shared/lib/supabase';
 import type { WorkoutWithSets } from '@shared/lib/types';
 
@@ -7,120 +8,156 @@ interface SetData {
   weight: string;
 }
 
-interface WorkoutState {
-  selectedExerciseId: string | null;
+interface PersistedWorkout {
+  activeExerciseId: string | null;
   customExerciseName: string;
   sets: SetData[];
+  startedAt: string | null;
+}
+
+interface WorkoutState extends PersistedWorkout {
   loading: boolean;
   error: string | null;
   repeatWorkout: (workout: WorkoutWithSets) => void;
-  setSelectedExercise: (id: string | null) => void;
+  setActiveExercise: (id: string | null) => void;
   setCustomExerciseName: (name: string) => void;
   addSet: () => void;
   updateSet: (index: number, data: Partial<SetData>) => void;
   removeSet: (index: number) => void;
   removeAllSets: () => void;
   saveWorkout: (userId: string) => Promise<{ error: Error | null; success: boolean }>;
+  clearPersistedState: () => void;
 }
 
 const initialSet: SetData = { reps: '', weight: '' };
 
-export const useWorkoutStore = create<WorkoutState>((set, get) => ({
-  selectedExerciseId: null,
-  customExerciseName: '',
-  sets: [],
-  loading: false,
-  error: null,
-
-  repeatWorkout: (workout: WorkoutWithSets) => {
-    if (workout.sets.length === 0) return;
-
-    const firstSet = workout.sets[0];
-    const exerciseId = firstSet.exercise_id;
-
-    set({
-      selectedExerciseId: exerciseId,
+export const useWorkoutStore = create<WorkoutState>()(
+  persist(
+    (set, get) => ({
+      activeExerciseId: null,
       customExerciseName: '',
-      sets: workout.sets.map((s) => ({
-        reps: String(s.reps),
-        weight: String(s.weight),
-      })),
-    });
-  },
+      sets: [],
+      startedAt: null,
+      loading: false,
+      error: null,
+      repeatWorkout: (workout: WorkoutWithSets) => {
+        if (workout.sets.length === 0) return;
 
-  setSelectedExercise: (id) => set({ selectedExerciseId: id }),
-  setCustomExerciseName: (name) => set({ customExerciseName: name }),
+        const firstSet = workout.sets[0];
+        const exerciseId = firstSet.exercise_id;
 
-  addSet: () => {
-    const last = get().sets[get().sets.length - 1];
-    set({
-      sets: [...get().sets, last ? { reps: last.reps, weight: last.weight } : { ...initialSet }],
-    });
-  },
+        set({
+          activeExerciseId: exerciseId,
+          customExerciseName: '',
+          sets: workout.sets.map((s) => ({
+            reps: String(s.reps),
+            weight: String(s.weight),
+          })),
+          startedAt: new Date().toISOString(),
+        });
+      },
 
-  updateSet: (index, data) => {
-    const newSets = [...get().sets];
-    newSets[index] = { ...newSets[index], ...data };
-    set({ sets: newSets });
-  },
+      setActiveExercise: (id: string | null) => {
+        const currentStartedAt = get().startedAt;
+        set({
+          activeExerciseId: id,
+          startedAt: id && !currentStartedAt ? new Date().toISOString() : currentStartedAt,
+        });
+      },
+      setCustomExerciseName: (name: string) => set({ customExerciseName: name }),
 
-  removeSet: (index) => {
-    set({ sets: get().sets.filter((_, i) => i !== index) });
-  },
+      addSet: () => {
+        const last = get().sets[get().sets.length - 1];
+        set({
+          sets: [
+            ...get().sets,
+            last ? { reps: last.reps, weight: last.weight } : { ...initialSet },
+          ],
+        });
+      },
 
-  removeAllSets: () => {
-    set({ sets: [] });
-  },
+      updateSet: (index: number, data: Partial<SetData>) => {
+        const newSets = [...get().sets];
+        newSets[index] = { ...newSets[index], ...data };
+        set({ sets: newSets });
+      },
 
-  saveWorkout: async (userId) => {
-    const { selectedExerciseId, customExerciseName, sets: setData } = get();
+      removeSet: (index: number) => {
+        set({ sets: get().sets.filter((_, i) => i !== index) });
+      },
 
-    let exerciseId = selectedExerciseId;
+      removeAllSets: () => {
+        set({ sets: [] });
+      },
 
-    if (!selectedExerciseId && customExerciseName.trim()) {
-      const { data, error } = await supabase
-        .from('exercises')
-        .upsert({ name: customExerciseName.trim(), user_id: userId, muscle_group: 'Otro' })
-        .select()
-        .single();
-      if (error) return { error, success: false };
-      exerciseId = data.id;
-    }
+      saveWorkout: async (userId: string) => {
+        const { activeExerciseId, customExerciseName, sets: setData } = get();
 
-    if (!exerciseId) return { error: new Error('Selecciona un ejercicio'), success: false };
+        let exerciseId = activeExerciseId;
 
-    const validSets = setData.filter((s) => s.reps && s.weight);
-    if (!validSets.length) return { error: new Error('Añade reps y kg'), success: false };
+        if (!activeExerciseId && customExerciseName.trim()) {
+          const { data, error } = await supabase
+            .from('exercises')
+            .upsert({ name: customExerciseName.trim(), user_id: userId, muscle_group: 'Otro' })
+            .select()
+            .single();
+          if (error) return { error, success: false };
+          exerciseId = data.id;
+        }
 
-    try {
-      const { data: wo, error: woError } = await supabase
-        .from('workouts')
-        .insert({ user_id: userId, started_at: new Date().toISOString() })
-        .select()
-        .single();
+        if (!exerciseId) return { error: new Error('Selecciona un ejercicio'), success: false };
 
-      if (woError) throw woError;
-      if (!wo) throw new Error('Error creando workout');
+        const validSets = setData.filter((s) => s.reps && s.weight);
+        if (!validSets.length) return { error: new Error('Añade reps y kg'), success: false };
 
-      const setsToInsert = validSets.map((s, i) => ({
-        workout_id: wo.id,
-        exercise_id: exerciseId,
-        set_num: i + 1,
-        reps: Number(s.reps),
-        weight: Number(s.weight),
-        notes: null,
-      }));
+        try {
+          const { data: wo, error: woError } = await supabase
+            .from('workouts')
+            .insert({
+              user_id: userId,
+              started_at: get().startedAt || new Date().toISOString(),
+              finished_at: new Date().toISOString(),
+            })
+            .select()
+            .single();
 
-      const { error: insertError } = await supabase.from('workout_sets').insert(setsToInsert);
-      if (insertError) throw insertError;
+          if (woError) throw woError;
+          if (!wo) throw new Error('Error creando workout');
 
-      set({ sets: [], selectedExerciseId: null, customExerciseName: '' });
+          const setsToInsert = validSets.map((s, i) => ({
+            workout_id: wo.id,
+            exercise_id: exerciseId,
+            set_num: i + 1,
+            reps: Number(s.reps),
+            weight: Number(s.weight),
+            notes: null,
+          }));
 
-      return { error: null, success: true };
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Error guardando';
-      console.error('[WorkoutStore] saveWorkout:', message);
-      return { error: new Error(message), success: false };
-    }
-  },
-}));
+          const { error: insertError } = await supabase.from('workout_sets').insert(setsToInsert);
+          if (insertError) throw insertError;
+
+          set({ sets: [], activeExerciseId: null, customExerciseName: '', startedAt: null });
+
+          return { error: null, success: true };
+        } catch (err) {
+          const message = err instanceof Error ? err.message : 'Error guardando';
+          console.error('[WorkoutStore] saveWorkout:', message);
+          return { error: new Error(message), success: false };
+        }
+      },
+
+      clearPersistedState: () =>
+        set({ activeExerciseId: null, customExerciseName: '', sets: [], startedAt: null }),
+    }),
+    {
+      name: 'gymlog-workout',
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        activeExerciseId: state.activeExerciseId,
+        customExerciseName: state.customExerciseName,
+        sets: state.sets,
+        startedAt: state.startedAt,
+      }),
+    },
+  ),
+);

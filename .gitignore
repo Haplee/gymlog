@@ -26,3 +26,7 @@ dist-ssr
 .vercel
 .env
 .env*.local
+
+# Test results
+test-results/
+supabase/test-results/

@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useWorkoutStore } from '@features/workout/stores/workoutStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
@@ -17,23 +17,76 @@ import {
   deleteExercise,
 } from '@shared/api/queries';
 import confetti from 'canvas-confetti';
-import { Trophy, X, Trash2, Plus, StickyNote } from 'lucide-react';
+import { Trophy, X, Trash2, Plus, StickyNote, AlertCircle } from 'lucide-react';
+import { z } from 'zod';
+import { toast } from 'sonner';
+
+const setSchema = z.object({
+  reps: z.coerce.number().positive('Las repeticiones deben ser mayores a 0'),
+  weight: z.coerce.number().nonnegative('El peso no puede ser negativo'),
+});
+
+const setsSchema = z.array(setSchema).min(1, 'Debes registrar al menos una serie válida');
+
+// Componente extraído fuera para evitar el error react-hooks/static-components
+function ResumeWorkoutBanner({
+  startedAt,
+  onContinue,
+  onDiscard,
+}: {
+  startedAt: string;
+  onContinue: () => void;
+  onDiscard: () => void;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="mb-4 p-4 rounded-xl border-2 border-[--color-primary] bg-[--color-primary]/5 flex flex-col gap-3"
+    >
+      <div className="flex items-center gap-2 text-[--color-primary]">
+        <AlertCircle className="w-5 h-5" />
+        <span className="font-semibold text-sm">Entrenamiento en curso detectado</span>
+      </div>
+      <p className="text-xs text-[--text-secondary]">
+        Tienes una sesión iniciada el {new Date(startedAt).toLocaleTimeString()}. ¿Quieres continuar
+        registrando?
+      </p>
+      <div className="flex gap-2">
+        <button
+          onClick={onContinue}
+          className="flex-1 py-2 rounded-lg bg-[--color-primary] text-[--interactive-primary-fg] text-xs font-bold"
+        >
+          Continuar
+        </button>
+        <button
+          onClick={onDiscard}
+          className="flex-1 py-2 rounded-lg border border-[--border-default] text-[--text-secondary] text-xs font-medium"
+        >
+          Descartar
+        </button>
+      </div>
+    </motion.div>
+  );
+}
 
 export function WorkoutPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const {
-    selectedExerciseId,
+    activeExerciseId,
     customExerciseName,
     sets,
-    setSelectedExercise,
+    startedAt,
+    setActiveExercise,
     setCustomExerciseName,
     addSet,
     updateSet,
     removeSet,
     removeAllSets,
     saveWorkout,
+    clearPersistedState,
   } = useWorkoutStore();
 
   const { sound } = useSettingsStore();
@@ -45,6 +98,15 @@ export function WorkoutPage() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [noteText, setNoteText] = useState('');
+  const [showResumeBanner, setShowResumeBanner] = useState(() => {
+    if (startedAt && sets.length > 0) {
+      const startTime = new Date(startedAt).getTime();
+      const now = new Date().getTime();
+      const twelveHours = 12 * 60 * 60 * 1000;
+      return now - startTime < twelveHours;
+    }
+    return false;
+  });
 
   const { data: exercises = [] } = useQuery({
     queryKey: ['exercises', user?.id],
@@ -59,9 +121,9 @@ export function WorkoutPage() {
   });
 
   const { data: exerciseNotes = [], refetch: refetchNotes } = useQuery({
-    queryKey: ['exerciseNotes', user?.id, selectedExerciseId],
-    queryFn: () => fetchExerciseNotes(user!.id, selectedExerciseId!),
-    enabled: !!user?.id && !!selectedExerciseId,
+    queryKey: ['exerciseNotes', user?.id, activeExerciseId],
+    queryFn: () => fetchExerciseNotes(user!.id, activeExerciseId!),
+    enabled: !!user?.id && !!activeExerciseId,
   });
 
   const personalRecords = Object.fromEntries(personalRecordsList.map((pr) => [pr.exercise_id, pr]));
@@ -72,10 +134,20 @@ export function WorkoutPage() {
       return;
     }
     checkAndBackup(user.id);
-  }, [user, navigate, checkAndBackup]);
 
-  const selectedExercise = exercises.find((e) => e.id === selectedExerciseId);
-  const currentPR = selectedExerciseId ? personalRecords[selectedExerciseId] : null;
+    // Bloque 1: Si el workout es viejo, limpiarlo al montar
+    if (startedAt && sets.length > 0) {
+      const startTime = new Date(startedAt).getTime();
+      const now = new Date().getTime();
+      const twelveHours = 12 * 60 * 60 * 1000;
+      if (now - startTime >= twelveHours) {
+        clearPersistedState();
+      }
+    }
+  }, [user, navigate, checkAndBackup, startedAt, sets.length, clearPersistedState]);
+
+  const selectedExercise = exercises.find((e) => e.id === activeExerciseId);
+  const currentPR = activeExerciseId ? personalRecords[activeExerciseId] : null;
 
   const activeRoutine = getActiveRoutine();
   const todayRoutine = getTodayRoutine();
@@ -123,6 +195,25 @@ export function WorkoutPage() {
   const handleSave = async () => {
     if (!user || saving) return;
     setMessage('');
+
+    // Bloque 6: Filtrado y Validación con Zod
+    const validSets = sets.filter(
+      (s) =>
+        s.reps !== '' &&
+        s.weight !== '' &&
+        Number(s.reps) > 0 &&
+        (s.weight === '0' || Number(s.weight) >= 0),
+    );
+
+    const validation = setsSchema.safeParse(validSets);
+
+    if (!validation.success) {
+      const errorMsg = validation.error.errors[0]?.message || 'Datos de series inválidos';
+      toast.error(errorMsg);
+      setMessage(errorMsg);
+      return;
+    }
+
     setSaving(true);
     const result = await saveWorkout(user.id);
     setSaving(false);
@@ -137,8 +228,7 @@ export function WorkoutPage() {
       queryClient.invalidateQueries({ queryKey: ['recentSets'] });
       queryClient.invalidateQueries({ queryKey: ['personalRecords'] });
 
-      // Lanzar confeti si hay algún PR nuevo
-      const hasPR = sets.some((s) => checkIsNewPR(s.weight, s.reps));
+      const hasPR = validSets.some((s) => checkIsNewPR(s.weight, s.reps));
       if (hasPR) {
         confetti({
           particleCount: 150,
@@ -168,9 +258,9 @@ export function WorkoutPage() {
   };
 
   const handleSaveNote = async () => {
-    if (!user || !selectedExerciseId || !noteText.trim()) return;
+    if (!user || !activeExerciseId || !noteText.trim()) return;
     try {
-      await saveExerciseNote(user.id, selectedExerciseId, noteText.trim());
+      await saveExerciseNote(user.id, activeExerciseId, noteText.trim());
       setNoteText('');
       refetchNotes();
     } catch (err) {
@@ -193,7 +283,7 @@ export function WorkoutPage() {
     try {
       await deleteExercise(exId);
       queryClient.invalidateQueries({ queryKey: ['exercises'] });
-      setSelectedExercise(null);
+      setActiveExercise(null);
     } catch (err) {
       console.error('Error deleting exercise:', err);
     }
@@ -203,7 +293,7 @@ export function WorkoutPage() {
     const val = e.target.value;
     const isCustom = val === '__custom__';
     setCustomInput(isCustom);
-    setSelectedExercise(isCustom ? null : val || null);
+    setActiveExercise(isCustom ? null : val || null);
     if (val && !isCustom && !sets.length) {
       addSet();
     }
@@ -229,9 +319,24 @@ export function WorkoutPage() {
 
   return (
     <Layout>
+      <AnimatePresence>
+        {showResumeBanner && startedAt && (
+          <ResumeWorkoutBanner
+            startedAt={startedAt}
+            onContinue={() => setShowResumeBanner(false)}
+            onDiscard={() => {
+              clearPersistedState();
+              setShowResumeBanner(false);
+            }}
+          />
+        )}
+      </AnimatePresence>
+
       {activeRoutine && todayRoutine && todayRoutine.exercises.length > 0 && (
         <motion.div
           variants={containerVariants}
+          initial="hidden"
+          animate="show"
           className="mb-3 p-3 rounded-[var(--radius-lg)]"
           style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}
         >
@@ -262,11 +367,13 @@ export function WorkoutPage() {
 
       <motion.div
         variants={containerVariants}
+        initial="hidden"
+        animate="show"
         className="rounded-[var(--radius-lg)] p-4 mb-3"
         style={{ backgroundColor: bgCard, border: `1px solid ${border}` }}
       >
         <select
-          value={selectedExerciseId || (customInput ? '__custom__' : '')}
+          value={activeExerciseId || (customInput ? '__custom__' : '')}
           onChange={handleExerciseChange}
           className="w-full rounded-lg text-sm p-2.5 outline-none appearance-none transition-all focus:scale-[1.01]"
           style={{ backgroundColor: bgCard, border: `1px solid ${border}`, color: textPrimary }}
@@ -323,7 +430,7 @@ export function WorkoutPage() {
           </div>
         )}
 
-        {showNotes && selectedExerciseId && (
+        {showNotes && activeExerciseId && (
           <div
             className="mt-3 p-3 rounded-lg"
             style={{ backgroundColor: bgCard, border: `1px solid ${border}` }}
@@ -387,6 +494,8 @@ export function WorkoutPage() {
 
       <motion.div
         variants={containerVariants}
+        initial="hidden"
+        animate="show"
         className={`rounded-[var(--radius-lg)] p-4 ${saveSuccess ? 'success-pulse' : ''}`}
         style={{ backgroundColor: bgCard, border: `1px solid ${border}` }}
       >

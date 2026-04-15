@@ -72,6 +72,13 @@ export function StatsPage() {
     retry: 1,
   });
 
+  const { data: volumeData, isLoading: isLoadingVolume } = useQuery({
+    queryKey: ['volumeByMuscleGroup', user?.id],
+    queryFn: () => fetchVolumeByMuscleGroup(user!.id),
+    enabled: !!user?.id,
+    staleTime: 1000 * 60 * 5,
+  });
+
   useEffect(() => {
     if (error) {
       console.error('Error fetching stats data:', error);
@@ -166,7 +173,7 @@ export function StatsPage() {
   const periodButtons: PeriodFilter[] = ['4semanas', '3meses', '6meses', '1año'];
   const metricButtons: ('1rm' | 'maxWeight' | 'volume')[] = ['1rm', 'maxWeight', 'volume'];
 
-  if (isLoading) {
+  if (isLoading || isLoadingVolume) {
     return (
       <Layout>
         <div className="grid grid-cols-2 gap-3">
@@ -334,22 +341,25 @@ export function StatsPage() {
 
       <div className="bg-[var(--bg-surface)] rounded-[var(--radius-lg)] p-4 mb-4">
         <div className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-3">
-          Distribución muscular
+          Volumen muscular total (t)
         </div>
         <div className="h-[200px]">
           <ResponsiveContainer width="100%" height="100%">
-            <RadarChart cx="50%" cy="50%" outerRadius="70%" data={muscleRecovery}>
+            <RadarChart cx="50%" cy="50%" outerRadius="70%" data={volumeData}>
               <PolarGrid stroke="var(--border-default)" />
               <PolarAngleAxis
-                dataKey="name"
+                dataKey="muscle_group"
                 tick={{ fill: 'var(--text-tertiary)', fontSize: 10 }}
               />
               <Radar
                 name="Volumen"
-                dataKey="daysSinceLast"
+                dataKey="total_volume"
                 stroke="var(--interactive-primary)"
                 fill="var(--interactive-primary)"
                 fillOpacity={0.3}
+              />
+              <Tooltip
+                formatter={(value) => [`${(Number(value) / 1000).toFixed(1)}t`, 'Volumen']}
               />
             </RadarChart>
           </ResponsiveContainer>

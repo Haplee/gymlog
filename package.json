@@ -16,7 +16,8 @@
     "analyze": "MODE=analyze npm run build",
     "release": "standard-version",
     "prepare": "husky",
-    "commit": "git-cz"
+    "commit": "git-cz",
+    "gen:types": "supabase gen types typescript --project-id eoltmipoklizewxdpzfa > src/types/database.types.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.102.1",

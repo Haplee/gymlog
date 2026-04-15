@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { motion } from 'framer-motion';
 import { Flame, TrendingUp, TrendingDown, Calendar, Trophy } from 'lucide-react';
 
@@ -10,7 +11,14 @@ interface KPICardProps {
   isNewPR?: boolean;
 }
 
-export function KPICard({ title, value, subtitle, icon, trend, isNewPR }: KPICardProps) {
+export const KPICard = memo(function KPICard({
+  title,
+  value,
+  subtitle,
+  icon,
+  trend,
+  isNewPR,
+}: KPICardProps) {
   const icons = {
     flame: <Flame className="w-4 h-4" />,
     volume: <TrendingUp className="w-4 h-4" />,
@@ -55,4 +63,4 @@ export function KPICard({ title, value, subtitle, icon, trend, isNewPR }: KPICar
       {subtitle && <span className="text-[0.6875rem] text-[var(--text-tertiary)]">{subtitle}</span>}
     </motion.div>
   );
-}
+});

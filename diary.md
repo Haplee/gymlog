@@ -19,3 +19,21 @@
 - **Arreglo de Hooks**: Migrada la configuración de `lint-staged` a `package.json` y añadido el uso de `npx` para asegurar la compatibilidad con Windows durante el commit.
 - **Saneamiento de código**: Eliminados todos los errores de TypeScript (hooks condicionales, tipos any y exportaciones de Fast Refresh) que bloqueaban el commit inicial.
 - **Estado actual**: Commiteado y sincronizado; listo para el despliegue automático en Vercel tras las correcciones de compatibilidad.
+
+## [2026-04-15] — Ampliación detallada de la lógica del repositorio
+
+- Generado y ampliado el archivo `logica.md` con detalles técnicos específicos:
+  - Análisis del modelo de datos de **Supabase** (v2.0) y sus políticas de **RLS**.
+  - Explicación del flujo de cálculo de **PRs** mediante la fórmula de Brzycki.
+  - Desglose de la arquitectura por features (`auth`, `workout`, `routine`, `stats`) y su interacción con los stores de **Zustand**.
+  - Identificados cuellos de botella lógicos en la persistencia del estado activo y la agregación de volumen en el cliente.
+- Estado actual: Documentación técnica completa disponible para guiar las próximas refactorizaciones.
+
+## [2026-04-15] — Refactorización Integral: Persistencia, Caché, RPC y Zod
+
+- **Persistencia del Workout Activo**: Implementado middleware `persist` en `useWorkoutStore.ts`. Normalización de nomenclatura a `activeExerciseId`. Añadido `ResumeWorkoutBanner` en la UI para reanudar sesiones (< 12h).
+- **Seguridad y Limpieza de Caché**: Integrado `queryClient.clear()` y `clearPersistedState()` en el proceso de `signOut` para evitar fugas de datos entre sesiones.
+- **Optimización de Datos (RPC)**: Creada función PL/pgSQL `get_volume_by_muscle_group` en Supabase. Refactorizado `StatsPage.tsx` para consumir esta RPC, delegando el procesamiento pesado al servidor.
+- **Calidad de Datos (Zod)**: Implementada validación estricta de series en `WorkoutPage.tsx` con Zod. Añadido filtrado de series vacías antes del guardado.
+- **Rendimiento**: Verificada carga perezosa (`React.lazy`) y aplicada memoización (`React.memo`) en componentes críticos de estadísticas (`KPICards`, `ConsistencyHeatmap`).
+- **Estado actual**: Refactorización técnica completada. Sistema más robusto, seguro y eficiente.

@@ -1,7 +1,8 @@
 import { create } from 'zustand';
-import type { User } from '@supabase/supabase-js';
-import type { Subscription } from '@supabase/supabase-js';
+import type { User, Subscription } from '@supabase/supabase-js';
 import { supabase, SB_URL, SB_KEY } from '@shared/lib/supabase';
+import { queryClient } from '@app/queryClient';
+import { useWorkoutStore } from '@features/workout/stores/workoutStore';
 
 // Guardamos la subscripción fuera del store para que HMR y StrictMode
 // no acumulen múltiples listeners de onAuthStateChange.
@@ -104,6 +105,9 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   signOut: async () => {
+    // Bloque 2: Limpieza de cache y estado persistido
+    queryClient.clear();
+    useWorkoutStore.getState().clearPersistedState();
     await supabase.auth.signOut();
     set({ user: null });
   },

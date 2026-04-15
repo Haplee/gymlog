@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { motion } from 'framer-motion';
 
 interface DayData {
@@ -12,7 +13,9 @@ interface ConsistencyHeatmapProps {
 
 const DAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
-export function ConsistencyHeatmap({ data }: ConsistencyHeatmapProps) {
+export const ConsistencyHeatmap = memo(function ConsistencyHeatmap({
+  data,
+}: ConsistencyHeatmapProps) {
   const maxVolume = Math.max(...data.map((d) => d.volume), 1);
 
   const getIntensity = (volume: number): string => {
@@ -96,4 +99,4 @@ export function ConsistencyHeatmap({ data }: ConsistencyHeatmapProps) {
       </div>
     </motion.div>
   );
-}
+});

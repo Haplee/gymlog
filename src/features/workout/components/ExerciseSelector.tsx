@@ -9,7 +9,7 @@ import { Button } from '@shared/components/ui';
 interface ExerciseSelectorProps {
   userId: string;
   onSelect: (exerciseId: string, isCustom: boolean) => void;
-  selectedExerciseId?: string | null;
+  activeExerciseId?: string | null;
 }
 
 interface ExerciseOption {
@@ -19,7 +19,7 @@ interface ExerciseOption {
   user_id: string | null;
 }
 
-export function ExerciseSelector({ userId, onSelect, selectedExerciseId }: ExerciseSelectorProps) {
+export function ExerciseSelector({ userId, onSelect, activeExerciseId }: ExerciseSelectorProps) {
   const queryClient = useQueryClient();
   const [isCreating, setIsCreating] = useState(false);
   const [newExerciseName, setNewExerciseName] = useState('');
@@ -160,10 +160,10 @@ export function ExerciseSelector({ userId, onSelect, selectedExerciseId }: Exerc
                         key={ex.id}
                         onClick={() => handleSelect(ex)}
                         className={`w-full px-3 py-2 text-left text-sm flex items-center justify-between hover:bg-[--bg-elevated] focus:outline-none focus:bg-[--bg-elevated] ${
-                          selectedExerciseId === ex.id ? 'bg-[--bg-elevated]' : ''
+                          activeExerciseId === ex.id ? 'bg-[--bg-elevated]' : ''
                         }`}
                         role="option"
-                        aria-selected={selectedExerciseId === ex.id}
+                        aria-selected={activeExerciseId === ex.id}
                       >
                         <span className="text-[--text-primary]">{ex.name}</span>
                         {ex.user_id === userId && (
