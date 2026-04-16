@@ -12,8 +12,8 @@
   <p>PWA integral para el registro y análisis de entrenamientos de hipertrofia y fuerza. Diseñada con un enfoque <b>offline-first</b>, arquitectura escalable y rendimiento premium.</p>
 
   <p align="center">
-    <a href="https://pesos-wine.vercel.app"><img src="https://img.shields.io/badge/LIVE_DEMO-en_Vercel-3ECF8E?style=for-the-badge&logoColor=white" alt="Live Demo" /></a>
-    <a href="https://github.com/Haplee/pesos/releases/latest"><img src="https://img.shields.io/badge/DOWNLOAD_APK-Native_Android-3ECF8E?style=for-the-badge&logo=android&logoColor=white" alt="Download APK" /></a>
+    <a href="https://pesos-wine.vercel.app"><img src="https://img.shields.io/badge/APP_Vercel-LIVE_DEMO-3ECF8E?style=for-the-badge&logo=vercel&logoColor=white" alt="Live Demo" /></a>
+    <a href="https://Haplee.github.io/pesos/"><img src="https://img.shields.io/badge/APK_Download-Landing_Page-3ECF8E?style=for-the-badge&logo=android&logoColor=white" alt="Download APK" /></a>
   </p>
   
   <p align="center">
