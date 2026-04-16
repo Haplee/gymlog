@@ -10,6 +10,9 @@ import { supabase } from '@shared/lib/supabase';
 import { shareWorkout } from '@shared/lib/share';
 import type { WorkoutWithSets, WorkoutSetWithDetails } from '@shared/lib/types';
 import { toast } from 'sonner';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 import { fetchWorkouts, fetchRecentSets, fetchExercises } from '@shared/api/queries';
 import { EmptyHistory } from '@shared/components/EmptyStates';
 import { Modal, Button } from '@shared/components/ui';
@@ -75,7 +78,9 @@ function ExerciseRow({
                 <span className="text-[var(--text-tertiary)] text-[0.8125rem]">
                   {t('workout.sets')} {s.set_num}
                 </span>
-                <span className="text-[var(--text-secondary)] text-[0.875rem]">{s.reps} {t('workout.reps').toLowerCase()}</span>
+                <span className="text-[var(--text-secondary)] text-[0.875rem]">
+                  {s.reps} {t('workout.reps').toLowerCase()}
+                </span>
               </div>
               <span className="text-[var(--interactive-primary)] font-medium">{s.weight} kg</span>
             </div>
@@ -159,7 +164,7 @@ export function HistoryPage() {
     setDeleteId(null);
   };
 
-  const exportToExcel = () => {
+  const exportToExcel = async () => {
     let csv = 'Fecha,Ejercicio,Serie,Repeticiones,Peso (kg)\n';
 
     filteredSets.forEach((s: WorkoutSetWithDetails) => {
@@ -180,11 +185,36 @@ export function HistoryPage() {
       csv += `${dateFormatted},${exName},${s.set_num},${s.reps},${s.weight}\n`;
     });
 
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `gymlog_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
+    const fileName = `gymlog_${new Date().toISOString().split('T')[0]}.csv`;
+
+    if (Capacitor.isNativePlatform()) {
+      try {
+        await Filesystem.writeFile({
+          path: fileName,
+          data: csv,
+          directory: Directory.Cache,
+          encoding: Encoding.UTF8,
+        });
+        const uriResult = await Filesystem.getUri({
+          directory: Directory.Cache,
+          path: fileName,
+        });
+        await Share.share({
+          title: 'Exportar Historial',
+          url: uriResult.uri,
+          dialogTitle: 'Compartir Historial',
+        });
+      } catch (e) {
+        console.error('Error export native', e);
+        toast.error('Error al exportar histórico');
+      }
+    } else {
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = fileName;
+      link.click();
+    }
   };
 
   const importFromCsv = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -662,7 +692,11 @@ export function HistoryPage() {
         </div>
       )}
 
-      <Modal open={!!deleteId} onClose={() => setDeleteId(null)} title={t('history.delete_confirm')}>
+      <Modal
+        open={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        title={t('history.delete_confirm')}
+      >
         <p className="text-[var(--text-secondary)] mb-6">Esta acción no se puede deshacer.</p>
         <div className="flex gap-3 justify-end mt-4">
           <Button variant="secondary" onClick={() => setDeleteId(null)}>

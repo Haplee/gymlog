@@ -28,12 +28,14 @@ export function Providers({ children }: ProvidersProps) {
     <QueryClientProvider client={queryClient}>
       {children}
       <Toaster
-        position="bottom-center"
+        position="top-center"
         richColors
         closeButton
         duration={3500}
+        theme="dark"
         toastOptions={{
           style: {
+            marginTop: 'calc(env(safe-area-inset-top) + 8px)',
             background: 'var(--bg-surface)',
             border: '1px solid var(--border-default)',
             color: 'var(--text-primary)',

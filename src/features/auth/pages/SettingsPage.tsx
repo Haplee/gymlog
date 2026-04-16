@@ -7,6 +7,8 @@ import { Layout } from '@app/components/Layout';
 import { Button } from '@shared/components/ui';
 import { supabase } from '@shared/lib/supabase';
 import { requestPermission, isNative } from '@shared/lib/notifications';
+import { toast } from 'sonner';
+import BiometricPlugin from '@shared/lib/biometric';
 
 const playSound = (freq: number, duration: number, delay: number, ctx: AudioContext) => {
   const osc = ctx.createOscillator();
@@ -25,8 +27,20 @@ export function SettingsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, signOut } = useAuthStore();
-  const { sound, setSound, language, setLanguage } = useSettingsStore();
+  const {
+    sound,
+    setSound,
+    language,
+    setLanguage,
+    biometricEnabled,
+    setBiometricEnabled,
+    trainingReminders,
+    setTrainingReminders,
+  } = useSettingsStore();
   const [notifEnabled, setNotifEnabled] = useState(false);
+  const [biometricSupport, setBiometricSupport] = useState<{ available: boolean; message: string }>(
+    { available: false, message: '' },
+  );
 
   useEffect(() => {
     if (!user) {
@@ -46,8 +60,31 @@ export function SettingsPage() {
         else localStorage.setItem('notif_disabled', 'true');
       }
     };
+
+    const checkBio = async () => {
+      if (isNative()) {
+        try {
+          const support = await BiometricPlugin.checkBiometry();
+          setBiometricSupport({ available: support.available, message: support.message || '' });
+          // Si el hardware dice que no está activado, pero el store dice que sí, sincronizamos
+          if (!support.available && biometricEnabled) {
+            setBiometricEnabled(false);
+            await BiometricPlugin.setBiometricEnabled({ enabled: false });
+          }
+        } catch (e: unknown) {
+          console.error('Error checking biometric:', e);
+          const errorMsg = e instanceof Error ? e.message : 'Error desconocido';
+          setBiometricSupport({
+            available: false,
+            message: `Error de conexión nativa: ${errorMsg}. Asegúrate de haber compilado el APK con el nuevo código.`,
+          });
+        }
+      }
+    };
+
     fetchConfig();
-  }, [user, navigate]);
+    checkBio();
+  }, [user, navigate, biometricEnabled, setBiometricEnabled]);
 
   const playFeedbackSound = useCallback(() => {
     try {
@@ -71,8 +108,7 @@ export function SettingsPage() {
       localStorage.removeItem('notif_disabled');
 
       if (!isNative() && 'Notification' in window && Notification.permission === 'denied') {
-        // Web: permiso denegado por el navegador, no podemos hacer nada
-        localStorage.setItem('notif_disabled', 'true');
+        toast.error('Permiso de notificaciones denegado en el navegador');
         return;
       }
 
@@ -80,13 +116,12 @@ export function SettingsPage() {
       if (granted) {
         setNotifEnabled(true);
         if (user) {
-          await supabase
-            .from('profiles')
-            .update({ notifications_enabled: true })
-            .eq('id', user.id);
+          await supabase.from('profiles').update({ notifications_enabled: true }).eq('id', user.id);
         }
+        toast.success('Notificaciones activadas');
       } else {
         localStorage.setItem('notif_disabled', 'true');
+        toast.error('No se concedieron permisos de notificación');
       }
     } else {
       setNotifEnabled(false);
@@ -94,6 +129,36 @@ export function SettingsPage() {
       if (user) {
         await supabase.from('profiles').update({ notifications_enabled: false }).eq('id', user.id);
       }
+    }
+  };
+
+  const handleBiometricToggle = async () => {
+    if (!isNative()) return;
+
+    if (!biometricSupport.available) {
+      toast.error(`Biometría no disponible: ${biometricSupport.message}`);
+      return;
+    }
+
+    if (!biometricEnabled) {
+      const loadId = toast.loading('Verificando identidad...');
+      try {
+        const result = await BiometricPlugin.authenticate();
+        if (result.success) {
+          setBiometricEnabled(true);
+          await BiometricPlugin.setBiometricEnabled({ enabled: true });
+          toast.success('Acceso biométrico activado', { id: loadId });
+        } else {
+          toast.error(result.message || 'Autenticación fallida', { id: loadId });
+        }
+      } catch (e) {
+        toast.error('Error al conectar con el sensor', { id: loadId });
+        console.error('Error biometric:', e);
+      }
+    } else {
+      setBiometricEnabled(false);
+      await BiometricPlugin.setBiometricEnabled({ enabled: false });
+      toast.success('Acceso biométrico desactivado');
     }
   };
 
@@ -186,13 +251,64 @@ export function SettingsPage() {
           </div>
         </div>
 
+        {/* Biometría (Solo Nativo) */}
+        {isNative() && (
+          <div
+            className="rounded-2xl p-4 scale-in border"
+            style={{ backgroundColor: bgCard, borderColor: border }}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-[0.95rem]" style={{ color: 'var(--text-primary)' }}>
+                  Acceso Biométrico
+                </div>
+                <div className="text-[0.75rem]" style={{ color: 'var(--text-muted)' }}>
+                  Usa tu huella o cara para entrar
+                </div>
+              </div>
+              <button
+                onClick={handleBiometricToggle}
+                className={`w-12 h-6 rounded-full transition-all relative ${biometricEnabled ? 'bg-[--color-primary]' : 'bg-[--bg-base]'}`}
+              >
+                <div
+                  className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${biometricEnabled ? 'left-7' : 'left-1'}`}
+                />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Recordatorios de entrenamiento */}
+        <div
+          className="rounded-2xl p-4 scale-in border"
+          style={{ backgroundColor: bgCard, borderColor: border }}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-[0.95rem]" style={{ color: 'var(--text-primary)' }}>
+                Recordatorios de entreno
+              </div>
+              <div className="text-[0.75rem]" style={{ color: 'var(--text-muted)' }}>
+                Avisar si llevo 2 días sin entrenar
+              </div>
+            </div>
+            <button
+              onClick={() => setTrainingReminders(!trainingReminders)}
+              className={`w-12 h-6 rounded-full transition-all relative ${trainingReminders ? 'bg-[--color-primary]' : 'bg-[--bg-base]'}`}
+            >
+              <div
+                className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${trainingReminders ? 'left-7' : 'left-1'}`}
+              />
+            </button>
+          </div>
+        </div>
+
         <button
           onClick={() => signOut()}
-          className="w-full rounded-2xl p-4 cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98] scale-in border"
+          className="w-full rounded-2xl p-4 cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98] scale-in border-none shadow-md"
           style={{
-            backgroundColor: bgCard,
-            borderColor: 'var(--color-danger-border)',
-            color: 'var(--color-danger)',
+            backgroundColor: 'var(--color-danger)',
+            color: '#ffffff',
           }}
         >
           <div className="text-[1rem] font-semibold">{t('settings.logout')}</div>

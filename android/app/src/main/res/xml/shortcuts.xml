@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="nuevo_entreno"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_new"
+        android:shortcutShortLabel="@string/shortcut_new_workout_short"
+        android:shortcutLongLabel="@string/shortcut_new_workout_long"
+        android:shortcutDisabledMessage="@string/shortcut_disabled_message">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.franvi.gymlog"
+            android:targetClass="com.franvi.gymlog.MainActivity"
+            android:data="com.franvi.gymlog://workout/new" />
+        <categories android:name="android.shortcut.conversation" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="ver_progreso"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_stats"
+        android:shortcutShortLabel="@string/shortcut_stats_short"
+        android:shortcutLongLabel="@string/shortcut_stats_long"
+        android:shortcutDisabledMessage="@string/shortcut_disabled_message">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.franvi.gymlog"
+            android:targetClass="com.franvi.gymlog.MainActivity"
+            android:data="com.franvi.gymlog://history" />
+        <categories android:name="android.shortcut.conversation" />
+    </shortcut>
+</shortcuts>

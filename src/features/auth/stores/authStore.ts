@@ -120,10 +120,15 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   signOut: async () => {
-    // Bloque 2: Limpieza de cache y estado persistido
-    queryClient.clear();
-    useWorkoutStore.getState().clearPersistedState();
-    await supabase.auth.signOut();
-    set({ user: null });
+    // Limpieza de cache y estado persistido
+    try {
+      queryClient.clear();
+      useWorkoutStore.getState().clearPersistedState();
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error('[GymLog] Error durante signOut:', err);
+    } finally {
+      set({ user: null });
+    }
   },
 }));

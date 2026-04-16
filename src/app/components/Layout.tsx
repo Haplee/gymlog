@@ -55,17 +55,11 @@ export function Layout({ children }: LayoutProps) {
 
   return (
     <div className="min-h-screen min-h-[100dvh] flex flex-col bg-[var(--bg-base)]">
-      <header
-        className="px-5 pb-3"
-        style={{ paddingTop: '6px' }}
-      >
+      <header className="px-5 pb-3" style={{ paddingTop: '6px' }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-[var(--radius-lg)] bg-[var(--interactive-primary)] flex items-center justify-center">
-              <Dumbbell
-                className="w-5 h-5 text-[var(--interactive-primary-fg)]"
-                strokeWidth={2.5}
-              />
+            <div className="w-10 h-10 flex items-center justify-center overflow-hidden">
+              <img src="/gimnasia.png" alt="Logo" className="w-9 h-9 object-contain" />
             </div>
             <div>
               <div className="text-[1.25rem] font-semibold text-[var(--text-primary)]">GymLog</div>

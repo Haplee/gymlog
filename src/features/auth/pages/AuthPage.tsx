@@ -84,15 +84,8 @@ export function AuthPage() {
   return (
     <div className="min-h-screen min-h-[100dvh] flex flex-col items-center justify-center p-6 bg-[var(--bg-base)]">
       <div className="text-center mb-8 scale-in">
-        <div
-          className="w-16 h-16 mx-auto mb-4 rounded-[var(--radius-lg)] flex items-center justify-center"
-          style={{ backgroundColor: accent, boxShadow: `0 0 30px ${accent}40` }}
-        >
-          <img
-            src="/gimnasia.png"
-            alt="GymLog"
-            className="w-full h-full rounded-[var(--radius-lg)] object-contain"
-          />
+        <div className="w-24 h-16 mx-auto mb-4 flex items-center justify-center">
+          <img src="/gimnasia.svg" alt="GymLog" className="w-full h-full object-contain" />
         </div>
         <h1 className="text-[1.875rem] font-extrabold tracking-tight fade-in-up text-[var(--text-primary)]">
           Gym<span style={{ color: accent }}>Log</span>

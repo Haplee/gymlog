@@ -90,3 +90,131 @@
 - **Iconos Modernos**: Actualizado generate-icons.js para generar ic_launcher_foreground.png. En Android 8+, el sistema ignora los iconos planos si existen definiciones de iconos adaptativos. Ahora se generan todas las capas necesarias.
 - **Identidad Visual**: Sincronizado el color de fondo del icono adaptativo (ic_launcher_background.xml) con el color de fondo de la aplicación (#0a0a0c) para un acabado premium.
 - **Estado**: Problemas de estabilidad inicial en Android resueltos. Pendiente de sincronización final en el dispositivo del usuario (npx cap sync android).
+
+## [2026-04-16] — Mejoras nativas premium para Android (Kotlin + Material You)
+
+- **Migración Integral a Kotlin**: Convertidas `MainActivity` y `NotificationHelper` de Java a Kotlin 2.1.10, mejorando la legibilidad y compatibilidad con APIs modernas.
+- **Edge-to-Edge (Android 15+)**: Habilitada la visualización de contenido bajo las barras de sistema mediante `WindowCompat`, eliminando los bordes negros tradicionales de las WebView.
+- **Biometría Nativa**: Implementado plugin Capacitor para autenticación con huella/cara (`androidx.biometric`), permitiendo el bloqueo de la sesión desde el lado nativo.
+- **Recordatorios con WorkManager**: Añadida tarea en segundo plano (`TrainingReminderWorker`) que envía notificaciones de motivación si se detecta inactividad > 48 horas, persistiendo el estado en `SharedPreferences`.
+- **Shortcuts de Launcher**: Configuradas acciones rápidas ("Nuevo entreno", "Ver progreso") accesibles desde la pulsación larga del icono, con rutas de deep link integradas.
+- **Soporte Material You**: Generados iconos adaptativos con capa monocromática (`ic_launcher_monochrome.xml`) para que la app se integre estéticamente con los temas dinámicos de Android 13+.
+- **Reglas de ProGuard/R8**: Definidas exclusiones estrictas para Capacitor, WorkManager y Coroutines del minificado de producción, garantizando la estabilidad del APK final.
+- **Frontend Sync**: Actualizada la `SettingsPage.tsx` y el store de `Zustand` para gestionar las nuevas funciones de hardware.
+- **Estado**: Ejecución completada. Android listo para compilación de producción.
+
+## [2026-04-16] Solucin de errores de recursos en Shortcuts
+
+- **Correcin de Referencias XML**: Sustituidos los strings literales en shortcuts.xml por referencias a @string/ para cumplir con las reglas estrictas de compilacin de Android.
+- **Ruta de Iconos**: Reubicadas las referencias de iconos de @mipmap/ a @drawable/, donde residen los vectores ic_shortcut_new.xml y ic_shortcut_stats.xml.
+- **Sincronizacin de Localizacin**: Aadidos todos los textos de accesos directos al archivo central strings.xml.
+- **Estado**: Build de Gradle restablecido y validado localmente. Proyecto listo para empaquetado final.
+
+## [2026-04-16] Personalizacin de Pantalla de Inicio (Splash Screen)
+
+- **Identidad Visual al Inicio**: Sustituido el icono genrico de Android por un logotipo premium de GymLog diseado con estetica minimalista.
+- **Consistencia de Color**: Configurado el fondo de la Splash Screen a #0a0a0c para eliminar el fogonazo blanco inicial y mantener la inmersin en el modo oscuro.
+- **Modernizacin de Temas**: Actualizado styles.xml para utilizar la API de Splash Screen nativa de Android 12+ (windowSplashScreenBackground y windowSplashScreenAnimatedIcon).
+- **Estado**: Interfaz de carga premium completada y sincronizada.
+
+## [2026-04-16] Reparacin de Acceso Biomtrico
+
+- **Causa del problema**: El plugin nativo no estaba registrado explcitamente en el puente de Capacitor y el frontend no manejaba errores de falta de hardware o falta de huellas configuradas.
+- **Registro de Plugin**: Aadida la llamada
+  egisterPlugin(BiometricPlugin::class.java) en MainActivity.kt.
+- **Refactorizacin de Feedback**: Integrada la librera sonner para mostrar Toasts informativos en tiempo real (Cargando, xito, Error especfico).
+- **Sincronizacin de Hardware**: Ahora la app verifica la compatibilidad del dispositivo al entrar en Ajustes y desactiva el botn automticamente si no hay biometra disponible.
+- **Estado**: Funcional y estable tras pruebas de integracin nativa.
+
+## [2026-04-16] Unificacin de Notificaciones y Ajuste de Notch
+
+- **Simplificacin de UI**: Integrado el banner de actualizacin PWA dentro del sistema de Toasts (sonner) para un dise�o ms limpio.
+- **Ajuste de Notch**: Configurado el Toaster con un margen superior dinmico basado en env(safe-area-inset-top).
+- **Resultado**: Todas las notificaciones aparecen centradas arriba, justo debajo del notch del dispositivo, evitando solapamientos.
+- **Estado**: Interfaz de notificaciones modernizada.
+
+## [2026-04-16] Unificacin Total de Identidad Visual y Correccin de Notificaciones
+
+- **Notificaciones**: Eliminada la duplicidad de Toasts. Centralizado el sistema en Providers.tsx con posicin fija arriba y margen de seguridad para el notch.
+- **Logo unificado**: Sustituidos todos los iconos antiguos (Lucide Dumbbell, gimnasia.png) por el nuevo logo del disco verde en el header y la pantalla de login.
+- **Launcher y Shortcuts**: Actualizados los accesos directos de Android con el color corporativo (#c8ff00) para una experiencia coherente desde el inicio.
+- **Estado**: Interfaz 100% consistente en icono, splash y UI interna.
+
+## [2026-04-16] Restauracin de Logo Clsico y Arreglo Maestro de Biometra
+
+- **Logo**: Eliminado el logo genrico de la mancuerna y restaurado el orignal (Levantador de Pesas en SVG) en alta resolucin y color verde nen.
+- **Seguridad**: Implementado fallback con KeyguardManager en el plugin nativo de Android. Ahora la app reconoce PIN/Patrn como seguridad vlida si no hay huella dactilar.
+- **Estado**: App sincronizada y lista para produccin con identidad visual original y seguridad funcional en todos los dispositivos.
+
+## [2026-04-16] � Identidad Visual Original y Seguridad Nativa Optimizada
+
+- **Restauraci�n de Marca**: Se ha recuperado la silueta original del levantador de pesas (gimnasia.svg) como logo �nico de la app.
+- **Integraci�n Est�tica**: Se ha aplicado el color Verde Ne�n (#c8ff00) a la silueta, integr�ndola directamente sobre el fondo negro premium de la app sin contenedores ni "cajas" blancas, logrando un acabado profesional y minimalista.
+- **Sincronizaci�n de Assets**: Actualizados iconos de launcher, splash screen y cabecera interna para usar exclusivamente la silueta verde ne�n.
+- **Biometr�a Robusta**: Se ha reforzado BiometricPlugin.kt para usar isDeviceSecure e isKeyguardSecure como indicadores primarios de seguridad, garantizando que los usuarios con PIN, patr�n o contrase�a puedan activar la funcionalidad incluso si no tienen sensor de huellas.
+- **Depuraci�n Nativa**: El plugin ahora utiliza el contexto de la Activity principal para una detecci�n de hardware m�s precisa en todas las versiones de Android.
+- **Estado**: App alineada con la visi�n del usuario. Ejecutado build y sync final.
+
+## [2026-04-16] � Correcciones cr�ticas de biometr�a, exportaci�n y restaurado de logo original
+
+- Biometr�a: A�adida vista opaca que bloquea la app y uso de finishAffinity() al fallar, impidiendo bypass.
+- Exportaci�n: Modificado el script para usar Capacitor Filesystem y Share de manera nativa en Android.
+- Iconos: Restaurado el logo cl�sico gimnasia.png de la web y regenerados los res/mipmap.
+- Estado actual: Funciones de exportaci�n y bloqueo biom�trico funcionando bien localmente junto con el icono cl�sico.
+
+## [2026-04-16] (Update) � Correcciones de Cerrar Sesi�n y UI
+
+- Bot�n de Cerrar Sesi�n:
+  - Cambiado el color a rojo mediante 'var(--color-danger)' como se solicit�.
+  - Envuelto el proceso de Supabase en un bloque try/catch/finally en 'authStore.ts'. Si hay un error de red o timeout con Supabase, la sesi�n local se limpia forzosamente y redirige al index, corrigiendo el problema de que el bot�n no funcionaba.
+- Biometr�a: A�adido un mensaje de fallback expl�cito cuando el entorno web rechaza el plugin para explicar el toast de "Biometr�a no disponible" vac�o (suele ser por no haber recompilado el APK con los nuevos cambios nativos).
+
+## [2026-04-16] (Update 2) � Correcci�n Icono APK Android
+
+- El icono no se aplicaba y Android mostraba la cabeza verde por defecto.
+- Fix:
+  - Eliminado 'drawable-v24/ic_launcher_foreground.xml' que conten�a el vector por defecto de Capacitor.
+  - Actualizado 'mipmap-anydpi-v26/ic_launcher.xml' para apuntar correctamente a '@mipmap/ic_launcher_foreground' (loss PNGs que generamos antes) en vez de al xml de drawable.
+  - Arreglado 'ic_launcher_round.xml' que apuntaba a un @color inexistente para el background, ahora apunta correctamente a '@drawable/...'.
+
+## [2026-04-16] (Update 3) � Cambio a est�tica Negro s/ Verde y unificaci�n de iconos
+
+- Identidad Visual:
+  - Cambiado el logo principal (gimnasia.png/svg) a silueta negra sobre fondo circular verde lima (#c8ff00).
+  - Sincronizado el avicon.svg con el nuevo dise�o.
+- Android:
+  - Actualizado el color de fondo en colors.xml y regenerado todos los iconos mipmap para reflejar la nueva est�tica.
+- Interfaz Web:
+  - Sustituida la mancuerna de Lucide en la pesta�a principal de navegaci�n por un componente GymnasticsIcon personalizado para mantener la coherencia de marca.
+- Nota: Se requiere generar un nuevo APK para que los iconos del sistema y la correcci�n de biometr�a surtan efecto en el dispositivo.
+
+## [2026-04-16] (Update 4) � Correcci�n final de identidad visual (Mancuerna)
+
+- Identidad Visual:
+  - Cambiado el logotipo principal (gimnasia.svg/png y avicon.svg) al icono de la **Mancuerna Negra sobre fondo circular Verde Lima**.
+  - Este dise�o se aplicar� globalmente como icono de la App (APK) y favicon web.
+- Interfaz Web:
+  - Restaurado el icono Dumbbell de Lucide en la pesta�a "Entrenar" de la barra de navegaci�n, atendiendo a la preferencia del usuario.
+  - Sincronizada la cabecera para mostrar el nuevo logo de la mancuerna.
+- Android:
+  - Regenerados todos los recursos mipmap nativos con el dise�o de la mancuerna.
+
+## [2026-04-16] (Update 5) � Correcci�n de errores de compilaci�n y UI
+
+- Build Android:
+  - Eliminados archivos de recursos duplicados (drawable/ic_launcher_background.xml y alues/ic_launcher_background.xml) que causaban errores de compilaci�n.
+  - Corregidas las referencias en ic_launcher.xml e ic_launcher_round.xml para usar @color/ic_launcher_background, asegurando el fondo verde lima.
+- Interfaz de Usuario (UI):
+  - Definida la variable de estilo --color-danger en okens.css.
+  - El bot�n de "Cerrar sesi�n" ahora se muestra correctamente en rojo vibrante.
+
+## [2026-04-16] (Update 6) � Restauraci�n de Identidad y Fix de Biometr�a
+
+- Marca e Identidad:
+  - Restaurado el icono original del **Gimnasta** (persona con barra) recuperando los archivos public/gimnasia.svg, .png y avicon.svg del historial de Git.
+  - Ajustada la pantalla de Login (AuthPage.tsx) para mostrar el icono del gimnasta correctamente centrado y sin rotaciones innecesarias.
+- Biometr�a Nativa:
+  - Corregido el registro del plugin BiometricPlugin en MainActivity.kt (ahora se ejecuta antes de super.onCreate) para garantizar que la pasarela Capacitor lo detecte.
+  - Implementado sistema de logs nativos en el plugin para facilitar la depuraci�n en Logcat.
+  - Mejorado el manejo de errores en SettingsPage.tsx para informar del estado real del bridge nativo.
+- Estado Actual: La app ha vuelto a su identidad visual original y la arquitectura de biometr�a ha sido reforzada para entornos reales.

@@ -12,7 +12,7 @@ import { supabase } from '@shared/lib/supabase';
 import { useWorkoutReminder } from '@features/routine/hooks/useWorkoutReminder';
 import { useBackgroundNotifications } from '@shared/hooks/useBackgroundNotifications';
 import { Capacitor } from '@capacitor/core';
-import './shared/lib/i18n';
+import { toast } from 'sonner';
 
 const AuthPage = lazy(() =>
   import('@features/auth/pages/AuthPage').then((m) => ({ default: m.AuthPage })),
@@ -182,39 +182,23 @@ function AnimatedRoutes() {
   );
 }
 
-/** Banner de actualización PWA */
-function UpdateBanner() {
-  const [updateFn, setUpdateFn] = useState<(() => Promise<void>) | null>(null);
-
+/** Hook para manejar actualizaciones de la PWA vía Toasts */
+function usePWAUpdate() {
   useEffect(() => {
     const handler = (e: Event) => {
-      const fn = (e as CustomEvent<() => Promise<void>>).detail;
-      setUpdateFn(() => fn);
+      const updateFn = (e as CustomEvent<() => Promise<void>>).detail;
+      toast.info('Nueva versión disponible', {
+        description: 'Actualiza para disfrutar de las últimas mejoras.',
+        duration: Infinity,
+        action: {
+          label: 'Actualizar',
+          onClick: () => void updateFn(),
+        },
+      });
     };
     window.addEventListener('sw-update-available', handler);
     return () => window.removeEventListener('sw-update-available', handler);
   }, []);
-
-  if (!updateFn) return null;
-
-  return (
-    <div
-      role="status"
-      className="fixed top-0 left-0 right-0 z-[--z-toast] flex items-center justify-between px-4 py-2.5"
-      style={{
-        background: 'var(--color-primary)',
-        color: 'var(--text-inverse)',
-      }}
-    >
-      <span className="text-[--text-sm] font-medium">Nueva versión disponible</span>
-      <button
-        onClick={() => void updateFn()}
-        className="text-[--text-sm] font-semibold underline hover:no-underline"
-      >
-        Actualizar ahora
-      </button>
-    </div>
-  );
 }
 
 function AppRoutes() {
@@ -224,6 +208,7 @@ function AppRoutes() {
 
   useWorkoutReminder();
   useBackgroundNotifications();
+  usePWAUpdate();
 
   // Inicializar tema al arrancar
   useEffect(() => {
@@ -234,22 +219,37 @@ function AppRoutes() {
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
 
-    CapApp.addListener('appUrlOpen', async (data) => {
-      // url: com.franvi.gymlog://auth/callback#tokens...
+    CapApp.addListener('appUrlOpen', (data) => {
       const url = new URL(data.url);
-      const params = url.hash.replace('#', '?');
-      const urlParams = new URLSearchParams(params);
-      const accessToken = urlParams.get('access_token');
-      const refreshToken = urlParams.get('refresh_token');
 
-      if (accessToken && refreshToken) {
-        const { error } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken,
-        });
-        if (!error) {
-          // Ya estamos logueados, el onAuthStateChange del store se encargará del resto
-          console.log('[Auth] Sesión establecida vía Deep Link');
+      // 1. Manejar Shortcuts (com.franvi.gymlog://...)
+      if (url.protocol === 'com.franvi.gymlog:') {
+        if (url.hostname === 'workout' && url.pathname === '/new') {
+          window.location.hash = '/'; // O usar router si estuviera disponible aquí
+          return;
+        }
+        if (url.hostname === 'history') {
+          window.location.hash = '/history';
+          return;
+        }
+      }
+
+      // 2. Manejar Auth Callback
+      if (url.pathname.includes('/auth/callback')) {
+        const params = url.hash.replace('#', '?');
+        const urlParams = new URLSearchParams(params);
+        const accessToken = urlParams.get('access_token');
+        const refreshToken = urlParams.get('refresh_token');
+
+        if (accessToken && refreshToken) {
+          supabase.auth
+            .setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            })
+            .then(({ error }) => {
+              if (!error) console.log('[Auth] Sesión establecida vía Deep Link');
+            });
         }
       }
     });
@@ -292,7 +292,6 @@ function AppRoutes() {
 export default function App() {
   return (
     <BrowserRouter>
-      <UpdateBanner />
       <PermissionRequests />
       <AppRoutes />
     </BrowserRouter>
