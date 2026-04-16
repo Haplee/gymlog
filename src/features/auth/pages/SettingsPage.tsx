@@ -6,7 +6,7 @@ import { useSettingsStore } from '@shared/stores/settingsStore';
 import { Layout } from '@app/components/Layout';
 import { Button } from '@shared/components/ui';
 import { supabase } from '@shared/lib/supabase';
-import { requestPermission } from '@shared/lib/notifications';
+import { requestPermission, isNative } from '@shared/lib/notifications';
 
 const playSound = (freq: number, duration: number, delay: number, ctx: AudioContext) => {
   const osc = ctx.createOscillator();
@@ -70,36 +70,23 @@ export function SettingsPage() {
     if (newValue) {
       localStorage.removeItem('notif_disabled');
 
-      if ('Notification' in window) {
-        if (Notification.permission === 'granted') {
-          setNotifEnabled(true);
-          if (user) {
-            await supabase
-              .from('profiles')
-              .update({ notifications_enabled: true })
-              .eq('id', user.id);
-          }
-        } else if (Notification.permission === 'denied') {
-          localStorage.setItem('notif_disabled', 'true');
-        } else {
-          const permission = await requestPermission();
-          if (permission === 'granted') {
-            setNotifEnabled(true);
-            if (user) {
-              await supabase
-                .from('profiles')
-                .update({ notifications_enabled: true })
-                .eq('id', user.id);
-            }
-          } else {
-            localStorage.setItem('notif_disabled', 'true');
-          }
-        }
-      } else {
+      if (!isNative() && 'Notification' in window && Notification.permission === 'denied') {
+        // Web: permiso denegado por el navegador, no podemos hacer nada
+        localStorage.setItem('notif_disabled', 'true');
+        return;
+      }
+
+      const granted = await requestPermission();
+      if (granted) {
         setNotifEnabled(true);
         if (user) {
-          await supabase.from('profiles').update({ notifications_enabled: true }).eq('id', user.id);
+          await supabase
+            .from('profiles')
+            .update({ notifications_enabled: true })
+            .eq('id', user.id);
         }
+      } else {
+        localStorage.setItem('notif_disabled', 'true');
       }
     } else {
       setNotifEnabled(false);

@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import type { User, Subscription } from '@supabase/supabase-js';
 import { supabase, SB_URL, SB_KEY } from '@shared/lib/supabase';
+import { Capacitor } from '@capacitor/core';
+import { Browser } from '@capacitor/browser';
 import { queryClient } from '@app/queryClient';
 import { useWorkoutStore } from '@features/workout/stores/workoutStore';
 
@@ -96,12 +98,25 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   signInWithGoogle: async () => {
-    await supabase.auth.signInWithOAuth({
+    const isNative = Capacitor.isNativePlatform();
+    const redirectTo = isNative
+      ? 'com.franvi.gymlog://auth/callback'
+      : `${window.location.origin}/auth/callback`;
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo,
+        skipBrowserRedirect: isNative,
       },
     });
+
+    if (error) throw error;
+
+    // Si estamos en nativo, abrimos el navegador manualmente con la URL que nos da Supabase
+    if (isNative && data?.url) {
+      await Browser.open({ url: data.url });
+    }
   },
 
   signOut: async () => {

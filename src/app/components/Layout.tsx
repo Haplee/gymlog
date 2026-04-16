@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { queryClient } from '@app/queryClient';
 import { fetchWorkoutsAndSets, fetchWorkouts, fetchRecentSets } from '@shared/api/queries';
@@ -43,17 +44,21 @@ const preloadChunk = (path: string) => {
 export function Layout({ children }: LayoutProps) {
   const { user } = useAuthStore();
   const location = useLocation();
+  const { t } = useTranslation();
 
   const tabs = [
-    { path: '/', Icon: Dumbbell, label: 'Entrenar', id: 'train' },
-    { path: '/stats', Icon: BarChart3, label: 'Estadísticas', id: 'stats' },
-    { path: '/history', Icon: History, label: 'Historial', id: 'history' },
-    { path: '/settings', Icon: Settings, label: 'Ajustes', id: 'settings' },
+    { path: '/', Icon: Dumbbell, label: t('workout.title'), id: 'train' },
+    { path: '/stats', Icon: BarChart3, label: t('stats.title'), id: 'stats' },
+    { path: '/history', Icon: History, label: t('history.title'), id: 'history' },
+    { path: '/settings', Icon: Settings, label: t('settings.title'), id: 'settings' },
   ];
 
   return (
     <div className="min-h-screen min-h-[100dvh] flex flex-col bg-[var(--bg-base)]">
-      <header className="px-5 pt-5 pb-3">
+      <header
+        className="px-5 pb-3"
+        style={{ paddingTop: '6px' }}
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-[var(--radius-lg)] bg-[var(--interactive-primary)] flex items-center justify-center">

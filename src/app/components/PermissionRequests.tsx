@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { requestPermission as requestNotifPermission } from '@shared/lib/notifications';
 
 interface PermissionRequest {
   key: string;
@@ -19,15 +20,24 @@ const PERMISSIONS: PermissionRequest[] = [
 export function PermissionRequests() {
   const [showModal, setShowModal] = useState(() => {
     const hasSeen = localStorage.getItem('gymlog_permissions_seen');
-    return !hasSeen && 'Notification' in window && Notification.permission === 'default';
+    // Si estamos en web y ya está concedido o denegado, no mostramos
+    if (typeof Notification !== 'undefined' && Notification.permission !== 'default' && !hasSeen) {
+       localStorage.setItem('gymlog_permissions_seen', 'true');
+       return false;
+    }
+    return !hasSeen;
   });
   const [requested, setRequested] = useState<string[]>([]);
 
   const requestPermission = async (key: string) => {
-    if (key === 'notifications' && 'Notification' in window) {
-      await Notification.requestPermission();
+    if (key === 'notifications') {
+      const granted = await requestNotifPermission();
+      if (granted) {
+         setRequested((prev) => [...prev, key]);
+      }
+    } else {
+      setRequested((prev) => [...prev, key]);
     }
-    setRequested((prev) => [...prev, key]);
   };
 
   const handleContinue = () => {

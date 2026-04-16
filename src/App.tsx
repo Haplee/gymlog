@@ -7,9 +7,11 @@ import { useSettingsStore } from '@shared/stores/settingsStore';
 import { PermissionRequests } from '@app/components/PermissionRequests';
 import { PageSkeleton } from '@shared/components/ui/Skeleton';
 import { OnboardingModal } from '@features/auth/components/OnboardingModal';
+import { App as CapApp } from '@capacitor/app';
 import { supabase } from '@shared/lib/supabase';
 import { useWorkoutReminder } from '@features/routine/hooks/useWorkoutReminder';
 import { useBackgroundNotifications } from '@shared/hooks/useBackgroundNotifications';
+import { Capacitor } from '@capacitor/core';
 import './shared/lib/i18n';
 
 const AuthPage = lazy(() =>
@@ -227,6 +229,35 @@ function AppRoutes() {
   useEffect(() => {
     applyTheme();
   }, [applyTheme]);
+
+  // Manejar Deep Links (OAuth Google, etc)
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    CapApp.addListener('appUrlOpen', async (data) => {
+      // url: com.franvi.gymlog://auth/callback#tokens...
+      const url = new URL(data.url);
+      const params = url.hash.replace('#', '?');
+      const urlParams = new URLSearchParams(params);
+      const accessToken = urlParams.get('access_token');
+      const refreshToken = urlParams.get('refresh_token');
+
+      if (accessToken && refreshToken) {
+        const { error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+        if (!error) {
+          // Ya estamos logueados, el onAuthStateChange del store se encargará del resto
+          console.log('[Auth] Sesión establecida vía Deep Link');
+        }
+      }
+    });
+
+    return () => {
+      CapApp.removeAllListeners();
+    };
+  }, []);
 
   useEffect(() => {
     if (!initialized) {

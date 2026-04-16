@@ -13,6 +13,7 @@
 
   <p align="center">
     <a href="https://pesos-wine.vercel.app"><img src="https://img.shields.io/badge/LIVE_DEMO-pesos--wine.vercel.app-3ECF8E?style=for-the-badge&logoColor=white" alt="Live Demo" /></a>
+    <a href="https://github.com/Haplee/pesos/releases/latest"><img src="https://img.shields.io/badge/DOWNLOAD_APK-Native_Android-3ECF8E?style=for-the-badge&logo=android&logoColor=white" alt="Download APK" /></a>
   </p>
   
   <p align="center">
@@ -119,6 +120,21 @@ npm run dev
 # Tests en terminal
 npm run test:coverage
 ```
+
+---
+
+## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Mobile%20Phone.png" width="35" align="center" /> GymLog Mobile (Nativo)
+
+GymLog v2.0 ha evolucionado a una aplicación nativa completa mediante **Capacitor 8**. Ofrecemos una experiencia superior a la PWA estándar:
+
+- **Haptics**: Vibración táctil al completar series y batir récords.
+- **Edge-to-Edge**: Diseño que aprovecha el 100% de la pantalla (detrás de la barra de estado).
+- **Notificaciones**: Recordatorios nativos y avisos de récords directamente en el sistema.
+
+### Instalación Directa (Android)
+1. Descarga el archivo `.apk` desde la sección de **[Releases](https://github.com/Haplee/pesos/releases/latest)**.
+2. Abre el archivo en tu dispositivo Android.
+3. Si el sistema te lo pide, permite la "Instalación desde fuentes desconocidas".
 
 ---
 
