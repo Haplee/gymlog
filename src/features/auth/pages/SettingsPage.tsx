@@ -69,21 +69,33 @@ export function SettingsPage() {
     const newValue = !notifEnabled;
     if (newValue) {
       localStorage.removeItem('notif_disabled');
-      if (!('Notification' in window)) return;
+      const hasNotificationSupport = 'Notification' in window;
 
-      const permission = await requestPermission();
-      if (permission === 'granted') {
-        setNotifEnabled(true);
-        if (user)
-          await supabase.from('profiles').update({ notifications_enabled: true }).eq('id', user.id);
+      if (hasNotificationSupport) {
+        const permission = await requestPermission();
+        if (permission === 'granted') {
+          setNotifEnabled(true);
+          if (user) {
+            await supabase
+              .from('profiles')
+              .update({ notifications_enabled: true })
+              .eq('id', user.id);
+          }
+        } else {
+          localStorage.setItem('notif_disabled', 'true');
+        }
       } else {
-        localStorage.setItem('notif_disabled', 'true');
+        setNotifEnabled(true);
+        if (user) {
+          await supabase.from('profiles').update({ notifications_enabled: true }).eq('id', user.id);
+        }
       }
     } else {
       setNotifEnabled(false);
       localStorage.setItem('notif_disabled', 'true');
-      if (user)
+      if (user) {
         await supabase.from('profiles').update({ notifications_enabled: false }).eq('id', user.id);
+      }
     }
   };
 

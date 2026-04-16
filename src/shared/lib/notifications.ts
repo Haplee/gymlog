@@ -16,7 +16,7 @@ export const requestPermission = async (): Promise<NotificationPermission | 'def
 export const canNotify = (): boolean => {
   if (isNotificationsDisabled()) return false;
   if (!('Notification' in window)) return false;
-  return Notification.permission === 'granted' && document.visibilityState !== 'visible';
+  return Notification.permission === 'granted';
 };
 
 export const notify = async (
