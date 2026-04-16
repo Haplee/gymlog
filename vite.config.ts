@@ -56,6 +56,7 @@ export default defineConfig(({ mode }) => ({
       workbox: {
         cleanupOutdatedCaches: true,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,json,woff2}'],
+        importScripts: ['sw-custom.js'],
         runtimeCaching: [
           {
             // Network-first para Supabase API
@@ -83,6 +84,10 @@ export default defineConfig(({ mode }) => ({
             options: { cacheName: 'html-cache' },
           },
         ],
+      },
+      devOptions: {
+        enabled: true,
+        type: 'module',
       },
     }),
     mode === 'analyze' &&
