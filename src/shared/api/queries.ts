@@ -41,8 +41,8 @@ export const fetchWorkoutsAndSets = async (userId: string, limit = 200) => {
         ...wo,
         started_at: wo.started_at,
         ended_at: wo.finished_at,
-        sets: sets as unknown as WorkoutSetWithDetails[],
-      } as unknown as WorkoutWithSets;
+        sets: sets as WorkoutSetWithDetails[],
+      } as WorkoutWithSets;
     });
 
     return { workouts, sets: (allSets as WorkoutSetWithDetails[]) || [] };
@@ -80,8 +80,8 @@ export const fetchWorkouts = async (userId: string, limit = 20): Promise<Workout
       ...wo,
       started_at: wo.started_at,
       ended_at: wo.finished_at,
-      sets: sets as unknown as WorkoutSetWithDetails[],
-    } as unknown as WorkoutWithSets;
+      sets: sets as WorkoutSetWithDetails[],
+    } as WorkoutWithSets;
   });
 };
 
@@ -119,7 +119,7 @@ export const fetchRecentSets = async (
       throw setsError;
     }
 
-    return (data as unknown as WorkoutSetWithDetails[]) || [];
+    return (data as WorkoutSetWithDetails[]) || [];
   } catch (err) {
     console.error('fetchRecentSets error:', err);
     throw err;
@@ -167,11 +167,11 @@ export const fetchExercises = async (userId: string | undefined): Promise<Exerci
     if (globalError) throw globalError;
 
     const allEx = [...(userExData || []), ...(globalExData || [])];
-    return allEx.sort((a, b) => (usage[b.id] || 0) - (usage[a.id] || 0)) as unknown as Exercise[];
+    return allEx.sort((a, b) => (usage[b.id] || 0) - (usage[a.id] || 0)) as Exercise[];
   } else {
     const { data, error } = await supabase.from('exercises').select('*').order('name');
     if (error) throw error;
-    return (data as unknown as Exercise[]) || [];
+    return (data as Exercise[]) || [];
   }
 };
 
@@ -185,7 +185,7 @@ export const fetchPersonalRecords = async (userId: string): Promise<PersonalReco
     console.error('Error fetching personal records:', error);
     throw error;
   }
-  return (data as unknown as PersonalRecord[]) || [];
+  return (data as PersonalRecord[]) || [];
 };
 
 export const fetchExerciseNotes = async (
@@ -200,7 +200,7 @@ export const fetchExerciseNotes = async (
     .order('created_at', { ascending: false });
 
   if (error) throw error;
-  return (data as unknown as ExerciseNote[]) || [];
+  return (data as ExerciseNote[]) || [];
 };
 
 export const saveExerciseNote = async (
@@ -215,7 +215,7 @@ export const saveExerciseNote = async (
     .single();
 
   if (error) throw error;
-  return data as unknown as ExerciseNote;
+  return data as ExerciseNote;
 };
 
 export const deleteExerciseNote = async (noteId: string): Promise<void> => {

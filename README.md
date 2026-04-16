@@ -1,141 +1,134 @@
+<div align="center">
+  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/People/People%20Lifting%20Weights.png" alt="Weight Lifting" width="120" />
+
 # GymLog v2.0
 
-PWA para registrar entrenamientos de gimnasio con enfoque en rendimiento, seguridad y experiencia de usuario premium.
+<a href="https://git.io/typing-svg"><img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=20&duration=3000&pause=1000&color=3ECF8E&center=true&vCenter=true&width=600&lines=Hipertrofia+y+Sobrecarga+Progresiva;Arquitectura+Offline-First+Robusta;Anal%C3%ADticas+Avanzadas+de+Entrenamiento" alt="Typing SVG" /></a>
 
-Desplegado en: **https://pesos-wine.vercel.app**
+  <p>PWA integral para el registro y análisis de entrenamientos de hipertrofia y fuerza. Diseñada con un enfoque <b>offline-first</b>, arquitectura escalable y rendimiento premium.</p>
 
-## 🚀 Novedades v2.0
+  <p align="center">
+    <a href="https://pesos-wine.vercel.app"><img src="https://img.shields.io/badge/LIVE_DEMO-pesos--wine.vercel.app-3ECF8E?style=for-the-badge&logoColor=white" alt="Live Demo" /></a>
+  </p>
+  
+  <p align="center">
+    <img src="https://img.shields.io/badge/React-19.2-61DAFB?style=flat-square&logo=react&logoColor=white" />
+    <img src="https://img.shields.io/badge/TypeScript-5.7-3178C6?style=flat-square&logo=typescript&logoColor=white" />
+    <img src="https://img.shields.io/badge/Vite-6.2-646CFF?style=flat-square&logo=vite&logoColor=white" />
+    <img src="https://img.shields.io/badge/Supabase-DB-3ECF8E?style=flat-square&logo=supabase&logoColor=white" />
+    <img src="https://img.shields.io/badge/Vercel-Deploy-000000?style=flat-square&logo=vercel&logoColor=white" />
+  </p>
+</div>
 
-- **Arquitectura Feature-based**: Código organizado por funcionalidades (`auth`, `workout`, `routine`, `stats`) para mayor escalabilidad.
-- **TanStack Query v5**: Gestión de estado asíncrono, caché inteligente y optimistic updates.
-- **Gestión de Ejercicios**: Añadir/remover ejercicios de workouts, notas por ejercicio, búsqueda con debounce.
-- **Ejercicios Personalizados**: Crear ejercicios propios integrados con el catálogo global.
-- **Design System Premium**: Tokens de diseño, componentes accesibles (WCAG 2.1) y animaciones fluidas.
-- **Seguridad Reforzada**: Rate limiting en autenticación y políticas de seguridad (CSP) estrictas.
-- **Gráficos Avanzados**: Incorporación de `RadarChart` para análisis de volumen por grupo muscular.
-- **Testing**: Vitest (Unit) + Playwright (E2E para iPhone 13 + Pixel 9a)
+<br>
 
-## 🛠️ Tech Stack
+## ⚡ Core Features
 
-- **Frontend**: React 19 + TypeScript (Strict Mode) + Vite
-- **Estilos**: Tailwind CSS v4 + Custom Design Tokens (HSL)
-- **Estado**: Zustand (Global) + TanStack Query (Server State)
-- **Base de Datos**: Supabase (PostgreSQL)
-- **PWA**: Vite PWA Plugin + Custom Update Banner
-- **Testing**: Vitest (Unit) + Playwright (E2E)
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Mobile%20Phone.png" alt="Mobile" width="50" />
+      <br>
+      <b>Experiencia PWA Nativa</b>
+      <p>Modo offline puro. Sigue entrenando sin conexión a internet; caché local inteligente y resiliencia con TanStack Query.</p>
+    </td>
+    <td align="center" width="50%">
+      <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Symbols/Chart%20Increasing.png" alt="Chart" width="50" />
+      <br>
+      <b>Analíticas Premium</b>
+      <p>Gráficos <i>Radar</i> de volumen, proyecciones reales de RM con Brzycki y seguimiento continuo de fatiga neuromuscular.</p>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Shield.png" alt="Shield" width="50" />
+      <br>
+      <b>Seguridad ASIR</b>
+      <p>Implementación CSP, Rate Limiting contra fuerza bruta, y control RLS absoluto a nivel base de datos.</p>
+    </td>
+    <td align="center" width="50%">
+      <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Rocket.png" alt="Rocket" width="50" />
+      <br>
+      <b>Rendimiento Extremo</b>
+      <p>Delegación a RPCs en Postgres, code-splitting estratégico con Suspense y validación no-bloqueante con Zod.</p>
+    </td>
+  </tr>
+</table>
 
-## 📁 Estructura del Proyecto
+---
+
+## 🛠️ Stack Detallado
+
+| Capa               | Tecnología                     | Función                                                           |
+| :----------------- | :----------------------------- | :---------------------------------------------------------------- |
+| **Frontend**       | React 19, TypeScript           | Motor visual estricto y sin regresiones.                          |
+| **Estilos**        | CSS Custom Tokens, TailwindCSS | Flexibilidad al máximo y consistencia visual premium.             |
+| **Data Fetching**  | TanStack Query v5              | Server state, actualizaciones optimistas y <i>caching</i> nativo. |
+| **Store Global**   | Zustand                        | Estado de IU ligero y sincronizado offline.                       |
+| **Backend & Auth** | Supabase (PostgreSQL)          | JWT Auth, Row Level Security y lógica RPC.                        |
+| **Testing E2E**    | Playwright, Vitest             | BDD/TDD multi-dispositivo (iPhone, Pixel simulado).               |
+
+---
+
+## 🏗️ Topologia del Repositorio
+
+El proyecto emplea una estructuración vertical basada en <i>features</i> para reducir el sobreacoplamiento global.
 
 ```text
 src/
-├── app/              # Configuración global, providers y layout
-├── features/         # Módulos de negocio (auth, workout, routine, stats)
-│   ├── [feature]/
-│   │   ├── pages/    # Vistas de la funcionalidad
-│   │   └── stores/   # Estado específico del módulo
-├── shared/           # Recursos comunes
-│   ├── api/          # Queries y mutaciones unificadas
-│   ├── components/   # UI Kit y componentes comunes
-│   ├── hooks/        # Hooks reutilizables
-│   ├── lib/          # Utilidades, tipos y esquemas (Zod)
-│   └── styles/       # Tokens de diseño y CSS global
+├── app/              # Shell principal, providers y manifiesto service-worker
+├── features/         # Verticales independientes de funcionalidad:
+│   ├── auth/         # Onboarding, Guards y Seguridad
+│   ├── routine/      # Macros semanales y generación estática
+│   ├── stats/        # Analítica y Recharts (motor vectorial)
+│   └── workout/      # Núcleo de interacción en vivo del ejercicio
+├── shared/           # Elementos agnósticos e infraestructura global:
+│   ├── api/          # Capa de transporte y types CLI automáticos (Tables<T>)
+│   ├── components/   # UI Kit modular
+│   └── lib/          # Algoritmia pura y abstracción de Supabase
 ```
 
-## 📦 Instalación y Desarrollo
+---
+
+## 🚀 Despliegue Local
+
+Para administradores iterando en el ecosistema de la app de forma local:
+
+### 1. Variables de Entorno (`.env.local`)
+
+```env
+VITE_SUPABASE_URL=xxxx
+VITE_SUPABASE_KEY=xxxx
+```
+
+### 2. Arranque
 
 ```bash
-# Instalar dependencias
+# Preparar clúster local de dependencias
 npm install
 
-# Iniciar servidor de desarrollo
+# Instanciar desarrollo con HMR
 npm run dev
 
-# Ejecutar tests unitarios
-npm run test
-
-# Ejecutar tests E2E
-npx playwright test
-
-# Build de producción
-npm run build
+# Tests en terminal
+npm run test:coverage
 ```
-
-## 🔒 Seguridad y Rendimiento
-
-- **CSP**: Cabeceras de seguridad configuradas en `vercel.json`.
-- **Rate Limit**: Protección contra fuerza bruta en formularios de acceso.
-- **PWA Update**: Sistema de actualización controlada para evitar pérdida de datos.
-- **Optimization**: Code splitting, lazy loading y bundle analysis integrado.
-
-## 📊 Base de Datos
-
-El esquema se encuentra en `src/db/`. Incluye tablas para:
-
-- `profiles` (Usuarios)
-- `exercises` (Catálogo global + personalizados)
-- `workouts` (Sesiones)
-- `workout_sets` (Datos técnicos de series)
-- `workout_exercises` (Ejercicios en cada workout)
-- `exercise_notes` (Notas por ejercicio)
-- `personal_records` (Brzycki formula)
-- `user_routines` (Planificación semanal)
-
-### Migraciones
-
-```bash
-# Aplicar migraciones de workout_exercises
-npx supabase db push
-```
-
-## 🧪 Testing
-
-```bash
-# Unit tests (no ejecuta E2E)
-npx vitest run
-
-# E2E tests (iPhone 13 + Pixel 9a)
-npx playwright test
-
-# Dispositivo específico
-npx playwright test --project="iPhone 13"
-npx playwright test --project="Pixel 9a"
-```
-
-## ✨ Features Implementadas
-
-### Gestión de Ejercicios en Workout
-
-1. **Añadir ejercicios durante entrenamiento**
-   - Buscador con debounce (250ms)
-   - Integración con catálogo global (`exercises`)
-   - Crear ejercicios personalizados
-
-2. **Eliminar ejercicios**
-   - Solo el owner puede eliminar
-   - Modal de confirmación accesible (WCAG)
-   - Optimistic update con TanStack Query
-
-3. **Notas por ejercicio**
-   -textarea auto-expandible
-   - Persistidas en Supabase
-   - Ctrl+Enter para guardar rápido
-
-4. **Componentes**
-   - `ExerciseSelector`: Buscador + crear ejercicio
-   - `DeleteExerciseModal`: Confirmación accesible
-   - `ExerciseNotesEditor`: Notas en tiempo real
-   - `WorkoutExerciseCard`: Card con acciones
 
 ---
 
-## 🌐 Redes Sociales
+<div align="center">
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=3ECF8E&height=100&section=footer" alt="Footer animated wave" />
+</div>
 
-| Plataforma  | URL                                      |
-| ----------- | ---------------------------------------- |
-| GitHub      | https://github.com/Haplee                |
-| Instagram   | https://www.instagram.com/franvidalmateo |
-| X (Twitter) | https://x.com/FranVidalMateo             |
+## 🌐 Conexión y Autoría
 
----
+<div align="center">
+  <br>
+  <a href="https://github.com/Haplee"><img src="https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white" /></a>
+  <a href="https://x.com/FranVidalMateo"><img src="https://img.shields.io/badge/Twitter-000000?style=for-the-badge&logo=x&logoColor=white" /></a>
+  <a href="https://www.instagram.com/franvidalmateo"><img src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white" /></a>
 
-Desarrollado con ❤️ por [Haplee](https://github.com/Haplee)
+<br><br>
+<b>GymLog v2.0</b> • Creado con precisión y fiabilidad técnica por <a href="https://github.com/Haplee">Fran Vidal Mateo (Haplee)</a>
+
+</div>

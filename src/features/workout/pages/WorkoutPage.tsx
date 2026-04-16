@@ -19,14 +19,11 @@ import {
 import confetti from 'canvas-confetti';
 import { Trophy, X, Trash2, Plus, StickyNote, AlertCircle } from 'lucide-react';
 import { z } from 'zod';
-import { toast } from 'sonner';
 
 const setSchema = z.object({
   reps: z.coerce.number().positive('Las repeticiones deben ser mayores a 0'),
   weight: z.coerce.number().nonnegative('El peso no puede ser negativo'),
 });
-
-const setsSchema = z.array(setSchema).min(1, 'Debes registrar al menos una serie válida');
 
 // Componente extraído fuera para evitar el error react-hooks/static-components
 function ResumeWorkoutBanner({
@@ -98,6 +95,7 @@ export function WorkoutPage() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [noteText, setNoteText] = useState('');
+  const [setErrors, setSetErrors] = useState<Record<number, string>>({});
   const [showResumeBanner, setShowResumeBanner] = useState(() => {
     if (startedAt && sets.length > 0) {
       const startTime = new Date(startedAt).getTime();
@@ -110,19 +108,19 @@ export function WorkoutPage() {
 
   const { data: exercises = [] } = useQuery({
     queryKey: ['exercises', user?.id],
-    queryFn: () => fetchExercises(user!.id),
+    queryFn: () => fetchExercises(user?.id ?? ''),
     enabled: !!user?.id,
   });
 
   const { data: personalRecordsList = [] } = useQuery({
     queryKey: ['personalRecords', user?.id],
-    queryFn: () => fetchPersonalRecords(user!.id),
+    queryFn: () => fetchPersonalRecords(user?.id ?? ''),
     enabled: !!user?.id,
   });
 
   const { data: exerciseNotes = [], refetch: refetchNotes } = useQuery({
     queryKey: ['exerciseNotes', user?.id, activeExerciseId],
-    queryFn: () => fetchExerciseNotes(user!.id, activeExerciseId!),
+    queryFn: () => fetchExerciseNotes(user?.id ?? '', activeExerciseId ?? ''),
     enabled: !!user?.id && !!activeExerciseId,
   });
 
@@ -196,21 +194,35 @@ export function WorkoutPage() {
     if (!user || saving) return;
     setMessage('');
 
+    setSetErrors({});
+
     // Bloque 6: Filtrado y Validación con Zod
-    const validSets = sets.filter(
-      (s) =>
-        s.reps !== '' &&
-        s.weight !== '' &&
-        Number(s.reps) > 0 &&
-        (s.weight === '0' || Number(s.weight) >= 0),
-    );
+    const newErrors: Record<number, string> = {};
+    let hasValid = false;
 
-    const validation = setsSchema.safeParse(validSets);
+    sets.forEach((s, i) => {
+      // Ignorar completamente series vacías (las borramos/filtramos lógicamente)
+      if ((s.reps === '' || s.reps === '0') && (s.weight === '' || s.weight === '0')) {
+        return;
+      }
 
-    if (!validation.success) {
-      const errorMsg = validation.error.errors[0]?.message || 'Datos de series inválidos';
-      toast.error(errorMsg);
-      setMessage(errorMsg);
+      const validation = setSchema.safeParse(s);
+      if (!validation.success) {
+        newErrors[i] = validation.error.errors[0]?.message || 'Inválido';
+      } else {
+        hasValid = true;
+      }
+    });
+
+    setSetErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+      // Mostrar error inline sin bloquear las demás
+      return;
+    }
+
+    if (!hasValid) {
+      setMessage('Añade al menos una serie válida');
       return;
     }
 
@@ -529,52 +541,82 @@ export function WorkoutPage() {
                 key={i}
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex gap-2 items-center mb-2"
+                className="mb-2"
               >
-                <div
-                  className="w-6 text-center text-sm font-medium"
-                  style={{ color: textSecondary }}
-                >
-                  {i + 1}
-                </div>
-                <input
-                  type="number"
-                  placeholder="0"
-                  value={s.reps}
-                  onChange={(e) => updateSet(i, { reps: e.target.value })}
-                  className="flex-1 rounded-lg text-sm p-2 outline-none text-center"
-                  style={{
-                    backgroundColor: bgCard,
-                    border: `1px solid ${border}`,
-                    color: textPrimary,
-                  }}
-                />
-                <div className="relative flex-1">
+                <div className="flex gap-2 items-center">
+                  <div
+                    className="w-6 text-center text-sm font-medium"
+                    style={{ color: textSecondary }}
+                  >
+                    {i + 1}
+                  </div>
                   <input
                     type="number"
                     placeholder="0"
-                    value={s.weight}
-                    onChange={(e) => updateSet(i, { weight: e.target.value })}
-                    className="w-full rounded-lg text-sm p-2 outline-none text-center"
+                    value={s.reps}
+                    onChange={(e) => {
+                      updateSet(i, { reps: e.target.value });
+                      if (setErrors[i]) {
+                        setSetErrors((prev) => {
+                          const n = { ...prev };
+                          delete n[i];
+                          return n;
+                        });
+                      }
+                    }}
+                    className={`flex-1 rounded-lg text-sm p-2 outline-none text-center ${
+                      setErrors[i] ? 'border-red-500 bg-red-500/10' : ''
+                    }`}
                     style={{
-                      backgroundColor: bgCard,
-                      border: `1px solid ${border}`,
+                      backgroundColor: setErrors[i] ? undefined : bgCard,
+                      border: setErrors[i] ? undefined : `1px solid ${border}`,
                       color: textPrimary,
                     }}
                   />
-                  {isNewPR && (
-                    <span className="absolute -top-1 -right-1">
-                      <Trophy className="w-3 h-3" style={{ color: 'var(--interactive-primary)' }} />
-                    </span>
-                  )}
+                  <div className="relative flex-1">
+                    <input
+                      type="number"
+                      placeholder="0"
+                      value={s.weight}
+                      onChange={(e) => {
+                        updateSet(i, { weight: e.target.value });
+                        if (setErrors[i]) {
+                          setSetErrors((prev) => {
+                            const n = { ...prev };
+                            delete n[i];
+                            return n;
+                          });
+                        }
+                      }}
+                      className={`w-full rounded-lg text-sm p-2 outline-none text-center ${
+                        setErrors[i] ? 'border-red-500 bg-red-500/10' : ''
+                      }`}
+                      style={{
+                        backgroundColor: setErrors[i] ? undefined : bgCard,
+                        border: setErrors[i] ? undefined : `1px solid ${border}`,
+                        color: textPrimary,
+                      }}
+                    />
+                    {isNewPR && (
+                      <span className="absolute -top-1 -right-1">
+                        <Trophy
+                          className="w-3 h-3"
+                          style={{ color: 'var(--interactive-primary)' }}
+                        />
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => handleRemoveSet(i)}
+                    className="w-6 h-8 bg-transparent border rounded-lg cursor-pointer text-lg flex items-center justify-center"
+                    style={{ borderColor: 'var(--border-subtle)', color: textMuted }}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
-                <button
-                  onClick={() => handleRemoveSet(i)}
-                  className="w-6 h-8 bg-transparent border rounded-lg cursor-pointer text-lg flex items-center justify-center"
-                  style={{ borderColor: 'var(--border-subtle)', color: textMuted }}
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                {setErrors[i] && (
+                  <div className="text-[0.65rem] text-red-500 mt-1 ml-8">{setErrors[i]}</div>
+                )}
               </motion.div>
             );
           })

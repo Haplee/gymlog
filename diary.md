@@ -46,3 +46,10 @@
 - Ajustados los mapeos de `queries.ts` para cumplir con las interfaces estrictas de `WorkoutWithSets` y `Exercise`.
 - Verificado éxito del build local (`npm run build`) y subido a producción.
 - Estado: **Producción estable y desplegada.**
+
+## [2026-04-16] — Finalización de refactorización integral: Tipos y validación inline
+
+- Completado Bloque 4: Eliminados los casting `unknown` en `queries.ts` y sustituidos con los tipos correctos (`Tables<T>`) provenientes de `database.types.ts`.
+- Completado Bloque 6: Reforzada la lógica de guardado en `WorkoutPage.tsx`. Filtrado automático de series vacías y añadido estado visual de errores de validación de Zod inline (debajo de cada serie) sin bloquear el guardado ni presentar toasts molestos.
+- Comprobado el estado de los bloques pendientes (Persistencia local, Limpieza de Caché, RPC y Optimizaciones Generales) que ya estaban implementados.
+- Estado actual del proyecto: Tipado estricto mejorado, experiencia de usuario fluida en la página de workouts.
