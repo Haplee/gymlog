@@ -211,7 +211,7 @@ const getInitialLanguage = () => {
       const parsed = JSON.parse(settings);
       return parsed.state?.language || 'es';
     }
-  } catch (_e) {
+  } catch {
     return 'es';
   }
   return 'es';
