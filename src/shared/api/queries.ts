@@ -80,8 +80,8 @@ export const fetchWorkouts = async (userId: string, limit = 20): Promise<Workout
       ...wo,
       started_at: wo.started_at,
       ended_at: wo.finished_at,
-      sets: sets as WorkoutSetWithDetails[],
-    } as WorkoutWithSets;
+      sets: sets as unknown as WorkoutSetWithDetails[],
+    } as unknown as WorkoutWithSets;
   });
 };
 
@@ -119,7 +119,7 @@ export const fetchRecentSets = async (
       throw setsError;
     }
 
-    return (data as WorkoutSetWithDetails[]) || [];
+    return (data as unknown as WorkoutSetWithDetails[]) || [];
   } catch (err) {
     console.error('fetchRecentSets error:', err);
     throw err;

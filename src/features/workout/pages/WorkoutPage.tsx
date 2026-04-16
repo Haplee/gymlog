@@ -240,7 +240,9 @@ export function WorkoutPage() {
       queryClient.invalidateQueries({ queryKey: ['recentSets'] });
       queryClient.invalidateQueries({ queryKey: ['personalRecords'] });
 
-      const hasPR = validSets.some((s) => checkIsNewPR(s.weight, s.reps));
+      const hasPR = sets.some(
+        (s, i) => !setErrors[i] && s.weight && s.reps && checkIsNewPR(s.weight, s.reps),
+      );
       if (hasPR) {
         confetti({
           particleCount: 150,

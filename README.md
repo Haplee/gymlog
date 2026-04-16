@@ -1,7 +1,11 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/People/People%20Lifting%20Weights.png" alt="Weight Lifting" width="120" />
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=3ECF8E&height=120&section=header&text=GymLog%20v2.0&fontSize=50&fontColor=ffffff&animation=fadeIn" alt="Header animated wave" />
+  
+  <br>
 
-# GymLog v2.0
+  <img src="./public/gimnasia.svg" alt="GymLog App Logo" width="130" />
+
+  <br>
 
 <a href="https://git.io/typing-svg"><img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=20&duration=3000&pause=1000&color=3ECF8E&center=true&vCenter=true&width=600&lines=Hipertrofia+y+Sobrecarga+Progresiva;Arquitectura+Offline-First+Robusta;Anal%C3%ADticas+Avanzadas+de+Entrenamiento" alt="Typing SVG" /></a>
 
@@ -18,6 +22,8 @@
     <img src="https://img.shields.io/badge/Supabase-DB-3ECF8E?style=flat-square&logo=supabase&logoColor=white" />
     <img src="https://img.shields.io/badge/Vercel-Deploy-000000?style=flat-square&logo=vercel&logoColor=white" />
   </p>
+  <br>
+  <img src="https://visitor-badge.laobi.icu/badge?page_id=Haplee.pesos&left_color=black&right_color=%233ECF8E&left_text=Visitantes" alt="Visitor Badge" />
 </div>
 
 <br>
@@ -59,14 +65,14 @@
 
 ## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Hammer%20and%20Wrench.png" width="35" align="center" /> Stack Detallado
 
-| Capa               | Tecnología                     | Función                                                           |
-| :----------------- | :----------------------------- | :---------------------------------------------------------------- |
-| **Frontend**       | React 19, TypeScript           | Motor visual estricto y sin regresiones.                          |
-| **Estilos**        | CSS Custom Tokens, TailwindCSS | Flexibilidad al máximo y consistencia visual premium.             |
-| **Data Fetching**  | TanStack Query v5              | Server state, actualizaciones optimistas y <i>caching</i> nativo. |
-| **Store Global**   | Zustand                        | Estado de IU ligero y sincronizado offline.                       |
-| **Backend & Auth** | Supabase (PostgreSQL)          | JWT Auth, Row Level Security y lógica RPC.                        |
-| **Testing E2E**    | Playwright, Vitest             | BDD/TDD multi-dispositivo (iPhone, Pixel simulado).               |
+| <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Desktop%20Computer.png" width="20" align="center"/> Capa | Tecnología                     | Función                                                           |
+| :------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------- | :---------------------------------------------------------------- |
+| **Frontend**                                                                                                                                                         | React 19, TypeScript           | Motor visual estricto y sin regresiones.                          |
+| **Estilos**                                                                                                                                                          | CSS Custom Tokens, TailwindCSS | Flexibilidad al máximo y consistencia visual premium.             |
+| **Data Fetching**                                                                                                                                                    | TanStack Query v5              | Server state, actualizaciones optimistas y <i>caching</i> nativo. |
+| **Store Global**                                                                                                                                                     | Zustand                        | Estado de IU ligero y sincronizado offline.                       |
+| **Backend & Auth**                                                                                                                                                   | Supabase (PostgreSQL)          | JWT Auth, Row Level Security y lógica RPC.                        |
+| **Testing E2E**                                                                                                                                                      | Playwright, Vitest             | BDD/TDD multi-dispositivo (iPhone, Pixel simulado).               |
 
 ---
 
@@ -94,14 +100,14 @@ src/
 
 Para administradores iterando en el ecosistema de la app de forma local:
 
-### 1. Variables de Entorno (`.env.local`)
+### <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Locked.png" width="25" align="center" /> 1. Variables de Entorno (`.env.local`)
 
 ```env
 VITE_SUPABASE_URL=xxxx
 VITE_SUPABASE_KEY=xxxx
 ```
 
-### 2. Arranque
+### <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Gear.png" width="25" align="center" /> 2. Arranque
 
 ```bash
 # Preparar clúster local de dependencias
@@ -123,8 +129,13 @@ npm run test:coverage
 ## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Globe%20with%20Meridians.png" width="35" align="center" /> Conexión y Autoría
 
 <div align="center">
+  <br>
 
   <img src="https://github-readme-stats.vercel.app/api?username=Haplee&show_icons=true&theme=radical&hide_border=true&bg_color=0D1117&icon_color=3ECF8E&text_color=FFFFFF&title_color=3ECF8E" alt="Haplee's GitHub Stats" />
+  
+  <br>
+
+  <img src="https://github-readme-streak-stats.herokuapp.com/?user=Haplee&theme=radical&hide_border=true&background=0D1117&ring=3ECF8E&fire=3ECF8E&currStreakNum=FFFFFF" alt="GitHub Streaks" />
   
   <br><br>
 
@@ -132,6 +143,7 @@ npm run test:coverage
 <a href="https://x.com/FranVidalMateo"><img src="https://img.shields.io/badge/Twitter-000000?style=for-the-badge&logo=x&logoColor=white" /></a>
 <a href="https://www.instagram.com/franvidalmateo"><img src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white" /></a>
 
+<br><br>
 <b>GymLog v2.0</b> • Creado con precisión y fiabilidad técnica por <a href="https://github.com/Haplee">Fran Vidal Mateo (Haplee)</a>
 
 </div>
