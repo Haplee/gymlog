@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GymLog APK | Seguimiento de Entrenamiento Premium</title>
+    <meta name="description" content="Descarga la última versión de GymLog para Android. La app definitiva para gestionar tus rutinas de gimnasio, calcular PRs y visualizar tu progreso.">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="GymLog APK - Entrena como un Pro">
+    <meta property="og:description" content="Gestión de rutinas, cálculo de 1RM y estadísticas avanzadas. Descarga el APK oficial aquí.">
+    <meta property="og:image" content="assets/logo.svg">
+    
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+</head>
+<body>
+    <div class="hero-glow"></div>
+    
+    <header class="container">
+        <img src="assets/logo.svg" alt="GymLog Logo" class="logo">
+        <h1>GymLog v2.0</h1>
+        <p class="tagline">Lleva tu entrenamiento al siguiente nivel con la app nativa diseñada para el rendimiento extremo.</p>
+        
+        <div class="cta">
+            <a href="app-debug.apk" class="btn btn-primary" id="download-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Descargar APK
+            </a>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="features">
+            <div class="feature-card glass">
+                <span class="feature-icon">📊</span>
+                <h3>Análisis Avanzado</h3>
+                <p>Gráficos de volumen muscular y consistencia para entender tu evolución real.</p>
+            </div>
+            <div class="feature-card glass">
+                <span class="feature-icon">⚡</span>
+                <h3>Cálculo de PRs</h3>
+                <p>Algoritmos integrados para calcular tu 1RM estimado en tiempo real mediante fórmulas de precisión.</p>
+            </div>
+            <div class="feature-card glass">
+                <span class="feature-icon">📱</span>
+                <h3>Experiencia Nativa</h3>
+                <p>Feedback háptico, notificaciones locales y rendimiento fluido optimizado para Android.</p>
+            </div>
+        </section>
+
+        <section class="instructions glass">
+            <h2 class="section-title">¿Cómo instalar el APK?</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-text">
+                        <strong>Permitir orígenes desconocidos</strong>
+                        <p>En Ajustes > Seguridad, activa la opción de instalar aplicaciones desde "Fuentes desconocidas".</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-text">
+                        <strong>Descarga el archivo</strong>
+                        <p>Pulsa el botón superior para bajar el archivo <code>gymlog-debug.apk</code> en tu dispositivo.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-text">
+                        <strong>Instala y entrena</strong>
+                        <p>Abre el archivo descargado, acepta los permisos y ¡listo! Tu progreso te espera.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 GymLog Project. Código disponible en <a href="https://github.com/Haplee/pesos" class="repo-link">GitHub</a>.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Efecto hover sutil en tarjetas
+        const cards = document.querySelectorAll('.glass');
+        cards.forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                card.style.setProperty('--mouse-x', `${x}px`);
+                card.style.setProperty('--mouse-y', `${y}px`);
+            });
+        });
+    </script>
+</body>
+</html>
