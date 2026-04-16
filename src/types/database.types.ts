@@ -15,6 +15,7 @@ export interface Database {
           updated_at: string | null;
           goal: string | null;
           days_per_week: number | null;
+          notifications_enabled: boolean | null;
         };
         Insert: {
           id: string;
@@ -27,6 +28,7 @@ export interface Database {
           updated_at?: string | null;
           goal?: string | null;
           days_per_week?: number | null;
+          notifications_enabled?: boolean | null;
         };
         Update: {
           id?: string;
@@ -39,6 +41,7 @@ export interface Database {
           updated_at?: string | null;
           goal?: string | null;
           days_per_week?: number | null;
+          notifications_enabled?: boolean | null;
         };
       };
       exercises: {

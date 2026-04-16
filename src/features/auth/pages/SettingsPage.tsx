@@ -5,6 +5,8 @@ import { useAuthStore } from '@features/auth/stores/authStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
 import { Layout } from '@app/components/Layout';
 import { Button } from '@shared/components/ui';
+import { supabase } from '@shared/lib/supabase';
+import { requestPermission } from '@shared/lib/notifications';
 
 const playSound = (freq: number, duration: number, delay: number, ctx: AudioContext) => {
   const osc = ctx.createOscillator();
@@ -24,12 +26,27 @@ export function SettingsPage() {
   const navigate = useNavigate();
   const { user, signOut } = useAuthStore();
   const { sound, setSound, language, setLanguage } = useSettingsStore();
-  const [notifEnabled, setNotifEnabled] = useState(
-    'Notification' in window && Notification.permission === 'granted',
-  );
+  const [notifEnabled, setNotifEnabled] = useState(false);
 
   useEffect(() => {
-    if (!user) navigate('/login');
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    const fetchConfig = async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('notifications_enabled')
+        .eq('id', user.id)
+        .single();
+      if (data) {
+        setNotifEnabled(!!data.notifications_enabled);
+        if (data.notifications_enabled) localStorage.removeItem('notif_disabled');
+        else localStorage.setItem('notif_disabled', 'true');
+      }
+    };
+    fetchConfig();
   }, [user, navigate]);
 
   const playFeedbackSound = useCallback(() => {
@@ -49,9 +66,25 @@ export function SettingsPage() {
   }, []);
 
   const handlePushToggle = async () => {
-    if (!('Notification' in window)) return;
-    const permission = await Notification.requestPermission();
-    setNotifEnabled(permission === 'granted');
+    const newValue = !notifEnabled;
+    if (newValue) {
+      localStorage.removeItem('notif_disabled');
+      if (!('Notification' in window)) return;
+
+      const permission = await requestPermission();
+      if (permission === 'granted') {
+        setNotifEnabled(true);
+        if (user)
+          await supabase.from('profiles').update({ notifications_enabled: true }).eq('id', user.id);
+      } else {
+        localStorage.setItem('notif_disabled', 'true');
+      }
+    } else {
+      setNotifEnabled(false);
+      localStorage.setItem('notif_disabled', 'true');
+      if (user)
+        await supabase.from('profiles').update({ notifications_enabled: false }).eq('id', user.id);
+    }
   };
 
   const bgCard = 'var(--bg-surface)';

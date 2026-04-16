@@ -19,6 +19,7 @@ import {
 import confetti from 'canvas-confetti';
 import { Trophy, X, Trash2, Plus, StickyNote, AlertCircle } from 'lucide-react';
 import { z } from 'zod';
+import { notify } from '@shared/lib/notifications';
 
 const setSchema = z.object({
   reps: z.coerce.number().positive('Las repeticiones deben ser mayores a 0'),
@@ -240,15 +241,27 @@ export function WorkoutPage() {
       queryClient.invalidateQueries({ queryKey: ['recentSets'] });
       queryClient.invalidateQueries({ queryKey: ['personalRecords'] });
 
-      const hasPR = sets.some(
-        (s, i) => !setErrors[i] && s.weight && s.reps && checkIsNewPR(s.weight, s.reps),
-      );
-      if (hasPR) {
+      let max1RM = 0;
+      sets.forEach((s, i) => {
+        if (!setErrors[i] && s.weight && s.reps && checkIsNewPR(s.weight, s.reps)) {
+          const e1rm = Math.round(calcular1RM(Number(s.weight), Number(s.reps)));
+          if (e1rm > max1RM) max1RM = e1rm;
+        }
+      });
+
+      if (max1RM > 0) {
         confetti({
           particleCount: 150,
           spread: 70,
           origin: { y: 0.6 },
           colors: ['#FFFFFF', '#fafafa', '#22c55e'],
+        });
+
+        const exerciseName = selectedExercise?.name || customExerciseName || 'Ejercicio';
+        notify('🏆 ¡Nuevo récord personal!', {
+          body: `${exerciseName}: ${max1RM} kg estimado de 1RM`,
+          icon: '/icons/icon-192x192.png',
+          url: '/stats',
         });
       }
 

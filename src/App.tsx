@@ -8,6 +8,8 @@ import { PermissionRequests } from '@app/components/PermissionRequests';
 import { PageSkeleton } from '@shared/components/ui/Skeleton';
 import { OnboardingModal } from '@features/auth/components/OnboardingModal';
 import { supabase } from '@shared/lib/supabase';
+import { useWorkoutReminder } from '@features/routine/hooks/useWorkoutReminder';
+import { useBackgroundNotifications } from '@shared/hooks/useBackgroundNotifications';
 import './shared/lib/i18n';
 
 const AuthPage = lazy(() =>
@@ -217,6 +219,9 @@ function AppRoutes() {
   const { user, loading, initialized } = useAuthStore();
   const { applyTheme } = useSettingsStore();
   const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useWorkoutReminder();
+  useBackgroundNotifications();
 
   // Inicializar tema al arrancar
   useEffect(() => {

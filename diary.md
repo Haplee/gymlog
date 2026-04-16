@@ -72,3 +72,12 @@
 
 - Modificado el intervalo automático del método `checkAndBackup` en el store de rutinas (`useRoutineStore.ts`).
 - Las rutinas locales se exportan y sincronizan ahora de forma automática contra la base de datos de Supabase cada **3 días** en lugar del plazo previo de dos semanas, protegiendo mucho más el progreso frente a borrados de la caché del navegador.
+
+## [2026-04-16] — Sistema de notificaciones nativas (Web + Push)
+
+- **B1**: Añadidos permisos nativos `Notification.requestPermission` y heurísticas de seguridad para No Molestar en `notifications.ts`. Añadido un Toggle Switch a `SettingsPage.tsx` con almacenamiento permanente en la tabla de Supabase `profiles` (`notifications_enabled`).
+- **B3**: Integrada notificación de **🏆 ¡Nuevo récord personal!** al batir un PR en la estimación de 1RM dentro de `WorkoutPage.tsx`.
+- **B2**: Desarrollado `useWorkoutReminder.ts` para notificar al usuario "💪 Tienes entrenamiento hoy" cuando existen rutinas preestablecidas y ha superado un periodo de 23h de inactividad, limitado a una vez por sesión.
+- **B4 / B6**: Creado loop persistente de comprobación en `useBackgroundNotifications.ts` para enviar advertencias de **🔥 Racha en peligro** al detectar inactividad a partir de las 20:00 (racha >= 3) y resúmenes semanales de rendimiento todos los lunes a las 09:00.
+- Nota técnica: Se ha descartado el nivel inferior de Service Worker puro que exigía no usar React/TanStack (que rompía la arquitectura) optando en su lugar por montajes globales como Hooks de PWA en el shell general.
+- Estado: Todos los módulos están activos (commit atómico).
