@@ -3,98 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GymLog APK | Seguimiento de Entrenamiento Premium</title>
-    <meta name="description" content="Descarga la última versión de GymLog para Android. La app definitiva para gestionar tus rutinas de gimnasio, calcular PRs y visualizar tu progreso.">
+    <title>GymLog | Rinde al Máximo</title>
+    <meta name="description" content="Descarga GymLog: La app definitiva para el seguimiento de hipertrofia con analítica avanzada, modo offline y experiencia nativa premium.">
     
     <!-- Open Graph -->
-    <meta property="og:title" content="GymLog APK - Entrena como un Pro">
-    <meta property="og:description" content="Gestión de rutinas, cálculo de 1RM y estadísticas avanzadas. Descarga el APK oficial aquí.">
+    <meta property="og:title" content="GymLog v2.0 - Entrena como un Guerrero">
+    <meta property="og:description" content="Calcula tus PRs, visualiza tu volumen muscular y entrena sin límites. Descarga el APK oficial.">
     <meta property="og:image" content="assets/logo.svg">
     
     <link rel="stylesheet" href="styles.css">
     <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
 </head>
 <body>
-    <div class="hero-glow"></div>
+    <div class="bg-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
     
     <header class="container">
-        <img src="assets/logo.svg" alt="GymLog Logo" class="logo">
-        <h1>GymLog v2.0</h1>
-        <p class="tagline">Lleva tu entrenamiento al siguiente nivel con la app nativa diseñada para el rendimiento extremo.</p>
+        <div class="logo-container">
+            <img src="assets/logo.svg" alt="GymLog Logo" class="logo">
+        </div>
+        <h1>Entrena Sin Límites</h1>
+        <p class="tagline">GymLog es la herramienta definitiva para entusiastas de la hipertrofia que exigen precisión, rendimiento y una experiencia de usuario impecable.</p>
         
         <div class="cta">
             <a href="GymLog.apk" class="btn btn-primary" id="download-btn">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Descargar APK
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Descargar GymLog.apk
             </a>
         </div>
     </header>
 
     <main class="container">
-        <section class="features">
-            <div class="feature-card glass">
-                <span class="feature-icon">📊</span>
-                <h3>Análisis Avanzado</h3>
-                <p>Gráficos de volumen muscular y consistencia para entender tu evolución real.</p>
-            </div>
-            <div class="feature-card glass">
-                <span class="feature-icon">⚡</span>
-                <h3>Cálculo de PRs</h3>
-                <p>Algoritmos integrados para calcular tu 1RM estimado en tiempo real mediante fórmulas de precisión.</p>
-            </div>
-            <div class="feature-card glass">
-                <span class="feature-icon">📱</span>
-                <h3>Experiencia Nativa</h3>
-                <p>Feedback háptico, notificaciones locales y rendimiento fluido optimizado para Android.</p>
+        <!-- App Preview Section -->
+        <section class="app-preview" data-reveal>
+            <div class="mockup-container">
+                <div class="mockup-screen">
+                    <div class="mockup-header">
+                        <div style="width: 120px; height: 12px; background: rgba(255,255,255,0.1); border-radius: 6px;"></div>
+                    </div>
+                    <div class="mockup-stats">
+                        <div class="mockup-bar" style="height: 120px;"></div>
+                        <div class="mockup-bar" style="height: 80px; margin-top: 40px;"></div>
+                        <div class="mockup-bar" style="height: 150px; grid-column: span 2;"></div>
+                    </div>
+                    <div style="padding: 1.5rem;">
+                        <div style="width: 100%; height: 2px; background: var(--accent-color); margin-bottom: 1rem;"></div>
+                        <div style="width: 60%; height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px;"></div>
+                    </div>
+                </div>
             </div>
         </section>
 
-        <section class="instructions glass">
-            <h2 class="section-title">¿Cómo instalar el APK?</h2>
-            <div class="steps">
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <div class="step-text">
-                        <strong>Permitir orígenes desconocidos</strong>
-                        <p>En Ajustes > Seguridad, activa la opción de instalar aplicaciones desde "Fuentes desconocidas".</p>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <div class="step-text">
-                        <strong>Descarga el archivo</strong>
-                        <p>Pulsa el botón superior para bajar el archivo <code>GymLog.apk</code> en tu dispositivo.</p>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <div class="step-text">
-                        <strong>Instala y entrena</strong>
-                        <p>Abre el archivo descargado, acepta los permisos y ¡listo! Tu progreso te espera.</p>
-                    </div>
-                </div>
+        <!-- Features Grid -->
+        <section class="features">
+            <div class="feature-card" data-reveal>
+                <div class="feature-icon">🛡️</div>
+                <h3>Arquitectura Robusta</h3>
+                <p>Diseñada con Supabase y modo Offline-First. Tus datos están seguros y siempre disponibles, incluso sin conexión.</p>
             </div>
+            <div class="feature-card" data-reveal>
+                <div class="feature-icon">📉</div>
+                <h3>Proyección de Fuerza</h3>
+                <p>Calcula tu 1RM estimado al instante usando algoritmos de Brzycki integrados en el registro de series.</p>
+            </div>
+            <div class="feature-card" data-reveal>
+                <div class="feature-icon">🦾</div>
+                <h3>Feedback Háptico</h3>
+                <p>Siente cada progreso. La app utiliza motores de vibración nativos para confirmar récords y acciones críticas.</p>
+            </div>
+        </section>
+
+        <!-- Instructions Section -->
+        <section class="instructions-card" data-reveal>
+            <h2 style="font-size: 2.5rem; margin-bottom: 3rem; text-align: center;">Prepara tu Dispositivo</h2>
+            <ol class="steps">
+                <li class="step-item">
+                    <div>
+                        <strong style="font-size: 1.25rem; display: block; margin-bottom: 0.5rem;">Habilita Instalaciones</strong>
+                        <p style="color: var(--text-secondary);">Ve a Ajustes > Seguridad y activa "Fuentes Desconocidas" para permitir la instalación de APKs externos.</p>
+                    </div>
+                </li>
+                <li class="step-item">
+                    <div>
+                        <strong style="font-size: 1.25rem; display: block; margin-bottom: 0.5rem;">Obtén el Binario</strong>
+                        <p style="color: var(--text-secondary);">Descarga el archivo <code>GymLog.apk</code> pulsando el botón principal de esta página.</p>
+                    </div>
+                </li>
+                <li class="step-item">
+                    <div>
+                        <strong style="font-size: 1.25rem; display: block; margin-bottom: 0.5rem;">Comienza tu Viaje</strong>
+                        <p style="color: var(--text-secondary);">Ejecuta el archivo, otorga los permisos necesarios y empieza a registrar tus marcas.</p>
+                    </div>
+                </li>
+            </ol>
         </section>
     </main>
 
     <footer>
         <div class="container">
-            <p>&copy; 2026 GymLog Project. Código disponible en <a href="https://github.com/Haplee/pesos" class="repo-link">GitHub</a>.</p>
+            <p style="margin-bottom: 1rem;">Diseñado para el alto rendimiento por <strong>Haplee</strong></p>
+            <div class="social-links">
+                <a href="https://github.com/Haplee/pesos">GitHub</a>
+                <a href="https://x.com/FranVidalMateo">Twitter</a>
+                <a href="https://www.instagram.com/franvidalmateo">Instagram</a>
+            </div>
         </div>
     </footer>
 
     <script>
-        // Efecto hover sutil en tarjetas
-        const cards = document.querySelectorAll('.glass');
-        cards.forEach(card => {
-            card.addEventListener('mousemove', (e) => {
-                const rect = card.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                card.style.setProperty('--mouse-x', `${x}px`);
-                card.style.setProperty('--mouse-y', `${y}px`);
+        // Scroll Reveal Logic
+        const reveal = () => {
+            const reveals = document.querySelectorAll('[data-reveal]');
+            reveals.forEach(el => {
+                const windowHeight = window.innerHeight;
+                const elementTop = el.getBoundingClientRect().top;
+                const elementVisible = 150;
+                if (elementTop < windowHeight - elementVisible) {
+                    el.classList.add('active');
+                }
             });
-        });
+        }
+        window.addEventListener('scroll', reveal);
+        // Trigger once on load
+        window.addEventListener('load', reveal);
     </script>
 </body>
 </html>
