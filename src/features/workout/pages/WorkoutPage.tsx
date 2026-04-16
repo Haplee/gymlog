@@ -416,7 +416,7 @@ export function WorkoutPage() {
           />
         )}
 
-        {selectedExercise && selectedExercise.user_id && (
+        {selectedExercise && (
           <div className="flex gap-2 mt-2">
             <button
               onClick={() => setShowNotes(!showNotes)}
@@ -430,17 +430,19 @@ export function WorkoutPage() {
               <StickyNote className="w-3 h-3" />
               Notas ({exerciseNotes.length})
             </button>
-            <button
-              onClick={() => handleDeleteExercise(selectedExercise.id)}
-              className="py-1.5 px-2 rounded-lg text-xs flex items-center gap-1"
-              style={{
-                backgroundColor: bgCard,
-                border: `1px solid ${border}`,
-                color: 'var(--error)',
-              }}
-            >
-              <Trash2 className="w-3 h-3" />
-            </button>
+            {selectedExercise.user_id && (
+              <button
+                onClick={() => handleDeleteExercise(selectedExercise.id)}
+                className="py-1.5 px-2 rounded-lg text-xs flex items-center gap-1"
+                style={{
+                  backgroundColor: bgCard,
+                  border: `1px solid ${border}`,
+                  color: 'var(--error)',
+                }}
+              >
+                <Trash2 className="w-3 h-3" />
+              </button>
+            )}
           </div>
         )}
 

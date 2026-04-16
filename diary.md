@@ -60,3 +60,10 @@
 - Rediseñado el formato de exportación `.csv` con columnas más precisas y legibles: `Fecha, Ejercicio, Serie, Repeticiones, Peso (kg)`.
 - Reescrito el parseador CSV de `importFromCsv` para soportar retrocompatibilidad con el formato CSV antiguo limitante, adaptando automáticamente y asegurando que ninguna serie o repetición se pierda.
 - Estado: Mejorada drásticamente la fiabilidad del registro y la portabilidad del usuario.
+
+## [2026-04-16] — Accesibilidad a notas y borrado de ejercicios
+
+- Refactorizada la renderización condicional de los componentes de interacción en `WorkoutPage.tsx`.
+- El botón de Notas de Ejercicio (`ExerciseNotes`) ha sido desacoplado del chequeo de autoría, permitiendo ahora añadir y consultar anotaciones en ejercicios globales de la plataforma (ej. Pres de banca, Sentadilla).
+- El botón de Eliminar Ejercicio (`Trash2`) se mantiene restringido exclusivamente a ejercicios creados por el usuario (`user_id !== null`), preservando la integridad de la base de datos predefinida.
+- Estado: Mejorada la funcionalidad de personalización de entrenamientos sin comprometer la seguridad de los datos genéricos.
