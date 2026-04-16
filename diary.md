@@ -67,3 +67,8 @@
 - El botón de Notas de Ejercicio (`ExerciseNotes`) ha sido desacoplado del chequeo de autoría, permitiendo ahora añadir y consultar anotaciones en ejercicios globales de la plataforma (ej. Pres de banca, Sentadilla).
 - El botón de Eliminar Ejercicio (`Trash2`) se mantiene restringido exclusivamente a ejercicios creados por el usuario (`user_id !== null`), preservando la integridad de la base de datos predefinida.
 - Estado: Mejorada la funcionalidad de personalización de entrenamientos sin comprometer la seguridad de los datos genéricos.
+
+## [2026-04-16] — Sincronización en la nube de copias de seguridad de rutinas
+
+- Modificado el intervalo automático del método `checkAndBackup` en el store de rutinas (`useRoutineStore.ts`).
+- Las rutinas locales se exportan y sincronizan ahora de forma automática contra la base de datos de Supabase cada **3 días** en lugar del plazo previo de dos semanas, protegiendo mucho más el progreso frente a borrados de la caché del navegador.

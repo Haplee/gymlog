@@ -456,9 +456,9 @@ export const useRoutineStore = create<RoutineStore>()(
       checkAndBackup: async (userId: string) => {
         const { lastBackup } = get();
         const now = new Date();
-        const twoWeeks = 14 * 24 * 60 * 60 * 1000;
+        const threeDays = 3 * 24 * 60 * 60 * 1000;
 
-        if (lastBackup && now.getTime() - new Date(lastBackup).getTime() < twoWeeks) {
+        if (lastBackup && now.getTime() - new Date(lastBackup).getTime() < threeDays) {
           return;
         }
 
