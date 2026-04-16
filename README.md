@@ -22,7 +22,7 @@
 
 <br>
 
-## ⚡ Core Features
+## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/High%20Voltage.png" width="35" align="center" /> Core Features
 
 <table>
   <tr>
@@ -47,7 +47,7 @@
       <p>Implementación CSP, Rate Limiting contra fuerza bruta, y control RLS absoluto a nivel base de datos.</p>
     </td>
     <td align="center" width="50%">
-      <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Rocket.png" alt="Rocket" width="50" />
+      <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Rocket.png" alt="Rocket" width="50" />
       <br>
       <b>Rendimiento Extremo</b>
       <p>Delegación a RPCs en Postgres, code-splitting estratégico con Suspense y validación no-bloqueante con Zod.</p>
@@ -57,7 +57,7 @@
 
 ---
 
-## 🛠️ Stack Detallado
+## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Hammer%20and%20Wrench.png" width="35" align="center" /> Stack Detallado
 
 | Capa               | Tecnología                     | Función                                                           |
 | :----------------- | :----------------------------- | :---------------------------------------------------------------- |
@@ -70,7 +70,7 @@
 
 ---
 
-## 🏗️ Topologia del Repositorio
+## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Construction.png" width="35" align="center" /> Topología del Repositorio
 
 El proyecto emplea una estructuración vertical basada en <i>features</i> para reducir el sobreacoplamiento global.
 
@@ -80,7 +80,7 @@ src/
 ├── features/         # Verticales independientes de funcionalidad:
 │   ├── auth/         # Onboarding, Guards y Seguridad
 │   ├── routine/      # Macros semanales y generación estática
-│   ├── stats/        # Analítica y Recharts (motor vectorial)
+│   ├── stats/        # Analítica y Recharts (motor vectorial genérico)
 │   └── workout/      # Núcleo de interacción en vivo del ejercicio
 ├── shared/           # Elementos agnósticos e infraestructura global:
 │   ├── api/          # Capa de transporte y types CLI automáticos (Tables<T>)
@@ -90,7 +90,7 @@ src/
 
 ---
 
-## 🚀 Despliegue Local
+## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Laptop.png" width="35" align="center" /> Despliegue Local
 
 Para administradores iterando en el ecosistema de la app de forma local:
 
@@ -120,15 +120,18 @@ npm run test:coverage
   <img src="https://capsule-render.vercel.app/api?type=waving&color=3ECF8E&height=100&section=footer" alt="Footer animated wave" />
 </div>
 
-## 🌐 Conexión y Autoría
+## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Globe%20with%20Meridians.png" width="35" align="center" /> Conexión y Autoría
 
 <div align="center">
-  <br>
-  <a href="https://github.com/Haplee"><img src="https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white" /></a>
-  <a href="https://x.com/FranVidalMateo"><img src="https://img.shields.io/badge/Twitter-000000?style=for-the-badge&logo=x&logoColor=white" /></a>
-  <a href="https://www.instagram.com/franvidalmateo"><img src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white" /></a>
 
-<br><br>
+  <img src="https://github-readme-stats.vercel.app/api?username=Haplee&show_icons=true&theme=radical&hide_border=true&bg_color=0D1117&icon_color=3ECF8E&text_color=FFFFFF&title_color=3ECF8E" alt="Haplee's GitHub Stats" />
+  
+  <br><br>
+
+<a href="https://github.com/Haplee"><img src="https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white" /></a>
+<a href="https://x.com/FranVidalMateo"><img src="https://img.shields.io/badge/Twitter-000000?style=for-the-badge&logo=x&logoColor=white" /></a>
+<a href="https://www.instagram.com/franvidalmateo"><img src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white" /></a>
+
 <b>GymLog v2.0</b> • Creado con precisión y fiabilidad técnica por <a href="https://github.com/Haplee">Fran Vidal Mateo (Haplee)</a>
 
 </div>
