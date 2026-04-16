@@ -53,3 +53,10 @@
 - Completado Bloque 6: Reforzada la lógica de guardado en `WorkoutPage.tsx`. Filtrado automático de series vacías y añadido estado visual de errores de validación de Zod inline (debajo de cada serie) sin bloquear el guardado ni presentar toasts molestos.
 - Comprobado el estado de los bloques pendientes (Persistencia local, Limpieza de Caché, RPC y Optimizaciones Generales) que ya estaban implementados.
 - Estado actual del proyecto: Tipado estricto mejorado, experiencia de usuario fluida en la página de workouts.
+
+## [2026-04-16] — Solución a historial oculto y mejora de imports/exports CSV
+
+- Aumentado el límite de series recuperadas en `queries.ts` de 50 a 1000 y eliminado límite de truncado `.slice(0, 30)` en `HistoryPage.tsx`, previniendo el efecto visual de "historial borrado" al registrar múltiples ejercicios.
+- Rediseñado el formato de exportación `.csv` con columnas más precisas y legibles: `Fecha, Ejercicio, Serie, Repeticiones, Peso (kg)`.
+- Reescrito el parseador CSV de `importFromCsv` para soportar retrocompatibilidad con el formato CSV antiguo limitante, adaptando automáticamente y asegurando que ninguna serie o repetición se pierda.
+- Estado: Mejorada drásticamente la fiabilidad del registro y la portabilidad del usuario.

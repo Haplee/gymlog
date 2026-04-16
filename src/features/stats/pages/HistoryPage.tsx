@@ -134,7 +134,7 @@ export function HistoryPage() {
         new Date(b.workout?.started_at ?? '').getTime() -
         new Date(a.workout?.started_at ?? '').getTime(),
     )
-    .slice(0, 30);
+    .slice(0, 1000);
 
   const groupedWorkouts: GroupedWorkout[] = workouts.reduce((acc: GroupedWorkout[], wo) => {
     const date = new Date(wo.started_at ?? '').toLocaleDateString();
@@ -157,46 +157,24 @@ export function HistoryPage() {
   };
 
   const exportToExcel = () => {
-    const data = filteredSets.map((s: WorkoutSetWithDetails) => ({
-      ejercicio: s.exercise?.name || '',
-      fecha: s.workout?.started_at
-        ? new Date(s.workout.started_at).toISOString().split('T')[0]
-        : '',
-      peso: s.weight,
-      reps: s.reps,
-    }));
+    let csv = 'Fecha,Ejercicio,Serie,Repeticiones,Peso (kg)\n';
 
-    const allDates = new Set<string>();
-    data.forEach((row) => {
-      if (row.fecha) allDates.add(row.fecha);
-    });
-    allDates.add(new Date().toISOString().split('T')[0]);
-
-    const sortedDates = Array.from(allDates).sort().reverse();
-
-    let csv = '';
-
-    sortedDates.forEach((date) => {
-      const parts = date.split('-');
-      const dateFormatted = `${parts[2]}/${parts[1]}/${parts[0]}`;
-
-      csv += `Tren superior,${dateFormatted},\n`;
-
-      const dayData = data.filter((r) => r.fecha === date);
-
-      if (dayData.length === 0) {
-        csv += `Bíceps,"no hay registros",\n`;
-      } else {
-        const exercises = dayData.map((r) => r.ejercicio).sort();
-        exercises.forEach((exName) => {
-          const row = dayData.find((r) => r.ejercicio === exName);
-          if (row) {
-            csv += `${row.ejercicio},,${row.peso}\n`;
-          }
-        });
+    filteredSets.forEach((s: WorkoutSetWithDetails) => {
+      const exName = s.exercise?.name
+        ? `"${s.exercise.name.replace(/"/g, '""')}"`
+        : '"Desconocido"';
+      let dateFormatted = '';
+      if (s.workout?.started_at) {
+        const splitted = s.workout.started_at.split('T')[0];
+        const parts = splitted.split('-');
+        if (parts.length === 3) {
+          dateFormatted = `${parts[2]}/${parts[1]}/${parts[0]}`;
+        } else {
+          dateFormatted = splitted;
+        }
       }
 
-      csv += '\n';
+      csv += `${dateFormatted},${exName},${s.set_num},${s.reps},${s.weight}\n`;
     });
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -300,7 +278,14 @@ export function HistoryPage() {
         };
 
         const parseDate = (dateStr: string): string | null => {
-          if (!dateStr || dateStr.trim() === '' || !dateStr.includes('/')) return null;
+          if (!dateStr || dateStr.trim() === '') return null;
+
+          if (dateStr.includes('-')) {
+            const parts = dateStr.split('-');
+            if (parts.length === 3 && parts[0].length === 4) return dateStr.trim();
+          }
+
+          if (!dateStr.includes('/')) return null;
 
           const parts = dateStr.split('/');
           if (parts.length !== 3) return null;
@@ -350,6 +335,7 @@ export function HistoryPage() {
         let imported = 0;
         const errors: string[] = [];
         const dateWorkoutMap: Record<string, string> = {};
+        const exerciseSetCounts: Record<string, number> = {};
         let currentDate = new Date().toISOString().split('T')[0];
 
         for (let i = 0; i < lines.length; i++) {
@@ -375,15 +361,21 @@ export function HistoryPage() {
           }
           cols.push(current.trim());
 
-          while (cols.length < 3) cols.push('');
+          while (cols.length < 5) cols.push('');
 
-          const firstCol = cols[0].trim();
-          const secondCol = cols[1]?.trim() || '';
-          const thirdCol = cols[2]?.trim() || '';
+          const firstCol = cols[0].replace(/^"|"$/g, '').trim();
+          const secondCol = cols[1]?.replace(/^"|"$/g, '').trim() || '';
+          const thirdCol = cols[2]?.replace(/^"|"$/g, '').trim() || '';
+          const fourthCol = cols[3]?.replace(/^"|"$/g, '').trim() || '';
+          const fifthCol = cols[4]?.replace(/^"|"$/g, '').trim() || '';
 
-          if (isHeaderLine(firstCol)) {
-            const parsedDate = parseDate(secondCol) || parseDate(thirdCol);
-            if (parsedDate) currentDate = parsedDate;
+          if (firstCol.toLowerCase() === 'fecha') {
+            continue;
+          }
+
+          const dateFromSecondOrThird = parseDate(secondCol) || parseDate(thirdCol);
+          if (isHeaderLine(firstCol) && dateFromSecondOrThird) {
+            currentDate = dateFromSecondOrThird;
             continue;
           }
 
@@ -396,16 +388,42 @@ export function HistoryPage() {
             'descanso',
             'libre',
           ];
-          if (skipPhrases.some((p) => secondCol.toLowerCase().includes(p))) continue;
+          if (
+            skipPhrases.some(
+              (p) => secondCol.toLowerCase().includes(p) || firstCol.toLowerCase().includes(p),
+            )
+          )
+            continue;
 
-          const peso = parseNumber(secondCol) || parseNumber(thirdCol);
+          const dateFromFirstCol = parseDate(firstCol);
 
-          if (!peso) continue;
+          let parsedDate = currentDate;
+          let exerciseName = '';
+          let reps = 10;
+          let weight = 0;
+          let setNum = 1;
+          let isNewFormat = false;
 
-          if (!dateWorkoutMap[currentDate]) {
+          if (dateFromFirstCol && cols.length >= 3) {
+            parsedDate = dateFromFirstCol;
+            currentDate = parsedDate;
+            exerciseName = secondCol;
+            setNum = parseNumber(thirdCol) || 1;
+            reps = parseNumber(fourthCol) || 10;
+            weight = parseNumber(fifthCol) || 0;
+            isNewFormat = true;
+          } else {
+            exerciseName = firstCol;
+            weight = parseNumber(secondCol) || parseNumber(thirdCol) || 0;
+            reps = 10;
+          }
+
+          if (weight === null || weight === 0) continue;
+
+          if (!dateWorkoutMap[parsedDate]) {
             const { data: workoutData, error: woError } = await supabase
               .from('workouts')
-              .insert({ user_id: user.id, started_at: currentDate })
+              .insert({ user_id: user.id, started_at: parsedDate })
               .select('id')
               .single();
 
@@ -414,22 +432,29 @@ export function HistoryPage() {
               continue;
             }
 
-            dateWorkoutMap[currentDate] = workoutData.id;
+            dateWorkoutMap[parsedDate] = workoutData.id;
           }
 
-          const exerciseId = await getExerciseId(firstCol);
+          const exerciseId = await getExerciseId(exerciseName);
 
           if (!exerciseId) {
-            errors.push(`Fila ${lineNum}: "${firstCol}" no se pudo crear`);
+            errors.push(`Fila ${lineNum}: "${exerciseName}" no se pudo crear`);
             continue;
           }
 
+          let finalSetNum = setNum;
+          if (!isNewFormat) {
+            const key = `${parsedDate}_${exerciseId}`;
+            exerciseSetCounts[key] = (exerciseSetCounts[key] || 0) + 1;
+            finalSetNum = exerciseSetCounts[key];
+          }
+
           const { error: insertError } = await supabase.from('workout_sets').insert({
-            workout_id: dateWorkoutMap[currentDate],
+            workout_id: dateWorkoutMap[parsedDate],
             exercise_id: exerciseId,
-            weight: peso,
-            reps: 10,
-            set_num: 1,
+            weight: weight,
+            reps: reps,
+            set_num: finalSetNum,
           });
 
           if (insertError) continue;

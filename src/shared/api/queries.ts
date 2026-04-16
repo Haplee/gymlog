@@ -95,7 +95,7 @@ export const fetchRecentSets = async (
       .select('id')
       .eq('user_id', userId)
       .order('started_at', { ascending: false })
-      .limit(10);
+      .limit(50);
 
     if (woError) {
       console.error('Error fetching workout IDs:', woError);
@@ -112,7 +112,7 @@ export const fetchRecentSets = async (
       )
       .in('workout_id', ids)
       .order('created_at', { ascending: false })
-      .limit(limit);
+      .limit(limit > 50 ? limit : 1000);
 
     if (setsError) {
       console.error('Error fetching recent sets:', setsError);
