@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '@features/auth/stores/authStore';
@@ -30,6 +31,7 @@ function ExerciseRow({
   sets: WorkoutSetWithDetails[];
   onDelete: (id: string) => void;
 }) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const sortedSets = [...sets].sort((a, b) => a.set_num - b.set_num);
   const firstSet = sortedSets[0];
@@ -49,7 +51,7 @@ function ExerciseRow({
         </div>
         <div className="flex items-center gap-2">
           <span className="text-[var(--interactive-primary)] font-medium text-[0.8125rem]">
-            {sortedSets.length} series
+            {sortedSets.length} {t('history.series_plural')}
           </span>
           <button
             onClick={(e) => {
@@ -71,9 +73,9 @@ function ExerciseRow({
             >
               <div className="flex items-center gap-3">
                 <span className="text-[var(--text-tertiary)] text-[0.8125rem]">
-                  Serie {s.set_num}
+                  {t('workout.sets')} {s.set_num}
                 </span>
-                <span className="text-[var(--text-secondary)] text-[0.875rem]">{s.reps} reps</span>
+                <span className="text-[var(--text-secondary)] text-[0.875rem]">{s.reps} {t('workout.reps').toLowerCase()}</span>
               </div>
               <span className="text-[var(--interactive-primary)] font-medium">{s.weight} kg</span>
             </div>
@@ -86,6 +88,7 @@ function ExerciseRow({
 
 export function HistoryPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const { repeatWorkout } = useWorkoutStore();
   const [view, setView] = useState<'sets' | 'workouts'>('sets');
@@ -505,8 +508,8 @@ export function HistoryPage() {
           onChange={(e) => setView(e.target.value as 'sets' | 'workouts')}
           className="bg-[#141418] border border-[rgba(255,255,255,0.12)] rounded-lg text-[#a0a0a8] text-[0.95rem] p-2 cursor-pointer transition-all hover:scale-[1.02]"
         >
-          <option value="sets">Series</option>
-          <option value="workouts">Entrenos</option>
+          <option value="sets">{t('history.sets_view')}</option>
+          <option value="workouts">{t('history.workouts_view')}</option>
         </select>
 
         {view === 'sets' && (
@@ -516,7 +519,7 @@ export function HistoryPage() {
               onChange={(e) => setFilterExercise(e.target.value)}
               className="bg-[#141418] border border-[rgba(255,255,255,0.12)] rounded-lg text-[#a0a0a8] text-[0.95rem] p-2 cursor-pointer transition-all hover:scale-[1.02]"
             >
-              <option value="">Todos</option>
+              <option value="">{t('history.filter_all')}</option>
               {exercises.map((ex) => (
                 <option key={ex} value={ex}>
                   {ex}
@@ -527,10 +530,10 @@ export function HistoryPage() {
               onClick={exportToExcel}
               className="bg-[#141418] border border-[rgba(255,255,255,0.12)] rounded-lg text-[#c8ff00] text-[0.95rem] px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
-              Exportar
+              {t('history.export_btn')}
             </button>
             <label className="bg-[#141418] border border-[rgba(255,255,255,0.12)] rounded-lg text-[#a0a0a8] text-[0.95rem] px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]">
-              Importar
+              {t('history.import_btn')}
               <input type="file" accept=".csv,.txt" onChange={importFromCsv} className="hidden" />
             </label>
           </>
@@ -617,7 +620,7 @@ export function HistoryPage() {
                           className="text-[var(--interactive-primary)] text-[0.8rem] font-medium bg-transparent border-none cursor-pointer transition-all hover:scale-105"
                         >
                           <Repeat className="w-3.5 h-3.5 mr-1" />
-                          Repetir
+                          {t('history.repeat')}
                         </button>
                         <button
                           onClick={async () => {
@@ -631,13 +634,13 @@ export function HistoryPage() {
                               totalVolume: volume,
                               date: new Date(wo.started_at ?? '').toLocaleDateString(),
                             });
-                            if (success) toast.success('Workout compartido');
-                            else toast.error('Error al compartir');
+                            if (success) toast.success(t('history.shared_msg'));
+                            else toast.error('Error');
                           }}
                           className="text-[var(--text-secondary)] text-[0.8rem] font-medium bg-transparent border-none cursor-pointer transition-all hover:scale-105"
                         >
                           <Share2 className="w-3.5 h-3.5 mr-1" />
-                          Compartir
+                          {t('history.share')}
                         </button>
                       </div>
                     </div>
@@ -659,14 +662,14 @@ export function HistoryPage() {
         </div>
       )}
 
-      <Modal open={!!deleteId} onClose={() => setDeleteId(null)} title="¿Eliminar registro?">
+      <Modal open={!!deleteId} onClose={() => setDeleteId(null)} title={t('history.delete_confirm')}>
         <p className="text-[var(--text-secondary)] mb-6">Esta acción no se puede deshacer.</p>
         <div className="flex gap-3 justify-end mt-4">
           <Button variant="secondary" onClick={() => setDeleteId(null)}>
-            Cancelar
+            {t('common.cancel')}
           </Button>
           <Button variant="danger" onClick={() => deleteId && handleDelete(deleteId)}>
-            Eliminar
+            {t('common.delete')}
           </Button>
         </div>
       </Modal>

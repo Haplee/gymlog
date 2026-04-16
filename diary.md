@@ -73,11 +73,20 @@
 - Modificado el intervalo automático del método `checkAndBackup` en el store de rutinas (`useRoutineStore.ts`).
 - Las rutinas locales se exportan y sincronizan ahora de forma automática contra la base de datos de Supabase cada **3 días** en lugar del plazo previo de dos semanas, protegiendo mucho más el progreso frente a borrados de la caché del navegador.
 
-## [2026-04-16] — Sistema de notificaciones nativas (Web + Push)
+## [2026-04-16] — Integración de Capacitor: Conversión a App Nativa
 
-- **B1**: Añadidos permisos nativos `Notification.requestPermission` y heurísticas de seguridad para No Molestar en `notifications.ts`. Añadido un Toggle Switch a `SettingsPage.tsx` con almacenamiento permanente en la tabla de Supabase `profiles` (`notifications_enabled`).
-- **B3**: Integrada notificación de **🏆 ¡Nuevo récord personal!** al batir un PR en la estimación de 1RM dentro de `WorkoutPage.tsx`.
-- **B2**: Desarrollado `useWorkoutReminder.ts` para notificar al usuario "💪 Tienes entrenamiento hoy" cuando existen rutinas preestablecidas y ha superado un periodo de 23h de inactividad, limitado a una vez por sesión.
-- **B4 / B6**: Creado loop persistente de comprobación en `useBackgroundNotifications.ts` para enviar advertencias de **🔥 Racha en peligro** al detectar inactividad a partir de las 20:00 (racha >= 3) y resúmenes semanales de rendimiento todos los lunes a las 09:00.
-- Nota técnica: Se ha descartado el nivel inferior de Service Worker puro que exigía no usar React/TanStack (que rompía la arquitectura) optando en su lugar por montajes globales como Hooks de PWA en el shell general.
-- Estado: Todos los módulos están activos (commit atómico).
+- **B1: Cimiento Nativo**: Configurado Capacitor 8.3 con soporte para Android e iOS. Creado `capacitor.config.ts` y actualizados los scripts de `package.json` para facilitar el build y apertura en Android Studio/Xcode.
+- **B2: Notificaciones Híbridas**: Reemplazado el sistema de notificaciones web por uno compatible con Capacitor. En modo nativo usa `@capacitor/local-notifications` con soporte para deep linking (navegación por URL al pulsar la notificación).
+- **B3: Haptics (Vibración)**: Implementado feedback háptico en acciones críticas: vibración ligera al añadir series, éxito al guardar entrenamiento y batir PRs, y error vibratorio en fallos de validación.
+- **B4: Personalización Nativa**: Integrada gestión de `StatusBar` y `SplashScreen`. La barra de estado se adapta automáticamente al tema claro/oscuro del dispositivo y el fondo se sincroniza con el diseño de la app.
+- **B5: Assets y Branding**: Creado script de automatización (`generate-icons.js`) usando `sharp` para generar todos los tamaños de iconos Android desde un recurso fuente.
+- **B6: Configuración Android Optimizada**: Sincronizadas versiones de app, configurados permisos de vibración, notificaciones post-boot e internet en `AndroidManifest.xml` y `build.gradle`.
+- **B7: CI/CD Nativo**: Añadida GitHub Action para generar automáticamente el APK de depuración (`gymlog-debug.apk`) con cada actualización en la rama principal.
+- **Estado actual**: GymLog ya es una app nativa funcional. Listo para abrir con `npm run open:android`.
+
+## [2026-04-16] — Solución de crash en notificaciones e iconos adaptativos
+
+- **Fix Crash de Notificaciones**: Identificado que PermissionRequests.tsx llamaba a Notification.requestPermission() (web) en lugar del helper de Capacitor. Corregido para usar LocalNotifications nativo y añadido un bloque try-catch robusto en el core de notificaciones para evitar cierres inesperados.
+- **Iconos Modernos**: Actualizado generate-icons.js para generar ic_launcher_foreground.png. En Android 8+, el sistema ignora los iconos planos si existen definiciones de iconos adaptativos. Ahora se generan todas las capas necesarias.
+- **Identidad Visual**: Sincronizado el color de fondo del icono adaptativo (ic_launcher_background.xml) con el color de fondo de la aplicación (#0a0a0c) para un acabado premium.
+- **Estado**: Problemas de estabilidad inicial en Android resueltos. Pendiente de sincronización final en el dispositivo del usuario (npx cap sync android).

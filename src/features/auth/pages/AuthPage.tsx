@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuthStore } from '@features/auth/stores/authStore';
+import { useTranslation } from 'react-i18next';
 import { useRateLimit } from '@shared/hooks/useRateLimit';
 
 export function AuthPage() {
@@ -10,6 +11,7 @@ export function AuthPage() {
   const [username, setUsername] = useState('');
   const [isRevealing, setIsRevealing] = useState(false);
   const [animKey, setAnimKey] = useState(0);
+  const { t } = useTranslation();
   const { signIn, signUp, signInWithGoogle } = useAuthStore();
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -96,7 +98,7 @@ export function AuthPage() {
           Gym<span style={{ color: accent }}>Log</span>
         </h1>
         <p className="text-[0.875rem] mt-2 fade-in-up text-[var(--text-tertiary)]">
-          {isSignUp ? 'Crea tu cuenta' : 'Inicia sesión'}
+          {isSignUp ? t('auth.signup') : t('auth.login')}
         </p>
       </div>
 
@@ -112,7 +114,7 @@ export function AuthPage() {
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               className="w-full rounded-[var(--radius-lg)] text-base py-3.5 px-4 outline-none transition-all bg-[var(--bg-surface)] border border-[var(--border-default)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--interactive-primary)] focus:shadow-[0_0_0_2px_var(--interactive-primary)]/30"
-              placeholder="Nombre completo"
+              placeholder={t('auth.name')}
             />
           </div>
         )}
@@ -124,7 +126,7 @@ export function AuthPage() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="w-full rounded-[var(--radius-lg)] text-base py-3.5 px-4 outline-none transition-all bg-[var(--bg-surface)] border border-[var(--border-default)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--interactive-primary)] focus:shadow-[0_0_0_2px_var(--interactive-primary)]/30"
-              placeholder="Nombre de usuario"
+              placeholder={t('auth.username')}
             />
           </div>
         )}
@@ -135,7 +137,7 @@ export function AuthPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full rounded-[var(--radius-lg)] text-base py-3.5 px-4 outline-none transition-all bg-[var(--bg-surface)] border border-[var(--border-default)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--interactive-primary)] focus:shadow-[0_0_0_2px_var(--interactive-primary)]/30"
-            placeholder="Email"
+            placeholder={t('auth.email')}
           />
         </div>
 
@@ -146,7 +148,7 @@ export function AuthPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full rounded-[var(--radius-lg)] text-base py-3.5 px-4 outline-none transition-all pr-12 bg-[var(--bg-surface)] border border-[var(--border-default)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--interactive-primary)] focus:shadow-[0_0_0_2px_var(--interactive-primary)]/30"
-              placeholder="Contraseña"
+              placeholder={t('auth.password')}
             />
             <button
               type="button"
@@ -199,10 +201,10 @@ export function AuthPage() {
           disabled={loading || isBlocked}
           aria-label={
             isBlocked
-              ? `Bloqueado ${cooldownSeconds}s`
+              ? `Blocked ${cooldownSeconds}s`
               : isSignUp
-                ? 'Crear cuenta'
-                : 'Iniciar sesión'
+                ? t('auth.signup')
+                : t('auth.login')
           }
           className="w-full py-4 rounded-[var(--radius-lg)] text-base font-bold transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
           style={{ backgroundColor: isBlocked ? '#444' : accent, color: '#0a0a0c' }}
@@ -225,14 +227,14 @@ export function AuthPage() {
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                 />
               </svg>
-              Cargando...
+              {t('auth.loading')}
             </span>
           ) : isBlocked ? (
-            `Espera ${cooldownSeconds}s`
+            `Wait ${cooldownSeconds}s`
           ) : isSignUp ? (
-            'Crear cuenta'
+            t('auth.signup')
           ) : (
-            'Entrar'
+            t('auth.login')
           )}
         </button>
 
@@ -285,7 +287,7 @@ export function AuthPage() {
               />
             </svg>
           )}
-          Continuar con Google
+          {t('auth.signin_google')}
         </button>
 
         <div className="text-center pt-2">
@@ -295,7 +297,7 @@ export function AuthPage() {
             className="text-sm bg-transparent border-none transition-all hover:scale-105"
             style={{ color: accent }}
           >
-            {isSignUp ? '¿Ya tienes cuenta? Inicia sesión' : '¿Sin cuenta? Crea una'}
+            {isSignUp ? t('auth.switch_login') : t('auth.switch_signup')}
           </button>
         </div>
       </form>

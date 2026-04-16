@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '@features/auth/stores/authStore';
@@ -20,6 +21,7 @@ import confetti from 'canvas-confetti';
 import { Trophy, X, Trash2, Plus, StickyNote, AlertCircle } from 'lucide-react';
 import { z } from 'zod';
 import { notify } from '@shared/lib/notifications';
+import { impact, notificationHaptic, ImpactStyle, NotificationType } from '@shared/lib/haptics';
 
 const setSchema = z.object({
   reps: z.coerce.number().positive('Las repeticiones deben ser mayores a 0'),
@@ -28,14 +30,13 @@ const setSchema = z.object({
 
 // Componente extraído fuera para evitar el error react-hooks/static-components
 function ResumeWorkoutBanner({
-  startedAt,
   onContinue,
   onDiscard,
 }: {
-  startedAt: string;
   onContinue: () => void;
   onDiscard: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -44,24 +45,23 @@ function ResumeWorkoutBanner({
     >
       <div className="flex items-center gap-2 text-[--color-primary]">
         <AlertCircle className="w-5 h-5" />
-        <span className="font-semibold text-sm">Entrenamiento en curso detectado</span>
+        <span className="font-semibold text-sm">{t('workout.resume_banner')}</span>
       </div>
       <p className="text-xs text-[--text-secondary]">
-        Tienes una sesión iniciada el {new Date(startedAt).toLocaleTimeString()}. ¿Quieres continuar
-        registrando?
+        {t('workout.resume_desc')}
       </p>
       <div className="flex gap-2">
         <button
           onClick={onContinue}
           className="flex-1 py-2 rounded-lg bg-[--color-primary] text-[--interactive-primary-fg] text-xs font-bold"
         >
-          Continuar
+          {t('workout.continue')}
         </button>
         <button
           onClick={onDiscard}
           className="flex-1 py-2 rounded-lg border border-[--border-default] text-[--text-secondary] text-xs font-medium"
         >
-          Descartar
+          {t('workout.discard')}
         </button>
       </div>
     </motion.div>
@@ -70,6 +70,7 @@ function ResumeWorkoutBanner({
 
 export function WorkoutPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const {
@@ -218,6 +219,7 @@ export function WorkoutPage() {
     setSetErrors(newErrors);
 
     if (Object.keys(newErrors).length > 0) {
+      void notificationHaptic(NotificationType.Error);
       // Mostrar error inline sin bloquear las demás
       return;
     }
@@ -235,6 +237,7 @@ export function WorkoutPage() {
       setMessage(result.error.message);
     } else {
       setSaveSuccess(true);
+      void notificationHaptic(NotificationType.Success);
       if (sound) playFeedbackSound();
       queryClient.invalidateQueries({ queryKey: ['exercises'] });
       queryClient.invalidateQueries({ queryKey: ['workouts'] });
@@ -256,10 +259,11 @@ export function WorkoutPage() {
           origin: { y: 0.6 },
           colors: ['#FFFFFF', '#fafafa', '#22c55e'],
         });
+        void notificationHaptic(NotificationType.Success);
 
         const exerciseName = selectedExercise?.name || customExerciseName || 'Ejercicio';
-        notify('🏆 ¡Nuevo récord personal!', {
-          body: `${exerciseName}: ${max1RM} kg estimado de 1RM`,
+        notify(t('workout.new_pr_title'), {
+          body: t('workout.new_pr_body', { exercise: exerciseName, weight: max1RM }),
           icon: '/icons/icon-192x192.png',
           url: '/stats',
         });
@@ -271,6 +275,7 @@ export function WorkoutPage() {
   };
 
   const handleAddSet = () => {
+    void impact(ImpactStyle.Light);
     addSet();
   };
 
@@ -349,7 +354,6 @@ export function WorkoutPage() {
       <AnimatePresence>
         {showResumeBanner && startedAt && (
           <ResumeWorkoutBanner
-            startedAt={startedAt}
             onContinue={() => setShowResumeBanner(false)}
             onDiscard={() => {
               clearPersistedState();
@@ -405,7 +409,7 @@ export function WorkoutPage() {
           className="w-full rounded-lg text-sm p-2.5 outline-none appearance-none transition-all focus:scale-[1.01]"
           style={{ backgroundColor: bgCard, border: `1px solid ${border}`, color: textPrimary }}
         >
-          <option value="">- Ejercicio -</option>
+          <option value="">{t('workout.select_exercise')}</option>
           {Object.entries(groups).map(([group, exs]) => (
             <optgroup key={group} label={group}>
               {exs.map((ex) => (
@@ -415,7 +419,7 @@ export function WorkoutPage() {
               ))}
             </optgroup>
           ))}
-          <option value="__custom__">+ Personalizado</option>
+          <option value="__custom__">{t('workout.custom_exercise')}</option>
         </select>
 
         {customInput && (
@@ -441,7 +445,7 @@ export function WorkoutPage() {
               }}
             >
               <StickyNote className="w-3 h-3" />
-              Notas ({exerciseNotes.length})
+              {t('workout.notes')} ({exerciseNotes.length})
             </button>
             {selectedExercise.user_id && (
               <button
@@ -465,7 +469,7 @@ export function WorkoutPage() {
             style={{ backgroundColor: bgCard, border: `1px solid ${border}` }}
           >
             <div className="text-xs font-medium mb-2" style={{ color: textSecondary }}>
-              Anotaciones
+              {t('workout.no_notes')}
             </div>
             {exerciseNotes.length > 0 && (
               <div className="space-y-2 mb-3 max-h-24 overflow-y-auto">
@@ -492,7 +496,7 @@ export function WorkoutPage() {
             <div className="flex gap-2">
               <input
                 type="text"
-                placeholder="Nueva nota..."
+                placeholder={t('workout.new_note')}
                 value={noteText}
                 onChange={(e) => setNoteText(e.target.value)}
                 className="flex-1 rounded-lg text-xs p-2 outline-none"
@@ -516,7 +520,7 @@ export function WorkoutPage() {
 
         {currentPR && (
           <div className="mt-3 text-[0.85rem]" style={{ color: accent }}>
-            PR: {currentPR.weight} kg × {currentPR.reps} reps
+            {t('workout.recent_pr')}: {currentPR.weight} kg × {currentPR.reps} reps
           </div>
         )}
       </motion.div>
@@ -530,10 +534,10 @@ export function WorkoutPage() {
       >
         <div className="text-[0.9375rem] font-medium mb-2" style={{ color: textPrimary }}>
           {selectedExercise
-            ? `Series — ${selectedExercise.name}`
+            ? `${t('workout.sets')} — ${selectedExercise.name}`
             : customExerciseName
-              ? `Series — ${customExerciseName}`
-              : 'Series'}
+              ? `${t('workout.sets')} — ${customExerciseName}`
+              : t('workout.sets')}
         </div>
 
         <div
@@ -541,14 +545,14 @@ export function WorkoutPage() {
           style={{ color: textMuted }}
         >
           <div className="w-6"></div>
-          <div className="flex-1 text-center">Reps</div>
-          <div className="flex-1 text-center">Kg</div>
+          <div className="flex-1 text-center">{t('workout.reps')}</div>
+          <div className="flex-1 text-center">{t('workout.weight')}</div>
           <div className="w-6"></div>
         </div>
 
         {sets.length === 0 ? (
           <div className="text-center py-8" style={{ color: textMuted }}>
-            Añade una serie
+            {t('workout.empty_sets')}
           </div>
         ) : (
           sets.map((s, i) => {
@@ -645,16 +649,16 @@ export function WorkoutPage() {
             className="flex-1 py-2 px-3 border border-dashed rounded-[var(--radius-lg)] text-sm font-medium cursor-pointer"
             style={{ borderColor: border, color: textSecondary }}
           >
-            + Serie
+            {t('workout.add_set')}
           </button>
           {sets.length > 1 && (
             <button
               onClick={handleRemoveAllSets}
               className="py-2 px-3 border border-dashed rounded-[var(--radius-lg)] text-sm font-medium cursor-pointer"
               style={{ borderColor: border, color: 'var(--error)' }}
-              title="Eliminar todas las series"
+              title={t('workout.remove_all')}
             >
-              × Todas
+              {t('workout.remove_all')}
             </button>
           )}
           <button
@@ -667,7 +671,7 @@ export function WorkoutPage() {
               border: 'none',
             }}
           >
-            {saving ? 'Guardando...' : saveSuccess ? '✓ Listo' : 'Guardar'}
+            {saving ? t('workout.saving') : saveSuccess ? '✓' : t('workout.save_workout')}
           </button>
         </div>
 
