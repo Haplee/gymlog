@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gymlog-v1.9';
+const CACHE_NAME = 'gymlog-v2.5.2';
 const STATIC_ASSETS = ['/', '/index.html', '/manifest.json', '/gimnasia.png'];
 
 self.addEventListener('install', (e) => {
