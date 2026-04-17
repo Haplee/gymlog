@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=3ECF8E&height=120&section=header&text=GymLog%20v2.0&fontSize=50&fontColor=ffffff&animation=fadeIn" alt="Header animated wave" />
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=3ECF8E&height=120&section=header&text=GymLog%20v2.5&fontSize=50&fontColor=ffffff&animation=fadeIn" alt="Header animated wave" />
   
   <br>
 
@@ -30,7 +30,7 @@
 
 <br>
 
-## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/High%20Voltage.png" width="35" align="center" /> Core Features (v2.0)
+## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/High%20Voltage.png" width="35" align="center" /> Core Features (v2.5)
 
 <table>
   <tr>
@@ -121,7 +121,7 @@ El repositorio incluye una configuración de **Jenkins-style** vía GitHub Actio
 
 ## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Mobile%20Phone.png" width="35" align="center" /> GymLog Mobile Native Experience
 
-GymLog v2.0 ha evolucionado a una aplicación nativa completa. Ventajas exclusivas del binario:
+GymLog v2.5 ha evolucionado a una aplicación nativa completa. Ventajas exclusivas del binario:
 
 - **Haptic Feedback**: Micro-vibraciones táctiles al completar ejercicios exitosamente.
 - **True Full-Screen**: Eliminación de barras negras mediante implementación nativa de `WindowInsets`.
@@ -156,6 +156,6 @@ Puedes obtener el último APK directamente desde **[GitHub Releases](https://git
 <a href="https://www.instagram.com/franvidalmateo"><img src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white" /></a>
 
 <br><br>
-<b>GymLog v2.0</b> • Diseñado por <a href="https://github.com/Haplee">Haplee</a>
+<b>GymLog v2.5</b> • Diseñado por <a href="https://github.com/Haplee">Haplee</a>
 
 </div>
