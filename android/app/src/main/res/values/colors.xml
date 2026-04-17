@@ -1,8 +1,8 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="colorPrimary">#007AFF</color>
     <color name="colorPrimaryDark">#0056B3</color>
     <color name="colorAccent">#FF2D55</color>
-    <color name="gymlog_green">#4CD964</color>
+    <color name="gymlog_green">#c8ff00</color>
     <color name="gymlog_blue">#5AC8FA</color>
 </resources>

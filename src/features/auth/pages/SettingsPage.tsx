@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
 import { Layout } from '@app/components/Layout';
-import { Button } from '@shared/components/ui';
+import { Button, GymLogLogo } from '@/shared/components/ui';
 import { supabase } from '@shared/lib/supabase';
 import { requestPermission, isNative } from '@shared/lib/notifications';
 import { toast } from 'sonner';
@@ -315,14 +315,15 @@ export function SettingsPage() {
         </button>
 
         <div
-          className="rounded-2xl p-4 scale-in"
+          className="rounded-2xl p-6 scale-in flex flex-col items-center text-center"
           style={{ backgroundColor: bgCard, border: `1px solid ${border}` }}
         >
-          <div className="text-[1rem] font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
-            {t('settings.about')}
+          <GymLogLogo size="lg" variant="stacked" className="mb-4" />
+          <div className="text-[0.8rem] font-bold text-[var(--interactive-primary)] mb-4 uppercase tracking-[0.2em] bg-[var(--interactive-primary)]/10 px-3 py-1 rounded-full">
+            Version 2.5
           </div>
-          <div className="text-[0.85rem]" style={{ color: 'var(--text-muted)' }}>
-            {t('settings.version')}
+          <div className="text-[0.85rem] leading-relaxed text-[var(--text-tertiary)] max-w-[240px]">
+            Tu compañero definitivo para el seguimiento de entrenamientos de fuerza.
           </div>
         </div>
       </div>

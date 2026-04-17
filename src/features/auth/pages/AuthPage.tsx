@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useTranslation } from 'react-i18next';
 import { useRateLimit } from '@shared/hooks/useRateLimit';
+import { GymLogLogo } from '@/shared/components/ui';
 
 export function AuthPage() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -83,16 +84,12 @@ export function AuthPage() {
 
   return (
     <div className="min-h-screen min-h-[100dvh] flex flex-col items-center justify-center p-6 bg-[var(--bg-base)]">
-      <div className="text-center mb-8 scale-in">
-        <div className="w-24 h-16 mx-auto mb-4 flex items-center justify-center">
-          <img src="/gimnasia.svg" alt="GymLog" className="w-full h-full object-contain" />
-        </div>
+      <div className="text-center mb-6 scale-in flex flex-col items-center">
+        <GymLogLogo size="lg" variant="stacked" className="mb-4" />
         <h1 className="text-[1.875rem] font-extrabold tracking-tight fade-in-up text-[var(--text-primary)]">
           Gym<span style={{ color: accent }}>Log</span>
         </h1>
-        <p className="text-[0.875rem] mt-2 fade-in-up text-[var(--text-tertiary)]">
-          {isSignUp ? t('auth.signup') : t('auth.login')}
-        </p>
+        <p className="text-[var(--text-secondary)] mt-2 text-sm">{t('auth.subtitle')}</p>
       </div>
 
       <form

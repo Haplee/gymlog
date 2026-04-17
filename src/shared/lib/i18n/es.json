@@ -19,6 +19,7 @@
   "auth": {
     "login": "Iniciar sesión",
     "register": "Registrarse",
+    "subtitle": "Semper Fortis",
     "logout": "Cerrar sesión",
     "email": "Email",
     "password": "Contraseña",

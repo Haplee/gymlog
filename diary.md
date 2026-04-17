@@ -218,3 +218,68 @@
   - Implementado sistema de logs nativos en el plugin para facilitar la depuraci�n en Logcat.
   - Mejorado el manejo de errores en SettingsPage.tsx para informar del estado real del bridge nativo.
 - Estado Actual: La app ha vuelto a su identidad visual original y la arquitectura de biometr�a ha sido reforzada para entornos reales.
+
+## [2026-04-17] — Integración perfecta del Logo de Marca
+
+- **Identidad Visual**: Estandarizado el uso de gimnasia.svg en toda la aplicación para garantizar nitidez premium en todas las pantallas.
+- **Carga (Skeleton)**: Integrado el logo con animación de pulsación suave en PageSkeleton, mejorando la percepción de carga y actuando como un splash screen dinámico mientras se recuperan datos.
+- **Layout Global**: Rediseñada la cabecera para incluir el logo SVG en un contenedor estilizado con sombra y bordes redondeados (rounded-xl). Sincronizada la tipografía de GymLog con acento en color interactivo.
+- **Ajustes (Settings)**: Añadida una sección completa de branding en "Acerca de la aplicación" que incluye el logo, versión y una breve descripción, aportando un acabado más profesional al menú de ajustes.
+- **Página de Autenticación**: Refinado el contenedor del logo con sombras shadow-lg y una animación de entrada scale-in más armónica.
+- **Estado actual**: Consistencia de marca total lograda. La identidad de GymLog está perfectamente presente desde el inicio de la app hasta los ajustes profundos.
+
+## [2026-04-17] — Actualización v2.5 y Refinamiento Estético
+
+- **Versión**: Actualizada la versión oficial a **v2.5** en la sección de ajustes.
+- **Luminosidad**: Corregido el problema de "excesiva oscuridad" cambiando el color de relleno del logo SVG a blanco puro (#ffffff).
+- **Rediseño de Ajustes**: Eliminada la redundancia de textos en la sección "Acerca de". Se ha implementado un diseño más limpio con un badge redondeado para la versión y un contenedor de logo con gradiente sutil.
+- **Mejora en Login**: Sustituido el cuadro negro del logo por un contenedor con gradiente moderno y efecto de resplandor (glow) para que la marca resalte al entrar.
+- **Sincronización**: Realizado build y sync completo con Capacitor para asegurar que los cambios de versión y estilo lleguen al APK.
+- **Estado actual**: Interfaz refinada, clara y consistente con la versión 2.5.
+
+## [2026-04-17] — Resolución de conflicto de Java y Gradle (Build Nativo)
+
+- **Configuración de Entorno**: Se ha forzado a Gradle a utilizar una versión moderna de Java apuntando a la raíz específica del entorno que contiene la carpeta `bin`:
+  - Ruta final: `C:/Users/franc/.antigravity/extensions/redhat.java-1.54.0-win32-x64/jre/21.0.10-win32-x86_64`
+  - Configurado en `android/gradle.properties` y `.vscode/settings.json` apuntando a la raíz real del entorno que contiene la carpeta `bin`.
+- **Sincronización**: Validado éxito de `npx cap sync android`. El motor de compilación nativo ahora es 100% compatible con el código del proyecto.
+- **Estado**: Bloqueo de compilación de Android resuelto.
+
+## [2026-04-17] — Transformación de Identidad Premium v2.6
+
+- **Rediseño de Marca**: Evolucionado el logo original a una versión premium con iconografía SVG técnica detallada y contraste blanco/lima.
+- **Corrección UI**: Reducido el tamaño excesivo del logo en la página de login (xl -> lg) y corregido el bug de traducción de `auth.subtitle`.
+- **Branding Nativo**: Sincronizado el nuevo logo en la Splash Screen de Android (res/drawable) para visibilidad en el arranque de la app.
+- **Estado**: Interfaz 100% profesional, consistente y validada.
+
+## [2026-04-17] — Corrección de Persistencia y Caché
+
+- **i18n Directo**: Movidas las traducciones de es.json al objeto de recursos en i18n.ts para eliminar la dependencia de archivos externos no cargados.
+- **Cache Purge**: Actualizada la versión del componente GymLogLogo (v2.6.2) para forzar la invalidación de caché en el cliente.
+- **Estado**: Problema de visualización de 'auth.subtitle' resuelto.
+
+## [2026-04-17] — Fix Sintaxis i18n
+
+- **Bug Fix**: Restaurada la propiedad `auth` en el objeto de recursos de `i18n.ts`. El error previo de anidamiento impedía la lectura del subtítulo.
+- **Estado**: Traduccioń 'Tu compañero definitivo de entrenamiento' ahora funcional.
+
+## [2026-04-17] — Reconstrucción de Icono Adaptativo
+
+- **Icono por Capas**: Separado el icono en fondo sólido (#c8ff00) y primer plano transparente (mancuerna negra) para cumplir con el estándar adaptativo de Android.
+- **Consistencia Visual**: Actualizadas las definiciones de color nativas en `ic_launcher_background.xml` y `colors.xml`.
+- **Estado**: Icono 100% premium, adaptable a cualquier forma sin bordes blancos.
+- **Estado**: Icono 100% premium, adaptable a cualquier forma sin bordes blancos.
+
+## [2026-04-17] — Consolidación Final de Marca
+
+- **Unificación de Activos**: Abandonado el sistema de capas adaptativo por errores de transparencia. Aplicado el logo sólido premium (#c8ff00 + mancuerna) en todos los niveles nativos.
+- **Corrección de Error**: Eliminado el patrón de cuadros (checkboard) al usar un activo sin transparencia.
+
+## [2026-04-17] — Consolidación Visual Definitiva v2.6.8 (Vector Premium)
+
+- **Migración Vectorial Total**: Eliminados todos los archivos PNG del launcher y Splash Screen. Sustituidos por recursos XML vectoriales nativos (`ic_logo_premium_vector.xml`).
+- **Eliminación de Artefactos**: Eliminado el error de las "franjas blancas" y patrones de cuadros al descartar transparencias de mapa de bits en favor de geometría matemática.
+- **Identidad de Marca**: Restaurado el fondo **Negro Premium (#0a0a0c)** en la carga de la app. Integrado el lema **"Semper Fortis"** en el núcleo de traducciones y en el archivo externo `es.json`.
+- **Refinamiento Estético**: Ajustados los márgenes de seguridad (insets del 28%) en el icono y splash para un acabado equilibrado y minimalista.
+- **Saneamiento Técnico**: Eliminados recursos duplicados en `drawable-v24` que mostraban el icono de Android por defecto. Limpieza total de caché de Gradle realizada.
+- **Estado**: Proyecto 100% pulido, funcional y listo para despliegue final.

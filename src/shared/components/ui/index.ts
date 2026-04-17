@@ -5,3 +5,4 @@ export { Modal } from './Modal';
 export { Skeleton, ExerciseListSkeleton, PageSkeleton } from './Skeleton';
 export { Badge } from './Badge';
 export { BottomSheet } from './BottomSheet';
+export { GymLogLogo } from './GymLogLogo';

@@ -88,8 +88,9 @@ const resources = {
         series_plural: 'series',
       },
       auth: {
-        login: 'Entrar',
-        signup: 'Crear cuenta',
+        login: 'Iniciar sesión',
+        signup: 'Registrarse',
+        subtitle: 'Semper Fortis',
         email: 'Email',
         password: 'Contraseña',
         name: 'Nombre completo',
@@ -189,6 +190,7 @@ const resources = {
       auth: {
         login: 'Login',
         signup: 'Sign up',
+        subtitle: 'Your ultimate training companion',
         email: 'Email',
         password: 'Password',
         name: 'Full Name',

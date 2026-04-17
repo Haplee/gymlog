@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { queryClient } from '@app/queryClient';
 import { fetchWorkoutsAndSets, fetchWorkouts, fetchRecentSets } from '@shared/api/queries';
+import { GymLogLogo } from '@/shared/components/ui';
 import { Dumbbell, BarChart3, History, Settings } from 'lucide-react';
 
 interface LayoutProps {
@@ -55,16 +56,17 @@ export function Layout({ children }: LayoutProps) {
 
   return (
     <div className="min-h-screen min-h-[100dvh] flex flex-col bg-[var(--bg-base)]">
-      <header className="px-5 pb-3" style={{ paddingTop: '6px' }}>
+      <header className="px-5 py-4 border-b border-[var(--border-subtle)] bg-[var(--bg-base)] sticky top-0 z-50">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 flex items-center justify-center overflow-hidden">
-              <img src="/gimnasia.png" alt="Logo" className="w-9 h-9 object-contain" />
-            </div>
+            <GymLogLogo size="sm" variant="icon" />
             <div>
-              <div className="text-[1.25rem] font-semibold text-[var(--text-primary)]">GymLog</div>
+              <div className="text-[1.125rem] font-bold tracking-tight text-[var(--text-primary)] leading-none mb-0.5">
+                Gym<span className="text-[var(--interactive-primary)]">Log</span>
+              </div>
               {user && (
-                <div className="text-[0.8125rem] text-[var(--text-tertiary)]">
+                <div className="text-[0.75rem] font-medium text-[var(--text-tertiary)] flex items-center gap-1.5">
+                  <span className="w-1 h-1 rounded-full bg-[var(--success)]"></span>
                   {user.email?.split('@')[0]}
                 </div>
               )}
