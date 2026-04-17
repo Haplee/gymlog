@@ -185,19 +185,33 @@ function AnimatedRoutes() {
 /** Hook para manejar actualizaciones de la PWA vía Toasts */
 function usePWAUpdate() {
   useEffect(() => {
+    let updateFn: (() => Promise<void>) | null = null;
+
     const handler = (e: Event) => {
-      const updateFn = (e as CustomEvent<() => Promise<void>>).detail;
+      updateFn = (e as CustomEvent<() => Promise<void>>).detail;
       toast.info('Nueva versión disponible', {
         description: 'Actualiza para disfrutar de las últimas mejoras.',
         duration: Infinity,
         action: {
           label: 'Actualizar',
-          onClick: () => void updateFn(),
+          onClick: async () => {
+            if (updateFn) {
+              try {
+                await updateFn();
+              } catch (err) {
+                console.error('Update failed:', err);
+              }
+            }
+          },
         },
       });
     };
+
     window.addEventListener('sw-update-available', handler);
-    return () => window.removeEventListener('sw-update-available', handler);
+    return () => {
+      window.removeEventListener('sw-update-available', handler);
+      updateFn = null;
+    };
   }, []);
 }
 
@@ -220,12 +234,25 @@ function AppRoutes() {
     if (!Capacitor.isNativePlatform()) return;
 
     CapApp.addListener('appUrlOpen', (data) => {
+      console.log('[DeepLink] Received:', data.url);
       const url = new URL(data.url);
+
+      console.log(
+        '[DeepLink] protocol:',
+        url.protocol,
+        'host:',
+        url.hostname,
+        'path:',
+        url.pathname,
+        'hash:',
+        url.hash.substring(0, 50),
+      );
 
       // 1. Manejar Shortcuts (com.franvi.gymlog://...)
       if (url.protocol === 'com.franvi.gymlog:') {
+        console.log('[DeepLink] Custom protocol, host:', url.hostname);
         if (url.hostname === 'workout' && url.pathname === '/new') {
-          window.location.hash = '/'; // O usar router si estuviera disponible aquí
+          window.location.hash = '/';
           return;
         }
         if (url.hostname === 'history') {
@@ -234,12 +261,15 @@ function AppRoutes() {
         }
       }
 
-      // 2. Manejar Auth Callback
-      if (url.pathname.includes('/auth/callback')) {
+      // 2. Manejar Auth Callback - puede venir como hostname 'auth' o path '/auth/callback'
+      const isAuthCallback = url.hostname === 'auth' || url.pathname.includes('/auth/callback');
+      if (isAuthCallback && url.hash) {
+        console.log('[DeepLink] Auth callback detected, processing hash...');
         const params = url.hash.replace('#', '?');
         const urlParams = new URLSearchParams(params);
         const accessToken = urlParams.get('access_token');
         const refreshToken = urlParams.get('refresh_token');
+        console.log('[DeepLink] accessToken:', accessToken ? 'present' : 'MISSING');
 
         if (accessToken && refreshToken) {
           supabase.auth
@@ -249,6 +279,7 @@ function AppRoutes() {
             })
             .then(({ error }) => {
               if (!error) console.log('[Auth] Sesión establecida vía Deep Link');
+              else console.error('[Auth] Error setSession:', error);
             });
         }
       }

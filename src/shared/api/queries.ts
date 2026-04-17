@@ -231,10 +231,12 @@ export const deleteExercise = async (exerciseId: string): Promise<void> => {
 export const fetchVolumeByMuscleGroup = async (
   userId: string,
 ): Promise<{ muscle_group: string; total_volume: number }[]> => {
+  console.log('[Volume] Fetching volume for user:', userId);
   const { data, error } = await supabase.rpc('get_volume_by_muscle_group', { user_uuid: userId });
   if (error) {
-    console.error('Error fetching volume by muscle group:', error);
+    console.error('[Volume] Error fetching volume:', error);
     throw error;
   }
+  console.log('[Volume] Data received:', data);
   return data || [];
 };

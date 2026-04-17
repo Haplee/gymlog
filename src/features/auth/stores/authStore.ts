@@ -32,6 +32,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   initialized: false,
 
   init: async () => {
+    console.log('[Auth] init started, SB_URL:', SB_URL ? 'configured' : 'MISSING');
     if (_authSubscription) {
       _authSubscription.unsubscribe();
       _authSubscription = null;
@@ -63,13 +64,19 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   signIn: async (email, password) => {
+    console.log('[Auth] signIn started for:', email);
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) return { error };
+    if (error) {
+      console.error('[Auth] signIn error:', error.message, error.name);
+      return { error };
+    }
+    console.log('[Auth] signIn success, user:', data.user?.id);
     set({ user: data.user });
     return { error: null };
   },
 
   signUp: async (email, password, fullName, username) => {
+    console.log('[Auth] signUp started for:', email);
     const { data, error } = await supabase.auth.signUp({
       email,
       password,

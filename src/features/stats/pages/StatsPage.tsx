@@ -4,11 +4,10 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { Layout } from '@app/components/Layout';
 import { format, subWeeks, startOfWeek, eachWeekOfInterval, parseISO, subDays } from 'date-fns';
-import { fetchWorkoutsAndSets, fetchVolumeByMuscleGroup } from '@shared/api/queries';
+import { fetchWorkoutsAndSets } from '@shared/api/queries';
 import { calcular1RM } from '@shared/lib/brzycki';
 import { Skeleton } from '@shared/components/ui/Skeleton';
 import { KPICard } from '../components/KPICards';
-import { ConsistencyHeatmap } from '../components/ConsistencyHeatmap';
 import { FatigueAnalysis } from '../components/FatigueAnalysis';
 import {
   calculateCurrentStreak,
@@ -35,10 +34,6 @@ import {
   ResponsiveContainer,
   LineChart,
   Line,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  Radar,
 } from 'recharts';
 
 type PeriodFilter = '4semanas' | '3meses' | '6meses' | '1año';
@@ -70,13 +65,6 @@ export function StatsPage() {
     },
     enabled: !!user?.id,
     retry: 1,
-  });
-
-  const { data: volumeData, isLoading: isLoadingVolume } = useQuery({
-    queryKey: ['volumeByMuscleGroup', user?.id],
-    queryFn: () => fetchVolumeByMuscleGroup(user!.id),
-    enabled: !!user?.id,
-    staleTime: 1000 * 60 * 5,
   });
 
   useEffect(() => {
@@ -143,20 +131,6 @@ export function StatsPage() {
     return buildProgressionData(recentSets, activeExercise, metricFilter);
   }, [recentSets, activeExercise, metricFilter]);
 
-  const heatmapData = useMemo(() => {
-    const yearAgo = subDays(new Date(), 365);
-    const days: { date: string; volume: number; sessions: number }[] = [];
-
-    for (let d = yearAgo; d <= new Date(); d.setDate(d.getDate() + 1)) {
-      const dateStr = d.toISOString().split('T')[0];
-      const daySets = recentSets.filter((s) => (s.workout?.started_at ?? '').startsWith(dateStr));
-      const volume = daySets.reduce((sum, s) => sum + s.reps * s.weight, 0);
-      days.push({ date: dateStr, volume, sessions: daySets.length });
-    }
-
-    return days;
-  }, [recentSets]);
-
   const calcRM = (weight: string, reps: string) => {
     const w = parseFloat(weight);
     const r = parseInt(reps);
@@ -175,7 +149,7 @@ export function StatsPage() {
   const periodButtons: PeriodFilter[] = ['4semanas', '3meses', '6meses', '1año'];
   const metricButtons: ('1rm' | 'maxWeight' | 'volume')[] = ['1rm', 'maxWeight', 'volume'];
 
-  if (isLoading || isLoadingVolume) {
+  if (isLoading) {
     return (
       <Layout>
         <div className="grid grid-cols-2 gap-3">
@@ -340,35 +314,6 @@ export function StatsPage() {
           </>
         )}
       </div>
-
-      <div className="bg-[var(--bg-surface)] rounded-[var(--radius-lg)] p-4 mb-4">
-        <div className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-3">
-          Volumen muscular total (t)
-        </div>
-        <div className="h-[200px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <RadarChart cx="50%" cy="50%" outerRadius="70%" data={volumeData}>
-              <PolarGrid stroke="var(--border-default)" />
-              <PolarAngleAxis
-                dataKey="muscle_group"
-                tick={{ fill: 'var(--text-tertiary)', fontSize: 10 }}
-              />
-              <Radar
-                name="Volumen"
-                dataKey="total_volume"
-                stroke="var(--interactive-primary)"
-                fill="var(--interactive-primary)"
-                fillOpacity={0.3}
-              />
-              <Tooltip
-                formatter={(value) => [`${(Number(value) / 1000).toFixed(1)}t`, 'Volumen']}
-              />
-            </RadarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      <ConsistencyHeatmap data={heatmapData} />
 
       <FatigueAnalysis
         muscleGroups={muscleRecovery}

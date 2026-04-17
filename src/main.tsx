@@ -31,10 +31,13 @@ if ('serviceWorker' in navigator) {
         if (!newWorker) return;
         newWorker.addEventListener('statechange', () => {
           if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            console.log('[SW] New version available, prompting user...');
             window.dispatchEvent(
               new CustomEvent('sw-update-available', {
-                detail: () => {
+                detail: async () => {
+                  console.log('[SW] User accepted update, skipping...');
                   newWorker.postMessage({ type: 'SKIP_WAITING' });
+                  await new Promise((r) => setTimeout(r, 500));
                   window.location.reload();
                 },
               }),
