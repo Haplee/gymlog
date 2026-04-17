@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import { useRateLimit } from '@shared/hooks/useRateLimit';
 import { GymLogLogo } from '@/shared/components/ui';
 
@@ -64,8 +65,12 @@ export function AuthPage() {
 
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
+    setError('');
     try {
       await signInWithGoogle();
+    } catch (err) {
+      console.error('Google login error:', err);
+      toast.error(err instanceof Error ? err.message : 'Error con Google');
     } finally {
       setGoogleLoading(false);
     }

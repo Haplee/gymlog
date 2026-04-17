@@ -103,6 +103,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       ? 'com.franvi.gymlog://auth/callback'
       : `${window.location.origin}/auth/callback`;
 
+    console.log('[GoogleAuth] isNative:', isNative, 'redirectTo:', redirectTo);
+
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -111,10 +113,15 @@ export const useAuthStore = create<AuthState>((set) => ({
       },
     });
 
-    if (error) throw error;
+    console.log('[GoogleAuth] OAuth result:', { data, error });
 
-    // Si estamos en nativo, abrimos el navegador manualmente con la URL que nos da Supabase
+    if (error) {
+      console.error('[GoogleAuth] Error:', error);
+      throw error;
+    }
+
     if (isNative && data?.url) {
+      console.log('[GoogleAuth] Opening browser with URL:', data.url);
       await Browser.open({ url: data.url });
     }
   },
