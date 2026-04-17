@@ -10,6 +10,29 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
+        const url = new URL(window.location.href);
+        const hashParams = url.hash.substring(1);
+        const urlSearchParams = new URLSearchParams(hashParams);
+        const accessToken = urlSearchParams.get('access_token');
+        const refreshToken = urlSearchParams.get('refresh_token');
+
+        if (accessToken && refreshToken) {
+          const { error: sessionError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+
+          if (sessionError) {
+            setError(sessionError.message);
+            setLoading(false);
+            return;
+          }
+        } else if (urlSearchParams.get('error_description') || urlSearchParams.get('error')) {
+          setError(urlSearchParams.get('error_description') || urlSearchParams.get('error'));
+          setLoading(false);
+          return;
+        }
+
         const {
           data: { session },
           error,

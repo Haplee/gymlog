@@ -182,29 +182,34 @@ function AnimatedRoutes() {
   );
 }
 
-/** Hook para manejar actualizaciones de la PWA vía Toasts */
+/** Hook para manejar actualizaciones de la PWA */
 function usePWAUpdate() {
   useEffect(() => {
     let updateFn: (() => Promise<void>) | null = null;
 
     const handler = (e: Event) => {
-      updateFn = (e as CustomEvent<() => Promise<void>>).detail;
-      toast.info('Nueva versión disponible', {
-        description: 'Actualiza para disfrutar de las últimas mejoras.',
-        duration: Infinity,
-        action: {
-          label: 'Actualizar',
-          onClick: async () => {
-            if (updateFn) {
+      const customEvent = e as CustomEvent<() => Promise<void>>;
+      if (customEvent.detail) {
+        updateFn = customEvent.detail;
+        toast.info('Nueva versión disponible', {
+          description: 'Actualiza para disfrutar de las últimas mejoras.',
+          duration: 8000,
+          action: {
+            label: 'Actualizar',
+            onClick: async () => {
               try {
-                await updateFn();
+                if (updateFn) {
+                  await updateFn();
+                  window.location.reload();
+                }
               } catch (err) {
+                toast.error('Error al actualizar');
                 console.error('Update failed:', err);
               }
-            }
+            },
           },
-        },
-      });
+        });
+      }
     };
 
     window.addEventListener('sw-update-available', handler);

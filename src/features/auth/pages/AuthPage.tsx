@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useTranslation } from 'react-i18next';
 import { useRateLimit } from '@shared/hooks/useRateLimit';
 import { GymLogLogo } from '@/shared/components/ui';
 
 export function AuthPage() {
+  const navigate = useNavigate();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -51,11 +53,17 @@ export function AuthPage() {
         const result = await signUp(email, password, fullName, username);
         if (result.error) setError(result.error.message);
         else if (result.needsVerification) setMessage('¡Verifica tu email!');
-        else reset();
+        else {
+          reset();
+          navigate('/', { replace: true });
+        }
       } else {
         const result = await signIn(email, password);
         if (result.error) setError(result.error.message);
-        else reset();
+        else {
+          reset();
+          navigate('/', { replace: true });
+        }
       }
     } finally {
       setLoading(false);
