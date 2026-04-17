@@ -14,59 +14,6 @@ import { useBackgroundNotifications } from '@shared/hooks/useBackgroundNotificat
 import { Capacitor } from '@capacitor/core';
 import { toast } from 'sonner';
 
-function handleAuthCallback(url: string) {
-  console.log('[DeepLink] URL recibida:', url);
-  const urlObj = new URL(url);
-
-  // 1. Manejar Shortcuts (com.franvi.gymlog://...)
-  if (urlObj.protocol === 'com.franvi.gymlog:') {
-    if (urlObj.hostname === 'workout' && urlObj.pathname === '/new') {
-      window.location.hash = '/';
-      return;
-    }
-    if (urlObj.hostname === 'history') {
-      window.location.hash = '/history';
-      return;
-    }
-  }
-
-  // 2. Manejar Auth Callback - varios formatos
-  console.log('[DeepLink] pathname:', urlObj.pathname, 'hash:', urlObj.hash);
-
-  // Formato 1: com.franvi.gymlog://auth/callback#access_token=xxx
-  // Formato 2: https://eoltmipoklizewxdpzfa.supabase.co/auth/v1/callback#access_token=xxx
-  let params: URLSearchParams;
-
-  if (urlObj.hash && urlObj.hash.includes('access_token')) {
-    params = new URLSearchParams(urlObj.hash.replace('#', '?'));
-  } else if (urlObj.search && urlObj.search.includes('access_token')) {
-    params = urlObj.searchParams;
-  } else {
-    console.log('[DeepLink] No se encontraron tokens en la URL');
-    return;
-  }
-
-  const accessToken = params.get('access_token');
-  const refreshToken = params.get('refresh_token');
-
-  console.log('[DeepLink] Tokens:', { accessToken: !!accessToken, refreshToken: !!refreshToken });
-
-  if (accessToken && refreshToken) {
-    supabase.auth
-      .setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken,
-      })
-      .then(({ error }) => {
-        if (!error) {
-          console.log('[Auth] Sesión establecida vía Deep Link');
-        } else {
-          console.error('[Auth] Error estableciendo sesión:', error);
-        }
-      });
-  }
-}
-
 const AuthPage = lazy(() =>
   import('@features/auth/pages/AuthPage').then((m) => ({ default: m.AuthPage })),
 );
@@ -272,18 +219,38 @@ function AppRoutes() {
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
 
-    // Escuchar cuando la app se abre con una URL
     CapApp.addListener('appUrlOpen', (data) => {
-      console.log('[DeepLink] URL recibida:', data.url);
-      handleAuthCallback(data.url);
-    });
+      const url = new URL(data.url);
 
-    // También verificar cuando la app vuelve al foreground
-    CapApp.addListener('appStateChange', (state) => {
-      if (state.isActive) {
-        console.log('[AppState] App стала активной, verificando sesión...');
-        // Forzar verificación de sesión
-        useAuthStore.getState().init();
+      // 1. Manejar Shortcuts (com.franvi.gymlog://...)
+      if (url.protocol === 'com.franvi.gymlog:') {
+        if (url.hostname === 'workout' && url.pathname === '/new') {
+          window.location.hash = '/'; // O usar router si estuviera disponible aquí
+          return;
+        }
+        if (url.hostname === 'history') {
+          window.location.hash = '/history';
+          return;
+        }
+      }
+
+      // 2. Manejar Auth Callback
+      if (url.pathname.includes('/auth/callback')) {
+        const params = url.hash.replace('#', '?');
+        const urlParams = new URLSearchParams(params);
+        const accessToken = urlParams.get('access_token');
+        const refreshToken = urlParams.get('refresh_token');
+
+        if (accessToken && refreshToken) {
+          supabase.auth
+            .setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            })
+            .then(({ error }) => {
+              if (!error) console.log('[Auth] Sesión establecida vía Deep Link');
+            });
+        }
       }
     });
 
