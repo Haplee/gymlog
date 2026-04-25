@@ -6,13 +6,13 @@
 
 He realizado una auditoría exhaustiva del repositorio **GymLog** (aplicación de entrenamiento de gimnasio con Supabase/PWA/Capacitor). El código analiza como un proyecto robusto con arquitectura por features, pero presenta varios problemas críticos de seguridad y calidad que deben abordarse.
 
-| Nivel | Cantidad | Descripción |
-|-------|----------|-------------|
-| 🔴 **CRITICAL** | 3 | Seguridad y exposición de datos |
-| 🟠 **HIGH** | 4 | Bugs funcionales y arquitectura |
-| 🟡 **MEDIUM** | 5 | Rendimiento y UX |
-| 🔵 **LOW** | 6 | Calidad de código |
-| ⚪ **INFO** | 4 | Sugerencias varias |
+| Nivel           | Cantidad | Descripción                     |
+| --------------- | -------- | ------------------------------- |
+| 🔴 **CRITICAL** | 3        | Seguridad y exposición de datos |
+| 🟠 **HIGH**     | 4        | Bugs funcionales y arquitectura |
+| 🟡 **MEDIUM**   | 5        | Rendimiento y UX                |
+| 🔵 **LOW**      | 6        | Calidad de código               |
+| ⚪ **INFO**     | 4        | Sugerencias varias              |
 
 ---
 
@@ -21,13 +21,14 @@ He realizado una auditoría exhaustiva del repositorio **GymLog** (aplicación d
 ### [CRITICAL 1] Claves de Supabase expuestas en `.env`
 
 **Archivo:** `.env` (línea 1-2)  
-**Categoría:** Seguridad  
+**Categoría:** Seguridad
 
 **Descripción:** El archivo `.env` contiene la `VITE_SUPABASE_KEY` que es la **clave pública/anon** de Supabase. Aunque nominalmente es "publicable", en este contexto no debería estar en el repositorio (debería estar en `.gitignore` ya presente pero el archivo ya está comprometido si estuvo en commits previos).
 
 **Impacto:** Si estas claves fueron commiteadas anteriormente, están expuestas en el historial de git. Un atacante podría acceder a la base de datos de Supabase.
 
 **Solución propuesta:**
+
 ```bash
 # Ejecutar inmediatamente:
 git filter-branch --tree-filter 'rm -f .env' -- --all
@@ -42,18 +43,19 @@ git filter-branch --tree-filter 'rm -f .env' -- --all
 ### [CRITICAL 2] RLS no implementada en tablas críticas
 
 **Archivo:** `src/db/schema.sql` + `supabase/migrations/v2.sql`  
-**Categoría:** Seguridad  
+**Categoría:** Seguridad
 
 **Descripción:** Las tablas `user_routines` y `body_measurements` NO tienen políticas RLS definidas en el schema.sql original (línea 116-152), aunque v2.sql sí las añade (líneas 426-503). Existe duplicación de esfuerzo y potencial de inconsistencia. Las tablas `routine_templates` (línea 368) tiene políticas solo de lectura pública.
 
 **Impacto:** Sin RLS adecuada, un usuario malicioso podría leer datos de otros usuarios.
 
 **Solución propuesta:**
+
 ```sql
 -- Verificar tablas sin RLS:
-SELECT tablename 
-FROM pg_tables 
-WHERE schemaname = 'public' 
+SELECT tablename
+FROM pg_tables
+WHERE schemaname = 'public'
 AND rowsecurity = false;
 ```
 
@@ -64,19 +66,21 @@ AND rowsecurity = false;
 
 ### [CRITICAL 3] Duplicación de código funcional
 
-**Archivos:** 
+**Archivos:**
+
 - `src/shared/lib/supabase.ts` y `src/shared/lib/lib/supabase.ts` (idénticos)
 - `src/shared/lib/brzycki.ts` y `src/shared/lib/lib/brzycki.ts` (idénticos)
 - `src/shared/lib/types.ts` y `src/shared/lib/lib/types.ts` (diferentes)
 - `src/shared/hooks/useWakeLock.ts` y `src/shared/hooks/hooks/useWakeLock.ts` (duplicado)
 
-**Categoría:** Mantenibilidad  
+**Categoría:** Mantenibilidad
 
 **Descripción:** Múltiples archivos duplicados generan confusión sobre cuál es el correcto, riesgo de divergencia de código y aumentan el bundle size innecesariamente.
 
 **Impacto:** Mantenimiento difícil,可能出现不一致 (divergencia) en futuras actualizaciones.
 
 **Solución propuesta:**
+
 ```bash
 # Eliminar duplicados incorrectos:
 rm src/shared/lib/lib/supabase.ts
@@ -95,13 +99,14 @@ rm -rf src/shared/hooks/hooks/
 ### [HIGH 1] Tipos generados manualmente/desincronizados
 
 **Archivo:** `src/types/database.types.ts`  
-**Categoría:** TypeScript  
+**Categoría:** TypeScript
 
 **Descripción:** Los tipos de base de datos están escritos a mano y no se actualizan automáticamente. El package.json tiene el script `gen:types` pero no se ejecuta regularmente.
 
 **Impacto:** Desincronización entre el schema real de Supabase y los tipos TypeScript.
 
 **Solución propuesta:**
+
 ```json
 // Añadir a package.json scripts
 "prebuild": "npm run gen:types"
@@ -115,7 +120,7 @@ rm -rf src/shared/hooks/hooks/
 ### [HIGH 2] Schema SQL duplicado entre archivos
 
 **Archivos:** `src/db/schema.sql` vs `supabase/migrations/v2.sql`  
-**Categoría:** Arquitectura  
+**Categoría:** Arquitectura
 
 **Descripción:** Dos archivos SQL que definen el mismo schema de formas diferentes. El `schema.sql` es más básico (v1), mientras `v2.sql` es la migración completa. Esta duplicación genera confusión.
 
@@ -131,13 +136,14 @@ rm -rf src/shared/hooks/hooks/
 ### [HIGH 3] Fallback de autenticación sin manejo de errores robusto
 
 **Archivo:** `src/features/auth/stores/authStore.ts` (líneas 34-63)  
-**Categoría:** Arquitectura  
+**Categoría:** Arquitectura
 
 **Descripción:** El método `init()` maneja errores genéricos sin distinguirlos (network vs auth vs Supabase). No hay reintentos automáticos.
 
 **Impacto:** Usuario puede quedar atascado sin poder autenticarse sin feedback claro.
 
 **Solución propuesta:**
+
 ```typescript
 // Añadir mapeo de errores específicos
 const handleAuthError = (error: Error) => {
@@ -159,13 +165,14 @@ const handleAuthError = (error: Error) => {
 ### [HIGH 4] Migraciones no versionadas cronológicamente
 
 **Archivos:** `supabase/migrations/`  
-**Categoría:** DevOps  
+**Categoría:** DevOps
 
 **Descripción:** Las migraciones tienen nombres como `v2.sql` y `20240415_volume_rpc.sql` sin timestamp consistente. El orden de ejecución no es determinista.
 
 **Impacto:** Despliegues en nuevos entornos pueden fallar oapplied en orden incorrecto.
 
 **Solución propuesta:**
+
 ```text
 # Formato correcto:
 supabase/migrations/
@@ -185,19 +192,20 @@ supabase/migrations/
 ### [MEDIUM 1] Sin paginación en queries de historial
 
 **Archivo:** `src/shared/api/queries.ts` (línea 10-53)  
-**Categoría:** Performance  
+**Categoría:** Performance
 
 **Descripción:** `fetchWorkoutsAndSets` tiene `limit = 200` hardcodeado sin paginación real. No hay "load more" o cursor-based pagination.
 
 **Impacto:** Si el usuario tiene >200 entrenamientos, la query tardará y puede timeout.
 
 **Solución propuesta:**
+
 ```typescript
 // Implementar paginación cursor
 export const fetchWorkouts = async (
-  userId: string, 
-  cursor?: string, 
-  limit = 20
+  userId: string,
+  cursor?: string,
+  limit = 20,
 ): Promise<WorkoutWithSets & { nextCursor?: string }> => {
   const { data, error } = await supabase
     .from('workouts')
@@ -206,10 +214,10 @@ export const fetchWorkouts = async (
     .order('started_at', { ascending: false })
     .limit(limit)
     .gt('started_at', cursor || '');
-    
-  return { 
-    workouts: data, 
-    nextCursor: data?.[data.length - 1]?.started_at 
+
+  return {
+    workouts: data,
+    nextCursor: data?.[data.length - 1]?.started_at,
   };
 };
 ```
@@ -222,13 +230,14 @@ export const fetchWorkouts = async (
 ### [MEDIUM 2] Fallback de公式 Brzycki no implementado en frontend
 
 **Archivo:** `src/shared/lib/brzycki.ts` (línea 1-5)  
-**Categoría:** Lógica  
+**Categoría:** Lógica
 
 **Descripción:** La fórmula de Brzycki está implementada correctamente, pero el cálculo de 1RM se hace en el trigger PostgreSQL (`process_new_set`), no en el frontend. Si el usuario quiere mostrar 1RM estimado antes de guardar, no hay función expuesta visible.
 
 **Impacto:** UX inconsistente: el usuario no ve el 1RM hasta después de guardar en base de datos.
 
 **Solución propuesta:**
+
 ```typescript
 // Ya existe en brzycki.ts, solo falta importarla en WorkoutPage
 import { calcular1RM } from '@shared/lib/brzycki';
@@ -246,13 +255,14 @@ import { calcular1RM } from '@shared/lib/brzycki';
 ### [MEDIUM 3] Sin loading states en llamadas RPC
 
 **Archivo:** `src/shared/api/queries.ts` (línea 231-241)  
-**Categoría:** UX  
+**Categoría:** UX
 
 **Descripción:** `fetchVolumeByMuscleGroup` usa RPC pero no hay indicador de carga en el frontend.
 
 **Impacto:** El usuario ve un salto visual cuando los datos llegan, sin feedback de "cargando...".
 
 **Solución propuesta:**
+
 ```typescript
 // En StatsPage.tsx:
 const { data, isLoading } = useQuery({
@@ -272,17 +282,18 @@ const { data, isLoading } = useQuery({
 ### [MEDIUM 4] Workbox caching sin TTL para Supabase
 
 **Archivo:** `vite.config.ts` (línea 71-78)  
-**Categoría:** Performance  
+**Categoría:** Performance
 
 **Descripción:** La caché de Supabase tiene `networkTimeoutSeconds: 10` pero los datos de workouts pueden cambiar (el usuario puede entrenar en otro dispositivo). 5 minutos de TTL es excesivamente largo.
 
 **Impacto:** El usuario ve datos stale hasta 5 minutos.
 
 **Solución propuesta:**
+
 ```typescript
 // vite.config.ts
-expiration: { 
-  maxEntries: 50, 
+expiration: {
+  maxEntries: 50,
   maxAgeSeconds: 60  // 1 minuto, no 5
 }
 ```
@@ -295,13 +306,14 @@ expiration: {
 ### [MEDIUM 5] Sin validación Zod en inputs de workout
 
 **Archivo:** `src/features/workout/stores/workoutStore.ts`  
-**Categoría:** TypeScript  
+**Categoría:** TypeScript
 
 **Descripción:** Los inputs de `reps` y `weight` se validan con strings vacías (`if (!s.reps || !s.weight)`) pero no con Zod schema. El package.json incluye Zod pero no se usa en los stores.
 
 **Impacto:** Datos potencialmente inválidos pueden llegar a la base de datos.
 
 **Solución propuesta:**
+
 ```typescript
 import { z } from 'zod';
 
@@ -311,8 +323,7 @@ const SetSchema = z.object({
 });
 
 // En saveWorkout:
-const validSets = setData
-  .filter(s => SetSchema.safeParse(s).success);
+const validSets = setData.filter((s) => SetSchema.safeParse(s).success);
 ```
 
 **Esfuerzo estimado:** M  
@@ -325,7 +336,7 @@ const validSets = setData
 ### [LOW 1] Nombres de variables confusas
 
 **Archivo:** `src/shared/lib/types.ts` (línea 22-29)  
-**Categoría:** TypeScript  
+**Categoría:** TypeScript
 
 **Descripción:** `WorkoutWithSets` usa `ended_at` pero el schema define `finished_at`.
 
@@ -336,7 +347,7 @@ const validSets = setData
 ### [LOW 2] Console.logs de debug en producción
 
 **Archivo:** Múltiples (`queries.ts`, `authStore.ts`)  
-**Categoría:** Mantenibilidad  
+**Categoría:** Mantenibilidad
 
 **Descripción:** Hay `console.log` que exponen datos de debugging (workout IDs, user IDs) incluso en producción.
 
@@ -347,9 +358,10 @@ const validSets = setData
 ### [LOW 3] Ausencia de tests E2E para flows críticos
 
 **Archivo:** `e2e/auth.spec.ts`  
-**Categoría:** Tests  
+**Categoría:** Tests
 
 **Descripción:** Solo hay test E2E para autenticación. Faltan:
+
 - Workout flow completo
 - Stats carga de datos
 - Export/import CSV
@@ -361,7 +373,7 @@ const validSets = setData
 ### [LOW 4] Componentes >300 líneas sin fragmentar
 
 **Archivo:** `src/features/workout/pages/WorkoutPage.tsx`  
-**Categoría:** Mantenibilidad  
+**Categoría:** Mantenibilidad
 
 **Descripción:** WorkoutPage tiene >400 líneas y múltiples responsabilidades.
 
@@ -372,7 +384,7 @@ const validSets = setData
 ### [LOW 5] Sin JSDoc en funciones públicas
 
 **Archivo:** `src/shared/lib/*.ts`  
-**Categoría:** Documentación  
+**Categoría:** Documentación
 
 **Descripción:** Las funciones exportadas no tienen JSDoc explicando parámetros, returns, o casos de error.
 
@@ -385,7 +397,7 @@ const validSets = setData
  * @param reps - Repeticiones (1-36)
  * @returns 1RM estimado en kg
  */
-export function calcular1RM(weight: number, reps: number): number
+export function calcular1RM(weight: number, reps: number): number;
 ```
 
 ---
@@ -393,7 +405,7 @@ export function calcular1RM(weight: number, reps: number): number
 ### [LOW 6] CSS variables no usadas
 
 **Archivo:** `src/index.css`  
-**Categoría:** Mantenibilidad  
+**Categoría:** Mantenibilidad
 
 **Descripción:** Hay variables CSS definidas pero no usadas (ej. `--color-primary` pero se usa directamente `bg-green-500`).
 
@@ -405,7 +417,7 @@ export function calcular1RM(weight: number, reps: number): number
 
 ### [INFO 1] Añadir error boundary global
 
-**Categoría:** UX  
+**Categoría:** UX
 
 **Descripción:** No hay Error Boundary que captures errores de render no esperados.
 
@@ -415,7 +427,7 @@ export function calcular1RM(weight: number, reps: number): number
 
 ### [INFO 2] Configurar bundle analyzer en CI
 
-**Categoría:** DevOps  
+**Categoría:** DevOps
 
 **Descripción:** El analyzer existe pero no se ejecuta automáticamente.
 
@@ -425,7 +437,7 @@ export function calcular1RM(weight: number, reps: number): number
 
 ### [INFO 3] i18n con namespace por página
 
-**Categoría:** i18n  
+**Categoría:** i18n
 
 **Descripción:** Todos los strings están en un solo objeto `translation`.
 
@@ -435,7 +447,7 @@ export function calcular1RM(weight: number, reps: number): number
 
 ### [INFO 4] Prettier no formatea SQL
 
-**Categoría:** Herramientas  
+**Categoría:** Herramientas
 
 **Descripción:** Los archivos SQL no tienen format detection.
 
@@ -446,22 +458,24 @@ export function calcular1RM(weight: number, reps: number): number
 ## 📊 ANÁLISIS POR DIMENSIÓN
 
 ### Seguridad (RLS + Auth)
-| Tabla | RLS | Notas |
-|-------|-----|-------|
-| profiles | ✅ | Política propia |
-| exercises | ✅ | Global + propio |
-| workouts | ✅ | Política propia |
-| workout_sets | ✅ | Via join |
-| personal_records | ✅ | Política propia |
-| user_routines | ✅ | v2.sql |
-| body_measurements | ✅ | v2.sql |
-| exercise_notes | ✅ | v2.sql |
+
+| Tabla             | RLS | Notas           |
+| ----------------- | --- | --------------- |
+| profiles          | ✅  | Política propia |
+| exercises         | ✅  | Global + propio |
+| workouts          | ✅  | Política propia |
+| workout_sets      | ✅  | Via join        |
+| personal_records  | ✅  | Política propia |
+| user_routines     | ✅  | v2.sql          |
+| body_measurements | ✅  | v2.sql          |
+| exercise_notes    | ✅  | v2.sql          |
 
 **Veredicto:** Seguridad sólida con RLS. Revisar `.env` exposure.
 
 ---
 
 ### Performance
+
 - ✅ Workbox caching correctamente configurado
 - ✅ RPC server-side para volumen
 - ⚠️ Sin paginación (limit 200)
@@ -472,6 +486,7 @@ export function calcular1RM(weight: number, reps: number): number
 ---
 
 ### Motor Core (Brzycki + Workout)
+
 - ✅ Fórmula testada en vitest
 - ✅ Trigger PostgreSQL correcto
 - ⚠️ Frontend no muestra 1RM estimado antes de guardar
@@ -482,6 +497,7 @@ export function calcular1RM(weight: number, reps: number): number
 ---
 
 ### Scripts de Diagnóstico (Android/iOS)
+
 - ✅ Notificaciones Capacitor bien integradas
 - ✅ Biometric fallback implementado
 - ⚠️ Build requiere pasos manuales (`sync` + `build`)
@@ -491,6 +507,7 @@ export function calcular1RM(weight: number, reps: number): number
 ---
 
 ### Tests
+
 - ✅ Unit test para Brzycki
 - ✅ E2E para Auth
 - ❌ Unit tests para stores
@@ -501,6 +518,7 @@ export function calcular1RM(weight: number, reps: number): number
 ---
 
 ### Documentación
+
 - ✅ README completo
 - ✅ Diary exhaustivo (286 líneas)
 - ⚠️ Plan de desarrollo desactualizado
@@ -514,20 +532,21 @@ export function calcular1RM(weight: number, reps: number): number
 
 ### Criterios de Evaluación
 
-| Criterio | Puntuación | Notas |
-|----------|------------|-------|
-| Base de datos (PostgreSQL/Supabase) | 9/10 | Schema correcto, RLS implementada |
-| Frontend (React/TypeScript) | 8/10 | Arquitectura por features, tipos estrictos |
-| Estado (Zustand) | 8/10 | Persistencia robusta |
-| Seguridad (RLS/CSP) | 7/10 | RLS OK, CSP básica, tema `.env` |
-| DevOps (CI/CD) | 7/10 | GitHub Actions, pre-commit hooks OK |
-| Tests | 5/10 | Brzycki + Auth, falta coverage |
-| Documentación | 8/10 | README + Diary excelente |
-| Native (Capacitor) | 8/10 | Integración completa |
+| Criterio                            | Puntuación | Notas                                      |
+| ----------------------------------- | ---------- | ------------------------------------------ |
+| Base de datos (PostgreSQL/Supabase) | 9/10       | Schema correcto, RLS implementada          |
+| Frontend (React/TypeScript)         | 8/10       | Arquitectura por features, tipos estrictos |
+| Estado (Zustand)                    | 8/10       | Persistencia robusta                       |
+| Seguridad (RLS/CSP)                 | 7/10       | RLS OK, CSP básica, tema `.env`            |
+| DevOps (CI/CD)                      | 7/10       | GitHub Actions, pre-commit hooks OK        |
+| Tests                               | 5/10       | Brzycki + Auth, falta coverage             |
+| Documentación                       | 8/10       | README + Diary excelente                   |
+| Native (Capacitor)                  | 8/10       | Integración completa                       |
 
 **Puntuación Global:** 7.5/10 — Notable alto
 
 ### Fortalezas para ASIR
+
 - Schema PostgreSQL con constraints y triggers de negocio
 - RLS como medida de seguridad multi-capa
 - Integración nativa Android con biometría
@@ -536,6 +555,7 @@ export function calcular1RM(weight: number, reps: number): number
 - Historia de desarrollo detallada
 
 ### Debilidades a Mejorar
+
 - Cobertura de tests insuficiente
 - Documentación arquitectónica faltante
 - Exposición de `.env` (crítico)
@@ -546,6 +566,7 @@ export function calcular1RM(weight: number, reps: number): number
 ## ✅ CHECKLIST FINAL
 
 ### Completado
+
 - [x] Auditoría de configuración global
 - [x] Revisión de seguridad (RLS, Supabase client)
 - [x] Análisis de stores Zustand
@@ -554,17 +575,20 @@ export function calcular1RM(weight: number, reps: number): number
 - [x] Documentación revisada
 - [x] Crear Plan de desarrollo.md actualizado
 - [x] Añadir entrada en diary.md
+- [x] **Eliminar código duplicado** (`/lib/lib/`, `/hooks/hooks/`)
+- [x] **Reducir TTL Workbox a 1 minuto**
+- [x] **Implementar paginación cursor** (`fetchWorkoutsPaginated`)
+- [x] **Añadir validación Zod** en workoutStore
+- [x] **Crear tests para workoutStore**
+- [x] **Commit y push** de cambios
 
-### Pendiente (próximas sesiones)
-- [ ] Rewritear git history para `.env`
-- [ ] Eliminar `/src/shared/lib/lib/` y `/src/shared/hooks/hooks/`
-- [ ] Ejecutar `npm run gen:types`
-- [ ] Verificar RLS activa en producción
-- [ ] Implementar paginación
-- [ ] Añadir tests para stores
+### Pendiente (requieren acceso/token):
+
+- [ ] Rewritear git history para `.env` del historial
+- [ ] Ejecutar `gen:types` con SUPABASE_ACCESS_TOKEN
 
 ---
 
-*Auditoría completada el 2026-04-25*
-*Tiempo totale: ~3.5 horas*
-*GymLog v2.5.2 — ResolveCore style audit*
+_Auditoría completada el 2026-04-25_
+_Tiempo totale: ~3.5 horas_
+_GymLog v2.5.2 — ResolveCore style audit_
