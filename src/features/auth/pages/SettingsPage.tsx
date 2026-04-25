@@ -36,6 +36,10 @@ export function SettingsPage() {
     setBiometricEnabled,
     trainingReminders,
     setTrainingReminders,
+    unitSystem,
+    setUnitSystem,
+    showWarmupSets,
+    setShowWarmupSets,
   } = useSettingsStore();
   const [notifEnabled, setNotifEnabled] = useState(false);
   const [biometricSupport, setBiometricSupport] = useState<{ available: boolean; message: string }>(
@@ -303,6 +307,53 @@ export function SettingsPage() {
           </div>
         </div>
 
+        {/* Unidad de peso */}
+        <div
+          className="rounded-2xl p-4 scale-in"
+          style={{ backgroundColor: bgCard, border: `1px solid ${border}` }}
+        >
+          <div className="text-sm font-medium mb-3" style={{ color: 'var(--text-primary)' }}>
+            Unidad de peso
+          </div>
+          <div className="flex gap-2">
+            {(['kg', 'lb'] as const).map((unit) => (
+              <Button
+                key={unit}
+                variant={unitSystem === unit ? 'primary' : 'secondary'}
+                onClick={() => setUnitSystem(unit)}
+                className="flex-1"
+              >
+                {unit}
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        {/* Mostrar series de calentamiento */}
+        <div
+          className="rounded-2xl p-4 scale-in border"
+          style={{ backgroundColor: bgCard, borderColor: border }}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-[0.95rem]" style={{ color: 'var(--text-primary)' }}>
+                Series de calentamiento
+              </div>
+              <div className="text-[0.75rem]" style={{ color: 'var(--text-muted)' }}>
+                Marcar series de warmup
+              </div>
+            </div>
+            <button
+              onClick={() => setShowWarmupSets(!showWarmupSets)}
+              className={`w-12 h-6 rounded-full transition-all relative ${showWarmupSets ? 'bg-[--color-primary]' : 'bg-[--bg-base]'}`}
+            >
+              <div
+                className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${showWarmupSets ? 'left-7' : 'left-1'}`}
+              />
+            </button>
+          </div>
+        </div>
+
         <button
           onClick={() => signOut()}
           className="w-full rounded-2xl p-4 cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98] scale-in border-none shadow-md"
@@ -320,7 +371,7 @@ export function SettingsPage() {
         >
           <GymLogLogo size="lg" variant="stacked" className="mb-4" />
           <div className="text-[0.8rem] font-bold text-[var(--interactive-primary)] mb-4 uppercase tracking-[0.2em] bg-[var(--interactive-primary)]/10 px-3 py-1 rounded-full">
-            Version 2.5
+            Version 2.7
           </div>
           <div className="text-[0.85rem] leading-relaxed text-[var(--text-tertiary)] max-w-[240px]">
             Tu compañero definitivo para el seguimiento de entrenamientos de fuerza.

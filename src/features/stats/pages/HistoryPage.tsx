@@ -82,7 +82,18 @@ function ExerciseRow({
                   {s.reps} {t('workout.reps').toLowerCase()}
                 </span>
               </div>
-              <span className="text-[var(--interactive-primary)] font-medium">{s.weight} kg</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[var(--interactive-primary)] font-medium">{s.weight} kg</span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(s.id);
+                  }}
+                  className="bg-transparent border-none cursor-pointer p-1"
+                >
+                  <Trash2 className="w-3 h-3" style={{ color: 'var(--text-tertiary)' }} />
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -523,7 +534,7 @@ export function HistoryPage() {
   if (loading) {
     return (
       <Layout>
-        <div className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-2xl overflow-hidden">
+        <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-[var(--radius-xl)] overflow-hidden">
           <div className="skeleton h-12 w-full"></div>
         </div>
       </Layout>
@@ -536,7 +547,7 @@ export function HistoryPage() {
         <select
           value={view}
           onChange={(e) => setView(e.target.value as 'sets' | 'workouts')}
-          className="bg-[#141418] border border-[rgba(255,255,255,0.12)] rounded-lg text-[#a0a0a8] text-[0.95rem] p-2 cursor-pointer transition-all hover:scale-[1.02]"
+          className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-lg text-[var(--text-secondary)] text-[0.95rem] p-2 cursor-pointer transition-all hover:scale-[1.02]"
         >
           <option value="sets">{t('history.sets_view')}</option>
           <option value="workouts">{t('history.workouts_view')}</option>
@@ -547,7 +558,7 @@ export function HistoryPage() {
             <select
               value={filterExercise}
               onChange={(e) => setFilterExercise(e.target.value)}
-              className="bg-[#141418] border border-[rgba(255,255,255,0.12)] rounded-lg text-[#a0a0a8] text-[0.95rem] p-2 cursor-pointer transition-all hover:scale-[1.02]"
+              className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-lg text-[var(--text-secondary)] text-[0.95rem] p-2 cursor-pointer transition-all hover:scale-[1.02]"
             >
               <option value="">{t('history.filter_all')}</option>
               {exercises.map((ex) => (
@@ -558,11 +569,11 @@ export function HistoryPage() {
             </select>
             <button
               onClick={exportToExcel}
-              className="bg-[#141418] border border-[rgba(255,255,255,0.12)] rounded-lg text-[#c8ff00] text-[0.95rem] px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-lg text-[var(--interactive-primary)] text-[0.95rem] px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               {t('history.export_btn')}
             </button>
-            <label className="bg-[#141418] border border-[rgba(255,255,255,0.12)] rounded-lg text-[#a0a0a8] text-[0.95rem] px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]">
+            <label className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-lg text-[var(--text-secondary)] text-[0.95rem] px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]">
               {t('history.import_btn')}
               <input type="file" accept=".csv,.txt" onChange={importFromCsv} className="hidden" />
             </label>
@@ -696,13 +707,20 @@ export function HistoryPage() {
         open={!!deleteId}
         onClose={() => setDeleteId(null)}
         title={t('history.delete_confirm')}
+        icon={<Trash2 className="w-5 h-5" style={{ color: 'var(--error)' }} />}
+        variant="danger"
       >
         <p className="text-[var(--text-secondary)] mb-6">Esta acción no se puede deshacer.</p>
-        <div className="flex gap-3 justify-end mt-4">
-          <Button variant="secondary" onClick={() => setDeleteId(null)}>
+        <div className="flex gap-3">
+          <Button variant="secondary" onClick={() => setDeleteId(null)} className="flex-1">
             {t('common.cancel')}
           </Button>
-          <Button variant="danger" onClick={() => deleteId && handleDelete(deleteId)}>
+          <Button
+            variant="primary"
+            onClick={() => deleteId && handleDelete(deleteId)}
+            className="flex-1"
+            style={{ backgroundColor: 'var(--error)' }}
+          >
             {t('common.delete')}
           </Button>
         </div>

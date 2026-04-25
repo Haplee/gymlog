@@ -1,10 +1,12 @@
 import { useState, useCallback, useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Plus, X, Loader2, AlertCircle } from 'lucide-react';
+import { Search, Plus, X, Loader2, AlertCircle, Trash2 } from 'lucide-react';
 import { useExerciseSearch } from '../hooks/useExerciseSearch';
 import { createCustomExercise } from '../api/workoutMutations';
 import { Button } from '@shared/components/ui';
+import { supabase } from '@shared/lib/supabase';
+import { toast } from 'sonner';
 
 interface ExerciseSelectorProps {
   userId: string;
@@ -47,6 +49,31 @@ export function ExerciseSelector({ userId, onSelect, activeExerciseId }: Exercis
       setError(err instanceof Error ? err.message : 'Error creando ejercicio');
     },
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (exerciseId: string) => {
+      const { error } = await supabase.from('exercises').delete().eq('id', exerciseId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['exercises'] });
+      queryClient.invalidateQueries({ queryKey: ['exerciseSearch'] });
+      toast.success('Ejercicio eliminado');
+    },
+    onError: () => {
+      toast.error('Error al eliminar ejercicio');
+    },
+  });
+
+  const handleDeleteExercise = useCallback(
+    (e: React.MouseEvent, exerciseId: string) => {
+      e.stopPropagation();
+      if (confirm('¿Eliminar este ejercicio? Esta acción no se puede deshacer.')) {
+        deleteMutation.mutate(exerciseId);
+      }
+    },
+    [deleteMutation],
+  );
 
   const handleSelect = useCallback(
     (ex: ExerciseOption) => {
@@ -156,22 +183,33 @@ export function ExerciseSelector({ userId, onSelect, activeExerciseId }: Exercis
                       {group}
                     </div>
                     {exs.map((ex) => (
-                      <button
-                        key={ex.id}
-                        onClick={() => handleSelect(ex)}
-                        className={`w-full px-3 py-2 text-left text-sm flex items-center justify-between hover:bg-[--bg-elevated] focus:outline-none focus:bg-[--bg-elevated] ${
-                          activeExerciseId === ex.id ? 'bg-[--bg-elevated]' : ''
-                        }`}
-                        role="option"
-                        aria-selected={activeExerciseId === ex.id}
-                      >
-                        <span className="text-[--text-primary]">{ex.name}</span>
+                      <div key={ex.id} className="flex items-center">
+                        <button
+                          onClick={() => handleSelect(ex)}
+                          className={`flex-1 px-3 py-2 text-left text-sm flex items-center justify-between hover:bg-[--bg-elevated] focus:outline-none focus:bg-[--bg-elevated] ${
+                            activeExerciseId === ex.id ? 'bg-[--bg-elevated]' : ''
+                          }`}
+                          role="option"
+                          aria-selected={activeExerciseId === ex.id}
+                        >
+                          <span className="text-[--text-primary]">{ex.name}</span>
+                          {ex.user_id === userId && (
+                            <span className="text-[0.625rem] px-1.5 py-0.5 rounded bg-[--color-primary]/10 text-[--color-primary]">
+                              Propio
+                            </span>
+                          )}
+                        </button>
                         {ex.user_id === userId && (
-                          <span className="text-[0.625rem] px-1.5 py-0.5 rounded bg-[--color-primary]/10 text-[--color-primary]">
-                            Propio
-                          </span>
+                          <button
+                            onClick={(e) => handleDeleteExercise(e, ex.id)}
+                            disabled={deleteMutation.isPending}
+                            className="px-3 py-2 text-[--text-muted] hover:text-[--color-error] bg-transparent border-none"
+                            aria-label="Eliminar ejercicio"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         )}
-                      </button>
+                      </div>
                     ))}
                   </div>
                 ))}

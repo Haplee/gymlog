@@ -1,212 +1,111 @@
-// SVG Empty States inline — sin dependencias externas
-// Todos los estados vacíos con ilustraciones consistentes
+import { Dumbbell, Calendar, BarChart3, CheckSquare, Sparkles } from 'lucide-react';
+import { motion } from 'framer-motion';
 
-// ── Sin entrenamientos ─────────────────────────
+const containerVariants = {
+  hidden: { opacity: 0, y: 20 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { staggerChildren: 0.1 },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, scale: 0.9 },
+  show: { opacity: 1, scale: 1 },
+};
+
+interface EmptyStateProps {
+  title: string;
+  description: string;
+  icon: 'workout' | 'history' | 'stats' | 'routine';
+  action?: { label: string; onClick: () => void };
+}
+
+const icons = {
+  workout: Dumbbell,
+  history: Calendar,
+  stats: BarChart3,
+  routine: CheckSquare,
+};
+
+const labels = {
+  workout: {
+    title: 'Empieza a entrenar',
+    desc: 'Selecciona un ejercicio, añade tus series y guarda tu primer entrenamiento.',
+  },
+  history: {
+    title: 'Sin historial aún',
+    desc: 'Guarda entrenamientos y aparecerán aquí para que puedas revisarlos.',
+  },
+  stats: {
+    title: 'Sin estadísticas',
+    desc: 'Completa entrenamientos para ver tu progreso y tendencias aquí.',
+  },
+  routine: {
+    title: 'Sin rutina configurada',
+    desc: 'Planifica tu semana asignando ejercicios a cada día.',
+  },
+};
+
+export function EmptyState({ type }: { type: EmptyStateProps['icon'] }) {
+  const { title, desc } = labels[type];
+  const Icon = icons[type];
+
+  return (
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+      className="flex flex-col items-center justify-center py-16 px-6 text-center"
+    >
+      <motion.div variants={itemVariants} className="relative mb-6">
+        <div
+          className="w-24 h-24 rounded-full flex items-center justify-center"
+          style={{ backgroundColor: 'var(--bg-surface-2)' }}
+        >
+          <Icon className="w-12 h-12" style={{ color: 'var(--interactive-primary)' }} />
+        </div>
+        <motion.div
+          animate={{ scale: [1, 1.1, 1] }}
+          transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
+          className="absolute -top-1 -right-1"
+        >
+          <Sparkles className="w-6 h-6" style={{ color: 'var(--interactive-primary)' }} />
+        </motion.div>
+      </motion.div>
+
+      <motion.h3
+        variants={itemVariants}
+        className="text-xl font-bold mb-2"
+        style={{ color: 'var(--text-primary)' }}
+      >
+        {title}
+      </motion.h3>
+
+      <motion.p
+        variants={itemVariants}
+        className="text-sm max-w-xs mb-6"
+        style={{ color: 'var(--text-secondary)' }}
+      >
+        {desc}
+      </motion.p>
+    </motion.div>
+  );
+}
+
 export function EmptyWorkout() {
-  return (
-    <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
-      <svg
-        width="120"
-        height="120"
-        viewBox="0 0 120 120"
-        fill="none"
-        aria-hidden="true"
-        className="mb-5 opacity-80"
-      >
-        <circle cx="60" cy="60" r="56" fill="var(--bg-elevated)" />
-        {/* Mancuerna */}
-        <rect x="30" y="53" width="60" height="14" rx="7" fill="var(--border-strong)" />
-        <rect
-          x="18"
-          y="44"
-          width="16"
-          height="32"
-          rx="6"
-          fill="var(--color-primary)"
-          opacity="0.7"
-        />
-        <rect
-          x="86"
-          y="44"
-          width="16"
-          height="32"
-          rx="6"
-          fill="var(--color-primary)"
-          opacity="0.7"
-        />
-        <rect x="22" y="38" width="8" height="44" rx="4" fill="var(--color-primary)" />
-        <rect x="90" y="38" width="8" height="44" rx="4" fill="var(--color-primary)" />
-        {/* Estrella */}
-        <circle cx="82" cy="30" r="12" fill="var(--bg-elevated)" />
-        <text x="82" y="35" textAnchor="middle" fontSize="14">
-          💪
-        </text>
-      </svg>
-      <h3 className="text-[--text-xl] font-bold text-[--text-primary] mb-2">
-        ¡Empieza a entrenar!
-      </h3>
-      <p className="text-[--text-secondary] text-[--text-sm] max-w-xs">
-        Selecciona un ejercicio, añade tus series y guarda tu primer entrenamiento.
-      </p>
-    </div>
-  );
+  return <EmptyState type="workout" />;
 }
 
-// ── Sin historial ───────────────────────────────
 export function EmptyHistory() {
-  return (
-    <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
-      <svg
-        width="120"
-        height="120"
-        viewBox="0 0 120 120"
-        fill="none"
-        aria-hidden="true"
-        className="mb-5 opacity-80"
-      >
-        <circle cx="60" cy="60" r="56" fill="var(--bg-elevated)" />
-        {/* Calendario */}
-        <rect x="28" y="35" width="64" height="54" rx="8" fill="var(--border-strong)" />
-        <rect
-          x="28"
-          y="35"
-          width="64"
-          height="18"
-          rx="8"
-          fill="var(--color-primary)"
-          opacity="0.6"
-        />
-        <rect
-          x="32"
-          y="39"
-          width="56"
-          height="10"
-          rx="4"
-          fill="var(--color-primary)"
-          opacity="0.4"
-        />
-        {/* Cuadraditos */}
-        {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
-          <rect
-            key={i}
-            x={36 + (i % 4) * 15}
-            y={62 + Math.floor(i / 4) * 14}
-            width="10"
-            height="10"
-            rx="3"
-            fill="var(--color-primary)"
-            opacity={0.15 + i * 0.07}
-          />
-        ))}
-        <text x="60" y="78" textAnchor="middle" fontSize="14">
-          📅
-        </text>
-      </svg>
-      <h3 className="text-[--text-xl] font-bold text-[--text-primary] mb-2">Sin historial aún</h3>
-      <p className="text-[--text-secondary] text-[--text-sm] max-w-xs">
-        Guarda entrenamientos y aparecerán aquí para que puedas revisarlos.
-      </p>
-    </div>
-  );
+  return <EmptyState type="history" />;
 }
 
-// ── Sin estadísticas ────────────────────────────
 export function EmptyStats() {
-  return (
-    <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
-      <svg
-        width="120"
-        height="120"
-        viewBox="0 0 120 120"
-        fill="none"
-        aria-hidden="true"
-        className="mb-5 opacity-80"
-      >
-        <circle cx="60" cy="60" r="56" fill="var(--bg-elevated)" />
-        {/* Gráfico de barras */}
-        <rect x="30" y="80" width="60" height="3" rx="1.5" fill="var(--border-strong)" />
-        <rect
-          x="38"
-          y="65"
-          width="12"
-          height="15"
-          rx="3"
-          fill="var(--color-primary)"
-          opacity="0.3"
-        />
-        <rect
-          x="54"
-          y="50"
-          width="12"
-          height="30"
-          rx="3"
-          fill="var(--color-primary)"
-          opacity="0.55"
-        />
-        <rect
-          x="70"
-          y="42"
-          width="12"
-          height="38"
-          rx="3"
-          fill="var(--color-primary)"
-          opacity="0.85"
-        />
-        {/* Flecha arriba */}
-        <path
-          d="M76 36 L76 44 M72 40 L76 36 L80 40"
-          stroke="var(--color-primary)"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-      </svg>
-      <h3 className="text-[--text-xl] font-bold text-[--text-primary] mb-2">Sin estadísticas</h3>
-      <p className="text-[--text-secondary] text-[--text-sm] max-w-xs">
-        Completa entrenamientos para ver tu progreso y tendencias aquí.
-      </p>
-    </div>
-  );
+  return <EmptyState type="stats" />;
 }
 
-// ── Sin rutina ──────────────────────────────────
 export function EmptyRoutine() {
-  return (
-    <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
-      <svg
-        width="120"
-        height="120"
-        viewBox="0 0 120 120"
-        fill="none"
-        aria-hidden="true"
-        className="mb-5 opacity-80"
-      >
-        <circle cx="60" cy="60" r="56" fill="var(--bg-elevated)" />
-        {/* Lista con check */}
-        <rect x="32" y="38" width="56" height="44" rx="8" fill="var(--border-strong)" />
-        {[0, 1, 2].map((i) => (
-          <g key={i}>
-            <rect x="38" y={50 + i * 14} width="8" height="8" rx="2" fill="var(--bg-elevated)" />
-            <rect
-              x="50"
-              y={52 + i * 14}
-              width="28"
-              height="4"
-              rx="2"
-              fill="var(--bg-elevated)"
-              opacity="0.5"
-            />
-          </g>
-        ))}
-        <text x="60" y="50" textAnchor="middle" fontSize="16">
-          📋
-        </text>
-      </svg>
-      <h3 className="text-[--text-xl] font-bold text-[--text-primary] mb-2">
-        Sin rutina configurada
-      </h3>
-      <p className="text-[--text-secondary] text-[--text-sm] max-w-xs">
-        Planifica tu semana asignando ejercicios a cada día.
-      </p>
-    </div>
-  );
+  return <EmptyState type="routine" />;
 }

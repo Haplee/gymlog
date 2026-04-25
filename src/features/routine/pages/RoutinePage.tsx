@@ -128,13 +128,13 @@ export function RoutinePage() {
 
   return (
     <Layout>
-      <div className="text-lg font-bold mb-4" style={{ color: '#c8ff00' }}>
+      <div className="text-lg font-bold mb-4" style={{ color: 'var(--interactive-primary)' }}>
         Rutinas
       </div>
 
       {!activeRoutineId ? (
         <>
-          <div className="text-sm mb-3" style={{ color: '#a1a1aa' }}>
+          <div className="text-sm mb-3" style={{ color: 'var(--text-secondary)' }}>
             Selecciona una rutina
           </div>
 
@@ -145,23 +145,26 @@ export function RoutinePage() {
                 onClick={() => handleSelectRoutine(routine.id)}
                 className="p-3 rounded-lg cursor-pointer transition-all"
                 style={{
-                  backgroundColor: '#141418',
-                  border: '1px solid rgba(255,255,255,0.06)',
+                  backgroundColor: 'var(--bg-surface)',
+                  border: '1px solid var(--border-subtle)',
                 }}
               >
                 <div className="flex justify-between items-center">
                   <div>
-                    <div className="font-medium" style={{ color: '#fafafa' }}>
+                    <div className="font-medium" style={{ color: 'var(--text-primary)' }}>
                       {routine.name}
                     </div>
-                    <div className="text-xs" style={{ color: '#606068' }}>
+                    <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
                       {routine.description}
                     </div>
                   </div>
                   {!routine.isCustom && (
                     <span
                       className="text-xs px-2 py-1 rounded"
-                      style={{ backgroundColor: 'rgba(200,255,0,0.1)', color: '#c8ff00' }}
+                      style={{
+                        backgroundColor: 'rgba(200,255,0,0.1)',
+                        color: 'var(--interactive-primary)',
+                      }}
                     >
                       Predefinida
                     </span>
@@ -174,7 +177,10 @@ export function RoutinePage() {
           <button
             onClick={() => setShowCreate(true)}
             className="w-full mt-4 py-3 rounded-lg font-medium"
-            style={{ backgroundColor: '#c8ff00', color: '#0a0a0c' }}
+            style={{
+              backgroundColor: 'var(--interactive-primary)',
+              color: 'var(--interactive-primary-fg)',
+            }}
           >
             + Crear rutina personalizada
           </button>
@@ -183,17 +189,17 @@ export function RoutinePage() {
         <>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <div className="text-lg font-bold" style={{ color: '#fafafa' }}>
+              <div className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
                 {activeRoutine?.name}
               </div>
-              <div className="text-xs" style={{ color: '#606068' }}>
+              <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
                 {activeRoutine?.description}
               </div>
             </div>
             <button
               onClick={() => setActiveRoutine(null)}
               className="text-sm px-3 py-1 rounded"
-              style={{ backgroundColor: '#1c1c22', color: '#a1a1aa' }}
+              style={{ backgroundColor: 'var(--bg-surface-2)', color: 'var(--text-secondary)' }}
             >
               Cambiar
             </button>
@@ -201,7 +207,10 @@ export function RoutinePage() {
 
           {todayRoutine && todayRoutine.exercises.length > 0 && (
             <div className="mb-4 p-3 rounded-lg" style={{ backgroundColor: 'rgba(200,255,0,0.1)' }}>
-              <div className="text-xs font-medium mb-2" style={{ color: '#c8ff00' }}>
+              <div
+                className="text-xs font-medium mb-2"
+                style={{ color: 'var(--interactive-primary)' }}
+              >
                 HOY - {todayRoutine.name}
               </div>
               <div className="flex flex-wrap gap-1.5">
@@ -209,7 +218,7 @@ export function RoutinePage() {
                   <span
                     key={i}
                     className="text-xs px-2 py-1 rounded"
-                    style={{ backgroundColor: '#1c1c22', color: '#fafafa' }}
+                    style={{ backgroundColor: 'var(--bg-surface-2)', color: 'var(--text-primary)' }}
                   >
                     {ex.name}
                   </span>
@@ -225,8 +234,10 @@ export function RoutinePage() {
                 onClick={() => setSelectedDay(day)}
                 className="flex-shrink-0 px-3 py-1.5 text-xs rounded-lg font-medium transition-all"
                 style={{
-                  backgroundColor: selectedDay === day ? '#c8ff00' : '#141418',
-                  color: selectedDay === day ? '#0a0a0c' : '#a1a1aa',
+                  backgroundColor:
+                    selectedDay === day ? 'var(--interactive-primary)' : 'var(--bg-surface)',
+                  color:
+                    selectedDay === day ? 'var(--interactive-primary-fg)' : 'var(--text-secondary)',
                 }}
               >
                 {dayLabels[day].slice(0, 3)}
@@ -234,9 +245,9 @@ export function RoutinePage() {
             ))}
           </div>
 
-          <div className="rounded-lg p-3" style={{ backgroundColor: '#141418' }}>
+          <div className="rounded-lg p-3" style={{ backgroundColor: 'var(--bg-surface)' }}>
             <div className="flex justify-between items-center mb-3">
-              <div className="text-sm font-medium" style={{ color: '#fafafa' }}>
+              <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
                 {dayLabels[selectedDay]}
               </div>
               {activeRoutine?.isCustom && (
@@ -244,7 +255,11 @@ export function RoutinePage() {
                   value=""
                   onChange={(e) => e.target.value && addExerciseToDay(selectedDay, e.target.value)}
                   className="text-xs p-1 rounded"
-                  style={{ backgroundColor: '#1c1c22', color: '#c8ff00', border: 'none' }}
+                  style={{
+                    backgroundColor: 'var(--bg-surface-2)',
+                    color: 'var(--interactive-primary)',
+                    border: 'none',
+                  }}
                 >
                   <option value="">+ Añadir</option>
                   {exerciseNames
@@ -262,7 +277,7 @@ export function RoutinePage() {
             </div>
 
             {activeRoutine?.days[selectedDay].exercises.length === 0 ? (
-              <div className="text-center py-4 text-xs" style={{ color: '#606068' }}>
+              <div className="text-center py-4 text-xs" style={{ color: 'var(--text-tertiary)' }}>
                 {activeRoutine?.isCustom ? 'Añade ejercicios' : 'Descanso'}
               </div>
             ) : (
@@ -271,14 +286,14 @@ export function RoutinePage() {
                   <div
                     key={i}
                     className="flex items-center justify-between p-2 rounded"
-                    style={{ backgroundColor: '#1c1c22' }}
+                    style={{ backgroundColor: 'var(--bg-surface-2)' }}
                   >
                     <div>
-                      <div className="text-sm" style={{ color: '#fafafa' }}>
+                      <div className="text-sm" style={{ color: 'var(--text-primary)' }}>
                         {ex.name}
                       </div>
                       {ex.sets && (
-                        <div className="text-xs" style={{ color: '#606068' }}>
+                        <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
                           {ex.sets} series × {ex.reps}
                         </div>
                       )}
@@ -286,7 +301,8 @@ export function RoutinePage() {
                     {activeRoutine?.isCustom && (
                       <button
                         onClick={() => removeExerciseFromDay(selectedDay, i)}
-                        className="text-lg text-[#606068] bg-transparent border-none"
+                        className="text-lg bg-transparent border-none"
+                        style={{ color: 'var(--text-tertiary)' }}
                       >
                         ×
                       </button>
@@ -301,7 +317,7 @@ export function RoutinePage() {
             <button
               onClick={() => handleDeleteRoutine(activeRoutine.id)}
               className="mt-4 text-sm"
-              style={{ color: '#ff5252' }}
+              style={{ color: 'var(--error)' }}
             >
               Eliminar rutina
             </button>
@@ -311,8 +327,11 @@ export function RoutinePage() {
 
       {showCreate && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-          <div className="rounded-xl p-4 w-full max-w-sm" style={{ backgroundColor: '#141418' }}>
-            <div className="text-lg font-bold mb-4" style={{ color: '#fafafa' }}>
+          <div
+            className="rounded-xl p-4 w-full max-w-sm"
+            style={{ backgroundColor: 'var(--bg-surface)' }}
+          >
+            <div className="text-lg font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
               Nueva Rutina
             </div>
 
@@ -323,9 +342,9 @@ export function RoutinePage() {
               onChange={(e) => setNewRoutineName(e.target.value)}
               className="w-full p-2 rounded-lg text-sm mb-2"
               style={{
-                backgroundColor: '#1c1c22',
-                color: '#fafafa',
-                border: '1px solid rgba(255,255,255,0.1)',
+                backgroundColor: 'var(--bg-surface-2)',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--border-default)',
               }}
             />
 
@@ -336,9 +355,9 @@ export function RoutinePage() {
               onChange={(e) => setNewRoutineDesc(e.target.value)}
               className="w-full p-2 rounded-lg text-sm mb-4"
               style={{
-                backgroundColor: '#1c1c22',
-                color: '#fafafa',
-                border: '1px solid rgba(255,255,255,0.1)',
+                backgroundColor: 'var(--bg-surface-2)',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--border-default)',
               }}
             />
 
@@ -346,14 +365,17 @@ export function RoutinePage() {
               <button
                 onClick={() => setShowCreate(false)}
                 className="flex-1 py-2 rounded-lg text-sm"
-                style={{ backgroundColor: '#1c1c22', color: '#a1a1aa' }}
+                style={{ backgroundColor: 'var(--bg-surface-2)', color: 'var(--text-secondary)' }}
               >
                 Cancelar
               </button>
               <button
                 onClick={handleCreateRoutine}
                 className="flex-1 py-2 rounded-lg text-sm font-medium"
-                style={{ backgroundColor: '#c8ff00', color: '#0a0a0c' }}
+                style={{
+                  backgroundColor: 'var(--interactive-primary)',
+                  color: 'var(--interactive-primary-fg)',
+                }}
               >
                 Crear
               </button>

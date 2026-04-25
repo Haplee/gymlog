@@ -16,11 +16,9 @@ export function Providers({ children }: ProvidersProps) {
 
     void registerNativeNotificationListeners();
 
-    // StatusBar y SplashScreen solo en nativo
     void (async () => {
       const { SplashScreen } = await import('@capacitor/splash-screen');
       await SplashScreen.hide();
-      // Delegamos el manejo de la StatusBar al código nativo en MainActivity.java
     })();
   }, []);
 
@@ -28,17 +26,20 @@ export function Providers({ children }: ProvidersProps) {
     <QueryClientProvider client={queryClient}>
       {children}
       <Toaster
-        position="top-center"
-        richColors
+        position="bottom-center"
         closeButton
         duration={3500}
         theme="dark"
         toastOptions={{
           style: {
-            marginTop: 'calc(env(safe-area-inset-top) + 8px)',
             background: 'var(--bg-surface)',
             border: '1px solid var(--border-default)',
             color: 'var(--text-primary)',
+            fontSize: '14px',
+            padding: '12px 16px',
+            borderRadius: '12px',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+            marginBottom: 'calc(env(safe-area-inset-bottom) + 80px)',
           },
         }}
       />

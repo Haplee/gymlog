@@ -6,11 +6,14 @@ interface SettingsState {
   trainingReminders: boolean;
   sound: boolean;
   language: string;
+  unitSystem: 'kg' | 'lb';
+  showWarmupSets: boolean;
   setBiometricEnabled: (enabled: boolean) => void;
   setTrainingReminders: (enabled: boolean) => void;
   setSound: (sound: boolean) => void;
   setLanguage: (lang: string) => void;
-  /** Aplica la clase CSS al elemento :root según el tema */
+  setUnitSystem: (unit: 'kg' | 'lb') => void;
+  setShowWarmupSets: (show: boolean) => void;
   applyTheme: () => void;
 }
 
@@ -21,6 +24,8 @@ export const useSettingsStore = create<SettingsState>()(
       trainingReminders: true,
       sound: true,
       language: 'es',
+      unitSystem: 'kg',
+      showWarmupSets: true,
 
       setBiometricEnabled: (biometricEnabled) => set({ biometricEnabled }),
       setTrainingReminders: (trainingReminders) => set({ trainingReminders }),
@@ -30,6 +35,9 @@ export const useSettingsStore = create<SettingsState>()(
         set({ language });
         import('../lib/i18n').then((m) => m.default.changeLanguage(language));
       },
+
+      setUnitSystem: (unitSystem) => set({ unitSystem }),
+      setShowWarmupSets: (showWarmupSets) => set({ showWarmupSets }),
 
       applyTheme: () => {
         const root = document.documentElement;

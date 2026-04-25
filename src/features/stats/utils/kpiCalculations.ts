@@ -103,3 +103,24 @@ export function calculateVolumeChangePercent(current: number, previous: number):
   if (previous === 0) return current > 0 ? 100 : 0;
   return Math.round(((current - previous) / previous) * 100);
 }
+
+export function calculateAverageSessionDuration(workouts: WorkoutWithSets[]): number {
+  if (workouts.length === 0) return 0;
+
+  const durations = workouts
+    .map((w) => {
+      const start = w.started_at ? new Date(w.started_at).getTime() : null;
+      const end = w.ended_at ? new Date(w.ended_at).getTime() : null;
+      if (!start || !end) return null;
+      const diff = (end - start) / (1000 * 60);
+      return diff > 0 ? diff : null;
+    })
+    .filter((d): d is number => d !== null);
+
+  if (durations.length === 0) return 0;
+  return Math.round(durations.reduce((a, b) => a + b, 0) / durations.length);
+}
+
+export function calculateTotalPRs(sets: { weight: number; is_pr?: boolean | null }[]): number {
+  return sets.filter((s) => s.is_pr === true).length;
+}

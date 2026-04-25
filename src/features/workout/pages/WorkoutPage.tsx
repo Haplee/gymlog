@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useWorkoutStore } from '@features/workout/stores/workoutStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
+import { notifyTimerAlarm, playAlarmSound } from '@shared/lib/notifications';
 import { useRoutineStore } from '@features/routine/stores/routineStore';
 import { Layout } from '@app/components/Layout';
 import { calcular1RM } from '@shared/lib/brzycki';
@@ -20,7 +21,6 @@ import {
 import confetti from 'canvas-confetti';
 import { Trophy, X, Trash2, Plus, StickyNote, AlertCircle } from 'lucide-react';
 import { z } from 'zod';
-import { notify } from '@shared/lib/notifications';
 import { impact, notificationHaptic, ImpactStyle, NotificationType } from '@shared/lib/haptics';
 
 const setSchema = z.object({
@@ -47,9 +47,7 @@ function ResumeWorkoutBanner({
         <AlertCircle className="w-5 h-5" />
         <span className="font-semibold text-sm">{t('workout.resume_banner')}</span>
       </div>
-      <p className="text-xs text-[--text-secondary]">
-        {t('workout.resume_desc')}
-      </p>
+      <p className="text-xs text-[--text-secondary]">{t('workout.resume_desc')}</p>
       <div className="flex gap-2">
         <button
           onClick={onContinue}
@@ -88,16 +86,20 @@ export function WorkoutPage() {
     clearPersistedState,
   } = useWorkoutStore();
 
-  const { sound } = useSettingsStore();
+  const { sound, showWarmupSets } = useSettingsStore();
   const { getActiveRoutine, getTodayRoutine, checkAndBackup } = useRoutineStore();
 
   const [message, setMessage] = useState('');
   const [customInput, setCustomInput] = useState(false);
+  const [customMuscleGroup, setCustomMuscleGroup] = useState('Otro');
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [noteText, setNoteText] = useState('');
   const [setErrors, setSetErrors] = useState<Record<number, string>>({});
+  const [restTimer, setRestTimer] = useState(0);
+  const [isResting, setIsResting] = useState(false);
+  const [restDuration, setRestDuration] = useState(90); // default 90 seconds
   const [showResumeBanner, setShowResumeBanner] = useState(() => {
     if (startedAt && sets.length > 0) {
       const startTime = new Date(startedAt).getTime();
@@ -157,6 +159,41 @@ export function WorkoutPage() {
     if (!groups[ex.muscle_group]) groups[ex.muscle_group] = [];
     groups[ex.muscle_group].push(ex);
   });
+
+  // Rest timer effect
+  useEffect(() => {
+    if (!isResting || restTimer <= 0) {
+      if (isResting && restTimer <= 0) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setIsResting(false);
+        void notifyTimerAlarm(restDuration);
+        void playAlarmSound();
+      }
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setRestTimer((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isResting, restTimer, restDuration]);
+
+  const startRestTimer = useCallback(() => {
+    setRestTimer(restDuration);
+    setIsResting(true);
+  }, [restDuration]);
+
+  const cancelRestTimer = useCallback(() => {
+    setRestTimer(0);
+    setIsResting(false);
+  }, []);
 
   const playFeedbackSound = useCallback(() => {
     try {
@@ -237,6 +274,7 @@ export function WorkoutPage() {
       setMessage(result.error.message);
     } else {
       setSaveSuccess(true);
+      setMessage('✓ Entrenamiento guardado');
       void notificationHaptic(NotificationType.Success);
       if (sound) playFeedbackSound();
       queryClient.invalidateQueries({ queryKey: ['exercises'] });
@@ -257,17 +295,16 @@ export function WorkoutPage() {
           particleCount: 150,
           spread: 70,
           origin: { y: 0.6 },
-          colors: ['#FFFFFF', '#fafafa', '#22c55e'],
+          colors: ['#c8ff00', '#ffffff', '#22c55e'],
         });
         void notificationHaptic(NotificationType.Success);
 
         const exerciseName = selectedExercise?.name || customExerciseName || 'Ejercicio';
-        notify(t('workout.new_pr_title'), {
-          body: t('workout.new_pr_body', { exercise: exerciseName, weight: max1RM }),
-          icon: '/icons/icon-192x192.png',
-          url: '/stats',
-        });
+        setMessage(`🏆 PR: ${exerciseName} - ${max1RM.toFixed(1)} kg`);
       }
+
+      setSaveSuccess(true);
+      setMessage('✓ Entrenamiento guardado');
 
       setTimeout(() => setMessage(''), 2500);
       setTimeout(() => setSaveSuccess(false), 300);
@@ -423,14 +460,32 @@ export function WorkoutPage() {
         </select>
 
         {customInput && (
-          <input
-            type="text"
-            placeholder="Nombre del ejercicio"
-            value={customExerciseName}
-            onChange={(e) => setCustomExerciseName(e.target.value)}
-            className="w-full rounded-lg text-sm p-2.5 outline-none mt-2 transition-all"
-            style={{ backgroundColor: bgCard, border: `1px solid ${border}`, color: textPrimary }}
-          />
+          <>
+            <input
+              type="text"
+              placeholder="Nombre del ejercicio"
+              value={customExerciseName}
+              onChange={(e) => setCustomExerciseName(e.target.value)}
+              className="w-full rounded-lg text-sm p-2.5 outline-none mt-2 transition-all"
+              style={{ backgroundColor: bgCard, border: `1px solid ${border}`, color: textPrimary }}
+            />
+            <select
+              value={customMuscleGroup}
+              onChange={(e) => setCustomMuscleGroup(e.target.value)}
+              className="w-full rounded-lg text-sm p-2.5 outline-none mt-2 transition-all"
+              style={{ backgroundColor: bgCard, border: `1px solid ${border}`, color: textPrimary }}
+            >
+              <option value="Pecho">Pecho</option>
+              <option value="Espalda">Espalda</option>
+              <option value="Hombro">Hombro</option>
+              <option value="Pierna">Pierna</option>
+              <option value="Glúteo">Glúteo</option>
+              <option value="Brazos">Brazos</option>
+              <option value="Core">Core</option>
+              <option value="Cardio">Cardio</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </>
         )}
 
         {selectedExercise && (
@@ -551,8 +606,21 @@ export function WorkoutPage() {
         </div>
 
         {sets.length === 0 ? (
-          <div className="text-center py-8" style={{ color: textMuted }}>
-            {t('workout.empty_sets')}
+          <div
+            className="flex flex-col items-center justify-center py-8 gap-2"
+            style={{ color: textMuted }}
+          >
+            <div className="text-sm">{t('workout.empty_sets')}</div>
+            <button
+              onClick={addSet}
+              className="text-xs px-3 py-1.5 rounded-full"
+              style={{
+                backgroundColor: 'var(--interactive-primary)',
+                color: 'var(--interactive-primary-fg)',
+              }}
+            >
+              + Añadir serie
+            </button>
           </div>
         ) : (
           sets.map((s, i) => {
@@ -565,36 +633,63 @@ export function WorkoutPage() {
                 className="mb-2"
               >
                 <div className="flex gap-2 items-center">
+                  {showWarmupSets && (
+                    <button
+                      onClick={() => updateSet(i, { isWarmup: !s.isWarmup })}
+                      className={`w-6 h-6 rounded text-xs font-bold flex items-center justify-center transition-colors ${
+                        s.isWarmup ? 'bg-orange-500 text-white' : 'border border-dashed'
+                      }`}
+                      style={{
+                        borderColor: s.isWarmup ? undefined : textMuted,
+                        color: s.isWarmup ? undefined : textMuted,
+                      }}
+                    >
+                      W
+                    </button>
+                  )}
                   <div
-                    className="w-6 text-center text-sm font-medium"
-                    style={{ color: textSecondary }}
+                    className={`w-6 text-center text-sm font-medium rounded-full ${
+                      isNewPR ? 'bg-[var(--interactive-primary)]' : ''
+                    }`}
+                    style={{
+                      color: isNewPR ? 'var(--interactive-primary-fg)' : textSecondary,
+                      backgroundColor: isNewPR ? 'var(--interactive-primary)' : 'transparent',
+                    }}
                   >
                     {i + 1}
                   </div>
-                  <input
-                    type="number"
-                    placeholder="0"
-                    value={s.reps}
-                    onChange={(e) => {
-                      updateSet(i, { reps: e.target.value });
-                      if (setErrors[i]) {
-                        setSetErrors((prev) => {
-                          const n = { ...prev };
-                          delete n[i];
-                          return n;
-                        });
-                      }
-                    }}
-                    className={`flex-1 rounded-lg text-sm p-2 outline-none text-center ${
-                      setErrors[i] ? 'border-red-500 bg-red-500/10' : ''
-                    }`}
-                    style={{
-                      backgroundColor: setErrors[i] ? undefined : bgCard,
-                      border: setErrors[i] ? undefined : `1px solid ${border}`,
-                      color: textPrimary,
-                    }}
-                  />
+                  <div className="flex-1">
+                    <label className="text-[0.625rem] block mb-1" style={{ color: textMuted }}>
+                      {t('workout.reps')}
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="0"
+                      value={s.reps}
+                      onChange={(e) => {
+                        updateSet(i, { reps: e.target.value });
+                        if (setErrors[i]) {
+                          setSetErrors((prev) => {
+                            const n = { ...prev };
+                            delete n[i];
+                            return n;
+                          });
+                        }
+                      }}
+                      className={`w-full rounded-lg text-sm p-3 outline-none text-center ${
+                        setErrors[i] ? 'border-red-500 bg-red-500/10' : ''
+                      }`}
+                      style={{
+                        backgroundColor: setErrors[i] ? undefined : bgCard,
+                        border: setErrors[i] ? undefined : `1px solid ${border}`,
+                        color: textPrimary,
+                      }}
+                    />
+                  </div>
                   <div className="relative flex-1">
+                    <label className="text-[0.625rem] block mb-1" style={{ color: textMuted }}>
+                      kg
+                    </label>
                     <input
                       type="number"
                       placeholder="0"
@@ -674,6 +769,84 @@ export function WorkoutPage() {
             {saving ? t('workout.saving') : saveSuccess ? '✓' : t('workout.save_workout')}
           </button>
         </div>
+
+        {/* Rest Timer UI */}
+        <AnimatePresence>
+          {isResting ? (
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.8, opacity: 0, y: 20 }}
+              className="mt-4 flex flex-col items-center gap-3 p-6 rounded-2xl"
+              style={{ backgroundColor: bgCard, border: `1px solid ${border}` }}
+            >
+              <div className="text-6xl font-bold tabular-nums" style={{ color: accent }}>
+                {Math.floor(restTimer / 60)}:{String(restTimer % 60).padStart(2, '0')}
+              </div>
+              <div className="text-sm font-medium" style={{ color: textSecondary }}>
+                Descanso
+              </div>
+              <div className="flex gap-3 mt-2">
+                <button
+                  onClick={cancelRestTimer}
+                  className="px-6 py-3 rounded-full text-sm font-medium"
+                  style={{
+                    backgroundColor: 'var(--bg-surface-2)',
+                    color: textSecondary,
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => setRestTimer(restDuration)}
+                  className="px-6 py-3 rounded-full text-sm font-medium"
+                  style={{
+                    backgroundColor: 'var(--interactive-primary)',
+                    color: 'var(--interactive-primary-fg)',
+                  }}
+                >
+                  +{restDuration}s
+                </button>
+              </div>
+            </motion.div>
+          ) : (
+            <div className="mt-4 flex flex-col items-center gap-3">
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium" style={{ color: textSecondary }}>
+                  Descanso
+                </span>
+                <select
+                  value={restDuration}
+                  onChange={(e) => setRestDuration(Number(e.target.value))}
+                  className="rounded-lg text-sm p-2"
+                  style={{
+                    backgroundColor: bgCard,
+                    border: `1px solid ${border}`,
+                    color: textPrimary,
+                  }}
+                >
+                  <option value={30}>30s</option>
+                  <option value={60}>1m</option>
+                  <option value={90}>1:30</option>
+                  <option value={120}>2m</option>
+                  <option value={180}>3m</option>
+                  <option value={240}>4m</option>
+                  <option value={300}>5m</option>
+                </select>
+                <button
+                  onClick={startRestTimer}
+                  className="px-5 py-2.5 rounded-full text-sm font-semibold"
+                  style={{
+                    backgroundColor: 'var(--interactive-primary)',
+                    color: 'var(--interactive-primary-fg)',
+                  }}
+                >
+                  Iniciar
+                </button>
+              </div>
+            </div>
+          )}
+        </AnimatePresence>
 
         {message && (
           <div
