@@ -7,6 +7,7 @@ import type { WorkoutWithSets } from '@shared/lib/types';
 const SetDataSchema = z.object({
   reps: z.string().min(1, 'Min 1 rep').max(4, 'Max 9999'),
   weight: z.string().min(1, 'Min 1 kg').max(6, 'Max 999999'),
+  isWarmup: z.boolean().default(false),
 });
 
 type SetData = z.infer<typeof SetDataSchema>;
@@ -14,6 +15,7 @@ type SetData = z.infer<typeof SetDataSchema>;
 interface PersistedWorkout {
   activeExerciseId: string | null;
   customExerciseName: string;
+  customMuscleGroup: string;
   sets: SetData[];
   startedAt: string | null;
 }
@@ -21,6 +23,7 @@ interface PersistedWorkout {
 interface WorkoutState extends PersistedWorkout {
   loading: boolean;
   error: string | null;
+  customMuscleGroup: string;
   repeatWorkout: (workout: WorkoutWithSets) => void;
   setActiveExercise: (id: string | null) => void;
   setCustomExerciseName: (name: string) => void;
@@ -32,13 +35,14 @@ interface WorkoutState extends PersistedWorkout {
   clearPersistedState: () => void;
 }
 
-const initialSet: SetData = { reps: '', weight: '' };
+const initialSet: SetData = { reps: '', weight: '', isWarmup: false };
 
 export const useWorkoutStore = create<WorkoutState>()(
   persist(
     (set, get) => ({
       activeExerciseId: null,
       customExerciseName: '',
+      customMuscleGroup: 'Otro',
       sets: [],
       startedAt: null,
       loading: false,
@@ -55,6 +59,7 @@ export const useWorkoutStore = create<WorkoutState>()(
           sets: workout.sets.map((s) => ({
             reps: String(s.reps),
             weight: String(s.weight),
+            isWarmup: false,
           })),
           startedAt: new Date().toISOString(),
         });
@@ -68,13 +73,14 @@ export const useWorkoutStore = create<WorkoutState>()(
         });
       },
       setCustomExerciseName: (name: string) => set({ customExerciseName: name }),
+      setCustomMuscleGroup: (group: string) => set({ customMuscleGroup: group }),
 
       addSet: () => {
         const last = get().sets[get().sets.length - 1];
         set({
           sets: [
             ...get().sets,
-            last ? { reps: last.reps, weight: last.weight } : { ...initialSet },
+            last ? { reps: last.reps, weight: last.weight, isWarmup: false } : { ...initialSet },
           ],
         });
       },
@@ -94,14 +100,18 @@ export const useWorkoutStore = create<WorkoutState>()(
       },
 
       saveWorkout: async (userId: string) => {
-        const { activeExerciseId, customExerciseName, sets: setData } = get();
+        const { activeExerciseId, customExerciseName, customMuscleGroup, sets: setData } = get();
 
         let exerciseId = activeExerciseId;
 
         if (!activeExerciseId && customExerciseName.trim()) {
           const { data, error } = await supabase
             .from('exercises')
-            .upsert({ name: customExerciseName.trim(), user_id: userId, muscle_group: 'Otro' })
+            .upsert({
+              name: customExerciseName.trim(),
+              user_id: userId,
+              muscle_group: customMuscleGroup,
+            })
             .select()
             .single();
           if (error) return { error, success: false };
@@ -143,7 +153,13 @@ export const useWorkoutStore = create<WorkoutState>()(
           const { error: insertError } = await supabase.from('workout_sets').insert(setsToInsert);
           if (insertError) throw insertError;
 
-          set({ sets: [], activeExerciseId: null, customExerciseName: '', startedAt: null });
+          set({
+            sets: [],
+            activeExerciseId: null,
+            customExerciseName: '',
+            customMuscleGroup: 'Otro',
+            startedAt: null,
+          });
 
           return { error: null, success: true };
         } catch (err) {
@@ -154,7 +170,13 @@ export const useWorkoutStore = create<WorkoutState>()(
       },
 
       clearPersistedState: () =>
-        set({ activeExerciseId: null, customExerciseName: '', sets: [], startedAt: null }),
+        set({
+          activeExerciseId: null,
+          customExerciseName: '',
+          customMuscleGroup: 'Otro',
+          sets: [],
+          startedAt: null,
+        }),
     }),
     {
       name: 'gymlog-workout',

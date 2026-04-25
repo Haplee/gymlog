@@ -16,6 +16,8 @@ import {
   calculatePreviousWeekVolume,
   calculateSessionCountLast30Days,
   calculateVolumeChangePercent,
+  calculateAverageSessionDuration,
+  calculateTotalPRs,
 } from '../utils/kpiCalculations';
 import { buildProgressionData } from '../utils/progressionMetrics';
 import {
@@ -24,6 +26,8 @@ import {
   getDaysSinceLastWorkout,
 } from '../utils/fatigueAnalysis';
 import { toast } from 'sonner';
+import { motion } from 'framer-motion';
+import { TrendingUp, Target, Calculator } from 'lucide-react';
 
 import {
   BarChart,
@@ -34,7 +38,25 @@ import {
   ResponsiveContainer,
   LineChart,
   Line,
+  PieChart,
+  Pie,
+  Cell,
 } from 'recharts';
+
+const CHART_COLORS = [
+  '#c8ff00',
+  '#22c55e',
+  '#3b82f6',
+  '#f59e0b',
+  '#ef4444',
+  '#8b5cf6',
+  '#ec4899',
+  '#06b6d4',
+  '#84cc16',
+  '#14b8a6',
+  '#f97316',
+  '#a855f7',
+];
 
 type PeriodFilter = '4semanas' | '3meses' | '6meses' | '1año';
 
@@ -44,6 +66,66 @@ const PERIOD_LABELS: Record<PeriodFilter, string> = {
   '6meses': '6 mes',
   '1año': '1 año',
 };
+
+function calculateMuscleGroupDistribution(
+  sets: { exercise?: { muscle_group?: string | null } | null }[],
+) {
+  const distribution: Record<string, number> = {};
+
+  sets.forEach((s) => {
+    const muscleGroup = s.exercise?.muscle_group || 'Otro';
+    distribution[muscleGroup] = (distribution[muscleGroup] || 0) + 1;
+  });
+
+  return Object.entries(distribution)
+    .map(([name, value]) => ({ name, value }))
+    .sort((a, b) => b.value - a.value);
+}
+
+function MuscleGroupChart({ data }: { data: { name: string; value: number }[] }) {
+  if (data.length === 0) return null;
+
+  return (
+    <div className="h-[180px]">
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie
+            data={data}
+            cx="50%"
+            cy="50%"
+            innerRadius={45}
+            outerRadius={70}
+            paddingAngle={3}
+            dataKey="value"
+          >
+            {data.map((_, index) => (
+              <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+            ))}
+          </Pie>
+          <Tooltip
+            contentStyle={{
+              background: 'var(--bg-surface-3)',
+              border: '1px solid var(--border-default)',
+              borderRadius: 8,
+            }}
+            formatter={(value) => [`${value} series`, 'Series']}
+          />
+        </PieChart>
+      </ResponsiveContainer>
+      <div className="flex flex-wrap justify-center gap-x-3 gap-y-1.5 mt-2">
+        {data.map((item, index) => (
+          <div key={item.name} className="flex items-center gap-1.5 text-[0.6875rem]">
+            <div
+              className="w-2 h-2 rounded-full"
+              style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}
+            />
+            <span className="text-[var(--text-secondary)]">{item.name}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export function StatsPage() {
   const navigate = useNavigate();
@@ -88,8 +170,16 @@ export function StatsPage() {
   const sessionCount = useMemo(() => calculateSessionCountLast30Days(workouts), [workouts]);
   const daysSinceLast = useMemo(() => getDaysSinceLastWorkout(workouts), [workouts]);
 
+  const avgDuration = useMemo(() => calculateAverageSessionDuration(workouts), [workouts]);
+  const totalPRs = useMemo(() => calculateTotalPRs(recentSets), [recentSets]);
+
   const muscleRecovery = useMemo(() => analyzeMuscleRecovery(recentSets), [recentSets]);
   const suggestedGroup = useMemo(() => getSuggestedMuscleGroup(muscleRecovery), [muscleRecovery]);
+
+  const muscleGroupDistribution = useMemo(
+    () => calculateMuscleGroupDistribution(recentSets),
+    [recentSets],
+  );
 
   const uniqueExercises = useMemo(() => {
     return [...new Set(recentSets.map((s) => s.exercise?.name).filter(Boolean))] as string[];
@@ -163,7 +253,11 @@ export function StatsPage() {
 
   return (
     <Layout>
-      <div className="grid grid-cols-2 gap-3 mb-4">
+      <motion.div
+        className="grid grid-cols-2 gap-3 mb-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+      >
         <KPICard
           title="Racha actual"
           value={currentStreak}
@@ -184,22 +278,65 @@ export function StatsPage() {
           subtitle="sesiones (30 días)"
           icon="frequency"
         />
-        <KPICard title="Racha máxima" value={maxStreak} subtitle="semanas" icon="prs" />
-      </div>
+        <KPICard
+          title="Duración media"
+          value={`${avgDuration}m`}
+          subtitle="por sesión"
+          icon="duration"
+        />
+      </motion.div>
 
-      <div className="bg-[var(--bg-surface)] rounded-[var(--radius-lg)] p-4 mb-4">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="grid grid-cols-2 gap-3 mb-4"
+      >
+        <div className="bg-[var(--bg-surface)] rounded-[var(--radius-xl)] p-4">
+          <div className="text-[0.6875rem] font-medium text-[var(--text-tertiary)] uppercase tracking-wider mb-2">
+            Racha máxima
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[2rem] font-bold text-[var(--text-primary)] font-mono">
+              {maxStreak}
+            </span>
+            <span className="text-[0.8125rem] text-[var(--text-secondary)]">semanas</span>
+          </div>
+        </div>
+        <div className="bg-[var(--bg-surface)] rounded-[var(--radius-xl)] p-4">
+          <div className="text-[0.6875rem] font-medium text-[var(--text-tertiary)] uppercase tracking-wider mb-2">
+            Récords personales
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[2rem] font-bold text-[var(--warning)] font-mono">
+              {totalPRs}
+            </span>
+            <span className="text-[0.8125rem] text-[var(--text-secondary)]">PRs</span>
+          </div>
+        </div>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="bg-[var(--bg-surface)] rounded-[var(--radius-xl)] p-4 mb-4"
+      >
         <div className="flex items-center justify-between mb-3">
-          <div className="text-[0.8125rem] font-medium text-[var(--text-secondary)]">
-            Volumen semanal
+          <div className="flex items-center gap-2">
+            <TrendingUp className="w-4 h-4" style={{ color: 'var(--interactive-primary)' }} />
+            <span className="text-[0.8125rem] font-medium text-[var(--text-secondary)]">
+              Volumen semanal
+            </span>
           </div>
           <div className="flex gap-1">
             {periodButtons.map((p) => (
               <button
                 key={p}
                 onClick={() => setPeriodFilter(p)}
-                className={`text-[0.6875rem] px-2 py-1 rounded-[var(--radius-pill)] transition-colors ${
+                className={`text-[0.625rem] px-2 py-1 rounded-[var(--radius-pill)] transition-colors ${
                   periodFilter === p
-                    ? 'bg-[var(--interactive-primary)] text-[var(--interactive-primary-fg)]'
+                    ? 'bg-[var(--interactive-primary)] text-[var(--interactive-primary-fg)] font-medium'
                     : 'bg-[var(--bg-surface-2)] text-[var(--text-tertiary)]'
                 }`}
               >
@@ -211,6 +348,12 @@ export function StatsPage() {
         <div className="h-[120px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={weeklyVolumeData}>
+              <defs>
+                <linearGradient id="volumeGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="var(--interactive-primary)" stopOpacity={1} />
+                  <stop offset="100%" stopColor="var(--interactive-primary)" stopOpacity={0.4} />
+                </linearGradient>
+              </defs>
               <XAxis
                 dataKey="week"
                 tick={{ fill: 'var(--text-tertiary)', fontSize: 10 }}
@@ -227,15 +370,40 @@ export function StatsPage() {
                 labelStyle={{ color: 'var(--text-secondary)' }}
                 formatter={(value) => [`${Number(value).toLocaleString()} kg`, 'Volumen']}
               />
-              <Bar dataKey="vol" fill="var(--interactive-primary)" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="vol" fill="url(#volumeGradient)" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
-      </div>
+      </motion.div>
 
-      <div className="bg-[var(--bg-surface)] rounded-[var(--radius-lg)] p-4 mb-4">
-        <div className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-3">
-          Progresión
+      {muscleGroupDistribution.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="bg-[var(--bg-surface)] rounded-[var(--radius-xl)] p-4 mb-4"
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <Target className="w-4 h-4" style={{ color: 'var(--interactive-primary)' }} />
+            <span className="text-[0.8125rem] font-medium text-[var(--text-secondary)]">
+              Grupos musculares
+            </span>
+          </div>
+          <MuscleGroupChart data={muscleGroupDistribution} />
+        </motion.div>
+      )}
+
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="bg-[var(--bg-surface)] rounded-[var(--radius-xl)] p-4 mb-4"
+      >
+        <div className="flex items-center gap-2 mb-3">
+          <TrendingUp className="w-5 h-5" style={{ color: 'var(--interactive-primary)' }} />
+          <div className="text-[0.9375rem] font-semibold text-[var(--text-primary)]">
+            Progresión
+          </div>
         </div>
 
         {uniqueExercises.length > 0 && (
@@ -313,7 +481,7 @@ export function StatsPage() {
             )}
           </>
         )}
-      </div>
+      </motion.div>
 
       <FatigueAnalysis
         muscleGroups={muscleRecovery}
@@ -321,9 +489,17 @@ export function StatsPage() {
         suggestedGroup={suggestedGroup}
       />
 
-      <div className="bg-[var(--bg-surface)] rounded-[var(--radius-lg)] p-4 mt-4">
-        <div className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-3">
-          Calculadora 1RM
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6 }}
+        className="bg-[var(--bg-surface)] rounded-[var(--radius-xl)] p-4 mt-4"
+      >
+        <div className="flex items-center gap-2 mb-4">
+          <Calculator className="w-5 h-5" style={{ color: 'var(--interactive-primary)' }} />
+          <div className="text-[0.9375rem] font-semibold text-[var(--text-primary)]">
+            Calculadora 1RM
+          </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
@@ -356,7 +532,7 @@ export function StatsPage() {
         <div className="mt-4 text-center text-lg font-semibold text-[var(--interactive-primary)]">
           1RM: {rmResult ? `${rmResult.toFixed(1)} kg` : '-- kg'}
         </div>
-      </div>
+      </motion.div>
     </Layout>
   );
 }

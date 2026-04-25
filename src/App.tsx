@@ -1,7 +1,6 @@
 import { useEffect, useState, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import type { Transition } from 'framer-motion';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
 import { PermissionRequests } from '@app/components/PermissionRequests';
@@ -13,6 +12,8 @@ import { useWorkoutReminder } from '@features/routine/hooks/useWorkoutReminder';
 import { useBackgroundNotifications } from '@shared/hooks/useBackgroundNotifications';
 import { Capacitor } from '@capacitor/core';
 import { toast } from 'sonner';
+import { devLog, devError } from '@shared/lib/devtools';
+import { ErrorBoundary } from '@shared/components/ErrorBoundary';
 
 const AuthPage = lazy(() =>
   import('@features/auth/pages/AuthPage').then((m) => ({ default: m.AuthPage })),
@@ -36,7 +37,7 @@ const RoutinePage = lazy(() =>
 
 function Loading() {
   return (
-    <div className="min-h-dvh bg-[--bg-base]">
+    <div className="min-h-dvh bg-[var(--bg-base)]" style={{ backgroundColor: 'var(--bg-base)' }}>
       <PageSkeleton />
     </div>
   );
@@ -50,15 +51,15 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 const pageVariants = {
-  initial: { opacity: 0, y: 8 },
-  in: { opacity: 1, y: 0 },
-  out: { opacity: 0, y: -8 },
+  initial: { opacity: 0, x: 20 },
+  in: { opacity: 1, x: 0 },
+  out: { opacity: 0, x: -20 },
 };
 
-const pageTransition: Transition = {
-  type: 'tween',
-  ease: [0.25, 0.1, 0.25, 1],
-  duration: 0.2,
+const pageTransition = {
+  type: 'spring' as const,
+  stiffness: 250,
+  damping: 25,
 };
 
 function AnimatedRoutes() {
@@ -66,118 +67,62 @@ function AnimatedRoutes() {
   const { user } = useAuthStore();
 
   return (
-    <AnimatePresence mode="sync">
-      <Routes location={location} key={location.pathname}>
-        <Route
-          path="/login"
-          element={
-            <motion.div
-              initial="initial"
-              animate="in"
-              exit="out"
-              variants={pageVariants}
-              transition={pageTransition}
-            >
-              {user ? <Navigate to="/" replace /> : <AuthPage />}
-            </motion.div>
-          }
-        />
-        <Route
-          path="/auth/callback"
-          element={
-            <motion.div
-              initial="initial"
-              animate="in"
-              exit="out"
-              variants={pageVariants}
-              transition={pageTransition}
-            >
-              <AuthCallback />
-            </motion.div>
-          }
-        />
-        <Route
-          path="/"
-          element={
-            <motion.div
-              initial="initial"
-              animate="in"
-              exit="out"
-              variants={pageVariants}
-              transition={pageTransition}
-            >
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={location.pathname}
+        initial="initial"
+        animate="in"
+        exit="out"
+        variants={pageVariants}
+        transition={pageTransition}
+        className="w-full"
+      >
+        <Routes location={location}>
+          <Route path="/login" element={user ? <Navigate to="/" replace /> : <AuthPage />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route
+            path="/"
+            element={
               <ProtectedRoute>
                 <WorkoutPage />
               </ProtectedRoute>
-            </motion.div>
-          }
-        />
-        <Route
-          path="/routines"
-          element={
-            <motion.div
-              initial="initial"
-              animate="in"
-              exit="out"
-              variants={pageVariants}
-              transition={pageTransition}
-            >
+            }
+          />
+          <Route
+            path="/routines"
+            element={
               <ProtectedRoute>
                 <RoutinePage />
               </ProtectedRoute>
-            </motion.div>
-          }
-        />
-        <Route
-          path="/stats"
-          element={
-            <motion.div
-              initial="initial"
-              animate="in"
-              exit="out"
-              variants={pageVariants}
-              transition={pageTransition}
-            >
+            }
+          />
+          <Route
+            path="/stats"
+            element={
               <ProtectedRoute>
                 <StatsPage />
               </ProtectedRoute>
-            </motion.div>
-          }
-        />
-        <Route
-          path="/history"
-          element={
-            <motion.div
-              initial="initial"
-              animate="in"
-              exit="out"
-              variants={pageVariants}
-              transition={pageTransition}
-            >
+            }
+          />
+          <Route
+            path="/history"
+            element={
               <ProtectedRoute>
                 <HistoryPage />
               </ProtectedRoute>
-            </motion.div>
-          }
-        />
-        <Route
-          path="/settings"
-          element={
-            <motion.div
-              initial="initial"
-              animate="in"
-              exit="out"
-              variants={pageVariants}
-              transition={pageTransition}
-            >
+            }
+          />
+          <Route
+            path="/settings"
+            element={
               <ProtectedRoute>
                 <SettingsPage />
               </ProtectedRoute>
-            </motion.div>
-          }
-        />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+            }
+          />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </motion.div>
     </AnimatePresence>
   );
 }
@@ -204,7 +149,7 @@ function usePWAUpdate() {
                 }
               } catch (err) {
                 toast.error('Error al actualizar');
-                console.error('Update failed:', err);
+                devError('Update failed:', err);
               }
             },
           },
@@ -239,23 +184,25 @@ function AppRoutes() {
     if (!Capacitor.isNativePlatform()) return;
 
     CapApp.addListener('appUrlOpen', (data) => {
-      console.log('[DeepLink] Received:', data.url);
+      if (import.meta.env.DEV) devLog('[DeepLink] Received:', data.url);
       const url = new URL(data.url);
 
-      console.log(
-        '[DeepLink] protocol:',
-        url.protocol,
-        'host:',
-        url.hostname,
-        'path:',
-        url.pathname,
-        'hash:',
-        url.hash.substring(0, 50),
-      );
+      if (import.meta.env.DEV) {
+        devLog(
+          '[DeepLink] protocol:',
+          url.protocol,
+          'host:',
+          url.hostname,
+          'path:',
+          url.pathname,
+          'hash:',
+          url.hash.substring(0, 50),
+        );
+      }
 
       // 1. Manejar Shortcuts (com.franvi.gymlog://...)
       if (url.protocol === 'com.franvi.gymlog:') {
-        console.log('[DeepLink] Custom protocol, host:', url.hostname);
+        if (import.meta.env.DEV) devLog('[DeepLink] Custom protocol, host:', url.hostname);
         if (url.hostname === 'workout' && url.pathname === '/new') {
           window.location.hash = '/';
           return;
@@ -269,12 +216,13 @@ function AppRoutes() {
       // 2. Manejar Auth Callback - puede venir como hostname 'auth' o path '/auth/callback'
       const isAuthCallback = url.hostname === 'auth' || url.pathname.includes('/auth/callback');
       if (isAuthCallback && url.hash) {
-        console.log('[DeepLink] Auth callback detected, processing hash...');
+        if (import.meta.env.DEV) devLog('[DeepLink] Auth callback detected, processing hash...');
         const params = url.hash.replace('#', '?');
         const urlParams = new URLSearchParams(params);
         const accessToken = urlParams.get('access_token');
         const refreshToken = urlParams.get('refresh_token');
-        console.log('[DeepLink] accessToken:', accessToken ? 'present' : 'MISSING');
+        if (import.meta.env.DEV)
+          devLog('[DeepLink] accessToken:', accessToken ? 'present' : 'MISSING');
 
         if (accessToken && refreshToken) {
           supabase.auth
@@ -283,8 +231,8 @@ function AppRoutes() {
               refresh_token: refreshToken,
             })
             .then(({ error }) => {
-              if (!error) console.log('[Auth] Sesión establecida vía Deep Link');
-              else console.error('[Auth] Error setSession:', error);
+              if (!error && import.meta.env.DEV) devLog('[Auth] Sesión establecida vía Deep Link');
+              else if (error && import.meta.env.DEV) devError('[Auth] Error setSession:', error);
             });
         }
       }
@@ -327,9 +275,11 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <PermissionRequests />
-      <AppRoutes />
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <PermissionRequests />
+        <AppRoutes />
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }

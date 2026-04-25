@@ -1,10 +1,10 @@
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { queryClient } from '@app/queryClient';
 import { fetchWorkoutsAndSets, fetchWorkouts, fetchRecentSets } from '@shared/api/queries';
-import { GymLogLogo } from '@/shared/components/ui';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Dumbbell, BarChart3, History, Settings } from 'lucide-react';
 
 interface LayoutProps {
@@ -54,28 +54,56 @@ export function Layout({ children }: LayoutProps) {
     { path: '/settings', Icon: Settings, label: t('settings.title'), id: 'settings' },
   ];
 
+  useEffect(() => {
+    if (user?.id) {
+      preloadChunk(location.pathname);
+    }
+  }, [location.pathname, user?.id]);
+
   return (
-    <div className="min-h-screen min-h-[100dvh] flex flex-col bg-[var(--bg-base)]">
-      <header className="px-5 py-4 border-b border-[var(--border-subtle)] bg-[var(--bg-base)] sticky top-0 z-50">
+    <div
+      className="min-h-screen min-h-[100dvh] flex flex-col overflow-hidden"
+      style={{ backgroundColor: 'var(--bg-base)' }}
+    >
+      <header className="px-4 py-3 flex-shrink-0" style={{ backgroundColor: 'var(--bg-surface)' }}>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <GymLogLogo size="sm" variant="icon" />
+          <div className="flex items-center gap-2">
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center"
+              style={{ backgroundColor: 'var(--interactive-primary)' }}
+            >
+              <Dumbbell className="w-4 h-4" style={{ color: 'var(--interactive-primary-fg)' }} />
+            </div>
             <div>
-              <div className="text-[1.125rem] font-bold tracking-tight text-[var(--text-primary)] leading-none mb-0.5">
-                Gym<span className="text-[var(--interactive-primary)]">Log</span>
+              <div
+                className="text-[1rem] font-bold leading-none"
+                style={{ color: 'var(--text-primary)' }}
+              >
+                Gym<span style={{ color: 'var(--interactive-primary)' }}>Log</span>
               </div>
-              {user && (
-                <div className="text-[0.75rem] font-medium text-[var(--text-tertiary)] flex items-center gap-1.5">
-                  <span className="w-1 h-1 rounded-full bg-[var(--success)]"></span>
-                  {user.email?.split('@')[0]}
-                </div>
-              )}
             </div>
           </div>
+          {user && (
+            <div className="flex items-center gap-2">
+              <div
+                className="w-2 h-2 rounded-full animate-pulse"
+                style={{ backgroundColor: 'var(--success)' }}
+              />
+              <span className="text-[0.75rem]" style={{ color: 'var(--text-tertiary)' }}>
+                {user.email?.split('@')[0]}
+              </span>
+            </div>
+          )}
         </div>
       </header>
 
-      <nav className="flex px-4 gap-1 border-t border-[var(--border-subtle)]">
+      <nav
+        className="flex flex-shrink-0 relative z-10"
+        style={{
+          backgroundColor: 'var(--bg-surface)',
+          borderTop: '1px solid var(--border-subtle)',
+        }}
+      >
         {tabs.map((tab) => {
           const isActive = location.pathname === tab.path;
           const { Icon, label } = tab;
@@ -91,26 +119,42 @@ export function Layout({ children }: LayoutProps) {
               }}
               className="flex-1 py-3 flex flex-col items-center gap-1 relative"
             >
+              {isActive && (
+                <motion.div
+                  layoutId="activeTab"
+                  className="absolute top-0 left-0 right-0 h-0.5 rounded-full"
+                  style={{ backgroundColor: 'var(--interactive-primary)' }}
+                  transition={{ type: 'spring' as const, stiffness: 500, damping: 30 }}
+                />
+              )}
               <Icon
                 className="w-5 h-5"
-                strokeWidth={1.5}
-                style={{ color: isActive ? 'var(--text-primary)' : 'var(--text-tertiary)' }}
+                strokeWidth={isActive ? 2 : 1.5}
+                style={{ color: isActive ? 'var(--interactive-primary)' : 'var(--text-tertiary)' }}
               />
               <span
                 className="text-[0.625rem] font-medium"
-                style={{ color: isActive ? 'var(--text-primary)' : 'var(--text-tertiary)' }}
+                style={{ color: isActive ? 'var(--interactive-primary)' : 'var(--text-tertiary)' }}
               >
                 {label}
               </span>
-              {isActive && (
-                <div className="absolute bottom-1 w-1 h-1 rounded-full bg-[var(--interactive-primary)]" />
-              )}
             </Link>
           );
         })}
       </nav>
 
-      <main className="flex-1 px-4 pt-4 pb-8 overflow-y-auto">{children}</main>
+      <AnimatePresence mode="wait">
+        <motion.main
+          key={location.pathname}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -20 }}
+          transition={{ type: 'spring' as const, stiffness: 250, damping: 25 }}
+          className="flex-1 px-4 pt-4 pb-24 overflow-y-auto"
+        >
+          {children}
+        </motion.main>
+      </AnimatePresence>
     </div>
   );
 }

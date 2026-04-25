@@ -37,8 +37,18 @@ export function AuthPage() {
       return;
     }
 
+    if (password.length < 6) {
+      setError('La contraseña debe tener al menos 6 caracteres');
+      return;
+    }
+
     if (isSignUp && (!fullName || !username)) {
       setError('Completa tu nombre y usuario');
+      return;
+    }
+
+    if (isSignUp && username.length < 3) {
+      setError('El usuario debe tener al menos 3 caracteres');
       return;
     }
 
@@ -88,7 +98,7 @@ export function AuthPage() {
     setAnimKey((prev) => prev + 1);
   };
 
-  const accent = '#c8ff00';
+  const accent = 'var(--interactive-primary)';
 
   return (
     <div className="min-h-screen min-h-[100dvh] flex flex-col items-center justify-center p-6 bg-[var(--bg-base)]">
@@ -205,7 +215,10 @@ export function AuthPage() {
                 : t('auth.login')
           }
           className="w-full py-4 rounded-[var(--radius-lg)] text-base font-bold transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
-          style={{ backgroundColor: isBlocked ? '#444' : accent, color: '#0a0a0c' }}
+          style={{
+            backgroundColor: isBlocked ? 'var(--text-tertiary)' : accent,
+            color: 'var(--interactive-primary-fg)',
+          }}
         >
           {loading ? (
             <span className="inline-flex items-center gap-2">

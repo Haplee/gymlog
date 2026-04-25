@@ -26,7 +26,7 @@ export async function requestPermission(): Promise<boolean> {
     // Comprobamos estado actual
     const status = await LocalNotifications.checkPermissions();
     console.log('[Notifications] Estado actual:', status);
-    
+
     if (status.display === 'granted') {
       return true;
     }
@@ -34,7 +34,7 @@ export async function requestPermission(): Promise<boolean> {
     // Solicitamos
     const result = await LocalNotifications.requestPermissions();
     console.log('[Notifications] Resultado solicitud:', result);
-    
+
     if (result.display === 'granted') {
       toast.success('Notificaciones habilitadas correctamente');
       return true;
@@ -55,7 +55,7 @@ export const canNotify = (): boolean => {
     if (!('Notification' in window)) return false;
     return Notification.permission === 'granted';
   }
-  return true; 
+  return true;
 };
 
 export async function notify(
@@ -101,6 +101,68 @@ export async function notify(
     });
   } catch (e) {
     console.error('[Notifications] Error scheduling:', e);
+  }
+}
+
+export async function notifyTimerAlarm(seconds: number): Promise<void> {
+  if (isNotificationsDisabled()) return;
+
+  if (!isNative()) {
+    if (!canNotify()) return;
+    try {
+      if ('Notification' in window && Notification.permission === 'granted') {
+        const registration = await navigator.serviceWorker?.ready;
+        if (registration) {
+          await registration.showNotification('GymLog - Descanso terminado', {
+            body: `Han pasado ${seconds} segundos de descanso`,
+            tag: 'timer-alarm',
+            requireInteraction: true,
+          });
+        }
+      }
+    } catch {
+      // falla silenciosamente
+    }
+    return;
+  }
+
+  try {
+    await LocalNotifications.schedule({
+      notifications: [
+        {
+          title: 'GymLog - Descanso terminado',
+          body: `Han pasado ${seconds} segundos`,
+          id: 999999,
+          schedule: { at: new Date(Date.now() + 100) },
+        },
+      ],
+    });
+  } catch (e) {
+    console.error('[Notifications] Timer alarm error:', e);
+  }
+}
+
+export async function playAlarmSound(): Promise<void> {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+    const ctx = new AudioContextClass();
+
+    for (let i = 0; i < 3; i++) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = i === 1 ? 880 : 660;
+      osc.type = 'square';
+      gain.gain.setValueAtTime(0.8, ctx.currentTime + i * 0.3);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.3 + 0.25);
+      osc.start(ctx.currentTime + i * 0.3);
+      osc.stop(ctx.currentTime + i * 0.3 + 0.25);
+    }
+  } catch (e) {
+    console.error('[Alarm] Sound error:', e);
   }
 }
 

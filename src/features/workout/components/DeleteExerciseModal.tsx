@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react';
-import { AlertTriangle, Loader2 } from 'lucide-react';
+import { Loader2, Trash2 } from 'lucide-react';
 import { Modal } from '@shared/components/ui/Modal';
 import { Button } from '@shared/components/ui';
 
@@ -39,26 +39,30 @@ export function DeleteExerciseModal({
       onClose={onClose}
       title="Eliminar ejercicio"
       titleId="delete-exercise-modal-title"
+      icon={<Trash2 className="w-5 h-5" style={{ color: 'var(--error)' }} />}
+      variant="danger"
     >
-      <div className="flex flex-col items-center text-center py-2" onKeyDown={handleKeyDown}>
-        <div className="w-12 h-12 rounded-full bg-[--color-error]/10 flex items-center justify-center mb-4">
-          <AlertTriangle className="w-6 h-6 text-[--color-error]" />
-        </div>
-
-        <p className="text-[--text-primary] mb-2">
-          ¿Estás seguro de que quieres eliminar{' '}
-          <strong className="text-[--text-primary]">{exerciseName}</strong> del entrenamiento?
+      <div onKeyDown={handleKeyDown}>
+        <p className="text-[var(--text-secondary)] mb-2">
+          ¿Eliminar <strong className="text-[var(--text-primary)]">{exerciseName}</strong> del
+          entrenamiento?
         </p>
 
-        <p className="text-sm text-[--text-muted] mb-6">
-          Esta acción eliminará todas las series asociadas a este ejercicio.
+        <p className="text-sm text-[var(--text-tertiary)] mb-6">
+          Se eliminarán todas las series asociadas.
         </p>
 
-        <div className="flex gap-3 w-full">
-          <Button variant="ghost" onClick={onClose} disabled={isDeleting} className="flex-1">
+        <div className="flex gap-3">
+          <Button variant="secondary" onClick={onClose} disabled={isDeleting} className="flex-1">
             Cancelar
           </Button>
-          <Button variant="danger" onClick={onConfirm} disabled={isDeleting} className="flex-1">
+          <Button
+            variant="primary"
+            onClick={onConfirm}
+            disabled={isDeleting}
+            className="flex-1"
+            style={{ backgroundColor: 'var(--error)' }}
+          >
             {isDeleting ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />

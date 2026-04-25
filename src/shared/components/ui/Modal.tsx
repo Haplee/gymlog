@@ -1,43 +1,38 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { createPortal } from 'react-dom';
+import { X } from 'lucide-react';
 
 interface ModalProps {
   open: boolean;
   onClose: () => void;
   title?: string;
-  /** ID del elemento que actúa como label del modal (aria-labelledby) */
   titleId?: string;
   children: ReactNode;
-  /** Ancho máximo del panel. Default: max-w-md */
-  maxWidth?: string;
+  showCloseButton?: boolean;
+  icon?: ReactNode;
+  variant?: 'default' | 'danger';
 }
 
-/**
- * Modal accesible con backdrop blur, animación de entrada/salida,
- * focus trap y cierre con Escape.
- *
- * @example
- * <Modal open={isOpen} onClose={() => setOpen(false)} title="Confirmar">
- *   <p>¿Estás seguro?</p>
- * </Modal>
- */
 export function Modal({
   open,
   onClose,
   title,
   titleId = 'modal-title',
   children,
-  maxWidth = 'max-w-md',
+  showCloseButton = true,
+  icon,
+  variant = 'default',
 }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
 
-  // Guardar foco anterior + focus trap
+  const accentColor = variant === 'danger' ? 'var(--error)' : 'var(--interactive-primary)';
+  const iconBg = variant === 'danger' ? 'rgba(255,69,58,0.15)' : 'rgba(200,255,0,0.15)';
+
   useEffect(() => {
     if (open) {
       previouslyFocused.current = document.activeElement as HTMLElement;
-      // Esperar al siguiente frame para que el portal esté en el DOM
       const frame = requestAnimationFrame(() => {
         panelRef.current?.focus();
       });
@@ -47,7 +42,6 @@ export function Modal({
     }
   }, [open]);
 
-  // Cerrar con Escape
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && open) onClose();
@@ -56,7 +50,6 @@ export function Modal({
     return () => document.removeEventListener('keydown', handler);
   }, [open, onClose]);
 
-  // Bloquear scroll del body
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden';
@@ -76,65 +69,71 @@ export function Modal({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-[--z-modal] flex items-end sm:items-center justify-center p-4"
-          style={{ backgroundColor: 'var(--bg-overlay)' }}
+          className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) onClose();
           }}
-          aria-hidden="true"
         >
-          {/* Backdrop blur */}
-          <div
-            className="absolute inset-0 backdrop-blur-sm"
-            style={{ backgroundColor: 'var(--bg-overlay)' }}
-          />
-
           <motion.div
             ref={panelRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby={title ? titleId : undefined}
             tabIndex={-1}
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className={[
-              'relative z-10 w-full rounded-[--radius-2xl]',
-              'bg-[--bg-surface] border border-[--border-default]',
-              'shadow-[--shadow-lg] p-6 focus:outline-none',
-              maxWidth,
-            ].join(' ')}
-            aria-hidden="false"
+            className="relative z-10 w-full rounded-[var(--radius-xl)] overflow-hidden max-w-md"
+            style={{ backgroundColor: 'var(--bg-surface)' }}
           >
-            {title && (
-              <h2
-                id={titleId}
-                className="text-[--text-xl] font-semibold text-[--text-primary] mb-4"
-              >
-                {title}
-              </h2>
-            )}
+            <div
+              className="absolute top-0 left-0 right-0 h-1"
+              style={{ backgroundColor: accentColor }}
+            />
 
-            {/* Botón cerrar */}
-            <button
-              onClick={onClose}
-              aria-label="Cerrar modal"
-              className="absolute top-4 right-4 p-1.5 rounded-[--radius-md] text-[--text-muted] hover:bg-[--bg-elevated] hover:text-[--text-primary] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--color-primary]"
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M18 6 6 18M6 6l12 12" />
-              </svg>
-            </button>
+            <div className="p-5 pt-6">
+              {(title || icon || showCloseButton) && (
+                <div className="flex items-center gap-3 mb-4">
+                  {icon && (
+                    <div
+                      className="w-10 h-10 rounded-[var(--radius-lg)] flex items-center justify-center flex-shrink-0"
+                      style={{ backgroundColor: iconBg }}
+                    >
+                      {icon}
+                    </div>
+                  )}
+                  {title && (
+                    <h2
+                      id={titleId}
+                      className="text-[1rem] font-semibold text-[var(--text-primary)] flex-1"
+                    >
+                      {title}
+                    </h2>
+                  )}
+                  {showCloseButton && !title && (
+                    <button
+                      onClick={onClose}
+                      aria-label="Cerrar"
+                      className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center text-[var(--text-tertiary)] hover:bg-[var(--bg-surface-2)] hover:text-[var(--text-primary)] transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                  {showCloseButton && title && (
+                    <button
+                      onClick={onClose}
+                      aria-label="Cerrar"
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-[var(--text-tertiary)] hover:bg-[var(--bg-surface-2)] hover:text-[var(--text-primary)] transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              )}
 
-            {children}
+              {children}
+            </div>
           </motion.div>
         </motion.div>
       )}
