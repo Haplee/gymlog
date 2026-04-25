@@ -7,6 +7,12 @@ import type {
   ExerciseNote,
 } from '@shared/lib/types';
 
+/**
+ * Obtiene workouts con sus sets asociados para un usuario
+ * @param userId - ID del usuario
+ * @param limit - Límite de workouts (default 200)
+ * @returns Objeto con workouts y sets
+ */
 export const fetchWorkoutsAndSets = async (userId: string, limit = 200) => {
   try {
     const { data: workoutIds, error } = await supabase

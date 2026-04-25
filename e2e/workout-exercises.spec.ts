@@ -27,4 +27,20 @@ test.describe('Workout Page', () => {
     const url = page.url();
     expect(url).toMatch(/login|workout|\/$/);
   });
+
+  test('stats page loads', async ({ page }) => {
+    await page.goto('/stats');
+    await page.waitForLoadState('networkidle');
+
+    const url = page.url();
+    expect(url).toMatch(/login|stats|\/$/);
+  });
+
+  test('history page loads', async ({ page }) => {
+    await page.goto('/history');
+    await page.waitForLoadState('networkidle');
+
+    const url = page.url();
+    expect(url).toMatch(/login|history|\/$/);
+  });
 });

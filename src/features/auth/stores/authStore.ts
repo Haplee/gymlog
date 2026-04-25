@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { User, Subscription } from '@supabase/supabase-js';
 import { supabase, SB_URL, SB_KEY } from '@shared/lib/supabase';
+import { getAuthErrorMessage } from '@shared/lib/authErrors';
 import { Capacitor } from '@capacitor/core';
 import { Browser } from '@capacitor/browser';
 import { queryClient } from '@app/queryClient';
@@ -68,7 +69,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       console.error('[Auth] signIn error:', error.message, error.name);
-      return { error };
+      return { error: new Error(getAuthErrorMessage(error)) };
     }
     console.log('[Auth] signIn success, user:', data.user?.id);
     set({ user: data.user });
