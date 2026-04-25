@@ -580,7 +580,12 @@ export function calcular1RM(weight: number, reps: number): number;
 - [x] **Implementar paginación cursor** (`fetchWorkoutsPaginated`)
 - [x] **Añadir validación Zod** en workoutStore
 - [x] **Crear tests para workoutStore**
-- [x] **Commit y push** de cambios
+- [x] **Eliminar schema.sql duplicado** (`src/db/schema.sql`)
+- [x] **Renombrar migraciones con timestamp** (`v2.sql` → `20240418_v2_complete.sql`)
+- [x] **Añadir getAuthErrorMessage** para errores user-friendly
+- [x] **Añadir JSDoc** a funciones públicas
+- [x] **Ampliar E2E tests** (stats, history pages)
+- [x] **Commit y push** de todos los cambios
 
 ### Pendiente (requieren acceso/token):
 
