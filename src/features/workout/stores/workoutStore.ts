@@ -1,12 +1,15 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { z } from 'zod';
 import { supabase } from '@shared/lib/supabase';
 import type { WorkoutWithSets } from '@shared/lib/types';
 
-interface SetData {
-  reps: string;
-  weight: string;
-}
+const SetDataSchema = z.object({
+  reps: z.string().min(1, 'Min 1 rep').max(4, 'Max 9999'),
+  weight: z.string().min(1, 'Min 1 kg').max(6, 'Max 999999'),
+});
+
+type SetData = z.infer<typeof SetDataSchema>;
 
 interface PersistedWorkout {
   activeExerciseId: string | null;
@@ -107,8 +110,12 @@ export const useWorkoutStore = create<WorkoutState>()(
 
         if (!exerciseId) return { error: new Error('Selecciona un ejercicio'), success: false };
 
-        const validSets = setData.filter((s) => s.reps && s.weight);
-        if (!validSets.length) return { error: new Error('Añade reps y kg'), success: false };
+        const validSets = setData.filter((s) => {
+          const result = SetDataSchema.safeParse(s);
+          return result.success && Number(s.reps) > 0 && Number(s.weight) > 0;
+        });
+        if (!validSets.length)
+          return { error: new Error('Añade reps y kg válidas'), success: false };
 
         try {
           const { data: wo, error: woError } = await supabase

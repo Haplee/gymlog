@@ -52,6 +52,59 @@ export const fetchWorkoutsAndSets = async (userId: string, limit = 200) => {
   }
 };
 
+export interface PaginatedWorkoutsResponse {
+  workouts: WorkoutWithSets[];
+  nextCursor: string | null;
+}
+
+export const fetchWorkoutsPaginated = async (
+  userId: string,
+  cursor: string | null = null,
+  limit = 20,
+): Promise<PaginatedWorkoutsResponse> => {
+  let query = supabase
+    .from('workouts')
+    .select('*')
+    .eq('user_id', userId)
+    .order('started_at', { ascending: false })
+    .limit(limit);
+
+  if (cursor) {
+    query = query.lt('started_at', cursor);
+  }
+
+  const { data: workouts, error } = await query;
+
+  if (error) throw error;
+  if (!workouts || workouts.length === 0) return { workouts: [], nextCursor: null };
+
+  const ids = workouts.map((w) => w.id);
+
+  const { data: allSets, error: setsError } = await supabase
+    .from('workout_sets')
+    .select(
+      'id, weight, reps, set_num, exercise_id, workout_id, created_at, exercise:exercises(name)',
+    )
+    .in('workout_id', ids);
+
+  if (setsError) throw setsError;
+
+  const mappedWorkouts = workouts.map((wo) => {
+    const sets = (allSets || []).filter((s) => s.workout_id === wo.id);
+    return {
+      ...wo,
+      started_at: wo.started_at,
+      ended_at: wo.finished_at,
+      sets: sets as unknown as WorkoutSetWithDetails[],
+    } as unknown as WorkoutWithSets;
+  });
+
+  const nextCursor =
+    workouts.length === limit ? (workouts[workouts.length - 1]?.started_at ?? null) : null;
+
+  return { workouts: mappedWorkouts, nextCursor };
+};
+
 export const fetchWorkouts = async (userId: string, limit = 20): Promise<WorkoutWithSets[]> => {
   const { data: workouts, error } = await supabase
     .from('workouts')
