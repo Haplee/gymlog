@@ -40,24 +40,24 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
       VitePWA({
         registerType: 'prompt',
-        includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+        includeAssets: ['favicon.ico', 'apple-touch-icon.webp', 'masked-icon.svg'],
         manifest: {
-          name: 'GymLog PWA',
+          name: 'GymLog',
           short_name: 'GymLog',
-          description: 'PWA de entrenamiento de gimnasio',
+          description: 'Tu diario de entrenamiento de fuerza',
           theme_color: '#0a0a0c',
           background_color: '#0a0a0c',
           display: 'standalone',
           icons: [
             {
-              src: 'pwa-192x192.png',
+              src: 'icon-192x192.webp',
               sizes: '192x192',
-              type: 'image/png',
+              type: 'image/webp',
             },
             {
-              src: 'pwa-512x512.png',
+              src: 'icon-512x512.webp',
               sizes: '512x512',
-              type: 'image/png',
+              type: 'image/webp',
               purpose: 'any maskable',
             },
           ],
