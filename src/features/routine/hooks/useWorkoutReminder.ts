@@ -38,7 +38,7 @@ export function useWorkoutReminder() {
       const dayEn = getDayName();
       const dayEs = dayLabels[dayEn];
 
-      notify('💪 Tienes entrenamiento hoy', {
+      notify('Tienes entrenamiento hoy', {
         body: `Tu rutina de ${dayEs} está lista. ¿Empezamos?`,
         icon: '/icons/icon-192x192.png',
         url: '/workout',

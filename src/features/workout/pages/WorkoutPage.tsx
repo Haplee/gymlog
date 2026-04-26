@@ -303,7 +303,7 @@ export function WorkoutPage() {
         void notificationHaptic(NotificationType.Success);
 
         const exerciseName = selectedExercise?.name || customExerciseName || 'Ejercicio';
-        setMessage(`🏆 PR: ${exerciseName} - ${max1RM.toFixed(1)} kg`);
+        setMessage(`Nuevo PR: ${exerciseName} - ${max1RM.toFixed(1)} kg`);
       }
 
       setSaveSuccess(true);

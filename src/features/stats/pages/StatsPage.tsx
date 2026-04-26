@@ -99,56 +99,60 @@ function MuscleGroupChart({ data }: { data: { name: string; value: number }[] })
   const total = data.reduce((sum, d) => sum + d.value, 0);
 
   return (
-    <div className="h-[220px]">
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
-          <Pie
-            data={data}
-            cx="50%"
-            cy="50%"
-            innerRadius={50}
-            outerRadius={80}
-            paddingAngle={2}
-            dataKey="value"
-          >
-            {data.map((_, index) => (
-              <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-            ))}
-          </Pie>
-          <Tooltip
-            contentStyle={{
-              background: 'var(--bg-surface-3)',
-              border: '1px solid var(--border-default)',
-              borderRadius: 8,
-              fontSize: 12,
-            }}
-            formatter={(value) => {
-              const numVal = typeof value === 'number' ? value : Number(value);
-              return [
-                !isNaN(numVal) && numVal > 0
-                  ? `${(numVal / 1000).toFixed(1)}t (${Math.round((numVal / total) * 100)}%)`
-                  : `${value}`,
-                'Volumen',
-              ];
-            }}
-          />
-        </PieChart>
-      </ResponsiveContainer>
-      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-2">
-        {data.slice(0, 6).map((item, index) => (
-          <div key={item.name} className="flex items-center gap-1.5">
-            <div
-              className="w-2 h-2 rounded-full flex-shrink-0"
-              style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}
+    <div>
+      <div className="h-[160px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={data}
+              cx="50%"
+              cy="50%"
+              innerRadius={40}
+              outerRadius={65}
+              paddingAngle={2}
+              dataKey="value"
+            >
+              {data.map((_, index) => (
+                <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip
+              contentStyle={{
+                background: 'var(--bg-surface-3)',
+                border: '1px solid var(--border-default)',
+                borderRadius: 8,
+                fontSize: 12,
+              }}
+              formatter={(value) => {
+                const numVal = typeof value === 'number' ? value : Number(value);
+                return [
+                  !isNaN(numVal) && numVal > 0
+                    ? `${(numVal / 1000).toFixed(1)}t (${Math.round((numVal / total) * 100)}%)`
+                    : `${value}`,
+                  'Volumen',
+                ];
+              }}
             />
-            <span className="text-[0.6875rem] text-[var(--text-secondary)] truncate">
-              {item.name}
-            </span>
-            <span className="text-[0.625rem] text-[var(--text-tertiary)] ml-auto">
-              {(item.value / 1000).toFixed(1)}t
-            </span>
-          </div>
-        ))}
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+      <div className="mt-3 max-h-[120px] overflow-y-auto">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2 pr-2">
+          {data.map((item, index) => (
+            <div key={item.name} className="flex items-center gap-2">
+              <div
+                className="w-3 h-3 rounded-full flex-shrink-0"
+                style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}
+              />
+              <span className="text-[0.75rem] text-[var(--text-secondary)] truncate flex-1">
+                {item.name}
+              </span>
+              <span className="text-[0.6875rem] text-[var(--text-tertiary)]">
+                {(item.value / 1000).toFixed(1)}t
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
