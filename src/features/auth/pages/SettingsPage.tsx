@@ -182,7 +182,7 @@ export function SettingsPage() {
       <div className="space-y-3 pb-20">
         {!isNative() && (
           <a
-            href="/GymLog-v2.7.0.apk"
+            href="/GymLog-v2.8.0.apk"
             download
             className="block rounded-2xl p-4 scale-in border text-center"
             style={{
@@ -192,7 +192,7 @@ export function SettingsPage() {
             }}
           >
             <div className="text-[0.95rem] font-semibold">Descargar App Android</div>
-            <div className="text-[0.75rem] mt-1 opacity-70">GymLog v2.7.0</div>
+            <div className="text-[0.75rem] mt-1 opacity-70">GymLog v2.8</div>
           </a>
         )}
 
@@ -387,7 +387,7 @@ export function SettingsPage() {
         >
           <GymLogLogo size="lg" variant="stacked" className="mb-4" />
           <div className="text-[0.8rem] font-bold text-[var(--interactive-primary)] mb-4 uppercase tracking-[0.2em] bg-[var(--interactive-primary)]/10 px-3 py-1 rounded-full">
-            Version 2.7
+            Version 2.8
           </div>
           <div className="text-[0.85rem] leading-relaxed text-[var(--text-tertiary)] max-w-[240px]">
             Tu compañero definitivo para el seguimiento de entrenamientos de fuerza.
