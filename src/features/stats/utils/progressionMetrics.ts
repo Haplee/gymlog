@@ -70,21 +70,3 @@ export function buildProgressionData(
 
   return result;
 }
-
-export function linearRegression(points: { x: number; y: number }[]): {
-  slope: number;
-  intercept: number;
-} {
-  const n = points.length;
-  if (n < 2) return { slope: 0, intercept: 0 };
-
-  const sumX = points.reduce((sum, p) => sum + p.x, 0);
-  const sumY = points.reduce((sum, p) => sum + p.y, 0);
-  const sumXY = points.reduce((sum, p) => sum + p.x * p.y, 0);
-  const sumX2 = points.reduce((sum, p) => sum + p.x * p.x, 0);
-
-  const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
-  const intercept = (sumY - slope * sumX) / n;
-
-  return { slope, intercept };
-}

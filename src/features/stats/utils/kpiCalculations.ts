@@ -4,21 +4,27 @@ export function calculateCurrentStreak(workouts: WorkoutWithSets[]): number {
   if (workouts.length === 0) return 0;
 
   const dates = [
-    ...new Set(workouts.map((w) => new Date(w.started_at ?? '').toISOString().split('T')[0])),
-  ]
-    .sort()
-    .reverse();
+    ...new Set(
+      workouts.map((w) => {
+        const d = new Date(w.started_at ?? '');
+        return d.toISOString().split('T')[0];
+      }),
+    ),
+  ].sort();
 
   const today = new Date().toISOString().split('T')[0];
-  let streak = 0;
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().split('T')[0];
 
-  for (let i = 0; i < dates.length; i++) {
-    const diff =
-      i === 0
-        ? 0
-        : (new Date(dates[i - 1]).getTime() - new Date(dates[i]).getTime()) / (1000 * 60 * 60 * 24);
+  if (!dates.includes(today) && !dates.includes(yesterdayStr)) return 0;
 
-    if (diff === 1 || (i === 0 && dates[0] === today)) {
+  let streak = 1;
+  for (let i = dates.length - 1; i > 0; i--) {
+    const current = new Date(dates[i]).getTime();
+    const prev = new Date(dates[i - 1]).getTime();
+    const diffDays = (current - prev) / (1000 * 60 * 60 * 24);
+    if (diffDays === 1) {
       streak++;
     } else {
       break;
@@ -32,35 +38,40 @@ export function calculateMaxStreak(workouts: WorkoutWithSets[]): number {
   if (workouts.length === 0) return 0;
 
   const dates = [
-    ...new Set(workouts.map((w) => new Date(w.started_at ?? '').toISOString().split('T')[0])),
-  ]
-    .sort()
-    .reverse();
+    ...new Set(
+      workouts.map((w) => {
+        const d = new Date(w.started_at ?? '');
+        return d.toISOString().split('T')[0];
+      }),
+    ),
+  ].sort();
 
-  let maxStreak = 0;
-  let temp = 1;
+  let maxStreak = 1;
+  let tempStreak = 1;
 
   for (let i = 1; i < dates.length; i++) {
     const diff =
-      (new Date(dates[i - 1]).getTime() - new Date(dates[i]).getTime()) / (1000 * 60 * 60 * 24);
+      (new Date(dates[i]).getTime() - new Date(dates[i - 1]).getTime()) / (1000 * 60 * 60 * 24);
 
     if (diff === 1) {
-      temp++;
+      tempStreak++;
     } else {
-      maxStreak = Math.max(maxStreak, temp);
-      temp = 1;
+      maxStreak = Math.max(maxStreak, tempStreak);
+      tempStreak = 1;
     }
   }
 
-  return Math.max(maxStreak, temp);
+  return Math.max(maxStreak, tempStreak);
 }
 
 export function calculateWeeklyVolume(
   sets: { weight: number; reps: number; workout?: { started_at: string | null } }[],
 ): number {
   const now = new Date();
+  const dayOfWeek = now.getDay();
+  const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
   const weekStart = new Date(now);
-  weekStart.setDate(now.getDate() - now.getDay());
+  weekStart.setDate(now.getDate() - diffToMonday);
   weekStart.setHours(0, 0, 0, 0);
 
   return sets
@@ -72,8 +83,10 @@ export function calculatePreviousWeekVolume(
   sets: { weight: number; reps: number; workout?: { started_at: string | null } }[],
 ): number {
   const now = new Date();
+  const dayOfWeek = now.getDay();
+  const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
   const thisWeekStart = new Date(now);
-  thisWeekStart.setDate(now.getDate() - now.getDay());
+  thisWeekStart.setDate(now.getDate() - diffToMonday);
   thisWeekStart.setHours(0, 0, 0, 0);
 
   const lastWeekStart = new Date(thisWeekStart);
@@ -81,6 +94,7 @@ export function calculatePreviousWeekVolume(
 
   const lastWeekEnd = new Date(thisWeekStart);
   lastWeekEnd.setDate(lastWeekEnd.getDate() - 1);
+  lastWeekEnd.setHours(23, 59, 59, 999);
 
   return sets
     .filter((s) => {
@@ -121,6 +135,24 @@ export function calculateAverageSessionDuration(workouts: WorkoutWithSets[]): nu
   return Math.round(durations.reduce((a, b) => a + b, 0) / durations.length);
 }
 
-export function calculateTotalPRs(sets: { weight: number; is_pr?: boolean | null }[]): number {
+export function calculateTotalPRs(
+  sets: { weight: number; reps: number; is_pr?: boolean | null }[],
+): number {
   return sets.filter((s) => s.is_pr === true).length;
+}
+
+export function calculateTotalPRsFromRecords(
+  prs: { exercise_id: string; achieved_at: string | null }[],
+): number {
+  if (!prs || prs.length === 0) return 0;
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  return prs.filter((pr) => {
+    if (!pr.achieved_at) return false;
+    return new Date(pr.achieved_at) >= thirtyDaysAgo;
+  }).length;
+}
+
+export function calculateAllTimePRsCount(prs: { exercise_id: string }[]): number {
+  return prs?.length ?? 0;
 }
