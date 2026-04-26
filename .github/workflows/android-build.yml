@@ -15,7 +15,7 @@ jobs:
           cache: npm
       - uses: actions/setup-java@v4
         with:
-          distribution: temurin
+          distribution: 'zulu'
           java-version: 21
       - name: Install deps
         run: npm ci
