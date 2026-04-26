@@ -17,13 +17,22 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
-    buildTypes {
-        release {
-            minifyEnabled true
-            shrinkResources true
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-        }
+signingConfigs {
+    release {
+        storeFile file('gymlog.keystore')
+        storePassword 'franvi1234'
+        keyAlias 'gymlog'
+        keyPassword 'franvi1234'
     }
+}
+buildTypes {
+    release {
+        signingConfig signingConfigs.release
+        minifyEnabled true
+        shrinkResources true
+        proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+    }
+}
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_21
@@ -32,7 +41,7 @@ android {
 
     applicationVariants.all { variant ->
         variant.outputs.all {
-            outputFileName = "GymLog-v2.5.apk"
+            outputFileName = "GymLog-v${versionName}.apk"
         }
     }
 }
