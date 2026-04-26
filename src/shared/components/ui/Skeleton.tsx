@@ -1,4 +1,5 @@
 import { GymLogLogo } from './GymLogLogo';
+import { memo } from 'react';
 
 interface SkeletonProps {
   className?: string;
@@ -6,7 +7,7 @@ interface SkeletonProps {
   card?: boolean;
 }
 
-export function Skeleton({ className = '', lines, card }: SkeletonProps) {
+const SkeletonComponent = ({ className = '', lines, card }: SkeletonProps) => {
   if (card) {
     return (
       <div
@@ -37,9 +38,11 @@ export function Skeleton({ className = '', lines, card }: SkeletonProps) {
   }
 
   return <div className={`skeleton rounded-[var(--radius-md)] ${className}`} />;
-}
+};
 
-export function ExerciseListSkeleton() {
+export const Skeleton = memo(SkeletonComponent);
+
+export const ExerciseListSkeleton = memo(function ExerciseListSkeleton() {
   return (
     <div className="space-y-2 p-4">
       {Array.from({ length: 6 }, (_, i) => (
@@ -51,9 +54,9 @@ export function ExerciseListSkeleton() {
       ))}
     </div>
   );
-}
+});
 
-export function ChartSkeleton() {
+export const ChartSkeleton = memo(function ChartSkeleton() {
   const heights = [45, 70, 55, 85, 40, 65, 50];
   return (
     <div className="space-y-3 p-4">
@@ -69,13 +72,13 @@ export function ChartSkeleton() {
       <div className="skeleton h-3 w-full rounded-[var(--radius-md)]" />
     </div>
   );
-}
+});
 
-export function KPICardSkeleton() {
+export const KPICardSkeleton = memo(function KPICardSkeleton() {
   return <div className="skeleton h-24 rounded-[var(--radius-xl)]" />;
-}
+});
 
-export function HistoryListSkeleton() {
+export const HistoryListSkeleton = memo(function HistoryListSkeleton() {
   return (
     <div className="space-y-2">
       {Array.from({ length: 5 }, (_, i) => (
@@ -89,9 +92,9 @@ export function HistoryListSkeleton() {
       ))}
     </div>
   );
-}
+});
 
-export function PageSkeleton() {
+export const PageSkeleton = memo(function PageSkeleton() {
   return (
     <div className="p-4 space-y-4 min-h-[80vh] flex flex-col">
       <div className="flex flex-col items-center justify-center flex-1 py-10 opacity-40">
@@ -104,4 +107,4 @@ export function PageSkeleton() {
       </div>
     </div>
   );
-}
+});
