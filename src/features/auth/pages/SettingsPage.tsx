@@ -180,6 +180,22 @@ export function SettingsPage() {
       </div>
 
       <div className="space-y-3 pb-20">
+        {!isNative() && (
+          <a
+            href="/GymLog-v2.7.0.apk"
+            download
+            className="block rounded-2xl p-4 scale-in border text-center"
+            style={{
+              backgroundColor: bgCard,
+              borderColor: 'var(--color-primary)',
+              color: 'var(--color-primary)',
+            }}
+          >
+            <div className="text-[0.95rem] font-semibold">Descargar App Android</div>
+            <div className="text-[0.75rem] mt-1 opacity-70">GymLog v2.7.0</div>
+          </a>
+        )}
+
         {/* Idioma */}
         <div
           className="rounded-2xl p-4 scale-in"
