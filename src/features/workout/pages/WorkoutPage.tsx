@@ -6,10 +6,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useWorkoutStore } from '@features/workout/stores/workoutStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
+import { useWeight } from '@shared/hooks/useWeight';
+import { calcular1RM } from '@shared/lib/brzycki';
 import { notifyTimerAlarm, playAlarmSound } from '@shared/lib/notifications';
 import { useRoutineStore } from '@features/routine/stores/routineStore';
 import { Layout } from '@app/components/Layout';
-import { calcular1RM } from '@shared/lib/brzycki';
 import {
   fetchExercises,
   fetchPersonalRecords,
@@ -87,6 +88,7 @@ export function WorkoutPage() {
 
   const { sound, showWarmupSets } = useSettingsStore();
   const { getActiveRoutine, getTodayRoutine, checkAndBackup } = useRoutineStore();
+  const { unit: weightUnit, convert, convertFromDisplay: convertToKg } = useWeight();
 
   const [message, setMessage] = useState('');
   const [customInput, setCustomInput] = useState(false);
@@ -303,7 +305,7 @@ export function WorkoutPage() {
         void notificationHaptic(NotificationType.Success);
 
         const exerciseName = selectedExercise?.name || customExerciseName || 'Ejercicio';
-        setMessage(`Nuevo PR: ${exerciseName} - ${max1RM.toFixed(1)} kg`);
+        setMessage(`Nuevo PR: ${exerciseName} - ${convert(max1RM).toFixed(1)} ${weightUnit}`);
       }
 
       setSaveSuccess(true);
@@ -579,7 +581,8 @@ export function WorkoutPage() {
 
         {currentPR && (
           <div className="mt-3 text-[0.85rem]" style={{ color: accent }}>
-            {t('workout.recent_pr')}: {currentPR.weight} kg × {currentPR.reps} reps
+            {t('workout.recent_pr')}: {convert(Number(currentPR.weight)).toFixed(1)} {weightUnit} ×{' '}
+            {currentPR.reps} reps
           </div>
         )}
       </motion.div>
@@ -603,10 +606,10 @@ export function WorkoutPage() {
           className="flex gap-2 mb-1.5 text-[0.65rem] font-semibold uppercase"
           style={{ color: textMuted }}
         >
-          <div className="w-6"></div>
+          <div className="w-6 h-8 flex items-center"></div>
           <div className="flex-1 text-center">{t('workout.reps')}</div>
-          <div className="flex-1 text-center">{t('workout.weight')}</div>
-          <div className="w-6"></div>
+          <div className="flex-1 text-center">{weightUnit}</div>
+          <div className="w-6 h-8 flex items-center justify-center"></div>
         </div>
 
         {sets.length === 0 ? (
@@ -636,11 +639,11 @@ export function WorkoutPage() {
                 animate={{ opacity: 1, y: 0 }}
                 className="mb-2"
               >
-                <div className="flex gap-2 items-center">
+                <div className="flex items-stretch gap-1">
                   {showWarmupSets && (
                     <button
                       onClick={() => updateSet(i, { isWarmup: !s.isWarmup })}
-                      className={`w-6 h-6 rounded text-xs font-bold flex items-center justify-center transition-colors ${
+                      className={`w-6 h-8 rounded text-xs font-bold flex items-center justify-center transition-colors ${
                         s.isWarmup ? 'bg-orange-500 text-white' : 'border border-dashed'
                       }`}
                       style={{
@@ -652,7 +655,7 @@ export function WorkoutPage() {
                     </button>
                   )}
                   <div
-                    className={`w-6 text-center text-sm font-medium rounded-full ${
+                    className={`w-6 h-8 flex items-center justify-center text-sm font-medium rounded ${
                       isNewPR ? 'bg-[var(--interactive-primary)]' : ''
                     }`}
                     style={{
@@ -662,7 +665,7 @@ export function WorkoutPage() {
                   >
                     {i + 1}
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 flex flex-col">
                     <label className="text-[0.625rem] block mb-1" style={{ color: textMuted }}>
                       {t('workout.reps')}
                     </label>
@@ -680,7 +683,7 @@ export function WorkoutPage() {
                           });
                         }
                       }}
-                      className={`w-full rounded-lg text-sm p-3 outline-none text-center ${
+                      className={`w-full rounded-lg text-sm px-2 py-1.5 outline-none text-center ${
                         setErrors[i] ? 'border-red-500 bg-red-500/10' : ''
                       }`}
                       style={{
@@ -690,16 +693,20 @@ export function WorkoutPage() {
                       }}
                     />
                   </div>
-                  <div className="relative flex-1">
+                  <div className="relative flex-1 flex flex-col">
                     <label className="text-[0.625rem] block mb-1" style={{ color: textMuted }}>
-                      kg
+                      {weightUnit}
                     </label>
                     <input
                       type="number"
                       placeholder="0"
-                      value={s.weight}
+                      value={
+                        s.weight ? convert(Number(s.weight)).toFixed(1).replace(/\.0$/, '') : ''
+                      }
                       onChange={(e) => {
-                        updateSet(i, { weight: e.target.value });
+                        const displayValue = parseFloat(e.target.value) || 0;
+                        const kgValue = convertToKg(displayValue);
+                        updateSet(i, { weight: kgValue.toString() });
                         if (setErrors[i]) {
                           setSetErrors((prev) => {
                             const n = { ...prev };
@@ -708,7 +715,7 @@ export function WorkoutPage() {
                           });
                         }
                       }}
-                      className={`w-full rounded-lg text-sm p-2 outline-none text-center ${
+                      className={`w-full rounded-lg text-sm px-2 py-1.5 outline-none text-center ${
                         setErrors[i] ? 'border-red-500 bg-red-500/10' : ''
                       }`}
                       style={{
@@ -728,7 +735,7 @@ export function WorkoutPage() {
                   </div>
                   <button
                     onClick={() => handleRemoveSet(i)}
-                    className="w-6 h-8 bg-transparent border rounded-lg cursor-pointer text-lg flex items-center justify-center"
+                    className="w-6 h-8 flex items-center justify-center bg-transparent border rounded cursor-pointer text-lg"
                     style={{ borderColor: 'var(--border-subtle)', color: textMuted }}
                   >
                     <X className="w-4 h-4" />
