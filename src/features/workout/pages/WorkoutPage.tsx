@@ -374,7 +374,8 @@ export function WorkoutPage() {
   const checkIsNewPR = (weight: string, reps: string): boolean => {
     if (!currentPR) return false;
     const estimated1RM = calcular1RM(Number(weight) || 0, Number(reps) || 0);
-    return estimated1RM > currentPR.weight;
+    const currentPRValue = currentPR.one_rm ?? currentPR.weight;
+    return estimated1RM > currentPRValue;
   };
 
   const bgCard = 'var(--bg-surface)';

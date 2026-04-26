@@ -7,11 +7,18 @@ export interface MuscleGroupStatus {
 export function analyzeMuscleRecovery(
   sets: { exercise?: { muscle_group?: string }; workout?: { started_at: string | null } }[],
 ): MuscleGroupStatus[] {
-  const muscleGroups = ['Pecho', 'Espalda', 'Piernas', 'Hombros', 'Brazos', 'Otro'];
   const now = new Date();
+  const muscleGroups = sets.map((s) => s.exercise?.muscle_group || 'Otro').filter(Boolean);
+
+  const uniqueGroups = [...new Set(muscleGroups)];
+
+  if (uniqueGroups.length === 0) {
+    return [{ name: 'Otro', daysSinceLast: -1, status: 'needs-attention' }];
+  }
+
   const result: MuscleGroupStatus[] = [];
 
-  muscleGroups.forEach((mg) => {
+  uniqueGroups.forEach((mg) => {
     const mgSets = sets.filter((s) => s.exercise?.muscle_group === mg);
 
     if (mgSets.length === 0) {

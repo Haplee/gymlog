@@ -1,35 +1,39 @@
-# GymLog v2.8.0
+# GymLog v2.8.2
 
-Tu diario de entrenamiento de fuerza - Registra series, ejercicios y sigue tu progreso.
-
-## ✨ Novedades
-
-- **Rendimiento mejorado** - canvas-confetti ahora se carga solo cuando detectas un PR
-- **Imágenes optimizadas** - Iconos en WebP (96% menor tamaño)
-- **Tutorial completo** - Nueva página de ayuda en GitHub Pages
+Tu diario de entrenamiento de fuerza.
 
 ## 🐛 Correcciones
 
-- Arreglado build de Android en CI
-- Configuración de firma para release APK
+- **Export/Import CSV mejorado** - Formato más limpio y compatible
+- **Fechas en formato estándar** - YYYY-MM-DD para mayor compatibilidad
+- **Detección automática de formatos** - Soporta múltiples formatos de fecha
 
-## 🔧 Mejoras Técnicas
+## 📱 Formato CSV
 
-- Lazy loading de dependencias pesadas
-- Memoización de componentes reutilizables
-- Imágenes WebP para menor consumo de datos
+**Export:**
 
-## 📱 Cómo Instalar
+```
+Fecha,Ejercicio,Repeticiones,Peso
+2024-01-15,"Press banca",10,80
+2024-01-15,"Press banca",8,85
+```
 
-**Android:**
+**Import acepta:**
 
-- Descarga la APK desde: [pesos-wine.vercel.app/GymLog-v2.8.0.apk](https://pesos-wine.vercel.app/GymLog-v2.8.0.apk)
+- `YYYY-MM-DD` (formato del export)
+- `DD/MM/YYYY`
+- `DD-MM-YYYY`
+- `YYYY/MM/DD`
 
-**iOS / Navegador:**
+## 📦 Descargas
 
-- Accede a: [pesos-wine.vercel.app/app](https://pesos-wine.vercel.app/app)
-- En iPhone: Safari → Compartir → Añadir a pantalla de inicio
+- **Android:** [GymLog-v2.8.2.apk](https://pesos-wine.vercel.app/GymLog-v2.8.2.apk)
+- **Web:** [pesos-wine.vercel.app/app](https://pesos-wine.vercel.app/app)
+- **Tutorial:** [haplee.github.io/pesos](https://haplee.github.io/pesos)
 
-## 📖 Tutorial
+## v2.8.0 - Novedades anteriores
 
-Consulta la guía completa en: [haplee.github.io/pesos](https://haplee.github.io/pesos)
+- Imágenes WebP (96% menor tamaño)
+- Memoización de componentes
+- Lazy loading de confetti
+- Tutorial en GitHub Pages
