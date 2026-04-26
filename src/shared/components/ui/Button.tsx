@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import { memo } from 'react';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'icon';
 type Size = 'sm' | 'md' | 'lg';
@@ -25,7 +26,7 @@ const sizeStyles: Record<Size, string> = {
   lg: 'h-12 px-6 text-[0.9375rem] rounded-[var(--radius-pill)]',
 };
 
-export function Button({
+const ButtonComponent = ({
   variant = 'primary',
   size = 'md',
   loading = false,
@@ -33,7 +34,7 @@ export function Button({
   children,
   className = '',
   ...props
-}: ButtonProps) {
+}: ButtonProps) => {
   const isDisabled = disabled || loading;
 
   return (
@@ -60,7 +61,9 @@ export function Button({
       )}
     </button>
   );
-}
+};
+
+export const Button = memo(ButtonComponent);
 
 function Spinner({ size }: { size: Size }) {
   const dim = size === 'sm' ? 'w-3 h-3' : size === 'lg' ? 'w-5 h-5' : 'w-4 h-4';
