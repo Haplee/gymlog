@@ -32,7 +32,7 @@ describe('useWorkoutStore', () => {
 
     const state = useWorkoutStore.getState();
     expect(state.sets).toHaveLength(1);
-    expect(state.sets[0]).toEqual({ reps: '', weight: '' });
+    expect(state.sets[0]).toEqual({ reps: '', weight: '', isWarmup: false });
   });
 
   it('debería añadir una serie copiando la anterior', () => {
@@ -42,7 +42,7 @@ describe('useWorkoutStore', () => {
 
     const state = useWorkoutStore.getState();
     expect(state.sets).toHaveLength(2);
-    expect(state.sets[1]).toEqual({ reps: '10', weight: '100' });
+    expect(state.sets[1]).toEqual({ reps: '10', weight: '100', isWarmup: false });
   });
 
   it('debería actualizar una serie existente', () => {
