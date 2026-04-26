@@ -1,23 +1,67 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1776256388380" clover="3.2.0">
-  <project timestamp="1776256388380" name="All files">
-    <metrics statements="6" coveredstatements="6" conditionals="16" coveredconditionals="16" methods="2" coveredmethods="2" elements="24" coveredelements="24" complexity="0" loc="6" ncloc="6" packages="2" files="2" classes="2"/>
-    <package name="lib">
-      <metrics statements="3" coveredstatements="3" conditionals="8" coveredconditionals="8" methods="1" coveredmethods="1"/>
-      <file name="brzycki.ts" path="C:\Users\franc\proyecto\Tonterias\pesos\src\shared\lib\brzycki.ts">
-        <metrics statements="3" coveredstatements="3" conditionals="8" coveredconditionals="8" methods="1" coveredmethods="1"/>
-        <line num="2" count="9" type="cond" truecount="6" falsecount="0"/>
-        <line num="3" count="5" type="cond" truecount="2" falsecount="0"/>
-        <line num="4" count="3" type="stmt"/>
+<coverage generated="1777200882472" clover="3.2.0">
+  <project timestamp="1777200882472" name="All files">
+    <metrics statements="50" coveredstatements="19" conditionals="39" coveredconditionals="13" methods="18" coveredmethods="11" elements="107" coveredelements="43" complexity="0" loc="50" ncloc="50" packages="2" files="2" classes="2"/>
+    <package name="features.workout.stores">
+      <metrics statements="47" coveredstatements="16" conditionals="31" coveredconditionals="5" methods="17" coveredmethods="10"/>
+      <file name="workoutStore.ts" path="/home/franvi/proyecto/pesos/src/features/workout/stores/workoutStore.ts">
+        <metrics statements="47" coveredstatements="16" conditionals="31" coveredconditionals="5" methods="17" coveredmethods="10"/>
+        <line num="7" count="1" type="stmt"/>
+        <line num="38" count="1" type="stmt"/>
+        <line num="40" count="1" type="stmt"/>
+        <line num="42" count="1" type="stmt"/>
+        <line num="51" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="53" count="0" type="stmt"/>
+        <line num="54" count="0" type="stmt"/>
+        <line num="56" count="0" type="stmt"/>
+        <line num="59" count="0" type="stmt"/>
+        <line num="69" count="2" type="stmt"/>
+        <line num="70" count="2" type="stmt"/>
+        <line num="75" count="1" type="stmt"/>
+        <line num="76" count="0" type="stmt"/>
+        <line num="79" count="6" type="stmt"/>
+        <line num="80" count="6" type="stmt"/>
+        <line num="89" count="4" type="stmt"/>
+        <line num="90" count="4" type="stmt"/>
+        <line num="91" count="4" type="stmt"/>
+        <line num="95" count="2" type="stmt"/>
+        <line num="99" count="1" type="stmt"/>
+        <line num="103" count="0" type="stmt"/>
+        <line num="105" count="0" type="stmt"/>
+        <line num="107" count="0" type="cond" truecount="0" falsecount="4"/>
+        <line num="108" count="0" type="stmt"/>
+        <line num="117" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="118" count="0" type="stmt"/>
+        <line num="121" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="123" count="0" type="stmt"/>
+        <line num="124" count="0" type="stmt"/>
+        <line num="125" count="0" type="cond" truecount="0" falsecount="3"/>
+        <line num="127" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="128" count="0" type="stmt"/>
+        <line num="130" count="0" type="stmt"/>
+        <line num="131" count="0" type="stmt"/>
+        <line num="141" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="142" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="144" count="0" type="stmt"/>
+        <line num="153" count="0" type="stmt"/>
+        <line num="154" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="156" count="0" type="stmt"/>
+        <line num="164" count="0" type="stmt"/>
+        <line num="166" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="167" count="0" type="stmt"/>
+        <line num="168" count="0" type="stmt"/>
+        <line num="173" count="10" type="stmt"/>
+        <line num="183" count="1" type="stmt"/>
+        <line num="184" count="0" type="stmt"/>
       </file>
     </package>
-    <package name="lib.lib">
+    <package name="shared.lib">
       <metrics statements="3" coveredstatements="3" conditionals="8" coveredconditionals="8" methods="1" coveredmethods="1"/>
-      <file name="brzycki.ts" path="C:\Users\franc\proyecto\Tonterias\pesos\src\shared\lib\lib\brzycki.ts">
+      <file name="brzycki.ts" path="/home/franvi/proyecto/pesos/src/shared/lib/brzycki.ts">
         <metrics statements="3" coveredstatements="3" conditionals="8" coveredconditionals="8" methods="1" coveredmethods="1"/>
-        <line num="2" count="5" type="cond" truecount="6" falsecount="0"/>
-        <line num="3" count="4" type="cond" truecount="2" falsecount="0"/>
-        <line num="4" count="3" type="stmt"/>
+        <line num="8" count="9" type="cond" truecount="6" falsecount="0"/>
+        <line num="9" count="5" type="cond" truecount="2" falsecount="0"/>
+        <line num="10" count="3" type="stmt"/>
       </file>
     </package>
   </project>
