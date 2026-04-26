@@ -2,287 +2,370 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>GymLog | Rinde al Máximo</title>
-    <meta
-      name="description"
-      content="Descarga GymLog: La app definitiva para el seguimiento de hipertrofia con analítica avanzada, modo offline y experiencia nativa premium."
-    />
-
-    <!-- Open Graph -->
-    <meta property="og:title" content="GymLog v2.5 - Entrena como un Guerrero" />
-    <meta
-      property="og:description"
-      content="Calcula tus PRs, visualiza tu volumen muscular y entrena sin límites. Descarga el APK oficial."
-    />
-    <meta property="og:image" content="assets/logo.svg" />
-
-    <link rel="stylesheet" href="styles.css" />
-    <link rel="icon" href="assets/logo.svg" type="image/svg+xml" />
+    <link rel="icon" type="image/svg+xml" href="/gimnasia.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.webp" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#0a0a0c" />
+    <meta name="description" content="Tutorial de GymLog - Aprende a usar la app paso a paso" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&display=swap" rel="stylesheet" />
+    <title>GymLog - Tutorial</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        min-height: 100vh;
+        min-height: 100dvh;
+        background: #0a0a0c;
+        font-family: 'DM Sans', system-ui, sans-serif;
+        color: #fff;
+        overflow-x: hidden;
+      }
+      .container { max-width: 700px; margin: 0 auto; padding: 0 1.5rem; }
+      /* Header */
+      .header {
+        padding: 3rem 0 2rem;
+        text-align: center;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+      }
+      .logo {
+        width: 60px;
+        height: 60px;
+        margin-bottom: 1.5rem;
+      }
+      h1 {
+        font-size: 2rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+      }
+      h1 span { color: #c8ff00; }
+      .subtitle { color: #666; font-size: 1rem; }
+      /* Content */
+      .content { padding: 3rem 0; }
+      .section { margin-bottom: 3rem; }
+      .section h2 {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #c8ff00;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      .section h2 svg { width: 24px; height: 24px; }
+      .card {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+      }
+      .card h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .card h3 .step {
+        width: 24px;
+        height: 24px;
+        background: #c8ff00;
+        color: #000;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        font-weight: 700;
+      }
+      .card p { color: #888; font-size: 0.9rem; line-height: 1.6; }
+      .card ul { margin-top: 0.75rem; padding-left: 1.25rem; }
+      .card li { color: #666; font-size: 0.85rem; margin-bottom: 0.5rem; line-height: 1.5; }
+      .tip {
+        background: rgba(200,255,0,0.08);
+        border: 1px solid rgba(200,255,0,0.2);
+        border-radius: 12px;
+        padding: 1rem;
+        margin-top: 1rem;
+      }
+      .tip strong { color: #c8ff00; }
+      .tip p { color: #999; font-size: 0.85rem; }
+      /* Features grid */
+      .features-grid {
+        display: grid;
+        gap: 1rem;
+      }
+      .feature {
+        display: flex;
+        gap: 1rem;
+        padding: 1rem;
+        background: rgba(255,255,255,0.02);
+        border-radius: 12px;
+      }
+      .feature-icon {
+        width: 40px;
+        height: 40px;
+        background: rgba(200,255,0,0.1);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .feature-icon svg { width: 20px; height: 20px; color: #c8ff00; }
+      .feature h4 { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.25rem; }
+      .feature p { color: #666; font-size: 0.8rem; line-height: 1.4; }
+      /* Links */
+      .links {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        margin-top: 2rem;
+      }
+      .link-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        padding: 1rem;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 12px;
+        text-decoration: none;
+        color: #fff;
+        font-weight: 500;
+        transition: all 0.2s;
+      }
+      .link-btn:hover { background: rgba(200,255,0,0.1); border-color: rgba(200,255,0,0.3); }
+      .link-btn svg { width: 20px; height: 20px; }
+      .link-btn.primary { background: #c8ff00; color: #000; border: none; }
+      .link-btn.primary:hover { opacity: 0.95; }
+      /* Footer */
+      footer {
+        padding: 2rem;
+        text-align: center;
+        border-top: 1px solid rgba(255,255,255,0.05);
+        color: #444;
+        font-size: 0.85rem;
+      }
+      /* Responsive */
+      @media (min-width: 500px) {
+        .features-grid { grid-template-columns: repeat(2, 1fr); }
+      }
+    </style>
   </head>
   <body>
-    <div class="bg-blobs">
-      <div class="blob blob-1"></div>
-      <div class="blob blob-2"></div>
-    </div>
+    <div class="container">
+      <!-- Header -->
+      <header class="header">
+        <svg class="logo" viewBox="0 0 100 100" fill="none">
+          <rect width="100" height="100" rx="24" fill="#1a1a1f"/>
+          <path d="M25 50h50M50 30v40M35 40l15-10 15 10M35 60l15 10 15-10" stroke="#c8ff00" stroke-width="4" stroke-linecap="round"/>
+        </svg>
+        <h1>Guía de <span>GymLog</span></h1>
+        <p class="subtitle">Aprende a usar la app en minutos</p>
+      </header>
 
-    <header class="container">
-      <div class="logo-container">
-        <img src="assets/logo.svg" alt="GymLog Logo" class="logo" />
-      </div>
-      <h1>Entrena Sin Límites</h1>
-      <p class="tagline">
-        GymLog es la herramienta definitiva para entusiastas de la hipertrofia que exigen precisión,
-        rendimiento y una experiencia de usuario impecable.
-      </p>
-
-      <div class="cta">
-        <a href="GymLog-v2.5.2.apk" class="btn btn-primary" id="download-btn">
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-            <polyline points="7 10 12 15 17 10" />
-            <line x1="12" y1="15" x2="12" y2="3" />
-          </svg>
-          Descargar GymLog-v2.5.2.apk
-        </a>
-      </div>
-    </header>
-
-    <main class="container">
-      <!-- App Preview Section -->
-      <section class="app-preview" data-reveal>
-        <div class="mockup-container">
-          <div class="mockup-screen">
-            <div class="mockup-header">
-              <span style="font-size: 0.8rem; font-weight: 700; color: var(--accent-color)"
-                >DASHBOARD ACTUAL</span
-              >
-              <div
-                style="
-                  width: 100%;
-                  height: 1px;
-                  background: rgba(255, 255, 255, 0.05);
-                  margin-top: 0.5rem;
-                "
-              ></div>
+      <!-- Content -->
+      <main class="content">
+        <!-- Getting Started -->
+        <section class="section">
+          <h2>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+            Primeros Pasos
+          </h2>
+          
+          <div class="card">
+            <h3><span class="step">1</span> Accede a la App</h3>
+            <p>Puedes usar GymLog desde cualquier navegador web o instalarla como app en tu móvil.</p>
+            <div class="tip">
+              <p><strong>💡 Consejo:</strong> En iPhone, desde Safari pulsa el botón de compartir y selecciona "Añadir a pantalla de inicio" para tenerla como una app native.</p>
             </div>
-            <div class="mockup-stats">
-              <div
-                class="mockup-bar"
-                style="
-                  height: 140px;
-                  display: flex;
-                  flex-direction: column;
-                  justify-content: flex-end;
-                  padding: 0.5rem;
-                  gap: 0.5rem;
-                "
-              >
-                <div
-                  style="
-                    width: 100%;
-                    height: 40%;
-                    background: var(--accent-color);
-                    border-radius: 4px;
-                    opacity: 0.8;
-                  "
-                ></div>
-                <span style="font-size: 0.6rem; opacity: 0.5">LUN</span>
+          </div>
+
+          <div class="card">
+            <h3><span class="step">2</span> Crea tu cuenta</h3>
+            <p>Regístrate con tu email o usa Google para acceder. Solo necesitas un email para empezar.</p>
+          </div>
+
+          <div class="card">
+            <h3><span class="step">3</span> Configura tus preferencias</h3>
+            <p>En Ajustes puedes cambiar:</p>
+            <ul>
+              <li>Idioma (Español / English)</li>
+              <li>Unidad de peso (kg o lb)</li>
+              <li>Notificaciones y recordatorios</li>
+              <li>Sonidos de feedback</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- Recording Workout -->
+        <section class="section">
+          <h2>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 20V10M18 20V4M6 20v-4"/>
+            </svg>
+            Registrar un Entrenamiento
+          </h2>
+          
+          <div class="card">
+            <h3><span class="step">1</span> Selecciona un ejercicio</h3>
+            <p>Busca en tu biblioteca o elige de las rutinas predefinidas: Press de Banca, Sentadilla, Peso Muerto, etc.</p>
+          </div>
+
+          <div class="card">
+            <h3><span class="step">2</span> Añade tus series</h3>
+            <p>Para cada serie indica:</p>
+            <ul>
+              <li><strong>Peso:</strong> El peso que has levantado (en kg o lb)</li>
+              <li><strong>Repeticiones:</strong> El número de reps completadas</li>
+              <li><strong>Warmup:</strong> Marca si es serie de calentamiento</li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <h3><span class="step">3</span> Guarda y celebra</h3>
+            <p>Pulsa "Guardar" al finalizar. Si has batido un récord personal, ¡celebrarás con confetti!</p>
+            <div class="tip">
+              <p><strong>🏆 PR:</strong> Cuando superas tu mejor marca en peso o estimado 1RM, la app lo detecta automáticamente.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Key Features -->
+        <section class="section">
+          <h2>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+            </svg>
+            Funciones Principales
+          </h2>
+          
+          <div class="features-grid">
+            <div class="feature">
+              <div class="feature-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                </svg>
               </div>
-              <div
-                class="mockup-bar"
-                style="
-                  height: 140px;
-                  display: flex;
-                  flex-direction: column;
-                  justify-content: flex-end;
-                  padding: 0.5rem;
-                  gap: 0.5rem;
-                "
-              >
-                <div
-                  style="
-                    width: 100%;
-                    height: 75%;
-                    background: var(--accent-color);
-                    border-radius: 4px;
-                    opacity: 0.8;
-                  "
-                ></div>
-                <span style="font-size: 0.6rem; opacity: 0.5">MAR</span>
-              </div>
-              <div
-                class="mockup-bar"
-                style="
-                  height: 140px;
-                  grid-column: span 2;
-                  padding: 1rem;
-                  display: flex;
-                  flex-direction: column;
-                  gap: 0.5rem;
-                "
-              >
-                <span style="font-size: 1.2rem; font-weight: 800">45,800 kg</span>
-                <span style="font-size: 0.7rem; color: var(--accent-secondary)"
-                  >+12% vs last week</span
-                >
-                <div
-                  style="
-                    width: 100%;
-                    height: 4px;
-                    background: rgba(255, 255, 255, 0.1);
-                    border-radius: 2px;
-                  "
-                >
-                  <div
-                    style="
-                      width: 70%;
-                      height: 100%;
-                      background: var(--accent-secondary);
-                      border-radius: 2px;
-                    "
-                  ></div>
-                </div>
+              <div>
+                <h4>Rutinas Predefinidas</h4>
+                <p>Accede a rutinas populares como PPL, Full Body, y ejercicios individuales.</p>
               </div>
             </div>
-            <div style="padding: 0 1.5rem 1.5rem 1.5rem">
-              <div
-                style="
-                  background: rgba(255, 255, 255, 0.03);
-                  border-radius: 1rem;
-                  padding: 1rem;
-                  border: 1px solid rgba(255, 255, 255, 0.05);
-                "
-              >
-                <div
-                  style="
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-bottom: 0.5rem;
-                  "
-                >
-                  <span style="font-size: 0.8rem; font-weight: 600">Press de Banca</span>
-                  <span style="font-size: 0.7rem; color: var(--accent-color)">100kg × 8</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center">
-                  <span style="font-size: 0.8rem; font-weight: 600">Sentadilla Libre</span>
-                  <span style="font-size: 0.7rem; color: var(--accent-color)">140kg × 5</span>
-                </div>
+            
+            <div class="feature">
+              <div class="feature-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="20" x2="18" y2="10"/>
+                  <line x1="12" y1="20" x2="12" y2="4"/>
+                  <line x1="6" y1="20" x2="6" y2="14"/>
+                </svg>
+              </div>
+              <div>
+                <h4>Estadísticas</h4>
+                <p>Gráficos de volumen, progresión y distribución muscular.</p>
+              </div>
+            </div>
+            
+            <div class="feature">
+              <div class="feature-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12 6 12 12 16 14"/>
+                </svg>
+              </div>
+              <div>
+                <h4>Historial Completo</h4>
+                <p>Consulta todos tus entrenamientos pasados y revisa tu progreso.</p>
+              </div>
+            </div>
+            
+            <div class="feature">
+              <div class="feature-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                </svg>
+              </div>
+              <div>
+                <h4>Recordatorios</h4>
+                <p>Recibe avisos si llevas 2 días sin entrenar.</p>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <!-- Features Grid -->
-      <section class="features">
-        <div class="feature-card" data-reveal>
-          <div class="feature-icon">🛡️</div>
-          <h3>Arquitectura Robusta</h3>
-          <p>
-            Diseñada con Supabase y modo Offline-First. Tus datos están seguros y siempre
-            disponibles, incluso sin conexión.
-          </p>
-        </div>
-        <div class="feature-card" data-reveal>
-          <div class="feature-icon">📉</div>
-          <h3>Proyección de Fuerza</h3>
-          <p>
-            Calcula tu 1RM estimado al instante usando algoritmos de Brzycki integrados en el
-            registro de series.
-          </p>
-        </div>
-        <div class="feature-card" data-reveal>
-          <div class="feature-icon">🦾</div>
-          <h3>Feedback Háptico</h3>
-          <p>
-            Siente cada progreso. La app utiliza motores de vibración nativos para confirmar récords
-            y acciones críticas.
-          </p>
-        </div>
-      </section>
+        <!-- Tips -->
+        <section class="section">
+          <h2>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="16" x2="12" y2="12"/>
+              <line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+            Consejos
+          </h2>
+          
+          <div class="card">
+            <h3>Usa notas en ejercicios</h3>
+            <p>Añade notas a cada ejercicio para recordar técnicas, molestias o metas específicas. Las notas se guardan y aparecen cuando seleccionas el ejercicio.</p>
+          </div>
 
-      <!-- Instructions Section -->
-      <section class="instructions-card" data-reveal>
-        <h2 style="font-size: 2.5rem; margin-bottom: 3rem; text-align: center">
-          Prepara tu Dispositivo
-        </h2>
-        <ol class="steps">
-          <li class="step-item">
-            <div>
-              <strong style="font-size: 1.25rem; display: block; margin-bottom: 0.5rem"
-                >Habilita Instalaciones</strong
-              >
-              <p style="color: var(--text-secondary)">
-                Ve a Ajustes > Seguridad y activa "Fuentes Desconocidas" para permitir la
-                instalación de APKs externos.
-              </p>
-            </div>
-          </li>
-          <li class="step-item">
-            <div>
-              <strong style="font-size: 1.25rem; display: block; margin-bottom: 0.5rem"
-                >Obtén el Binario</strong
-              >
-              <p style="color: var(--text-secondary)">
-                Descarga el archivo <code>GymLog-v2.5.2.apk</code> pulsando el botón principal de
-                esta página.
-              </p>
-            </div>
-          </li>
-          <li class="step-item">
-            <div>
-              <strong style="font-size: 1.25rem; display: block; margin-bottom: 0.5rem"
-                >Comienza tu Viaje</strong
-              >
-              <p style="color: var(--text-secondary)">
-                Ejecuta el archivo, otorga los permisos necesarios y empieza a registrar tus marcas.
-              </p>
-            </div>
-          </li>
-        </ol>
-      </section>
-    </main>
+          <div class="card">
+            <h3>Marca series de calentamiento</h3>
+            <p>Activa "Series de calentamiento" en Ajustes para poder marcar tus warmups. No cuentan para tus estadísticas de volumen.</p>
+          </div>
 
-    <footer>
-      <div class="container">
-        <p style="margin-bottom: 1rem">
-          Diseñado para el alto rendimiento por <strong>Haplee</strong>
-        </p>
-        <div class="social-links">
-          <a href="https://github.com/Haplee/pesos">GitHub</a>
-          <a href="https://x.com/FranVidalMateo">Twitter</a>
-          <a href="https://www.instagram.com/franvidalmateo">Instagram</a>
-        </div>
-      </div>
-    </footer>
+          <div class="card">
+            <h3>Revisa tu progreso</h3>
+            <p>En la pestaña de Estadísticas puedes ver tu racha actual, volumen semanal, y gráficos de progresión por ejercicio.</p>
+          </div>
+        </section>
 
-    <script>
-      // Scroll Reveal Logic
-      const reveal = () => {
-        const reveals = document.querySelectorAll('[data-reveal]');
-        reveals.forEach((el) => {
-          const windowHeight = window.innerHeight;
-          const elementTop = el.getBoundingClientRect().top;
-          const elementVisible = 150;
-          if (elementTop < windowHeight - elementVisible) {
-            el.classList.add('active');
-          }
-        });
-      };
-      window.addEventListener('scroll', reveal);
-      // Trigger once on load
-      window.addEventListener('load', reveal);
-    </script>
+        <!-- Download Links -->
+        <section class="section">
+          <h2>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Descargar App
+          </h2>
+          
+          <div class="links">
+            <a href="https://gymlog.rayxxb.com/app" class="link-btn primary">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="2" y1="12" x2="22" y2="12"/>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+              </svg>
+              Usar GymLog Online
+            </a>
+            <a href="https://gymlog.rayxxb.com/GymLog-v2.8.0.apk" class="link-btn" download>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+                <line x1="12" y1="18" x2="12.01" y2="18"/>
+              </svg>
+              Descargar APK (Android)
+            </a>
+          </div>
+        </section>
+      </main>
+
+      <!-- Footer -->
+      <footer>
+        <p>GymLog v2.8 © 2024-2026 · Tu compañero de entrenamiento</p>
+      </footer>
+    </div>
   </body>
 </html>

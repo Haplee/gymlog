@@ -18,7 +18,6 @@ import {
   deleteExerciseNote,
   deleteExercise,
 } from '@shared/api/queries';
-import confetti from 'canvas-confetti';
 import { Trophy, X, Trash2, Plus, StickyNote, AlertCircle } from 'lucide-react';
 import { z } from 'zod';
 import { impact, notificationHaptic, ImpactStyle, NotificationType } from '@shared/lib/haptics';
@@ -164,7 +163,6 @@ export function WorkoutPage() {
   useEffect(() => {
     if (!isResting || restTimer <= 0) {
       if (isResting && restTimer <= 0) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setIsResting(false);
         void notifyTimerAlarm(restDuration);
         void playAlarmSound();
@@ -229,6 +227,16 @@ export function WorkoutPage() {
     }
   }, []);
 
+  const triggerConfetti = useCallback(async () => {
+    const confettiModule = await import('canvas-confetti');
+    confettiModule.default({
+      particleCount: 150,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: ['#c8ff00', '#ffffff', '#22c55e'],
+    });
+  }, []);
+
   const handleSave = async () => {
     if (!user || saving) return;
     setMessage('');
@@ -291,12 +299,7 @@ export function WorkoutPage() {
       });
 
       if (max1RM > 0) {
-        confetti({
-          particleCount: 150,
-          spread: 70,
-          origin: { y: 0.6 },
-          colors: ['#c8ff00', '#ffffff', '#22c55e'],
-        });
+        triggerConfetti();
         void notificationHaptic(NotificationType.Success);
 
         const exerciseName = selectedExercise?.name || customExerciseName || 'Ejercicio';

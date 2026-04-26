@@ -27,6 +27,7 @@ export default defineConfig(({ mode }) => {
             supabase: ['@supabase/supabase-js'],
             motion: ['framer-motion'],
             query: ['@tanstack/react-query'],
+            confetti: ['canvas-confetti'],
           },
         },
       },
