@@ -54,7 +54,7 @@ const resources = {
         save_workout: 'Guardar',
         saving: 'Guardando...',
         empty_sets: 'Añade una serie',
-        new_pr_title: '🏆 ¡Nuevo récord personal!',
+        new_pr_title: 'Nuevo record personal',
         new_pr_body: '{{exercise}}: {{weight}} kg estimado de 1RM',
         resume_banner: 'Entrenamiento en curso detectado',
         resume_desc: 'Tienes una sesión iniciada. ¿Quieres continuar?',
