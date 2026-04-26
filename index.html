@@ -3,48 +3,105 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/gimnasia.svg" />
-    <link rel="apple-touch-icon" href="/gimnasia.png" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#000000" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="format-detection" content="telephone=no" />
-    <link rel="manifest" href="/manifest.json" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap"
-      rel="stylesheet"
-    />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&display=swap"
-      rel="stylesheet"
-    />
-    <title>GymLog</title>
+    <title>GymLog - Descargar App</title>
     <style>
-      html,
-      body,
-      #root {
+      * {
         margin: 0;
         padding: 0;
+        box-sizing: border-box;
+      }
+      html, body {
         min-height: 100vh;
         min-height: 100dvh;
         background: #0a0a0c;
-        touch-action: manipulation;
-        -webkit-tap-highlight-color: transparent;
+        font-family: 'DM Sans', system-ui, sans-serif;
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        text-align: center;
       }
-      html {
-        padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
-          env(safe-area-inset-left);
+      .logo {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 2rem;
+      }
+      h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.02em;
+      }
+      .version {
+        color: #c8ff00;
+        font-size: 1rem;
+        font-weight: 500;
+        margin-bottom: 2rem;
+      }
+      .description {
+        color: #888;
+        font-size: 0.95rem;
+        max-width: 300px;
+        line-height: 1.5;
+        margin-bottom: 2.5rem;
+      }
+      .download-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        background: #c8ff00;
+        color: #000;
+        font-size: 1rem;
+        font-weight: 600;
+        padding: 1rem 2rem;
+        border-radius: 12px;
+        text-decoration: none;
+        transition: transform 0.15s ease, opacity 0.15s ease;
+      }
+      .download-btn:hover {
+        opacity: 0.9;
+        transform: scale(1.02);
+      }
+      .download-btn:active {
+        transform: scale(0.98);
+      }
+      .download-btn svg {
+        width: 20px;
+        height: 20px;
+      }
+      .footer {
+        position: fixed;
+        bottom: 2rem;
+        color: #444;
+        font-size: 0.8rem;
       }
     </style>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <svg class="logo" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100" height="100" rx="24" fill="#1a1a1f"/>
+      <path d="M25 50h50M50 30v40M35 40l15-10 15 10M35 60l15 10 15-10" stroke="#c8ff00" stroke-width="4" stroke-linecap="round"/>
+    </svg>
+    
+    <h1>GymLog</h1>
+    <p class="version">v2.7.0</p>
+    <p class="description">Tu diario de entrenamiento. Registra series, ejercicios y sigue tu progreso en el gimnasio.</p>
+    
+    <a href="/GymLog-v2.7.0.apk" class="download-btn" download>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Descargar APK
+    </a>
+    
+    <p class="footer">Android only</p>
   </body>
 </html>
