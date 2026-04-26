@@ -176,7 +176,7 @@ export function HistoryPage() {
   };
 
   const exportToExcel = async () => {
-    let csv = 'Fecha,Ejercicio,Serie,Repeticiones,Peso (kg)\n';
+    let csv = 'Fecha,Ejercicio,Repeticiones,Peso\n';
 
     filteredSets.forEach((s: WorkoutSetWithDetails) => {
       const exName = s.exercise?.name
@@ -184,16 +184,10 @@ export function HistoryPage() {
         : '"Desconocido"';
       let dateFormatted = '';
       if (s.workout?.started_at) {
-        const splitted = s.workout.started_at.split('T')[0];
-        const parts = splitted.split('-');
-        if (parts.length === 3) {
-          dateFormatted = `${parts[2]}/${parts[1]}/${parts[0]}`;
-        } else {
-          dateFormatted = splitted;
-        }
+        dateFormatted = s.workout.started_at.split('T')[0];
       }
 
-      csv += `${dateFormatted},${exName},${s.set_num},${s.reps},${s.weight}\n`;
+      csv += `${dateFormatted},${exName},${s.reps},${s.weight}\n`;
     });
 
     const fileName = `gymlog_${new Date().toISOString().split('T')[0]}.csv`;
@@ -324,28 +318,19 @@ export function HistoryPage() {
         const parseDate = (dateStr: string): string | null => {
           if (!dateStr || dateStr.trim() === '') return null;
 
-          if (dateStr.includes('-')) {
-            const parts = dateStr.split('-');
-            if (parts.length === 3 && parts[0].length === 4) return dateStr.trim();
-          }
-
-          if (!dateStr.includes('/')) return null;
-
-          const parts = dateStr.split('/');
+          const parts = dateStr.split(/[-/]/);
           if (parts.length !== 3) return null;
 
-          const day = parseInt(parts[0], 10);
+          const year = parseInt(parts[0], 10);
           const month = parseInt(parts[1], 10);
-          const year = parseInt(parts[2], 10);
+          const day = parseInt(parts[2], 10);
 
           if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
 
           const fullYear = year < 100 ? 2000 + year : year;
-          const finalYear = fullYear > 2026 ? fullYear - 100 : fullYear;
-
           if (day < 1 || day > 31 || month < 1 || month > 12) return null;
 
-          return `${finalYear}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+          return `${fullYear}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         };
 
         const isHeaderLine = (firstCol: string): boolean => {
@@ -411,7 +396,6 @@ export function HistoryPage() {
           const secondCol = cols[1]?.replace(/^"|"$/g, '').trim() || '';
           const thirdCol = cols[2]?.replace(/^"|"$/g, '').trim() || '';
           const fourthCol = cols[3]?.replace(/^"|"$/g, '').trim() || '';
-          const fifthCol = cols[4]?.replace(/^"|"$/g, '').trim() || '';
 
           if (firstCol.toLowerCase() === 'fecha') {
             continue;
@@ -445,21 +429,17 @@ export function HistoryPage() {
           let exerciseName = '';
           let reps = 10;
           let weight = 0;
-          let setNum = 1;
-          let isNewFormat = false;
 
-          if (dateFromFirstCol && cols.length >= 3) {
+          if (dateFromFirstCol) {
             parsedDate = dateFromFirstCol;
             currentDate = parsedDate;
             exerciseName = secondCol;
-            setNum = parseNumber(thirdCol) || 1;
-            reps = parseNumber(fourthCol) || 10;
-            weight = parseNumber(fifthCol) || 0;
-            isNewFormat = true;
+            reps = parseNumber(thirdCol) || 10;
+            weight = parseNumber(fourthCol) || 0;
           } else {
             exerciseName = firstCol;
             weight = parseNumber(secondCol) || parseNumber(thirdCol) || 0;
-            reps = 10;
+            reps = parseNumber(thirdCol) || parseNumber(fourthCol) || 10;
           }
 
           if (weight === null || weight === 0) continue;
@@ -486,19 +466,15 @@ export function HistoryPage() {
             continue;
           }
 
-          let finalSetNum = setNum;
-          if (!isNewFormat) {
-            const key = `${parsedDate}_${exerciseId}`;
-            exerciseSetCounts[key] = (exerciseSetCounts[key] || 0) + 1;
-            finalSetNum = exerciseSetCounts[key];
-          }
+          const key = `${parsedDate}_${exerciseId}`;
+          exerciseSetCounts[key] = (exerciseSetCounts[key] || 0) + 1;
 
           const { error: insertError } = await supabase.from('workout_sets').insert({
             workout_id: dateWorkoutMap[parsedDate],
             exercise_id: exerciseId,
             weight: weight,
             reps: reps,
-            set_num: finalSetNum,
+            set_num: exerciseSetCounts[key],
           });
 
           if (insertError) continue;
