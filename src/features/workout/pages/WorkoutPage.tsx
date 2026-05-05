@@ -179,8 +179,7 @@ export function WorkoutPage() {
 
   const playFeedbackSound = useCallback(() => {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
       if (!AudioContextClass) return;
       const ctx = new AudioContextClass();
       const osc = ctx.createOscillator();
@@ -410,6 +409,7 @@ export function WorkoutPage() {
         startedAt={startedAt}
         totalVolume={sessionVolume}
         totalSets={validSetCount}
+        onCancel={() => clearPersistedState()}
       />
 
       {activeRoutine && todayRoutine && todayRoutine.exercises.length > 0 && (

@@ -58,17 +58,23 @@ export function WorkoutExerciseCard({
     <>
       <motion.div
         layout
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, x: 20, height: 0, marginBottom: 0 }}
         transition={{ duration: 0.2 }}
-        className="relative group flex items-center gap-2 p-3 rounded-lg border border-[--border-default] bg-[--bg-surface]"
+        className="relative group flex items-center gap-2 p-3 rounded-[var(--radius-md)]"
+        style={{
+          backgroundColor: 'var(--bg-surface-2)',
+          border: '1px solid var(--border-glass)',
+          boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset',
+        }}
         onKeyDown={handleKeyDown}
         role="listitem"
         aria-label={`Ejercicio ${exerciseName}`}
       >
         <button
-          className="cursor-grab active:cursor-grabbing text-[--text-muted] opacity-0 group-hover:opacity-100 transition-opacity"
+          className="cursor-grab active:cursor-grabbing transition-opacity opacity-30 group-active:opacity-70"
+          style={{ color: 'var(--text-tertiary)' }}
           aria-label="Reordenar ejercicio"
         >
           <GripVertical className="w-4 h-4" />
@@ -76,9 +82,21 @@ export function WorkoutExerciseCard({
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="font-medium text-[--text-primary] truncate">{exerciseName}</span>
+            <span
+              className="font-semibold truncate text-[0.9375rem]"
+              style={{ color: 'var(--text-primary)' }}
+            >
+              {exerciseName}
+            </span>
             {muscleGroup && (
-              <span className="text-[0.625rem] px-1.5 py-0.5 rounded bg-[--bg-surface-2] text-[--text-muted] shrink-0">
+              <span
+                className="text-[0.5625rem] px-1.5 py-0.5 rounded-[var(--radius-pill)] font-semibold uppercase tracking-wide shrink-0"
+                style={{
+                  backgroundColor: 'rgba(200,255,0,0.08)',
+                  color: 'var(--interactive-primary)',
+                  border: '1px solid rgba(200,255,0,0.15)',
+                }}
+              >
                 {muscleGroup}
               </span>
             )}
@@ -96,7 +114,10 @@ export function WorkoutExerciseCard({
           {isOwner && (
             <button
               onClick={() => setShowDeleteModal(true)}
-              className="p-1.5 rounded-lg text-[--color-error] hover:bg-[--color-error]/10 transition-colors"
+              className="p-1.5 rounded-[var(--radius-sm)] transition-colors"
+              style={{ color: 'var(--error)' }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,69,58,0.1)')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
               aria-label={`Eliminar ${exerciseName} del entrenamiento`}
               title="Eliminar ejercicio"
             >

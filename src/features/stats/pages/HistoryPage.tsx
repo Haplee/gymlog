@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useWorkoutStore } from '@features/workout/stores/workoutStore';
+import { useCardioStore, CARDIO_LABELS } from '@features/cardio/stores/cardioStore';
 import { Layout } from '@app/components/Layout';
 import { supabase } from '@shared/lib/supabase';
 import { shareWorkout } from '@shared/lib/share';
@@ -16,6 +17,9 @@ import { Share } from '@capacitor/share';
 import { fetchWorkouts, fetchRecentSets, fetchExercises } from '@shared/api/queries';
 import { EmptyHistory } from '@shared/components/EmptyStates';
 import { Modal, Button } from '@shared/components/ui';
+import { CardioTypeIcon } from '@shared/components/CardioIcons';
+import { formatDistanceToNow, parseISO } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { ChevronRight, Trash2, Repeat, Share2 } from 'lucide-react';
 
 interface GroupedWorkout {
@@ -40,20 +44,34 @@ function ExerciseRow({
   const firstSet = sortedSets[0];
 
   return (
-    <div className="border-b border-[var(--border-subtle)] last:border-b-0">
+    <div style={{ borderBottom: '1px solid var(--border-subtle)' }} className="last:border-b-0">
       <div
         onClick={() => setExpanded(!expanded)}
-        className="p-3 flex justify-between items-center cursor-pointer hover:bg-[var(--interactive-hover)] transition-colors"
+        className="px-3 py-3 flex justify-between items-center cursor-pointer transition-colors"
+        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--interactive-hover)')}
+        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
       >
         <div className="flex items-center gap-3">
           <ChevronRight
-            className="w-4 h-4 text-[var(--text-tertiary)]"
-            style={{ transform: expanded ? 'rotate(90deg)' : 'none' }}
+            className="w-4 h-4 flex-shrink-0 transition-transform"
+            style={{
+              color: 'var(--text-tertiary)',
+              transform: expanded ? 'rotate(90deg)' : 'none',
+            }}
           />
-          <span className="font-medium text-[var(--text-primary)]">{exercise}</span>
+          <span className="text-[0.9375rem] font-medium" style={{ color: 'var(--text-primary)' }}>
+            {exercise}
+          </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[var(--interactive-primary)] font-medium text-[0.8125rem]">
+          <span
+            className="text-[0.5625rem] px-1.5 py-0.5 rounded-[var(--radius-pill)] font-bold"
+            style={{
+              backgroundColor: 'rgba(200,255,0,0.08)',
+              color: 'var(--interactive-primary)',
+              border: '1px solid rgba(200,255,0,0.15)',
+            }}
+          >
             {sortedSets.length} {t('history.series_plural')}
           </span>
           <button
@@ -61,37 +79,53 @@ function ExerciseRow({
               e.stopPropagation();
               onDelete(firstSet.id);
             }}
-            className="bg-transparent border-none cursor-pointer transition-all hover:scale-125 ml-2"
+            className="p-1.5 rounded-[var(--radius-sm)] transition-colors"
+            style={{ color: 'var(--text-tertiary)' }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,69,58,0.1)')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
           >
-            <Trash2 className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
+            <Trash2 className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
       {expanded && (
-        <div className="px-3 pb-3 space-y-2">
+        <div className="px-3 pb-3 space-y-1.5">
           {sortedSets.map((s) => (
             <div
               key={s.id}
-              className="flex justify-between items-center bg-[var(--bg-surface-2)] p-2 rounded-[var(--radius-md)] ml-6"
+              className="flex justify-between items-center px-3 py-2 rounded-[var(--radius-md)] ml-7"
+              style={{
+                backgroundColor: 'var(--bg-surface-2)',
+                border: '1px solid var(--border-glass)',
+              }}
             >
               <div className="flex items-center gap-3">
-                <span className="text-[var(--text-tertiary)] text-[0.8125rem]">
+                <span
+                  className="text-[0.75rem] font-mono"
+                  style={{ color: 'var(--text-tertiary)' }}
+                >
                   {t('workout.sets')} {s.set_num}
                 </span>
-                <span className="text-[var(--text-secondary)] text-[0.875rem]">
+                <span className="text-[0.875rem]" style={{ color: 'var(--text-secondary)' }}>
                   {s.reps} {t('workout.reps').toLowerCase()}
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-[var(--interactive-primary)] font-medium">{s.weight} kg</span>
+                <span
+                  className="font-semibold text-[0.875rem]"
+                  style={{ color: 'var(--interactive-primary)' }}
+                >
+                  {s.weight} kg
+                </span>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     onDelete(s.id);
                   }}
-                  className="bg-transparent border-none cursor-pointer p-1"
+                  className="p-1 rounded"
+                  style={{ color: 'var(--text-tertiary)' }}
                 >
-                  <Trash2 className="w-3 h-3" style={{ color: 'var(--text-tertiary)' }} />
+                  <Trash2 className="w-3 h-3" />
                 </button>
               </div>
             </div>
@@ -102,12 +136,20 @@ function ExerciseRow({
   );
 }
 
+function formatDuration(s: number): string {
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}min`;
+}
+
 export function HistoryPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const { repeatWorkout } = useWorkoutStore();
-  const [view, setView] = useState<'sets' | 'workouts'>('sets');
+  const { sessions: cardioSessions, deleteSession: deleteCardioSession } = useCardioStore();
+  const [view, setView] = useState<'sets' | 'workouts' | 'cardio'>('sets');
   const [filterExercise, setFilterExercise] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -152,8 +194,7 @@ export function HistoryPage() {
       (a, b) =>
         new Date(b.workout?.started_at ?? '').getTime() -
         new Date(a.workout?.started_at ?? '').getTime(),
-    )
-    .slice(0, 1000);
+    );
 
   const groupedWorkouts: GroupedWorkout[] = workouts.reduce((acc: GroupedWorkout[], wo) => {
     const date = new Date(wo.started_at ?? '').toLocaleDateString();
@@ -526,11 +567,12 @@ export function HistoryPage() {
       <div className="flex gap-2 mb-3 flex-wrap">
         <select
           value={view}
-          onChange={(e) => setView(e.target.value as 'sets' | 'workouts')}
+          onChange={(e) => setView(e.target.value as 'sets' | 'workouts' | 'cardio')}
           className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-lg text-[var(--text-secondary)] text-[0.95rem] p-2 cursor-pointer transition-all hover:scale-[1.02]"
         >
           <option value="sets">{t('history.sets_view')}</option>
           <option value="workouts">{t('history.workouts_view')}</option>
+          <option value="cardio">Cardio</option>
         </select>
 
         {view === 'sets' && (
@@ -561,8 +603,91 @@ export function HistoryPage() {
         )}
       </div>
 
-      {view === 'sets' ? (
-        <div className="bg-[var(--bg-surface)] rounded-[var(--radius-lg)] overflow-hidden">
+      {view === 'cardio' ? (
+        <div className="space-y-2">
+          {cardioSessions.length === 0 ? (
+            <div className="text-center py-12 text-sm" style={{ color: 'var(--text-tertiary)' }}>
+              Sin sesiones de cardio registradas
+            </div>
+          ) : (
+            cardioSessions.map((session, i) => (
+              <motion.div
+                key={session.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.03 }}
+                className="rounded-[var(--radius-lg)] p-4 flex items-center justify-between"
+                style={{
+                  backgroundColor: 'var(--bg-surface)',
+                  border: '1px solid var(--border-subtle)',
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-9 h-9 rounded-[var(--radius-md)] flex items-center justify-center flex-shrink-0"
+                    style={{ backgroundColor: 'var(--bg-surface-2)' }}
+                  >
+                    <span style={{ color: 'var(--interactive-primary)' }}>
+                      <CardioTypeIcon type={session.type} className="w-4.5 h-4.5" />
+                    </span>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="text-sm font-medium"
+                        style={{ color: 'var(--text-primary)' }}
+                      >
+                        {CARDIO_LABELS[session.type]}
+                      </span>
+                      <span
+                        className="font-mono text-sm font-semibold"
+                        style={{ color: 'var(--interactive-primary)' }}
+                      >
+                        {formatDuration(session.duration)}
+                      </span>
+                    </div>
+                    <div
+                      className="text-[0.6875rem] flex items-center gap-2"
+                      style={{ color: 'var(--text-tertiary)' }}
+                    >
+                      <span>
+                        {formatDistanceToNow(parseISO(session.startedAt), {
+                          addSuffix: true,
+                          locale: es,
+                        })}
+                      </span>
+                      {session.distance && <span>· {session.distance}km</span>}
+                      {session.calories && <span>· {session.calories}kcal</span>}
+                    </div>
+                    {session.notes && (
+                      <div
+                        className="text-[0.6875rem] italic mt-0.5"
+                        style={{ color: 'var(--text-tertiary)' }}
+                      >
+                        {session.notes}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <button
+                  onClick={() => deleteCardioSession(session.id)}
+                  className="p-2 rounded-lg ml-2 flex-shrink-0"
+                  style={{ color: 'var(--text-tertiary)' }}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </motion.div>
+            ))
+          )}
+        </div>
+      ) : view === 'sets' ? (
+        <div
+          className="rounded-[var(--radius-lg)] overflow-hidden"
+          style={{
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border-default)',
+          }}
+        >
           {filteredSets.length === 0 ? (
             <EmptyHistory />
           ) : (
@@ -586,8 +711,20 @@ export function HistoryPage() {
                 <div className="divide-y divide-[var(--border-subtle)]">
                   {sortedDates.map((date) => (
                     <div key={date}>
-                      <div className="bg-[var(--bg-surface)] p-3 text-[0.6875rem] font-semibold text-[var(--text-tertiary)] uppercase border-b border-[var(--border-subtle)]">
-                        {date}
+                      {/* Cabecera de fecha — mismo estilo que group headers del ExerciseSelector */}
+                      <div
+                        className="px-3 py-2 flex items-center gap-1.5 sticky top-0 z-10"
+                        style={{
+                          backgroundColor: 'var(--bg-surface-2)',
+                          borderBottom: '1px solid var(--border-subtle)',
+                        }}
+                      >
+                        <span
+                          className="text-[0.625rem] font-bold uppercase tracking-[0.12em]"
+                          style={{ color: 'var(--text-tertiary)' }}
+                        >
+                          {date}
+                        </span>
                       </div>
                       {Object.entries(grouped[date]).map(([exercise, exerciseSets]) => (
                         <ExerciseRow
@@ -605,42 +742,63 @@ export function HistoryPage() {
           )}
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {groupedWorkouts.length === 0 ? (
             <EmptyHistory />
           ) : (
             groupedWorkouts.map((group, gi) => (
               <motion.div
                 key={gi}
-                initial={{ opacity: 0, y: 12 }}
+                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: gi * 0.05 }}
-                className="bg-[var(--bg-surface)] rounded-[var(--radius-lg)] overflow-hidden"
+                transition={{ delay: gi * 0.04 }}
+                className="rounded-[var(--radius-lg)] overflow-hidden"
+                style={{
+                  backgroundColor: 'var(--bg-surface)',
+                  border: '1px solid var(--border-default)',
+                }}
               >
-                <div className="p-3 border-b border-[var(--border-subtle)] flex justify-between items-center">
-                  <span className="font-medium text-[var(--text-primary)]">{group.date}</span>
-                  <span className="text-[var(--text-tertiary)] text-[0.8125rem]">
-                    {group.totalSets} series · {group.totalVolume.toLocaleString()} kg
+                {/* Cabecera fecha/volumen */}
+                <div
+                  className="px-3 py-2 flex justify-between items-center"
+                  style={{
+                    backgroundColor: 'var(--bg-surface-2)',
+                    borderBottom: '1px solid var(--border-subtle)',
+                  }}
+                >
+                  <span
+                    className="text-[0.625rem] font-bold uppercase tracking-[0.12em]"
+                    style={{ color: 'var(--text-tertiary)' }}
+                  >
+                    {group.date}
+                  </span>
+                  <span
+                    className="text-[0.6875rem] font-mono"
+                    style={{ color: 'var(--text-tertiary)' }}
+                  >
+                    {group.totalSets} series · {(group.totalVolume / 1000).toFixed(1)}t
                   </span>
                 </div>
                 {group.workouts.map((wo) => (
                   <div
                     key={wo.id}
-                    className="p-3 border-b border-[var(--border-subtle)] last:border-b-0"
+                    className="px-3 py-2.5"
+                    style={{ borderBottom: '1px solid var(--border-subtle)' }}
                   >
                     <div className="flex justify-between items-center mb-2">
-                      <span className="text-[var(--text-secondary)] text-[0.875rem]">
+                      <span className="text-[0.8125rem]" style={{ color: 'var(--text-tertiary)' }}>
                         {new Date(wo.started_at ?? '').toLocaleTimeString([], {
                           hour: '2-digit',
                           minute: '2-digit',
                         })}
                       </span>
-                      <div className="flex gap-2">
+                      <div className="flex gap-3">
                         <button
                           onClick={() => handleRepeat(wo)}
-                          className="text-[var(--interactive-primary)] text-[0.8rem] font-medium bg-transparent border-none cursor-pointer transition-all hover:scale-105"
+                          className="flex items-center gap-1 text-[0.75rem] font-semibold"
+                          style={{ color: 'var(--interactive-primary)' }}
                         >
-                          <Repeat className="w-3.5 h-3.5 mr-1" />
+                          <Repeat className="w-3.5 h-3.5" />
                           {t('history.repeat')}
                         </button>
                         <button
@@ -658,18 +816,24 @@ export function HistoryPage() {
                             if (success) toast.success(t('history.shared_msg'));
                             else toast.error('Error');
                           }}
-                          className="text-[var(--text-secondary)] text-[0.8rem] font-medium bg-transparent border-none cursor-pointer transition-all hover:scale-105"
+                          className="flex items-center gap-1 text-[0.75rem] font-semibold"
+                          style={{ color: 'var(--text-secondary)' }}
                         >
-                          <Share2 className="w-3.5 h-3.5 mr-1" />
+                          <Share2 className="w-3.5 h-3.5" />
                           {t('history.share')}
                         </button>
                       </div>
                     </div>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-1.5">
                       {wo.sets.map((s: WorkoutSetWithDetails, si) => (
                         <span
                           key={si}
-                          className="bg-[var(--bg-surface-2)] px-2 py-1 rounded-[var(--radius-pill)] text-[0.8rem] text-[var(--text-secondary)]"
+                          className="px-2 py-1 rounded-[var(--radius-pill)] text-[0.75rem]"
+                          style={{
+                            backgroundColor: 'var(--bg-surface-2)',
+                            color: 'var(--text-secondary)',
+                            border: '1px solid var(--border-glass)',
+                          }}
                         >
                           {s.exercise?.name}: {s.reps}×{s.weight}
                         </span>

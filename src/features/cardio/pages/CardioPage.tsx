@@ -6,10 +6,10 @@ import { Layout } from '@app/components/Layout';
 import {
   useCardioStore,
   CARDIO_LABELS,
-  CARDIO_EMOJIS,
   type CardioType,
   type CardioSession,
 } from '@features/cardio/stores/cardioStore';
+import { CardioTypeIcon } from '@shared/components/CardioIcons';
 import { impact, notificationHaptic, ImpactStyle, NotificationType } from '@shared/lib/haptics';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -91,7 +91,6 @@ function ActiveSessionCard() {
   if (!isActive && !showFinish) return null;
 
   const label = activeType ? CARDIO_LABELS[activeType] : '';
-  const emoji = activeType ? CARDIO_EMOJIS[activeType] : '';
 
   return (
     <motion.div
@@ -107,7 +106,11 @@ function ActiveSessionCard() {
         <>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <span className="text-xl">{emoji}</span>
+              {activeType && (
+                <span style={{ color: 'var(--interactive-primary)' }}>
+                  <CardioTypeIcon type={activeType} className="w-5 h-5" />
+                </span>
+              )}
               <div>
                 <div className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
                   {label}
@@ -153,8 +156,12 @@ function ActiveSessionCard() {
         </>
       ) : (
         <div>
-          <div className="text-sm font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>
-            {emoji} {label} · {formatSeconds(elapsed)}
+          <div
+            className="flex items-center gap-2 text-sm font-semibold mb-1"
+            style={{ color: 'var(--text-primary)' }}
+          >
+            {activeType && <CardioTypeIcon type={activeType} className="w-4 h-4" />}
+            {label} · {formatSeconds(elapsed)}
           </div>
           <div className="text-[0.6875rem] mb-3" style={{ color: 'var(--text-tertiary)' }}>
             Añade detalles opcionales
@@ -343,7 +350,9 @@ function SessionHistoryItem({
       style={{ borderColor: 'var(--border-subtle)' }}
     >
       <div className="flex items-center gap-3">
-        <span className="text-xl">{CARDIO_EMOJIS[session.type]}</span>
+        <span style={{ color: 'var(--interactive-primary)' }}>
+          <CardioTypeIcon type={session.type} className="w-5 h-5" />
+        </span>
         <div>
           <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
             {CARDIO_LABELS[session.type]}
@@ -468,7 +477,9 @@ export function CardioPage() {
                   border: '1px solid var(--border-subtle)',
                 }}
               >
-                <span className="text-xl">{CARDIO_EMOJIS[type]}</span>
+                <span style={{ color: 'var(--text-secondary)' }}>
+                  <CardioTypeIcon type={type} className="w-5 h-5" />
+                </span>
                 <span
                   className="text-[0.625rem] font-medium leading-tight text-center"
                   style={{ color: 'var(--text-secondary)' }}
