@@ -29,6 +29,7 @@ interface WorkoutState extends PersistedWorkout {
   setActiveExercise: (id: string | null) => void;
   setCustomExerciseName: (name: string) => void;
   addSet: () => void;
+  setSets: (sets: SetData[]) => void;
   updateSet: (index: number, data: Partial<SetData>) => void;
   removeSet: (index: number) => void;
   removeAllSets: () => void;
@@ -78,6 +79,8 @@ export const useWorkoutStore = create<WorkoutState>()(
         const last = get().sets.at(-1);
         set({ sets: [...get().sets, last ? makeSet(last.reps, last.weight) : makeSet()] });
       },
+
+      setSets: (newSets: SetData[]) => set({ sets: newSets }),
 
       updateSet: (index: number, data: Partial<SetData>) => {
         const newSets = [...get().sets];
