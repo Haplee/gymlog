@@ -6,7 +6,14 @@
       "Bash(git add *)",
       "Bash(npx tsc *)",
       "Bash(npx eslint *)",
-      "Bash(git *)"
+      "Bash(git *)",
+      "Bash(python -c \"from PIL import Image; img = Image.open\\('C:/Users/franc/proyecto/Tonterias/pesos/public/icon-512x512.png'\\); print\\(img.size\\)\")",
+      "Bash(python3 -c \"from PIL import Image; img = Image.open\\('C:/Users/franc/proyecto/Tonterias/pesos/public/icon-512x512.png'\\); print\\(img.size\\)\")",
+      "PowerShell($img = [System.Drawing.Image]::FromFile\\(\"C:\\\\Users\\\\franc\\\\proyecto\\\\Tonterias\\\\pesos\\\\public\\\\icon-512x512.png\"\\); Write-Output \"$\\($img.Width\\)x$\\($img.Height\\)\")",
+      "Bash(.\\\\gradlew.bat bundleRelease)",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Eclipse Adoptium\\\\jdk-21.0.10.7-hotspot\"; Set-Location \"C:\\\\Users\\\\franc\\\\proyecto\\\\Tonterias\\\\pesos\\\\android\"; .\\\\gradlew.bat bundleRelease 2>&1)",
+      "PowerShell(Get-Item \"C:\\\\Users\\\\franc\\\\proyecto\\\\Tonterias\\\\pesos\\\\android\\\\app\\\\build\\\\outputs\\\\bundle\\\\release\\\\app-release.aab\" | Select-Object Name, @{N='Size \\(MB\\)';E={[math]::Round\\($_.Length/1MB,2\\)}}, LastWriteTime)",
+      "PowerShell(Get-Item *)"
     ]
   }
 }
