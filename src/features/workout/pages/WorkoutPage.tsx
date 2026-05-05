@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -8,8 +8,8 @@ import { useWorkoutStore } from '@features/workout/stores/workoutStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
 import { useWeight } from '@shared/hooks/useWeight';
 import { calcular1RM } from '@shared/lib/brzycki';
-import { notifyTimerAlarm, playAlarmSound } from '@shared/lib/notifications';
 import { useRoutineStore } from '@features/routine/stores/routineStore';
+import { useRestTimerStore } from '@features/workout/stores/restTimerStore';
 import { Layout } from '@app/components/Layout';
 import {
   fetchExercises,
@@ -19,6 +19,11 @@ import {
   deleteExerciseNote,
   deleteExercise,
 } from '@shared/api/queries';
+import { ExerciseSelector } from '@features/workout/components/ExerciseSelector';
+import { RestTimer } from '@features/workout/components/RestTimer';
+import { WorkoutSessionStats } from '@features/workout/components/WorkoutSessionStats';
+import { LastSessionCard } from '@features/workout/components/LastSessionCard';
+import type { ExerciseNote } from '@shared/lib/types';
 import { Trophy, X, Trash2, Plus, StickyNote, AlertCircle } from 'lucide-react';
 import { z } from 'zod';
 import { impact, notificationHaptic, ImpactStyle, NotificationType } from '@shared/lib/haptics';
@@ -28,7 +33,6 @@ const setSchema = z.object({
   weight: z.coerce.number().nonnegative('El peso no puede ser negativo'),
 });
 
-// Componente extraído fuera para evitar el error react-hooks/static-components
 function ResumeWorkoutBanner({
   onContinue,
   onDiscard,
@@ -77,7 +81,6 @@ export function WorkoutPage() {
     sets,
     startedAt,
     setActiveExercise,
-    setCustomExerciseName,
     addSet,
     updateSet,
     removeSet,
@@ -89,24 +92,22 @@ export function WorkoutPage() {
   const { sound, showWarmupSets } = useSettingsStore();
   const { getActiveRoutine, getTodayRoutine, checkAndBackup } = useRoutineStore();
   const { unit: weightUnit, convert, convertFromDisplay: convertToKg } = useWeight();
+  const {
+    start: startRestTimer,
+    isRunning: restTimerRunning,
+    duration: restDuration,
+  } = useRestTimerStore();
 
   const [message, setMessage] = useState('');
-  const [customInput, setCustomInput] = useState(false);
-  const [customMuscleGroup, setCustomMuscleGroup] = useState('Otro');
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [noteText, setNoteText] = useState('');
   const [setErrors, setSetErrors] = useState<Record<number, string>>({});
-  const [restTimer, setRestTimer] = useState(0);
-  const [isResting, setIsResting] = useState(false);
-  const [restDuration, setRestDuration] = useState(90); // default 90 seconds
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
   const [showResumeBanner, setShowResumeBanner] = useState(() => {
     if (startedAt && sets.length > 0) {
-      const startTime = new Date(startedAt).getTime();
-      const now = new Date().getTime();
-      const twelveHours = 12 * 60 * 60 * 1000;
-      return now - startTime < twelveHours;
+      return Date.now() - new Date(startedAt).getTime() < 12 * 60 * 60 * 1000;
     }
     return false;
   });
@@ -115,21 +116,26 @@ export function WorkoutPage() {
     queryKey: ['exercises', user?.id],
     queryFn: () => fetchExercises(user?.id ?? ''),
     enabled: !!user?.id,
+    staleTime: 1000 * 60 * 5,
   });
 
   const { data: personalRecordsList = [] } = useQuery({
     queryKey: ['personalRecords', user?.id],
     queryFn: () => fetchPersonalRecords(user?.id ?? ''),
     enabled: !!user?.id,
+    staleTime: 1000 * 60 * 5,
   });
 
-  const { data: exerciseNotes = [], refetch: refetchNotes } = useQuery({
+  const { data: exerciseNotes = [] } = useQuery({
     queryKey: ['exerciseNotes', user?.id, activeExerciseId],
     queryFn: () => fetchExerciseNotes(user?.id ?? '', activeExerciseId ?? ''),
     enabled: !!user?.id && !!activeExerciseId,
   });
 
-  const personalRecords = Object.fromEntries(personalRecordsList.map((pr) => [pr.exercise_id, pr]));
+  const personalRecords = useMemo(
+    () => Object.fromEntries(personalRecordsList.map((pr) => [pr.exercise_id, pr])),
+    [personalRecordsList],
+  );
 
   useEffect(() => {
     if (!user) {
@@ -137,13 +143,8 @@ export function WorkoutPage() {
       return;
     }
     checkAndBackup(user.id);
-
-    // Bloque 1: Si el workout es viejo, limpiarlo al montar
     if (startedAt && sets.length > 0) {
-      const startTime = new Date(startedAt).getTime();
-      const now = new Date().getTime();
-      const twelveHours = 12 * 60 * 60 * 1000;
-      if (now - startTime >= twelveHours) {
+      if (Date.now() - new Date(startedAt).getTime() >= 12 * 60 * 60 * 1000) {
         clearPersistedState();
       }
     }
@@ -155,45 +156,17 @@ export function WorkoutPage() {
   const activeRoutine = getActiveRoutine();
   const todayRoutine = getTodayRoutine();
 
-  const groups: Record<string, typeof exercises> = {};
-  exercises.forEach((ex) => {
-    if (!groups[ex.muscle_group]) groups[ex.muscle_group] = [];
-    groups[ex.muscle_group].push(ex);
-  });
+  const sessionVolume = useMemo(
+    () =>
+      sets.reduce((sum, s) => {
+        const r = Number(s.reps) || 0;
+        const w = Number(s.weight) || 0;
+        return sum + r * w;
+      }, 0),
+    [sets],
+  );
 
-  // Rest timer effect
-  useEffect(() => {
-    if (!isResting || restTimer <= 0) {
-      if (isResting && restTimer <= 0) {
-        setIsResting(false);
-        void notifyTimerAlarm(restDuration);
-        void playAlarmSound();
-      }
-      return;
-    }
-
-    const interval = setInterval(() => {
-      setRestTimer((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [isResting, restTimer, restDuration]);
-
-  const startRestTimer = useCallback(() => {
-    setRestTimer(restDuration);
-    setIsResting(true);
-  }, [restDuration]);
-
-  const cancelRestTimer = useCallback(() => {
-    setRestTimer(0);
-    setIsResting(false);
-  }, []);
+  const validSetCount = useMemo(() => sets.filter((s) => s.reps && s.weight).length, [sets]);
 
   const playFeedbackSound = useCallback(() => {
     try {
@@ -211,7 +184,6 @@ export function WorkoutPage() {
       gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
       osc.start(ctx.currentTime);
       osc.stop(ctx.currentTime + 0.15);
-
       setTimeout(() => {
         const osc2 = ctx.createOscillator();
         const gain2 = ctx.createGain();
@@ -239,22 +211,24 @@ export function WorkoutPage() {
     });
   }, []);
 
+  const checkIsNewPR = useCallback(
+    (weight: string, reps: string): boolean => {
+      if (!currentPR) return false;
+      return calcular1RM(Number(weight) || 0, Number(reps) || 0) > currentPR.weight;
+    },
+    [currentPR],
+  );
+
   const handleSave = async () => {
     if (!user || saving) return;
     setMessage('');
-
     setSetErrors({});
 
-    // Bloque 6: Filtrado y Validación con Zod
     const newErrors: Record<number, string> = {};
     let hasValid = false;
 
     sets.forEach((s, i) => {
-      // Ignorar completamente series vacías (las borramos/filtramos lógicamente)
-      if ((s.reps === '' || s.reps === '0') && (s.weight === '' || s.weight === '0')) {
-        return;
-      }
-
+      if ((s.reps === '' || s.reps === '0') && (s.weight === '' || s.weight === '0')) return;
       const validation = setSchema.safeParse(s);
       if (!validation.success) {
         newErrors[i] = validation.error.errors[0]?.message || 'Inválido';
@@ -267,10 +241,8 @@ export function WorkoutPage() {
 
     if (Object.keys(newErrors).length > 0) {
       void notificationHaptic(NotificationType.Error);
-      // Mostrar error inline sin bloquear las demás
       return;
     }
-
     if (!hasValid) {
       setMessage('Añade al menos una serie válida');
       return;
@@ -287,14 +259,18 @@ export function WorkoutPage() {
       setMessage('✓ Entrenamiento guardado');
       void notificationHaptic(NotificationType.Success);
       if (sound) playFeedbackSound();
-      queryClient.invalidateQueries({ queryKey: ['exercises'] });
       queryClient.invalidateQueries({ queryKey: ['workouts'] });
       queryClient.invalidateQueries({ queryKey: ['recentSets'] });
       queryClient.invalidateQueries({ queryKey: ['personalRecords'] });
+      if (activeExerciseId) {
+        queryClient.invalidateQueries({
+          queryKey: ['lastExerciseSets', user.id, activeExerciseId],
+        });
+      }
 
       let max1RM = 0;
       sets.forEach((s, i) => {
-        if (!setErrors[i] && s.weight && s.reps && checkIsNewPR(s.weight, s.reps)) {
+        if (!newErrors[i] && s.weight && s.reps && checkIsNewPR(s.weight, s.reps)) {
           const e1rm = Math.round(calcular1RM(Number(s.weight), Number(s.reps)));
           if (e1rm > max1RM) max1RM = e1rm;
         }
@@ -303,7 +279,6 @@ export function WorkoutPage() {
       if (max1RM > 0) {
         triggerConfetti();
         void notificationHaptic(NotificationType.Success);
-
         const exerciseName = selectedExercise?.name || customExerciseName || 'Ejercicio';
         setMessage(`Nuevo PR: ${exerciseName} - ${convert(max1RM).toFixed(1)} ${weightUnit}`);
       }
@@ -318,42 +293,68 @@ export function WorkoutPage() {
 
   const handleAddSet = () => {
     void impact(ImpactStyle.Light);
+    const lastSet = sets.at(-1);
+    const lastHasData = lastSet && lastSet.reps && lastSet.weight;
     addSet();
-  };
-
-  const handleRemoveSet = (index: number) => {
-    removeSet(index);
-  };
-
-  const handleRemoveAllSets = () => {
-    if (confirm('¿Eliminar todas las series?')) {
-      removeAllSets();
+    if (lastHasData && !restTimerRunning) {
+      startRestTimer(restDuration);
     }
+  };
+
+  const handleRemoveSet = (index: number) => removeSet(index);
+
+  const handleCopySets = (copied: { reps: number; weight: number }[]) => {
+    if (!copied.length) return;
+    removeAllSets();
+    copied.forEach(() => addSet());
+    copied.forEach((s, i) => updateSet(i, { reps: String(s.reps), weight: String(s.weight) }));
+    void impact(ImpactStyle.Light);
   };
 
   const handleSaveNote = async () => {
     if (!user || !activeExerciseId || !noteText.trim()) return;
+    const text = noteText.trim();
+    setNoteText('');
+    const tempId = `temp-${Date.now()}`;
+    queryClient.setQueryData(
+      ['exerciseNotes', user.id, activeExerciseId],
+      (old: ExerciseNote[] = []) => [
+        {
+          id: tempId,
+          note: text,
+          exercise_id: activeExerciseId,
+          user_id: user.id,
+          created_at: new Date().toISOString(),
+        } as ExerciseNote,
+        ...old,
+      ],
+    );
     try {
-      await saveExerciseNote(user.id, activeExerciseId, noteText.trim());
-      setNoteText('');
-      refetchNotes();
-    } catch (err) {
-      console.error('Error saving note:', err);
+      const saved = await saveExerciseNote(user.id, activeExerciseId, text);
+      queryClient.setQueryData(
+        ['exerciseNotes', user.id, activeExerciseId],
+        (old: ExerciseNote[] = []) => [saved, ...old.filter((n) => n.id !== tempId)],
+      );
+    } catch {
+      queryClient.setQueryData(
+        ['exerciseNotes', user.id, activeExerciseId],
+        (old: ExerciseNote[] = []) => old.filter((n) => n.id !== tempId),
+      );
     }
   };
 
   const handleDeleteNote = async (noteId: string) => {
-    if (!confirm('¿Eliminar esta nota?')) return;
-    try {
-      await deleteExerciseNote(noteId);
-      refetchNotes();
-    } catch (err) {
-      console.error('Error deleting note:', err);
-    }
+    if (!user || !activeExerciseId) return;
+    queryClient.setQueryData(
+      ['exerciseNotes', user.id, activeExerciseId],
+      (old: ExerciseNote[] = []) => old.filter((n) => n.id !== noteId),
+    );
+    await deleteExerciseNote(noteId).catch(() => {
+      queryClient.invalidateQueries({ queryKey: ['exerciseNotes', user.id, activeExerciseId] });
+    });
   };
 
   const handleDeleteExercise = async (exId: string) => {
-    if (!confirm('¿Eliminar este ejercicio? Se borrarán todos los registros asociados.')) return;
     try {
       await deleteExercise(exId);
       queryClient.invalidateQueries({ queryKey: ['exercises'] });
@@ -361,23 +362,6 @@ export function WorkoutPage() {
     } catch (err) {
       console.error('Error deleting exercise:', err);
     }
-  };
-
-  const handleExerciseChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const val = e.target.value;
-    const isCustom = val === '__custom__';
-    setCustomInput(isCustom);
-    setActiveExercise(isCustom ? null : val || null);
-    if (val && !isCustom && !sets.length) {
-      addSet();
-    }
-  };
-
-  const checkIsNewPR = (weight: string, reps: string): boolean => {
-    if (!currentPR) return false;
-    const estimated1RM = calcular1RM(Number(weight) || 0, Number(reps) || 0);
-    const currentPRValue = currentPR.one_rm ?? currentPR.weight;
-    return estimated1RM > currentPRValue;
   };
 
   const bgCard = 'var(--bg-surface)';
@@ -406,18 +390,22 @@ export function WorkoutPage() {
         )}
       </AnimatePresence>
 
+      {/* Session Stats */}
+      <WorkoutSessionStats
+        startedAt={startedAt}
+        totalVolume={sessionVolume}
+        totalSets={validSetCount}
+      />
+
       {activeRoutine && todayRoutine && todayRoutine.exercises.length > 0 && (
         <motion.div
           variants={containerVariants}
           initial="hidden"
           animate="show"
           className="mb-3 p-3 rounded-[var(--radius-lg)]"
-          style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}
+          style={{ backgroundColor: bgCard, border: '1px solid var(--border-subtle)' }}
         >
-          <div
-            className="text-[0.8125rem] font-medium mb-1"
-            style={{ color: 'var(--interactive-primary)' }}
-          >
+          <div className="text-[0.8125rem] font-medium mb-1" style={{ color: accent }}>
             {todayRoutine.name}
           </div>
           <div className="flex flex-wrap gap-1.5">
@@ -425,13 +413,13 @@ export function WorkoutPage() {
               <span
                 key={i}
                 className="text-[0.6875rem] px-2 py-1 rounded-[var(--radius-pill)]"
-                style={{ backgroundColor: 'var(--bg-surface-2)', color: 'var(--text-secondary)' }}
+                style={{ backgroundColor: 'var(--bg-surface-2)', color: textSecondary }}
               >
                 {ex.name}
               </span>
             ))}
             {todayRoutine.exercises.length > 4 && (
-              <span className="text-[0.6875rem]" style={{ color: 'var(--text-tertiary)' }}>
+              <span className="text-[0.6875rem]" style={{ color: textMuted }}>
                 +{todayRoutine.exercises.length - 4}
               </span>
             )}
@@ -446,56 +434,28 @@ export function WorkoutPage() {
         className="rounded-[var(--radius-lg)] p-4 mb-3"
         style={{ backgroundColor: bgCard, border: `1px solid ${border}` }}
       >
-        <select
-          value={activeExerciseId || (customInput ? '__custom__' : '')}
-          onChange={handleExerciseChange}
-          className="w-full rounded-lg text-sm p-2.5 outline-none appearance-none transition-all focus:scale-[1.01]"
-          style={{ backgroundColor: bgCard, border: `1px solid ${border}`, color: textPrimary }}
-        >
-          <option value="">{t('workout.select_exercise')}</option>
-          {Object.entries(groups).map(([group, exs]) => (
-            <optgroup key={group} label={group}>
-              {exs.map((ex) => (
-                <option key={ex.id} value={ex.id}>
-                  {ex.name}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-          <option value="__custom__">{t('workout.custom_exercise')}</option>
-        </select>
+        {user && (
+          <ExerciseSelector
+            userId={user.id}
+            onSelect={(id) => {
+              setActiveExercise(id);
+              if (!sets.length) addSet();
+            }}
+            activeExerciseId={activeExerciseId}
+          />
+        )}
 
-        {customInput && (
-          <>
-            <input
-              type="text"
-              placeholder="Nombre del ejercicio"
-              value={customExerciseName}
-              onChange={(e) => setCustomExerciseName(e.target.value)}
-              className="w-full rounded-lg text-sm p-2.5 outline-none mt-2 transition-all"
-              style={{ backgroundColor: bgCard, border: `1px solid ${border}`, color: textPrimary }}
-            />
-            <select
-              value={customMuscleGroup}
-              onChange={(e) => setCustomMuscleGroup(e.target.value)}
-              className="w-full rounded-lg text-sm p-2.5 outline-none mt-2 transition-all"
-              style={{ backgroundColor: bgCard, border: `1px solid ${border}`, color: textPrimary }}
-            >
-              <option value="Pecho">Pecho</option>
-              <option value="Espalda">Espalda</option>
-              <option value="Hombro">Hombro</option>
-              <option value="Pierna">Pierna</option>
-              <option value="Glúteo">Glúteo</option>
-              <option value="Brazos">Brazos</option>
-              <option value="Core">Core</option>
-              <option value="Cardio">Cardio</option>
-              <option value="Otro">Otro</option>
-            </select>
-          </>
+        {/* Last Session Reference */}
+        {user && activeExerciseId && (
+          <LastSessionCard
+            userId={user.id}
+            exerciseId={activeExerciseId}
+            onCopySets={handleCopySets}
+          />
         )}
 
         {selectedExercise && (
-          <div className="flex gap-2 mt-2">
+          <div className="flex gap-2 mt-3">
             <button
               onClick={() => setShowNotes(!showNotes)}
               className="flex-1 py-1.5 px-2 rounded-lg text-xs flex items-center justify-center gap-1"
@@ -634,7 +594,7 @@ export function WorkoutPage() {
             const isNewPR = checkIsNewPR(s.weight, s.reps);
             return (
               <motion.div
-                key={i}
+                key={s.id ?? String(i)}
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="mb-2"
@@ -671,6 +631,7 @@ export function WorkoutPage() {
                     </label>
                     <input
                       type="number"
+                      inputMode="numeric"
                       placeholder="0"
                       value={s.reps}
                       onChange={(e) => {
@@ -699,6 +660,7 @@ export function WorkoutPage() {
                     </label>
                     <input
                       type="number"
+                      inputMode="decimal"
                       placeholder="0"
                       value={
                         s.weight ? convert(Number(s.weight)).toFixed(1).replace(/\.0$/, '') : ''
@@ -726,10 +688,7 @@ export function WorkoutPage() {
                     />
                     {isNewPR && (
                       <span className="absolute -top-1 -right-1">
-                        <Trophy
-                          className="w-3 h-3"
-                          style={{ color: 'var(--interactive-primary)' }}
-                        />
+                        <Trophy className="w-3 h-3" style={{ color: accent }} />
                       </span>
                     )}
                   </div>
@@ -757,22 +716,58 @@ export function WorkoutPage() {
           >
             {t('workout.add_set')}
           </button>
+
           {sets.length > 1 && (
-            <button
-              onClick={handleRemoveAllSets}
-              className="py-2 px-3 border border-dashed rounded-[var(--radius-lg)] text-sm font-medium cursor-pointer"
-              style={{ borderColor: border, color: 'var(--error)' }}
-              title={t('workout.remove_all')}
-            >
-              {t('workout.remove_all')}
-            </button>
+            <AnimatePresence mode="wait">
+              {confirmDeleteAll ? (
+                <motion.div
+                  key="confirm"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  className="flex gap-1"
+                >
+                  <button
+                    onClick={() => {
+                      removeAllSets();
+                      setConfirmDeleteAll(false);
+                    }}
+                    className="py-2 px-3 rounded-[var(--radius-lg)] text-sm font-medium"
+                    style={{ backgroundColor: 'var(--error)', color: '#fff' }}
+                  >
+                    ✓
+                  </button>
+                  <button
+                    onClick={() => setConfirmDeleteAll(false)}
+                    className="py-2 px-3 rounded-[var(--radius-lg)] text-sm border"
+                    style={{ borderColor: border, color: textMuted }}
+                  >
+                    ✕
+                  </button>
+                </motion.div>
+              ) : (
+                <motion.button
+                  key="delete-all"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setConfirmDeleteAll(true)}
+                  className="py-2 px-3 border border-dashed rounded-[var(--radius-lg)] text-sm font-medium cursor-pointer"
+                  style={{ borderColor: border, color: 'var(--error)' }}
+                  title={t('workout.remove_all')}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </motion.button>
+              )}
+            </AnimatePresence>
           )}
+
           <button
             onClick={handleSave}
             disabled={saving}
             className="flex-1 py-3 px-4 rounded-[var(--radius-pill)] text-[0.9375rem] font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             style={{
-              backgroundColor: saveSuccess ? 'var(--success)' : 'var(--interactive-primary)',
+              backgroundColor: saveSuccess ? 'var(--success)' : accent,
               color: 'var(--interactive-primary-fg)',
               border: 'none',
             }}
@@ -780,84 +775,6 @@ export function WorkoutPage() {
             {saving ? t('workout.saving') : saveSuccess ? '✓' : t('workout.save_workout')}
           </button>
         </div>
-
-        {/* Rest Timer UI */}
-        <AnimatePresence>
-          {isResting ? (
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.8, opacity: 0, y: 20 }}
-              className="mt-4 flex flex-col items-center gap-3 p-6 rounded-2xl"
-              style={{ backgroundColor: bgCard, border: `1px solid ${border}` }}
-            >
-              <div className="text-6xl font-bold tabular-nums" style={{ color: accent }}>
-                {Math.floor(restTimer / 60)}:{String(restTimer % 60).padStart(2, '0')}
-              </div>
-              <div className="text-sm font-medium" style={{ color: textSecondary }}>
-                Descanso
-              </div>
-              <div className="flex gap-3 mt-2">
-                <button
-                  onClick={cancelRestTimer}
-                  className="px-6 py-3 rounded-full text-sm font-medium"
-                  style={{
-                    backgroundColor: 'var(--bg-surface-2)',
-                    color: textSecondary,
-                  }}
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={() => setRestTimer(restDuration)}
-                  className="px-6 py-3 rounded-full text-sm font-medium"
-                  style={{
-                    backgroundColor: 'var(--interactive-primary)',
-                    color: 'var(--interactive-primary-fg)',
-                  }}
-                >
-                  +{restDuration}s
-                </button>
-              </div>
-            </motion.div>
-          ) : (
-            <div className="mt-4 flex flex-col items-center gap-3">
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-medium" style={{ color: textSecondary }}>
-                  Descanso
-                </span>
-                <select
-                  value={restDuration}
-                  onChange={(e) => setRestDuration(Number(e.target.value))}
-                  className="rounded-lg text-sm p-2"
-                  style={{
-                    backgroundColor: bgCard,
-                    border: `1px solid ${border}`,
-                    color: textPrimary,
-                  }}
-                >
-                  <option value={30}>30s</option>
-                  <option value={60}>1m</option>
-                  <option value={90}>1:30</option>
-                  <option value={120}>2m</option>
-                  <option value={180}>3m</option>
-                  <option value={240}>4m</option>
-                  <option value={300}>5m</option>
-                </select>
-                <button
-                  onClick={startRestTimer}
-                  className="px-5 py-2.5 rounded-full text-sm font-semibold"
-                  style={{
-                    backgroundColor: 'var(--interactive-primary)',
-                    color: 'var(--interactive-primary-fg)',
-                  }}
-                >
-                  Iniciar
-                </button>
-              </div>
-            </div>
-          )}
-        </AnimatePresence>
 
         {message && (
           <div
@@ -868,6 +785,8 @@ export function WorkoutPage() {
           </div>
         )}
       </motion.div>
+
+      <RestTimer />
     </Layout>
   );
 }

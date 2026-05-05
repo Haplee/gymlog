@@ -34,6 +34,9 @@ const SettingsPage = lazy(() =>
 const RoutinePage = lazy(() =>
   import('@features/routine/pages/RoutinePage').then((m) => ({ default: m.RoutinePage })),
 );
+const CardioPage = lazy(() =>
+  import('@features/cardio/pages/CardioPage').then((m) => ({ default: m.CardioPage })),
+);
 
 function Loading() {
   return (
@@ -117,6 +120,14 @@ function AnimatedRoutes() {
             element={
               <ProtectedRoute>
                 <SettingsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/cardio"
+            element={
+              <ProtectedRoute>
+                <CardioPage />
               </ProtectedRoute>
             }
           />

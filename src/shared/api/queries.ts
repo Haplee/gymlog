@@ -171,7 +171,7 @@ export const fetchRecentSets = async (
       )
       .in('workout_id', ids)
       .order('created_at', { ascending: false })
-      .limit(limit > 50 ? limit : 1000);
+      .limit(limit);
 
     if (setsError) {
       console.error('Error fetching recent sets:', setsError);
@@ -186,52 +186,37 @@ export const fetchRecentSets = async (
 };
 
 export const fetchExercises = async (userId: string | undefined): Promise<Exercise[]> => {
-  if (userId) {
-    const { data: userExercises, error: userExError } = await supabase
-      .from('exercises')
-      .select('id')
-      .eq('user_id', userId);
-
-    if (userExError) throw userExError;
-
-    const userExerciseIds = userExercises?.map((e) => e.id) || [];
-    const usage: Record<string, number> = {};
-
-    if (userExerciseIds.length > 0) {
-      const { data: usageData, error: usageError } = await supabase
-        .from('workout_sets')
-        .select('exercise_id')
-        .in('exercise_id', userExerciseIds);
-
-      if (!usageError && usageData) {
-        usageData.forEach((s) => {
-          usage[s.exercise_id] = (usage[s.exercise_id] || 0) + 1;
-        });
-      }
-    }
-
-    const { data: userExData, error: userDataError } = await supabase
-      .from('exercises')
-      .select('id, name, muscle_group, user_id, created_at')
-      .eq('user_id', userId);
-
-    if (userDataError) throw userDataError;
-
-    const { data: globalExData, error: globalError } = await supabase
-      .from('exercises')
-      .select('id, name, muscle_group, user_id, created_at')
-      .is('user_id', null)
-      .order('name');
-
-    if (globalError) throw globalError;
-
-    const allEx = [...(userExData || []), ...(globalExData || [])];
-    return allEx.sort((a, b) => (usage[b.id] || 0) - (usage[a.id] || 0)) as Exercise[];
-  } else {
+  if (!userId) {
     const { data, error } = await supabase.from('exercises').select('*').order('name');
     if (error) throw error;
     return (data as Exercise[]) || [];
   }
+
+  // Single query for all exercises (user + global) — replaces 3 of the original 4 queries
+  const { data: allEx, error: allError } = await supabase
+    .from('exercises')
+    .select('id, name, muscle_group, user_id, created_at')
+    .or(`user_id.eq.${userId},user_id.is.null`)
+    .order('name');
+
+  if (allError) throw allError;
+  const exercises = (allEx || []) as Exercise[];
+
+  // Usage counts only for user's custom exercises
+  const userExIds = exercises.filter((e) => e.user_id === userId).map((e) => e.id);
+  const usage: Record<string, number> = {};
+
+  if (userExIds.length > 0) {
+    const { data: usageData } = await supabase
+      .from('workout_sets')
+      .select('exercise_id')
+      .in('exercise_id', userExIds);
+    usageData?.forEach((s) => {
+      usage[s.exercise_id] = (usage[s.exercise_id] || 0) + 1;
+    });
+  }
+
+  return exercises.sort((a, b) => (usage[b.id] || 0) - (usage[a.id] || 0));
 };
 
 export const fetchPersonalRecords = async (userId: string): Promise<PersonalRecord[]> => {
@@ -285,6 +270,49 @@ export const deleteExerciseNote = async (noteId: string): Promise<void> => {
 export const deleteExercise = async (exerciseId: string): Promise<void> => {
   const { error } = await supabase.from('exercises').delete().eq('id', exerciseId);
   if (error) throw error;
+};
+
+export const fetchLastExerciseSets = async (
+  userId: string,
+  exerciseId: string,
+): Promise<
+  { reps: number; weight: number; set_num: number; workout_started_at: string | null }[]
+> => {
+  const { data: workouts } = await supabase
+    .from('workouts')
+    .select('id, started_at')
+    .eq('user_id', userId)
+    .order('started_at', { ascending: false })
+    .limit(30);
+
+  if (!workouts?.length) return [];
+
+  const workoutIds = workouts.map((w) => w.id);
+
+  const { data: latestSet } = await supabase
+    .from('workout_sets')
+    .select('workout_id')
+    .eq('exercise_id', exerciseId)
+    .in('workout_id', workoutIds)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!latestSet?.workout_id) return [];
+
+  const workoutInfo = workouts.find((w) => w.id === latestSet.workout_id);
+
+  const { data: sets } = await supabase
+    .from('workout_sets')
+    .select('reps, weight, set_num')
+    .eq('workout_id', latestSet.workout_id)
+    .eq('exercise_id', exerciseId)
+    .order('set_num');
+
+  return (sets || []).map((s) => ({
+    ...s,
+    workout_started_at: workoutInfo?.started_at ?? null,
+  }));
 };
 
 export const fetchVolumeByMuscleGroup = async (

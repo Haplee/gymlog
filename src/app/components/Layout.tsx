@@ -5,7 +5,7 @@ import { useAuthStore } from '@features/auth/stores/authStore';
 import { queryClient } from '@app/queryClient';
 import { fetchWorkoutsAndSets, fetchWorkouts, fetchRecentSets } from '@shared/api/queries';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Dumbbell, BarChart3, History, Settings } from 'lucide-react';
+import { Dumbbell, BarChart3, History, Settings, Heart } from 'lucide-react';
 
 interface LayoutProps {
   children: ReactNode;
@@ -33,6 +33,8 @@ const prefetchPageData = (path: string, userId: string) => {
 const preloadChunk = (path: string) => {
   if (path === '/') {
     import('@features/workout/pages/WorkoutPage');
+  } else if (path === '/cardio') {
+    import('@features/cardio/pages/CardioPage');
   } else if (path === '/stats') {
     import('@features/stats/pages/StatsPage');
   } else if (path === '/history') {
@@ -49,6 +51,7 @@ export function Layout({ children }: LayoutProps) {
 
   const tabs = [
     { path: '/', Icon: Dumbbell, label: t('workout.title'), id: 'train' },
+    { path: '/cardio', Icon: Heart, label: 'Cardio', id: 'cardio' },
     { path: '/stats', Icon: BarChart3, label: t('stats.title'), id: 'stats' },
     { path: '/history', Icon: History, label: t('history.title'), id: 'history' },
     { path: '/settings', Icon: Settings, label: t('settings.title'), id: 'settings' },
