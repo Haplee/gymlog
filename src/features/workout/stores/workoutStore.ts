@@ -5,6 +5,7 @@ import { supabase } from '@shared/lib/supabase';
 import type { WorkoutWithSets } from '@shared/lib/types';
 
 const SetDataSchema = z.object({
+  id: z.string().default(() => crypto.randomUUID()),
   reps: z.string().min(1, 'Min 1 rep').max(4, 'Max 9999'),
   weight: z.string().min(1, 'Min 1 kg').max(6, 'Max 999999'),
   isWarmup: z.boolean().default(false),
@@ -35,7 +36,12 @@ interface WorkoutState extends PersistedWorkout {
   clearPersistedState: () => void;
 }
 
-const initialSet: SetData = { reps: '', weight: '', isWarmup: false };
+const makeSet = (reps = '', weight = '', isWarmup = false): SetData => ({
+  id: crypto.randomUUID(),
+  reps,
+  weight,
+  isWarmup,
+});
 
 export const useWorkoutStore = create<WorkoutState>()(
   persist(
@@ -49,18 +55,11 @@ export const useWorkoutStore = create<WorkoutState>()(
       error: null,
       repeatWorkout: (workout: WorkoutWithSets) => {
         if (workout.sets.length === 0) return;
-
-        const firstSet = workout.sets[0];
-        const exerciseId = firstSet.exercise_id;
-
+        const exerciseId = workout.sets[0].exercise_id;
         set({
           activeExerciseId: exerciseId,
           customExerciseName: '',
-          sets: workout.sets.map((s) => ({
-            reps: String(s.reps),
-            weight: String(s.weight),
-            isWarmup: false,
-          })),
+          sets: workout.sets.map((s) => makeSet(String(s.reps), String(s.weight))),
           startedAt: new Date().toISOString(),
         });
       },
@@ -76,13 +75,8 @@ export const useWorkoutStore = create<WorkoutState>()(
       setCustomMuscleGroup: (group: string) => set({ customMuscleGroup: group }),
 
       addSet: () => {
-        const last = get().sets[get().sets.length - 1];
-        set({
-          sets: [
-            ...get().sets,
-            last ? { reps: last.reps, weight: last.weight, isWarmup: false } : { ...initialSet },
-          ],
-        });
+        const last = get().sets.at(-1);
+        set({ sets: [...get().sets, last ? makeSet(last.reps, last.weight) : makeSet()] });
       },
 
       updateSet: (index: number, data: Partial<SetData>) => {
