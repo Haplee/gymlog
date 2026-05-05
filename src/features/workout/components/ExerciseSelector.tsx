@@ -1,8 +1,8 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Plus, X, Loader2, AlertCircle, Trash2 } from 'lucide-react';
-import { useExerciseSearch } from '../hooks/useExerciseSearch';
+import { useExerciseSearch, trackRecentExercise } from '../hooks/useExerciseSearch';
 import { createCustomExercise } from '../api/workoutMutations';
 import { Button } from '@shared/components/ui';
 import { supabase } from '@shared/lib/supabase';
@@ -29,17 +29,14 @@ export function ExerciseSelector({ userId, onSelect, activeExerciseId }: Exercis
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const { query, setQuery, exercises, isLoading, isFocused, onFocus, onBlur } = useExerciseSearch({
-    debounceMs: 250,
-    userId,
-  });
+  const { query, setQuery, exercises, recentIds, isLoading, isFocused, onFocus, onBlur } =
+    useExerciseSearch({ debounceMs: 250, userId });
 
   const createMutation = useMutation({
     mutationFn: (data: { name: string; muscle_group: string; equipment?: string }) =>
       createCustomExercise(userId, data),
     onSuccess: (newExercise) => {
       queryClient.invalidateQueries({ queryKey: ['exercises'] });
-      queryClient.invalidateQueries({ queryKey: ['exerciseSearch'] });
       onSelect(newExercise.id, true);
       setIsCreating(false);
       setNewExerciseName('');
@@ -57,7 +54,6 @@ export function ExerciseSelector({ userId, onSelect, activeExerciseId }: Exercis
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['exercises'] });
-      queryClient.invalidateQueries({ queryKey: ['exerciseSearch'] });
       toast.success('Ejercicio eliminado');
     },
     onError: () => {
@@ -77,6 +73,7 @@ export function ExerciseSelector({ userId, onSelect, activeExerciseId }: Exercis
 
   const handleSelect = useCallback(
     (ex: ExerciseOption) => {
+      trackRecentExercise(ex.id);
       onSelect(ex.id, ex.user_id === userId);
       setQuery('');
     },
@@ -113,12 +110,22 @@ export function ExerciseSelector({ userId, onSelect, activeExerciseId }: Exercis
     [isCreating, handleCancelCreate],
   );
 
-  const groupedExercises = exercises.reduce<Record<string, ExerciseOption[]>>((acc, ex) => {
-    const group = ex.muscle_group;
-    if (!acc[group]) acc[group] = [];
-    acc[group].push(ex);
-    return acc;
-  }, {});
+  const recentSet = useMemo(() => new Set(recentIds), [recentIds]);
+
+  const groupedExercises = useMemo(() => {
+    const recentExercises = exercises.filter((ex) => recentSet.has(ex.id));
+    const otherExercises = exercises.filter((ex) => !recentSet.has(ex.id));
+
+    const groups: Record<string, ExerciseOption[]> = {};
+    if (recentExercises.length > 0) {
+      groups['⏱ Recientes'] = recentExercises;
+    }
+    otherExercises.forEach((ex) => {
+      if (!groups[ex.muscle_group]) groups[ex.muscle_group] = [];
+      groups[ex.muscle_group].push(ex);
+    });
+    return groups;
+  }, [exercises, recentSet]);
 
   return (
     <div className="relative">

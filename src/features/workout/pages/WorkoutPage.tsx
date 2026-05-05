@@ -28,6 +28,11 @@ import { Trophy, X, Trash2, Plus, StickyNote, AlertCircle } from 'lucide-react';
 import { z } from 'zod';
 import { impact, notificationHaptic, ImpactStyle, NotificationType } from '@shared/lib/haptics';
 
+const containerVariants = {
+  hidden: { opacity: 0, y: 12 },
+  show: { opacity: 1, y: 0 },
+};
+
 const setSchema = z.object({
   reps: z.coerce.number().positive('Las repeticiones deben ser mayores a 0'),
   weight: z.coerce.number().nonnegative('El peso no puede ser negativo'),
@@ -82,6 +87,7 @@ export function WorkoutPage() {
     startedAt,
     setActiveExercise,
     addSet,
+    setSets,
     updateSet,
     removeSet,
     removeAllSets,
@@ -150,7 +156,10 @@ export function WorkoutPage() {
     }
   }, [user, navigate, checkAndBackup, startedAt, sets.length, clearPersistedState]);
 
-  const selectedExercise = exercises.find((e) => e.id === activeExerciseId);
+  const selectedExercise = useMemo(
+    () => exercises.find((e) => e.id === activeExerciseId),
+    [exercises, activeExerciseId],
+  );
   const currentPR = activeExerciseId ? personalRecords[activeExerciseId] : null;
 
   const activeRoutine = getActiveRoutine();
@@ -283,9 +292,6 @@ export function WorkoutPage() {
         setMessage(`Nuevo PR: ${exerciseName} - ${convert(max1RM).toFixed(1)} ${weightUnit}`);
       }
 
-      setSaveSuccess(true);
-      setMessage('✓ Entrenamiento guardado');
-
       setTimeout(() => setMessage(''), 2500);
       setTimeout(() => setSaveSuccess(false), 300);
     }
@@ -303,15 +309,23 @@ export function WorkoutPage() {
 
   const handleRemoveSet = (index: number) => removeSet(index);
 
-  const handleCopySets = (copied: { reps: number; weight: number }[]) => {
-    if (!copied.length) return;
-    removeAllSets();
-    copied.forEach(() => addSet());
-    copied.forEach((s, i) => updateSet(i, { reps: String(s.reps), weight: String(s.weight) }));
-    void impact(ImpactStyle.Light);
-  };
+  const handleCopySets = useCallback(
+    (copied: { reps: number; weight: number }[]) => {
+      if (!copied.length) return;
+      setSets(
+        copied.map((s) => ({
+          id: crypto.randomUUID(),
+          reps: String(s.reps),
+          weight: String(s.weight),
+          isWarmup: false,
+        })),
+      );
+      void impact(ImpactStyle.Light);
+    },
+    [setSets],
+  );
 
-  const handleSaveNote = async () => {
+  const handleSaveNote = useCallback(async () => {
     if (!user || !activeExerciseId || !noteText.trim()) return;
     const text = noteText.trim();
     setNoteText('');
@@ -341,28 +355,34 @@ export function WorkoutPage() {
         (old: ExerciseNote[] = []) => old.filter((n) => n.id !== tempId),
       );
     }
-  };
+  }, [user, activeExerciseId, noteText, queryClient]);
 
-  const handleDeleteNote = async (noteId: string) => {
-    if (!user || !activeExerciseId) return;
-    queryClient.setQueryData(
-      ['exerciseNotes', user.id, activeExerciseId],
-      (old: ExerciseNote[] = []) => old.filter((n) => n.id !== noteId),
-    );
-    await deleteExerciseNote(noteId).catch(() => {
-      queryClient.invalidateQueries({ queryKey: ['exerciseNotes', user.id, activeExerciseId] });
-    });
-  };
+  const handleDeleteNote = useCallback(
+    async (noteId: string) => {
+      if (!user || !activeExerciseId) return;
+      queryClient.setQueryData(
+        ['exerciseNotes', user.id, activeExerciseId],
+        (old: ExerciseNote[] = []) => old.filter((n) => n.id !== noteId),
+      );
+      await deleteExerciseNote(noteId).catch(() => {
+        queryClient.invalidateQueries({ queryKey: ['exerciseNotes', user.id, activeExerciseId] });
+      });
+    },
+    [user, activeExerciseId, queryClient],
+  );
 
-  const handleDeleteExercise = async (exId: string) => {
-    try {
-      await deleteExercise(exId);
-      queryClient.invalidateQueries({ queryKey: ['exercises'] });
-      setActiveExercise(null);
-    } catch (err) {
-      console.error('Error deleting exercise:', err);
-    }
-  };
+  const handleDeleteExercise = useCallback(
+    async (exId: string) => {
+      try {
+        await deleteExercise(exId);
+        queryClient.invalidateQueries({ queryKey: ['exercises'] });
+        setActiveExercise(null);
+      } catch (err) {
+        console.error('Error deleting exercise:', err);
+      }
+    },
+    [queryClient, setActiveExercise],
+  );
 
   const bgCard = 'var(--bg-surface)';
   const border = 'var(--border-subtle)';
@@ -370,11 +390,6 @@ export function WorkoutPage() {
   const textSecondary = 'var(--text-secondary)';
   const textMuted = 'var(--text-tertiary)';
   const accent = 'var(--interactive-primary)';
-
-  const containerVariants = {
-    hidden: { opacity: 0, y: 12 },
-    show: { opacity: 1, y: 0 },
-  };
 
   return (
     <Layout>
