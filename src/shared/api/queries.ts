@@ -111,7 +111,7 @@ export const fetchWorkoutsPaginated = async (
   return { workouts: mappedWorkouts, nextCursor };
 };
 
-export const fetchWorkouts = async (userId: string, limit = 20): Promise<WorkoutWithSets[]> => {
+export const fetchWorkouts = async (userId: string, limit = 1000): Promise<WorkoutWithSets[]> => {
   const { data: workouts, error } = await supabase
     .from('workouts')
     .select('*')
@@ -144,17 +144,14 @@ export const fetchWorkouts = async (userId: string, limit = 20): Promise<Workout
   });
 };
 
-export const fetchRecentSets = async (
-  userId: string,
-  limit = 50,
-): Promise<WorkoutSetWithDetails[]> => {
+export const fetchRecentSets = async (userId: string): Promise<WorkoutSetWithDetails[]> => {
   try {
+    // Sin límite — traer todos los workouts del usuario
     const { data: workoutIds, error: woError } = await supabase
       .from('workouts')
       .select('id')
       .eq('user_id', userId)
-      .order('started_at', { ascending: false })
-      .limit(50);
+      .order('started_at', { ascending: false });
 
     if (woError) {
       console.error('Error fetching workout IDs:', woError);
@@ -164,14 +161,14 @@ export const fetchRecentSets = async (
 
     const ids = workoutIds.map((w) => w.id);
 
+    // Supabase devuelve máx 1000 por defecto; con muchos datos se podría paginar
     const { data, error: setsError } = await supabase
       .from('workout_sets')
       .select(
         'id, weight, reps, set_num, exercise_id, workout_id, created_at, exercise:exercises(name), workout:workouts(started_at)',
       )
       .in('workout_id', ids)
-      .order('created_at', { ascending: false })
-      .limit(limit);
+      .order('created_at', { ascending: false });
 
     if (setsError) {
       console.error('Error fetching recent sets:', setsError);

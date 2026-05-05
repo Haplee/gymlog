@@ -4,10 +4,11 @@
 
 :root {
   /* ── Base ─────────────────────────────────────── */
-  --bg-base: #000000;
-  --bg-surface: #141414;
-  --bg-surface-2: #1c1c1c;
-  --bg-surface-3: #242424;
+  --bg-base: #080808;
+  --bg-surface: #111111;
+  --bg-surface-2: #191919;
+  --bg-surface-3: #222222;
+  --bg-glass: rgba(255, 255, 255, 0.04);
 
   /* ── Texto ───────────────────────────────────── */
   --text-primary: #ffffff;
@@ -28,8 +29,10 @@
   --info: #0a84ff;
 
   /* ── Bordes ─────────────────────────────────── */
-  --border-subtle: #1f1f1f;
-  --border-default: #2a2a2a;
+  --border-subtle: #1e1e1e;
+  --border-default: #282828;
+  --border-accent: rgba(200, 255, 0, 0.2);
+  --border-glass: rgba(255, 255, 255, 0.07);
 
   /* ── Radios ─────────────────────────────────── */
   --radius-sm: 8px;
@@ -68,10 +71,13 @@
   --color-danger: var(--error);
 
   /* ── Sombras ─────────────────────────────────── */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
-  --shadow-fab: 0 4px 20px rgba(255, 255, 255, 0.15);
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.6);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.7);
+  --shadow-fab: 0 4px 24px rgba(200, 255, 0, 0.2);
+  --shadow-card: 0 1px 1px rgba(255, 255, 255, 0.04) inset, 0 8px 24px rgba(0, 0, 0, 0.5);
+  --glow-accent: 0 0 20px rgba(200, 255, 0, 0.15);
+  --glow-error: 0 0 16px rgba(255, 69, 58, 0.25);
 
   /* ── Transiciones ────────────────────────────── */
   --transition-fast: 100ms ease;

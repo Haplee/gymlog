@@ -68,31 +68,49 @@ export function Layout({ children }: LayoutProps) {
       className="min-h-screen min-h-[100dvh] flex flex-col overflow-hidden"
       style={{ backgroundColor: 'var(--bg-base)' }}
     >
-      <header className="px-4 py-3 flex-shrink-0" style={{ backgroundColor: 'var(--bg-surface)' }}>
+      <header
+        className="px-4 py-3 flex-shrink-0"
+        style={{
+          backgroundColor: 'rgba(17,17,17,0.85)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          borderBottom: '1px solid var(--border-glass)',
+        }}
+      >
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center"
-              style={{ backgroundColor: 'var(--interactive-primary)' }}
+              className="w-8 h-8 rounded-[10px] flex items-center justify-center"
+              style={{
+                background: 'linear-gradient(135deg, #c8ff00 0%, #a0cc00 100%)',
+                boxShadow: '0 2px 8px rgba(200,255,0,0.3)',
+              }}
             >
-              <Dumbbell className="w-4 h-4" style={{ color: 'var(--interactive-primary-fg)' }} />
+              <Dumbbell className="w-4 h-4" style={{ color: '#000' }} />
             </div>
-            <div>
-              <div
-                className="text-[1rem] font-bold leading-none"
-                style={{ color: 'var(--text-primary)' }}
-              >
-                Gym<span style={{ color: 'var(--interactive-primary)' }}>Log</span>
-              </div>
+            <div
+              className="text-[1rem] font-bold leading-none tracking-tight"
+              style={{ color: 'var(--text-primary)' }}
+            >
+              Gym<span style={{ color: 'var(--interactive-primary)' }}>Log</span>
             </div>
           </div>
           {user && (
-            <div className="flex items-center gap-2">
+            <div
+              className="flex items-center gap-2 px-2.5 py-1 rounded-[var(--radius-pill)]"
+              style={{
+                backgroundColor: 'var(--bg-surface-2)',
+                border: '1px solid var(--border-subtle)',
+              }}
+            >
               <div
-                className="w-2 h-2 rounded-full animate-pulse"
-                style={{ backgroundColor: 'var(--success)' }}
+                className="w-1.5 h-1.5 rounded-full"
+                style={{ backgroundColor: 'var(--success)', boxShadow: '0 0 6px var(--success)' }}
               />
-              <span className="text-[0.75rem]" style={{ color: 'var(--text-tertiary)' }}>
+              <span
+                className="text-[0.6875rem] font-medium"
+                style={{ color: 'var(--text-secondary)' }}
+              >
                 {user.email?.split('@')[0]}
               </span>
             </div>
@@ -103,8 +121,12 @@ export function Layout({ children }: LayoutProps) {
       <nav
         className="flex flex-shrink-0 relative z-10"
         style={{
-          backgroundColor: 'var(--bg-surface)',
-          borderTop: '1px solid var(--border-subtle)',
+          backgroundColor: 'rgba(0,0,0,0.95)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          borderTop: '1px solid var(--border-glass)',
+          boxShadow: '0 -1px 0 rgba(255,255,255,0.04)',
+          paddingBottom: 'env(safe-area-inset-bottom)',
         }}
       >
         {tabs.map((tab) => {
@@ -120,23 +142,30 @@ export function Layout({ children }: LayoutProps) {
                   preloadChunk(tab.path);
                 }
               }}
-              className="flex-1 py-3 flex flex-col items-center gap-1 relative"
+              className="flex-1 py-3 flex flex-col items-center gap-1 relative transition-opacity active:opacity-60"
             >
-              {isActive && (
-                <motion.div
-                  layoutId="activeTab"
-                  className="absolute top-0 left-0 right-0 h-0.5 rounded-full"
-                  style={{ backgroundColor: 'var(--interactive-primary)' }}
-                  transition={{ type: 'spring' as const, stiffness: 500, damping: 30 }}
+              <div className="relative">
+                <Icon
+                  className="w-5 h-5"
+                  strokeWidth={isActive ? 2 : 1.5}
+                  style={{
+                    color: isActive ? 'var(--interactive-primary)' : 'var(--text-tertiary)',
+                  }}
                 />
-              )}
-              <Icon
-                className="w-5 h-5"
-                strokeWidth={isActive ? 2 : 1.5}
-                style={{ color: isActive ? 'var(--interactive-primary)' : 'var(--text-tertiary)' }}
-              />
+                {isActive && (
+                  <motion.div
+                    layoutId="activeTabDot"
+                    className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full"
+                    style={{
+                      backgroundColor: 'var(--interactive-primary)',
+                      boxShadow: 'var(--glow-accent)',
+                    }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  />
+                )}
+              </div>
               <span
-                className="text-[0.625rem] font-medium"
+                className="text-[0.5625rem] font-semibold tracking-wide"
                 style={{ color: isActive ? 'var(--interactive-primary)' : 'var(--text-tertiary)' }}
               >
                 {label}

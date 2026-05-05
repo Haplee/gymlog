@@ -1,24 +1,13 @@
 import { motion } from 'framer-motion';
-import { CheckCircle2, AlertTriangle, XCircle, TrendingUp, Zap, Dumbbell } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, XCircle, TrendingUp, Zap } from 'lucide-react';
 import type { MuscleGroupStatus } from '../utils/fatigueAnalysis';
+import { MuscleGroupIcon } from '@shared/components/CardioIcons';
 
 interface FatigueAnalysisProps {
   muscleGroups: MuscleGroupStatus[];
   daysSinceLastWorkout: number;
   suggestedGroup: string | null;
 }
-
-const muscleGroupIcons: Record<string, React.ReactNode> = {
-  Pecho: <Dumbbell className="w-5 h-5" />,
-  Espalda: <Dumbbell className="w-5 h-5" />,
-  Pierna: <Dumbbell className="w-5 h-5" />,
-  Hombro: <Dumbbell className="w-5 h-5" />,
-  Brazos: <Dumbbell className="w-5 h-5" />,
-  Glúteo: <Dumbbell className="w-5 h-5" />,
-  Core: <Dumbbell className="w-5 h-5" />,
-  Cardio: <Dumbbell className="w-5 h-5" />,
-  Otro: <Dumbbell className="w-5 h-5" />,
-};
 
 export function FatigueAnalysis({
   muscleGroups,
@@ -105,7 +94,6 @@ export function FatigueAnalysis({
           const config = getStatusConfig(mg.status);
           const Icon = config.icon;
           const recoveryPercent = getRecoveryPercentage(mg.daysSinceLast);
-          const icon = muscleGroupIcons[mg.name] || <Dumbbell className="w-5 h-5" />;
 
           return (
             <motion.div
@@ -116,7 +104,9 @@ export function FatigueAnalysis({
               className="flex items-center gap-3 p-3 rounded-[var(--radius-lg)]"
               style={{ backgroundColor: config.bgColor }}
             >
-              <div style={{ color: 'var(--interactive-primary)' }}>{icon}</div>
+              <div style={{ color: 'var(--interactive-primary)' }}>
+                <MuscleGroupIcon name={mg.name} className="w-5 h-5" />
+              </div>
 
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-1">
@@ -174,7 +164,7 @@ export function FatigueAnalysis({
             className="flex items-center gap-3 px-4 py-3 rounded-[var(--radius-lg)]"
             style={{ backgroundColor: 'rgba(200, 255, 0, 0.1)' }}
           >
-            <Dumbbell className="w-6 h-6" style={{ color: 'var(--interactive-primary)' }} />
+            <MuscleGroupIcon name={suggestedGroup ?? 'Otro'} className="w-6 h-6" />
             <div>
               <div
                 className="text-[0.9375rem] font-semibold"

@@ -22,17 +22,6 @@ export const CARDIO_LABELS: Record<CardioType, string> = {
   other: 'Otro',
 };
 
-export const CARDIO_EMOJIS: Record<CardioType, string> = {
-  running: '🏃',
-  cycling: '🚴',
-  rowing: '🚣',
-  swimming: '🏊',
-  elliptical: '⚙️',
-  walking: '🚶',
-  jump_rope: '🪢',
-  other: '💪',
-};
-
 export interface CardioSession {
   id: string;
   type: CardioType;

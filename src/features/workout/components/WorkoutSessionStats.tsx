@@ -1,17 +1,19 @@
 import { useEffect, useState } from 'react';
-import { Clock, Zap, Layers } from 'lucide-react';
+import { Clock, Zap, Layers, XCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface WorkoutSessionStatsProps {
   startedAt: string | null;
   totalVolume: number;
   totalSets: number;
+  onCancel?: () => void;
 }
 
 export function WorkoutSessionStats({
   startedAt,
   totalVolume,
   totalSets,
+  onCancel,
 }: WorkoutSessionStatsProps) {
   const [elapsed, setElapsed] = useState(0);
 
@@ -74,6 +76,26 @@ export function WorkoutSessionStats({
           Series
         </span>
       </div>
+
+      {onCancel && (
+        <>
+          <div className="w-px self-stretch" style={{ backgroundColor: 'var(--border-subtle)' }} />
+          <button
+            onClick={() => {
+              if (window.confirm('¿Cancelar y eliminar la sesión de entrenamiento actual?')) {
+                onCancel();
+              }
+            }}
+            className="px-3 flex flex-col items-center justify-center transition-colors hover:opacity-70 active:opacity-50"
+            title="Cancelar entrenamiento"
+          >
+            <XCircle className="w-4 h-4 mb-0.5" style={{ color: 'var(--error)' }} />
+            <span className="text-[0.6rem] uppercase font-bold" style={{ color: 'var(--error)' }}>
+              Cancelar
+            </span>
+          </button>
+        </>
+      )}
     </motion.div>
   );
 }

@@ -144,8 +144,7 @@ export async function notifyTimerAlarm(seconds: number): Promise<void> {
 
 export async function playAlarmSound(): Promise<void> {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     if (!AudioContextClass) return;
     const ctx = new AudioContextClass();
 

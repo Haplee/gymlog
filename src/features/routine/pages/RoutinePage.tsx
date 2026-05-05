@@ -143,27 +143,35 @@ export function RoutinePage() {
               <div
                 key={routine.id}
                 onClick={() => handleSelectRoutine(routine.id)}
-                className="p-3 rounded-lg cursor-pointer transition-all"
+                className="p-4 rounded-[var(--radius-lg)] cursor-pointer transition-all active:scale-[0.99]"
                 style={{
-                  backgroundColor: 'var(--bg-surface)',
-                  border: '1px solid var(--border-subtle)',
+                  backgroundColor: 'var(--bg-surface-2)',
+                  border: '1px solid var(--border-glass)',
+                  boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset',
                 }}
               >
                 <div className="flex justify-between items-center">
                   <div>
-                    <div className="font-medium" style={{ color: 'var(--text-primary)' }}>
+                    <div
+                      className="text-[0.9375rem] font-semibold"
+                      style={{ color: 'var(--text-primary)' }}
+                    >
                       {routine.name}
                     </div>
-                    <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                    <div
+                      className="text-[0.75rem] mt-0.5"
+                      style={{ color: 'var(--text-tertiary)' }}
+                    >
                       {routine.description}
                     </div>
                   </div>
                   {!routine.isCustom && (
                     <span
-                      className="text-xs px-2 py-1 rounded"
+                      className="text-[0.5625rem] px-2 py-1 rounded-[var(--radius-pill)] font-bold uppercase tracking-wide"
                       style={{
-                        backgroundColor: 'rgba(200,255,0,0.1)',
+                        backgroundColor: 'rgba(200,255,0,0.08)',
                         color: 'var(--interactive-primary)',
+                        border: '1px solid rgba(200,255,0,0.15)',
                       }}
                     >
                       Predefinida
@@ -277,23 +285,34 @@ export function RoutinePage() {
             </div>
 
             {activeRoutine?.days[selectedDay].exercises.length === 0 ? (
-              <div className="text-center py-4 text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                {activeRoutine?.isCustom ? 'Añade ejercicios' : 'Descanso'}
+              <div className="text-center py-6 text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                {activeRoutine?.isCustom
+                  ? 'Añade ejercicios con el selector de arriba'
+                  : 'Descanso'}
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {activeRoutine?.days[selectedDay].exercises.map((ex, i) => (
                   <div
                     key={i}
-                    className="flex items-center justify-between p-2 rounded"
-                    style={{ backgroundColor: 'var(--bg-surface-2)' }}
+                    className="flex items-center justify-between px-3 py-3 rounded-[var(--radius-md)]"
+                    style={{
+                      backgroundColor: 'var(--bg-surface-2)',
+                      border: '1px solid var(--border-glass)',
+                    }}
                   >
                     <div>
-                      <div className="text-sm" style={{ color: 'var(--text-primary)' }}>
+                      <div
+                        className="text-[0.9375rem] font-medium"
+                        style={{ color: 'var(--text-primary)' }}
+                      >
                         {ex.name}
                       </div>
                       {ex.sets && (
-                        <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                        <div
+                          className="text-[0.6875rem] mt-0.5"
+                          style={{ color: 'var(--text-tertiary)' }}
+                        >
                           {ex.sets} series × {ex.reps}
                         </div>
                       )}
@@ -301,7 +320,7 @@ export function RoutinePage() {
                     {activeRoutine?.isCustom && (
                       <button
                         onClick={() => removeExerciseFromDay(selectedDay, i)}
-                        className="text-lg bg-transparent border-none"
+                        className="w-7 h-7 flex items-center justify-center rounded-[var(--radius-sm)] text-lg"
                         style={{ color: 'var(--text-tertiary)' }}
                       >
                         ×
