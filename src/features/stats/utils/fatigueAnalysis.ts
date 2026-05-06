@@ -43,7 +43,8 @@ export function analyzeMuscleRecovery(
     result.push({ name: mg, daysSinceLast: daysSince, status });
   });
 
-  return result.sort((a, b) => b.daysSinceLast - a.daysSinceLast);
+  // Fresh muscles first (ascending daysSinceLast), needs-attention last
+  return result.sort((a, b) => a.daysSinceLast - b.daysSinceLast);
 }
 
 export function getSuggestedMuscleGroup(recoveryData: MuscleGroupStatus[]): string | null {

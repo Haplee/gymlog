@@ -247,7 +247,8 @@ function ActiveSessionCard() {
 function WeeklyStats({ sessions }: { sessions: CardioSession[] }) {
   const now = new Date();
   const weekStart = new Date(now);
-  weekStart.setDate(now.getDate() - now.getDay());
+  const daysSinceMonday = now.getDay() === 0 ? 6 : now.getDay() - 1;
+  weekStart.setDate(now.getDate() - daysSinceMonday);
   weekStart.setHours(0, 0, 0, 0);
 
   const weekSessions = sessions.filter((s) => new Date(s.startedAt) >= weekStart);

@@ -181,6 +181,7 @@ export const useWorkoutStore = create<WorkoutState>()(
       partialize: (state) => ({
         activeExerciseId: state.activeExerciseId,
         customExerciseName: state.customExerciseName,
+        customMuscleGroup: state.customMuscleGroup,
         sets: state.sets,
         startedAt: state.startedAt,
       }),

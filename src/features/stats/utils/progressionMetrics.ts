@@ -52,6 +52,8 @@ export function buildProgressionData(
   const result: ProgressionDataPoint[] = [];
 
   Object.entries(byDate).forEach(([date, daySets]) => {
+    if (daySets.length === 0) return;
+
     let value: number;
 
     if (metric === '1rm') {
@@ -61,6 +63,8 @@ export function buildProgressionData(
     } else {
       value = daySets.reduce((sum, s) => sum + s.weight * s.reps, 0);
     }
+
+    if (!isFinite(value) || value <= 0) return;
 
     const isPR = value > maxValue;
     if (isPR) maxValue = value;

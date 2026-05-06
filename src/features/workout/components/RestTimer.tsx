@@ -34,7 +34,7 @@ function playCompletionSound() {
 }
 
 export function RestTimer() {
-  const { endTime, duration, isRunning, start, stop, remaining } = useRestTimerStore();
+  const { endTime, duration, isRunning, start, stop, extend, remaining } = useRestTimerStore();
   const [display, setDisplay] = useState(() => remaining());
   const [customSecs, setCustomSecs] = useState<number | null>(null);
   const completedRef = useRef(false);
@@ -60,7 +60,7 @@ export function RestTimer() {
     };
 
     tick();
-    const id = setInterval(tick, 300);
+    const id = setInterval(tick, 1000);
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRunning, endTime]);
@@ -185,10 +185,24 @@ export function RestTimer() {
             </div>
 
             {/* Controls */}
-            <div className="flex items-center gap-3 w-full justify-center">
+            <div className="flex items-center gap-2 w-full justify-center">
+              <button
+                onClick={() => {
+                  void impact(ImpactStyle.Light);
+                  extend(30);
+                }}
+                className="px-3 py-2 rounded-[var(--radius-pill)] text-xs font-bold"
+                style={{
+                  backgroundColor: 'rgba(200,255,0,0.1)',
+                  color: 'var(--interactive-primary)',
+                  border: '1px solid rgba(200,255,0,0.2)',
+                }}
+              >
+                +30s
+              </button>
               <button
                 onClick={() => handleStart(duration)}
-                className="px-5 py-2 rounded-[var(--radius-pill)] text-xs font-semibold tracking-wide"
+                className="px-4 py-2 rounded-[var(--radius-pill)] text-xs font-semibold tracking-wide"
                 style={{
                   backgroundColor: 'var(--bg-surface-2)',
                   color: 'var(--text-secondary)',
@@ -199,10 +213,10 @@ export function RestTimer() {
               </button>
               <button
                 onClick={stop}
-                className="px-4 py-2 rounded-[var(--radius-pill)] text-xs"
+                className="px-3 py-2 rounded-[var(--radius-pill)] text-xs"
                 style={{ color: 'var(--text-tertiary)' }}
               >
-                Cancelar
+                Cerrar
               </button>
             </div>
           </motion.div>

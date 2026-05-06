@@ -7,6 +7,7 @@ interface RestTimerState {
   isRunning: boolean;
   start: (seconds: number) => void;
   stop: () => void;
+  extend: (seconds: number) => void;
   remaining: () => number;
 }
 
@@ -23,6 +24,11 @@ export const useRestTimerStore = create<RestTimerState>()(
           isRunning: true,
         }),
       stop: () => set({ endTime: null, isRunning: false }),
+      extend: (seconds) => {
+        const { endTime, duration, isRunning } = get();
+        if (!isRunning || !endTime) return;
+        set({ endTime: endTime + seconds * 1000, duration: duration + seconds });
+      },
       remaining: () => {
         const { endTime } = get();
         if (!endTime) return 0;

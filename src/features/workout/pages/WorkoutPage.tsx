@@ -610,20 +610,21 @@ export function WorkoutPage() {
             return (
               <motion.div
                 key={s.id ?? String(i)}
-                initial={{ opacity: 0, y: 12 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.03, type: 'spring', stiffness: 320, damping: 26 }}
                 className="mb-2"
               >
                 <div className="flex items-stretch gap-1">
                   {showWarmupSets && (
                     <button
                       onClick={() => updateSet(i, { isWarmup: !s.isWarmup })}
-                      className={`w-6 h-8 rounded text-xs font-bold flex items-center justify-center transition-colors ${
-                        s.isWarmup ? 'bg-orange-500 text-white' : 'border border-dashed'
-                      }`}
+                      className="w-6 h-8 rounded text-xs font-bold flex items-center justify-center transition-colors border border-dashed"
                       style={{
-                        borderColor: s.isWarmup ? undefined : textMuted,
-                        color: s.isWarmup ? undefined : textMuted,
+                        backgroundColor: s.isWarmup ? 'var(--warning)' : 'transparent',
+                        borderColor: s.isWarmup ? 'var(--warning)' : textMuted,
+                        color: s.isWarmup ? '#000' : textMuted,
+                        borderStyle: s.isWarmup ? 'solid' : 'dashed',
                       }}
                     >
                       W
@@ -659,12 +660,10 @@ export function WorkoutPage() {
                           });
                         }
                       }}
-                      className={`w-full rounded-lg text-sm px-2 py-1.5 outline-none text-center ${
-                        setErrors[i] ? 'border-red-500 bg-red-500/10' : ''
-                      }`}
+                      className="w-full rounded-lg text-sm px-2 py-1.5 outline-none text-center"
                       style={{
-                        backgroundColor: setErrors[i] ? undefined : bgCard,
-                        border: setErrors[i] ? undefined : `1px solid ${border}`,
+                        backgroundColor: setErrors[i] ? 'rgba(255,69,58,0.08)' : bgCard,
+                        border: setErrors[i] ? '1px solid var(--error)' : `1px solid ${border}`,
                         color: textPrimary,
                       }}
                     />
@@ -692,12 +691,10 @@ export function WorkoutPage() {
                           });
                         }
                       }}
-                      className={`w-full rounded-lg text-sm px-2 py-1.5 outline-none text-center ${
-                        setErrors[i] ? 'border-red-500 bg-red-500/10' : ''
-                      }`}
+                      className="w-full rounded-lg text-sm px-2 py-1.5 outline-none text-center"
                       style={{
-                        backgroundColor: setErrors[i] ? undefined : bgCard,
-                        border: setErrors[i] ? undefined : `1px solid ${border}`,
+                        backgroundColor: setErrors[i] ? 'rgba(255,69,58,0.08)' : bgCard,
+                        border: setErrors[i] ? '1px solid var(--error)' : `1px solid ${border}`,
                         color: textPrimary,
                       }}
                     />
@@ -716,7 +713,9 @@ export function WorkoutPage() {
                   </button>
                 </div>
                 {setErrors[i] && (
-                  <div className="text-[0.65rem] text-red-500 mt-1 ml-8">{setErrors[i]}</div>
+                  <div className="text-[0.65rem] mt-1 ml-8" style={{ color: 'var(--error)' }}>
+                    {setErrors[i]}
+                  </div>
                 )}
               </motion.div>
             );

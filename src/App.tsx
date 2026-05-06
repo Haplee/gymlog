@@ -37,6 +37,9 @@ const RoutinePage = lazy(() =>
 const CardioPage = lazy(() =>
   import('@features/cardio/pages/CardioPage').then((m) => ({ default: m.CardioPage })),
 );
+const UserStatsPage = lazy(() =>
+  import('@features/stats/pages/UserStatsPage').then((m) => ({ default: m.UserStatsPage })),
+);
 
 function Loading() {
   return (
@@ -128,6 +131,14 @@ function AnimatedRoutes() {
             element={
               <ProtectedRoute>
                 <CardioPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/user-stats"
+            element={
+              <ProtectedRoute>
+                <UserStatsPage />
               </ProtectedRoute>
             }
           />

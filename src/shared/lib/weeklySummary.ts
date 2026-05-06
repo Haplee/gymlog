@@ -26,7 +26,8 @@ export const checkWeeklySummary = async (userId: string) => {
 
   // Fetch last week's workouts
   const startOfPreviousWeek = new Date(now);
-  startOfPreviousWeek.setDate(now.getDate() - now.getDay() - 6); // Last monday
+  const daysSinceMondaySummary = now.getDay() === 0 ? 6 : now.getDay() - 1;
+  startOfPreviousWeek.setDate(now.getDate() - daysSinceMondaySummary - 7); // Previous Monday
   startOfPreviousWeek.setHours(0, 0, 0, 0);
 
   const endOfPreviousWeek = new Date(startOfPreviousWeek);

@@ -13,7 +13,11 @@
       "Bash(adb uninstall *)",
       "Bash(adb shell *)",
       "Bash(./gradlew assembleRelease)",
-      "PowerShell(Get-Item *)"
+      "PowerShell(Get-Item *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\franc\\\\proyecto\\\\Tonterias\\\\pesos\" -Force)",
+      "Bash(Select-Object Name, FullName)",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('scripts',{}\\), indent=2\\)\\)\")",
+      "PowerShell(Test-Path *)"
     ]
   }
 }

@@ -20,7 +20,7 @@ import { Modal, Button } from '@shared/components/ui';
 import { CardioTypeIcon } from '@shared/components/CardioIcons';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { ChevronRight, Trash2, Repeat, Share2 } from 'lucide-react';
+import { ChevronRight, Trash2, Repeat, Share2, BarChart2 } from 'lucide-react';
 
 interface GroupedWorkout {
   date: string;
@@ -47,6 +47,9 @@ function ExerciseRow({
     <div style={{ borderBottom: '1px solid var(--border-subtle)' }} className="last:border-b-0">
       <div
         onClick={() => setExpanded(!expanded)}
+        onKeyDown={(e) => e.key === 'Enter' && setExpanded(!expanded)}
+        role="button"
+        tabIndex={0}
         className="px-3 py-3 flex justify-between items-center cursor-pointer transition-colors"
         onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--interactive-hover)')}
         onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
@@ -159,7 +162,7 @@ export function HistoryPage() {
     refetch: refetchWorkouts,
   } = useQuery({
     queryKey: ['workouts', user?.id],
-    queryFn: () => fetchWorkouts(user!.id),
+    queryFn: () => fetchWorkouts(user?.id ?? ''),
     enabled: !!user?.id,
   });
 
@@ -169,7 +172,7 @@ export function HistoryPage() {
     refetch: refetchSets,
   } = useQuery({
     queryKey: ['recentSets', user?.id],
-    queryFn: () => fetchRecentSets(user!.id),
+    queryFn: () => fetchRecentSets(user?.id ?? ''),
     enabled: !!user?.id,
   });
 
@@ -565,6 +568,19 @@ export function HistoryPage() {
   return (
     <Layout>
       <div className="flex gap-2 mb-3 flex-wrap">
+        <button
+          onClick={() => navigate('/user-stats')}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg font-semibold text-[0.875rem] transition-all hover:scale-[1.02] active:scale-[0.98]"
+          style={{
+            backgroundColor: 'rgba(200,255,0,0.1)',
+            border: '1px solid rgba(200,255,0,0.25)',
+            color: 'var(--interactive-primary)',
+          }}
+        >
+          <BarChart2 className="w-4 h-4" />
+          Mis estadísticas
+        </button>
+
         <select
           value={view}
           onChange={(e) => setView(e.target.value as 'sets' | 'workouts' | 'cardio')}

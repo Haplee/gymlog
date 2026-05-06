@@ -289,14 +289,17 @@
 ## Sesión [N] — [2026-04-25]
 
 ### Tipo de actividad
+
 Auditoría técnica exhaustiva del repositorio GymLog v2.5.2
 
 ### Resumen ejecutivo
+
 Se ha realizado una auditoría completa del proyecto GymLog, una PWA de entrenamiento de gimnasio con integración nativa Android vía Capacitor. El análisis cubrió código fuente (React 19/TypeScript), configuración de build, schema de base de datos Supabase, políticas RLS, migraciones, stores de estado y componentes.
 
 El proyecto presenta una arquitectura por features razonablemente implementada, pero se identificaron problemas críticos de seguridad (claves potencialmente expuestas en historial git), duplicación de código entre `/lib/lib/` y otras carpetas, y tipos TypeScript desincronizados con el schema de base de datos.
 
 ### Metodología aplicada
+
 Revisión sistemática siguiendo el protocolo de auditoría: primero configuración global (package.json, vite.config, eslint), luego seguridad (Supabase client, RLS), lógica de negocio (stores Zustand, queries), componentes principales y finalmente documentación existente.
 
 Para cada archivo se evaluó: corrección funcional, calidad TypeScript, arquitectura, rendimiento, seguridad, accesibilidad y mantenibilidad.
@@ -304,35 +307,42 @@ Para cada archivo se evaluó: corrección funcional, calidad TypeScript, arquite
 ### Hallazgos principales
 
 #### Críticos
+
 - **Claves en .env**: El archivo `.env` contiene `VITE_SUPABASE_URL` y `VITE_SUPABASE_KEY`. Aunque figura en .gitignore, si estuvo commiteado previamente, las credenciales están expuestas en el historial git.
 - **RLS incompleta**: Tablas `user_routines` y `body_measurements` no tienen políticas RLS en el schema.sql base (aunque v2.sql las añade después).
 - **Código duplicado**: Múltiples archivos duplicados (`/lib/lib/supabase.ts`, `/lib/lib/brzycki.ts`, `/hooks/hooks/`), creando riesgo de divergencia.
 
 #### Importantes
+
 - **Tipos desincronizados**: `database.types.ts` está escrito a mano. El script `gen:types` existe pero no se ejecuta automáticamente.
 - **Schema SQL duplicado**: `src/db/schema.sql` vs `supabase/migrations/v2.sql` definen el mismo modelo de formas diferentes.
 - **Sin paginación**: Las queries tienen `limit = 200` hardcodeado sin cursor/paginación real.
 
 #### Mejoras identificadas
+
 - Migraciones sin timestamp consistente (formato `20240415` vs `v2`)
 - Fallback de autenticación genérico sin mapeo de errores específico
 - Ausencia de tests unitarios para stores y RLS policies
 
 ### Conclusiones técnicas
+
 El proyecto tiene fundamentos sólidos: arquitectura por features, RLS correctamente implementado en la mayoría de tablas, persistencia robusta con Zustand, e integración nativa con Capacitor bien ejecutada. Los problemas encontrados son de **mantenimiento y seguridad** más que de arquitectura core.
 
 El motor de workout es sólido, las analytics usan RPC server-side correctamente, y la fórmula Brzycki está testada. La prioridad inmediata debe ser limpiar el código duplicado y rewritear el historial git para corregir la exposición de credenciales.
 
 ### Decisiones tomadas
+
 - Crear `Plan de desarrollo.md` consolidado con roadmap por fases
 - Eliminar código duplicado identificado (`/lib/lib/`, `/hooks/hooks/`)
 - Documentar hallazgos en este diario para trazabilidad
 - Ejecutar auditoría de tipos con `npm run gen:types`
 
 ### Impacto en el Proyecto Integrado ASIR
+
 Esta auditoría cumple los requisitos de evaluación técnica: demostración de conocimiento en bases de datos (PostgreSQL/Supabase), seguridad (RLS, gestión de secretos), arquitectura frontend (React/Zustand), DevOps (migraciones, CI/CD) y calidad de código (TypeScript strict, ESLint).
 
 ### Próximos pasos
+
 - [ ] Rewritear historial git para eliminar `.env` del historial
 - [ ] Eliminar `/src/shared/lib/lib/` y `/src/shared/hooks/hooks/`
 - [ ] Ejecutar `npm run gen:types` y actualizar database.types.ts
@@ -340,4 +350,13 @@ Esta auditoría cumple los requisitos de evaluación técnica: demostración de 
 - [ ] Implementar paginación en historial de workouts
 
 ### Tiempo invertido
+
 ~3.5 horas
+
+## [2026-05-06] — Corrección de errores de ESLint y accesibilidad
+
+- Solucionados errores de variables no usadas (`BarChart`, `RadialBarChart`, etc.) en `UserStatsPage.tsx`.
+- Corregidas advertencias de accesibilidad (`jsx-a11y`) en `HistoryPage.tsx` añadiendo soporte de teclado (`onKeyDown`) y atributos de accesibilidad (`role="button"`) a los elementos clicables.
+- Eliminadas aserciones de no-nulo (`!`) en las funciones de `useQuery` para cumplir con las reglas estrictas de TypeScript, sustituyéndolas por comprobaciones seguras.
+- Corregidas las dependencias de los hooks `useMemo` en `UserStatsPage.tsx` para evitar re-renderizados innecesarios y optimizar el rendimiento.
+- Estado: El proyecto compila y pasa el linter correctamente; listo para realizar el commit sin bloqueos de husky.

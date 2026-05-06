@@ -1,11 +1,11 @@
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { queryClient } from '@app/queryClient';
 import { fetchWorkoutsAndSets, fetchWorkouts, fetchRecentSets } from '@shared/api/queries';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Dumbbell, BarChart3, History, Settings, Heart } from 'lucide-react';
+import { Dumbbell, BarChart3, History, Settings, Heart, WifiOff } from 'lucide-react';
 
 interface LayoutProps {
   children: ReactNode;
@@ -44,10 +44,26 @@ const preloadChunk = (path: string) => {
   }
 };
 
+function useOnlineStatus() {
+  const [online, setOnline] = useState(navigator.onLine);
+  useEffect(() => {
+    const on = () => setOnline(true);
+    const off = () => setOnline(false);
+    window.addEventListener('online', on);
+    window.addEventListener('offline', off);
+    return () => {
+      window.removeEventListener('online', on);
+      window.removeEventListener('offline', off);
+    };
+  }, []);
+  return online;
+}
+
 export function Layout({ children }: LayoutProps) {
   const { user } = useAuthStore();
   const location = useLocation();
   const { t } = useTranslation();
+  const isOnline = useOnlineStatus();
 
   const tabs = [
     { path: '/', Icon: Dumbbell, label: t('workout.title'), id: 'train' },
@@ -174,6 +190,27 @@ export function Layout({ children }: LayoutProps) {
           );
         })}
       </nav>
+
+      <AnimatePresence>
+        {!isOnline && (
+          <motion.div
+            key="offline-banner"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="flex items-center justify-center gap-2 py-2 px-4 offline-pulse flex-shrink-0"
+            style={{
+              backgroundColor: 'rgba(255,69,58,0.12)',
+              borderBottom: '1px solid rgba(255,69,58,0.25)',
+            }}
+          >
+            <WifiOff className="w-3.5 h-3.5" style={{ color: 'var(--error)' }} />
+            <span className="text-[0.75rem] font-medium" style={{ color: 'var(--error)' }}>
+              Sin conexión — los cambios se guardarán al reconectar
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence mode="wait">
         <motion.main
