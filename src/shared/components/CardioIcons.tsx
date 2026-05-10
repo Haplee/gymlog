@@ -200,130 +200,279 @@ export function CardioTypeIcon({
 /* ────────────────────────────  MUSCLES  ──────────────────────────── */
 
 export function MuscleGroupIcon({ name, className = 'w-5 h-5' }: IconProps & { name: string }) {
+  const base = { strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+
   const icons: Record<string, React.ReactElement> = {
     Pecho: (
-      // Two pec halves
-      <svg viewBox="0 0 24 24" className={className} {...SVG_BASE}>
-        <path d="M3 7c0-1.5 1-2.5 3-2.5 2.5 0 4 1.5 5.5 4.5C13 6 14.5 4.5 17 4.5c2 0 3 1 3 2.5 0 4.5-3.5 8-8 11-4.5-3-9-6.5-9-11z" />
-        <path d="M11.5 9c-1 1-2.5 1.6-4.5 1.5" strokeOpacity="0.45" />
-        <path d="M12.5 9c1 1 2.5 1.6 4.5 1.5" strokeOpacity="0.45" />
+      <svg
+        viewBox="0 0 24 24"
+        className={className}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        {...base}
+      >
+        {/* Silueta anatómica del pecho — dos lóbulos pectorales */}
+        <path
+          d="M3.5 9C3.5 6.5 5.5 4.5 8.5 4.5C10 4.5 11.5 5.5 12 8C12.5 5.5 14 4.5 15.5 4.5C18.5 4.5 20.5 6.5 20.5 9C20.5 13.5 17 17.5 12 20.5C7 17.5 3.5 13.5 3.5 9Z"
+          fill="currentColor"
+          fillOpacity="0.2"
+        />
+        {/* Esternón */}
+        <line x1="12" y1="5" x2="12" y2="19" strokeOpacity="0.35" strokeWidth="1" />
+        {/* Pliegue pectoral izquierdo */}
+        <path d="M5 11.5C7.5 13.5 10.5 13 11.5 11" strokeOpacity="0.65" strokeWidth="1.1" />
+        {/* Pliegue pectoral derecho */}
+        <path d="M19 11.5C16.5 13.5 13.5 13 12.5 11" strokeOpacity="0.65" strokeWidth="1.1" />
       </svg>
     ),
     Espalda: (
-      // Back V-taper with spine + lats
-      <svg viewBox="0 0 24 24" className={className} {...SVG_BASE}>
-        {/* shoulders / lats */}
-        <path d="M4 6c1 5 4 8 8 9 4-1 7-4 8-9" />
-        {/* lats sides */}
-        <path d="M5 6c1 4 2 7 2.5 13" />
-        <path d="M19 6c-1 4-2 7-2.5 13" />
-        {/* spine */}
-        <line x1="12" y1="6" x2="12" y2="20" />
-        {/* spine notches */}
-        <path d="M11 10h2M11 13h2M11 16h2" strokeOpacity="0.5" />
+      <svg
+        viewBox="0 0 24 24"
+        className={className}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        {...base}
+      >
+        {/* Silueta anatómica de la espalda — V-taper con dorsales */}
+        <path
+          d="M4.5 8.5C5.5 5.5 7.5 4 10 4H14C16.5 4 18.5 5.5 19.5 8.5C20.5 11.5 20 15 18 18L12 21.5L6 18C4 15 3.5 11.5 4.5 8.5Z"
+          fill="currentColor"
+          fillOpacity="0.15"
+        />
+        {/* Columna vertebral */}
+        <path d="M12 4.5V20.5" strokeOpacity="0.35" strokeWidth="1" />
+        {/* Vértebras */}
+        <path d="M11 9H13M11 12H13M11 15H13" strokeOpacity="0.45" strokeWidth="0.9" />
+        {/* Dorsal izquierdo */}
+        <path d="M6 9.5C7 13 7.5 16 7.5 18.5" strokeOpacity="0.55" strokeWidth="1.1" />
+        {/* Dorsal derecho */}
+        <path d="M18 9.5C17 13 16.5 16 16.5 18.5" strokeOpacity="0.55" strokeWidth="1.1" />
       </svg>
     ),
     Pierna: (
-      // Quad/hamstring side profile
-      <svg viewBox="0 0 24 24" className={className} {...SVG_BASE}>
-        {/* upper leg / quad */}
-        <path d="M8 3c4 0 6 1.5 6.5 5.5l1 6.5" />
-        <path d="M8 3l-0.5 11" />
-        {/* knee */}
-        <ellipse cx="11" cy="14.5" rx="3.5" ry="1.4" />
-        {/* lower leg */}
-        <path d="M9 16l-0.5 5" />
-        <path d="M14 16l1 5" />
-        {/* foot */}
-        <path d="M7 21h3M13.5 21h3.5" />
+      <svg
+        viewBox="0 0 24 24"
+        className={className}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        {...base}
+      >
+        {/* Cuádriceps — vista frontal */}
+        <path
+          d="M8 2.5C6.5 2.5 5.5 3.5 5 5.5L4 14C4 15.5 5.5 16.5 9 17H15C18.5 16.5 20 15.5 20 14L19 5.5C18.5 3.5 17.5 2.5 16 2.5H8Z"
+          fill="currentColor"
+          fillOpacity="0.15"
+        />
+        {/* Rótula */}
+        <ellipse
+          cx="12"
+          cy="17.5"
+          rx="3.5"
+          ry="1.6"
+          fill="currentColor"
+          fillOpacity="0.3"
+          stroke="currentColor"
+          strokeWidth="1.2"
+        />
+        {/* Parte inferior de la pierna */}
+        <path d="M9.5 19.5L8.5 23" />
+        <path d="M14.5 19.5L15.5 23" />
+        {/* Líneas del cuádriceps */}
+        <path d="M9 7Q12 6.5 15 7" strokeOpacity="0.45" strokeWidth="1" />
+        <path d="M8.5 11Q12 10.5 15.5 11" strokeOpacity="0.45" strokeWidth="1" />
       </svg>
     ),
     Hombro: (
-      // Deltoid cap with arm hint
-      <svg viewBox="0 0 24 24" className={className} {...SVG_BASE}>
-        {/* deltoid bulb */}
-        <path d="M5 13c0-5 3.5-8 7-8s7 3 7 8" />
-        {/* clavicle line */}
-        <path d="M5 13c2-1 5-1.5 7-1.5s5 0.5 7 1.5" strokeOpacity="0.5" />
-        {/* arm down */}
-        <path d="M5 13l-1 7" />
-        <path d="M19 13l1 7" />
-        {/* neck */}
-        <path d="M11 5l-0.5-2M13 5l0.5-2" strokeOpacity="0.5" />
+      <svg
+        viewBox="0 0 24 24"
+        className={className}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        {...base}
+      >
+        {/* Deltoides — vista frontal con los tres haces */}
+        <path
+          d="M5 13C5 8 8 4.5 12 4.5C16 4.5 19 8 19 13C19 16 17 18.5 14.5 19.5L12 20.5L9.5 19.5C7 18.5 5 16 5 13Z"
+          fill="currentColor"
+          fillOpacity="0.2"
+        />
+        {/* Brazos */}
+        <path d="M9.5 19.5L8.5 23M14.5 19.5L15.5 23" />
+        {/* Haz anterior */}
+        <path d="M7 10C8.5 7.5 10.5 6.5 12 6.5" strokeOpacity="0.5" strokeWidth="1.1" />
+        {/* Haz posterior */}
+        <path d="M17 10C15.5 7.5 13.5 6.5 12 6.5" strokeOpacity="0.5" strokeWidth="1.1" />
+        {/* Clavícula */}
+        <path d="M6.5 8Q12 5.5 17.5 8" strokeOpacity="0.35" strokeWidth="0.9" />
       </svg>
     ),
     Brazos: (
-      // Flexed arm
-      <svg viewBox="0 0 24 24" className={className} {...SVG_BASE}>
-        <path d="M5 19V11c0-3 2-5 5-5s5 2 5 5v0.5" />
-        <path d="M15 11.5c2.5 0.5 4 2 4 4.5s-2 4-4.5 4H5" />
-        {/* bicep peak */}
-        <path d="M8 10c1.5-2 4-2 5.5 0" strokeOpacity="0.5" />
+      <svg
+        viewBox="0 0 24 24"
+        className={className}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        {...base}
+      >
+        {/* Brazo flexionado — bíceps y antebrazo */}
+        <path
+          d="M5 19V11C5 7.5 7 5 10 5C13 5 15 7.5 15 11V12"
+          fill="currentColor"
+          fillOpacity="0.1"
+        />
+        <path
+          d="M15 12C18 12 20 13.5 20 16.5C20 19.5 18 20.5 15 20.5H5"
+          fill="currentColor"
+          fillOpacity="0.1"
+        />
+        <path d="M5 5V19" />
+        <path d="M15 5V11" />
+        <path d="M15 12C18 12 20 13.5 20 16.5C20 19.5 18 21 15 21H5" />
+        {/* Pico del bíceps */}
+        <path d="M7.5 9C9.5 6.5 12.5 7 13.5 9.5" strokeOpacity="0.5" strokeWidth="1.1" />
       </svg>
     ),
     Bíceps: (
-      // Bicep peak with arm bend (anatomical)
-      <svg viewBox="0 0 24 24" className={className} {...SVG_BASE}>
-        {/* upper arm outline (flexed) */}
-        <path d="M3 17c2-7 8-11 16-12" />
-        {/* bicep bulge */}
-        <path d="M8 11c2-4 6-3 7 0c1 3-2 5-5 4c-2-0.5-2-2-2-4z" />
-        {/* forearm hint */}
-        <path d="M3 17c2 1 4 1.5 5.5 0.5" strokeOpacity="0.5" />
+      <svg
+        viewBox="0 0 24 24"
+        className={className}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        {...base}
+      >
+        {/* Bíceps en contracción — pico muscular */}
+        <path d="M3.5 18.5C6 11 12.5 5.5 20.5 5" />
+        <path
+          d="M7.5 11.5C8 8 12.5 7 14.5 10.5C16 13.5 13.5 16.5 10.5 15.5C8 14.5 7.5 13 7.5 11.5Z"
+          fill="currentColor"
+          fillOpacity="0.28"
+        />
+        <path d="M3.5 18.5C6 19.5 9 19.5 11 18" strokeOpacity="0.5" strokeWidth="1.1" />
+        <path d="M10 15.5L8.5 19.5" strokeOpacity="0.4" strokeWidth="1" />
       </svg>
     ),
     Tríceps: (
-      // Triceps horseshoe (back of arm)
-      <svg viewBox="0 0 24 24" className={className} {...SVG_BASE}>
-        {/* arm outline */}
-        <path d="M5 3c4 1 7 4 8 9l-1 9" />
-        <path d="M5 3l1 8" />
-        {/* triceps three heads */}
-        <path d="M7 8c2 1 3 3 3 5" strokeOpacity="0.5" />
-        <path d="M7 11c2.5 0 4 1.5 4 3" strokeOpacity="0.5" />
-        <path d="M7 14c2 0 3.5 1 3.5 2.5" strokeOpacity="0.5" />
+      <svg
+        viewBox="0 0 24 24"
+        className={className}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        {...base}
+      >
+        {/* Tríceps — herradura, vista posterior */}
+        <path d="M5.5 3.5C10 3 14 5.5 15 9.5C16 13.5 15 18 13.5 21.5" />
+        <path d="M5.5 3.5L7 13" />
+        <path
+          d="M5.5 3.5C8.5 4 11 6 12 9C13 12 12.5 17 13 21C12 21.5 8 22.5 7 13Z"
+          fill="currentColor"
+          fillOpacity="0.2"
+        />
+        {/* Cabezas del tríceps */}
+        <path d="M7 9.5C9.5 9 12 9.5 13.5 11" strokeOpacity="0.5" strokeWidth="1.1" />
+        <path d="M7.5 13.5C10 13 12.5 13.5 14 15" strokeOpacity="0.5" strokeWidth="1.1" />
       </svg>
     ),
     Antebrazo: (
-      // Forearm with hand fist
-      <svg viewBox="0 0 24 24" className={className} {...SVG_BASE}>
-        <path d="M4 9l11 9" />
-        <path d="M5 6l9 11" />
-        {/* fist */}
-        <circle cx="17" cy="18" r="3" />
-        <path d="M16 16.5h2M16 18h2M16 19.5h2" strokeOpacity="0.5" />
+      <svg
+        viewBox="0 0 24 24"
+        className={className}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        {...base}
+      >
+        {/* Antebrazo — silueta fusiforme con extensores y flexores */}
+        <path
+          d="M5.5 6C8.5 4.5 13 4.5 16 6.5L17.5 16C16 19 13 20 10 19.5C7 19 5 17 6.5 16.5L5.5 6Z"
+          fill="currentColor"
+          fillOpacity="0.15"
+        />
+        <path d="M5.5 6L6.5 16.5" />
+        <path d="M16 6.5L17.5 16" />
+        <path d="M6.5 10Q11 9.5 15.5 11" strokeOpacity="0.45" strokeWidth="1" />
+        <path d="M6.5 14Q11 13.5 16 15" strokeOpacity="0.45" strokeWidth="1" />
       </svg>
     ),
     Glúteo: (
-      // Two glute halves
-      <svg viewBox="0 0 24 24" className={className} {...SVG_BASE}>
-        <path d="M3 14c0-4 2.5-7 5.5-7s5 3 4.5 8c-0.3 3-2 5-4.5 5s-5.5-2-5.5-6z" />
-        <path d="M21 14c0-4-2.5-7-5.5-7s-5 3-4.5 8c0.3 3 2 5 4.5 5s5.5-2 5.5-6z" />
-        <line x1="12" y1="7" x2="12" y2="20" strokeOpacity="0.4" />
+      <svg
+        viewBox="0 0 24 24"
+        className={className}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        {...base}
+      >
+        {/* Glúteos — vista posterior, dos lóbulos */}
+        <path
+          d="M3 14.5C3 10.5 5.5 7 8.5 7C11 7 12.5 9.5 12 14C11.5 17.5 10 20.5 7.5 21C5.5 21 3 18.5 3 14.5Z"
+          fill="currentColor"
+          fillOpacity="0.2"
+        />
+        <path
+          d="M21 14.5C21 10.5 18.5 7 15.5 7C13 7 11.5 9.5 12 14C12.5 17.5 14 20.5 16.5 21C18.5 21 21 18.5 21 14.5Z"
+          fill="currentColor"
+          fillOpacity="0.2"
+        />
+        <line x1="12" y1="7.5" x2="12" y2="20.5" strokeOpacity="0.3" strokeWidth="0.9" />
       </svg>
     ),
     Core: (
-      // Six-pack abs grid
-      <svg viewBox="0 0 24 24" className={className} {...SVG_BASE}>
-        <path d="M7 4c0-0.5 0.5-1 1-1h8c0.5 0 1 0.5 1 1v15c0 1.5-2 2-5 2s-5-0.5-5-2z" />
-        <line x1="12" y1="3" x2="12" y2="20" />
-        <line x1="7" y1="8.5" x2="17" y2="8.5" />
-        <line x1="7" y1="13" x2="17" y2="13" />
-        <line x1="7.5" y1="17" x2="16.5" y2="17" strokeOpacity="0.5" />
+      <svg
+        viewBox="0 0 24 24"
+        className={className}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        {...base}
+      >
+        {/* Abdominales — six-pack con forma de torso */}
+        <path
+          d="M8 3.5C7 3 6.5 3.5 7.5 4.5L6.5 16C6.5 18.5 9 20.5 12 20.5C15 20.5 17.5 18.5 17.5 16L16.5 4.5C17.5 3.5 17 3 16 3.5H8Z"
+          fill="currentColor"
+          fillOpacity="0.15"
+        />
+        <line x1="12" y1="3.5" x2="12" y2="20" strokeOpacity="0.4" strokeWidth="1" />
+        <line x1="7" y1="9" x2="17" y2="9" strokeOpacity="0.5" strokeWidth="1" />
+        <line x1="7" y1="13.5" x2="17" y2="13.5" strokeOpacity="0.5" strokeWidth="1" />
+        <path d="M7 17.5Q9.5 19 12 18Q14.5 19 17 17.5" strokeOpacity="0.4" strokeWidth="1" />
       </svg>
     ),
     Cardio: (
-      // Heart with pulse line
-      <svg viewBox="0 0 24 24" className={className} {...SVG_BASE}>
-        <path d="M12 20c-4-3-8-6-8-11 0-2.5 2-4.5 4.5-4.5C10 4.5 11 5.5 12 7c1-1.5 2-2.5 3.5-2.5C18 4.5 20 6.5 20 9c0 5-4 8-8 11z" />
-        <polyline points="6,12 9,12 11,9 13,15 15,11 18,12" />
+      <svg
+        viewBox="0 0 24 24"
+        className={className}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        {...base}
+      >
+        <path
+          d="M12 20c-4-3-8-6-8-11 0-2.5 2-4.5 4.5-4.5C10 4.5 11 5.5 12 7c1-1.5 2-2.5 3.5-2.5C18 4.5 20 6.5 20 9c0 5-4 8-8 11z"
+          fill="currentColor"
+          fillOpacity="0.18"
+        />
+        <polyline points="5.5,12 8.5,12 10.5,9 12.5,15 14.5,11 17.5,12" />
       </svg>
     ),
     Otro: (
-      <svg viewBox="0 0 24 24" className={className} {...SVG_BASE}>
+      <svg
+        viewBox="0 0 24 24"
+        className={className}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        {...base}
+      >
         <path d="M2 12h2M20 12h2" />
-        <rect x="3.5" y="8" width="3" height="8" rx="0.7" />
-        <rect x="17.5" y="8" width="3" height="8" rx="0.7" />
+        <rect x="3.5" y="8" width="3" height="8" rx="0.7" fill="currentColor" fillOpacity="0.15" />
+        <rect x="17.5" y="8" width="3" height="8" rx="0.7" fill="currentColor" fillOpacity="0.15" />
         <path d="M6.5 12h11" />
       </svg>
     ),
@@ -331,7 +480,14 @@ export function MuscleGroupIcon({ name, className = 'w-5 h-5' }: IconProps & { n
 
   return (
     icons[name] ?? (
-      <svg viewBox="0 0 24 24" className={className} {...SVG_BASE}>
+      <svg
+        viewBox="0 0 24 24"
+        className={className}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        {...base}
+      >
         <circle cx="12" cy="12" r="9" />
       </svg>
     )

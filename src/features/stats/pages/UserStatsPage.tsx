@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
@@ -388,7 +388,11 @@ function generateTips(params: {
 export function UserStatsPage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { sessions: cardioSessions } = useCardioStore();
+  const { sessions: cardioSessions, syncFromRemote: syncCardio } = useCardioStore();
+
+  useEffect(() => {
+    if (user?.id) void syncCardio(user.id);
+  }, [user?.id, syncCardio]);
 
   const { data, isLoading } = useQuery({
     queryKey: ['workoutsAndSets', user?.id],

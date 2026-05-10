@@ -49,11 +49,11 @@ export const fetchWorkoutsAndSets = async (userId: string, limit = 200) => {
         ...wo,
         started_at: wo.started_at,
         ended_at: wo.finished_at,
-        sets: sets as WorkoutSetWithDetails[],
+        sets: sets as unknown as WorkoutSetWithDetails[],
       } as WorkoutWithSets;
     });
 
-    return { workouts, sets: (allSets as WorkoutSetWithDetails[]) || [] };
+    return { workouts, sets: (allSets as unknown as WorkoutSetWithDetails[]) || [] };
   } catch (err) {
     console.error('fetchWorkoutsAndSets error:', err);
     throw err;
@@ -309,12 +309,10 @@ export const fetchLastExerciseSets = async (
 export const fetchVolumeByMuscleGroup = async (
   userId: string,
 ): Promise<{ muscle_group: string; total_volume: number }[]> => {
-  console.log('[Volume] Fetching volume for user:', userId);
   const { data, error } = await supabase.rpc('get_volume_by_muscle_group', { user_uuid: userId });
   if (error) {
     console.error('[Volume] Error fetching volume:', error);
     throw error;
   }
-  console.log('[Volume] Data received:', data);
   return data || [];
 };

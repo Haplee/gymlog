@@ -320,6 +320,7 @@ export function WorkoutPage() {
           id: crypto.randomUUID(),
           reps: String(s.reps),
           weight: String(s.weight),
+          notes: '',
           isWarmup: false,
         })),
       );

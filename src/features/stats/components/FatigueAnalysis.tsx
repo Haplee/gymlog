@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { CheckCircle2, AlertTriangle, XCircle, TrendingUp, Zap } from 'lucide-react';
 import type { MuscleGroupStatus } from '../utils/fatigueAnalysis';
 import { MuscleGroupIcon } from '@shared/components/CardioIcons';
+import { MUSCLE_COLORS } from '@shared/constants/muscleColors';
 
 interface FatigueAnalysisProps {
   muscleGroups: MuscleGroupStatus[];
@@ -89,11 +90,12 @@ export function FatigueAnalysis({
         </motion.div>
       )}
 
-      <div className="space-y-3">
+      <div className="space-y-2.5">
         {muscleGroups.slice(0, 6).map((mg, index) => {
           const config = getStatusConfig(mg.status);
           const Icon = config.icon;
           const recoveryPercent = getRecoveryPercentage(mg.daysSinceLast);
+          const muscleColor = MUSCLE_COLORS[mg.name] ?? 'var(--interactive-primary)';
 
           return (
             <motion.div
@@ -101,21 +103,30 @@ export function FatigueAnalysis({
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="flex items-center gap-3 p-3 rounded-[var(--radius-lg)]"
+              className="flex items-center gap-3 p-2.5 rounded-[var(--radius-lg)]"
               style={{ backgroundColor: config.bgColor }}
             >
-              <div style={{ color: 'var(--interactive-primary)' }}>
-                <MuscleGroupIcon name={mg.name} className="w-5 h-5" />
+              {/* Icono anatómico con fondo coloreado */}
+              <div
+                className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
+                style={{ backgroundColor: `${muscleColor}22` }}
+              >
+                <div style={{ color: muscleColor }}>
+                  <MuscleGroupIcon name={mg.name} className="w-6 h-6" />
+                </div>
               </div>
 
-              <div className="flex-1">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[0.875rem] font-medium text-[var(--text-primary)]">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[0.875rem] font-semibold text-[var(--text-primary)]">
                     {mg.name}
                   </span>
-                  <div className="flex items-center gap-1">
-                    <Icon className="w-3.5 h-3.5" style={{ color: config.color }} />
-                    <span className="text-[0.6875rem]" style={{ color: config.color }}>
+                  <div className="flex items-center gap-1 ml-2">
+                    <Icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: config.color }} />
+                    <span
+                      className="text-[0.6875rem] whitespace-nowrap"
+                      style={{ color: config.color }}
+                    >
                       {config.label}
                     </span>
                   </div>
@@ -126,12 +137,12 @@ export function FatigueAnalysis({
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${recoveryPercent}%` }}
-                      transition={{ delay: 0.3 + index * 0.1, duration: 0.5 }}
+                      transition={{ delay: 0.3 + index * 0.1, duration: 0.6, ease: 'easeOut' }}
                       className="h-full rounded-full"
-                      style={{ backgroundColor: config.color }}
+                      style={{ backgroundColor: muscleColor, opacity: 0.85 }}
                     />
                   </div>
-                  <span className="text-[0.625rem] text-[var(--text-tertiary)] w-8 text-right">
+                  <span className="text-[0.625rem] text-[var(--text-tertiary)] w-8 text-right flex-shrink-0">
                     {mg.daysSinceLast === -1
                       ? '—'
                       : mg.daysSinceLast === 0
@@ -160,23 +171,30 @@ export function FatigueAnalysis({
               Sugerencia para hoy
             </div>
           </div>
-          <div
-            className="flex items-center gap-3 px-4 py-3 rounded-[var(--radius-lg)]"
-            style={{ backgroundColor: 'rgba(200, 255, 0, 0.1)' }}
-          >
-            <MuscleGroupIcon name={suggestedGroup ?? 'Otro'} className="w-6 h-6" />
-            <div>
+          {(() => {
+            const suggColor = MUSCLE_COLORS[suggestedGroup ?? ''] ?? 'var(--interactive-primary)';
+            return (
               <div
-                className="text-[0.9375rem] font-semibold"
-                style={{ color: 'var(--interactive-primary)' }}
+                className="flex items-center gap-3 px-4 py-3 rounded-[var(--radius-lg)]"
+                style={{ backgroundColor: `${suggColor}18` }}
               >
-                Entrenar {suggestedGroup}
+                <div
+                  className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: `${suggColor}28`, color: suggColor }}
+                >
+                  <MuscleGroupIcon name={suggestedGroup ?? 'Otro'} className="w-7 h-7" />
+                </div>
+                <div>
+                  <div className="text-[0.9375rem] font-semibold" style={{ color: suggColor }}>
+                    Entrenar {suggestedGroup}
+                  </div>
+                  <div className="text-[0.75rem] text-[var(--text-secondary)]">
+                    Grupo muscular recuperado
+                  </div>
+                </div>
               </div>
-              <div className="text-[0.75rem] text-[var(--text-secondary)]">
-                Grupo muscular recuperado
-              </div>
-            </div>
-          </div>
+            );
+          })()}
         </motion.div>
       )}
     </motion.div>

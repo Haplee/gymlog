@@ -189,7 +189,7 @@ export function HistoryPage() {
     deleteSession: deleteCardioSession,
     syncFromRemote: syncCardio,
   } = useCardioStore();
-  const [view, setView] = useState<'sets' | 'workouts' | 'cardio'>('sets');
+  const [view, setView] = useState<'all' | 'sets' | 'workouts' | 'cardio'>('all');
   const [filterExercise, setFilterExercise] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -600,6 +600,36 @@ export function HistoryPage() {
     e.target.value = '';
   };
 
+  // Timeline unificado: fuerza + cardio mezclados por fecha
+  type TimelineItem =
+    | { kind: 'workout'; data: WorkoutWithSets; date: Date }
+    | { kind: 'cardio'; data: (typeof cardioSessions)[0]; date: Date };
+
+  const timelineItems: TimelineItem[] = [
+    ...workouts.map(
+      (wo): TimelineItem => ({ kind: 'workout', data: wo, date: new Date(wo.started_at ?? '') }),
+    ),
+    ...cardioSessions.map(
+      (s): TimelineItem => ({ kind: 'cardio', data: s, date: new Date(s.startedAt) }),
+    ),
+  ].sort((a, b) => b.date.getTime() - a.date.getTime());
+
+  // Agrupar timeline por fecha local
+  const timelineByDate: { date: string; items: TimelineItem[] }[] = [];
+  timelineItems.forEach((item) => {
+    const label = item.date.toLocaleDateString('es', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    });
+    const last = timelineByDate[timelineByDate.length - 1];
+    if (last?.date === label) {
+      last.items.push(item);
+    } else {
+      timelineByDate.push({ date: label, items: [item] });
+    }
+  });
+
   if (loading) {
     return (
       <Layout>
@@ -628,9 +658,10 @@ export function HistoryPage() {
 
         <select
           value={view}
-          onChange={(e) => setView(e.target.value as 'sets' | 'workouts' | 'cardio')}
+          onChange={(e) => setView(e.target.value as 'all' | 'sets' | 'workouts' | 'cardio')}
           className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-lg text-[var(--text-secondary)] text-[0.95rem] p-2 cursor-pointer transition-all hover:scale-[1.02]"
         >
+          <option value="all">Todo</option>
           <option value="sets">{t('history.sets_view')}</option>
           <option value="workouts">{t('history.workouts_view')}</option>
           <option value="cardio">Cardio</option>
@@ -664,7 +695,177 @@ export function HistoryPage() {
         )}
       </div>
 
-      {view === 'cardio' ? (
+      {view === 'all' ? (
+        <div className="space-y-4">
+          {timelineByDate.length === 0 ? (
+            <EmptyHistory />
+          ) : (
+            timelineByDate.map((group) => (
+              <div key={group.date}>
+                <div className="px-1 mb-2">
+                  <span
+                    className="text-[0.6875rem] font-bold uppercase tracking-[0.1em]"
+                    style={{ color: 'var(--text-tertiary)' }}
+                  >
+                    {group.date}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {group.items.map((item, i) =>
+                    item.kind === 'cardio' ? (
+                      <motion.div
+                        key={item.data.id}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.03 }}
+                        className="rounded-[var(--radius-lg)] p-3.5 flex items-center justify-between"
+                        style={{
+                          backgroundColor: 'var(--bg-surface)',
+                          border: '1px solid var(--border-subtle)',
+                        }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="w-9 h-9 rounded-[var(--radius-md)] flex items-center justify-center flex-shrink-0"
+                            style={{ backgroundColor: 'rgba(239,68,68,0.12)' }}
+                          >
+                            <span style={{ color: '#ef4444' }}>
+                              <CardioTypeIcon type={item.data.type} className="w-4.5 h-4.5" />
+                            </span>
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span
+                                className="text-sm font-semibold"
+                                style={{ color: 'var(--text-primary)' }}
+                              >
+                                {CARDIO_LABELS[item.data.type]}
+                              </span>
+                              <span
+                                className="text-[0.6875rem] px-1.5 py-0.5 rounded-[var(--radius-pill)] font-bold"
+                                style={{
+                                  backgroundColor: 'rgba(239,68,68,0.1)',
+                                  color: '#ef4444',
+                                }}
+                              >
+                                Cardio
+                              </span>
+                            </div>
+                            <div
+                              className="text-[0.75rem] flex items-center gap-2 mt-0.5"
+                              style={{ color: 'var(--text-secondary)' }}
+                            >
+                              <span className="font-mono font-semibold">
+                                {formatDuration(item.data.duration)}
+                              </span>
+                              {item.data.distance && <span>· {item.data.distance}km</span>}
+                              {item.data.calories && <span>· {item.data.calories}kcal</span>}
+                            </div>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => void deleteCardioSession(item.data.id, user?.id ?? null)}
+                          className="p-2 rounded-lg ml-2 flex-shrink-0"
+                          style={{ color: 'var(--text-tertiary)' }}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key={item.data.id}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.03 }}
+                        className="rounded-[var(--radius-lg)] overflow-hidden"
+                        style={{
+                          backgroundColor: 'var(--bg-surface)',
+                          border: '1px solid var(--border-subtle)',
+                        }}
+                      >
+                        <div className="px-3 py-2.5">
+                          <div className="flex justify-between items-center mb-2">
+                            <div className="flex items-center gap-2">
+                              <span
+                                className="text-[0.8125rem] font-semibold"
+                                style={{ color: 'var(--text-primary)' }}
+                              >
+                                {new Date(item.data.started_at ?? '').toLocaleTimeString([], {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                              </span>
+                              <span
+                                className="text-[0.6875rem] px-1.5 py-0.5 rounded-[var(--radius-pill)] font-bold"
+                                style={{
+                                  backgroundColor: 'rgba(200,255,0,0.08)',
+                                  color: 'var(--interactive-primary)',
+                                  border: '1px solid rgba(200,255,0,0.15)',
+                                }}
+                              >
+                                Fuerza
+                              </span>
+                            </div>
+                            <div className="flex gap-3">
+                              <button
+                                onClick={() => handleRepeat(item.data)}
+                                className="flex items-center gap-1 text-[0.75rem] font-semibold"
+                                style={{ color: 'var(--interactive-primary)' }}
+                              >
+                                <Repeat className="w-3.5 h-3.5" />
+                                {t('history.repeat')}
+                              </button>
+                              <button
+                                onClick={async () => {
+                                  const uniqueExercises = [
+                                    ...new Set(item.data.sets.map((s) => s.exercise?.name)),
+                                  ].length;
+                                  const volume = item.data.sets.reduce(
+                                    (sum, s) => sum + s.reps * s.weight,
+                                    0,
+                                  );
+                                  const success = await shareWorkout({
+                                    exerciseCount: uniqueExercises,
+                                    totalSets: item.data.sets.length,
+                                    totalVolume: volume,
+                                    date: new Date(item.data.started_at ?? '').toLocaleDateString(),
+                                  });
+                                  if (success) toast.success(t('history.shared_msg'));
+                                  else toast.error('Error');
+                                }}
+                                className="flex items-center gap-1 text-[0.75rem] font-semibold"
+                                style={{ color: 'var(--text-secondary)' }}
+                              >
+                                <Share2 className="w-3.5 h-3.5" />
+                                {t('history.share')}
+                              </button>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {item.data.sets.map((s, si) => (
+                              <span
+                                key={si}
+                                className="px-2 py-1 rounded-[var(--radius-pill)] text-[0.75rem]"
+                                style={{
+                                  backgroundColor: 'var(--bg-surface-2)',
+                                  color: 'var(--text-secondary)',
+                                  border: '1px solid var(--border-glass)',
+                                }}
+                              >
+                                {s.exercise?.name}: {s.reps}×{s.weight}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </motion.div>
+                    ),
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      ) : view === 'cardio' ? (
         <div className="space-y-2">
           {cardioSessions.length === 0 ? (
             <div className="text-center py-12 text-sm" style={{ color: 'var(--text-tertiary)' }}>

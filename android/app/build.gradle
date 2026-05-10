@@ -21,10 +21,12 @@ android {
     }
     signingConfigs {
         release {
-            storeFile file(keystoreProperties['STORE_FILE'])
-            storePassword keystoreProperties['STORE_PASSWORD']
-            keyAlias keystoreProperties['KEY_ALIAS']
-            keyPassword keystoreProperties['KEY_PASSWORD']
+            if (keystoreProperties['STORE_FILE'] != null) {
+                storeFile file(keystoreProperties['STORE_FILE'])
+                storePassword keystoreProperties['STORE_PASSWORD']
+                keyAlias keystoreProperties['KEY_ALIAS']
+                keyPassword keystoreProperties['KEY_PASSWORD']
+            }
         }
     }
     buildTypes {

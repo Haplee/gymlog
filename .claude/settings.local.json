@@ -23,7 +23,27 @@
       "mcp__claude_ai_Supabase__execute_sql",
       "mcp__claude_ai_Supabase__apply_migration",
       "Bash(echo \"EXIT=$?\")",
-      "mcp__claude_ai_Supabase__get_advisors"
+      "mcp__claude_ai_Supabase__get_advisors",
+      "Read(//home/franvi/.nvm/versions/**)",
+      "Read(//usr/local/bin/**)",
+      "Bash(command -v fnm)",
+      "Read(//home/franvi/**)",
+      "Read(//usr/bin/**)",
+      "Bash(find / -name \"npm\" -type f)",
+      "Bash(apt list *)",
+      "Bash(snap list *)",
+      "Bash(sudo -n apt-get install -y nodejs npm)",
+      "Bash(npm --version)",
+      "Bash(npm install *)",
+      "Bash(npx cap *)",
+      "Bash(./gradlew assembleDebug)",
+      "Bash(java -version)",
+      "Bash(export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64)",
+      "Read(//opt/**)",
+      "Bash(find / -name \"sdkmanager\" -type f)",
+      "Bash(apt-cache search *)",
+      "Bash(sdkmanager --version)",
+      "mcp__claude_ai_Supabase__get_logs"
     ]
   }
 }

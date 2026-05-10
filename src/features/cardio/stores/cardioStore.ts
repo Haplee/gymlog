@@ -214,7 +214,7 @@ export const useCardioStore = create<CardioState>()(
               })),
             )
             .select('id, type, started_at, duration, distance, calories, notes');
-          if (!pushErr && inserted) {
+          if (!pushErr && inserted && inserted.length > 0) {
             inserted.forEach((r) =>
               remote.unshift({
                 id: r.id,
@@ -231,6 +231,8 @@ export const useCardioStore = create<CardioState>()(
             // Keep pending sessions for next retry
             pending.forEach((p) => stillPending.push({ ...p, pendingSync: true }));
             if (pushErr) console.error('[CardioStore] push pending failed:', pushErr.message);
+            else if (!inserted || inserted.length === 0)
+              console.warn('[CardioStore] push returned no rows — keeping sessions as pending');
           }
         }
 
