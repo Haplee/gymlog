@@ -9,6 +9,7 @@ const SetDataSchema = z.object({
   reps: z.string().min(1, 'Min 1 rep').max(4, 'Max 9999'),
   weight: z.string().min(1, 'Min 1 kg').max(6, 'Max 999999'),
   isWarmup: z.boolean().default(false),
+  notes: z.string().max(500).optional().default(''),
 });
 
 type SetData = z.infer<typeof SetDataSchema>;
@@ -37,11 +38,12 @@ interface WorkoutState extends PersistedWorkout {
   clearPersistedState: () => void;
 }
 
-const makeSet = (reps = '', weight = '', isWarmup = false): SetData => ({
+const makeSet = (reps = '', weight = '', isWarmup = false, notes = ''): SetData => ({
   id: crypto.randomUUID(),
   reps,
   weight,
   isWarmup,
+  notes,
 });
 
 export const useWorkoutStore = create<WorkoutState>()(
@@ -57,10 +59,18 @@ export const useWorkoutStore = create<WorkoutState>()(
       repeatWorkout: (workout: WorkoutWithSets) => {
         if (workout.sets.length === 0) return;
         const exerciseId = workout.sets[0].exercise_id;
+        const sortedSets = [...workout.sets].sort((a, b) => a.set_num - b.set_num);
         set({
           activeExerciseId: exerciseId,
           customExerciseName: '',
-          sets: workout.sets.map((s) => makeSet(String(s.reps), String(s.weight))),
+          sets: sortedSets.map((s) =>
+            makeSet(
+              String(s.reps),
+              String(s.weight),
+              !!(s as { is_warmup?: boolean | null }).is_warmup,
+              (s as { notes?: string | null }).notes ?? '',
+            ),
+          ),
           startedAt: new Date().toISOString(),
         });
       },
@@ -104,12 +114,12 @@ export const useWorkoutStore = create<WorkoutState>()(
         if (!activeExerciseId && customExerciseName.trim()) {
           const { data, error } = await supabase
             .from('exercises')
-            .upsert({
+            .insert({
               name: customExerciseName.trim(),
               user_id: userId,
               muscle_group: customMuscleGroup,
             })
-            .select()
+            .select('id')
             .single();
           if (error) return { error, success: false };
           exerciseId = data.id;
@@ -119,36 +129,39 @@ export const useWorkoutStore = create<WorkoutState>()(
 
         const validSets = setData.filter((s) => {
           const result = SetDataSchema.safeParse(s);
-          return result.success && Number(s.reps) > 0 && Number(s.weight) > 0;
+          if (!result.success) return false;
+          const reps = Number(s.reps);
+          const weight = Number(s.weight);
+          if (!Number.isFinite(reps) || reps <= 0) return false;
+          if (!Number.isFinite(weight) || weight < 0) return false;
+          // Allow weight=0 only on warmup sets (e.g. bodyweight warmup)
+          if (!s.isWarmup && weight === 0) return false;
+          return true;
         });
         if (!validSets.length)
           return { error: new Error('Añade reps y kg válidas'), success: false };
 
         try {
-          const { data: wo, error: woError } = await supabase
-            .from('workouts')
-            .insert({
-              user_id: userId,
-              started_at: get().startedAt || new Date().toISOString(),
-              finished_at: new Date().toISOString(),
-            })
-            .select()
-            .single();
+          const startedAt = get().startedAt || new Date().toISOString();
+          const finishedAt = new Date().toISOString();
 
-          if (woError) throw woError;
-          if (!wo) throw new Error('Error creando workout');
-
-          const setsToInsert = validSets.map((s, i) => ({
-            workout_id: wo.id,
-            exercise_id: exerciseId,
+          const setsPayload = validSets.map((s, i) => ({
             set_num: i + 1,
             reps: Number(s.reps),
             weight: Number(s.weight),
-            notes: null,
+            is_warmup: !!s.isWarmup,
+            notes: s.notes?.trim() || '',
           }));
 
-          const { error: insertError } = await supabase.from('workout_sets').insert(setsToInsert);
-          if (insertError) throw insertError;
+          const { error: rpcError } = await supabase.rpc('save_workout_with_sets', {
+            p_user_id: userId,
+            p_exercise_id: exerciseId,
+            p_started_at: startedAt,
+            p_finished_at: finishedAt,
+            p_sets: setsPayload,
+          });
+
+          if (rpcError) throw rpcError;
 
           set({
             sets: [],

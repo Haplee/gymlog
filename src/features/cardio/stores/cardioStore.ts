@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { supabase } from '@shared/lib/supabase';
 
 export type CardioType =
   | 'running'
@@ -30,6 +31,7 @@ export interface CardioSession {
   distance?: number;
   calories?: number;
   notes?: string;
+  pendingSync?: boolean;
 }
 
 interface CardioState {
@@ -44,13 +46,17 @@ interface CardioState {
   startSession: (type: CardioType) => void;
   pauseSession: () => void;
   resumeSession: () => void;
-  stopSession: (extras?: {
-    distance?: number;
-    calories?: number;
-    notes?: string;
-  }) => CardioSession | null;
+  stopSession: (
+    userId: string | null | undefined,
+    extras?: {
+      distance?: number;
+      calories?: number;
+      notes?: string;
+    },
+  ) => Promise<CardioSession | null>;
   discardSession: () => void;
-  deleteSession: (id: string) => void;
+  deleteSession: (id: string, userId?: string | null) => Promise<void>;
+  syncFromRemote: (userId: string) => Promise<void>;
   getElapsed: () => number;
 }
 
@@ -88,7 +94,7 @@ export const useCardioStore = create<CardioState>()(
         set({ isPaused: false, pausedAt: null, pausedDuration: pausedDuration + extra });
       },
 
-      stopSession: (extras = {}) => {
+      stopSession: async (userId, extras = {}) => {
         const { isActive, activeType, startedAt } = get();
         if (!isActive || !activeType || !startedAt) return null;
 
@@ -105,6 +111,31 @@ export const useCardioStore = create<CardioState>()(
           duration: elapsed,
           ...extras,
         };
+
+        if (userId) {
+          const { data, error } = await supabase
+            .from('cardio_sessions')
+            .insert({
+              user_id: userId,
+              type: session.type,
+              started_at: session.startedAt,
+              duration: session.duration,
+              distance: session.distance ?? null,
+              calories: session.calories ?? null,
+              notes: session.notes ?? null,
+            })
+            .select('id')
+            .single();
+          if (!error && data?.id) {
+            session.id = data.id;
+            session.pendingSync = false;
+          } else {
+            session.pendingSync = true;
+            if (error) console.error('[CardioStore] insert failed:', error.message);
+          }
+        } else {
+          session.pendingSync = true;
+        }
 
         set((state) => ({
           sessions: [session, ...state.sessions].slice(0, 100),
@@ -130,8 +161,82 @@ export const useCardioStore = create<CardioState>()(
         });
       },
 
-      deleteSession: (id) => {
+      deleteSession: async (id, userId) => {
         set((state) => ({ sessions: state.sessions.filter((s) => s.id !== id) }));
+        if (userId) {
+          const { error } = await supabase.from('cardio_sessions').delete().eq('id', id);
+          if (error) console.error('[CardioStore] delete failed:', error.message);
+        }
+      },
+
+      syncFromRemote: async (userId) => {
+        const { data, error } = await supabase
+          .from('cardio_sessions')
+          .select('id, type, started_at, duration, distance, calories, notes')
+          .eq('user_id', userId)
+          .order('started_at', { ascending: false })
+          .limit(200);
+        if (error) {
+          console.error('[CardioStore] syncFromRemote failed:', error.message);
+          return;
+        }
+        const remote: CardioSession[] = (data || []).map((r) => ({
+          id: r.id,
+          type: r.type as CardioType,
+          startedAt: r.started_at,
+          duration: r.duration,
+          distance: r.distance ?? undefined,
+          calories: r.calories ?? undefined,
+          notes: r.notes ?? undefined,
+          pendingSync: false,
+        }));
+
+        // Push pending or unknown local sessions
+        const remoteStartedSet = new Set(remote.map((r) => r.startedAt));
+        const pending = get().sessions.filter(
+          (s) =>
+            s.pendingSync ||
+            (!remote.some((r) => r.id === s.id) && !remoteStartedSet.has(s.startedAt)),
+        );
+        const stillPending: CardioSession[] = [];
+        if (pending.length > 0) {
+          const { data: inserted, error: pushErr } = await supabase
+            .from('cardio_sessions')
+            .insert(
+              pending.map((s) => ({
+                user_id: userId,
+                type: s.type,
+                started_at: s.startedAt,
+                duration: s.duration,
+                distance: s.distance ?? null,
+                calories: s.calories ?? null,
+                notes: s.notes ?? null,
+              })),
+            )
+            .select('id, type, started_at, duration, distance, calories, notes');
+          if (!pushErr && inserted) {
+            inserted.forEach((r) =>
+              remote.unshift({
+                id: r.id,
+                type: r.type as CardioType,
+                startedAt: r.started_at,
+                duration: r.duration,
+                distance: r.distance ?? undefined,
+                calories: r.calories ?? undefined,
+                notes: r.notes ?? undefined,
+                pendingSync: false,
+              }),
+            );
+          } else {
+            // Keep pending sessions for next retry
+            pending.forEach((p) => stillPending.push({ ...p, pendingSync: true }));
+            if (pushErr) console.error('[CardioStore] push pending failed:', pushErr.message);
+          }
+        }
+
+        const merged = [...stillPending, ...remote];
+        merged.sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
+        set({ sessions: merged });
       },
 
       getElapsed: () => {

@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRestTimerStore } from '../stores/restTimerStore';
+import { useSettingsStore } from '@shared/stores/settingsStore';
 import { impact, ImpactStyle } from '@shared/lib/haptics';
 import { Plus, Minus, TimerReset } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -35,6 +36,7 @@ function playCompletionSound() {
 
 export function RestTimer() {
   const { endTime, duration, isRunning, start, stop, extend, remaining } = useRestTimerStore();
+  const { restAutoStart, setRestAutoStart } = useSettingsStore();
   const [display, setDisplay] = useState(() => remaining());
   const [customSecs, setCustomSecs] = useState<number | null>(null);
   const completedRef = useRef(false);
@@ -95,12 +97,40 @@ export function RestTimer() {
         border: '1px solid var(--border-subtle)',
       }}
     >
-      <div
-        className="text-[0.7rem] font-semibold uppercase mb-4 flex items-center gap-1.5 tracking-widest"
-        style={{ color: 'var(--text-tertiary)' }}
-      >
-        <TimerReset className="w-3.5 h-3.5" />
-        Descanso
+      <div className="flex items-center justify-between mb-4">
+        <div
+          className="text-[0.7rem] font-semibold uppercase flex items-center gap-1.5 tracking-widest"
+          style={{ color: 'var(--text-tertiary)' }}
+        >
+          <TimerReset className="w-3.5 h-3.5" />
+          Descanso
+        </div>
+        <button
+          onClick={() => {
+            setRestAutoStart(!restAutoStart);
+            void impact(ImpactStyle.Light);
+          }}
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-[var(--radius-pill)] text-[0.625rem] font-bold uppercase tracking-wider transition-colors"
+          style={{
+            backgroundColor: restAutoStart ? 'rgba(200,255,0,0.12)' : 'var(--bg-surface-2)',
+            color: restAutoStart ? 'var(--interactive-primary)' : 'var(--text-tertiary)',
+            border: restAutoStart
+              ? '1px solid rgba(200,255,0,0.25)'
+              : '1px solid var(--border-subtle)',
+          }}
+          aria-pressed={restAutoStart}
+          title={restAutoStart ? 'Auto activado' : 'Auto desactivado'}
+        >
+          <span
+            className="w-1.5 h-1.5 rounded-full"
+            style={{
+              backgroundColor: restAutoStart
+                ? 'var(--interactive-primary)'
+                : 'var(--text-tertiary)',
+            }}
+          />
+          Auto {restAutoStart ? 'on' : 'off'}
+        </button>
       </div>
 
       <AnimatePresence mode="wait">

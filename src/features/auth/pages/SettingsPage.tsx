@@ -40,6 +40,8 @@ export function SettingsPage() {
     setUnitSystem,
     showWarmupSets,
     setShowWarmupSets,
+    restAutoStart,
+    setRestAutoStart,
   } = useSettingsStore();
   const [notifEnabled, setNotifEnabled] = useState(false);
   const [biometricSupport, setBiometricSupport] = useState<{ available: boolean; message: string }>(
@@ -362,6 +364,32 @@ export function SettingsPage() {
             >
               <div
                 className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${showWarmupSets ? 'left-7' : 'left-1'}`}
+              />
+            </button>
+          </div>
+        </div>
+
+        {/* Auto-iniciar temporizador descanso */}
+        <div
+          className="rounded-2xl p-4 scale-in border"
+          style={{ backgroundColor: bgCard, borderColor: border }}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-[0.95rem]" style={{ color: 'var(--text-primary)' }}>
+                Auto-iniciar descanso
+              </div>
+              <div className="text-[0.75rem]" style={{ color: 'var(--text-muted)' }}>
+                Inicia el temporizador al añadir serie
+              </div>
+            </div>
+            <button
+              onClick={() => setRestAutoStart(!restAutoStart)}
+              className={`w-12 h-6 rounded-full transition-all relative ${restAutoStart ? 'bg-[--color-primary]' : 'bg-[--bg-base]'}`}
+              aria-pressed={restAutoStart}
+            >
+              <div
+                className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${restAutoStart ? 'left-7' : 'left-1'}`}
               />
             </button>
           </div>

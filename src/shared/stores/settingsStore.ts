@@ -8,12 +8,14 @@ interface SettingsState {
   language: string;
   unitSystem: 'kg' | 'lb';
   showWarmupSets: boolean;
+  restAutoStart: boolean;
   setBiometricEnabled: (enabled: boolean) => void;
   setTrainingReminders: (enabled: boolean) => void;
   setSound: (sound: boolean) => void;
   setLanguage: (lang: string) => void;
   setUnitSystem: (unit: 'kg' | 'lb') => void;
   setShowWarmupSets: (show: boolean) => void;
+  setRestAutoStart: (auto: boolean) => void;
   applyTheme: () => void;
 }
 
@@ -26,6 +28,7 @@ export const useSettingsStore = create<SettingsState>()(
       language: 'es',
       unitSystem: 'kg',
       showWarmupSets: true,
+      restAutoStart: false,
 
       setBiometricEnabled: (biometricEnabled) => set({ biometricEnabled }),
       setTrainingReminders: (trainingReminders) => set({ trainingReminders }),
@@ -38,6 +41,7 @@ export const useSettingsStore = create<SettingsState>()(
 
       setUnitSystem: (unitSystem) => set({ unitSystem }),
       setShowWarmupSets: (showWarmupSets) => set({ showWarmupSets }),
+      setRestAutoStart: (restAutoStart) => set({ restAutoStart }),
 
       applyTheme: () => {
         const root = document.documentElement;

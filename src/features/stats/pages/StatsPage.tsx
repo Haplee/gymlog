@@ -93,14 +93,21 @@ function formatSeconds(s: number): string {
 }
 
 function calculateMuscleGroupDistribution(
-  sets: { weight: number; reps: number; exercise?: { muscle_group?: string | null } | null }[],
+  sets: {
+    weight: number;
+    reps: number;
+    is_warmup?: boolean | null;
+    exercise?: { muscle_group?: string | null } | null;
+  }[],
 ) {
   const distribution: Record<string, number> = {};
-  sets.forEach((s) => {
-    const muscleGroup = s.exercise?.muscle_group || 'Otro';
-    const volume = s.weight * s.reps;
-    distribution[muscleGroup] = (distribution[muscleGroup] || 0) + volume;
-  });
+  sets
+    .filter((s) => !s.is_warmup)
+    .forEach((s) => {
+      const muscleGroup = s.exercise?.muscle_group || 'Otro';
+      const volume = s.weight * s.reps;
+      distribution[muscleGroup] = (distribution[muscleGroup] || 0) + volume;
+    });
   return Object.entries(distribution)
     .map(([name, value]) => ({ name, value }))
     .sort((a, b) => b.value - a.value);
@@ -376,7 +383,11 @@ function ProgressionChart({
 export function StatsPage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { sessions: cardioSessions } = useCardioStore();
+  const { sessions: cardioSessions, syncFromRemote: syncCardio } = useCardioStore();
+
+  useEffect(() => {
+    if (user?.id) void syncCardio(user.id);
+  }, [user?.id, syncCardio]);
 
   const [selectedExercise, setSelectedExercise] = useState<string>('');
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('4semanas');
@@ -457,6 +468,7 @@ export function StatsPage() {
       .map((weekStart, i) => {
         const weekEnd = subDays(weekStart, -7);
         const vol = recentSets
+          .filter((s) => !(s as { is_warmup?: boolean | null }).is_warmup)
           .filter((s) => {
             const dateStr = s.workout?.started_at ?? '';
             if (!dateStr) return false;
@@ -480,13 +492,43 @@ export function StatsPage() {
     const weekSessions = cardioSessions.filter((s) => new Date(s.startedAt) >= weekStart);
     const totalTimeWeek = weekSessions.reduce((sum, s) => sum + s.duration, 0);
     const totalDistWeek = weekSessions.reduce((sum, s) => sum + (s.distance ?? 0), 0);
+    const totalDistAll = cardioSessions.reduce((sum, s) => sum + (s.distance ?? 0), 0);
+    const totalTimeAll = cardioSessions.reduce((sum, s) => sum + s.duration, 0);
+    const totalCalAll = cardioSessions.reduce((sum, s) => sum + (s.calories ?? 0), 0);
+    const avgDur = cardioSessions.length ? Math.round(totalTimeAll / cardioSessions.length) : 0;
     return {
       sessionsThisWeek: weekSessions.length,
       totalTimeWeek,
       totalDistWeek,
       totalSessions: cardioSessions.length,
+      totalDistAll,
+      totalTimeAll,
+      totalCalAll,
+      avgDur,
     };
   }, [cardioSessions]);
+
+  // Total volume + notes count + best 1RM
+  const allTimeVolume = useMemo(
+    () =>
+      recentSets
+        .filter((s) => !(s as { is_warmup?: boolean | null }).is_warmup)
+        .reduce((sum, s) => sum + s.reps * s.weight, 0),
+    [recentSets],
+  );
+  const setNotesCount = useMemo(
+    () => recentSets.filter((s) => (s as { notes?: string | null }).notes).length,
+    [recentSets],
+  );
+  const bestOneRm = useMemo(() => {
+    let best = 0;
+    for (const pr of personalRecords) {
+      const stored = Number((pr as { one_rm?: number | null }).one_rm) || 0;
+      const e1rm = stored > 0 ? stored : calcular1RM(Number(pr.weight) || 0, Number(pr.reps) || 0);
+      if (e1rm > best) best = e1rm;
+    }
+    return Math.round(best);
+  }, [personalRecords]);
 
   // Cardio weekly breakdown by type
   const cardioTypeBreakdown = useMemo(() => {
@@ -569,6 +611,28 @@ export function StatsPage() {
               subtitle="por sesión"
               icon="duration"
             />
+          </motion.div>
+
+          {/* Volumen total + Mejor 1RM + Notas */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.06 }}
+            className="grid grid-cols-3 gap-3"
+          >
+            <KPICard
+              title="Volumen total"
+              value={`${(allTimeVolume / 1000).toFixed(1)}t`}
+              subtitle="histórico"
+              icon="all-volume"
+            />
+            <KPICard
+              title="Mejor 1RM"
+              value={bestOneRm > 0 ? `${bestOneRm}kg` : '—'}
+              subtitle="estimado"
+              icon="best-1rm"
+            />
+            <KPICard title="Notas" value={setNotesCount} subtitle="series anotadas" icon="notes" />
           </motion.div>
 
           {/* Racha max + PRs */}
@@ -699,6 +763,34 @@ export function StatsPage() {
                 subtitle="historial"
                 icon="cardio-sessions"
                 accentColor="#38bdf8"
+              />
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.14 }}
+              className="grid grid-cols-3 gap-3"
+            >
+              <KPICard
+                title="Tiempo total"
+                value={formatSeconds(cardioStats.totalTimeAll)}
+                subtitle="histórico"
+                icon="cardio-time"
+              />
+              <KPICard
+                title="Distancia total"
+                value={
+                  cardioStats.totalDistAll > 0 ? `${cardioStats.totalDistAll.toFixed(1)}km` : '—'
+                }
+                subtitle="histórico"
+                icon="cardio-dist"
+              />
+              <KPICard
+                title="Duración media"
+                value={cardioStats.avgDur > 0 ? formatSeconds(cardioStats.avgDur) : '—'}
+                subtitle="por sesión"
+                icon="duration"
               />
             </motion.div>
 

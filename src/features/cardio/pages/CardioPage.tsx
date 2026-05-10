@@ -26,6 +26,17 @@ const CARDIO_TYPES: CardioType[] = [
   'other',
 ];
 
+const CARDIO_COLORS: Record<CardioType, string> = {
+  running: '#fb923c',
+  cycling: '#38bdf8',
+  walking: '#a3e635',
+  rowing: '#a78bfa',
+  swimming: '#22d3ee',
+  elliptical: '#f472b6',
+  jump_rope: '#facc15',
+  other: '#94a3b8',
+};
+
 function formatSeconds(s: number): string {
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
@@ -41,7 +52,7 @@ function formatDuration(s: number): string {
   return `${m}min`;
 }
 
-function ActiveSessionCard() {
+function ActiveSessionCard({ userId }: { userId: string | null }) {
   const {
     isActive,
     isPaused,
@@ -70,10 +81,12 @@ function ActiveSessionCard() {
     pauseSession();
   };
 
-  const handleSave = () => {
-    stopSession({
-      distance: distance ? parseFloat(distance) : undefined,
-      calories: calories ? parseInt(calories) : undefined,
+  const handleSave = async () => {
+    const distNum = distance ? parseFloat(distance.replace(',', '.')) : NaN;
+    const calNum = calories ? parseInt(calories, 10) : NaN;
+    await stopSession(userId, {
+      distance: Number.isFinite(distNum) ? distNum : undefined,
+      calories: Number.isFinite(calNum) ? calNum : undefined,
       notes: notes.trim() || undefined,
     });
     void notificationHaptic(NotificationType.Success);
@@ -173,11 +186,12 @@ function ActiveSessionCard() {
                 Distancia (km)
               </div>
               <input
-                type="number"
+                type="text"
                 inputMode="decimal"
+                pattern="[0-9]*[.,]?[0-9]*"
                 placeholder="0.0"
                 value={distance}
-                onChange={(e) => setDistance(e.target.value)}
+                onChange={(e) => setDistance(e.target.value.replace(/[^\d.,]/g, ''))}
                 className="w-full rounded-lg text-sm p-2 outline-none text-center"
                 style={{
                   backgroundColor: 'var(--bg-surface-2)',
@@ -191,11 +205,12 @@ function ActiveSessionCard() {
                 Calorías
               </div>
               <input
-                type="number"
+                type="text"
                 inputMode="numeric"
+                pattern="[0-9]*"
                 placeholder="0"
                 value={calories}
-                onChange={(e) => setCalories(e.target.value)}
+                onChange={(e) => setCalories(e.target.value.replace(/[^\d]/g, ''))}
                 className="w-full rounded-lg text-sm p-2 outline-none text-center"
                 style={{
                   backgroundColor: 'var(--bg-surface-2)',
@@ -433,11 +448,12 @@ function SessionHistoryItem({
 export function CardioPage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { isActive, startSession, sessions, deleteSession } = useCardioStore();
+  const { isActive, startSession, sessions, deleteSession, syncFromRemote } = useCardioStore();
 
   useEffect(() => {
     if (!user) navigate('/login');
-  }, [user, navigate]);
+    else void syncFromRemote(user.id);
+  }, [user, navigate, syncFromRemote]);
 
   const handleStart = useCallback(
     (type: CardioType) => {
@@ -450,7 +466,7 @@ export function CardioPage() {
 
   return (
     <Layout>
-      <ActiveSessionCard />
+      <ActiveSessionCard userId={user?.id ?? null} />
 
       {/* Quick Start */}
       {!isActive && (
@@ -468,27 +484,34 @@ export function CardioPage() {
             Iniciar sesión
           </div>
           <div className="grid grid-cols-4 gap-2">
-            {CARDIO_TYPES.map((type) => (
-              <button
-                key={type}
-                onClick={() => handleStart(type)}
-                className="flex flex-col items-center gap-1.5 py-3 rounded-[var(--radius-lg)] transition-all active:scale-95"
-                style={{
-                  backgroundColor: 'var(--bg-surface-2)',
-                  border: '1px solid var(--border-subtle)',
-                }}
-              >
-                <span style={{ color: 'var(--text-secondary)' }}>
-                  <CardioTypeIcon type={type} className="w-5 h-5" />
-                </span>
-                <span
-                  className="text-[0.625rem] font-medium leading-tight text-center"
-                  style={{ color: 'var(--text-secondary)' }}
+            {CARDIO_TYPES.map((type) => {
+              const color = CARDIO_COLORS[type];
+              return (
+                <button
+                  key={type}
+                  onClick={() => handleStart(type)}
+                  className="relative flex flex-col items-center gap-1.5 py-3 rounded-[var(--radius-lg)] transition-all active:scale-95 overflow-hidden"
+                  style={{
+                    backgroundColor: 'var(--bg-surface-2)',
+                    border: '1px solid var(--border-subtle)',
+                  }}
                 >
-                  {CARDIO_LABELS[type]}
-                </span>
-              </button>
-            ))}
+                  <div
+                    className="absolute top-0 left-0 right-0 h-[2px]"
+                    style={{ backgroundColor: color, opacity: 0.7 }}
+                  />
+                  <span style={{ color }}>
+                    <CardioTypeIcon type={type} className="w-6 h-6" />
+                  </span>
+                  <span
+                    className="text-[0.625rem] font-medium leading-tight text-center"
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
+                    {CARDIO_LABELS[type]}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </motion.div>
       )}
@@ -515,7 +538,7 @@ export function CardioPage() {
             <SessionHistoryItem
               key={session.id}
               session={session}
-              onDelete={() => deleteSession(session.id)}
+              onDelete={() => void deleteSession(session.id, user?.id ?? null)}
             />
           ))}
         </motion.div>

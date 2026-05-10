@@ -64,9 +64,16 @@ export function calculateMaxStreak(workouts: WorkoutWithSets[]): number {
   return Math.max(maxStreak, tempStreak);
 }
 
-export function calculateWeeklyVolume(
-  sets: { weight: number; reps: number; workout?: { started_at: string | null } }[],
-): number {
+type VolumeSet = {
+  weight: number;
+  reps: number;
+  is_warmup?: boolean | null;
+  workout?: { started_at: string | null };
+};
+
+const isWorkingSet = (s: VolumeSet) => !s.is_warmup;
+
+export function calculateWeeklyVolume(sets: VolumeSet[]): number {
   const now = new Date();
   const dayOfWeek = now.getDay();
   const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
@@ -75,13 +82,12 @@ export function calculateWeeklyVolume(
   weekStart.setHours(0, 0, 0, 0);
 
   return sets
+    .filter(isWorkingSet)
     .filter((s) => s.workout?.started_at && new Date(s.workout.started_at) >= weekStart)
     .reduce((sum, s) => sum + s.weight * s.reps, 0);
 }
 
-export function calculatePreviousWeekVolume(
-  sets: { weight: number; reps: number; workout?: { started_at: string | null } }[],
-): number {
+export function calculatePreviousWeekVolume(sets: VolumeSet[]): number {
   const now = new Date();
   const dayOfWeek = now.getDay();
   const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
@@ -97,6 +103,7 @@ export function calculatePreviousWeekVolume(
   lastWeekEnd.setHours(23, 59, 59, 999);
 
   return sets
+    .filter(isWorkingSet)
     .filter((s) => {
       const startedAt = s.workout?.started_at;
       if (!startedAt) return false;

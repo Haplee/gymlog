@@ -265,6 +265,41 @@ export interface Database {
           is_active?: boolean;
         };
       };
+      cardio_sessions: {
+        Row: {
+          id: string;
+          user_id: string;
+          type: string;
+          started_at: string;
+          duration: number;
+          distance: number | null;
+          calories: number | null;
+          notes: string | null;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          type: string;
+          started_at: string;
+          duration: number;
+          distance?: number | null;
+          calories?: number | null;
+          notes?: string | null;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          type?: string;
+          started_at?: string;
+          duration?: number;
+          distance?: number | null;
+          calories?: number | null;
+          notes?: string | null;
+          created_at?: string | null;
+        };
+      };
       body_measurements: {
         Row: {
           id: string;

@@ -57,9 +57,17 @@ const CHART_COLORS = [
   '#ec4899',
   '#06b6d4',
 ];
-const PUSH_MUSCLES = ['Pecho', 'Hombros', 'Tríceps'];
-const PULL_MUSCLES = ['Espalda', 'Bíceps', 'Espalda baja'];
-const LEG_MUSCLES = ['Cuádriceps', 'Isquiotibiales', 'Glúteos', 'Piernas', 'Gemelos'];
+const PUSH_MUSCLES = ['Pecho', 'Hombro', 'Hombros', 'Tríceps'];
+const PULL_MUSCLES = ['Espalda', 'Bíceps', 'Antebrazo', 'Espalda baja'];
+const LEG_MUSCLES = [
+  'Pierna',
+  'Cuádriceps',
+  'Isquiotibiales',
+  'Glúteo',
+  'Glúteos',
+  'Piernas',
+  'Gemelos',
+];
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (

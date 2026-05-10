@@ -32,7 +32,9 @@ export const fetchWorkoutsAndSets = async (userId: string, limit = 200) => {
 
     const { data: allSets, error: setsError } = await supabase
       .from('workout_sets')
-      .select('*, exercise:exercises(name, muscle_group), workout:workouts(started_at)')
+      .select(
+        'id, weight, reps, set_num, exercise_id, workout_id, created_at, notes, is_warmup, rpe, exercise:exercises(name, muscle_group), workout:workouts(started_at)',
+      )
       .in('workout_id', ids)
       .order('created_at', { ascending: false });
 
@@ -89,7 +91,7 @@ export const fetchWorkoutsPaginated = async (
   const { data: allSets, error: setsError } = await supabase
     .from('workout_sets')
     .select(
-      'id, weight, reps, set_num, exercise_id, workout_id, created_at, exercise:exercises(name)',
+      'id, weight, reps, set_num, exercise_id, workout_id, created_at, notes, is_warmup, rpe, exercise:exercises(name)',
     )
     .in('workout_id', ids);
 
@@ -127,7 +129,7 @@ export const fetchWorkouts = async (userId: string, limit = 1000): Promise<Worko
   const { data: allSets, error: setsError } = await supabase
     .from('workout_sets')
     .select(
-      'id, weight, reps, set_num, exercise_id, workout_id, created_at, exercise:exercises(name)',
+      'id, weight, reps, set_num, exercise_id, workout_id, created_at, notes, is_warmup, rpe, exercise:exercises(name)',
     )
     .in('workout_id', ids);
 
@@ -144,14 +146,17 @@ export const fetchWorkouts = async (userId: string, limit = 1000): Promise<Worko
   });
 };
 
-export const fetchRecentSets = async (userId: string): Promise<WorkoutSetWithDetails[]> => {
+export const fetchRecentSets = async (
+  userId: string,
+  limit = 1000,
+): Promise<WorkoutSetWithDetails[]> => {
   try {
-    // Sin límite — traer todos los workouts del usuario
     const { data: workoutIds, error: woError } = await supabase
       .from('workouts')
       .select('id')
       .eq('user_id', userId)
-      .order('started_at', { ascending: false });
+      .order('started_at', { ascending: false })
+      .limit(300);
 
     if (woError) {
       console.error('Error fetching workout IDs:', woError);
@@ -161,14 +166,14 @@ export const fetchRecentSets = async (userId: string): Promise<WorkoutSetWithDet
 
     const ids = workoutIds.map((w) => w.id);
 
-    // Supabase devuelve máx 1000 por defecto; con muchos datos se podría paginar
     const { data, error: setsError } = await supabase
       .from('workout_sets')
       .select(
-        'id, weight, reps, set_num, exercise_id, workout_id, created_at, exercise:exercises(name), workout:workouts(started_at)',
+        'id, weight, reps, set_num, exercise_id, workout_id, created_at, notes, is_warmup, rpe, exercise:exercises(name), workout:workouts(started_at)',
       )
       .in('workout_id', ids)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(limit);
 
     if (setsError) {
       console.error('Error fetching recent sets:', setsError);
@@ -189,31 +194,20 @@ export const fetchExercises = async (userId: string | undefined): Promise<Exerci
     return (data as Exercise[]) || [];
   }
 
-  // Single query for all exercises (user + global) — replaces 3 of the original 4 queries
-  const { data: allEx, error: allError } = await supabase
-    .from('exercises')
-    .select('id, name, muscle_group, user_id, created_at')
-    .or(`user_id.eq.${userId},user_id.is.null`)
-    .order('name');
-
-  if (allError) throw allError;
-  const exercises = (allEx || []) as Exercise[];
-
-  // Usage counts only for user's custom exercises
-  const userExIds = exercises.filter((e) => e.user_id === userId).map((e) => e.id);
-  const usage: Record<string, number> = {};
-
-  if (userExIds.length > 0) {
-    const { data: usageData } = await supabase
-      .from('workout_sets')
-      .select('exercise_id')
-      .in('exercise_id', userExIds);
-    usageData?.forEach((s) => {
-      usage[s.exercise_id] = (usage[s.exercise_id] || 0) + 1;
-    });
+  // Single RPC: exercises (own + public) + usage_count, sorted by usage desc.
+  const { data, error } = await supabase.rpc('get_exercises_with_usage', { p_user_id: userId });
+  if (error) {
+    // Fallback: simple select if RPC missing (older deployments)
+    console.warn('[fetchExercises] RPC failed, falling back:', error.message);
+    const { data: rows, error: fbErr } = await supabase
+      .from('exercises')
+      .select('id, name, muscle_group, user_id, created_at')
+      .or(`user_id.eq.${userId},user_id.is.null`)
+      .order('name');
+    if (fbErr) throw fbErr;
+    return (rows || []) as Exercise[];
   }
-
-  return exercises.sort((a, b) => (usage[b.id] || 0) - (usage[a.id] || 0));
+  return (data || []) as Exercise[];
 };
 
 export const fetchPersonalRecords = async (userId: string): Promise<PersonalRecord[]> => {

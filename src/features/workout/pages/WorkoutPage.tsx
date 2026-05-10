@@ -26,6 +26,7 @@ import { LastSessionCard } from '@features/workout/components/LastSessionCard';
 import type { ExerciseNote } from '@shared/lib/types';
 import { Trophy, X, Trash2, Plus, StickyNote, AlertCircle } from 'lucide-react';
 import { z } from 'zod';
+import { toast } from 'sonner';
 import { impact, notificationHaptic, ImpactStyle, NotificationType } from '@shared/lib/haptics';
 
 const containerVariants = {
@@ -95,7 +96,7 @@ export function WorkoutPage() {
     clearPersistedState,
   } = useWorkoutStore();
 
-  const { sound, showWarmupSets } = useSettingsStore();
+  const { sound, showWarmupSets, restAutoStart } = useSettingsStore();
   const { getActiveRoutine, getTodayRoutine, checkAndBackup } = useRoutineStore();
   const { unit: weightUnit, convert, convertFromDisplay: convertToKg } = useWeight();
   const {
@@ -111,6 +112,7 @@ export function WorkoutPage() {
   const [noteText, setNoteText] = useState('');
   const [setErrors, setSetErrors] = useState<Record<number, string>>({});
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
+  const [expandedNoteIdx, setExpandedNoteIdx] = useState<number | null>(null);
   const [showResumeBanner, setShowResumeBanner] = useState(() => {
     if (startedAt && sets.length > 0) {
       return Date.now() - new Date(startedAt).getTime() < 12 * 60 * 60 * 1000;
@@ -262,9 +264,11 @@ export function WorkoutPage() {
 
     if (result.error) {
       setMessage(result.error.message);
+      toast.error(result.error.message);
     } else {
       setSaveSuccess(true);
       setMessage('✓ Entrenamiento guardado');
+      toast.success('Entrenamiento guardado');
       void notificationHaptic(NotificationType.Success);
       if (sound) playFeedbackSound();
       queryClient.invalidateQueries({ queryKey: ['workouts'] });
@@ -301,7 +305,7 @@ export function WorkoutPage() {
     const lastSet = sets.at(-1);
     const lastHasData = lastSet && lastSet.reps && lastSet.weight;
     addSet();
-    if (lastHasData && !restTimerRunning) {
+    if (restAutoStart && lastHasData && !restTimerRunning) {
       startRestTimer(restDuration);
     }
   };
@@ -646,12 +650,14 @@ export function WorkoutPage() {
                       {t('workout.reps')}
                     </label>
                     <input
-                      type="number"
+                      type="text"
                       inputMode="numeric"
+                      pattern="[0-9]*"
                       placeholder="0"
                       value={s.reps}
                       onChange={(e) => {
-                        updateSet(i, { reps: e.target.value });
+                        const cleaned = e.target.value.replace(/[^\d]/g, '');
+                        updateSet(i, { reps: cleaned });
                         if (setErrors[i]) {
                           setSetErrors((prev) => {
                             const n = { ...prev };
@@ -673,16 +679,30 @@ export function WorkoutPage() {
                       {weightUnit}
                     </label>
                     <input
-                      type="number"
+                      type="text"
                       inputMode="decimal"
+                      pattern="[0-9]*[.,]?[0-9]*"
                       placeholder="0"
-                      value={
-                        s.weight ? convert(Number(s.weight)).toFixed(1).replace(/\.0$/, '') : ''
-                      }
+                      value={(() => {
+                        const n = Number(s.weight);
+                        if (!s.weight || Number.isNaN(n)) return '';
+                        return convert(n).toFixed(1).replace(/\.0$/, '');
+                      })()}
                       onChange={(e) => {
-                        const displayValue = parseFloat(e.target.value) || 0;
-                        const kgValue = convertToKg(displayValue);
-                        updateSet(i, { weight: kgValue.toString() });
+                        const raw = e.target.value.replace(',', '.').replace(/[^\d.]/g, '');
+                        if (raw === '' || raw === '.') {
+                          updateSet(i, { weight: '' });
+                        } else {
+                          const display = parseFloat(raw);
+                          if (Number.isNaN(display)) {
+                            updateSet(i, { weight: '' });
+                          } else {
+                            const kgValue = convertToKg(display);
+                            updateSet(i, {
+                              weight: Number.isFinite(kgValue) ? kgValue.toString() : '',
+                            });
+                          }
+                        }
                         if (setErrors[i]) {
                           setSetErrors((prev) => {
                             const n = { ...prev };
@@ -705,6 +725,17 @@ export function WorkoutPage() {
                     )}
                   </div>
                   <button
+                    onClick={() => setExpandedNoteIdx(expandedNoteIdx === i ? null : i)}
+                    className="w-6 h-8 flex items-center justify-center bg-transparent border rounded cursor-pointer"
+                    style={{
+                      borderColor: s.notes ? accent : 'var(--border-subtle)',
+                      color: s.notes ? accent : textMuted,
+                    }}
+                    title="Nota de la serie"
+                  >
+                    <StickyNote className="w-3 h-3" />
+                  </button>
+                  <button
                     onClick={() => handleRemoveSet(i)}
                     className="w-6 h-8 flex items-center justify-center bg-transparent border rounded cursor-pointer text-lg"
                     style={{ borderColor: 'var(--border-subtle)', color: textMuted }}
@@ -712,6 +743,20 @@ export function WorkoutPage() {
                     <X className="w-4 h-4" />
                   </button>
                 </div>
+                {expandedNoteIdx === i && (
+                  <input
+                    type="text"
+                    placeholder="Nota de la serie..."
+                    value={s.notes ?? ''}
+                    onChange={(e) => updateSet(i, { notes: e.target.value.slice(0, 500) })}
+                    className="w-full mt-1 rounded-lg text-xs px-2 py-1.5 outline-none"
+                    style={{
+                      backgroundColor: bgCard,
+                      border: `1px solid ${border}`,
+                      color: textPrimary,
+                    }}
+                  />
+                )}
                 {setErrors[i] && (
                   <div className="text-[0.65rem] mt-1 ml-8" style={{ color: 'var(--error)' }}>
                     {setErrors[i]}

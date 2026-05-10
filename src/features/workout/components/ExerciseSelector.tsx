@@ -5,6 +5,7 @@ import { Search, Plus, X, Loader2, AlertCircle, Trash2, Clock, Pencil, Check } f
 import { useExerciseSearch, trackRecentExercise } from '../hooks/useExerciseSearch';
 import { createCustomExercise } from '../api/workoutMutations';
 import { Button } from '@shared/components/ui';
+import { MuscleGroupIcon } from '@shared/components/CardioIcons';
 import { supabase } from '@shared/lib/supabase';
 import { toast } from 'sonner';
 
@@ -27,11 +28,34 @@ const MUSCLE_GROUPS = [
   'Hombro',
   'Pierna',
   'Glúteo',
-  'Brazos',
+  'Bíceps',
+  'Tríceps',
+  'Antebrazo',
   'Core',
   'Cardio',
   'Otro',
 ];
+
+function suggestMuscleGroup(name: string): string | null {
+  const n = name.toLowerCase();
+  if (!n.trim()) return null;
+  if (/antebrazo/.test(n)) return 'Antebrazo';
+  if (/bíceps|biceps|curl|martillo/.test(n)) return 'Bíceps';
+  if (/tríceps|triceps|press francés|fondos/.test(n)) return 'Tríceps';
+  if (/pecho|press banca|aperturas|fly/.test(n)) return 'Pecho';
+  if (/espalda|dominada|remo|jalón|jalon|pull/.test(n)) return 'Espalda';
+  if (/hombro|militar|lateral|pájaro|pajaro/.test(n)) return 'Hombro';
+  if (/glúteo|gluteo|hip thrust|puente/.test(n)) return 'Glúteo';
+  if (
+    /pierna|cuádriceps|cuadriceps|sentadilla|squat|peso muerto|femoral|isquio|gemelo|pantorrilla|lunge|zancada/.test(
+      n,
+    )
+  )
+    return 'Pierna';
+  if (/abdomen|core|plancha|crunch|abdominal/.test(n)) return 'Core';
+  if (/correr|bici|cardio|elíptica|eliptica/.test(n)) return 'Cardio';
+  return null;
+}
 
 export function ExerciseSelector({ userId, onSelect, activeExerciseId }: ExerciseSelectorProps) {
   const queryClient = useQueryClient();
@@ -273,17 +297,23 @@ export function ExerciseSelector({ userId, onSelect, activeExerciseId }: Exercis
                   <div key={group}>
                     {/* Group header */}
                     <div className="px-3 py-2 flex items-center gap-1.5" style={groupHeaderStyle}>
-                      {group === 'Recientes' && (
+                      {group === 'Recientes' ? (
                         <Clock
                           className="w-3 h-3 flex-shrink-0"
                           style={{ color: 'var(--text-tertiary)' }}
                         />
-                      )}
-                      {group === activeMuscleGroup && group !== 'Recientes' && (
-                        <div
-                          className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: 'var(--interactive-primary)' }}
-                        />
+                      ) : (
+                        <span
+                          className="flex-shrink-0"
+                          style={{
+                            color:
+                              group === activeMuscleGroup
+                                ? 'var(--interactive-primary)'
+                                : 'var(--text-tertiary)',
+                          }}
+                        >
+                          <MuscleGroupIcon name={group} className="w-3.5 h-3.5" />
+                        </span>
                       )}
                       <span
                         className="text-[0.625rem] font-bold uppercase tracking-[0.12em]"
@@ -381,28 +411,29 @@ export function ExerciseSelector({ userId, onSelect, activeExerciseId }: Exercis
                             onTouchStart={(e) => e.stopPropagation()}
                           >
                             <div className="flex flex-wrap gap-1.5 mb-2">
-                              {MUSCLE_GROUPS.map((mg) => (
-                                <button
-                                  key={mg}
-                                  onClick={() => setEditingMuscleValue(mg)}
-                                  className="px-2.5 py-1 text-[0.6875rem] rounded-[var(--radius-pill)] transition-colors border"
-                                  style={{
-                                    backgroundColor:
-                                      editingMuscleValue === mg
+                              {MUSCLE_GROUPS.map((mg) => {
+                                const active = editingMuscleValue === mg;
+                                return (
+                                  <button
+                                    key={mg}
+                                    onClick={() => setEditingMuscleValue(mg)}
+                                    className="flex items-center gap-1 px-2.5 py-1 text-[0.6875rem] rounded-[var(--radius-pill)] transition-colors border"
+                                    style={{
+                                      backgroundColor: active
                                         ? 'var(--interactive-primary)'
                                         : 'var(--bg-surface-2)',
-                                    color:
-                                      editingMuscleValue === mg ? '#000' : 'var(--text-secondary)',
-                                    borderColor:
-                                      editingMuscleValue === mg
+                                      color: active ? '#000' : 'var(--text-secondary)',
+                                      borderColor: active
                                         ? 'var(--interactive-primary)'
                                         : 'var(--border-subtle)',
-                                    fontWeight: editingMuscleValue === mg ? 'bold' : 'normal',
-                                  }}
-                                >
-                                  {mg}
-                                </button>
-                              ))}
+                                      fontWeight: active ? 'bold' : 'normal',
+                                    }}
+                                  >
+                                    <MuscleGroupIcon name={mg} className="w-3 h-3" />
+                                    {mg}
+                                  </button>
+                                );
+                              })}
                             </div>
                             <button
                               onClick={() =>
@@ -468,7 +499,12 @@ export function ExerciseSelector({ userId, onSelect, activeExerciseId }: Exercis
                 <input
                   type="text"
                   value={newExerciseName}
-                  onChange={(e) => setNewExerciseName(e.target.value)}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setNewExerciseName(v);
+                    const suggested = suggestMuscleGroup(v);
+                    if (suggested) setNewExerciseMuscle(suggested);
+                  }}
                   placeholder="Nombre del ejercicio"
                   className="w-full px-3 py-2 rounded-[var(--radius-md)] text-sm outline-none"
                   style={{
@@ -478,22 +514,32 @@ export function ExerciseSelector({ userId, onSelect, activeExerciseId }: Exercis
                   }}
                   autoFocus
                 />
-                <select
-                  value={newExerciseMuscle}
-                  onChange={(e) => setNewExerciseMuscle(e.target.value)}
-                  className="w-full mt-2 px-3 py-2 rounded-[var(--radius-md)] text-sm outline-none"
-                  style={{
-                    backgroundColor: 'var(--bg-surface-2)',
-                    border: '1px solid var(--border-default)',
-                    color: 'var(--text-primary)',
-                  }}
-                >
-                  {MUSCLE_GROUPS.map((mg) => (
-                    <option key={mg} value={mg}>
-                      {mg}
-                    </option>
-                  ))}
-                </select>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {MUSCLE_GROUPS.map((mg) => {
+                    const active = newExerciseMuscle === mg;
+                    return (
+                      <button
+                        key={mg}
+                        type="button"
+                        onClick={() => setNewExerciseMuscle(mg)}
+                        className="flex items-center gap-1 px-2.5 py-1 text-[0.6875rem] rounded-[var(--radius-pill)] transition-colors border"
+                        style={{
+                          backgroundColor: active
+                            ? 'var(--interactive-primary)'
+                            : 'var(--bg-surface-2)',
+                          color: active ? '#000' : 'var(--text-secondary)',
+                          borderColor: active
+                            ? 'var(--interactive-primary)'
+                            : 'var(--border-subtle)',
+                          fontWeight: active ? 'bold' : 'normal',
+                        }}
+                      >
+                        <MuscleGroupIcon name={mg} className="w-3 h-3" />
+                        {mg}
+                      </button>
+                    );
+                  })}
+                </div>
 
                 {error && (
                   <div

@@ -2,6 +2,8 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@features/auth/stores/authStore';
+import { useWorkoutStore } from '@features/workout/stores/workoutStore';
+import { useCardioStore } from '@features/cardio/stores/cardioStore';
 import { queryClient } from '@app/queryClient';
 import { fetchWorkoutsAndSets, fetchWorkouts, fetchRecentSets } from '@shared/api/queries';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -64,13 +66,17 @@ export function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const { t } = useTranslation();
   const isOnline = useOnlineStatus();
+  const workoutSets = useWorkoutStore((s) => s.sets);
+  const workoutStartedAt = useWorkoutStore((s) => s.startedAt);
+  const cardioActive = useCardioStore((s) => s.isActive);
+  const trainBadge = !!workoutStartedAt && workoutSets.length > 0;
 
   const tabs = [
-    { path: '/', Icon: Dumbbell, label: t('workout.title'), id: 'train' },
-    { path: '/cardio', Icon: Heart, label: 'Cardio', id: 'cardio' },
-    { path: '/stats', Icon: BarChart3, label: t('stats.title'), id: 'stats' },
-    { path: '/history', Icon: History, label: t('history.title'), id: 'history' },
-    { path: '/settings', Icon: Settings, label: t('settings.title'), id: 'settings' },
+    { path: '/', Icon: Dumbbell, label: t('workout.title'), id: 'train', badge: trainBadge },
+    { path: '/cardio', Icon: Heart, label: 'Cardio', id: 'cardio', badge: cardioActive },
+    { path: '/stats', Icon: BarChart3, label: t('stats.title'), id: 'stats', badge: false },
+    { path: '/history', Icon: History, label: t('history.title'), id: 'history', badge: false },
+    { path: '/settings', Icon: Settings, label: t('settings.title'), id: 'settings', badge: false },
   ];
 
   useEffect(() => {
@@ -147,7 +153,7 @@ export function Layout({ children }: LayoutProps) {
       >
         {tabs.map((tab) => {
           const isActive = location.pathname === tab.path;
-          const { Icon, label } = tab;
+          const { Icon, label, badge } = tab;
           return (
             <Link
               key={tab.path}
@@ -168,6 +174,18 @@ export function Layout({ children }: LayoutProps) {
                     color: isActive ? 'var(--interactive-primary)' : 'var(--text-tertiary)',
                   }}
                 />
+                {badge && (
+                  <motion.span
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute -top-1 -right-1 w-2 h-2 rounded-full"
+                    style={{
+                      backgroundColor: 'var(--interactive-primary)',
+                      boxShadow: '0 0 6px var(--interactive-primary)',
+                      animation: 'pulse-soft 1.6s ease-in-out infinite',
+                    }}
+                  />
+                )}
                 {isActive && (
                   <motion.div
                     layoutId="activeTabDot"

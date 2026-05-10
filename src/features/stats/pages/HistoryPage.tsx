@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useWorkoutStore } from '@features/workout/stores/workoutStore';
@@ -96,41 +96,73 @@ function ExerciseRow({
           {sortedSets.map((s) => (
             <div
               key={s.id}
-              className="flex justify-between items-center px-3 py-2 rounded-[var(--radius-md)] ml-7"
+              className="flex flex-col gap-1 px-3 py-2 rounded-[var(--radius-md)] ml-7"
               style={{
                 backgroundColor: 'var(--bg-surface-2)',
                 border: '1px solid var(--border-glass)',
               }}
             >
-              <div className="flex items-center gap-3">
-                <span
-                  className="text-[0.75rem] font-mono"
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <span
+                    className="text-[0.75rem] font-mono"
+                    style={{ color: 'var(--text-tertiary)' }}
+                  >
+                    {t('workout.sets')} {s.set_num}
+                  </span>
+                  <span className="text-[0.875rem]" style={{ color: 'var(--text-secondary)' }}>
+                    {s.reps} {t('workout.reps').toLowerCase()}
+                  </span>
+                  {s.is_warmup && (
+                    <span
+                      className="text-[0.5625rem] px-1.5 py-0.5 rounded-[var(--radius-pill)] font-bold uppercase"
+                      style={{
+                        backgroundColor: 'rgba(245,158,11,0.12)',
+                        color: 'var(--warning)',
+                      }}
+                    >
+                      W
+                    </span>
+                  )}
+                  {typeof s.rpe === 'number' && (
+                    <span
+                      className="text-[0.5625rem] px-1.5 py-0.5 rounded-[var(--radius-pill)] font-bold"
+                      style={{
+                        backgroundColor: 'var(--bg-surface-3)',
+                        color: 'var(--text-secondary)',
+                      }}
+                    >
+                      RPE {s.rpe}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span
+                    className="font-semibold text-[0.875rem]"
+                    style={{ color: 'var(--interactive-primary)' }}
+                  >
+                    {s.weight} kg
+                  </span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(s.id);
+                    }}
+                    className="p-1 rounded"
+                    style={{ color: 'var(--text-tertiary)' }}
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+              {s.notes && (
+                <div
+                  className="text-[0.6875rem] italic pl-1"
                   style={{ color: 'var(--text-tertiary)' }}
                 >
-                  {t('workout.sets')} {s.set_num}
-                </span>
-                <span className="text-[0.875rem]" style={{ color: 'var(--text-secondary)' }}>
-                  {s.reps} {t('workout.reps').toLowerCase()}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span
-                  className="font-semibold text-[0.875rem]"
-                  style={{ color: 'var(--interactive-primary)' }}
-                >
-                  {s.weight} kg
-                </span>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDelete(s.id);
-                  }}
-                  className="p-1 rounded"
-                  style={{ color: 'var(--text-tertiary)' }}
-                >
-                  <Trash2 className="w-3 h-3" />
-                </button>
-              </div>
+                  “{s.notes}”
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -149,9 +181,14 @@ function formatDuration(s: number): string {
 export function HistoryPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const { repeatWorkout } = useWorkoutStore();
-  const { sessions: cardioSessions, deleteSession: deleteCardioSession } = useCardioStore();
+  const {
+    sessions: cardioSessions,
+    deleteSession: deleteCardioSession,
+    syncFromRemote: syncCardio,
+  } = useCardioStore();
   const [view, setView] = useState<'sets' | 'workouts' | 'cardio'>('sets');
   const [filterExercise, setFilterExercise] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -181,8 +218,10 @@ export function HistoryPage() {
   useEffect(() => {
     if (!user) {
       navigate('/login');
+      return;
     }
-  }, [user, navigate]);
+    void syncCardio(user.id);
+  }, [user, navigate, syncCardio]);
 
   const handleRepeat = (workout: WorkoutWithSets) => {
     repeatWorkout(workout);
@@ -215,7 +254,13 @@ export function HistoryPage() {
 
   const handleDelete = async (id: string) => {
     await supabase.from('workout_sets').delete().eq('id', id);
-    if (user) refetchSets();
+    if (user) {
+      refetchSets();
+      refetchWorkouts();
+      queryClient.invalidateQueries({ queryKey: ['lastExerciseSets'] });
+      queryClient.invalidateQueries({ queryKey: ['personalRecords'] });
+      queryClient.invalidateQueries({ queryKey: ['workoutsAndSets'] });
+    }
     setDeleteId(null);
   };
 
@@ -686,7 +731,7 @@ export function HistoryPage() {
                   </div>
                 </div>
                 <button
-                  onClick={() => deleteCardioSession(session.id)}
+                  onClick={() => void deleteCardioSession(session.id, user?.id ?? null)}
                   className="p-2 rounded-lg ml-2 flex-shrink-0"
                   style={{ color: 'var(--text-tertiary)' }}
                 >

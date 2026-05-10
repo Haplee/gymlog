@@ -14,7 +14,10 @@ interface KPICardProps {
     | 'duration'
     | 'cardio-sessions'
     | 'cardio-time'
-    | 'cardio-dist';
+    | 'cardio-dist'
+    | 'all-volume'
+    | 'notes'
+    | 'best-1rm';
   trend?: number;
   isNewPR?: boolean;
   accentColor?: string;
@@ -104,6 +107,40 @@ const iconDefs: Record<string, { el: React.ReactElement; color: string }> = {
         <path d="M3 12h18" />
         <path d="M3 6l9-4 9 4" />
         <path d="M3 18l9 4 9-4" />
+      </svg>
+    ),
+  },
+  'all-volume': {
+    color: '#10b981',
+    el: (
+      <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
+        <path d="M3 21h18" />
+        <rect x="6" y="13" width="3" height="8" />
+        <rect x="11" y="9" width="3" height="12" />
+        <rect x="16" y="5" width="3" height="16" />
+      </svg>
+    ),
+  },
+  notes: {
+    color: '#facc15',
+    el: (
+      <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
+        <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
+        <polyline points="14,3 14,9 20,9" />
+        <line x1="8" y1="13" x2="16" y2="13" />
+        <line x1="8" y1="17" x2="13" y2="17" />
+      </svg>
+    ),
+  },
+  'best-1rm': {
+    color: '#f97316',
+    el: (
+      <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
+        <circle cx="6" cy="12" r="3" />
+        <circle cx="18" cy="12" r="3" />
+        <line x1="9" y1="12" x2="15" y2="12" />
+        <line x1="3" y1="9" x2="3" y2="15" />
+        <line x1="21" y1="9" x2="21" y2="15" />
       </svg>
     ),
   },
