@@ -1,21 +1,12 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { inject } from '@vercel/analytics';
-import { onCLS, onFID, onLCP, onTTFB, onFCP } from 'web-vitals';
 import { devLog, devWarn } from '@shared/lib/devtools';
 import './index.css';
 import App from './App.tsx';
 import { Providers } from './app/providers.tsx';
 
 inject();
-
-if (import.meta.env.DEV) {
-  onLCP((m) => devLog('[LCP]', m.value));
-  onFCP((m) => devLog('[FCP]', m.value));
-  onTTFB((m) => devLog('[TTFB]', m.value));
-  onCLS((m) => devLog('[CLS]', m.value));
-  onFID((m) => devLog('[FID]', m.value));
-}
 
 // Registro SW con prompt de actualización (vite-plugin-pwa registerType='prompt')
 if ('serviceWorker' in navigator) {

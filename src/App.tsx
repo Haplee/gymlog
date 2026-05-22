@@ -1,5 +1,5 @@
 import { useEffect, useState, lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
@@ -191,6 +191,7 @@ function AppRoutes() {
   const { user, loading, initialized } = useAuthStore();
   const { applyTheme } = useSettingsStore();
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const navigate = useNavigate();
 
   useWorkoutReminder();
   useBackgroundNotifications();
@@ -226,11 +227,11 @@ function AppRoutes() {
       if (url.protocol === 'com.franvi.gymlog:') {
         if (import.meta.env.DEV) devLog('[DeepLink] Custom protocol, host:', url.hostname);
         if (url.hostname === 'workout' && url.pathname === '/new') {
-          window.location.hash = '/';
+          navigate('/', { replace: true });
           return;
         }
         if (url.hostname === 'history') {
-          window.location.hash = '/history';
+          navigate('/history', { replace: true });
           return;
         }
       }
@@ -263,7 +264,7 @@ function AppRoutes() {
     return () => {
       CapApp.removeAllListeners();
     };
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     if (!initialized) {
