@@ -7,7 +7,16 @@ import { defineConfig, globalIgnores } from 'eslint/config';
 import jsxA11y from 'eslint-plugin-jsx-a11y';
 
 export default defineConfig([
-  globalIgnores(['dist', 'node_modules', 'coverage', '*.config.js']),
+  globalIgnores([
+    'dist',
+    'node_modules',
+    'coverage',
+    '*.config.js',
+    'dev-dist',
+    'android/app/build',
+    'android/app/src/main/assets',
+    'graphify-out',
+  ]),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

@@ -32,6 +32,8 @@ import {
   getSuggestedMuscleGroup,
   getDaysSinceLastWorkout,
 } from '../utils/fatigueAnalysis';
+import { FatigueAnalysis } from '../components/FatigueAnalysis';
+import { CHART_COLORS } from '../constants';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { TrendingUp, Target, Calculator, ChevronDown } from 'lucide-react';
