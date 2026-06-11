@@ -15,6 +15,7 @@ import {
   calculateVolumeChangePercent,
   calculateAverageSessionDuration,
   calculateAllTimePRsCount,
+  isWorkingSet,
 } from '../utils/kpiCalculations';
 import { analyzeMuscleRecovery, getDaysSinceLastWorkout } from '../utils/fatigueAnalysis';
 import {
@@ -431,7 +432,7 @@ export function UserStatsPage() {
   // Muscle group distribution
   const muscleDistribution = useMemo(() => {
     const dist: Record<string, number> = {};
-    recentSets.forEach((s) => {
+    recentSets.filter(isWorkingSet).forEach((s) => {
       const mg = s.exercise?.muscle_group || 'Otro';
       dist[mg] = (dist[mg] || 0) + s.weight * s.reps;
     });
@@ -443,7 +444,7 @@ export function UserStatsPage() {
   // Top exercises by volume
   const topExercises = useMemo(() => {
     const byEx: Record<string, { volume: number; sets: number; best1rm: number }> = {};
-    recentSets.forEach((s) => {
+    recentSets.filter(isWorkingSet).forEach((s) => {
       const name = s.exercise?.name || 'Desconocido';
       if (!byEx[name]) byEx[name] = { volume: 0, sets: 0, best1rm: 0 };
       byEx[name].volume += s.weight * s.reps;
@@ -467,6 +468,7 @@ export function UserStatsPage() {
     return weekStarts.map((weekStart, i) => {
       const weekEnd = subDays(weekStart, -7);
       const vol = recentSets
+        .filter(isWorkingSet)
         .filter((s) => {
           const d = s.workout?.started_at ? new Date(s.workout.started_at) : null;
           return d && d >= weekStart && d < weekEnd;
@@ -496,7 +498,7 @@ export function UserStatsPage() {
 
   // Total volume all time
   const totalVolumeAllTime = useMemo(
-    () => recentSets.reduce((sum, s) => sum + s.weight * s.reps, 0),
+    () => recentSets.filter(isWorkingSet).reduce((sum, s) => sum + s.weight * s.reps, 0),
     [recentSets],
   );
 

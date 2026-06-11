@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { toLocalDateKey } from './dateKeys';
 
 export const checkStreakAtRisk = async (userId: string): Promise<boolean> => {
   const { data: workouts } = await supabase
@@ -14,14 +15,14 @@ export const checkStreakAtRisk = async (userId: string): Promise<boolean> => {
   workouts.forEach((w) => {
     if (w.started_at) {
       const d = new Date(w.started_at);
-      dates.add(d.toISOString().split('T')[0]);
+      if (!isNaN(d.getTime())) dates.add(toLocalDateKey(d));
     }
   });
 
   const sortedDates = Array.from(dates).sort((a, b) => b.localeCompare(a));
 
   const today = new Date();
-  const todayStr = today.toISOString().split('T')[0];
+  const todayStr = toLocalDateKey(today);
 
   // si ya entrenó hoy, no hay riesgo
   if (sortedDates[0] === todayStr) return false;
@@ -32,7 +33,7 @@ export const checkStreakAtRisk = async (userId: string): Promise<boolean> => {
   currentDate.setDate(currentDate.getDate() - 1); // empezamos desde ayer
 
   while (true) {
-    const dateStr = currentDate.toISOString().split('T')[0];
+    const dateStr = toLocalDateKey(currentDate);
     if (dates.has(dateStr)) {
       streak++;
       currentDate.setDate(currentDate.getDate() - 1);

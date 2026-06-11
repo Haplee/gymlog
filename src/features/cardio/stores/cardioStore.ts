@@ -60,6 +60,11 @@ interface CardioState {
   getElapsed: () => number;
 }
 
+// Evita pushes duplicados si syncFromRemote se invoca concurrentemente
+// (p.ej. doble navegación rápida): sin este guard, ambas llamadas leen las
+// mismas sesiones pendientes y las insertan dos veces en Supabase.
+let syncInFlight = false;
+
 export const useCardioStore = create<CardioState>()(
   persist(
     (set, get) => ({
@@ -170,75 +175,81 @@ export const useCardioStore = create<CardioState>()(
       },
 
       syncFromRemote: async (userId) => {
-        const { data, error } = await supabase
-          .from('cardio_sessions')
-          .select('id, type, started_at, duration, distance, calories, notes')
-          .eq('user_id', userId)
-          .order('started_at', { ascending: false })
-          .limit(200);
-        if (error) {
-          console.error('[CardioStore] syncFromRemote failed:', error.message);
-          return;
-        }
-        const remote: CardioSession[] = (data || []).map((r) => ({
-          id: r.id,
-          type: r.type as CardioType,
-          startedAt: r.started_at,
-          duration: r.duration,
-          distance: r.distance ?? undefined,
-          calories: r.calories ?? undefined,
-          notes: r.notes ?? undefined,
-          pendingSync: false,
-        }));
-
-        // Push pending or unknown local sessions
-        const remoteStartedSet = new Set(remote.map((r) => r.startedAt));
-        const pending = get().sessions.filter(
-          (s) =>
-            s.pendingSync ||
-            (!remote.some((r) => r.id === s.id) && !remoteStartedSet.has(s.startedAt)),
-        );
-        const stillPending: CardioSession[] = [];
-        if (pending.length > 0) {
-          const { data: inserted, error: pushErr } = await supabase
+        if (syncInFlight) return;
+        syncInFlight = true;
+        try {
+          const { data, error } = await supabase
             .from('cardio_sessions')
-            .insert(
-              pending.map((s) => ({
-                user_id: userId,
-                type: s.type,
-                started_at: s.startedAt,
-                duration: s.duration,
-                distance: s.distance ?? null,
-                calories: s.calories ?? null,
-                notes: s.notes ?? null,
-              })),
-            )
-            .select('id, type, started_at, duration, distance, calories, notes');
-          if (!pushErr && inserted && inserted.length > 0) {
-            inserted.forEach((r) =>
-              remote.unshift({
-                id: r.id,
-                type: r.type as CardioType,
-                startedAt: r.started_at,
-                duration: r.duration,
-                distance: r.distance ?? undefined,
-                calories: r.calories ?? undefined,
-                notes: r.notes ?? undefined,
-                pendingSync: false,
-              }),
-            );
-          } else {
-            // Keep pending sessions for next retry
-            pending.forEach((p) => stillPending.push({ ...p, pendingSync: true }));
-            if (pushErr) console.error('[CardioStore] push pending failed:', pushErr.message);
-            else if (!inserted || inserted.length === 0)
-              console.warn('[CardioStore] push returned no rows — keeping sessions as pending');
+            .select('id, type, started_at, duration, distance, calories, notes')
+            .eq('user_id', userId)
+            .order('started_at', { ascending: false })
+            .limit(200);
+          if (error) {
+            console.error('[CardioStore] syncFromRemote failed:', error.message);
+            return;
           }
-        }
+          const remote: CardioSession[] = (data || []).map((r) => ({
+            id: r.id,
+            type: r.type as CardioType,
+            startedAt: r.started_at,
+            duration: r.duration,
+            distance: r.distance ?? undefined,
+            calories: r.calories ?? undefined,
+            notes: r.notes ?? undefined,
+            pendingSync: false,
+          }));
 
-        const merged = [...stillPending, ...remote];
-        merged.sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
-        set({ sessions: merged });
+          // Push pending or unknown local sessions
+          const remoteStartedSet = new Set(remote.map((r) => r.startedAt));
+          const pending = get().sessions.filter(
+            (s) =>
+              s.pendingSync ||
+              (!remote.some((r) => r.id === s.id) && !remoteStartedSet.has(s.startedAt)),
+          );
+          const stillPending: CardioSession[] = [];
+          if (pending.length > 0) {
+            const { data: inserted, error: pushErr } = await supabase
+              .from('cardio_sessions')
+              .insert(
+                pending.map((s) => ({
+                  user_id: userId,
+                  type: s.type,
+                  started_at: s.startedAt,
+                  duration: s.duration,
+                  distance: s.distance ?? null,
+                  calories: s.calories ?? null,
+                  notes: s.notes ?? null,
+                })),
+              )
+              .select('id, type, started_at, duration, distance, calories, notes');
+            if (!pushErr && inserted && inserted.length > 0) {
+              inserted.forEach((r) =>
+                remote.unshift({
+                  id: r.id,
+                  type: r.type as CardioType,
+                  startedAt: r.started_at,
+                  duration: r.duration,
+                  distance: r.distance ?? undefined,
+                  calories: r.calories ?? undefined,
+                  notes: r.notes ?? undefined,
+                  pendingSync: false,
+                }),
+              );
+            } else {
+              // Keep pending sessions for next retry
+              pending.forEach((p) => stillPending.push({ ...p, pendingSync: true }));
+              if (pushErr) console.error('[CardioStore] push pending failed:', pushErr.message);
+              else if (!inserted || inserted.length === 0)
+                console.warn('[CardioStore] push returned no rows — keeping sessions as pending');
+            }
+          }
+
+          const merged = [...stillPending, ...remote];
+          merged.sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
+          set({ sessions: merged });
+        } finally {
+          syncInFlight = false;
+        }
       },
 
       getElapsed: () => {

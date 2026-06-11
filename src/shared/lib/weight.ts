@@ -46,7 +46,7 @@ export function getVolumeUnitLabel(unit: 'kg' | 'lb'): string {
 export function formatVolume(volumeInKg: number, unit: 'kg' | 'lb', decimals = 1): string {
   if (typeof volumeInKg !== 'number' || isNaN(volumeInKg)) return '0';
 
-  const value = unit === 'lb' ? kgToLb(volumeInKg) : volumeInKg / 1000;
+  const value = unit === 'lb' ? kgToLb(volumeInKg) / 1000 : volumeInKg / 1000;
   const unitLabel = unit === 'kg' ? 't' : 'k lb';
   const formatted = decimals > 0 ? value.toFixed(decimals) : Math.round(value).toString();
 

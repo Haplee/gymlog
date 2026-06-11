@@ -1,34 +1,32 @@
 import type { WorkoutWithSets } from '@shared/lib/types';
+import { toLocalDateKey } from '@shared/lib/dateKeys';
+
+function workoutDateKeys(workouts: WorkoutWithSets[]): Set<string> {
+  const keys = new Set<string>();
+  for (const w of workouts) {
+    if (!w.started_at) continue;
+    const d = new Date(w.started_at);
+    if (!isNaN(d.getTime())) keys.add(toLocalDateKey(d));
+  }
+  return keys;
+}
 
 export function calculateCurrentStreak(workouts: WorkoutWithSets[]): number {
   if (workouts.length === 0) return 0;
 
-  const dates = [
-    ...new Set(
-      workouts.map((w) => {
-        const d = new Date(w.started_at ?? '');
-        return d.toISOString().split('T')[0];
-      }),
-    ),
-  ].sort();
+  const dates = workoutDateKeys(workouts);
 
-  const today = new Date().toISOString().split('T')[0];
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = yesterday.toISOString().split('T')[0];
+  // Anclar en hoy; si hoy no hay entreno, la racha sigue viva si entrenó ayer
+  const cursor = new Date();
+  if (!dates.has(toLocalDateKey(cursor))) {
+    cursor.setDate(cursor.getDate() - 1);
+    if (!dates.has(toLocalDateKey(cursor))) return 0;
+  }
 
-  if (!dates.includes(today) && !dates.includes(yesterdayStr)) return 0;
-
-  let streak = 1;
-  for (let i = dates.length - 1; i > 0; i--) {
-    const current = new Date(dates[i]).getTime();
-    const prev = new Date(dates[i - 1]).getTime();
-    const diffDays = (current - prev) / (1000 * 60 * 60 * 24);
-    if (diffDays === 1) {
-      streak++;
-    } else {
-      break;
-    }
+  let streak = 0;
+  while (dates.has(toLocalDateKey(cursor))) {
+    streak++;
+    cursor.setDate(cursor.getDate() - 1);
   }
 
   return streak;
@@ -37,14 +35,7 @@ export function calculateCurrentStreak(workouts: WorkoutWithSets[]): number {
 export function calculateMaxStreak(workouts: WorkoutWithSets[]): number {
   if (workouts.length === 0) return 0;
 
-  const dates = [
-    ...new Set(
-      workouts.map((w) => {
-        const d = new Date(w.started_at ?? '');
-        return d.toISOString().split('T')[0];
-      }),
-    ),
-  ].sort();
+  const dates = [...workoutDateKeys(workouts)].sort();
 
   let maxStreak = 1;
   let tempStreak = 1;
@@ -64,14 +55,14 @@ export function calculateMaxStreak(workouts: WorkoutWithSets[]): number {
   return Math.max(maxStreak, tempStreak);
 }
 
-type VolumeSet = {
+export type VolumeSet = {
   weight: number;
   reps: number;
   is_warmup?: boolean | null;
   workout?: { started_at: string | null };
 };
 
-const isWorkingSet = (s: VolumeSet) => !s.is_warmup;
+export const isWorkingSet = (s: { is_warmup?: boolean | null }) => !s.is_warmup;
 
 export function calculateWeeklyVolume(sets: VolumeSet[]): number {
   const now = new Date();

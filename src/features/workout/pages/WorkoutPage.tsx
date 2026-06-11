@@ -360,8 +360,9 @@ export function WorkoutPage() {
         ['exerciseNotes', user.id, activeExerciseId],
         (old: ExerciseNote[] = []) => old.filter((n) => n.id !== tempId),
       );
+      toast.error(t('workout.note_save_error'));
     }
-  }, [user, activeExerciseId, noteText, queryClient]);
+  }, [user, activeExerciseId, noteText, queryClient, t]);
 
   const handleDeleteNote = useCallback(
     async (noteId: string) => {

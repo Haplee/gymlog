@@ -2,7 +2,7 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
-const resources = {
+export const resources = {
   es: {
     translation: {
       common: {
@@ -13,6 +13,10 @@ const resources = {
         back: 'Volver',
         next: 'Siguiente',
         ready: 'Listo',
+        close: 'Cerrar',
+        confirm: 'Confirmar',
+        create: 'Crear',
+        offline: 'Sin conexión — los cambios se guardarán al reconectar',
       },
       onboarding: {
         title: '¡Bienvenido a GymLog v2!',
@@ -60,6 +64,17 @@ const resources = {
         resume_desc: 'Tienes una sesión iniciada. ¿Quieres continuar?',
         continue: 'Continuar',
         discard: 'Descartar',
+        add_valid_set: 'Añade al menos una serie válida',
+        saved: '✓ Entrenamiento guardado',
+        note_save_error: 'No se pudo guardar la nota',
+        confirm_delete_exercise: '¿Eliminar este ejercicio? Esta acción no se puede deshacer.',
+        custom_badge: 'Propio',
+        create_custom_exercise: 'Crear ejercicio personalizado',
+        new_exercise: 'Nuevo ejercicio',
+        exercise_name_placeholder: 'Nombre del ejercicio',
+      },
+      cardio: {
+        no_records: 'Sin registros',
       },
       stats: {
         title: 'Estadísticas',
@@ -113,6 +128,10 @@ const resources = {
         back: 'Back',
         next: 'Next',
         ready: 'Ready',
+        close: 'Close',
+        confirm: 'Confirm',
+        create: 'Create',
+        offline: 'Offline — changes will be saved when you reconnect',
       },
       onboarding: {
         title: 'Welcome to GymLog v2!',
@@ -160,6 +179,17 @@ const resources = {
         resume_desc: 'You have an active session. Want to continue?',
         continue: 'Continue',
         discard: 'Discard',
+        add_valid_set: 'Add at least one valid set',
+        saved: '✓ Workout saved',
+        note_save_error: 'Could not save the note',
+        confirm_delete_exercise: 'Delete this exercise? This action cannot be undone.',
+        custom_badge: 'Custom',
+        create_custom_exercise: 'Create custom exercise',
+        new_exercise: 'New exercise',
+        exercise_name_placeholder: 'Exercise name',
+      },
+      cardio: {
+        no_records: 'No records',
       },
       stats: {
         title: 'Statistics',

@@ -39,6 +39,13 @@ export const useRestTimerStore = create<RestTimerState>()(
       name: 'gymlog-rest-timer',
       storage: createJSONStorage(() => localStorage),
       partialize: (s) => ({ endTime: s.endTime, duration: s.duration, isRunning: s.isRunning }),
+      onRehydrateStorage: () => (state) => {
+        // Timer expirado mientras la app estaba cerrada: no rearmar
+        if (state && state.endTime !== null && state.endTime < Date.now()) {
+          state.endTime = null;
+          state.isRunning = false;
+        }
+      },
     },
   ),
 );
