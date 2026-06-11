@@ -30,3 +30,4 @@ dist-ssr
 # Test results
 test-results/
 supabase/test-results/
+graphify-out/

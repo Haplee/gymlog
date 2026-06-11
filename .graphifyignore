@@ -1,0 +1,23 @@
+# Dependencies & build output (compiled/minified — pollutes graph)
+node_modules/
+dist/
+dist-ssr/
+dev-dist/
+coverage/
+android/app/src/main/assets/public/
+android/app/build/
+android/.gradle/
+graphify-out/
+
+# Logs & misc
+logs/
+*.log
+.vercel/
+.env
+.env*.local
+test-results/
+supabase/test-results/
+*.local
+.vscode/
+.idea/
+.DS_Store
