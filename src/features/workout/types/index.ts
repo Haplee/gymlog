@@ -38,6 +38,17 @@ export const UpdateExerciseNoteSchema = z.object({
 
 export type UpdateExerciseNoteInput = z.infer<typeof UpdateExerciseNoteSchema>;
 
+export const AddExerciseToWorkoutSchema = z.object({
+  workoutId: z.string().uuid(),
+  exerciseId: z.string().uuid(),
+  userId: z.string().uuid(),
+});
+
+export const UpdateExerciseNotesSchema = z.object({
+  workoutExerciseId: z.string().uuid(),
+  notes: z.string().max(500, 'Máximo 500 caracteres'),
+});
+
 export const CreateCustomExerciseSchema = z.object({
   name: z.string().min(1, 'Nombre requerido').max(100),
   muscle_group: z.string().min(1),

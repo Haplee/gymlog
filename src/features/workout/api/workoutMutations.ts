@@ -6,7 +6,12 @@ import type {
   CreateExerciseNoteInput,
   CreateCustomExerciseInput,
 } from '../types';
-import { CreateExerciseNoteSchema, CreateCustomExerciseSchema } from '../types';
+import {
+  CreateExerciseNoteSchema,
+  CreateCustomExerciseSchema,
+  AddExerciseToWorkoutSchema,
+  UpdateExerciseNotesSchema,
+} from '../types';
 
 const WORKOUT_EXERCISES_QUERY_KEY = ['workoutExercises'];
 
@@ -36,6 +41,7 @@ export async function addExerciseToWorkout(
   exerciseId: string,
   userId: string,
 ): Promise<WorkoutExercise> {
+  AddExerciseToWorkoutSchema.parse({ workoutId, exerciseId, userId });
   const { data: existing } = await supabase
     .from('workout_exercises')
     .select('id')
@@ -84,6 +90,7 @@ export async function updateExerciseNotes(
   workoutExerciseId: string,
   notes: string,
 ): Promise<WorkoutExercise> {
+  UpdateExerciseNotesSchema.parse({ workoutExerciseId, notes });
   const { data, error } = await supabase
     .from('workout_exercises')
     .update({ notes })

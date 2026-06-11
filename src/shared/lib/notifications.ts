@@ -4,6 +4,22 @@ import { toast } from 'sonner';
 
 export const isNative = (): boolean => Capacitor.isNativePlatform();
 
+/**
+ * Solo permite navegar a URLs http(s) del propio origen.
+ * El extra de una notificación es dato no confiable: sin esta validación
+ * un deep link manipulado podría abrir cualquier URL externa.
+ */
+export function isSafeUrl(url: string): boolean {
+  try {
+    const u = new URL(url, window.location.origin);
+    return (
+      (u.protocol === 'http:' || u.protocol === 'https:') && u.origin === window.location.origin
+    );
+  } catch {
+    return false;
+  }
+}
+
 export const isNotificationsDisabled = (): boolean =>
   localStorage.getItem('notif_disabled') === 'true';
 
@@ -77,7 +93,7 @@ export async function notify(
         const notification = new Notification(title, options);
         if (options.url) {
           notification.onclick = () => {
-            if (options.url) window.open(options.url, '_blank');
+            if (options.url && isSafeUrl(options.url)) window.open(options.url, '_blank');
           };
         }
       }
@@ -170,7 +186,7 @@ export async function registerNativeNotificationListeners(): Promise<void> {
   try {
     await LocalNotifications.addListener('localNotificationActionPerformed', (action) => {
       const url = action.notification.extra?.url as string | undefined;
-      if (url) window.location.href = url;
+      if (url && isSafeUrl(url)) window.location.href = url;
     });
   } catch (e) {
     console.error('[Notifications] Error listener:', e);
