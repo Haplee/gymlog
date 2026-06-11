@@ -30,6 +30,7 @@ import { z } from 'zod';
 import { toast } from 'sonner';
 import { impact, notificationHaptic, ImpactStyle, NotificationType } from '@shared/lib/haptics';
 import { devError } from '@shared/lib/devtools';
+import { tv } from '@shared/styles/themeVars';
 
 const containerVariants = {
   hidden: { opacity: 0, y: 12 },
@@ -257,7 +258,7 @@ export function WorkoutPage() {
       return;
     }
     if (!hasValid) {
-      setMessage('Añade al menos una serie válida');
+      setMessage(t('workout.add_valid_set'));
       return;
     }
 
@@ -270,8 +271,8 @@ export function WorkoutPage() {
       toast.error(result.error.message);
     } else {
       setSaveSuccess(true);
-      setMessage('✓ Entrenamiento guardado');
-      toast.success('Entrenamiento guardado');
+      setMessage(t('workout.saved'));
+      toast.success(t('workout.saved'));
       void notificationHaptic(NotificationType.Success);
       if (sound) playFeedbackSound();
       queryClient.invalidateQueries({ queryKey: ['workouts'] });
@@ -392,12 +393,7 @@ export function WorkoutPage() {
     [queryClient, setActiveExercise],
   );
 
-  const bgCard = 'var(--bg-surface)';
-  const border = 'var(--border-subtle)';
-  const textPrimary = 'var(--text-primary)';
-  const textSecondary = 'var(--text-secondary)';
-  const textMuted = 'var(--text-tertiary)';
-  const accent = 'var(--interactive-primary)';
+  const { bgCard, border, textPrimary, textSecondary, textMuted, accent } = tv;
 
   return (
     <Layout>

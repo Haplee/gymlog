@@ -1,7 +1,8 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface BottomSheetProps {
   open: boolean;
@@ -24,10 +25,12 @@ export function BottomSheet({
   icon,
   variant = 'default',
 }: BottomSheetProps) {
+  const { t } = useTranslation();
   const sheetRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
 
   const accentColor = variant === 'danger' ? 'var(--error)' : 'var(--interactive-primary)';
-  const iconBg = variant === 'danger' ? 'rgba(255,69,58,0.15)' : 'rgba(200,255,0,0.15)';
+  const iconBg = variant === 'danger' ? 'var(--icon-bg-danger)' : 'var(--icon-bg-accent)';
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -70,7 +73,7 @@ export function BottomSheet({
             ref={sheetRef}
             role="dialog"
             aria-modal="true"
-            aria-label={title}
+            aria-labelledby={title ? titleId : undefined}
             tabIndex={-1}
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
@@ -102,12 +105,16 @@ export function BottomSheet({
                       {icon}
                     </div>
                   )}
-                  {title && <h2 className="font-semibold text-[var(--text-primary)]">{title}</h2>}
+                  {title && (
+                    <h2 id={titleId} className="font-semibold text-[var(--text-primary)]">
+                      {title}
+                    </h2>
+                  )}
                 </div>
                 {showCloseButton && (
                   <button
                     onClick={onClose}
-                    aria-label="Cerrar"
+                    aria-label={t('common.close')}
                     className="w-8 h-8 rounded-full flex items-center justify-center text-[var(--text-tertiary)] hover:bg-[var(--bg-surface-2)] hover:text-[var(--text-primary)] transition-colors"
                   >
                     <X className="w-4 h-4" />

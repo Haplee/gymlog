@@ -4,6 +4,7 @@ import { useAuthStore } from '@features/auth/stores/authStore';
 import { useTranslation } from 'react-i18next';
 import { useRateLimit } from '@shared/hooks/useRateLimit';
 import { GymLogLogo } from '@/shared/components/ui';
+import { tv } from '@shared/styles/themeVars';
 
 export function AuthPage() {
   const navigate = useNavigate();
@@ -98,7 +99,7 @@ export function AuthPage() {
     setAnimKey((prev) => prev + 1);
   };
 
-  const accent = 'var(--interactive-primary)';
+  const accent = tv.accent;
 
   return (
     <div className="min-h-screen min-h-[100dvh] flex flex-col items-center justify-center p-6 bg-[var(--bg-base)]">

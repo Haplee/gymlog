@@ -356,7 +356,7 @@ export function StatsPage() {
             >
               <div
                 className="absolute top-0 left-0 bottom-0 w-[3px] rounded-l-[var(--radius-xl)]"
-                style={{ backgroundColor: '#fbbf24' }}
+                style={{ backgroundColor: 'var(--warning)' }}
               />
               <div className="pl-2">
                 <div className="flex items-center justify-between mb-3">
@@ -370,7 +370,7 @@ export function StatsPage() {
                     viewBox="0 0 24 24"
                     className="w-4 h-4"
                     fill="none"
-                    stroke="#fbbf24"
+                    style={{ stroke: 'var(--warning)' }}
                     strokeWidth={1.5}
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -396,7 +396,7 @@ export function StatsPage() {
             >
               <div
                 className="absolute top-0 left-0 bottom-0 w-[3px] rounded-l-[var(--radius-xl)]"
-                style={{ backgroundColor: '#c8ff00' }}
+                style={{ backgroundColor: 'var(--interactive-primary)' }}
               />
               <div className="pl-2">
                 <div className="flex items-center justify-between mb-3">
@@ -410,7 +410,7 @@ export function StatsPage() {
                     viewBox="0 0 24 24"
                     className="w-4 h-4"
                     fill="none"
-                    stroke="#c8ff00"
+                    style={{ stroke: 'var(--interactive-primary)' }}
                     strokeWidth={1.5}
                     strokeLinecap="round"
                     strokeLinejoin="round"

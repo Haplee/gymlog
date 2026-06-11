@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, StickyNote, X } from 'lucide-react';
+import { tv } from '@shared/styles/themeVars';
 
 interface SetData {
   id?: string;
@@ -40,12 +41,7 @@ export function WorkoutSetList({
   const [localWeights, setLocalWeights] = useState<Record<string, string>>({});
   const [expandedNoteIdx, setExpandedNoteIdx] = useState<number | null>(null);
 
-  const bgCard = 'var(--bg-surface)';
-  const border = 'var(--border-subtle)';
-  const textPrimary = 'var(--text-primary)';
-  const textSecondary = 'var(--text-secondary)';
-  const textMuted = 'var(--text-tertiary)';
-  const accent = 'var(--interactive-primary)';
+  const { bgCard, border, textPrimary, textSecondary, textMuted, accent } = tv;
 
   if (sets.length === 0) {
     return null;
@@ -67,7 +63,9 @@ export function WorkoutSetList({
               {showWarmupSets && (
                 <button
                   onClick={() => updateSet(i, { isWarmup: !s.isWarmup })}
-                  className="w-6 h-8 rounded text-xs font-bold flex items-center justify-center transition-colors border border-dashed"
+                  aria-pressed={s.isWarmup}
+                  aria-label={`Serie ${i + 1}: calentamiento`}
+                  className="w-8 self-stretch rounded text-xs font-bold flex items-center justify-center transition-colors border border-dashed"
                   style={{
                     backgroundColor: s.isWarmup ? 'var(--warning)' : 'transparent',
                     borderColor: s.isWarmup ? 'var(--warning)' : textMuted,

@@ -76,6 +76,12 @@ export const resources = {
       cardio: {
         no_records: 'Sin registros',
       },
+      routine: {
+        title: 'Rutinas',
+        select: 'Selecciona una rutina',
+        change: 'Cambiar',
+        today: 'HOY',
+      },
       stats: {
         title: 'Estadísticas',
         muscle_dist: 'Distribución Muscular',
@@ -190,6 +196,12 @@ export const resources = {
       },
       cardio: {
         no_records: 'No records',
+      },
+      routine: {
+        title: 'Routines',
+        select: 'Pick a routine',
+        change: 'Change',
+        today: 'TODAY',
       },
       stats: {
         title: 'Statistics',

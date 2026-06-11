@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useState, useCallback, useRef, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -58,6 +59,7 @@ function suggestMuscleGroup(name: string): string | null {
 }
 
 export function ExerciseSelector({ userId, onSelect, activeExerciseId }: ExerciseSelectorProps) {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [isCreating, setIsCreating] = useState(false);
   const [newExerciseName, setNewExerciseName] = useState('');
@@ -117,11 +119,11 @@ export function ExerciseSelector({ userId, onSelect, activeExerciseId }: Exercis
   const handleDeleteExercise = useCallback(
     (e: React.MouseEvent, exerciseId: string) => {
       e.stopPropagation();
-      if (confirm('¿Eliminar este ejercicio? Esta acción no se puede deshacer.')) {
+      if (confirm(t('workout.confirm_delete_exercise'))) {
         deleteMutation.mutate(exerciseId);
       }
     },
-    [deleteMutation],
+    [deleteMutation, t],
   );
 
   const handleSelect = useCallback(
@@ -359,7 +361,7 @@ export function ExerciseSelector({ userId, onSelect, activeExerciseId }: Exercis
                                   color: 'var(--interactive-primary)',
                                 }}
                               >
-                                Propio
+                                {t('workout.custom_badge')}
                               </span>
                             )}
                           </button>
@@ -371,7 +373,7 @@ export function ExerciseSelector({ userId, onSelect, activeExerciseId }: Exercis
                                 if (editingMuscleId === ex.id) {
                                   setEditingMuscleId(null);
                                   // Devolver el foco al input para que el dropdown siga visible
-                                  setTimeout(() => inputRef.current?.focus(), 0);
+                                  requestAnimationFrame(() => inputRef.current?.focus());
                                 } else {
                                   setEditingMuscleId(ex.id);
                                   setEditingMuscleValue(ex.muscle_group);
@@ -484,7 +486,7 @@ export function ExerciseSelector({ userId, onSelect, activeExerciseId }: Exercis
                 onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
               >
                 <Plus className="w-4 h-4" />
-                <span>Crear ejercicio personalizado</span>
+                <span>{t('workout.create_custom_exercise')}</span>
               </button>
             )}
 
@@ -494,7 +496,7 @@ export function ExerciseSelector({ userId, onSelect, activeExerciseId }: Exercis
                   className="text-xs font-semibold uppercase tracking-wider mb-2"
                   style={{ color: 'var(--text-tertiary)' }}
                 >
-                  Nuevo ejercicio
+                  {t('workout.new_exercise')}
                 </div>
                 <input
                   type="text"
@@ -505,7 +507,7 @@ export function ExerciseSelector({ userId, onSelect, activeExerciseId }: Exercis
                     const suggested = suggestMuscleGroup(v);
                     if (suggested) setNewExerciseMuscle(suggested);
                   }}
-                  placeholder="Nombre del ejercicio"
+                  placeholder={t('workout.exercise_name_placeholder')}
                   className="w-full px-3 py-2 rounded-[var(--radius-md)] text-sm outline-none"
                   style={{
                     backgroundColor: 'var(--bg-surface-2)',
@@ -553,7 +555,7 @@ export function ExerciseSelector({ userId, onSelect, activeExerciseId }: Exercis
 
                 <div className="flex gap-2 mt-3">
                   <Button variant="ghost" size="sm" onClick={handleCancelCreate} className="flex-1">
-                    Cancelar
+                    {t('common.cancel')}
                   </Button>
                   <Button
                     variant="primary"
@@ -565,7 +567,7 @@ export function ExerciseSelector({ userId, onSelect, activeExerciseId }: Exercis
                     {createMutation.isPending ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
-                      'Crear'
+                      t('common.create')
                     )}
                   </Button>
                 </div>

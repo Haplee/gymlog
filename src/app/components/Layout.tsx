@@ -224,7 +224,7 @@ export function Layout({ children }: LayoutProps) {
           >
             <WifiOff className="w-3.5 h-3.5" style={{ color: 'var(--error)' }} />
             <span className="text-[0.75rem] font-medium" style={{ color: 'var(--error)' }}>
-              Sin conexión — los cambios se guardarán al reconectar
+              {t('common.offline')}
             </span>
           </motion.div>
         )}

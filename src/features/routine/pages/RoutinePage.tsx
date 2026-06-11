@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@features/auth/stores/authStore';
@@ -10,6 +11,7 @@ import { fetchExercises } from '@shared/api/queries';
 const DAYS = Object.keys(dayLabels) as DayOfWeek[];
 
 export function RoutinePage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const {
@@ -129,13 +131,13 @@ export function RoutinePage() {
   return (
     <Layout>
       <div className="text-lg font-bold mb-4" style={{ color: 'var(--interactive-primary)' }}>
-        Rutinas
+        {t('routine.title')}
       </div>
 
       {!activeRoutineId ? (
         <>
           <div className="text-sm mb-3" style={{ color: 'var(--text-secondary)' }}>
-            Selecciona una rutina
+            {t('routine.select')}
           </div>
 
           <div className="space-y-2">
@@ -209,7 +211,7 @@ export function RoutinePage() {
               className="text-sm px-3 py-1 rounded"
               style={{ backgroundColor: 'var(--bg-surface-2)', color: 'var(--text-secondary)' }}
             >
-              Cambiar
+              {t('routine.change')}
             </button>
           </div>
 
@@ -219,7 +221,7 @@ export function RoutinePage() {
                 className="text-xs font-medium mb-2"
                 style={{ color: 'var(--interactive-primary)' }}
               >
-                HOY - {todayRoutine.name}
+                {t('routine.today')} - {todayRoutine.name}
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {todayRoutine.exercises.map((ex, i) => (

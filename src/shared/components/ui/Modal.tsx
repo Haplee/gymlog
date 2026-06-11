@@ -2,6 +2,7 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface ModalProps {
   open: boolean;
@@ -24,11 +25,12 @@ export function Modal({
   icon,
   variant = 'default',
 }: ModalProps) {
+  const { t } = useTranslation();
   const panelRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
 
   const accentColor = variant === 'danger' ? 'var(--error)' : 'var(--interactive-primary)';
-  const iconBg = variant === 'danger' ? 'rgba(255,69,58,0.15)' : 'rgba(200,255,0,0.15)';
+  const iconBg = variant === 'danger' ? 'var(--icon-bg-danger)' : 'var(--icon-bg-accent)';
 
   useEffect(() => {
     if (open) {
@@ -114,7 +116,7 @@ export function Modal({
                   {showCloseButton && !title && (
                     <button
                       onClick={onClose}
-                      aria-label="Cerrar"
+                      aria-label={t('common.close')}
                       className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center text-[var(--text-tertiary)] hover:bg-[var(--bg-surface-2)] hover:text-[var(--text-primary)] transition-colors"
                     >
                       <X className="w-4 h-4" />
@@ -123,7 +125,7 @@ export function Modal({
                   {showCloseButton && title && (
                     <button
                       onClick={onClose}
-                      aria-label="Cerrar"
+                      aria-label={t('common.close')}
                       className="w-8 h-8 rounded-full flex items-center justify-center text-[var(--text-tertiary)] hover:bg-[var(--bg-surface-2)] hover:text-[var(--text-primary)] transition-colors"
                     >
                       <X className="w-4 h-4" />

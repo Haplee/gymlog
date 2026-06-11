@@ -115,7 +115,7 @@ export function WorkoutExerciseCard({
           {isOwner && (
             <button
               onClick={() => setShowDeleteModal(true)}
-              className="p-1.5 rounded-[var(--radius-sm)] transition-colors"
+              className="min-w-11 min-h-11 flex items-center justify-center rounded-[var(--radius-sm)] transition-colors"
               style={{ color: 'var(--error)' }}
               onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,69,58,0.1)')}
               onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}

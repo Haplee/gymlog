@@ -10,6 +10,7 @@ import { requestPermission, isNative } from '@shared/lib/notifications';
 import { toast } from 'sonner';
 import BiometricPlugin from '@shared/lib/biometric';
 import { devError } from '@shared/lib/devtools';
+import { tv } from '@shared/styles/themeVars';
 
 const playSound = (freq: number, duration: number, delay: number, ctx: AudioContext) => {
   const osc = ctx.createOscillator();
@@ -166,9 +167,7 @@ export function SettingsPage() {
     }
   };
 
-  const bgCard = 'var(--bg-surface)';
-  const border = 'var(--border-default)';
-  const accent = 'var(--color-primary)';
+  const { bgCard, borderDefault: border, accent } = tv;
 
   return (
     <Layout>
@@ -238,6 +237,8 @@ export function SettingsPage() {
                 if (!sound) playFeedbackSound();
               }}
               className={`w-12 h-6 rounded-full transition-all relative ${sound ? 'bg-[--color-primary]' : 'bg-[--bg-base]'}`}
+              aria-pressed={sound}
+              aria-label={t('settings.sound')}
             >
               <div
                 className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${sound ? 'left-7' : 'left-1'}`}
@@ -263,6 +264,8 @@ export function SettingsPage() {
             <button
               onClick={handlePushToggle}
               className={`w-12 h-6 rounded-full transition-all relative ${notifEnabled ? 'bg-[--color-primary]' : 'bg-[--bg-base]'}`}
+              aria-pressed={notifEnabled}
+              aria-label={t('settings.notifications')}
             >
               <div
                 className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${notifEnabled ? 'left-7' : 'left-1'}`}
@@ -289,6 +292,8 @@ export function SettingsPage() {
               <button
                 onClick={handleBiometricToggle}
                 className={`w-12 h-6 rounded-full transition-all relative ${biometricEnabled ? 'bg-[--color-primary]' : 'bg-[--bg-base]'}`}
+                aria-pressed={biometricEnabled}
+                aria-label={'Acceso Biométrico'}
               >
                 <div
                   className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${biometricEnabled ? 'left-7' : 'left-1'}`}
@@ -315,6 +320,8 @@ export function SettingsPage() {
             <button
               onClick={() => setTrainingReminders(!trainingReminders)}
               className={`w-12 h-6 rounded-full transition-all relative ${trainingReminders ? 'bg-[--color-primary]' : 'bg-[--bg-base]'}`}
+              aria-pressed={trainingReminders}
+              aria-label={'Recordatorios de entreno'}
             >
               <div
                 className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${trainingReminders ? 'left-7' : 'left-1'}`}
@@ -362,6 +369,8 @@ export function SettingsPage() {
             <button
               onClick={() => setShowWarmupSets(!showWarmupSets)}
               className={`w-12 h-6 rounded-full transition-all relative ${showWarmupSets ? 'bg-[--color-primary]' : 'bg-[--bg-base]'}`}
+              aria-pressed={showWarmupSets}
+              aria-label={'Series de calentamiento'}
             >
               <div
                 className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${showWarmupSets ? 'left-7' : 'left-1'}`}

@@ -13,7 +13,7 @@
   /* ── Texto ───────────────────────────────────── */
   --text-primary: #ffffff;
   --text-secondary: #a0a0a0;
-  --text-tertiary: #6b6b6b;
+  --text-tertiary: #878787; /* ≥4.5:1 sobre --bg-base (WCAG AA); antes #6b6b6b ~3:1 */
   --text-inverse: #000000;
 
   /* ── Interactivo ─────────────────────────────── */
@@ -29,6 +29,9 @@
   --info: #0a84ff;
 
   /* ── Bordes ─────────────────────────────────── */
+  --icon-bg-accent: rgba(200, 255, 0, 0.15);
+  --icon-bg-danger: rgba(255, 69, 58, 0.15);
+
   --border-subtle: #1e1e1e;
   --border-default: #282828;
   --border-accent: rgba(200, 255, 0, 0.2);
