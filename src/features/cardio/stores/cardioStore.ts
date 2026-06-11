@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { supabase } from '@shared/lib/supabase';
+import { devError, devWarn } from '@shared/lib/devtools';
 
 export type CardioType =
   | 'running'
@@ -136,7 +137,7 @@ export const useCardioStore = create<CardioState>()(
             session.pendingSync = false;
           } else {
             session.pendingSync = true;
-            if (error) console.error('[CardioStore] insert failed:', error.message);
+            if (error) devError('[CardioStore] insert failed:', error.message);
           }
         } else {
           session.pendingSync = true;
@@ -170,7 +171,7 @@ export const useCardioStore = create<CardioState>()(
         set((state) => ({ sessions: state.sessions.filter((s) => s.id !== id) }));
         if (userId) {
           const { error } = await supabase.from('cardio_sessions').delete().eq('id', id);
-          if (error) console.error('[CardioStore] delete failed:', error.message);
+          if (error) devError('[CardioStore] delete failed:', error.message);
         }
       },
 
@@ -185,7 +186,7 @@ export const useCardioStore = create<CardioState>()(
             .order('started_at', { ascending: false })
             .limit(200);
           if (error) {
-            console.error('[CardioStore] syncFromRemote failed:', error.message);
+            devError('[CardioStore] syncFromRemote failed:', error.message);
             return;
           }
           const remote: CardioSession[] = (data || []).map((r) => ({
@@ -238,9 +239,9 @@ export const useCardioStore = create<CardioState>()(
             } else {
               // Keep pending sessions for next retry
               pending.forEach((p) => stillPending.push({ ...p, pendingSync: true }));
-              if (pushErr) console.error('[CardioStore] push pending failed:', pushErr.message);
+              if (pushErr) devError('[CardioStore] push pending failed:', pushErr.message);
               else if (!inserted || inserted.length === 0)
-                console.warn('[CardioStore] push returned no rows — keeping sessions as pending');
+                devWarn('[CardioStore] push returned no rows — keeping sessions as pending');
             }
           }
 

@@ -5,6 +5,7 @@ import { useRemoveExerciseFromWorkout } from '../hooks/useWorkoutExercises';
 import { DeleteExerciseModal } from './DeleteExerciseModal';
 import { ExerciseNotesEditor } from './ExerciseNotesEditor';
 import type { WorkoutExercise } from '../types';
+import { devError } from '@shared/lib/devtools';
 
 interface WorkoutExerciseCardProps {
   workoutId: string;
@@ -35,7 +36,7 @@ export function WorkoutExerciseCard({
       setShowDeleteModal(false);
       onRemoveSuccess?.();
     } catch (err) {
-      console.error('Error removing exercise:', err);
+      devError('Error removing exercise:', err);
     } finally {
       setIsDeleting(false);
     }

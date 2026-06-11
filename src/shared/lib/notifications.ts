@@ -1,6 +1,7 @@
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { toast } from 'sonner';
+import { devError, devLog } from '@shared/lib/devtools';
 
 export const isNative = (): boolean => Capacitor.isNativePlatform();
 
@@ -32,16 +33,16 @@ export async function requestPermission(): Promise<boolean> {
       const result = await Notification.requestPermission();
       return result === 'granted';
     } catch (e) {
-      console.error('[Notifications] Error web:', e);
+      devError('[Notifications] Error web:', e);
       return false;
     }
   }
 
   try {
-    console.log('[Notifications] Solicitando permisos nativos...');
+    devLog('[Notifications] Solicitando permisos nativos...');
     // Comprobamos estado actual
     const status = await LocalNotifications.checkPermissions();
-    console.log('[Notifications] Estado actual:', status);
+    devLog('[Notifications] Estado actual:', status);
 
     if (status.display === 'granted') {
       return true;
@@ -49,7 +50,7 @@ export async function requestPermission(): Promise<boolean> {
 
     // Solicitamos
     const result = await LocalNotifications.requestPermissions();
-    console.log('[Notifications] Resultado solicitud:', result);
+    devLog('[Notifications] Resultado solicitud:', result);
 
     if (result.display === 'granted') {
       toast.success('Notificaciones habilitadas correctamente');
@@ -59,7 +60,7 @@ export async function requestPermission(): Promise<boolean> {
       return false;
     }
   } catch (e) {
-    console.error('[Notifications] Error crítico en solicitud nativa:', e);
+    devError('[Notifications] Error crítico en solicitud nativa:', e);
     toast.error('Error al solicitar permisos. Revisa los ajustes del sistema.');
     return false;
   }
@@ -116,7 +117,7 @@ export async function notify(
       ],
     });
   } catch (e) {
-    console.error('[Notifications] Error scheduling:', e);
+    devError('[Notifications] Error scheduling:', e);
   }
 }
 
@@ -154,7 +155,7 @@ export async function notifyTimerAlarm(seconds: number): Promise<void> {
       ],
     });
   } catch (e) {
-    console.error('[Notifications] Timer alarm error:', e);
+    devError('[Notifications] Timer alarm error:', e);
   }
 }
 
@@ -177,7 +178,7 @@ export async function playAlarmSound(): Promise<void> {
       osc.stop(ctx.currentTime + i * 0.3 + 0.25);
     }
   } catch (e) {
-    console.error('[Alarm] Sound error:', e);
+    devError('[Alarm] Sound error:', e);
   }
 }
 
@@ -189,6 +190,6 @@ export async function registerNativeNotificationListeners(): Promise<void> {
       if (url && isSafeUrl(url)) window.location.href = url;
     });
   } catch (e) {
-    console.error('[Notifications] Error listener:', e);
+    devError('[Notifications] Error listener:', e);
   }
 }

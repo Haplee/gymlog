@@ -3,6 +3,7 @@ import { useAuthStore } from '@features/auth/stores/authStore';
 import { checkStreakAtRisk } from '@shared/lib/streakChecker';
 import { checkWeeklySummary } from '@shared/lib/weeklySummary';
 import { notify } from '@shared/lib/notifications';
+import { devError } from '@shared/lib/devtools';
 
 export function useBackgroundNotifications() {
   const { user } = useAuthStore();
@@ -31,7 +32,7 @@ export function useBackgroundNotifications() {
           }
         }
       } catch (e) {
-        console.error('Background notification check failed:', e);
+        devError('Background notification check failed:', e);
       }
     };
 

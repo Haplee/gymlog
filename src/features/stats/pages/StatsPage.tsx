@@ -35,6 +35,7 @@ import {
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { TrendingUp, Target, Calculator, ChevronDown } from 'lucide-react';
+import { devError } from '@shared/lib/devtools';
 
 type PeriodFilter = '4semanas' | '3meses' | '6meses' | '1año';
 
@@ -132,7 +133,7 @@ export function StatsPage() {
 
   useEffect(() => {
     if (error) {
-      console.error('Error fetching stats data:', error);
+      devError('Error fetching stats data:', error);
       toast.error('Error al cargar las estadísticas');
     }
   }, [error]);

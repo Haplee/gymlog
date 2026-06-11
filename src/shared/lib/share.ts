@@ -1,3 +1,5 @@
+import { devError, devWarn } from '@shared/lib/devtools';
+
 interface ShareWorkoutParams {
   exerciseCount: number;
   totalSets: number;
@@ -22,7 +24,7 @@ export async function shareWorkout({
       return true;
     } catch (err) {
       if ((err as Error).name !== 'AbortError') {
-        console.warn('[Share] Error:', err);
+        devWarn('[Share] Error:', err);
       }
     }
   }
@@ -31,7 +33,7 @@ export async function shareWorkout({
     await navigator.clipboard.writeText(text);
     return true;
   } catch {
-    console.error('[Share] No se pudo copiar al portapapeles');
+    devError('[Share] No se pudo copiar al portapapeles');
     return false;
   }
 }

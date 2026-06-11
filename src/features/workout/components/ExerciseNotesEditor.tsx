@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { StickyNote, X, Check, Loader2 } from 'lucide-react';
 import { useUpdateExerciseNotes } from '../hooks/useWorkoutExercises';
+import { devError } from '@shared/lib/devtools';
 
 interface ExerciseNotesEditorProps {
   workoutId: string;
@@ -63,7 +64,7 @@ export function ExerciseNotesEditor({
       setLastSaved(new Date().toISOString());
       setIsOpen(false);
     } catch (err) {
-      console.error('Error saving notes:', err);
+      devError('Error saving notes:', err);
       setLocalNotes(initialNotes || '');
     } finally {
       setIsSaving(false);

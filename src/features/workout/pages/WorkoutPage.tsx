@@ -29,6 +29,7 @@ import { Trash2, Plus, StickyNote, AlertCircle } from 'lucide-react';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { impact, notificationHaptic, ImpactStyle, NotificationType } from '@shared/lib/haptics';
+import { devError } from '@shared/lib/devtools';
 
 const containerVariants = {
   hidden: { opacity: 0, y: 12 },
@@ -385,7 +386,7 @@ export function WorkoutPage() {
         queryClient.invalidateQueries({ queryKey: ['exercises'] });
         setActiveExercise(null);
       } catch (err) {
-        console.error('Error deleting exercise:', err);
+        devError('Error deleting exercise:', err);
       }
     },
     [queryClient, setActiveExercise],

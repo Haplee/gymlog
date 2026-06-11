@@ -9,6 +9,7 @@ import { supabase } from '@shared/lib/supabase';
 import { requestPermission, isNative } from '@shared/lib/notifications';
 import { toast } from 'sonner';
 import BiometricPlugin from '@shared/lib/biometric';
+import { devError } from '@shared/lib/devtools';
 
 const playSound = (freq: number, duration: number, delay: number, ctx: AudioContext) => {
   const osc = ctx.createOscillator();
@@ -78,7 +79,7 @@ export function SettingsPage() {
             await BiometricPlugin.setBiometricEnabled({ enabled: false });
           }
         } catch (e: unknown) {
-          console.error('Error checking biometric:', e);
+          devError('Error checking biometric:', e);
           const errorMsg = e instanceof Error ? e.message : 'Error desconocido';
           setBiometricSupport({
             available: false,
@@ -101,7 +102,7 @@ export function SettingsPage() {
       playSound(1500, 0.25, 0.15, ctx);
       playSound(1800, 0.35, 0.3, ctx);
     } catch (e) {
-      console.error('[Sound] Error:', e);
+      devError('[Sound] Error:', e);
     }
   }, []);
 
@@ -156,7 +157,7 @@ export function SettingsPage() {
         }
       } catch (e) {
         toast.error('Error al conectar con el sensor', { id: loadId });
-        console.error('Error biometric:', e);
+        devError('Error biometric:', e);
       }
     } else {
       setBiometricEnabled(false);

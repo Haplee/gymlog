@@ -21,43 +21,22 @@ import { analyzeMuscleRecovery, getDaysSinceLastWorkout } from '../utils/fatigue
 import {
   ArrowLeft,
   Lightbulb,
-  TrendingUp,
-  TrendingDown,
   AlertTriangle,
   CheckCircle2,
-  Zap,
   Trophy,
-  Target,
   Activity,
   Clock,
   Flame,
   BarChart3,
 } from 'lucide-react';
-import {
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  AreaChart,
-  Area,
-} from 'recharts';
 import { format, subWeeks, startOfWeek, eachWeekOfInterval, subDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { calcular1RM } from '@shared/lib/brzycki';
-
-const CHART_COLORS = [
-  '#c8ff00',
-  '#22c55e',
-  '#3b82f6',
-  '#f59e0b',
-  '#ef4444',
-  '#8b5cf6',
-  '#ec4899',
-  '#06b6d4',
-];
+import { SectionLabel } from '../components/userStats/SectionLabel';
+import { WeeklyVolumeChart } from '../components/userStats/WeeklyVolumeChart';
+import { DayFrequencyChart } from '../components/userStats/DayFrequencyChart';
+import { MuscleDistributionChart } from '../components/userStats/MuscleDistributionChart';
+import { TopExercisesList } from '../components/userStats/TopExercisesList';
 const PUSH_MUSCLES = ['Pecho', 'Hombro', 'Hombros', 'Tríceps'];
 const PULL_MUSCLES = ['Espalda', 'Bíceps', 'Antebrazo', 'Espalda baja'];
 const LEG_MUSCLES = [
@@ -69,20 +48,6 @@ const LEG_MUSCLES = [
   'Piernas',
   'Gemelos',
 ];
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex items-center gap-3 px-1">
-      <span
-        className="text-[0.6rem] font-bold uppercase tracking-[0.12em]"
-        style={{ color: 'var(--text-tertiary)' }}
-      >
-        {children}
-      </span>
-      <div className="flex-1 h-px" style={{ backgroundColor: 'var(--border-subtle)' }} />
-    </div>
-  );
-}
 
 function BigKPI({
   value,
@@ -581,8 +546,6 @@ export function UserStatsPage() {
     );
   }
 
-  const totalVol = muscleDistribution.reduce((s, m) => s + m.value, 0);
-
   return (
     <Layout>
       {/* Back header */}
@@ -701,343 +664,17 @@ export function UserStatsPage() {
 
         {/* ── Volumen semanal ── */}
         {weeklyVolumeData.some((w) => w.vol > 0) && (
-          <section className="space-y-3">
-            <SectionLabel>Evolución del volumen</SectionLabel>
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.35 }}
-              className="rounded-[var(--radius-xl)] p-4"
-              style={{ backgroundColor: 'var(--bg-surface)' }}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4" style={{ color: 'var(--interactive-primary)' }} />
-                  <span
-                    className="text-[0.8125rem] font-medium"
-                    style={{ color: 'var(--text-secondary)' }}
-                  >
-                    Últimas 8 semanas
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  {volumeChange > 0 ? (
-                    <TrendingUp className="w-3.5 h-3.5" style={{ color: 'var(--success)' }} />
-                  ) : (
-                    <TrendingDown className="w-3.5 h-3.5" style={{ color: 'var(--error)' }} />
-                  )}
-                  <span
-                    className="text-[0.75rem] font-semibold font-mono"
-                    style={{ color: volumeChange >= 0 ? 'var(--success)' : 'var(--error)' }}
-                  >
-                    {volumeChange > 0 ? '+' : ''}
-                    {volumeChange}%
-                  </span>
-                </div>
-              </div>
-              <div className="h-[140px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={weeklyVolumeData}>
-                    <defs>
-                      <linearGradient id="userStatsGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#c8ff00" stopOpacity={0.35} />
-                        <stop offset="100%" stopColor="#c8ff00" stopOpacity={0.02} />
-                      </linearGradient>
-                    </defs>
-                    <XAxis
-                      dataKey="label"
-                      tick={{ fill: 'var(--text-tertiary)', fontSize: 9 }}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <YAxis hide domain={[0, 'dataMax + 10']} />
-                    <Tooltip
-                      contentStyle={{
-                        background: 'var(--bg-surface-3)',
-                        border: '1px solid var(--border-default)',
-                        borderRadius: 10,
-                        fontSize: 12,
-                      }}
-                      formatter={(v) => {
-                        const n = Number(v);
-                        return [n > 0 ? `${(n / 1000).toFixed(1)}t` : '0', 'Volumen'];
-                      }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="vol"
-                      stroke="#c8ff00"
-                      strokeWidth={2.5}
-                      fill="url(#userStatsGrad)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </motion.div>
-          </section>
+          <WeeklyVolumeChart data={weeklyVolumeData} volumeChange={volumeChange} />
         )}
 
         {/* ── Día favorito ── */}
-        {workouts.length >= 3 && (
-          <section className="space-y-3">
-            <SectionLabel>Consistencia por día</SectionLabel>
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="rounded-[var(--radius-xl)] p-4"
-              style={{ backgroundColor: 'var(--bg-surface)' }}
-            >
-              {bestDay && (
-                <div className="flex items-center gap-2 mb-4">
-                  <Zap className="w-4 h-4" style={{ color: '#fbbf24' }} />
-                  <span
-                    className="text-[0.8125rem] font-medium"
-                    style={{ color: 'var(--text-secondary)' }}
-                  >
-                    Tu día favorito:{' '}
-                    <span className="font-bold" style={{ color: 'var(--text-primary)' }}>
-                      {bestDay}
-                    </span>
-                  </span>
-                </div>
-              )}
-              <div className="space-y-2.5">
-                {dayFrequency.map(({ day, count, pct }, i) => (
-                  <div key={day}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span
-                        className="text-[0.8125rem] w-8"
-                        style={{ color: 'var(--text-secondary)' }}
-                      >
-                        {day}
-                      </span>
-                      <div
-                        className="flex-1 mx-3 h-2 rounded-full overflow-hidden"
-                        style={{ backgroundColor: 'var(--bg-surface-2)' }}
-                      >
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${pct}%` }}
-                          transition={{ delay: 0.45 + i * 0.04, duration: 0.5 }}
-                          className="h-full rounded-full"
-                          style={{
-                            backgroundColor:
-                              pct === 100 ? '#c8ff00' : pct > 60 ? '#22c55e' : '#3b82f6',
-                          }}
-                        />
-                      </div>
-                      <span
-                        className="text-[0.75rem] font-mono w-6 text-right"
-                        style={{ color: 'var(--text-tertiary)' }}
-                      >
-                        {count}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          </section>
-        )}
+        {workouts.length >= 3 && <DayFrequencyChart data={dayFrequency} bestDay={bestDay} />}
 
         {/* ── Distribución muscular ── */}
-        {muscleDistribution.length > 0 && (
-          <section className="space-y-3">
-            <SectionLabel>Balance muscular</SectionLabel>
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.45 }}
-              className="rounded-[var(--radius-xl)] p-4"
-              style={{ backgroundColor: 'var(--bg-surface)' }}
-            >
-              <div className="flex items-center gap-2 mb-4">
-                <Target className="w-4 h-4" style={{ color: 'var(--interactive-primary)' }} />
-                <span
-                  className="text-[0.8125rem] font-medium"
-                  style={{ color: 'var(--text-secondary)' }}
-                >
-                  Distribución por grupo muscular
-                </span>
-              </div>
-
-              {/* Pie chart */}
-              <div className="h-[140px] mb-4">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={muscleDistribution}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={38}
-                      outerRadius={60}
-                      paddingAngle={3}
-                      dataKey="value"
-                    >
-                      {muscleDistribution.map((_, i) => (
-                        <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        background: 'var(--bg-surface-3)',
-                        border: '1px solid var(--border-default)',
-                        borderRadius: 10,
-                        fontSize: 12,
-                      }}
-                      formatter={(v) => {
-                        const n = Number(v);
-                        return [
-                          totalVol > 0
-                            ? `${(n / 1000).toFixed(1)}t (${Math.round((n / totalVol) * 100)}%)`
-                            : `${v}`,
-                          'Volumen',
-                        ];
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-
-              {/* Horizontal bars */}
-              <div className="space-y-2">
-                {muscleDistribution.slice(0, 6).map(({ name, value }, i) => {
-                  const pct = totalVol > 0 ? Math.round((value / totalVol) * 100) : 0;
-                  return (
-                    <div key={name}>
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="w-2 h-2 rounded-full flex-shrink-0"
-                            style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }}
-                          />
-                          <span
-                            className="text-[0.8125rem]"
-                            style={{ color: 'var(--text-secondary)' }}
-                          >
-                            {name}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span
-                            className="text-[0.6875rem] font-mono"
-                            style={{ color: 'var(--text-tertiary)' }}
-                          >
-                            {(value / 1000).toFixed(1)}t
-                          </span>
-                          <span
-                            className="text-[0.625rem] font-bold px-1.5 py-0.5 rounded-full"
-                            style={{
-                              backgroundColor: `${CHART_COLORS[i % CHART_COLORS.length]}20`,
-                              color: CHART_COLORS[i % CHART_COLORS.length],
-                            }}
-                          >
-                            {pct}%
-                          </span>
-                        </div>
-                      </div>
-                      <div
-                        className="h-1.5 rounded-full overflow-hidden"
-                        style={{ backgroundColor: 'var(--bg-surface-2)' }}
-                      >
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${pct}%` }}
-                          transition={{ delay: 0.5 + i * 0.05, duration: 0.5 }}
-                          className="h-full rounded-full"
-                          style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </motion.div>
-          </section>
-        )}
+        {muscleDistribution.length > 0 && <MuscleDistributionChart data={muscleDistribution} />}
 
         {/* ── Top ejercicios ── */}
-        {topExercises.length > 0 && (
-          <section className="space-y-3">
-            <SectionLabel>Top ejercicios por volumen</SectionLabel>
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              className="rounded-[var(--radius-xl)] overflow-hidden"
-              style={{
-                backgroundColor: 'var(--bg-surface)',
-                border: '1px solid var(--border-subtle)',
-              }}
-            >
-              {topExercises.map((ex, i) => {
-                const maxVol = topExercises[0].volume;
-                const pct = Math.round((ex.volume / maxVol) * 100);
-                return (
-                  <div
-                    key={ex.name}
-                    className="px-4 py-3"
-                    style={{
-                      borderBottom:
-                        i < topExercises.length - 1 ? '1px solid var(--border-subtle)' : 'none',
-                    }}
-                  >
-                    <div className="flex items-center justify-between mb-1.5">
-                      <div className="flex items-center gap-2.5">
-                        <span
-                          className="w-5 h-5 rounded-full flex items-center justify-center text-[0.625rem] font-bold flex-shrink-0"
-                          style={{
-                            backgroundColor:
-                              i === 0
-                                ? '#fbbf24'
-                                : i === 1
-                                  ? '#a3a3a3'
-                                  : i === 2
-                                    ? '#92400e'
-                                    : 'var(--bg-surface-2)',
-                            color: i < 3 ? '#000' : 'var(--text-tertiary)',
-                          }}
-                        >
-                          {i + 1}
-                        </span>
-                        <span
-                          className="text-[0.875rem] font-medium"
-                          style={{ color: 'var(--text-primary)' }}
-                        >
-                          {ex.name}
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        <div
-                          className="text-[0.8125rem] font-semibold font-mono"
-                          style={{ color: 'var(--interactive-primary)' }}
-                        >
-                          {(ex.volume / 1000).toFixed(1)}t
-                        </div>
-                        <div className="text-[0.625rem]" style={{ color: 'var(--text-tertiary)' }}>
-                          {ex.sets} series · 1RM ~{ex.best1rm.toFixed(0)}kg
-                        </div>
-                      </div>
-                    </div>
-                    <div
-                      className="h-1 rounded-full overflow-hidden"
-                      style={{ backgroundColor: 'var(--bg-surface-2)' }}
-                    >
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${pct}%` }}
-                        transition={{ delay: 0.55 + i * 0.05, duration: 0.5 }}
-                        className="h-full rounded-full"
-                        style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </motion.div>
-          </section>
-        )}
+        {topExercises.length > 0 && <TopExercisesList data={topExercises} />}
 
         {/* ── Estado muscular ── */}
         {muscleRecovery.length > 0 && (

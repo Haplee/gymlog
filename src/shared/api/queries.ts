@@ -1,4 +1,5 @@
 import { supabase } from '@shared/lib/supabase';
+import { devError, devWarn } from '@shared/lib/devtools';
 import type {
   WorkoutWithSets,
   WorkoutSetWithDetails,
@@ -23,7 +24,7 @@ export const fetchWorkoutsAndSets = async (userId: string, limit = 200) => {
       .limit(limit);
 
     if (error) {
-      console.error('Error fetching workouts:', error);
+      devError('Error fetching workouts:', error);
       throw error;
     }
     if (!workoutIds || workoutIds.length === 0) return { workouts: [], sets: [] };
@@ -39,7 +40,7 @@ export const fetchWorkoutsAndSets = async (userId: string, limit = 200) => {
       .order('created_at', { ascending: false });
 
     if (setsError) {
-      console.error('Error fetching sets:', setsError);
+      devError('Error fetching sets:', setsError);
       throw setsError;
     }
 
@@ -55,7 +56,7 @@ export const fetchWorkoutsAndSets = async (userId: string, limit = 200) => {
 
     return { workouts, sets: (allSets as unknown as WorkoutSetWithDetails[]) || [] };
   } catch (err) {
-    console.error('fetchWorkoutsAndSets error:', err);
+    devError('fetchWorkoutsAndSets error:', err);
     throw err;
   }
 };
@@ -159,7 +160,7 @@ export const fetchRecentSets = async (
       .limit(300);
 
     if (woError) {
-      console.error('Error fetching workout IDs:', woError);
+      devError('Error fetching workout IDs:', woError);
       throw woError;
     }
     if (!workoutIds || workoutIds.length === 0) return [];
@@ -176,13 +177,13 @@ export const fetchRecentSets = async (
       .limit(limit);
 
     if (setsError) {
-      console.error('Error fetching recent sets:', setsError);
+      devError('Error fetching recent sets:', setsError);
       throw setsError;
     }
 
     return (data as unknown as WorkoutSetWithDetails[]) || [];
   } catch (err) {
-    console.error('fetchRecentSets error:', err);
+    devError('fetchRecentSets error:', err);
     throw err;
   }
 };
@@ -198,7 +199,7 @@ export const fetchExercises = async (userId: string | undefined): Promise<Exerci
   const { data, error } = await supabase.rpc('get_exercises_with_usage', { p_user_id: userId });
   if (error) {
     // Fallback: simple select if RPC missing (older deployments)
-    console.warn('[fetchExercises] RPC failed, falling back:', error.message);
+    devWarn('[fetchExercises] RPC failed, falling back:', error.message);
     const { data: rows, error: fbErr } = await supabase
       .from('exercises')
       .select('id, name, muscle_group, user_id, created_at')
@@ -217,7 +218,7 @@ export const fetchPersonalRecords = async (userId: string): Promise<PersonalReco
     .eq('user_id', userId);
 
   if (error) {
-    console.error('Error fetching personal records:', error);
+    devError('Error fetching personal records:', error);
     throw error;
   }
   return (data as PersonalRecord[]) || [];
@@ -311,7 +312,7 @@ export const fetchVolumeByMuscleGroup = async (
 ): Promise<{ muscle_group: string; total_volume: number }[]> => {
   const { data, error } = await supabase.rpc('get_volume_by_muscle_group', { user_uuid: userId });
   if (error) {
-    console.error('[Volume] Error fetching volume:', error);
+    devError('[Volume] Error fetching volume:', error);
     throw error;
   }
   return data || [];

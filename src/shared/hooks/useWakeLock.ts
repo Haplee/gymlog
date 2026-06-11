@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
+import { devWarn } from '@shared/lib/devtools';
 
 export function useWakeLock(enabled: boolean) {
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
@@ -11,7 +12,7 @@ export function useWakeLock(enabled: boolean) {
         wakeLockRef.current = await navigator.wakeLock.request('screen');
       }
     } catch (err) {
-      console.warn('[WakeLock] No se pudo adquirir:', err);
+      devWarn('[WakeLock] No se pudo adquirir:', err);
     }
   }, [enabled]);
 

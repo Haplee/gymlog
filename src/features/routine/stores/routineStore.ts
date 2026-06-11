@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { supabase } from '@shared/lib/supabase';
+import { devError, devLog } from '@shared/lib/devtools';
 
 export type DayOfWeek =
   | 'monday'
@@ -418,7 +419,7 @@ export const useRoutineStore = create<RoutineStore>()(
         );
 
         if (error) {
-          console.error('Error saving routines:', error);
+          devError('Error saving routines:', error);
         }
       },
 
@@ -465,9 +466,9 @@ export const useRoutineStore = create<RoutineStore>()(
         try {
           await get().saveToDb(userId);
           set({ lastBackup: now.toISOString() });
-          console.log('[Routine] Backup completed');
+          devLog('[Routine] Backup completed');
         } catch (e) {
-          console.error('[Routine] Backup failed:', e);
+          devError('[Routine] Backup failed:', e);
         }
       },
     }),

@@ -21,6 +21,7 @@ import { CardioTypeIcon } from '@shared/components/CardioIcons';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ChevronRight, Trash2, Repeat, Share2, BarChart2 } from 'lucide-react';
+import { devError } from '@shared/lib/devtools';
 
 interface GroupedWorkout {
   date: string;
@@ -295,7 +296,7 @@ export function HistoryPage() {
           dialogTitle: 'Compartir Historial',
         });
       } catch (e) {
-        console.error('Error export native', e);
+        devError('Error export native', e);
         toast.error('Error al exportar histórico');
       }
     } else {
@@ -587,7 +588,7 @@ export function HistoryPage() {
         if (imported > 0) toast.success(message);
         else toast.error(message);
       } catch (err) {
-        console.error('Import error:', err);
+        devError('Import error:', err);
         toast.error('Error inesperado al importar datos');
       }
     };

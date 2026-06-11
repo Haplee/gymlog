@@ -6,6 +6,7 @@ import { Capacitor } from '@capacitor/core';
 import { Browser } from '@capacitor/browser';
 import { queryClient } from '@app/queryClient';
 import { useWorkoutStore } from '@features/workout/stores/workoutStore';
+import { devError, devLog, devWarn } from '@shared/lib/devtools';
 
 // Guardamos la subscripción fuera del store para que HMR y StrictMode
 // no acumulen múltiples listeners de onAuthStateChange.
@@ -33,7 +34,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   initialized: false,
 
   init: async () => {
-    console.log('[Auth] init started, SB_URL:', SB_URL ? 'configured' : 'MISSING');
+    devLog('[Auth] init started, SB_URL:', SB_URL ? 'configured' : 'MISSING');
     if (_authSubscription) {
       _authSubscription.unsubscribe();
       _authSubscription = null;
@@ -41,7 +42,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
     try {
       if (!SB_URL || !SB_KEY) {
-        console.warn('[GymLog] Supabase no configurado');
+        devWarn('[GymLog] Supabase no configurado');
         set({ user: null, loading: false, initialized: true });
         return;
       }
@@ -59,25 +60,25 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       _authSubscription = subscription;
     } catch (err) {
-      console.error('[GymLog] Error initializing auth:', err);
+      devError('[GymLog] Error initializing auth:', err);
       set({ loading: false, initialized: true });
     }
   },
 
   signIn: async (email, password) => {
-    console.log('[Auth] signIn started for:', email);
+    devLog('[Auth] signIn started for:', email);
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-      console.error('[Auth] signIn error:', error.message, error.name);
+      devError('[Auth] signIn error:', error.message, error.name);
       return { error: new Error(getAuthErrorMessage(error)) };
     }
-    console.log('[Auth] signIn success, user:', data.user?.id);
+    devLog('[Auth] signIn success, user:', data.user?.id);
     set({ user: data.user });
     return { error: null };
   },
 
   signUp: async (email, password, fullName, username) => {
-    console.log('[Auth] signUp started for:', email);
+    devLog('[Auth] signUp started for:', email);
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -134,7 +135,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       useWorkoutStore.getState().clearPersistedState();
       await supabase.auth.signOut();
     } catch (err) {
-      console.error('[GymLog] Error durante signOut:', err);
+      devError('[GymLog] Error durante signOut:', err);
     } finally {
       set({ user: null });
     }

@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { z } from 'zod';
 import { supabase } from '@shared/lib/supabase';
 import type { WorkoutWithSets } from '@shared/lib/types';
+import { devError } from '@shared/lib/devtools';
 
 const SetDataSchema = z.object({
   id: z.string().default(() => crypto.randomUUID()),
@@ -83,7 +84,6 @@ export const useWorkoutStore = create<WorkoutState>()(
         });
       },
       setCustomExerciseName: (name: string) => set({ customExerciseName: name }),
-      setCustomMuscleGroup: (group: string) => set({ customMuscleGroup: group }),
 
       addSet: () => {
         const last = get().sets.at(-1);
@@ -174,7 +174,7 @@ export const useWorkoutStore = create<WorkoutState>()(
           return { error: null, success: true };
         } catch (err) {
           const message = err instanceof Error ? err.message : 'Error guardando';
-          console.error('[WorkoutStore] saveWorkout:', message);
+          devError('[WorkoutStore] saveWorkout:', message);
           return { error: new Error(message), success: false };
         }
       },

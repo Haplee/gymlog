@@ -6,6 +6,7 @@ import type {
   CreateExerciseNoteInput,
   CreateCustomExerciseInput,
 } from '../types';
+import { devError } from '@shared/lib/devtools';
 import {
   CreateExerciseNoteSchema,
   CreateCustomExerciseSchema,
@@ -81,7 +82,7 @@ export async function removeExerciseFromWorkout(workoutExerciseId: string): Prom
   const { error } = await supabase.from('workout_exercises').delete().eq('id', workoutExerciseId);
 
   if (error) {
-    console.error('Error removing exercise from workout:', error);
+    devError('Error removing exercise from workout:', error);
     throw error;
   }
 }
@@ -99,7 +100,7 @@ export async function updateExerciseNotes(
     .single();
 
   if (error) {
-    console.error('Error updating exercise notes:', error);
+    devError('Error updating exercise notes:', error);
     throw error;
   }
   return data;
