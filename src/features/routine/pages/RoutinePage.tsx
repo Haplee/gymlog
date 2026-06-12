@@ -130,22 +130,18 @@ export function RoutinePage() {
 
   return (
     <Layout>
-      <div className="text-lg font-bold mb-4" style={{ color: 'var(--interactive-primary)' }}>
-        {t('routine.title')}
-      </div>
+      <div className="text-lg font-bold mb-4 text-accent">{t('routine.title')}</div>
 
       {!activeRoutineId ? (
         <>
-          <div className="text-sm mb-3" style={{ color: 'var(--text-secondary)' }}>
-            {t('routine.select')}
-          </div>
+          <div className="text-sm mb-3 text-fg-muted">{t('routine.select')}</div>
 
           <div className="space-y-2">
             {routines.map((routine) => (
               <div
                 key={routine.id}
                 onClick={() => handleSelectRoutine(routine.id)}
-                className="p-4 rounded-[var(--radius-lg)] cursor-pointer transition-all active:scale-[0.99]"
+                className="p-4 rounded-2xl cursor-pointer transition-all active:scale-[0.99]"
                 style={{
                   backgroundColor: 'var(--bg-surface-2)',
                   border: '1px solid var(--border-glass)',
@@ -154,22 +150,12 @@ export function RoutinePage() {
               >
                 <div className="flex justify-between items-center">
                   <div>
-                    <div
-                      className="text-[0.9375rem] font-semibold"
-                      style={{ color: 'var(--text-primary)' }}
-                    >
-                      {routine.name}
-                    </div>
-                    <div
-                      className="text-[0.75rem] mt-0.5"
-                      style={{ color: 'var(--text-tertiary)' }}
-                    >
-                      {routine.description}
-                    </div>
+                    <div className="text-base font-semibold text-fg">{routine.name}</div>
+                    <div className="text-xs mt-0.5 text-fg-subtle">{routine.description}</div>
                   </div>
                   {!routine.isCustom && (
                     <span
-                      className="text-[0.5625rem] px-2 py-1 rounded-[var(--radius-pill)] font-bold uppercase tracking-wide"
+                      className="text-[0.5625rem] px-2 py-1 rounded-pill font-bold uppercase tracking-wide"
                       style={{
                         backgroundColor: 'rgba(200,255,0,0.08)',
                         color: 'var(--interactive-primary)',
@@ -199,17 +185,12 @@ export function RoutinePage() {
         <>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <div className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
-                {activeRoutine?.name}
-              </div>
-              <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                {activeRoutine?.description}
-              </div>
+              <div className="text-lg font-bold text-fg">{activeRoutine?.name}</div>
+              <div className="text-xs text-fg-subtle">{activeRoutine?.description}</div>
             </div>
             <button
               onClick={() => setActiveRoutine(null)}
-              className="text-sm px-3 py-1 rounded"
-              style={{ backgroundColor: 'var(--bg-surface-2)', color: 'var(--text-secondary)' }}
+              className="text-sm px-3 py-1 rounded bg-surface-2 text-fg-muted"
             >
               {t('routine.change')}
             </button>
@@ -217,19 +198,12 @@ export function RoutinePage() {
 
           {todayRoutine && todayRoutine.exercises.length > 0 && (
             <div className="mb-4 p-3 rounded-lg" style={{ backgroundColor: 'rgba(200,255,0,0.1)' }}>
-              <div
-                className="text-xs font-medium mb-2"
-                style={{ color: 'var(--interactive-primary)' }}
-              >
+              <div className="text-xs font-medium mb-2 text-accent">
                 {t('routine.today')} - {todayRoutine.name}
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {todayRoutine.exercises.map((ex, i) => (
-                  <span
-                    key={i}
-                    className="text-xs px-2 py-1 rounded"
-                    style={{ backgroundColor: 'var(--bg-surface-2)', color: 'var(--text-primary)' }}
-                  >
+                  <span key={i} className="text-xs px-2 py-1 rounded bg-surface-2 text-fg">
                     {ex.name}
                   </span>
                 ))}
@@ -255,11 +229,9 @@ export function RoutinePage() {
             ))}
           </div>
 
-          <div className="rounded-lg p-3" style={{ backgroundColor: 'var(--bg-surface)' }}>
+          <div className="rounded-lg p-3 bg-surface">
             <div className="flex justify-between items-center mb-3">
-              <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                {dayLabels[selectedDay]}
-              </div>
+              <div className="text-sm font-medium text-fg">{dayLabels[selectedDay]}</div>
               {activeRoutine?.isCustom && (
                 <select
                   value=""
@@ -287,7 +259,7 @@ export function RoutinePage() {
             </div>
 
             {activeRoutine?.days[selectedDay].exercises.length === 0 ? (
-              <div className="text-center py-6 text-xs" style={{ color: 'var(--text-tertiary)' }}>
+              <div className="text-center py-6 text-xs text-fg-subtle">
                 {activeRoutine?.isCustom
                   ? 'Añade ejercicios con el selector de arriba'
                   : 'Descanso'}
@@ -297,24 +269,12 @@ export function RoutinePage() {
                 {activeRoutine?.days[selectedDay].exercises.map((ex, i) => (
                   <div
                     key={i}
-                    className="flex items-center justify-between px-3 py-3 rounded-[var(--radius-md)]"
-                    style={{
-                      backgroundColor: 'var(--bg-surface-2)',
-                      border: '1px solid var(--border-glass)',
-                    }}
+                    className="flex items-center justify-between px-3 py-3 rounded-xl bg-surface-2 border border-line-glass"
                   >
                     <div>
-                      <div
-                        className="text-[0.9375rem] font-medium"
-                        style={{ color: 'var(--text-primary)' }}
-                      >
-                        {ex.name}
-                      </div>
+                      <div className="text-base font-medium text-fg">{ex.name}</div>
                       {ex.sets && (
-                        <div
-                          className="text-[0.6875rem] mt-0.5"
-                          style={{ color: 'var(--text-tertiary)' }}
-                        >
+                        <div className="text-xs mt-0.5 text-fg-subtle">
                           {ex.sets} series × {ex.reps}
                         </div>
                       )}
@@ -322,8 +282,7 @@ export function RoutinePage() {
                     {activeRoutine?.isCustom && (
                       <button
                         onClick={() => removeExerciseFromDay(selectedDay, i)}
-                        className="w-7 h-7 flex items-center justify-center rounded-[var(--radius-sm)] text-lg"
-                        style={{ color: 'var(--text-tertiary)' }}
+                        className="w-7 h-7 flex items-center justify-center rounded-lg text-lg text-fg-subtle"
                       >
                         ×
                       </button>
@@ -337,8 +296,7 @@ export function RoutinePage() {
           {activeRoutine?.isCustom && (
             <button
               onClick={() => handleDeleteRoutine(activeRoutine.id)}
-              className="mt-4 text-sm"
-              style={{ color: 'var(--error)' }}
+              className="mt-4 text-sm text-error"
             >
               Eliminar rutina
             </button>
@@ -348,25 +306,15 @@ export function RoutinePage() {
 
       {showCreate && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-          <div
-            className="rounded-xl p-4 w-full max-w-sm"
-            style={{ backgroundColor: 'var(--bg-surface)' }}
-          >
-            <div className="text-lg font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
-              Nueva Rutina
-            </div>
+          <div className="rounded-xl p-4 w-full max-w-sm bg-surface">
+            <div className="text-lg font-bold mb-4 text-fg">Nueva Rutina</div>
 
             <input
               type="text"
               placeholder="Nombre"
               value={newRoutineName}
               onChange={(e) => setNewRoutineName(e.target.value)}
-              className="w-full p-2 rounded-lg text-sm mb-2"
-              style={{
-                backgroundColor: 'var(--bg-surface-2)',
-                color: 'var(--text-primary)',
-                border: '1px solid var(--border-default)',
-              }}
+              className="w-full p-2 rounded-lg text-sm mb-2 bg-surface-2 border border-line-strong text-fg"
             />
 
             <input
@@ -374,19 +322,13 @@ export function RoutinePage() {
               placeholder="Descripción (opcional)"
               value={newRoutineDesc}
               onChange={(e) => setNewRoutineDesc(e.target.value)}
-              className="w-full p-2 rounded-lg text-sm mb-4"
-              style={{
-                backgroundColor: 'var(--bg-surface-2)',
-                color: 'var(--text-primary)',
-                border: '1px solid var(--border-default)',
-              }}
+              className="w-full p-2 rounded-lg text-sm mb-4 bg-surface-2 border border-line-strong text-fg"
             />
 
             <div className="flex gap-2">
               <button
                 onClick={() => setShowCreate(false)}
-                className="flex-1 py-2 rounded-lg text-sm"
-                style={{ backgroundColor: 'var(--bg-surface-2)', color: 'var(--text-secondary)' }}
+                className="flex-1 py-2 rounded-lg text-sm bg-surface-2 text-fg-muted"
               >
                 Cancelar
               </button>

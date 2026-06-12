@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { StickyNote, X, Check, Loader2 } from 'lucide-react';
 import { useUpdateExerciseNotes } from '../hooks/useWorkoutExercises';
 import { devError } from '@shared/lib/devtools';
@@ -88,39 +88,35 @@ export function ExerciseNotesEditor({
     <div className="relative">
       <button
         onClick={handleOpen}
-        className="flex items-center gap-1.5 text-sm px-2.5 py-1.5 rounded-lg border border-[--border-default] bg-[--bg-surface] text-[--text-secondary] hover:bg-[--bg-surface-2] transition-colors"
+        className="flex items-center gap-1.5 text-sm px-2.5 py-1.5 rounded-lg border border-line-strong bg-surface text-fg-muted hover:bg-surface-2 transition-colors"
         aria-label={`Añadir notas a ${exerciseName}`}
         aria-expanded={isOpen}
       >
         <StickyNote className="w-4 h-4" />
         <span>Notas</span>
-        {localNotes && (
-          <span className="w-2 h-2 rounded-full bg-[--color-primary]" aria-hidden="true" />
-        )}
+        {localNotes && <span className="w-2 h-2 rounded-full bg-accent" aria-hidden="true" />}
       </button>
 
       <AnimatePresence>
         {isOpen && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: -8, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute z-50 top-full left-0 right-0 mt-2 p-3 rounded-lg border border-[--border-default] bg-[--bg-surface] shadow-lg"
+            className="absolute z-50 top-full left-0 right-0 mt-2 p-3 rounded-lg border border-line-strong bg-surface shadow-lg"
             role="dialog"
             aria-label={`Editar notas de ${exerciseName}`}
             onKeyDown={handleKeyDown}
           >
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-[--text-secondary]">
-                Notas para {exerciseName}
-              </span>
+              <span className="text-xs font-medium text-fg-muted">Notas para {exerciseName}</span>
               <button
                 onClick={handleClose}
-                className="p-1 rounded hover:bg-[--bg-elevated]"
+                className="p-1 rounded hover:bg-surface-2"
                 aria-label="Cerrar notas"
               >
-                <X className="w-3 h-3 text-[--text-muted]" />
+                <X className="w-3 h-3 text-fg-subtle" />
               </button>
             </div>
 
@@ -133,19 +129,19 @@ export function ExerciseNotesEditor({
               }}
               onFocus={autoResize}
               placeholder="Añade notas sobre este ejercicio (tempo, descanso, sensaciones...)"
-              className="w-full min-h-[60px] max-h-[120px] px-3 py-2 rounded-lg text-sm bg-[--bg-surface-2] border border-[--border-default] text-[--text-primary] outline-none resize-none focus:ring-2 focus:ring-[--color-primary]"
+              className="w-full min-h-[60px] max-h-[120px] px-3 py-2 rounded-lg text-sm bg-surface-2 border border-line-strong text-fg outline-none resize-none focus:ring-2 focus:ring-accent"
               aria-label="Notas del ejercicio"
             />
 
             <div className="flex items-center justify-between mt-2.5">
-              <span className="text-[0.625rem] text-[--text-muted]">
+              <span className="text-2xs text-fg-subtle">
                 Ctrl+Enter para guardar
                 {lastSaved && ' · Guardado'}
               </span>
               <button
                 onClick={handleSave}
                 disabled={isSaving || localNotes === initialNotes}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-sm bg-[--color-primary] text-[--color-primary-fg] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-sm bg-accent text-accent-fg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
               >
                 {isSaving ? (
                   <Loader2 className="w-3 h-3 animate-spin" />
@@ -155,7 +151,7 @@ export function ExerciseNotesEditor({
                 <span>Guardar</span>
               </button>
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
 

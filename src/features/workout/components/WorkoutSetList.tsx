@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Trophy, StickyNote, X } from 'lucide-react';
-import { tv } from '@shared/styles/themeVars';
 
 interface SetData {
   id?: string;
@@ -41,8 +40,6 @@ export function WorkoutSetList({
   const [localWeights, setLocalWeights] = useState<Record<string, string>>({});
   const [expandedNoteIdx, setExpandedNoteIdx] = useState<number | null>(null);
 
-  const { bgCard, border, textPrimary, textSecondary, textMuted, accent } = tv;
-
   if (sets.length === 0) {
     return null;
   }
@@ -52,7 +49,7 @@ export function WorkoutSetList({
       {sets.map((s, i) => {
         const isNewPR = checkIsNewPR(s.weight, s.reps);
         return (
-          <motion.div
+          <m.div
             key={s.id ?? String(i)}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -65,32 +62,24 @@ export function WorkoutSetList({
                   onClick={() => updateSet(i, { isWarmup: !s.isWarmup })}
                   aria-pressed={s.isWarmup}
                   aria-label={`Serie ${i + 1}: calentamiento`}
-                  className="w-8 self-stretch rounded text-xs font-bold flex items-center justify-center transition-colors border border-dashed"
-                  style={{
-                    backgroundColor: s.isWarmup ? 'var(--warning)' : 'transparent',
-                    borderColor: s.isWarmup ? 'var(--warning)' : textMuted,
-                    color: s.isWarmup ? '#000' : textMuted,
-                    borderStyle: s.isWarmup ? 'solid' : 'dashed',
-                  }}
+                  className={`w-8 self-stretch rounded text-xs font-bold flex items-center justify-center transition-colors border ${
+                    s.isWarmup
+                      ? 'bg-warning border-solid border-warning text-fg-inverse'
+                      : 'bg-transparent border-dashed border-fg-subtle text-fg-subtle'
+                  }`}
                 >
                   W
                 </button>
               )}
               <div
                 className={`w-6 h-8 flex items-center justify-center text-sm font-medium rounded ${
-                  isNewPR ? 'bg-[var(--interactive-primary)]' : ''
+                  isNewPR ? 'bg-accent text-accent-fg' : 'bg-transparent text-fg-muted'
                 }`}
-                style={{
-                  color: isNewPR ? 'var(--interactive-primary-fg)' : textSecondary,
-                  backgroundColor: isNewPR ? 'var(--interactive-primary)' : 'transparent',
-                }}
               >
                 {i + 1}
               </div>
               <div className="flex-1 flex flex-col">
-                <label className="text-[0.625rem] block mb-1" style={{ color: textMuted }}>
-                  {t('workout.reps')}
-                </label>
+                <label className="text-2xs block mb-1 text-fg-subtle">{t('workout.reps')}</label>
                 <input
                   type="text"
                   inputMode="numeric"
@@ -108,18 +97,13 @@ export function WorkoutSetList({
                       });
                     }
                   }}
-                  className="w-full rounded-lg text-sm px-2 py-1.5 outline-none text-center"
-                  style={{
-                    backgroundColor: setErrors[i] ? 'rgba(255,69,58,0.08)' : bgCard,
-                    border: setErrors[i] ? '1px solid var(--error)' : `1px solid ${border}`,
-                    color: textPrimary,
-                  }}
+                  className={`w-full rounded-lg text-sm px-2 py-1.5 outline-none text-center text-fg border ${
+                    setErrors[i] ? 'bg-error/10 border-error' : 'bg-surface border-line'
+                  }`}
                 />
               </div>
               <div className="relative flex-1 flex flex-col">
-                <label className="text-[0.625rem] block mb-1" style={{ color: textMuted }}>
-                  {weightUnit}
-                </label>
+                <label className="text-2xs block mb-1 text-fg-subtle">{weightUnit}</label>
                 <input
                   type="text"
                   inputMode="decimal"
@@ -170,34 +154,28 @@ export function WorkoutSetList({
                       return n;
                     });
                   }}
-                  className="w-full rounded-lg text-sm px-2 py-1.5 outline-none text-center"
-                  style={{
-                    backgroundColor: setErrors[i] ? 'rgba(255,69,58,0.08)' : bgCard,
-                    border: setErrors[i] ? '1px solid var(--error)' : `1px solid ${border}`,
-                    color: textPrimary,
-                  }}
+                  className={`w-full rounded-lg text-sm px-2 py-1.5 outline-none text-center text-fg border ${
+                    setErrors[i] ? 'bg-error/10 border-error' : 'bg-surface border-line'
+                  }`}
                 />
                 {isNewPR && (
                   <span className="absolute -top-1 -right-1">
-                    <Trophy className="w-3 h-3" style={{ color: accent }} />
+                    <Trophy className="w-3 h-3 text-accent" />
                   </span>
                 )}
               </div>
               <button
                 onClick={() => setExpandedNoteIdx(expandedNoteIdx === i ? null : i)}
-                className="w-6 h-8 flex items-center justify-center bg-transparent border rounded cursor-pointer"
-                style={{
-                  borderColor: s.notes ? accent : 'var(--border-subtle)',
-                  color: s.notes ? accent : textMuted,
-                }}
+                className={`w-6 h-8 flex items-center justify-center bg-transparent border rounded cursor-pointer ${
+                  s.notes ? 'border-accent text-accent' : 'border-line text-fg-subtle'
+                }`}
                 title="Nota de la serie"
               >
                 <StickyNote className="w-3 h-3" />
               </button>
               <button
                 onClick={() => removeSet(i)}
-                className="w-6 h-8 flex items-center justify-center bg-transparent border rounded cursor-pointer text-lg"
-                style={{ borderColor: 'var(--border-subtle)', color: textMuted }}
+                className="w-6 h-8 flex items-center justify-center bg-transparent border rounded cursor-pointer text-lg border-line text-fg-subtle"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -208,20 +186,11 @@ export function WorkoutSetList({
                 placeholder="Nota de la serie..."
                 value={s.notes ?? ''}
                 onChange={(e) => updateSet(i, { notes: e.target.value.slice(0, 500) })}
-                className="w-full mt-1 rounded-lg text-xs px-2 py-1.5 outline-none"
-                style={{
-                  backgroundColor: bgCard,
-                  border: `1px solid ${border}`,
-                  color: textPrimary,
-                }}
+                className="w-full mt-1 rounded-lg text-xs px-2 py-1.5 outline-none bg-surface border border-line text-fg"
               />
             )}
-            {setErrors[i] && (
-              <div className="text-[0.65rem] mt-1 ml-8" style={{ color: 'var(--error)' }}>
-                {setErrors[i]}
-              </div>
-            )}
-          </motion.div>
+            {setErrors[i] && <div className="text-2xs mt-1 ml-8 text-error">{setErrors[i]}</div>}
+          </m.div>
         );
       })}
     </>

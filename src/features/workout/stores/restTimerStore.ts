@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { scheduleTimerNotification, cancelTimerNotification } from '@shared/lib/notifications';
 
 interface RestTimerState {
   endTime: number | null;
@@ -17,17 +18,22 @@ export const useRestTimerStore = create<RestTimerState>()(
       endTime: null,
       duration: 90,
       isRunning: false,
-      start: (seconds) =>
-        set({
-          endTime: Date.now() + seconds * 1000,
-          duration: seconds,
-          isRunning: true,
-        }),
-      stop: () => set({ endTime: null, isRunning: false }),
+      start: (seconds) => {
+        const endTime = Date.now() + seconds * 1000;
+        set({ endTime, duration: seconds, isRunning: true });
+        // Alarma del sistema: suena aunque la app esté en background
+        void scheduleTimerNotification(endTime);
+      },
+      stop: () => {
+        set({ endTime: null, isRunning: false });
+        void cancelTimerNotification();
+      },
       extend: (seconds) => {
         const { endTime, duration, isRunning } = get();
         if (!isRunning || !endTime) return;
-        set({ endTime: endTime + seconds * 1000, duration: duration + seconds });
+        const newEnd = endTime + seconds * 1000;
+        set({ endTime: newEnd, duration: duration + seconds });
+        void scheduleTimerNotification(newEnd);
       },
       remaining: () => {
         const { endTime } = get();
@@ -41,6 +47,7 @@ export const useRestTimerStore = create<RestTimerState>()(
       partialize: (s) => ({ endTime: s.endTime, duration: s.duration, isRunning: s.isRunning }),
       onRehydrateStorage: () => (state) => {
         // Timer expirado mientras la app estaba cerrada: no rearmar
+        // (la notificación del sistema ya avisó en su momento)
         if (state && state.endTime !== null && state.endTime < Date.now()) {
           state.endTime = null;
           state.isRunning = false;

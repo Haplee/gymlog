@@ -1,5 +1,5 @@
 import { memo, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 
 interface DayData {
   date: string;
@@ -79,34 +79,25 @@ export const ConsistencyHeatmap = memo(function ConsistencyHeatmap({
 
   if (data.length === 0) {
     return (
-      <div className="bg-[var(--bg-surface)] rounded-[var(--radius-lg)] p-4">
-        <div className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-3">
-          Consistencia
-        </div>
-        <div className="text-[0.75rem] text-[var(--text-tertiary)] text-center py-8">
-          Sin datos de entrenamiento
-        </div>
+      <div className="bg-surface rounded-2xl p-4 shadow-card">
+        <div className="text-sm font-medium text-fg-muted mb-3">Consistencia</div>
+        <div className="text-xs text-fg-subtle text-center py-8">Sin datos de entrenamiento</div>
       </div>
     );
   }
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-[var(--bg-surface)] rounded-[var(--radius-lg)] p-4"
+      className="bg-surface rounded-2xl p-4 shadow-card"
     >
-      <div className="text-[0.8125rem] font-medium mb-3 text-[var(--text-secondary)]">
-        Consistencia
-      </div>
+      <div className="text-sm font-medium mb-3 text-fg-muted">Consistencia</div>
 
       <div className="flex gap-1 mb-3">
         <div className="w-8"></div>
         {DAYS.map((day) => (
-          <div
-            key={day}
-            className="flex-1 text-[0.625rem] text-center text-[var(--text-tertiary)] font-medium"
-          >
+          <div key={day} className="flex-1 text-2xs text-center text-fg-subtle font-medium">
             {day}
           </div>
         ))}
@@ -119,7 +110,7 @@ export const ConsistencyHeatmap = memo(function ConsistencyHeatmap({
               {monthLabels.map((m, i) => (
                 <div
                   key={i}
-                  className="absolute text-[0.5rem] text-[var(--text-tertiary)]"
+                  className="absolute text-[0.5rem] text-fg-subtle"
                   style={{ left: `${m.startWeek * 20}px` }}
                 >
                   {m.month}
@@ -150,15 +141,15 @@ export const ConsistencyHeatmap = memo(function ConsistencyHeatmap({
       </div>
 
       <div className="flex items-center justify-end gap-1 mt-4">
-        <span className="text-[0.5rem] text-[var(--text-tertiary)]">Menos</span>
+        <span className="text-[0.5rem] text-fg-subtle">Menos</span>
         <div className="w-3 h-3 rounded-[3px] bg-[#1a1a1a]" />
         <div className="w-3 h-3 rounded-[3px] bg-[#2d4a2d]" />
         <div className="w-3 h-3 rounded-[3px] bg-[#3d6b3d]" />
         <div className="w-3 h-3 rounded-[3px] bg-[#4d8c4d]" />
         <div className="w-3 h-3 rounded-[3px] bg-[#6bad6b]" />
         <div className="w-3 h-3 rounded-[3px] bg-[#c8ff00]" />
-        <span className="text-[0.5rem] text-[var(--text-tertiary)]">Más</span>
+        <span className="text-[0.5rem] text-fg-subtle">Más</span>
       </div>
-    </motion.div>
+    </m.div>
   );
 });

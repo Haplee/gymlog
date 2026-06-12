@@ -5,28 +5,31 @@ import { checkWeeklySummary } from '@shared/lib/weeklySummary';
 import { notify } from '@shared/lib/notifications';
 import { devError } from '@shared/lib/devtools';
 
+const CHECK_INTERVAL_MS = 30 * 60 * 1000;
+/** Hora a partir de la cual avisar de racha en peligro */
+const STREAK_ALERT_HOUR = 20;
+
 export function useBackgroundNotifications() {
-  const { user } = useAuthStore();
+  const userId = useAuthStore((s) => s.user?.id);
 
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
 
-    // Run immediately on mount
     const runChecks = async () => {
       try {
-        await checkWeeklySummary(user.id);
+        await checkWeeklySummary(userId);
 
         const now = new Date();
         const dateStr = now.toISOString().split('T')[0];
         const streakKey = `streak_notif_${dateStr}`;
 
-        if (now.getHours() >= 20 && !localStorage.getItem(streakKey)) {
-          const atRisk = await checkStreakAtRisk(user.id);
+        if (now.getHours() >= STREAK_ALERT_HOUR && !localStorage.getItem(streakKey)) {
+          const atRisk = await checkStreakAtRisk(userId);
           if (atRisk) {
-            notify('🔥 Tu racha está en peligro', {
+            await notify('🔥 Tu racha está en peligro', {
               body: 'Tantos días seguidos... No lo pierdas hoy.',
-              icon: '/icons/icon-192x192.png',
-              url: '/workout',
+              icon: '/icon-192x192.webp',
+              url: '/',
             });
             localStorage.setItem(streakKey, 'true');
           }
@@ -36,11 +39,8 @@ export function useBackgroundNotifications() {
       }
     };
 
-    runChecks();
-
-    // Check every 30 mins
-    const interval = setInterval(runChecks, 30 * 60 * 1000);
-
+    void runChecks();
+    const interval = setInterval(() => void runChecks(), CHECK_INTERVAL_MS);
     return () => clearInterval(interval);
-  }, [user]);
+  }, [userId]);
 }

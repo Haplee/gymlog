@@ -1,9 +1,39 @@
 import { Capacitor } from '@capacitor/core';
-import { LocalNotifications } from '@capacitor/local-notifications';
+import { LocalNotifications, type Weekday } from '@capacitor/local-notifications';
 import { toast } from 'sonner';
 import { devError, devLog } from '@shared/lib/devtools';
 
 export const isNative = (): boolean => Capacitor.isNativePlatform();
+
+/** IDs reservados: cada tipo tiene un id fijo → se puede cancelar/reemplazar sin duplicados. */
+export const NOTIF_IDS = {
+  TIMER: 990001,
+  GENERIC: 990010,
+  /** +1..7 (convención Capacitor: 1=domingo … 7=sábado) */
+  ROUTINE_REMINDER_BASE: 991000,
+} as const;
+
+/** Canales Android 8+. Sin canal explícito el sistema usa defaults pobres
+    (sin heads-up, importancia baja). iOS los ignora — el try los hace inocuos. */
+const CHANNELS = [
+  {
+    id: 'reminders',
+    name: 'Recordatorios',
+    description: 'Rutina del día, rachas y resumen semanal',
+    importance: 4 as const,
+  },
+  {
+    id: 'timer',
+    name: 'Temporizador de descanso',
+    description: 'Aviso al terminar el descanso entre series',
+    importance: 5 as const,
+    vibration: true,
+  },
+];
+
+/** Hora local del recordatorio de rutina */
+const REMINDER_HOUR = 18;
+const REMINDER_MINUTE = 30;
 
 /**
  * Solo permite navegar a URLs http(s) del propio origen.
@@ -24,6 +54,32 @@ export function isSafeUrl(url: string): boolean {
 export const isNotificationsDisabled = (): boolean =>
   localStorage.getItem('notif_disabled') === 'true';
 
+/**
+ * Inicialización única (providers): crea canales Android y registra el
+ * listener de taps sobre notificaciones.
+ */
+export async function initNotifications(): Promise<void> {
+  if (!isNative()) return;
+
+  try {
+    for (const channel of CHANNELS) {
+      await LocalNotifications.createChannel(channel);
+    }
+  } catch (e) {
+    // iOS no implementa canales — esperado
+    devLog('[Notifications] createChannel no disponible:', e);
+  }
+
+  try {
+    await LocalNotifications.addListener('localNotificationActionPerformed', (action) => {
+      const url = action.notification.extra?.url as string | undefined;
+      if (url && isSafeUrl(url)) window.location.href = url;
+    });
+  } catch (e) {
+    devError('[Notifications] Error registrando listener:', e);
+  }
+}
+
 export async function requestPermission(): Promise<boolean> {
   if (isNotificationsDisabled()) return false;
 
@@ -39,26 +95,16 @@ export async function requestPermission(): Promise<boolean> {
   }
 
   try {
-    devLog('[Notifications] Solicitando permisos nativos...');
-    // Comprobamos estado actual
     const status = await LocalNotifications.checkPermissions();
-    devLog('[Notifications] Estado actual:', status);
+    if (status.display === 'granted') return true;
 
-    if (status.display === 'granted') {
-      return true;
-    }
-
-    // Solicitamos
     const result = await LocalNotifications.requestPermissions();
-    devLog('[Notifications] Resultado solicitud:', result);
-
     if (result.display === 'granted') {
       toast.success('Notificaciones habilitadas correctamente');
       return true;
-    } else {
-      toast.error('Permiso de notificaciones denegado');
-      return false;
     }
+    toast.error('Permiso de notificaciones denegado');
+    return false;
   } catch (e) {
     devError('[Notifications] Error crítico en solicitud nativa:', e);
     toast.error('Error al solicitar permisos. Revisa los ajustes del sistema.');
@@ -66,6 +112,7 @@ export async function requestPermission(): Promise<boolean> {
   }
 }
 
+/** Check síncrono (solo fiable en web; en nativo usa canNotifyAsync) */
 export const canNotify = (): boolean => {
   if (isNotificationsDisabled()) return false;
   if (!isNative()) {
@@ -75,14 +122,25 @@ export const canNotify = (): boolean => {
   return true;
 };
 
+/** Check real de permisos en ambas plataformas. */
+export async function canNotifyAsync(): Promise<boolean> {
+  if (isNotificationsDisabled()) return false;
+  if (!isNative()) return canNotify();
+  try {
+    const status = await LocalNotifications.checkPermissions();
+    return status.display === 'granted';
+  } catch {
+    return false;
+  }
+}
+
 export async function notify(
   title: string,
-  options: NotificationOptions & { url?: string },
+  options: NotificationOptions & { url?: string; id?: number },
 ): Promise<void> {
-  if (isNotificationsDisabled()) return;
+  if (!(await canNotifyAsync())) return;
 
   if (!isNative()) {
-    if (!canNotify()) return;
     try {
       const swRegistration = await navigator.serviceWorker?.ready;
       if (swRegistration && 'showNotification' in swRegistration) {
@@ -110,7 +168,8 @@ export async function notify(
         {
           title,
           body: options.body ?? '',
-          id: Date.now() % 2147483647,
+          id: options.id ?? NOTIF_IDS.GENERIC,
+          channelId: 'reminders',
           extra: { url: options.url },
           schedule: { at: new Date(Date.now() + 100) },
         },
@@ -121,75 +180,96 @@ export async function notify(
   }
 }
 
-export async function notifyTimerAlarm(seconds: number): Promise<void> {
-  if (isNotificationsDisabled()) return;
+/* ── Timer de descanso ──────────────────────────────────────────────
+   Alarma exacta programada al endTime: suena aunque la app esté en
+   background o la pantalla apagada. Se cancela si el usuario para el
+   timer o si la app (en foreground) ya avisó con sonido+haptic. */
 
-  if (!isNative()) {
-    if (!canNotify()) return;
-    try {
-      if ('Notification' in window && Notification.permission === 'granted') {
-        const registration = await navigator.serviceWorker?.ready;
-        if (registration) {
-          await registration.showNotification('GymLog - Descanso terminado', {
-            body: `Han pasado ${seconds} segundos de descanso`,
-            tag: 'timer-alarm',
-            requireInteraction: true,
-          });
-        }
-      }
-    } catch {
-      // falla silenciosamente
-    }
-    return;
-  }
+/** +1.5s de margen: en foreground el tick del componente cancela antes de que dispare. */
+const TIMER_FOREGROUND_GRACE_MS = 1500;
 
+export async function scheduleTimerNotification(endAtMs: number): Promise<void> {
+  if (!isNative()) return;
+  if (!(await canNotifyAsync())) return;
   try {
+    await LocalNotifications.cancel({ notifications: [{ id: NOTIF_IDS.TIMER }] });
     await LocalNotifications.schedule({
       notifications: [
         {
-          title: 'GymLog - Descanso terminado',
-          body: `Han pasado ${seconds} segundos`,
-          id: 999999,
-          schedule: { at: new Date(Date.now() + 100) },
+          id: NOTIF_IDS.TIMER,
+          title: 'Descanso terminado',
+          body: 'Siguiente serie. ¡A por ella! 💪',
+          channelId: 'timer',
+          extra: { url: '/' },
+          schedule: { at: new Date(endAtMs + TIMER_FOREGROUND_GRACE_MS), allowWhileIdle: true },
         },
       ],
     });
   } catch (e) {
-    devError('[Notifications] Timer alarm error:', e);
+    devError('[Notifications] Error programando timer:', e);
   }
 }
 
-export async function playAlarmSound(): Promise<void> {
-  try {
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContextClass) return;
-    const ctx = new AudioContextClass();
-
-    for (let i = 0; i < 3; i++) {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.frequency.value = i === 1 ? 880 : 660;
-      osc.type = 'square';
-      gain.gain.setValueAtTime(0.8, ctx.currentTime + i * 0.3);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.3 + 0.25);
-      osc.start(ctx.currentTime + i * 0.3);
-      osc.stop(ctx.currentTime + i * 0.3 + 0.25);
-    }
-  } catch (e) {
-    devError('[Alarm] Sound error:', e);
-  }
-}
-
-export async function registerNativeNotificationListeners(): Promise<void> {
+export async function cancelTimerNotification(): Promise<void> {
   if (!isNative()) return;
   try {
-    await LocalNotifications.addListener('localNotificationActionPerformed', (action) => {
-      const url = action.notification.extra?.url as string | undefined;
-      if (url && isSafeUrl(url)) window.location.href = url;
+    await LocalNotifications.cancel({ notifications: [{ id: NOTIF_IDS.TIMER }] });
+  } catch {
+    // sin pendientes — nada que cancelar
+  }
+}
+
+/* ── Recordatorios de rutina (semanales, repetitivos) ───────────────
+   Programados en el sistema: disparan a las 18:30 del día con rutina
+   aunque la app esté cerrada. Se re-sincronizan al cambiar la rutina
+   activa y se cancelan al desactivar notificaciones. */
+
+export interface ReminderDay {
+  /** 1=domingo … 7=sábado (convención Capacitor) */
+  weekday: number;
+  routineName: string;
+}
+
+export async function syncRoutineReminders(days: ReminderDay[]): Promise<void> {
+  if (!isNative()) return;
+  try {
+    // Cancelar siempre los 7 posibles antes de reprogramar
+    await LocalNotifications.cancel({
+      notifications: [1, 2, 3, 4, 5, 6, 7].map((d) => ({
+        id: NOTIF_IDS.ROUTINE_REMINDER_BASE + d,
+      })),
     });
+
+    if (days.length === 0 || !(await canNotifyAsync())) return;
+
+    await LocalNotifications.schedule({
+      notifications: days.map(({ weekday, routineName }) => ({
+        id: NOTIF_IDS.ROUTINE_REMINDER_BASE + weekday,
+        title: 'Hoy toca entrenar',
+        body: `${routineName} te espera. ¿Empezamos?`,
+        channelId: 'reminders',
+        extra: { url: '/' },
+        schedule: {
+          on: { weekday: weekday as Weekday, hour: REMINDER_HOUR, minute: REMINDER_MINUTE },
+          allowWhileIdle: true,
+        },
+      })),
+    });
+    devLog('[Notifications] Recordatorios sincronizados:', days.length);
   } catch (e) {
-    devError('[Notifications] Error listener:', e);
+    devError('[Notifications] Error sincronizando recordatorios:', e);
+  }
+}
+
+/** Cancela todo lo programado (al desactivar notificaciones o cerrar sesión). */
+export async function cancelAllScheduled(): Promise<void> {
+  if (!isNative()) return;
+  try {
+    const pending = await LocalNotifications.getPending();
+    if (pending.notifications.length > 0) {
+      await LocalNotifications.cancel(pending);
+    }
+  } catch (e) {
+    devError('[Notifications] Error cancelando pendientes:', e);
   }
 }

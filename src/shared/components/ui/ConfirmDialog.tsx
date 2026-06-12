@@ -53,7 +53,7 @@ export function ConfirmDialog({
       icon={isDanger ? <Trash2 className="w-5 h-5" /> : <AlertTriangle className="w-5 h-5" />}
     >
       <div className="space-y-4">
-        <p className="text-[var(--text-secondary)] text-sm">{message}</p>
+        <p className="text-fg-muted text-sm">{message}</p>
         <div className="flex gap-3">
           <Button variant="secondary" onClick={onClose} disabled={isLoading} className="flex-1">
             {resolvedCancelText}

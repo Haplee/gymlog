@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Trash2, GripVertical } from 'lucide-react';
 import { useRemoveExerciseFromWorkout } from '../hooks/useWorkoutExercises';
 import { DeleteExerciseModal } from './DeleteExerciseModal';
@@ -57,13 +57,13 @@ export function WorkoutExerciseCard({
 
   return (
     <>
-      <motion.div
+      <m.div
         layout
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, x: 20, height: 0, marginBottom: 0 }}
         transition={{ duration: 0.2 }}
-        className="relative group flex items-center gap-2 p-3 rounded-[var(--radius-md)]"
+        className="relative group flex items-center gap-2 p-3 rounded-xl"
         style={{
           backgroundColor: 'var(--bg-surface-2)',
           border: '1px solid var(--border-glass)',
@@ -74,8 +74,7 @@ export function WorkoutExerciseCard({
         aria-label={`Ejercicio ${exerciseName}`}
       >
         <button
-          className="cursor-grab active:cursor-grabbing transition-opacity opacity-30 group-active:opacity-70"
-          style={{ color: 'var(--text-tertiary)' }}
+          className="cursor-grab active:cursor-grabbing transition-opacity opacity-30 group-active:opacity-70 text-fg-subtle"
           aria-label="Reordenar ejercicio"
         >
           <GripVertical className="w-4 h-4" />
@@ -83,15 +82,10 @@ export function WorkoutExerciseCard({
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span
-              className="font-semibold truncate text-[0.9375rem]"
-              style={{ color: 'var(--text-primary)' }}
-            >
-              {exerciseName}
-            </span>
+            <span className="font-semibold truncate text-base text-fg">{exerciseName}</span>
             {muscleGroup && (
               <span
-                className="text-[0.5625rem] px-1.5 py-0.5 rounded-[var(--radius-pill)] font-semibold uppercase tracking-wide shrink-0"
+                className="text-[0.5625rem] px-1.5 py-0.5 rounded-pill font-semibold uppercase tracking-wide shrink-0"
                 style={{
                   backgroundColor: 'rgba(200,255,0,0.08)',
                   color: 'var(--interactive-primary)',
@@ -115,10 +109,7 @@ export function WorkoutExerciseCard({
           {isOwner && (
             <button
               onClick={() => setShowDeleteModal(true)}
-              className="min-w-11 min-h-11 flex items-center justify-center rounded-[var(--radius-sm)] transition-colors"
-              style={{ color: 'var(--error)' }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,69,58,0.1)')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+              className="min-w-11 min-h-11 flex items-center justify-center rounded-lg transition-colors text-error hover:bg-error/10 active:bg-error/10"
               aria-label={`Eliminar ${exerciseName} del entrenamiento`}
               title="Eliminar ejercicio"
             >
@@ -128,7 +119,7 @@ export function WorkoutExerciseCard({
         </div>
 
         {!isOwner && <div className="absolute inset-0 bg-transparent pointer-events-none" />}
-      </motion.div>
+      </m.div>
 
       <DeleteExerciseModal
         open={showDeleteModal}

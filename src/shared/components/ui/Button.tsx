@@ -12,18 +12,17 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantStyles: Record<Variant, string> = {
-  primary:
-    'bg-[var(--interactive-primary)] text-[var(--interactive-primary-fg)] font-semibold active:scale-[0.97]',
-  secondary: 'bg-[var(--bg-surface-2)] text-[var(--text-primary)] active:scale-[0.97]',
-  ghost: 'bg-transparent text-[var(--text-secondary)] hover:bg-[var(--interactive-hover)]',
-  danger: 'bg-[var(--error)] text-[var(--interactive-primary-fg)] active:scale-[0.97]',
-  icon: 'bg-transparent text-[var(--text-tertiary)] hover:bg-[var(--interactive-hover)] aspect-square',
+  primary: 'bg-accent text-accent-fg font-semibold shadow-btn-accent active:scale-[0.97]',
+  secondary: 'bg-surface-2 text-fg active:scale-[0.97]',
+  ghost: 'bg-transparent text-fg-muted hover:bg-hover',
+  danger: 'bg-error text-accent-fg active:scale-[0.97]',
+  icon: 'bg-transparent text-fg-subtle hover:bg-hover aspect-square',
 };
 
 const sizeStyles: Record<Size, string> = {
-  sm: 'h-9 px-3 text-[0.8125rem] rounded-[var(--radius-pill)]',
-  md: 'h-11 px-5 text-[0.9375rem] rounded-[var(--radius-pill)]',
-  lg: 'h-12 px-6 text-[0.9375rem] rounded-[var(--radius-pill)]',
+  sm: 'h-9 px-3 text-sm rounded-pill',
+  md: 'h-11 px-5 text-base rounded-pill',
+  lg: 'h-12 px-6 text-base rounded-pill',
 };
 
 const ButtonComponent = ({
@@ -43,7 +42,7 @@ const ButtonComponent = ({
       className={[
         'inline-flex items-center justify-center gap-2 cursor-pointer font-medium',
         'transition-all duration-100',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--interactive-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-base)]',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-base',
         'disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none',
         variantStyles[variant],
         sizeStyles[size],
