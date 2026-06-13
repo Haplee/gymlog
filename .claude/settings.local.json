@@ -249,7 +249,8 @@
       "PowerShell(foreach \\($b in @\\('main','correccion_scripts','060526','140526','fix/cierre-pendiente-2026-06-02','fix/tecnicos-informe-factura-y-panel','simpleza-270526'\\)\\) { $n = \\(git log $b --format='%s%n%b' | Select-String -Pattern 'claude|anthropic' -CaseSensitive:$false | Measure-Object\\).Count; \"$b : $n\" })",
       "Bash(graphify label *)",
       "Bash(env)",
-      "Bash(python *)"
+      "Bash(python *)",
+      "Bash(npm run *)"
     ]
   }
 }

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@features/auth/stores/authStore';
@@ -10,12 +10,22 @@ import { calcular1RM } from '@shared/lib/brzycki';
 import { Skeleton } from '@shared/components/ui/Skeleton';
 import { KPICard } from '../components/KPICards';
 import { CardioTypeIcon } from '@shared/components/CardioIcons';
-import {
-  MuscleGroupChart,
-  VolumeChart,
-  ProgressionChart,
-  type ChartView,
-} from '../components/Charts';
+import type { ChartView } from '../components/Charts';
+
+// recharts es pesado: cargarlo bajo demanda saca ~100kb del chunk inicial de la página
+const MuscleGroupChart = lazy(() =>
+  import('../components/Charts').then((mod) => ({ default: mod.MuscleGroupChart })),
+);
+const VolumeChart = lazy(() =>
+  import('../components/Charts').then((mod) => ({ default: mod.VolumeChart })),
+);
+const ProgressionChart = lazy(() =>
+  import('../components/Charts').then((mod) => ({ default: mod.ProgressionChart })),
+);
+
+function ChartFallback() {
+  return <div className="h-56 skeleton rounded-2xl" aria-hidden="true" />;
+}
 import {
   calculateCurrentStreak,
   calculateMaxStreak,
@@ -35,7 +45,7 @@ import {
 import { FatigueAnalysis } from '../components/FatigueAnalysis';
 import { CHART_COLORS } from '../constants';
 import { toast } from 'sonner';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { TrendingUp, Target, Calculator, ChevronDown } from 'lucide-react';
 import { devError } from '@shared/lib/devtools';
 
@@ -58,10 +68,7 @@ const PERIOD_WEEKS: Record<PeriodFilter, number> = {
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-3 px-1">
-      <span
-        className="text-[0.6rem] font-bold uppercase tracking-[0.12em]"
-        style={{ color: 'var(--text-tertiary)' }}
-      >
+      <span className="text-2xs font-bold uppercase tracking-[0.12em] text-fg-subtle">
         {children}
       </span>
       <div className="flex-1 h-px" style={{ backgroundColor: 'var(--border-subtle)' }} />
@@ -274,10 +281,15 @@ export function StatsPage() {
   if (isLoading) {
     return (
       <Layout>
-        <div className="grid grid-cols-2 gap-3">
-          {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-24" />
-          ))}
+        {/* Replica el layout real: KPIs 2col + charts + heatmap */}
+        <div className="space-y-5">
+          <div className="grid grid-cols-2 gap-3">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-28 rounded-card" />
+            ))}
+          </div>
+          <Skeleton className="h-56 rounded-2xl" />
+          <Skeleton className="h-40 rounded-2xl" />
         </div>
       </Layout>
     );
@@ -290,7 +302,7 @@ export function StatsPage() {
         <section className="space-y-3">
           <SectionLabel>Entrenamiento</SectionLabel>
 
-          <motion.div
+          <m.div
             className="grid grid-cols-2 gap-3"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -321,10 +333,10 @@ export function StatsPage() {
               subtitle="por sesión"
               icon="duration"
             />
-          </motion.div>
+          </m.div>
 
           {/* Volumen total + Mejor 1RM + Notas */}
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.06 }}
@@ -343,29 +355,23 @@ export function StatsPage() {
               icon="best-1rm"
             />
             <KPICard title="Notas" value={setNotesCount} subtitle="series anotadas" icon="notes" />
-          </motion.div>
+          </m.div>
 
           {/* Racha max + PRs */}
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.08 }}
             className="grid grid-cols-2 gap-3"
           >
-            <div
-              className="relative overflow-hidden rounded-[var(--radius-xl)] p-4"
-              style={{ backgroundColor: 'var(--bg-surface)' }}
-            >
+            <div className="relative overflow-hidden rounded-card p-4 bg-surface">
               <div
-                className="absolute top-0 left-0 bottom-0 w-[3px] rounded-l-[var(--radius-xl)]"
+                className="absolute top-0 left-0 bottom-0 w-[3px] rounded-l-card"
                 style={{ backgroundColor: 'var(--warning)' }}
               />
               <div className="pl-2">
                 <div className="flex items-center justify-between mb-3">
-                  <span
-                    className="text-[0.625rem] font-semibold uppercase tracking-[0.08em]"
-                    style={{ color: 'var(--text-tertiary)' }}
-                  >
+                  <span className="text-2xs font-semibold uppercase tracking-[0.08em] text-fg-subtle">
                     Racha máxima
                   </span>
                   <svg
@@ -386,26 +392,18 @@ export function StatsPage() {
                 >
                   {maxStreak}
                 </div>
-                <div className="mt-2 text-[0.6875rem]" style={{ color: 'var(--text-tertiary)' }}>
-                  días
-                </div>
+                <div className="mt-2 text-xs text-fg-subtle">días</div>
               </div>
             </div>
 
-            <div
-              className="relative overflow-hidden rounded-[var(--radius-xl)] p-4"
-              style={{ backgroundColor: 'var(--bg-surface)' }}
-            >
+            <div className="relative overflow-hidden rounded-card p-4 bg-surface">
               <div
-                className="absolute top-0 left-0 bottom-0 w-[3px] rounded-l-[var(--radius-xl)]"
+                className="absolute top-0 left-0 bottom-0 w-[3px] rounded-l-card"
                 style={{ backgroundColor: 'var(--interactive-primary)' }}
               />
               <div className="pl-2">
                 <div className="flex items-center justify-between mb-3">
-                  <span
-                    className="text-[0.625rem] font-semibold uppercase tracking-[0.08em]"
-                    style={{ color: 'var(--text-tertiary)' }}
-                  >
+                  <span className="text-2xs font-semibold uppercase tracking-[0.08em] text-fg-subtle">
                     Records personales
                   </span>
                   <svg
@@ -428,12 +426,10 @@ export function StatsPage() {
                 >
                   {totalPRs}
                 </div>
-                <div className="mt-2 text-[0.6875rem]" style={{ color: 'var(--text-tertiary)' }}>
-                  PRs totales
-                </div>
+                <div className="mt-2 text-xs text-fg-subtle">PRs totales</div>
               </div>
             </div>
-          </motion.div>
+          </m.div>
         </section>
 
         {/* ── Cardio ── */}
@@ -441,7 +437,7 @@ export function StatsPage() {
           <section className="space-y-3">
             <SectionLabel>Cardio</SectionLabel>
 
-            <motion.div
+            <m.div
               className="grid grid-cols-2 gap-3"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -474,9 +470,9 @@ export function StatsPage() {
                 icon="cardio-sessions"
                 accentColor="#38bdf8"
               />
-            </motion.div>
+            </m.div>
 
-            <motion.div
+            <m.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.14 }}
@@ -502,16 +498,15 @@ export function StatsPage() {
                 subtitle="por sesión"
                 icon="duration"
               />
-            </motion.div>
+            </m.div>
 
             {/* Cardio type breakdown */}
             {cardioTypeBreakdown.length > 0 && (
-              <motion.div
+              <m.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.16 }}
-                className="rounded-[var(--radius-xl)] p-4"
-                style={{ backgroundColor: 'var(--bg-surface)' }}
+                className="rounded-card p-4 bg-surface"
               >
                 <div className="flex items-center gap-2 mb-3">
                   <svg
@@ -526,12 +521,7 @@ export function StatsPage() {
                     <path d="M2 13c2-2.5 4-2.5 6 0 2 2.5 4 2.5 6 0 2-2.5 4-2.5 6 0" />
                     <path d="M2 17.5c2-2.5 4-2.5 6 0 2 2.5 4 2.5 6 0 2-2.5 4-2.5 6 0" />
                   </svg>
-                  <span
-                    className="text-[0.8125rem] font-medium"
-                    style={{ color: 'var(--text-secondary)' }}
-                  >
-                    Actividades cardio
-                  </span>
+                  <span className="text-sm font-medium text-fg-muted">Actividades cardio</span>
                 </div>
                 <div className="space-y-2.5">
                   {cardioTypeBreakdown.map(({ type, duration, label }, i) => {
@@ -541,31 +531,20 @@ export function StatsPage() {
                       <div key={type}>
                         <div className="flex items-center justify-between mb-1">
                           <div className="flex items-center gap-2">
-                            <span style={{ color: 'var(--text-tertiary)' }}>
+                            <span className="text-fg-subtle">
                               <CardioTypeIcon
                                 type={type as Parameters<typeof CardioTypeIcon>[0]['type']}
                                 className="w-3.5 h-3.5"
                               />
                             </span>
-                            <span
-                              className="text-[0.8125rem]"
-                              style={{ color: 'var(--text-secondary)' }}
-                            >
-                              {label}
-                            </span>
+                            <span className="text-sm text-fg-muted">{label}</span>
                           </div>
-                          <span
-                            className="text-[0.75rem] font-mono font-medium"
-                            style={{ color: 'var(--text-primary)' }}
-                          >
+                          <span className="text-xs font-mono font-medium text-fg">
                             {formatSeconds(duration)}
                           </span>
                         </div>
-                        <div
-                          className="h-1 rounded-full overflow-hidden"
-                          style={{ backgroundColor: 'var(--bg-surface-2)' }}
-                        >
-                          <motion.div
+                        <div className="h-1 rounded-full overflow-hidden bg-surface-2">
+                          <m.div
                             initial={{ width: 0 }}
                             animate={{ width: `${pct}%` }}
                             transition={{ delay: 0.2 + i * 0.05, duration: 0.5 }}
@@ -577,7 +556,7 @@ export function StatsPage() {
                     );
                   })}
                 </div>
-              </motion.div>
+              </m.div>
             )}
           </section>
         )}
@@ -586,29 +565,23 @@ export function StatsPage() {
         <section className="space-y-3">
           <SectionLabel>Análisis</SectionLabel>
 
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.18 }}
-            className="rounded-[var(--radius-xl)] p-4"
-            style={{ backgroundColor: 'var(--bg-surface)' }}
+            className="rounded-card p-4 bg-surface"
           >
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <TrendingUp className="w-4 h-4" style={{ color: 'var(--interactive-primary)' }} />
-                <span
-                  className="text-[0.8125rem] font-medium"
-                  style={{ color: 'var(--text-secondary)' }}
-                >
-                  Volumen semanal
-                </span>
+                <TrendingUp className="w-4 h-4 text-accent" />
+                <span className="text-sm font-medium text-fg-muted">Volumen semanal</span>
               </div>
               <div className="flex gap-1">
                 {periodButtons.map((p) => (
                   <button
                     key={p}
                     onClick={() => setPeriodFilter(p)}
-                    className="text-[0.5625rem] px-2 py-1 rounded-[var(--radius-pill)] transition-colors font-medium"
+                    className="text-[0.5625rem] px-2 py-1 rounded-pill transition-colors font-medium"
                     style={
                       periodFilter === p
                         ? {
@@ -623,50 +596,42 @@ export function StatsPage() {
                 ))}
               </div>
             </div>
-            <VolumeChart data={weeklyVolumeData} view={chartView} onViewChange={setChartView} />
-            <div
-              className="mt-3 pt-3 flex items-center justify-between text-[0.75rem]"
-              style={{ borderTop: '1px solid var(--border-subtle)' }}
-            >
-              <span style={{ color: 'var(--text-tertiary)' }}>
-                Total ({PERIOD_LABELS[periodFilter]})
-              </span>
-              <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+            <Suspense fallback={<ChartFallback />}>
+              <VolumeChart data={weeklyVolumeData} view={chartView} onViewChange={setChartView} />
+            </Suspense>
+            <div className="mt-3 pt-3 flex items-center justify-between text-xs border-t border-line">
+              <span className="text-fg-subtle">Total ({PERIOD_LABELS[periodFilter]})</span>
+              <span className="font-semibold text-fg">
                 {(weeklyVolumeData.reduce((s, d) => s + d.vol, 0) / 1000).toFixed(1)}t
               </span>
             </div>
-          </motion.div>
+          </m.div>
 
           {/* Distribución muscular */}
           {muscleGroupDistribution.length > 0 && (
-            <motion.div
+            <m.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.22 }}
-              className="rounded-[var(--radius-xl)] p-4"
-              style={{ backgroundColor: 'var(--bg-surface)' }}
+              className="rounded-card p-4 bg-surface"
             >
               <div className="flex items-center gap-2 mb-3">
-                <Target className="w-4 h-4" style={{ color: 'var(--interactive-primary)' }} />
-                <span
-                  className="text-[0.8125rem] font-medium"
-                  style={{ color: 'var(--text-secondary)' }}
-                >
-                  Distribución muscular
-                </span>
+                <Target className="w-4 h-4 text-accent" />
+                <span className="text-sm font-medium text-fg-muted">Distribución muscular</span>
               </div>
-              <MuscleGroupChart data={muscleGroupDistribution} />
-            </motion.div>
+              <Suspense fallback={<ChartFallback />}>
+                <MuscleGroupChart data={muscleGroupDistribution} />
+              </Suspense>
+            </m.div>
           )}
 
           {/* Progresión por ejercicio */}
           {uniqueExercises.length > 0 && (
-            <motion.div
+            <m.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.26 }}
-              className="rounded-[var(--radius-xl)] p-4"
-              style={{ backgroundColor: 'var(--bg-surface)' }}
+              className="rounded-card p-4 bg-surface"
             >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
@@ -682,17 +647,11 @@ export function StatsPage() {
                     <path d="M6 4v6a6 6 0 0 0 12 0V4" />
                     <line x1="4" y1="20" x2="20" y2="20" />
                   </svg>
-                  <span
-                    className="text-[0.8125rem] font-semibold"
-                    style={{ color: 'var(--text-primary)' }}
-                  >
-                    Progresión
-                  </span>
+                  <span className="text-sm font-semibold text-fg">Progresión</span>
                 </div>
                 <button
                   onClick={() => setShowProgression(!showProgression)}
-                  className="flex items-center gap-1 text-[0.75rem]"
-                  style={{ color: 'var(--text-tertiary)' }}
+                  className="flex items-center gap-1 text-xs text-fg-subtle"
                 >
                   <span>{showProgression ? 'Ocultar' : 'Mostrar'}</span>
                   <ChevronDown
@@ -707,12 +666,7 @@ export function StatsPage() {
                   <select
                     value={selectedExercise}
                     onChange={(e) => setSelectedExercise(e.target.value)}
-                    className="w-full rounded-[var(--radius-md)] text-sm p-3"
-                    style={{
-                      backgroundColor: 'var(--bg-surface-2)',
-                      border: '1px solid var(--border-default)',
-                      color: 'var(--text-primary)',
-                    }}
+                    className="w-full rounded-xl text-sm p-3 bg-surface-2 border border-line-strong text-fg"
                   >
                     {uniqueExercises.map((ex) => (
                       <option key={ex} value={ex}>
@@ -726,7 +680,7 @@ export function StatsPage() {
                       <button
                         key={m}
                         onClick={() => setMetricFilter(m)}
-                        className="flex-1 text-[0.6875rem] py-2 rounded-[var(--radius-md)] transition-colors font-medium"
+                        className="flex-1 text-xs py-2 rounded-xl transition-colors font-medium"
                         style={
                           metricFilter === m
                             ? {
@@ -744,29 +698,25 @@ export function StatsPage() {
                     ))}
                   </div>
 
-                  <ProgressionChart
-                    data={progressionData}
-                    metric={metricFilter}
-                    exerciseName={activeExercise}
-                  />
+                  <Suspense fallback={<ChartFallback />}>
+                    <ProgressionChart
+                      data={progressionData}
+                      metric={metricFilter}
+                      exerciseName={activeExercise}
+                    />
+                  </Suspense>
 
                   {progressionData.length >= 2 && (
-                    <div
-                      className="pt-2 flex items-center justify-between text-[0.75rem]"
-                      style={{ borderTop: '1px solid var(--border-subtle)' }}
-                    >
-                      <span style={{ color: 'var(--text-tertiary)' }}>Mejor registro</span>
-                      <span
-                        className="font-semibold"
-                        style={{ color: 'var(--interactive-primary)' }}
-                      >
+                    <div className="pt-2 flex items-center justify-between text-xs border-t border-line">
+                      <span className="text-fg-subtle">Mejor registro</span>
+                      <span className="font-semibold text-accent">
                         {progressionData[progressionData.length - 1]?.value.toFixed(1)} kg
                       </span>
                     </div>
                   )}
                 </div>
               )}
-            </motion.div>
+            </m.div>
           )}
         </section>
 
@@ -778,27 +728,19 @@ export function StatsPage() {
         />
 
         {/* ── Calculadora 1RM ── */}
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="rounded-[var(--radius-xl)] p-4"
-          style={{ backgroundColor: 'var(--bg-surface)' }}
+          className="rounded-card p-4 bg-surface"
         >
           <div className="flex items-center gap-2 mb-4">
-            <Calculator className="w-4 h-4" style={{ color: 'var(--interactive-primary)' }} />
-            <span
-              className="text-[0.9375rem] font-semibold"
-              style={{ color: 'var(--text-primary)' }}
-            >
-              Calculadora 1RM
-            </span>
+            <Calculator className="w-4 h-4 text-accent" />
+            <span className="text-base font-semibold text-fg">Calculadora 1RM</span>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <div className="text-[0.75rem] mb-1.5" style={{ color: 'var(--text-tertiary)' }}>
-                Peso (kg)
-              </div>
+              <div className="text-xs mb-1.5 text-fg-subtle">Peso (kg)</div>
               <input
                 type="number"
                 placeholder="100"
@@ -807,18 +749,11 @@ export function StatsPage() {
                   setRmWeight(e.target.value);
                   calcRM(e.target.value, rmReps);
                 }}
-                className="w-full rounded-[var(--radius-md)] text-base p-3 outline-none"
-                style={{
-                  backgroundColor: 'var(--bg-surface-2)',
-                  border: '1px solid var(--border-default)',
-                  color: 'var(--text-primary)',
-                }}
+                className="w-full rounded-xl text-base p-3 outline-none bg-surface-2 border border-line-strong text-fg"
               />
             </div>
             <div>
-              <div className="text-[0.75rem] mb-1.5" style={{ color: 'var(--text-tertiary)' }}>
-                Reps
-              </div>
+              <div className="text-xs mb-1.5 text-fg-subtle">Reps</div>
               <input
                 type="number"
                 placeholder="10"
@@ -827,27 +762,17 @@ export function StatsPage() {
                   setRmReps(e.target.value);
                   calcRM(rmWeight, e.target.value);
                 }}
-                className="w-full rounded-[var(--radius-md)] text-base p-3 outline-none"
-                style={{
-                  backgroundColor: 'var(--bg-surface-2)',
-                  border: '1px solid var(--border-default)',
-                  color: 'var(--text-primary)',
-                }}
+                className="w-full rounded-xl text-base p-3 outline-none bg-surface-2 border border-line-strong text-fg"
               />
             </div>
           </div>
           <div className="mt-4 text-center">
-            <div className="text-[0.6875rem] mb-1" style={{ color: 'var(--text-tertiary)' }}>
-              1RM estimado
-            </div>
-            <div
-              className="text-3xl font-bold font-mono"
-              style={{ color: 'var(--interactive-primary)' }}
-            >
+            <div className="text-xs mb-1 text-fg-subtle">1RM estimado</div>
+            <div className="text-3xl font-bold font-mono text-accent">
               {rmResult ? `${rmResult.toFixed(1)} kg` : '—'}
             </div>
           </div>
-        </motion.div>
+        </m.div>
       </div>
     </Layout>
   );

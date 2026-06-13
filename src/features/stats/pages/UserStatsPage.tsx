@@ -1,7 +1,7 @@
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useCardioStore } from '@features/cardio/stores/cardioStore';
 import { Layout } from '@app/components/Layout';
@@ -18,6 +18,9 @@ import {
   isWorkingSet,
 } from '../utils/kpiCalculations';
 import { analyzeMuscleRecovery, getDaysSinceLastWorkout } from '../utils/fatigueAnalysis';
+import { comparePeriods } from '../utils/periodComparison';
+import { projectNextVolume } from '../utils/volumeProjection';
+import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft,
   Lightbulb,
@@ -33,10 +36,25 @@ import { format, subWeeks, startOfWeek, eachWeekOfInterval, subDays } from 'date
 import { es } from 'date-fns/locale';
 import { calcular1RM } from '@shared/lib/brzycki';
 import { SectionLabel } from '../components/userStats/SectionLabel';
-import { WeeklyVolumeChart } from '../components/userStats/WeeklyVolumeChart';
 import { DayFrequencyChart } from '../components/userStats/DayFrequencyChart';
-import { MuscleDistributionChart } from '../components/userStats/MuscleDistributionChart';
 import { TopExercisesList } from '../components/userStats/TopExercisesList';
+import { BodyMeasurements } from '../components/userStats/BodyMeasurements';
+
+// recharts es pesado: cargar estos charts bajo demanda lo saca del chunk de la página
+const WeeklyVolumeChart = lazy(() =>
+  import('../components/userStats/WeeklyVolumeChart').then((mod) => ({
+    default: mod.WeeklyVolumeChart,
+  })),
+);
+const MuscleDistributionChart = lazy(() =>
+  import('../components/userStats/MuscleDistributionChart').then((mod) => ({
+    default: mod.MuscleDistributionChart,
+  })),
+);
+
+function ChartFallback() {
+  return <div className="h-56 skeleton rounded-2xl" aria-hidden="true" />;
+}
 const PUSH_MUSCLES = ['Pecho', 'Hombro', 'Hombros', 'Tríceps'];
 const PULL_MUSCLES = ['Espalda', 'Bíceps', 'Antebrazo', 'Espalda baja'];
 const LEG_MUSCLES = [
@@ -63,29 +81,29 @@ function BigKPI({
   delay?: number;
 }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
+    <m.div
+      initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ delay, type: 'spring', stiffness: 300, damping: 24 }}
-      className="rounded-[var(--radius-xl)] p-4 flex flex-col gap-2"
-      style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}
+      className="relative overflow-hidden rounded-card p-4 flex flex-col gap-2 bg-surface border border-line shadow-card"
     >
+      {/* Tinte del color del KPI en el borde superior */}
       <div
-        className="w-8 h-8 rounded-[var(--radius-md)] flex items-center justify-center"
-        style={{ backgroundColor: `${color}18` }}
+        aria-hidden="true"
+        className="absolute inset-x-0 top-0 h-14 pointer-events-none"
+        style={{
+          background: `linear-gradient(to bottom, color-mix(in srgb, ${color} 8%, transparent), transparent)`,
+        }}
+      />
+      <div
+        className="relative w-8 h-8 rounded-xl flex items-center justify-center"
+        style={{ backgroundColor: `color-mix(in srgb, ${color} 12%, transparent)` }}
       >
         <Icon className="w-4 h-4" style={{ color }} />
       </div>
-      <div
-        className="font-mono font-bold text-2xl leading-none"
-        style={{ color: 'var(--text-primary)' }}
-      >
-        {value}
-      </div>
-      <div className="text-[0.6875rem]" style={{ color: 'var(--text-tertiary)' }}>
-        {label}
-      </div>
-    </motion.div>
+      <div className="relative font-mono font-bold text-2xl leading-none text-fg">{value}</div>
+      <div className="relative text-xs text-fg-subtle">{label}</div>
+    </m.div>
   );
 }
 
@@ -99,52 +117,45 @@ function TipCard({ tip, index }: { tip: Tip; index: number }) {
   const config = {
     warning: {
       icon: AlertTriangle,
-      color: '#ffd60a',
-      bg: 'rgba(255,214,10,0.08)',
-      border: 'rgba(255,214,10,0.2)',
+      color: 'var(--warning)',
+      bg: 'color-mix(in srgb, var(--warning) 8%, transparent)',
+      border: 'color-mix(in srgb, var(--warning) 20%, transparent)',
     },
     success: {
       icon: CheckCircle2,
-      color: '#30d158',
-      bg: 'rgba(48,209,88,0.08)',
-      border: 'rgba(48,209,88,0.2)',
+      color: 'var(--success)',
+      bg: 'color-mix(in srgb, var(--success) 8%, transparent)',
+      border: 'color-mix(in srgb, var(--success) 20%, transparent)',
     },
     info: {
       icon: Lightbulb,
-      color: '#c8ff00',
-      bg: 'rgba(200,255,0,0.08)',
-      border: 'rgba(200,255,0,0.15)',
+      color: 'var(--interactive-primary)',
+      bg: 'color-mix(in srgb, var(--interactive-primary) 8%, transparent)',
+      border: 'color-mix(in srgb, var(--interactive-primary) 15%, transparent)',
     },
     danger: {
       icon: AlertTriangle,
-      color: '#ff453a',
-      bg: 'rgba(255,69,58,0.08)',
-      border: 'rgba(255,69,58,0.2)',
+      color: 'var(--error)',
+      bg: 'color-mix(in srgb, var(--error) 8%, transparent)',
+      border: 'color-mix(in srgb, var(--error) 20%, transparent)',
     },
   }[tip.type];
   const Icon = config.icon;
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, x: -12 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: 0.05 * index, type: 'spring', stiffness: 280, damping: 22 }}
-      className="flex gap-3 p-3.5 rounded-[var(--radius-lg)]"
+      className="flex gap-3 p-3.5 rounded-2xl"
       style={{ backgroundColor: config.bg, border: `1px solid ${config.border}` }}
     >
       <Icon className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: config.color }} />
       <div>
-        <div
-          className="text-[0.8125rem] font-semibold mb-0.5"
-          style={{ color: 'var(--text-primary)' }}
-        >
-          {tip.title}
-        </div>
-        <div className="text-[0.75rem] leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-          {tip.message}
-        </div>
+        <div className="text-sm font-semibold mb-0.5 text-fg">{tip.title}</div>
+        <div className="text-xs leading-relaxed text-fg-muted">{tip.message}</div>
       </div>
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -353,6 +364,7 @@ function generateTips(params: {
 
 export function UserStatsPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const { sessions: cardioSessions, syncFromRemote: syncCardio } = useCardioStore();
 
@@ -393,6 +405,7 @@ export function UserStatsPage() {
   const avgDuration = useMemo(() => calculateAverageSessionDuration(workouts), [workouts]);
   const totalPRs = useMemo(() => calculateAllTimePRsCount(personalRecords), [personalRecords]);
   const muscleRecovery = useMemo(() => analyzeMuscleRecovery(recentSets), [recentSets]);
+  const periodComparison = useMemo(() => comparePeriods(recentSets, 30), [recentSets]);
 
   // Muscle group distribution
   const muscleDistribution = useMemo(() => {
@@ -442,6 +455,11 @@ export function UserStatsPage() {
       return { week: `S${i + 1}`, vol, label: format(weekStart, 'dd/MM', { locale: es }) };
     });
   }, [recentSets]);
+
+  const volumeProjection = useMemo(
+    () => projectNextVolume(weeklyVolumeData.map((w) => w.vol)),
+    [weeklyVolumeData],
+  );
 
   // Workout frequency by day of week
   const dayFrequency = useMemo(() => {
@@ -533,14 +551,18 @@ export function UserStatsPage() {
   if (isLoading) {
     return (
       <Layout>
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="h-24 rounded-[var(--radius-xl)] animate-pulse"
-              style={{ backgroundColor: 'var(--bg-surface)' }}
-            />
-          ))}
+        {/* Replica el layout real: header + grid KPI 2col + chart */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="skeleton w-11 h-11 rounded-xl" />
+            <div className="skeleton h-5 w-40 rounded-lg" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="skeleton h-28 rounded-card" />
+            ))}
+          </div>
+          <div className="skeleton h-56 rounded-2xl" />
         </div>
       </Layout>
     );
@@ -549,29 +571,22 @@ export function UserStatsPage() {
   return (
     <Layout>
       {/* Back header */}
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
         className="flex items-center gap-3 mb-5"
       >
         <button
           onClick={() => navigate(-1)}
-          className="w-9 h-9 rounded-[var(--radius-md)] flex items-center justify-center transition-colors"
-          style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface-2)')}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
+          className="w-11 h-11 rounded-xl flex items-center justify-center transition-colors bg-surface border border-line hover:bg-surface-2"
         >
-          <ArrowLeft className="w-4 h-4" style={{ color: 'var(--text-secondary)' }} />
+          <ArrowLeft className="w-4 h-4 text-fg-muted" />
         </button>
         <div>
-          <h1 className="text-[1.0625rem] font-bold" style={{ color: 'var(--text-primary)' }}>
-            Mis Estadísticas
-          </h1>
-          <p className="text-[0.6875rem]" style={{ color: 'var(--text-tertiary)' }}>
-            Análisis completo de tu progreso
-          </p>
+          <h1 className="text-lg font-bold text-fg">Mis Estadísticas</h1>
+          <p className="text-xs text-fg-subtle">Análisis completo de tu progreso</p>
         </div>
-      </motion.div>
+      </m.div>
 
       <div className="space-y-5">
         {/* ── Hero KPIs ── */}
@@ -582,28 +597,28 @@ export function UserStatsPage() {
               value={workouts.length}
               label="Entrenamientos totales"
               icon={Activity}
-              color="#c8ff00"
+              color="var(--interactive-primary)"
               delay={0}
             />
             <BigKPI
               value={`${(totalVolumeAllTime / 1000).toFixed(0)}t`}
               label="Volumen total"
               icon={BarChart3}
-              color="#3b82f6"
+              color="var(--accent-blue)"
               delay={0.05}
             />
             <BigKPI
               value={totalPRs}
               label="Records personales"
               icon={Trophy}
-              color="#fbbf24"
+              color="var(--accent-amber)"
               delay={0.1}
             />
             <BigKPI
               value={currentStreak}
               label={`días de racha${maxStreak > currentStreak ? ` (máx. ${maxStreak})` : ''}`}
               icon={Flame}
-              color="#ef4444"
+              color="var(--error)"
               delay={0.15}
             />
           </div>
@@ -611,67 +626,127 @@ export function UserStatsPage() {
           {/* Secondary row */}
           <div className="grid grid-cols-3 gap-2">
             {[
-              { value: sessionCount30d, label: 'sesiones/30d', color: '#22c55e' },
-              { value: `${avgDuration}m`, label: 'duración media', color: '#8b5cf6' },
-              { value: uniqueExercisesCount, label: 'ejercicios distintos', color: '#06b6d4' },
+              { value: sessionCount30d, label: 'sesiones/30d', color: 'var(--accent-green)' },
+              { value: `${avgDuration}m`, label: 'duración media', color: 'var(--accent-violet)' },
+              {
+                value: uniqueExercisesCount,
+                label: 'ejercicios distintos',
+                color: 'var(--accent-sky)',
+              },
             ].map((item, i) => (
-              <motion.div
+              <m.div
                 key={i}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 + i * 0.04 }}
-                className="rounded-[var(--radius-lg)] p-3 text-center"
-                style={{
-                  backgroundColor: 'var(--bg-surface)',
-                  border: '1px solid var(--border-subtle)',
-                }}
+                className="rounded-2xl p-3 text-center bg-surface border border-line shadow-card"
               >
                 <div className="font-mono font-bold text-xl" style={{ color: item.color }}>
                   {item.value}
                 </div>
-                <div className="text-[0.625rem] mt-1" style={{ color: 'var(--text-tertiary)' }}>
-                  {item.label}
-                </div>
-              </motion.div>
+                <div className="text-2xs mt-1 text-fg-subtle">{item.label}</div>
+              </m.div>
             ))}
           </div>
 
           {cardioTotalMin > 0 && (
-            <motion.div
+            <m.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.32 }}
-              className="rounded-[var(--radius-lg)] p-3.5 flex items-center justify-between"
-              style={{
-                backgroundColor: 'var(--bg-surface)',
-                border: '1px solid var(--border-subtle)',
-              }}
+              transition={{ delay: 0.2 }}
+              className="rounded-2xl p-3.5 flex items-center justify-between bg-surface border border-line"
             >
               <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4" style={{ color: '#38bdf8' }} />
-                <span className="text-[0.8125rem]" style={{ color: 'var(--text-secondary)' }}>
-                  Tiempo total de cardio
-                </span>
+                <Clock className="w-4 h-4" style={{ color: 'var(--accent-sky)' }} />
+                <span className="text-sm text-fg-muted">Tiempo total de cardio</span>
               </div>
-              <span className="font-mono font-semibold text-sm" style={{ color: '#38bdf8' }}>
+              <span
+                className="font-mono font-semibold text-sm"
+                style={{ color: 'var(--accent-sky)' }}
+              >
                 {cardioTotalMin >= 60
                   ? `${Math.floor(cardioTotalMin / 60)}h ${cardioTotalMin % 60}m`
                   : `${cardioTotalMin}m`}
               </span>
-            </motion.div>
+            </m.div>
           )}
         </section>
 
+        {/* ── Medidas corporales ── */}
+        <BodyMeasurements userId={user.id} />
+
         {/* ── Volumen semanal ── */}
         {weeklyVolumeData.some((w) => w.vol > 0) && (
-          <WeeklyVolumeChart data={weeklyVolumeData} volumeChange={volumeChange} />
+          <Suspense fallback={<ChartFallback />}>
+            <WeeklyVolumeChart data={weeklyVolumeData} volumeChange={volumeChange} />
+          </Suspense>
+        )}
+
+        {/* ── Comparación de periodo + proyección ── */}
+        {(periodComparison.current.volume > 0 || periodComparison.previous.volume > 0) && (
+          <section className="space-y-3">
+            <SectionLabel>{t('stats.comparison_title')}</SectionLabel>
+            <div className="grid grid-cols-2 gap-3">
+              {(
+                [
+                  { key: 'current', stats: periodComparison.current },
+                  { key: 'previous', stats: periodComparison.previous },
+                ] as const
+              ).map(({ key, stats }) => (
+                <div
+                  key={key}
+                  className="rounded-card p-4 bg-surface border border-line shadow-card"
+                >
+                  <div className="text-2xs uppercase font-semibold text-fg-subtle">
+                    {t(`stats.comparison_${key}`)}
+                  </div>
+                  <div className="font-mono font-bold text-2xl text-fg mt-1">
+                    {(stats.volume / 1000).toFixed(1)}t
+                  </div>
+                  <div className="text-xs text-fg-subtle">
+                    {stats.sessions} {t('stats.comparison_sessions')}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div
+              className="text-sm font-semibold text-center"
+              style={{
+                color: periodComparison.volumeChangePct >= 0 ? 'var(--success)' : 'var(--error)',
+              }}
+            >
+              {periodComparison.volumeChangePct >= 0 ? '+' : ''}
+              {periodComparison.volumeChangePct}% volumen
+            </div>
+
+            {volumeProjection && (
+              <div className="rounded-card p-4 bg-surface border border-line shadow-card flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-medium text-fg">{t('stats.projection_title')}</div>
+                  <div className="text-xs text-fg-subtle">
+                    {t(`stats.trend_${volumeProjection.trend}`)}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="font-mono font-bold text-xl text-accent">
+                    {(volumeProjection.projected / 1000).toFixed(1)}t
+                  </div>
+                  <div className="text-2xs text-fg-subtle">{t('stats.projection_next')}</div>
+                </div>
+              </div>
+            )}
+          </section>
         )}
 
         {/* ── Día favorito ── */}
         {workouts.length >= 3 && <DayFrequencyChart data={dayFrequency} bestDay={bestDay} />}
 
         {/* ── Distribución muscular ── */}
-        {muscleDistribution.length > 0 && <MuscleDistributionChart data={muscleDistribution} />}
+        {muscleDistribution.length > 0 && (
+          <Suspense fallback={<ChartFallback />}>
+            <MuscleDistributionChart data={muscleDistribution} />
+          </Suspense>
+        )}
 
         {/* ── Top ejercicios ── */}
         {topExercises.length > 0 && <TopExercisesList data={topExercises} />}
@@ -680,28 +755,35 @@ export function UserStatsPage() {
         {muscleRecovery.length > 0 && (
           <section className="space-y-3">
             <SectionLabel>Estado de recuperación</SectionLabel>
-            <motion.div
+            <m.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.55 }}
-              className="rounded-[var(--radius-xl)] p-4"
-              style={{ backgroundColor: 'var(--bg-surface)' }}
+              transition={{ delay: 0.25 }}
+              className="rounded-card p-4 bg-surface border border-line shadow-card"
             >
               <div className="space-y-2">
                 {muscleRecovery.slice(0, 6).map(({ name, daysSinceLast, status }) => {
                   const colors = {
-                    fresh: { dot: '#30d158', label: 'Descansado', bg: 'rgba(48,209,88,0.1)' },
-                    moderate: { dot: '#ffd60a', label: 'Moderado', bg: 'rgba(255,214,10,0.1)' },
+                    fresh: {
+                      dot: 'var(--success)',
+                      label: 'Descansado',
+                      bg: 'color-mix(in srgb, var(--success) 10%, transparent)',
+                    },
+                    moderate: {
+                      dot: 'var(--warning)',
+                      label: 'Moderado',
+                      bg: 'color-mix(in srgb, var(--warning) 10%, transparent)',
+                    },
                     'needs-attention': {
-                      dot: '#ff453a',
+                      dot: 'var(--error)',
                       label: 'Necesita trabajo',
-                      bg: 'rgba(255,69,58,0.1)',
+                      bg: 'color-mix(in srgb, var(--error) 10%, transparent)',
                     },
                   }[status];
                   return (
                     <div
                       key={name}
-                      className="flex items-center justify-between p-2.5 rounded-[var(--radius-md)]"
+                      className="flex items-center justify-between p-2.5 rounded-xl"
                       style={{ backgroundColor: colors.bg }}
                     >
                       <div className="flex items-center gap-2">
@@ -709,23 +791,18 @@ export function UserStatsPage() {
                           className="w-2 h-2 rounded-full"
                           style={{ backgroundColor: colors.dot }}
                         />
-                        <span
-                          className="text-[0.8125rem] font-medium"
-                          style={{ color: 'var(--text-primary)' }}
-                        >
-                          {name}
-                        </span>
+                        <span className="text-sm font-medium text-fg">{name}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span
-                          className="text-[0.6875rem]"
-                          style={{ color: 'var(--text-tertiary)' }}
-                        >
+                        <span className="text-xs text-fg-subtle">
                           {daysSinceLast >= 0 ? `hace ${daysSinceLast}d` : 'Sin datos'}
                         </span>
                         <span
-                          className="text-[0.625rem] font-semibold px-1.5 py-0.5 rounded-full"
-                          style={{ backgroundColor: colors.dot + '20', color: colors.dot }}
+                          className="text-2xs font-semibold px-1.5 py-0.5 rounded-full"
+                          style={{
+                            backgroundColor: `color-mix(in srgb, ${colors.dot} 13%, transparent)`,
+                            color: colors.dot,
+                          }}
                         >
                           {colors.label}
                         </span>
@@ -734,7 +811,7 @@ export function UserStatsPage() {
                   );
                 })}
               </div>
-            </motion.div>
+            </m.div>
           </section>
         )}
 
@@ -742,19 +819,15 @@ export function UserStatsPage() {
         {tips.length > 0 && (
           <section className="space-y-3">
             <SectionLabel>Consejos personalizados</SectionLabel>
-            <motion.div
+            <m.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-              className="rounded-[var(--radius-xl)] p-4"
-              style={{ backgroundColor: 'var(--bg-surface)' }}
+              transition={{ delay: 0.3 }}
+              className="rounded-card p-4 bg-surface border border-line shadow-card"
             >
               <div className="flex items-center gap-2 mb-4">
-                <Lightbulb className="w-4 h-4" style={{ color: '#ffd60a' }} />
-                <span
-                  className="text-[0.8125rem] font-semibold"
-                  style={{ color: 'var(--text-primary)' }}
-                >
+                <Lightbulb className="w-4 h-4 text-warning" />
+                <span className="text-sm font-semibold text-fg">
                   {tips.length} consejo{tips.length !== 1 ? 's' : ''} basados en tus datos
                 </span>
               </div>
@@ -763,25 +836,19 @@ export function UserStatsPage() {
                   <TipCard key={i} tip={tip} index={i} />
                 ))}
               </div>
-            </motion.div>
+            </m.div>
           </section>
         )}
 
         {/* Sin datos */}
         {workouts.length === 0 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center py-16"
-          >
+          <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-16">
             <div className="text-5xl mb-4">📊</div>
-            <div className="text-base font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
-              Sin datos todavía
-            </div>
-            <div className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
+            <div className="text-base font-semibold mb-2 text-fg">Sin datos todavía</div>
+            <div className="text-sm text-fg-subtle">
               Registra tus primeros entrenamientos para ver tus estadísticas aquí.
             </div>
-          </motion.div>
+          </m.div>
         )}
       </div>
     </Layout>

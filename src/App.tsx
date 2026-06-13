@@ -1,6 +1,6 @@
 import { useEffect, useState, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
+import { LazyMotion } from 'framer-motion';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
 import { PermissionRequests } from '@app/components/PermissionRequests';
@@ -9,11 +9,14 @@ import { OnboardingModal } from '@features/auth/components/OnboardingModal';
 import { App as CapApp } from '@capacitor/app';
 import { supabase } from '@shared/lib/supabase';
 import { useWorkoutReminder } from '@features/routine/hooks/useWorkoutReminder';
+import { useFatigueSuggestion } from '@features/stats/hooks/useFatigueSuggestion';
 import { useBackgroundNotifications } from '@shared/hooks/useBackgroundNotifications';
 import { Capacitor } from '@capacitor/core';
 import { toast } from 'sonner';
 import { devLog, devError } from '@shared/lib/devtools';
 import { ErrorBoundary } from '@shared/components/ErrorBoundary';
+
+const loadMotionFeatures = () => import('@shared/lib/motionFeatures').then((mod) => mod.default);
 
 const AuthPage = lazy(() =>
   import('@features/auth/pages/AuthPage').then((m) => ({ default: m.AuthPage })),
@@ -40,10 +43,15 @@ const CardioPage = lazy(() =>
 const UserStatsPage = lazy(() =>
   import('@features/stats/pages/UserStatsPage').then((m) => ({ default: m.UserStatsPage })),
 );
+const ExerciseLibraryPage = lazy(() =>
+  import('@features/workout/pages/ExerciseLibraryPage').then((m) => ({
+    default: m.ExerciseLibraryPage,
+  })),
+);
 
 function Loading() {
   return (
-    <div className="min-h-dvh bg-[var(--bg-base)]" style={{ backgroundColor: 'var(--bg-base)' }}>
+    <div className="min-h-dvh bg-base bg-base">
       <PageSkeleton />
     </div>
   );
@@ -56,96 +64,82 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-const pageVariants = {
-  initial: { opacity: 0, x: 20 },
-  in: { opacity: 1, x: 0 },
-  out: { opacity: 0, x: -20 },
-};
-
-const pageTransition = {
-  type: 'spring' as const,
-  stiffness: 250,
-  damping: 25,
-};
-
 function AnimatedRoutes() {
   const location = useLocation();
   const { user } = useAuthStore();
 
+  // La transición de página vive en Layout (m.main). Animar aquí también
+  // duplicaba exit+enter (dos mode="wait" encadenados) y hacía lento el cambio de tab.
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={location.pathname}
-        initial="initial"
-        animate="in"
-        exit="out"
-        variants={pageVariants}
-        transition={pageTransition}
-        className="w-full"
-      >
-        <Routes location={location}>
-          <Route path="/login" element={user ? <Navigate to="/" replace /> : <AuthPage />} />
-          <Route path="/auth/callback" element={<AuthCallback />} />
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <WorkoutPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/routines"
-            element={
-              <ProtectedRoute>
-                <RoutinePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/stats"
-            element={
-              <ProtectedRoute>
-                <StatsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/history"
-            element={
-              <ProtectedRoute>
-                <HistoryPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <ProtectedRoute>
-                <SettingsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/cardio"
-            element={
-              <ProtectedRoute>
-                <CardioPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/user-stats"
-            element={
-              <ProtectedRoute>
-                <UserStatsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </motion.div>
-    </AnimatePresence>
+    <Routes location={location}>
+      <Route path="/login" element={user ? <Navigate to="/" replace /> : <AuthPage />} />
+      <Route path="/auth/callback" element={<AuthCallback />} />
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <WorkoutPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/routines"
+        element={
+          <ProtectedRoute>
+            <RoutinePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/stats"
+        element={
+          <ProtectedRoute>
+            <StatsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/history"
+        element={
+          <ProtectedRoute>
+            <HistoryPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <SettingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/cardio"
+        element={
+          <ProtectedRoute>
+            <CardioPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/user-stats"
+        element={
+          <ProtectedRoute>
+            <UserStatsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/exercises"
+        element={
+          <ProtectedRoute>
+            <ExerciseLibraryPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
 
@@ -194,6 +188,7 @@ function AppRoutes() {
   const navigate = useNavigate();
 
   useWorkoutReminder();
+  useFatigueSuggestion();
   useBackgroundNotifications();
   usePWAUpdate();
 
@@ -299,10 +294,12 @@ function AppRoutes() {
 export default function App() {
   return (
     <ErrorBoundary>
-      <BrowserRouter>
-        <PermissionRequests />
-        <AppRoutes />
-      </BrowserRouter>
+      <LazyMotion features={loadMotionFeatures}>
+        <BrowserRouter>
+          <PermissionRequests />
+          <AppRoutes />
+        </BrowserRouter>
+      </LazyMotion>
     </ErrorBoundary>
   );
 }

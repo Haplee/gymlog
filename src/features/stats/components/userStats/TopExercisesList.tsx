@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { CHART_COLORS } from '../../constants';
 import { SectionLabel } from './SectionLabel';
 
@@ -13,15 +13,11 @@ export function TopExercisesList({ data }: { data: TopExerciseItem[] }) {
   return (
     <section className="space-y-3">
       <SectionLabel>Top ejercicios por volumen</SectionLabel>
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
-        className="rounded-[var(--radius-xl)] overflow-hidden"
-        style={{
-          backgroundColor: 'var(--bg-surface)',
-          border: '1px solid var(--border-subtle)',
-        }}
+        className="rounded-card overflow-hidden bg-surface border border-line"
       >
         {data.map((ex, i) => {
           const maxVol = data[0].volume;
@@ -37,7 +33,7 @@ export function TopExercisesList({ data }: { data: TopExerciseItem[] }) {
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-2.5">
                   <span
-                    className="w-5 h-5 rounded-full flex items-center justify-center text-[0.625rem] font-bold flex-shrink-0"
+                    className="w-5 h-5 rounded-full flex items-center justify-center text-2xs font-bold flex-shrink-0"
                     style={{
                       backgroundColor:
                         i === 0
@@ -52,30 +48,19 @@ export function TopExercisesList({ data }: { data: TopExerciseItem[] }) {
                   >
                     {i + 1}
                   </span>
-                  <span
-                    className="text-[0.875rem] font-medium"
-                    style={{ color: 'var(--text-primary)' }}
-                  >
-                    {ex.name}
-                  </span>
+                  <span className="text-sm font-medium text-fg">{ex.name}</span>
                 </div>
                 <div className="text-right">
-                  <div
-                    className="text-[0.8125rem] font-semibold font-mono"
-                    style={{ color: 'var(--interactive-primary)' }}
-                  >
+                  <div className="text-sm font-semibold font-mono text-accent">
                     {(ex.volume / 1000).toFixed(1)}t
                   </div>
-                  <div className="text-[0.625rem]" style={{ color: 'var(--text-tertiary)' }}>
+                  <div className="text-2xs text-fg-subtle">
                     {ex.sets} series · 1RM ~{ex.best1rm.toFixed(0)}kg
                   </div>
                 </div>
               </div>
-              <div
-                className="h-1 rounded-full overflow-hidden"
-                style={{ backgroundColor: 'var(--bg-surface-2)' }}
-              >
-                <motion.div
+              <div className="h-1 rounded-full overflow-hidden bg-surface-2">
+                <m.div
                   initial={{ width: 0 }}
                   animate={{ width: `${pct}%` }}
                   transition={{ delay: 0.55 + i * 0.05, duration: 0.5 }}
@@ -86,7 +71,7 @@ export function TopExercisesList({ data }: { data: TopExerciseItem[] }) {
             </div>
           );
         })}
-      </motion.div>
+      </m.div>
     </section>
   );
 }

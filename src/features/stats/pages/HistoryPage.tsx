@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useWorkoutStore } from '@features/workout/stores/workoutStore';
 import { useCardioStore, CARDIO_LABELS } from '@features/cardio/stores/cardioStore';
@@ -45,15 +45,13 @@ function ExerciseRow({
   const firstSet = sortedSets[0];
 
   return (
-    <div style={{ borderBottom: '1px solid var(--border-subtle)' }} className="last:border-b-0">
+    <div className="last:border-b-0 border-b border-line">
       <div
         onClick={() => setExpanded(!expanded)}
         onKeyDown={(e) => e.key === 'Enter' && setExpanded(!expanded)}
         role="button"
         tabIndex={0}
-        className="px-3 py-3 flex justify-between items-center cursor-pointer transition-colors"
-        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--interactive-hover)')}
-        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+        className="px-3 py-3 flex justify-between items-center cursor-pointer transition-colors hover:bg-hover active:bg-hover"
       >
         <div className="flex items-center gap-3">
           <ChevronRight
@@ -63,13 +61,11 @@ function ExerciseRow({
               transform: expanded ? 'rotate(90deg)' : 'none',
             }}
           />
-          <span className="text-[0.9375rem] font-medium" style={{ color: 'var(--text-primary)' }}>
-            {exercise}
-          </span>
+          <span className="text-base font-medium text-fg">{exercise}</span>
         </div>
         <div className="flex items-center gap-2">
           <span
-            className="text-[0.5625rem] px-1.5 py-0.5 rounded-[var(--radius-pill)] font-bold"
+            className="text-[0.5625rem] px-1.5 py-0.5 rounded-pill font-bold"
             style={{
               backgroundColor: 'rgba(200,255,0,0.08)',
               color: 'var(--interactive-primary)',
@@ -83,10 +79,7 @@ function ExerciseRow({
               e.stopPropagation();
               onDelete(firstSet.id);
             }}
-            className="p-1.5 rounded-[var(--radius-sm)] transition-colors"
-            style={{ color: 'var(--text-tertiary)' }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,69,58,0.1)')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+            className="p-1.5 rounded-lg transition-colors text-fg-subtle hover:bg-error/10 active:bg-error/10"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -97,26 +90,19 @@ function ExerciseRow({
           {sortedSets.map((s) => (
             <div
               key={s.id}
-              className="flex flex-col gap-1 px-3 py-2 rounded-[var(--radius-md)] ml-7"
-              style={{
-                backgroundColor: 'var(--bg-surface-2)',
-                border: '1px solid var(--border-glass)',
-              }}
+              className="flex flex-col gap-1 px-3 py-2 rounded-xl ml-7 bg-surface-2 border border-line-glass"
             >
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-3">
-                  <span
-                    className="text-[0.75rem] font-mono"
-                    style={{ color: 'var(--text-tertiary)' }}
-                  >
+                  <span className="text-xs font-mono text-fg-subtle">
                     {t('workout.sets')} {s.set_num}
                   </span>
-                  <span className="text-[0.875rem]" style={{ color: 'var(--text-secondary)' }}>
+                  <span className="text-sm text-fg-muted">
                     {s.reps} {t('workout.reps').toLowerCase()}
                   </span>
                   {s.is_warmup && (
                     <span
-                      className="text-[0.5625rem] px-1.5 py-0.5 rounded-[var(--radius-pill)] font-bold uppercase"
+                      className="text-[0.5625rem] px-1.5 py-0.5 rounded-pill font-bold uppercase"
                       style={{
                         backgroundColor: 'rgba(245,158,11,0.12)',
                         color: 'var(--warning)',
@@ -126,44 +112,25 @@ function ExerciseRow({
                     </span>
                   )}
                   {typeof s.rpe === 'number' && (
-                    <span
-                      className="text-[0.5625rem] px-1.5 py-0.5 rounded-[var(--radius-pill)] font-bold"
-                      style={{
-                        backgroundColor: 'var(--bg-surface-3)',
-                        color: 'var(--text-secondary)',
-                      }}
-                    >
+                    <span className="text-[0.5625rem] px-1.5 py-0.5 rounded-pill font-bold bg-surface-3 text-fg-muted">
                       RPE {s.rpe}
                     </span>
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <span
-                    className="font-semibold text-[0.875rem]"
-                    style={{ color: 'var(--interactive-primary)' }}
-                  >
-                    {s.weight} kg
-                  </span>
+                  <span className="font-semibold text-sm text-accent">{s.weight} kg</span>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       onDelete(s.id);
                     }}
-                    className="p-1 rounded"
-                    style={{ color: 'var(--text-tertiary)' }}
+                    className="p-1 rounded text-fg-subtle"
                   >
                     <Trash2 className="w-3 h-3" />
                   </button>
                 </div>
               </div>
-              {s.notes && (
-                <div
-                  className="text-[0.6875rem] italic pl-1"
-                  style={{ color: 'var(--text-tertiary)' }}
-                >
-                  “{s.notes}”
-                </div>
-              )}
+              {s.notes && <div className="text-xs italic pl-1 text-fg-subtle">“{s.notes}”</div>}
             </div>
           ))}
         </div>
@@ -192,6 +159,7 @@ export function HistoryPage() {
   } = useCardioStore();
   const [view, setView] = useState<'all' | 'sets' | 'workouts' | 'cardio'>('all');
   const [filterExercise, setFilterExercise] = useState('');
+  const [searchText, setSearchText] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const {
@@ -231,8 +199,15 @@ export function HistoryPage() {
 
   const exercises = [...new Set(recentSets.map((s) => s.exercise?.name).filter(Boolean))];
 
+  const search = searchText.trim().toLowerCase();
   const filteredSets = recentSets
     .filter((s) => !filterExercise || s.exercise?.name === filterExercise)
+    .filter((s) => {
+      if (!search) return true;
+      const name = s.exercise?.name?.toLowerCase() ?? '';
+      const notes = s.notes?.toLowerCase() ?? '';
+      return name.includes(search) || notes.includes(search);
+    })
     .sort(
       (a, b) =>
         new Date(b.workout?.started_at ?? '').getTime() -
@@ -308,6 +283,162 @@ export function HistoryPage() {
     }
   };
 
+  const saveBlob = async (fileName: string, data: string, mime: string) => {
+    if (Capacitor.isNativePlatform()) {
+      try {
+        await Filesystem.writeFile({
+          path: fileName,
+          data,
+          directory: Directory.Cache,
+          encoding: Encoding.UTF8,
+        });
+        const uriResult = await Filesystem.getUri({ directory: Directory.Cache, path: fileName });
+        await Share.share({
+          title: 'Exportar Historial',
+          url: uriResult.uri,
+          dialogTitle: 'Compartir Historial',
+        });
+      } catch (err) {
+        devError('Error export native', err);
+        toast.error('Error al exportar histórico');
+      }
+    } else {
+      const blob = new Blob([data], { type: mime });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = fileName;
+      link.click();
+    }
+  };
+
+  const exportToJson = async () => {
+    const payload = {
+      app: 'GymLog',
+      version: 2,
+      exported_at: new Date().toISOString(),
+      workouts: workouts.map((w) => ({
+        started_at: w.started_at,
+        finished_at: w.ended_at ?? null,
+        sets: [...w.sets]
+          .sort((a, b) => a.set_num - b.set_num)
+          .map((s) => ({
+            exercise: s.exercise?.name ?? null,
+            set_num: s.set_num,
+            reps: s.reps,
+            weight: s.weight,
+            is_warmup: s.is_warmup ?? false,
+            rpe: typeof s.rpe === 'number' ? s.rpe : null,
+            notes: s.notes ?? null,
+          })),
+      })),
+      cardio: cardioSessions,
+    };
+    const fileName = `gymlog_${new Date().toISOString().split('T')[0]}.json`;
+    await saveBlob(fileName, JSON.stringify(payload, null, 2), 'application/json;charset=utf-8;');
+  };
+
+  const importFromJson = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) {
+      toast.error('Selecciona un archivo e inicia sesión');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const parsed = JSON.parse((event.target?.result as string) || '{}');
+        const importedWorkouts = Array.isArray(parsed?.workouts) ? parsed.workouts : null;
+        if (!importedWorkouts) {
+          toast.error(t('history.import_json_invalid'));
+          return;
+        }
+
+        toast.info('Cargando datos...');
+        const exerciseList = await fetchExercises(user.id);
+        const resolveExerciseId = async (name: string): Promise<string | null> => {
+          const clean = (name || '').trim();
+          if (clean.length < 2) return null;
+          const existing = exerciseList.find(
+            (ex) => ex?.name?.toLowerCase() === clean.toLowerCase(),
+          );
+          if (existing?.id) return existing.id;
+          const { data: newEx, error } = await supabase
+            .from('exercises')
+            .insert({ name: clean, user_id: user.id, muscle_group: 'Otro' })
+            .select('id, name')
+            .single();
+          if (error || !newEx) return null;
+          exerciseList.push({
+            id: newEx.id,
+            name: clean,
+            muscle_group: 'Otro',
+            muscle_detail: null,
+            equipment: 'Gimnasio',
+            movement: null,
+            is_bilateral: true,
+            is_compound: false,
+            is_public: false,
+            description: null,
+            media_url: null,
+            user_id: user.id,
+            created_at: '',
+          });
+          return newEx.id;
+        };
+
+        let imported = 0;
+        for (const w of importedWorkouts) {
+          const sets = Array.isArray(w?.sets) ? w.sets : [];
+          // Agrupa sets por ejercicio: la RPC guarda un ejercicio por llamada.
+          const byExercise = new Map<string, typeof sets>();
+          for (const s of sets) {
+            const exName = String(s?.exercise ?? '').trim();
+            if (!exName) continue;
+            const group = byExercise.get(exName) ?? [];
+            group.push(s);
+            byExercise.set(exName, group);
+          }
+          const startedAt = w?.started_at || new Date().toISOString();
+          const finishedAt = w?.finished_at || startedAt;
+
+          for (const [exName, exSets] of byExercise) {
+            const exerciseId = await resolveExerciseId(exName);
+            if (!exerciseId) continue;
+            const setsPayload = exSets
+              .map((s: Record<string, unknown>, i: number) => ({
+                set_num: Number(s.set_num) || i + 1,
+                reps: Number(s.reps) || 0,
+                weight: Number(s.weight) || 0,
+                is_warmup: !!s.is_warmup,
+                notes: typeof s.notes === 'string' ? s.notes : '',
+                rpe: s.rpe != null ? String(s.rpe) : '',
+              }))
+              .filter((s: { reps: number }) => s.reps > 0);
+            if (!setsPayload.length) continue;
+            const { error } = await supabase.rpc('save_workout_with_sets', {
+              p_user_id: user.id,
+              p_exercise_id: exerciseId,
+              p_started_at: startedAt,
+              p_finished_at: finishedAt,
+              p_sets: setsPayload,
+            });
+            if (!error) imported += 1;
+          }
+        }
+
+        refetchSets();
+        refetchWorkouts();
+        queryClient.invalidateQueries({ queryKey: ['personalRecords'] });
+        toast.success(t('history.import_success', { count: imported }));
+      } catch (err) {
+        devError('Error import JSON', err);
+        toast.error(t('history.import_error'));
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
   const importFromCsv = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) {
@@ -373,6 +504,10 @@ export function HistoryPage() {
               equipment: 'Gimnasio',
               movement: null,
               is_bilateral: true,
+              is_compound: false,
+              is_public: false,
+              description: null,
+              media_url: null,
               user_id: user.id,
               created_at: '',
             });
@@ -634,8 +769,15 @@ export function HistoryPage() {
   if (loading) {
     return (
       <Layout>
-        <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-[var(--radius-xl)] overflow-hidden">
-          <div className="skeleton h-12 w-full"></div>
+        {/* Replica el layout real: filtros + grupos de tarjetas */}
+        <div className="space-y-3">
+          <div className="flex gap-2">
+            <div className="skeleton h-10 w-36 rounded-lg" />
+            <div className="skeleton h-10 w-24 rounded-lg" />
+          </div>
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="skeleton h-16 rounded-2xl" />
+          ))}
         </div>
       </Layout>
     );
@@ -643,57 +785,106 @@ export function HistoryPage() {
 
   return (
     <Layout>
-      <div className="flex gap-2 mb-3 flex-wrap">
-        <button
-          onClick={() => navigate('/user-stats')}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-lg font-semibold text-[0.875rem] transition-all hover:scale-[1.02] active:scale-[0.98]"
-          style={{
-            backgroundColor: 'rgba(200,255,0,0.1)',
-            border: '1px solid rgba(200,255,0,0.25)',
-            color: 'var(--interactive-primary)',
-          }}
+      {/* Barra de filtros sticky con tratamiento glass */}
+      <div className="sticky top-0 z-20 py-2 -mt-2 mb-3 space-y-2 bg-base/90 backdrop-blur-md">
+        {/* Segmented control de vista — píldora deslizante */}
+        <div
+          role="tablist"
+          aria-label="Vista del historial"
+          className="flex p-1 rounded-pill bg-surface border border-line"
         >
-          <BarChart2 className="w-4 h-4" />
-          Mis estadísticas
-        </button>
+          {(
+            [
+              { id: 'all', label: 'Todo' },
+              { id: 'workouts', label: t('history.workouts_view') },
+              { id: 'sets', label: t('history.sets_view') },
+              { id: 'cardio', label: 'Cardio' },
+            ] as const
+          ).map((v) => {
+            const active = view === v.id;
+            return (
+              <button
+                key={v.id}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => setView(v.id)}
+                className={`relative flex-1 py-2.5 text-xs font-semibold rounded-pill transition-colors ${
+                  active ? 'text-accent-fg' : 'text-fg-muted active:text-fg'
+                }`}
+              >
+                {active && (
+                  <m.div
+                    layoutId="historyViewPill"
+                    className="absolute inset-0 rounded-pill bg-accent shadow-btn-accent"
+                    transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                  />
+                )}
+                <span className="relative">{v.label}</span>
+              </button>
+            );
+          })}
+        </div>
 
-        <select
-          value={view}
-          onChange={(e) => setView(e.target.value as 'all' | 'sets' | 'workouts' | 'cardio')}
-          className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-lg text-[var(--text-secondary)] text-[0.95rem] p-2 cursor-pointer transition-all hover:scale-[1.02]"
-        >
-          <option value="all">Todo</option>
-          <option value="sets">{t('history.sets_view')}</option>
-          <option value="workouts">{t('history.workouts_view')}</option>
-          <option value="cardio">Cardio</option>
-        </select>
+        <div className="flex gap-2 flex-wrap">
+          <button
+            onClick={() => navigate('/user-stats')}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg font-semibold text-sm transition-all hover:scale-[1.02] active:scale-[0.98] bg-accent/10 border border-line-accent text-accent"
+          >
+            <BarChart2 className="w-4 h-4" />
+            Mis estadísticas
+          </button>
 
-        {view === 'sets' && (
-          <>
-            <select
-              value={filterExercise}
-              onChange={(e) => setFilterExercise(e.target.value)}
-              className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-lg text-[var(--text-secondary)] text-[0.95rem] p-2 cursor-pointer transition-all hover:scale-[1.02]"
-            >
-              <option value="">{t('history.filter_all')}</option>
-              {exercises.map((ex) => (
-                <option key={ex} value={ex}>
-                  {ex}
-                </option>
-              ))}
-            </select>
-            <button
-              onClick={exportToExcel}
-              className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-lg text-[var(--interactive-primary)] text-[0.95rem] px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
-            >
-              {t('history.export_btn')}
-            </button>
-            <label className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-lg text-[var(--text-secondary)] text-[0.95rem] px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]">
-              {t('history.import_btn')}
-              <input type="file" accept=".csv,.txt" onChange={importFromCsv} className="hidden" />
-            </label>
-          </>
-        )}
+          {view === 'sets' && (
+            <>
+              <input
+                type="search"
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                placeholder={t('history.search_placeholder')}
+                aria-label={t('history.search_placeholder')}
+                className="flex-1 min-w-[10rem] bg-surface border border-line-strong rounded-lg text-fg text-base p-2 outline-none"
+              />
+              <select
+                value={filterExercise}
+                onChange={(e) => setFilterExercise(e.target.value)}
+                className="bg-surface border border-line-strong rounded-lg text-fg-muted text-base p-2 cursor-pointer transition-all hover:scale-[1.02]"
+              >
+                <option value="">{t('history.filter_all')}</option>
+                {exercises.map((ex) => (
+                  <option key={ex} value={ex}>
+                    {ex}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={exportToExcel}
+                className="bg-surface border border-line-strong rounded-lg text-accent text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
+              >
+                {t('history.export_btn')}
+              </button>
+              <button
+                onClick={exportToJson}
+                className="bg-surface border border-line-strong rounded-lg text-accent text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
+              >
+                {t('history.export_json')}
+              </button>
+              <label className="bg-surface border border-line-strong rounded-lg text-fg-muted text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]">
+                {t('history.import_btn')}
+                <input type="file" accept=".csv,.txt" onChange={importFromCsv} className="hidden" />
+              </label>
+              <label className="bg-surface border border-line-strong rounded-lg text-fg-muted text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]">
+                {t('history.import_json')}
+                <input
+                  type="file"
+                  accept=".json,application/json"
+                  onChange={importFromJson}
+                  className="hidden"
+                />
+              </label>
+            </>
+          )}
+        </div>
       </div>
 
       {view === 'all' ? (
@@ -704,30 +895,23 @@ export function HistoryPage() {
             timelineByDate.map((group) => (
               <div key={group.date}>
                 <div className="px-1 mb-2">
-                  <span
-                    className="text-[0.6875rem] font-bold uppercase tracking-[0.1em]"
-                    style={{ color: 'var(--text-tertiary)' }}
-                  >
+                  <span className="text-xs font-bold uppercase tracking-[0.1em] text-fg-subtle">
                     {group.date}
                   </span>
                 </div>
                 <div className="space-y-2">
                   {group.items.map((item, i) =>
                     item.kind === 'cardio' ? (
-                      <motion.div
+                      <m.div
                         key={item.data.id}
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.03 }}
-                        className="rounded-[var(--radius-lg)] p-3.5 flex items-center justify-between"
-                        style={{
-                          backgroundColor: 'var(--bg-surface)',
-                          border: '1px solid var(--border-subtle)',
-                        }}
+                        className="rounded-2xl p-3.5 flex items-center justify-between bg-surface border border-line shadow-card transition-transform active:scale-[0.99]"
                       >
                         <div className="flex items-center gap-3">
                           <div
-                            className="w-9 h-9 rounded-[var(--radius-md)] flex items-center justify-center flex-shrink-0"
+                            className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
                             style={{ backgroundColor: 'rgba(239,68,68,0.12)' }}
                           >
                             <span style={{ color: '#ef4444' }}>
@@ -736,14 +920,11 @@ export function HistoryPage() {
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
-                              <span
-                                className="text-sm font-semibold"
-                                style={{ color: 'var(--text-primary)' }}
-                              >
+                              <span className="text-sm font-semibold text-fg">
                                 {CARDIO_LABELS[item.data.type]}
                               </span>
                               <span
-                                className="text-[0.6875rem] px-1.5 py-0.5 rounded-[var(--radius-pill)] font-bold"
+                                className="text-xs px-1.5 py-0.5 rounded-pill font-bold"
                                 style={{
                                   backgroundColor: 'rgba(239,68,68,0.1)',
                                   color: '#ef4444',
@@ -752,10 +933,7 @@ export function HistoryPage() {
                                 Cardio
                               </span>
                             </div>
-                            <div
-                              className="text-[0.75rem] flex items-center gap-2 mt-0.5"
-                              style={{ color: 'var(--text-secondary)' }}
-                            >
+                            <div className="text-xs flex items-center gap-2 mt-0.5 text-fg-muted">
                               <span className="font-mono font-semibold">
                                 {formatDuration(item.data.duration)}
                               </span>
@@ -766,38 +944,30 @@ export function HistoryPage() {
                         </div>
                         <button
                           onClick={() => void deleteCardioSession(item.data.id, user?.id ?? null)}
-                          className="p-2 rounded-lg ml-2 flex-shrink-0"
-                          style={{ color: 'var(--text-tertiary)' }}
+                          className="p-2 rounded-lg ml-2 flex-shrink-0 text-fg-subtle"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
-                      </motion.div>
+                      </m.div>
                     ) : (
-                      <motion.div
+                      <m.div
                         key={item.data.id}
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.03 }}
-                        className="rounded-[var(--radius-lg)] overflow-hidden"
-                        style={{
-                          backgroundColor: 'var(--bg-surface)',
-                          border: '1px solid var(--border-subtle)',
-                        }}
+                        className="rounded-2xl overflow-hidden bg-surface border border-line shadow-card"
                       >
                         <div className="px-3 py-2.5">
                           <div className="flex justify-between items-center mb-2">
                             <div className="flex items-center gap-2">
-                              <span
-                                className="text-[0.8125rem] font-semibold"
-                                style={{ color: 'var(--text-primary)' }}
-                              >
+                              <span className="text-sm font-semibold text-fg">
                                 {new Date(item.data.started_at ?? '').toLocaleTimeString([], {
                                   hour: '2-digit',
                                   minute: '2-digit',
                                 })}
                               </span>
                               <span
-                                className="text-[0.6875rem] px-1.5 py-0.5 rounded-[var(--radius-pill)] font-bold"
+                                className="text-xs px-1.5 py-0.5 rounded-pill font-bold"
                                 style={{
                                   backgroundColor: 'rgba(200,255,0,0.08)',
                                   color: 'var(--interactive-primary)',
@@ -810,8 +980,7 @@ export function HistoryPage() {
                             <div className="flex gap-3">
                               <button
                                 onClick={() => handleRepeat(item.data)}
-                                className="flex items-center gap-1 text-[0.75rem] font-semibold"
-                                style={{ color: 'var(--interactive-primary)' }}
+                                className="flex items-center gap-1 text-xs font-semibold text-accent"
                               >
                                 <Repeat className="w-3.5 h-3.5" />
                                 {t('history.repeat')}
@@ -834,8 +1003,7 @@ export function HistoryPage() {
                                   if (success) toast.success(t('history.shared_msg'));
                                   else toast.error('Error');
                                 }}
-                                className="flex items-center gap-1 text-[0.75rem] font-semibold"
-                                style={{ color: 'var(--text-secondary)' }}
+                                className="flex items-center gap-1 text-xs font-semibold text-fg-muted"
                               >
                                 <Share2 className="w-3.5 h-3.5" />
                                 {t('history.share')}
@@ -846,19 +1014,14 @@ export function HistoryPage() {
                             {item.data.sets.map((s, si) => (
                               <span
                                 key={si}
-                                className="px-2 py-1 rounded-[var(--radius-pill)] text-[0.75rem]"
-                                style={{
-                                  backgroundColor: 'var(--bg-surface-2)',
-                                  color: 'var(--text-secondary)',
-                                  border: '1px solid var(--border-glass)',
-                                }}
+                                className="px-2 py-1 rounded-pill text-xs bg-surface-2 border border-line-glass text-fg-muted"
                               >
                                 {s.exercise?.name}: {s.reps}×{s.weight}
                               </span>
                             ))}
                           </div>
                         </div>
-                      </motion.div>
+                      </m.div>
                     ),
                   )}
                 </div>
@@ -869,50 +1032,34 @@ export function HistoryPage() {
       ) : view === 'cardio' ? (
         <div className="space-y-2">
           {cardioSessions.length === 0 ? (
-            <div className="text-center py-12 text-sm" style={{ color: 'var(--text-tertiary)' }}>
+            <div className="text-center py-12 text-sm text-fg-subtle">
               Sin sesiones de cardio registradas
             </div>
           ) : (
             cardioSessions.map((session, i) => (
-              <motion.div
+              <m.div
                 key={session.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.03 }}
-                className="rounded-[var(--radius-lg)] p-4 flex items-center justify-between"
-                style={{
-                  backgroundColor: 'var(--bg-surface)',
-                  border: '1px solid var(--border-subtle)',
-                }}
+                className="rounded-2xl p-4 flex items-center justify-between bg-surface border border-line"
               >
                 <div className="flex items-center gap-3">
-                  <div
-                    className="w-9 h-9 rounded-[var(--radius-md)] flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: 'var(--bg-surface-2)' }}
-                  >
-                    <span style={{ color: 'var(--interactive-primary)' }}>
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-surface-2">
+                    <span className="text-accent">
                       <CardioTypeIcon type={session.type} className="w-4.5 h-4.5" />
                     </span>
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span
-                        className="text-sm font-medium"
-                        style={{ color: 'var(--text-primary)' }}
-                      >
+                      <span className="text-sm font-medium text-fg">
                         {CARDIO_LABELS[session.type]}
                       </span>
-                      <span
-                        className="font-mono text-sm font-semibold"
-                        style={{ color: 'var(--interactive-primary)' }}
-                      >
+                      <span className="font-mono text-sm font-semibold text-accent">
                         {formatDuration(session.duration)}
                       </span>
                     </div>
-                    <div
-                      className="text-[0.6875rem] flex items-center gap-2"
-                      style={{ color: 'var(--text-tertiary)' }}
-                    >
+                    <div className="text-xs flex items-center gap-2 text-fg-subtle">
                       <span>
                         {formatDistanceToNow(parseISO(session.startedAt), {
                           addSuffix: true,
@@ -923,34 +1070,22 @@ export function HistoryPage() {
                       {session.calories && <span>· {session.calories}kcal</span>}
                     </div>
                     {session.notes && (
-                      <div
-                        className="text-[0.6875rem] italic mt-0.5"
-                        style={{ color: 'var(--text-tertiary)' }}
-                      >
-                        {session.notes}
-                      </div>
+                      <div className="text-xs italic mt-0.5 text-fg-subtle">{session.notes}</div>
                     )}
                   </div>
                 </div>
                 <button
                   onClick={() => void deleteCardioSession(session.id, user?.id ?? null)}
-                  className="p-2 rounded-lg ml-2 flex-shrink-0"
-                  style={{ color: 'var(--text-tertiary)' }}
+                  className="p-2 rounded-lg ml-2 flex-shrink-0 text-fg-subtle"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
-              </motion.div>
+              </m.div>
             ))
           )}
         </div>
       ) : view === 'sets' ? (
-        <div
-          className="rounded-[var(--radius-lg)] overflow-hidden"
-          style={{
-            backgroundColor: 'var(--bg-surface)',
-            border: '1px solid var(--border-default)',
-          }}
-        >
+        <div className="rounded-2xl overflow-hidden bg-surface border border-line-strong shadow-card">
           {filteredSets.length === 0 ? (
             <EmptyHistory />
           ) : (
@@ -971,21 +1106,12 @@ export function HistoryPage() {
               );
 
               return (
-                <div className="divide-y divide-[var(--border-subtle)]">
+                <div className="divide-y divide-line">
                   {sortedDates.map((date) => (
                     <div key={date}>
                       {/* Cabecera de fecha — mismo estilo que group headers del ExerciseSelector */}
-                      <div
-                        className="px-3 py-2 flex items-center gap-1.5 sticky top-0 z-10"
-                        style={{
-                          backgroundColor: 'var(--bg-surface-2)',
-                          borderBottom: '1px solid var(--border-subtle)',
-                        }}
-                      >
-                        <span
-                          className="text-[0.625rem] font-bold uppercase tracking-[0.12em]"
-                          style={{ color: 'var(--text-tertiary)' }}
-                        >
+                      <div className="px-3 py-2 flex items-center gap-1.5 sticky top-0 z-10 bg-surface-2 border-b border-line">
+                        <span className="text-2xs font-bold uppercase tracking-[0.12em] text-fg-subtle">
                           {date}
                         </span>
                       </div>
@@ -1010,46 +1136,26 @@ export function HistoryPage() {
             <EmptyHistory />
           ) : (
             groupedWorkouts.map((group, gi) => (
-              <motion.div
+              <m.div
                 key={gi}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: gi * 0.04 }}
-                className="rounded-[var(--radius-lg)] overflow-hidden"
-                style={{
-                  backgroundColor: 'var(--bg-surface)',
-                  border: '1px solid var(--border-default)',
-                }}
+                className="rounded-2xl overflow-hidden bg-surface border border-line-strong shadow-card"
               >
                 {/* Cabecera fecha/volumen */}
-                <div
-                  className="px-3 py-2 flex justify-between items-center"
-                  style={{
-                    backgroundColor: 'var(--bg-surface-2)',
-                    borderBottom: '1px solid var(--border-subtle)',
-                  }}
-                >
-                  <span
-                    className="text-[0.625rem] font-bold uppercase tracking-[0.12em]"
-                    style={{ color: 'var(--text-tertiary)' }}
-                  >
+                <div className="px-3 py-2 flex justify-between items-center bg-surface-2 border-b border-line">
+                  <span className="text-2xs font-bold uppercase tracking-[0.12em] text-fg-subtle">
                     {group.date}
                   </span>
-                  <span
-                    className="text-[0.6875rem] font-mono"
-                    style={{ color: 'var(--text-tertiary)' }}
-                  >
+                  <span className="text-xs font-mono text-fg-subtle">
                     {group.totalSets} series · {(group.totalVolume / 1000).toFixed(1)}t
                   </span>
                 </div>
                 {group.workouts.map((wo) => (
-                  <div
-                    key={wo.id}
-                    className="px-3 py-2.5"
-                    style={{ borderBottom: '1px solid var(--border-subtle)' }}
-                  >
+                  <div key={wo.id} className="px-3 py-2.5 border-b border-line">
                     <div className="flex justify-between items-center mb-2">
-                      <span className="text-[0.8125rem]" style={{ color: 'var(--text-tertiary)' }}>
+                      <span className="text-sm text-fg-subtle">
                         {new Date(wo.started_at ?? '').toLocaleTimeString([], {
                           hour: '2-digit',
                           minute: '2-digit',
@@ -1058,8 +1164,7 @@ export function HistoryPage() {
                       <div className="flex gap-3">
                         <button
                           onClick={() => handleRepeat(wo)}
-                          className="flex items-center gap-1 text-[0.75rem] font-semibold"
-                          style={{ color: 'var(--interactive-primary)' }}
+                          className="flex items-center gap-1 text-xs font-semibold text-accent"
                         >
                           <Repeat className="w-3.5 h-3.5" />
                           {t('history.repeat')}
@@ -1079,8 +1184,7 @@ export function HistoryPage() {
                             if (success) toast.success(t('history.shared_msg'));
                             else toast.error('Error');
                           }}
-                          className="flex items-center gap-1 text-[0.75rem] font-semibold"
-                          style={{ color: 'var(--text-secondary)' }}
+                          className="flex items-center gap-1 text-xs font-semibold text-fg-muted"
                         >
                           <Share2 className="w-3.5 h-3.5" />
                           {t('history.share')}
@@ -1091,12 +1195,7 @@ export function HistoryPage() {
                       {wo.sets.map((s: WorkoutSetWithDetails, si) => (
                         <span
                           key={si}
-                          className="px-2 py-1 rounded-[var(--radius-pill)] text-[0.75rem]"
-                          style={{
-                            backgroundColor: 'var(--bg-surface-2)',
-                            color: 'var(--text-secondary)',
-                            border: '1px solid var(--border-glass)',
-                          }}
+                          className="px-2 py-1 rounded-pill text-xs bg-surface-2 border border-line-glass text-fg-muted"
                         >
                           {s.exercise?.name}: {s.reps}×{s.weight}
                         </span>
@@ -1104,7 +1203,7 @@ export function HistoryPage() {
                     </div>
                   </div>
                 ))}
-              </motion.div>
+              </m.div>
             ))
           )}
         </div>
@@ -1114,10 +1213,10 @@ export function HistoryPage() {
         open={!!deleteId}
         onClose={() => setDeleteId(null)}
         title={t('history.delete_confirm')}
-        icon={<Trash2 className="w-5 h-5" style={{ color: 'var(--error)' }} />}
+        icon={<Trash2 className="w-5 h-5 text-error" />}
         variant="danger"
       >
-        <p className="text-[var(--text-secondary)] mb-6">Esta acción no se puede deshacer.</p>
+        <p className="text-fg-muted mb-6">Esta acción no se puede deshacer.</p>
         <div className="flex gap-3">
           <Button variant="secondary" onClick={() => setDeleteId(null)} className="flex-1">
             {t('common.cancel')}

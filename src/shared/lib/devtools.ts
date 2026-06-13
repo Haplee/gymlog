@@ -1,6 +1,7 @@
 const isDev = import.meta.env.DEV;
 
 export const devLog = (...args: unknown[]) => {
+  // eslint-disable-next-line no-console
   if (isDev) console.log(...args);
 };
 

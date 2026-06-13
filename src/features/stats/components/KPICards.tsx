@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 
 interface KPICardProps {
@@ -33,7 +33,7 @@ const svgProps = {
 
 const iconDefs: Record<string, { el: React.ReactElement; color: string }> = {
   flame: {
-    color: '#fb923c',
+    color: 'var(--accent-orange)',
     el: (
       <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
         <path d="M12 2c0 6-6 7-6 12a6 6 0 0 0 12 0c0-5-6-6-6-12z" />
@@ -42,7 +42,7 @@ const iconDefs: Record<string, { el: React.ReactElement; color: string }> = {
     ),
   },
   volume: {
-    color: '#34d399',
+    color: 'var(--accent-emerald)',
     el: (
       <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
         <polyline points="3,17 8,12 13,15 21,7" />
@@ -51,7 +51,7 @@ const iconDefs: Record<string, { el: React.ReactElement; color: string }> = {
     ),
   },
   frequency: {
-    color: '#60a5fa',
+    color: 'var(--accent-blue)',
     el: (
       <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
         <rect x="3" y="4" width="18" height="18" rx="2" />
@@ -65,7 +65,7 @@ const iconDefs: Record<string, { el: React.ReactElement; color: string }> = {
     ),
   },
   prs: {
-    color: '#fbbf24',
+    color: 'var(--accent-amber)',
     el: (
       <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
         <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
@@ -73,7 +73,7 @@ const iconDefs: Record<string, { el: React.ReactElement; color: string }> = {
     ),
   },
   duration: {
-    color: '#e879f9',
+    color: 'var(--accent-fuchsia)',
     el: (
       <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
         <circle cx="12" cy="12" r="9" />
@@ -82,7 +82,7 @@ const iconDefs: Record<string, { el: React.ReactElement; color: string }> = {
     ),
   },
   'cardio-sessions': {
-    color: '#38bdf8',
+    color: 'var(--accent-sky)',
     el: (
       <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
         <path d="M13 4.5L10 9l2.5 1.5-2.5 6" />
@@ -93,7 +93,7 @@ const iconDefs: Record<string, { el: React.ReactElement; color: string }> = {
     ),
   },
   'cardio-time': {
-    color: '#a78bfa',
+    color: 'var(--accent-violet)',
     el: (
       <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
         <polyline points="2,12 5,12 7.5,5 10.5,19 13.5,8 16,15 18,12 22,12" />
@@ -101,7 +101,7 @@ const iconDefs: Record<string, { el: React.ReactElement; color: string }> = {
     ),
   },
   'cardio-dist': {
-    color: '#f472b6',
+    color: 'var(--accent-pink)',
     el: (
       <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
         <path d="M3 12h18" />
@@ -111,7 +111,7 @@ const iconDefs: Record<string, { el: React.ReactElement; color: string }> = {
     ),
   },
   'all-volume': {
-    color: '#10b981',
+    color: 'var(--accent-green)',
     el: (
       <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
         <path d="M3 21h18" />
@@ -122,7 +122,7 @@ const iconDefs: Record<string, { el: React.ReactElement; color: string }> = {
     ),
   },
   notes: {
-    color: '#facc15',
+    color: 'var(--accent-yellow)',
     el: (
       <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
         <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
@@ -133,7 +133,7 @@ const iconDefs: Record<string, { el: React.ReactElement; color: string }> = {
     ),
   },
   'best-1rm': {
-    color: '#f97316',
+    color: 'var(--accent-deep-orange)',
     el: (
       <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
         <circle cx="6" cy="12" r="3" />
@@ -159,58 +159,54 @@ export const KPICard = memo(function KPICard({
   const color = accentColor ?? def.color;
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       whileHover={{ scale: 1.02 }}
       transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-      className="relative overflow-hidden rounded-[var(--radius-xl)] p-4"
-      style={{ backgroundColor: 'var(--bg-surface)' }}
+      className="relative overflow-hidden rounded-card p-4 bg-surface shadow-card"
     >
       {/* Left accent bar */}
       <div
-        className="absolute top-0 left-0 bottom-0 w-[3px] rounded-l-[var(--radius-xl)]"
+        className="absolute top-0 left-0 bottom-0 w-[3px] rounded-l-card"
         style={{ backgroundColor: color }}
+      />
+      {/* Tinte sutil del acento en el borde superior */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-x-0 top-0 h-14 pointer-events-none"
+        style={{
+          background: `linear-gradient(to bottom, color-mix(in srgb, ${color} 8%, transparent), transparent)`,
+        }}
       />
 
       <div className="pl-2">
         {/* Icon + label row */}
         <div className="flex items-center justify-between mb-3">
-          <span
-            className="text-[0.625rem] font-semibold uppercase tracking-[0.08em]"
-            style={{ color: 'var(--text-tertiary)' }}
-          >
+          <span className="text-2xs font-semibold uppercase tracking-[0.08em] text-fg-subtle">
             {title}
           </span>
           <span style={{ color }}>{def.el}</span>
         </div>
 
         {/* Value */}
-        <motion.div
-          className="font-mono font-bold leading-none tracking-tight"
-          style={{
-            fontSize: '2.25rem',
-            color: 'var(--text-primary)',
-          }}
+        <m.div
+          className="font-mono font-bold leading-none tracking-tight text-3xl text-fg"
           initial={{ y: 8, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.05 }}
         >
           {value}
-        </motion.div>
+        </m.div>
 
         {/* Subtitle + badges */}
         <div className="mt-2 flex items-center gap-2 flex-wrap">
-          {subtitle && (
-            <span className="text-[0.6875rem]" style={{ color: 'var(--text-tertiary)' }}>
-              {subtitle}
-            </span>
-          )}
+          {subtitle && <span className="text-xs text-fg-subtle">{subtitle}</span>}
           {trend !== undefined && (
-            <motion.span
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="text-[0.625rem] font-semibold px-1.5 py-0.5 rounded-[var(--radius-pill)] flex items-center gap-0.5"
+            <m.span
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="text-2xs font-semibold px-1.5 py-0.5 rounded-pill flex items-center gap-0.5"
               style={{
                 backgroundColor: trend >= 0 ? 'rgba(48,209,88,0.15)' : 'rgba(255,69,58,0.15)',
                 color: trend >= 0 ? 'var(--success)' : 'var(--error)',
@@ -222,23 +218,23 @@ export const KPICard = memo(function KPICard({
                 <TrendingDown className="w-2.5 h-2.5" />
               )}
               {Math.abs(trend)}%
-            </motion.span>
+            </m.span>
           )}
           {isNewPR && (
-            <motion.span
-              initial={{ scale: 0, opacity: 0 }}
+            <m.span
+              initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="text-[0.5625rem] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-[var(--radius-pill)]"
+              className="text-[0.5625rem] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-pill"
               style={{
                 backgroundColor: 'rgba(48,209,88,0.15)',
                 color: 'var(--success)',
               }}
             >
               Nuevo
-            </motion.span>
+            </m.span>
           )}
         </div>
       </div>
-    </motion.div>
+    </m.div>
   );
 });

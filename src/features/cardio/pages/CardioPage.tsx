@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { Layout } from '@app/components/Layout';
 import {
@@ -106,36 +106,29 @@ function ActiveSessionCard({ userId }: { userId: string | null }) {
   const label = activeType ? CARDIO_LABELS[activeType] : '';
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-[var(--radius-lg)] p-4 mb-3"
-      style={{
-        backgroundColor: 'var(--bg-surface)',
-        border: '2px solid var(--interactive-primary)',
-      }}
+      className="rounded-2xl p-4 mb-3 bg-surface border-2 border-accent shadow-glow"
     >
       {!showFinish ? (
         <>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               {activeType && (
-                <span style={{ color: 'var(--interactive-primary)' }}>
+                <span className="text-accent">
                   <CardioTypeIcon type={activeType} className="w-5 h-5" />
                 </span>
               )}
               <div>
-                <div className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                  {label}
-                </div>
-                <div className="text-[0.6875rem]" style={{ color: 'var(--text-tertiary)' }}>
-                  {isPaused ? 'En pausa' : 'En curso'}
-                </div>
+                <div className="text-sm font-semibold text-fg">{label}</div>
+                <div className="text-xs text-fg-subtle">{isPaused ? 'En pausa' : 'En curso'}</div>
               </div>
             </div>
             <div
-              className="font-mono text-2xl font-bold tabular-nums"
-              style={{ color: 'var(--interactive-primary)' }}
+              className={`font-mono text-2xl font-bold tabular-nums text-accent ${
+                isPaused ? '' : 'timer-pulse'
+              }`}
             >
               {formatSeconds(elapsed)}
             </div>
@@ -148,19 +141,14 @@ function ActiveSessionCard({ userId }: { userId: string | null }) {
                 else pauseSession();
                 void impact(ImpactStyle.Light);
               }}
-              className="flex-1 py-2.5 rounded-[var(--radius-lg)] flex items-center justify-center gap-2 text-sm font-medium"
-              style={{ backgroundColor: 'var(--bg-surface-2)', color: 'var(--text-secondary)' }}
+              className="flex-1 py-2.5 rounded-2xl flex items-center justify-center gap-2 text-sm font-medium bg-surface-2 text-fg-muted"
             >
               {isPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
               {isPaused ? 'Continuar' : 'Pausar'}
             </button>
             <button
               onClick={handleStop}
-              className="flex-1 py-2.5 rounded-[var(--radius-lg)] flex items-center justify-center gap-2 text-sm font-semibold"
-              style={{
-                backgroundColor: 'var(--interactive-primary)',
-                color: 'var(--interactive-primary-fg)',
-              }}
+              className="flex-1 py-2.5 rounded-2xl flex items-center justify-center gap-2 text-sm font-semibold bg-accent text-accent-fg transition-transform active:scale-[0.98]"
             >
               <Square className="w-4 h-4" />
               Terminar
@@ -169,22 +157,15 @@ function ActiveSessionCard({ userId }: { userId: string | null }) {
         </>
       ) : (
         <div>
-          <div
-            className="flex items-center gap-2 text-sm font-semibold mb-1"
-            style={{ color: 'var(--text-primary)' }}
-          >
+          <div className="flex items-center gap-2 text-sm font-semibold mb-1 text-fg">
             {activeType && <CardioTypeIcon type={activeType} className="w-4 h-4" />}
             {label} · {formatSeconds(elapsed)}
           </div>
-          <div className="text-[0.6875rem] mb-3" style={{ color: 'var(--text-tertiary)' }}>
-            Añade detalles opcionales
-          </div>
+          <div className="text-xs mb-3 text-fg-subtle">Añade detalles opcionales</div>
 
           <div className="grid grid-cols-2 gap-2 mb-2">
             <div>
-              <div className="text-[0.6875rem] mb-1" style={{ color: 'var(--text-tertiary)' }}>
-                Distancia (km)
-              </div>
+              <div className="text-xs mb-1 text-fg-subtle">Distancia (km)</div>
               <input
                 type="text"
                 inputMode="decimal"
@@ -192,18 +173,11 @@ function ActiveSessionCard({ userId }: { userId: string | null }) {
                 placeholder="0.0"
                 value={distance}
                 onChange={(e) => setDistance(e.target.value.replace(/[^\d.,]/g, ''))}
-                className="w-full rounded-lg text-sm p-2 outline-none text-center"
-                style={{
-                  backgroundColor: 'var(--bg-surface-2)',
-                  border: '1px solid var(--border-subtle)',
-                  color: 'var(--text-primary)',
-                }}
+                className="w-full rounded-lg text-sm p-2 outline-none text-center bg-surface-2 border border-line text-fg"
               />
             </div>
             <div>
-              <div className="text-[0.6875rem] mb-1" style={{ color: 'var(--text-tertiary)' }}>
-                Calorías
-              </div>
+              <div className="text-xs mb-1 text-fg-subtle">Calorías</div>
               <input
                 type="text"
                 inputMode="numeric"
@@ -211,12 +185,7 @@ function ActiveSessionCard({ userId }: { userId: string | null }) {
                 placeholder="0"
                 value={calories}
                 onChange={(e) => setCalories(e.target.value.replace(/[^\d]/g, ''))}
-                className="w-full rounded-lg text-sm p-2 outline-none text-center"
-                style={{
-                  backgroundColor: 'var(--bg-surface-2)',
-                  border: '1px solid var(--border-subtle)',
-                  color: 'var(--text-primary)',
-                }}
+                className="w-full rounded-lg text-sm p-2 outline-none text-center bg-surface-2 border border-line text-fg"
               />
             </div>
           </div>
@@ -226,36 +195,26 @@ function ActiveSessionCard({ userId }: { userId: string | null }) {
             placeholder="Notas (opcional)..."
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            className="w-full rounded-lg text-sm p-2 outline-none mb-3"
-            style={{
-              backgroundColor: 'var(--bg-surface-2)',
-              border: '1px solid var(--border-subtle)',
-              color: 'var(--text-primary)',
-            }}
+            className="w-full rounded-lg text-sm p-2 outline-none mb-3 bg-surface-2 border border-line text-fg"
           />
 
           <div className="flex gap-2">
             <button
               onClick={handleDiscard}
-              className="flex-1 py-2 rounded-[var(--radius-lg)] text-sm border"
-              style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-tertiary)' }}
+              className="flex-1 py-2 rounded-2xl text-sm border border-line text-fg-subtle"
             >
               Descartar
             </button>
             <button
               onClick={handleSave}
-              className="flex-1 py-2 rounded-[var(--radius-lg)] text-sm font-semibold"
-              style={{
-                backgroundColor: 'var(--interactive-primary)',
-                color: 'var(--interactive-primary-fg)',
-              }}
+              className="flex-1 py-2 rounded-2xl text-sm font-semibold bg-accent text-accent-fg transition-transform active:scale-[0.98]"
             >
               Guardar sesión
             </button>
           </div>
         </div>
       )}
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -274,80 +233,44 @@ function WeeklyStats({ sessions }: { sessions: CardioSession[] }) {
   if (weekSessions.length === 0) return null;
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-[var(--radius-lg)] p-4 mb-3"
-      style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}
+      className="rounded-2xl p-4 mb-3 bg-surface border border-line shadow-card"
     >
-      <div
-        className="text-[0.75rem] font-semibold uppercase mb-3 flex items-center gap-1.5"
-        style={{ color: 'var(--text-tertiary)' }}
-      >
+      <div className="text-xs font-semibold uppercase mb-3 flex items-center gap-1.5 text-fg-subtle">
         <TrendingUp className="w-3.5 h-3.5" />
         Esta semana
       </div>
       <div className="grid grid-cols-3 gap-0">
         <div className="flex flex-col items-center py-1">
-          <span className="text-lg font-bold font-mono" style={{ color: 'var(--text-primary)' }}>
-            {weekSessions.length}
-          </span>
-          <span className="text-[0.6rem] uppercase" style={{ color: 'var(--text-tertiary)' }}>
-            Sesiones
-          </span>
+          <span className="text-lg font-bold font-mono text-fg">{weekSessions.length}</span>
+          <span className="text-2xs uppercase text-fg-subtle">Sesiones</span>
         </div>
-        <div
-          className="flex flex-col items-center py-1 border-x"
-          style={{ borderColor: 'var(--border-subtle)' }}
-        >
-          <span className="text-lg font-bold font-mono" style={{ color: 'var(--text-primary)' }}>
-            {formatDuration(totalTime)}
-          </span>
-          <span className="text-[0.6rem] uppercase" style={{ color: 'var(--text-tertiary)' }}>
-            Tiempo
-          </span>
+        <div className="flex flex-col items-center py-1 border-x border-line">
+          <span className="text-lg font-bold font-mono text-fg">{formatDuration(totalTime)}</span>
+          <span className="text-2xs uppercase text-fg-subtle">Tiempo</span>
         </div>
         <div className="flex flex-col items-center py-1">
           {totalDist > 0 ? (
             <>
-              <span
-                className="text-lg font-bold font-mono"
-                style={{ color: 'var(--text-primary)' }}
-              >
-                {totalDist.toFixed(1)}km
-              </span>
-              <span className="text-[0.6rem] uppercase" style={{ color: 'var(--text-tertiary)' }}>
-                Distancia
-              </span>
+              <span className="text-lg font-bold font-mono text-fg">{totalDist.toFixed(1)}km</span>
+              <span className="text-2xs uppercase text-fg-subtle">Distancia</span>
             </>
           ) : totalCals > 0 ? (
             <>
-              <span
-                className="text-lg font-bold font-mono"
-                style={{ color: 'var(--text-primary)' }}
-              >
-                {totalCals}
-              </span>
-              <span className="text-[0.6rem] uppercase" style={{ color: 'var(--text-tertiary)' }}>
-                kcal
-              </span>
+              <span className="text-lg font-bold font-mono text-fg">{totalCals}</span>
+              <span className="text-2xs uppercase text-fg-subtle">kcal</span>
             </>
           ) : (
             <>
-              <span
-                className="text-lg font-bold font-mono"
-                style={{ color: 'var(--text-primary)' }}
-              >
-                —
-              </span>
-              <span className="text-[0.6rem] uppercase" style={{ color: 'var(--text-tertiary)' }}>
-                km
-              </span>
+              <span className="text-lg font-bold font-mono text-fg">—</span>
+              <span className="text-2xs uppercase text-fg-subtle">km</span>
             </>
           )}
         </div>
       </div>
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -361,28 +284,19 @@ function SessionHistoryItem({
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   return (
-    <div
-      className="flex items-center justify-between py-3 border-b last:border-b-0"
-      style={{ borderColor: 'var(--border-subtle)' }}
-    >
+    <div className="flex items-center justify-between py-3 border-b last:border-b-0 border-line">
       <div className="flex items-center gap-3">
-        <span style={{ color: 'var(--interactive-primary)' }}>
+        <span className="text-accent">
           <CardioTypeIcon type={session.type} className="w-5 h-5" />
         </span>
         <div>
-          <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+          <div className="text-sm font-medium text-fg">
             {CARDIO_LABELS[session.type]}
-            <span
-              className="ml-2 font-mono font-semibold"
-              style={{ color: 'var(--interactive-primary)' }}
-            >
+            <span className="ml-2 font-mono font-semibold text-accent">
               {formatDuration(session.duration)}
             </span>
           </div>
-          <div
-            className="text-[0.6875rem] flex items-center gap-2"
-            style={{ color: 'var(--text-tertiary)' }}
-          >
+          <div className="text-xs flex items-center gap-2 text-fg-subtle">
             <span>
               {formatDistanceToNow(parseISO(session.startedAt), { addSuffix: true, locale: es })}
             </span>
@@ -390,19 +304,14 @@ function SessionHistoryItem({
             {session.calories && <span>· {session.calories}kcal</span>}
           </div>
           {session.notes && (
-            <div
-              className="text-[0.6875rem] italic mt-0.5"
-              style={{ color: 'var(--text-tertiary)' }}
-            >
-              {session.notes}
-            </div>
+            <div className="text-xs italic mt-0.5 text-fg-subtle">{session.notes}</div>
           )}
         </div>
       </div>
 
       <AnimatePresence mode="wait">
         {confirmDelete ? (
-          <motion.div
+          <m.div
             key="confirm"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -426,19 +335,18 @@ function SessionHistoryItem({
             >
               ✕
             </button>
-          </motion.div>
+          </m.div>
         ) : (
-          <motion.button
+          <m.button
             key="trash"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setConfirmDelete(true)}
-            className="p-1.5 rounded-lg"
-            style={{ color: 'var(--text-tertiary)' }}
+            className="p-1.5 rounded-lg text-fg-subtle"
           >
             <Trash2 className="w-3.5 h-3.5" />
-          </motion.button>
+          </m.button>
         )}
       </AnimatePresence>
     </div>
@@ -470,16 +378,12 @@ export function CardioPage() {
 
       {/* Quick Start */}
       {!isActive && (
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-[var(--radius-lg)] p-4 mb-3"
-          style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}
+          className="rounded-2xl p-4 mb-3 bg-surface border border-line shadow-card"
         >
-          <div
-            className="text-[0.75rem] font-semibold uppercase mb-3 flex items-center gap-1.5"
-            style={{ color: 'var(--text-tertiary)' }}
-          >
+          <div className="text-xs font-semibold uppercase mb-3 flex items-center gap-1.5 text-fg-subtle">
             <Timer className="w-3.5 h-3.5" />
             Iniciar sesión
           </div>
@@ -490,11 +394,7 @@ export function CardioPage() {
                 <button
                   key={type}
                   onClick={() => handleStart(type)}
-                  className="relative flex flex-col items-center gap-1.5 py-3 rounded-[var(--radius-lg)] transition-all active:scale-95 overflow-hidden"
-                  style={{
-                    backgroundColor: 'var(--bg-surface-2)',
-                    border: '1px solid var(--border-subtle)',
-                  }}
+                  className="relative flex flex-col items-center gap-1.5 py-3 rounded-2xl transition-all active:scale-95 overflow-hidden bg-surface-2 border border-line"
                 >
                   <div
                     className="absolute top-0 left-0 right-0 h-[2px]"
@@ -503,17 +403,14 @@ export function CardioPage() {
                   <span style={{ color }}>
                     <CardioTypeIcon type={type} className="w-6 h-6" />
                   </span>
-                  <span
-                    className="text-[0.625rem] font-medium leading-tight text-center"
-                    style={{ color: 'var(--text-secondary)' }}
-                  >
+                  <span className="text-2xs font-medium leading-tight text-center text-fg-muted">
                     {CARDIO_LABELS[type]}
                   </span>
                 </button>
               );
             })}
           </div>
-        </motion.div>
+        </m.div>
       )}
 
       {/* Weekly Stats */}
@@ -521,16 +418,12 @@ export function CardioPage() {
 
       {/* History */}
       {sessions.length > 0 && (
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-[var(--radius-lg)] p-4"
-          style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}
+          className="rounded-2xl p-4 bg-surface border border-line shadow-card"
         >
-          <div
-            className="text-[0.75rem] font-semibold uppercase mb-2 flex items-center gap-1.5"
-            style={{ color: 'var(--text-tertiary)' }}
-          >
+          <div className="text-xs font-semibold uppercase mb-2 flex items-center gap-1.5 text-fg-subtle">
             <Calendar className="w-3.5 h-3.5" />
             Historial
           </div>
@@ -541,11 +434,11 @@ export function CardioPage() {
               onDelete={() => void deleteSession(session.id, user?.id ?? null)}
             />
           ))}
-        </motion.div>
+        </m.div>
       )}
 
       {sessions.length === 0 && !isActive && (
-        <div className="text-center py-12 text-sm" style={{ color: 'var(--text-tertiary)' }}>
+        <div className="text-center py-12 text-sm text-fg-subtle">
           Inicia tu primera sesión de cardio
         </div>
       )}

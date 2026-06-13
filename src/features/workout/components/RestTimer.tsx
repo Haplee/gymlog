@@ -3,7 +3,7 @@ import { useRestTimerStore } from '../stores/restTimerStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
 import { impact, ImpactStyle } from '@shared/lib/haptics';
 import { Plus, Minus, TimerReset } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 
 const PRESETS = [60, 90, 120, 180];
 const RADIUS = 36;
@@ -91,17 +91,12 @@ export function RestTimer() {
 
   return (
     <div
-      className="rounded-[var(--radius-lg)] p-4 mt-3"
-      style={{
-        backgroundColor: 'var(--bg-surface)',
-        border: '1px solid var(--border-subtle)',
-      }}
+      className={`rounded-2xl p-4 mt-3 bg-surface border shadow-card transition-shadow duration-300 ${
+        isRunning ? 'border-line-accent shadow-glow' : 'border-line'
+      }`}
     >
       <div className="flex items-center justify-between mb-4">
-        <div
-          className="text-[0.7rem] font-semibold uppercase flex items-center gap-1.5 tracking-widest"
-          style={{ color: 'var(--text-tertiary)' }}
-        >
+        <div className="text-xs font-semibold uppercase flex items-center gap-1.5 tracking-widest text-fg-subtle">
           <TimerReset className="w-3.5 h-3.5" />
           Descanso
         </div>
@@ -110,24 +105,16 @@ export function RestTimer() {
             setRestAutoStart(!restAutoStart);
             void impact(ImpactStyle.Light);
           }}
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-[var(--radius-pill)] text-[0.625rem] font-bold uppercase tracking-wider transition-colors"
-          style={{
-            backgroundColor: restAutoStart ? 'rgba(200,255,0,0.12)' : 'var(--bg-surface-2)',
-            color: restAutoStart ? 'var(--interactive-primary)' : 'var(--text-tertiary)',
-            border: restAutoStart
-              ? '1px solid rgba(200,255,0,0.25)'
-              : '1px solid var(--border-subtle)',
-          }}
+          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-pill text-2xs font-bold uppercase tracking-wider transition-colors border ${
+            restAutoStart
+              ? 'bg-accent/10 text-accent border-line-accent'
+              : 'bg-surface-2 text-fg-subtle border-line'
+          }`}
           aria-pressed={restAutoStart}
           title={restAutoStart ? 'Auto activado' : 'Auto desactivado'}
         >
           <span
-            className="w-1.5 h-1.5 rounded-full"
-            style={{
-              backgroundColor: restAutoStart
-                ? 'var(--interactive-primary)'
-                : 'var(--text-tertiary)',
-            }}
+            className={`w-1.5 h-1.5 rounded-full ${restAutoStart ? 'bg-accent' : 'bg-fg-subtle'}`}
           />
           Auto {restAutoStart ? 'on' : 'off'}
         </button>
@@ -135,7 +122,7 @@ export function RestTimer() {
 
       <AnimatePresence mode="wait">
         {isRunning ? (
-          <motion.div
+          <m.div
             key="running"
             initial={{ opacity: 0, scale: 0.92 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -188,7 +175,7 @@ export function RestTimer() {
 
               {/* Centro — completamente separado del SVG, apilado encima */}
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
-                <motion.span
+                <m.span
                   key={urgent ? 'urgent' : 'normal'}
                   initial={{ scale: 1.06 }}
                   animate={{ scale: 1 }}
@@ -201,7 +188,7 @@ export function RestTimer() {
                   }}
                 >
                   {String(mins).padStart(2, '0')}:{String(secs).padStart(2, '0')}
-                </motion.span>
+                </m.span>
                 <span
                   className="text-[0.5rem] font-bold uppercase tracking-[0.22em]"
                   style={{
@@ -221,37 +208,23 @@ export function RestTimer() {
                   void impact(ImpactStyle.Light);
                   extend(30);
                 }}
-                className="px-3 py-2 rounded-[var(--radius-pill)] text-xs font-bold"
-                style={{
-                  backgroundColor: 'rgba(200,255,0,0.1)',
-                  color: 'var(--interactive-primary)',
-                  border: '1px solid rgba(200,255,0,0.2)',
-                }}
+                className="px-3 py-2 rounded-pill text-xs font-bold bg-accent/10 text-accent border border-line-accent transition-transform active:scale-95"
               >
                 +30s
               </button>
               <button
                 onClick={() => handleStart(duration)}
-                className="px-4 py-2 rounded-[var(--radius-pill)] text-xs font-semibold tracking-wide"
-                style={{
-                  backgroundColor: 'var(--bg-surface-2)',
-                  color: 'var(--text-secondary)',
-                  border: '1px solid var(--border-default)',
-                }}
+                className="px-4 py-2 rounded-pill text-xs font-semibold tracking-wide bg-surface-2 border border-line-strong text-fg-muted"
               >
                 Reiniciar
               </button>
-              <button
-                onClick={stop}
-                className="px-3 py-2 rounded-[var(--radius-pill)] text-xs"
-                style={{ color: 'var(--text-tertiary)' }}
-              >
+              <button onClick={stop} className="px-3 py-2 rounded-pill text-xs text-fg-subtle">
                 Cerrar
               </button>
             </div>
-          </motion.div>
+          </m.div>
         ) : (
-          <motion.div
+          <m.div
             key="idle"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -266,15 +239,11 @@ export function RestTimer() {
                   <button
                     key={s}
                     onClick={() => handleStart(s)}
-                    className="py-2.5 rounded-[var(--radius-pill)] text-[0.8125rem] font-bold transition-all active:scale-95"
-                    style={{
-                      backgroundColor: active
-                        ? 'var(--interactive-primary)'
-                        : 'var(--bg-surface-2)',
-                      color: active ? 'var(--interactive-primary-fg)' : 'var(--text-secondary)',
-                      boxShadow: active ? 'var(--glow-accent)' : 'none',
-                      border: active ? 'none' : '1px solid var(--border-subtle)',
-                    }}
+                    className={`py-2.5 rounded-pill text-sm font-bold transition-all active:scale-95 ${
+                      active
+                        ? 'bg-accent text-accent-fg shadow-glow'
+                        : 'bg-surface-2 text-fg-muted border border-line'
+                    }`}
                   >
                     {`${s}s`}
                   </button>
@@ -285,47 +254,28 @@ export function RestTimer() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => adjustCustom(-15)}
-                className="w-9 h-9 rounded-[var(--radius-pill)] flex items-center justify-center flex-shrink-0"
-                style={{
-                  backgroundColor: 'var(--bg-surface-2)',
-                  color: 'var(--text-secondary)',
-                  border: '1px solid var(--border-subtle)',
-                }}
+                className="w-9 h-9 rounded-pill flex items-center justify-center flex-shrink-0 bg-surface-2 border border-line text-fg-muted"
               >
                 <Minus className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={() => handleStart(selectedDuration)}
-                className="flex-1 h-9 rounded-[var(--radius-pill)] text-sm font-bold transition-all active:scale-95"
-                style={
+                className={`flex-1 h-9 rounded-pill text-sm font-bold transition-all active:scale-95 ${
                   customSecs
-                    ? {
-                        backgroundColor: 'var(--interactive-primary)',
-                        color: 'var(--interactive-primary-fg)',
-                        boxShadow: 'var(--glow-accent)',
-                      }
-                    : {
-                        backgroundColor: 'var(--bg-surface-2)',
-                        color: 'var(--text-tertiary)',
-                        border: '1px dashed var(--border-default)',
-                      }
-                }
+                    ? 'bg-accent text-accent-fg shadow-glow'
+                    : 'bg-surface-2 text-fg-subtle border border-dashed border-line-strong'
+                }`}
               >
                 {`${selectedDuration}s`}
               </button>
               <button
                 onClick={() => adjustCustom(15)}
-                className="w-9 h-9 rounded-[var(--radius-pill)] flex items-center justify-center flex-shrink-0"
-                style={{
-                  backgroundColor: 'var(--bg-surface-2)',
-                  color: 'var(--text-secondary)',
-                  border: '1px solid var(--border-subtle)',
-                }}
+                className="w-9 h-9 rounded-pill flex items-center justify-center flex-shrink-0 bg-surface-2 border border-line text-fg-muted"
               >
                 <Plus className="w-3.5 h-3.5" />
               </button>
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </div>

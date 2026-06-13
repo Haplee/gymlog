@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, m } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -56,7 +56,7 @@ export function BottomSheet({
     <AnimatePresence>
       {open && (
         <>
-          <motion.div
+          <m.div
             key="backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -68,7 +68,7 @@ export function BottomSheet({
             aria-hidden="true"
           />
 
-          <motion.div
+          <m.div
             key="sheet"
             ref={sheetRef}
             role="dialog"
@@ -79,8 +79,8 @@ export function BottomSheet({
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-            className="fixed bottom-0 left-0 right-0 z-[calc(var(--z-modal)+1)] flex flex-col rounded-t-[var(--radius-2xl)]"
-            style={{ backgroundColor: 'var(--bg-surface)', maxHeight: `${maxHeightVh}dvh` }}
+            className="fixed bottom-0 left-0 right-0 z-[calc(var(--z-modal)+1)] flex flex-col rounded-t-card bg-surface shadow-lg"
+            style={{ maxHeight: `${maxHeightVh}dvh` }}
           >
             <div
               className="h-1 flex-shrink-0 rounded-t-full"
@@ -88,10 +88,7 @@ export function BottomSheet({
             />
 
             <div className="flex justify-center pt-3 pb-2 flex-shrink-0">
-              <div
-                className="w-10 h-1 rounded-full"
-                style={{ backgroundColor: 'var(--border-subtle)' }}
-              />
+              <div className="w-10 h-1 rounded-full bg-line" />
             </div>
 
             {(title || icon || showCloseButton) && (
@@ -99,14 +96,14 @@ export function BottomSheet({
                 <div className="flex items-center gap-2">
                   {icon && (
                     <div
-                      className="w-8 h-8 rounded-[var(--radius-md)] flex items-center justify-center"
+                      className="w-8 h-8 rounded-xl flex items-center justify-center"
                       style={{ backgroundColor: iconBg }}
                     >
                       {icon}
                     </div>
                   )}
                   {title && (
-                    <h2 id={titleId} className="font-semibold text-[var(--text-primary)]">
+                    <h2 id={titleId} className="font-semibold text-fg">
                       {title}
                     </h2>
                   )}
@@ -115,7 +112,7 @@ export function BottomSheet({
                   <button
                     onClick={onClose}
                     aria-label={t('common.close')}
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-[var(--text-tertiary)] hover:bg-[var(--bg-surface-2)] hover:text-[var(--text-primary)] transition-colors"
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-fg-subtle hover:bg-surface-2 hover:text-fg transition-colors"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -126,7 +123,7 @@ export function BottomSheet({
             <div className="overflow-y-auto overscroll-contain flex-1 px-4 pb-[env(safe-area-inset-bottom)]">
               {children}
             </div>
-          </motion.div>
+          </m.div>
         </>
       )}
     </AnimatePresence>,

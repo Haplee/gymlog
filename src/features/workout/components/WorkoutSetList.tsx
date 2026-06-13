@@ -1,7 +1,9 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Trophy, StickyNote, X } from 'lucide-react';
-import { tv } from '@shared/styles/themeVars';
+import { impact, ImpactStyle } from '@shared/lib/haptics';
+
+type SetType = 'normal' | 'dropset' | 'rest_pause' | 'amrap';
 
 interface SetData {
   id?: string;
@@ -9,7 +11,17 @@ interface SetData {
   weight: string;
   isWarmup?: boolean;
   notes?: string;
+  rpe?: string;
+  setType?: SetType;
 }
+
+const RPE_OPTIONS = ['6', '7', '8', '9', '10'] as const;
+const SET_TYPES: SetType[] = ['normal', 'dropset', 'rest_pause', 'amrap'];
+const SET_TYPE_BADGE: Record<Exclude<SetType, 'normal'>, string> = {
+  dropset: 'DROP',
+  rest_pause: 'R-P',
+  amrap: 'AMRAP',
+};
 
 interface WorkoutSetListProps {
   sets: SetData[];
@@ -41,8 +53,6 @@ export function WorkoutSetList({
   const [localWeights, setLocalWeights] = useState<Record<string, string>>({});
   const [expandedNoteIdx, setExpandedNoteIdx] = useState<number | null>(null);
 
-  const { bgCard, border, textPrimary, textSecondary, textMuted, accent } = tv;
-
   if (sets.length === 0) {
     return null;
   }
@@ -52,7 +62,7 @@ export function WorkoutSetList({
       {sets.map((s, i) => {
         const isNewPR = checkIsNewPR(s.weight, s.reps);
         return (
-          <motion.div
+          <m.div
             key={s.id ?? String(i)}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -62,35 +72,30 @@ export function WorkoutSetList({
             <div className="flex items-stretch gap-1">
               {showWarmupSets && (
                 <button
-                  onClick={() => updateSet(i, { isWarmup: !s.isWarmup })}
+                  onClick={() => {
+                    void impact(ImpactStyle.Light);
+                    updateSet(i, { isWarmup: !s.isWarmup });
+                  }}
                   aria-pressed={s.isWarmup}
                   aria-label={`Serie ${i + 1}: calentamiento`}
-                  className="w-8 self-stretch rounded text-xs font-bold flex items-center justify-center transition-colors border border-dashed"
-                  style={{
-                    backgroundColor: s.isWarmup ? 'var(--warning)' : 'transparent',
-                    borderColor: s.isWarmup ? 'var(--warning)' : textMuted,
-                    color: s.isWarmup ? '#000' : textMuted,
-                    borderStyle: s.isWarmup ? 'solid' : 'dashed',
-                  }}
+                  className={`w-8 self-stretch rounded text-xs font-bold flex items-center justify-center transition-colors border ${
+                    s.isWarmup
+                      ? 'bg-warning border-solid border-warning text-fg-inverse'
+                      : 'bg-transparent border-dashed border-fg-subtle text-fg-subtle'
+                  }`}
                 >
                   W
                 </button>
               )}
               <div
                 className={`w-6 h-8 flex items-center justify-center text-sm font-medium rounded ${
-                  isNewPR ? 'bg-[var(--interactive-primary)]' : ''
+                  isNewPR ? 'bg-accent text-accent-fg' : 'bg-transparent text-fg-muted'
                 }`}
-                style={{
-                  color: isNewPR ? 'var(--interactive-primary-fg)' : textSecondary,
-                  backgroundColor: isNewPR ? 'var(--interactive-primary)' : 'transparent',
-                }}
               >
                 {i + 1}
               </div>
               <div className="flex-1 flex flex-col">
-                <label className="text-[0.625rem] block mb-1" style={{ color: textMuted }}>
-                  {t('workout.reps')}
-                </label>
+                <label className="text-2xs block mb-1 text-fg-subtle">{t('workout.reps')}</label>
                 <input
                   type="text"
                   inputMode="numeric"
@@ -108,18 +113,13 @@ export function WorkoutSetList({
                       });
                     }
                   }}
-                  className="w-full rounded-lg text-sm px-2 py-1.5 outline-none text-center"
-                  style={{
-                    backgroundColor: setErrors[i] ? 'rgba(255,69,58,0.08)' : bgCard,
-                    border: setErrors[i] ? '1px solid var(--error)' : `1px solid ${border}`,
-                    color: textPrimary,
-                  }}
+                  className={`w-full rounded-lg text-sm px-2 py-1.5 outline-none text-center text-fg border ${
+                    setErrors[i] ? 'bg-error/10 border-error' : 'bg-surface border-line'
+                  }`}
                 />
               </div>
               <div className="relative flex-1 flex flex-col">
-                <label className="text-[0.625rem] block mb-1" style={{ color: textMuted }}>
-                  {weightUnit}
-                </label>
+                <label className="text-2xs block mb-1 text-fg-subtle">{weightUnit}</label>
                 <input
                   type="text"
                   inputMode="decimal"
@@ -135,17 +135,23 @@ export function WorkoutSetList({
                         })()
                   }
                   onChange={(e) => {
-                    const raw = e.target.value.replace(',', '.').replace(/[^\d.]/g, '');
-                    const parts = raw.split('.');
-                    const cleanRaw =
-                      parts[0] + (parts.length > 1 ? '.' + parts.slice(1).join('') : '');
+                    const raw = e.target.value.replace(/[^\d.,]/g, '');
+                    // Evitar múltiples separadores decimales
+                    const parts = raw.split(/[.,]/);
+                    const cleanLocal =
+                      parts[0] +
+                      (parts.length > 1
+                        ? (raw.includes(',') ? ',' : '.') + parts.slice(1).join('')
+                        : '');
 
-                    setLocalWeights((prev) => ({ ...prev, [s.id ?? String(i)]: cleanRaw }));
+                    setLocalWeights((prev) => ({ ...prev, [s.id ?? String(i)]: cleanLocal }));
 
-                    if (cleanRaw === '' || cleanRaw === '.') {
+                    const cleanForParse = cleanLocal.replace(',', '.');
+
+                    if (cleanForParse === '' || cleanForParse === '.') {
                       updateSet(i, { weight: '' });
                     } else {
-                      const display = parseFloat(cleanRaw);
+                      const display = parseFloat(cleanForParse);
                       if (Number.isNaN(display)) {
                         updateSet(i, { weight: '' });
                       } else {
@@ -170,58 +176,106 @@ export function WorkoutSetList({
                       return n;
                     });
                   }}
-                  className="w-full rounded-lg text-sm px-2 py-1.5 outline-none text-center"
-                  style={{
-                    backgroundColor: setErrors[i] ? 'rgba(255,69,58,0.08)' : bgCard,
-                    border: setErrors[i] ? '1px solid var(--error)' : `1px solid ${border}`,
-                    color: textPrimary,
-                  }}
+                  className={`w-full rounded-lg text-sm px-2 py-1.5 outline-none text-center text-fg border ${
+                    setErrors[i] ? 'bg-error/10 border-error' : 'bg-surface border-line'
+                  }`}
                 />
                 {isNewPR && (
                   <span className="absolute -top-1 -right-1">
-                    <Trophy className="w-3 h-3" style={{ color: accent }} />
+                    <Trophy className="w-3 h-3 text-accent" />
                   </span>
                 )}
               </div>
+              {s.setType && s.setType !== 'normal' && (
+                <span className="self-center px-1.5 py-0.5 rounded text-[0.5rem] font-bold bg-accent/15 text-accent">
+                  {SET_TYPE_BADGE[s.setType]}
+                </span>
+              )}
               <button
                 onClick={() => setExpandedNoteIdx(expandedNoteIdx === i ? null : i)}
-                className="w-6 h-8 flex items-center justify-center bg-transparent border rounded cursor-pointer"
-                style={{
-                  borderColor: s.notes ? accent : 'var(--border-subtle)',
-                  color: s.notes ? accent : textMuted,
-                }}
+                className={`w-6 h-8 flex items-center justify-center bg-transparent border rounded cursor-pointer ${
+                  s.notes || s.rpe || (s.setType && s.setType !== 'normal')
+                    ? 'border-accent text-accent'
+                    : 'border-line text-fg-subtle'
+                }`}
                 title="Nota de la serie"
               >
                 <StickyNote className="w-3 h-3" />
               </button>
               <button
                 onClick={() => removeSet(i)}
-                className="w-6 h-8 flex items-center justify-center bg-transparent border rounded cursor-pointer text-lg"
-                style={{ borderColor: 'var(--border-subtle)', color: textMuted }}
+                className="w-6 h-8 flex items-center justify-center bg-transparent border rounded cursor-pointer text-lg border-line text-fg-subtle"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
             {expandedNoteIdx === i && (
-              <input
-                type="text"
-                placeholder="Nota de la serie..."
-                value={s.notes ?? ''}
-                onChange={(e) => updateSet(i, { notes: e.target.value.slice(0, 500) })}
-                className="w-full mt-1 rounded-lg text-xs px-2 py-1.5 outline-none"
-                style={{
-                  backgroundColor: bgCard,
-                  border: `1px solid ${border}`,
-                  color: textPrimary,
-                }}
-              />
-            )}
-            {setErrors[i] && (
-              <div className="text-[0.65rem] mt-1 ml-8" style={{ color: 'var(--error)' }}>
-                {setErrors[i]}
+              <div className="mt-1 space-y-2">
+                <input
+                  type="text"
+                  placeholder="Nota de la serie..."
+                  value={s.notes ?? ''}
+                  onChange={(e) => updateSet(i, { notes: e.target.value.slice(0, 500) })}
+                  className="w-full rounded-lg text-xs px-2 py-1.5 outline-none bg-surface border border-line text-fg"
+                />
+                <div>
+                  <div className="text-2xs uppercase font-semibold mb-1 text-fg-subtle">
+                    {t('workout.rpe_label')}
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {RPE_OPTIONS.map((value) => {
+                      const active = s.rpe === value;
+                      return (
+                        <button
+                          key={value}
+                          onClick={() => {
+                            void impact(ImpactStyle.Light);
+                            updateSet(i, { rpe: active ? '' : value });
+                          }}
+                          aria-pressed={active}
+                          className={`min-w-11 min-h-9 px-2 rounded-lg text-sm font-medium border ${
+                            active
+                              ? 'bg-accent border-accent text-accent-fg'
+                              : 'bg-surface border-line text-fg-muted'
+                          }`}
+                        >
+                          {value}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-2xs uppercase font-semibold mb-1 text-fg-subtle">
+                    {t('workout.set_type_label')}
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {SET_TYPES.map((value) => {
+                      const active = (s.setType ?? 'normal') === value;
+                      return (
+                        <button
+                          key={value}
+                          onClick={() => {
+                            void impact(ImpactStyle.Light);
+                            updateSet(i, { setType: value });
+                          }}
+                          aria-pressed={active}
+                          className={`min-h-9 px-2.5 rounded-lg text-xs font-medium border ${
+                            active
+                              ? 'bg-accent border-accent text-accent-fg'
+                              : 'bg-surface border-line text-fg-muted'
+                          }`}
+                        >
+                          {t(`workout.set_type_${value}`)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             )}
-          </motion.div>
+            {setErrors[i] && <div className="text-2xs mt-1 ml-8 text-error">{setErrors[i]}</div>}
+          </m.div>
         );
       })}
     </>

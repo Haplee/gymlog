@@ -32,15 +32,15 @@ export class ErrorBoundary extends Component<Props, State> {
         return this.props.fallback;
       }
       return (
-        <div className="min-h-screen flex items-center justify-center p-4 bg-[var(--bg-base)]">
+        <div className="min-h-screen flex items-center justify-center p-4 bg-base">
           <div className="text-center max-w-sm">
-            <h1 className="text-xl font-bold text-[var(--error)] mb-2">Algo salió mal</h1>
-            <p className="text-sm text-[var(--text-secondary)] mb-4">
+            <h1 className="text-xl font-bold text-error mb-2">Algo salió mal</h1>
+            <p className="text-sm text-fg-muted mb-4">
               Lo sentimos, ha ocurrido un error inesperado.
             </p>
             <button
               onClick={() => window.location.reload()}
-              className="px-4 py-2 rounded-lg bg-[var(--interactive-primary)] text-[var(--interactive-primary-fg)] font-medium"
+              className="px-4 py-2 rounded-lg bg-accent text-accent-fg font-medium"
             >
               Recargar
             </button>

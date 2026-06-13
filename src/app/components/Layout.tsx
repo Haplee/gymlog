@@ -6,7 +6,7 @@ import { useWorkoutStore } from '@features/workout/stores/workoutStore';
 import { useCardioStore } from '@features/cardio/stores/cardioStore';
 import { queryClient } from '@app/queryClient';
 import { fetchWorkoutsAndSets, fetchWorkouts, fetchRecentSets } from '@shared/api/queries';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { Dumbbell, BarChart3, History, Settings, Heart, WifiOff } from 'lucide-react';
 
 interface LayoutProps {
@@ -85,72 +85,40 @@ export function Layout({ children }: LayoutProps) {
     }
   }, [location.pathname, user?.id]);
 
+  // Precargar el resto de chunks en idle: el primer tap a cada tab ya no espera red
+  useEffect(() => {
+    if (!user?.id) return;
+    const idle = window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 1500));
+    const handle = idle(() => {
+      ['/', '/cardio', '/stats', '/history', '/settings'].forEach(preloadChunk);
+    });
+    return () => {
+      (window.cancelIdleCallback ?? window.clearTimeout)(handle as number);
+    };
+  }, [user?.id]);
+
   return (
-    <div
-      className="min-h-screen min-h-[100dvh] flex flex-col overflow-hidden"
-      style={{ backgroundColor: 'var(--bg-base)' }}
-    >
-      <header
-        className="px-4 py-3 flex-shrink-0"
-        style={{
-          backgroundColor: 'rgba(17,17,17,0.85)',
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
-          borderBottom: '1px solid var(--border-glass)',
-        }}
-      >
+    <div className="min-h-screen min-h-[100dvh] flex flex-col overflow-hidden bg-base">
+      <header className="px-4 py-3 flex-shrink-0 bg-surface/85 backdrop-blur-xl border-b border-line-glass">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div
-              className="w-8 h-8 rounded-[10px] flex items-center justify-center"
-              style={{
-                background: 'linear-gradient(135deg, #c8ff00 0%, #a0cc00 100%)',
-                boxShadow: '0 2px 8px rgba(200,255,0,0.3)',
-              }}
-            >
-              <Dumbbell className="w-4 h-4" style={{ color: '#000' }} />
+            <div className="w-8 h-8 rounded-[10px] flex items-center justify-center bg-gradient-to-br from-accent to-accent-dim shadow-btn-accent">
+              <Dumbbell className="w-4 h-4 text-accent-fg" />
             </div>
-            <div
-              className="text-[1rem] font-bold leading-none tracking-tight"
-              style={{ color: 'var(--text-primary)' }}
-            >
-              Gym<span style={{ color: 'var(--interactive-primary)' }}>Log</span>
+            <div className="text-lg font-bold leading-none tracking-tight text-fg">
+              Gym<span className="text-accent">Log</span>
             </div>
           </div>
           {user && (
-            <div
-              className="flex items-center gap-2 px-2.5 py-1 rounded-[var(--radius-pill)]"
-              style={{
-                backgroundColor: 'var(--bg-surface-2)',
-                border: '1px solid var(--border-subtle)',
-              }}
-            >
-              <div
-                className="w-1.5 h-1.5 rounded-full"
-                style={{ backgroundColor: 'var(--success)', boxShadow: '0 0 6px var(--success)' }}
-              />
-              <span
-                className="text-[0.6875rem] font-medium"
-                style={{ color: 'var(--text-secondary)' }}
-              >
-                {user.email?.split('@')[0]}
-              </span>
+            <div className="flex items-center gap-2 px-2.5 py-1 rounded-pill bg-surface-2 border border-line">
+              <div className="w-1.5 h-1.5 rounded-full bg-success shadow-[0_0_6px_var(--success)]" />
+              <span className="text-xs font-medium text-fg-muted">{user.email?.split('@')[0]}</span>
             </div>
           )}
         </div>
       </header>
 
-      <nav
-        className="flex flex-shrink-0 relative z-10"
-        style={{
-          backgroundColor: 'rgba(0,0,0,0.95)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          borderTop: '1px solid var(--border-glass)',
-          boxShadow: '0 -1px 0 rgba(255,255,255,0.04)',
-          paddingBottom: 'env(safe-area-inset-bottom)',
-        }}
-      >
+      <nav className="flex flex-shrink-0 relative z-10 safe-area-bottom bg-black/95 backdrop-blur-xl border-t border-line-glass shadow-[0_-1px_0_rgba(255,255,255,0.04)]">
         {tabs.map((tab) => {
           const isActive = location.pathname === tab.path;
           const { Icon, label, badge } = tab;
@@ -166,41 +134,28 @@ export function Layout({ children }: LayoutProps) {
               }}
               className="flex-1 py-3 flex flex-col items-center gap-1 relative transition-opacity active:opacity-60"
             >
-              <div className="relative">
-                <Icon
-                  className="w-5 h-5"
-                  strokeWidth={isActive ? 2 : 1.5}
-                  style={{
-                    color: isActive ? 'var(--interactive-primary)' : 'var(--text-tertiary)',
-                  }}
-                />
-                {badge && (
-                  <motion.span
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="absolute -top-1 -right-1 w-2 h-2 rounded-full"
-                    style={{
-                      backgroundColor: 'var(--interactive-primary)',
-                      boxShadow: '0 0 6px var(--interactive-primary)',
-                      animation: 'pulse-soft 1.6s ease-in-out infinite',
-                    }}
+              <div className="relative px-3.5 py-0.5">
+                {isActive && (
+                  <m.div
+                    layoutId="activeTabPill"
+                    className="absolute inset-0 rounded-pill bg-accent/12"
+                    transition={{ type: 'spring', stiffness: 500, damping: 32 }}
                   />
                 )}
-                {isActive && (
-                  <motion.div
-                    layoutId="activeTabDot"
-                    className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full"
-                    style={{
-                      backgroundColor: 'var(--interactive-primary)',
-                      boxShadow: 'var(--glow-accent)',
-                    }}
-                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                <Icon
+                  className={`relative w-5 h-5 transition-colors ${isActive ? 'text-accent' : 'text-fg-subtle'}`}
+                  strokeWidth={isActive ? 2 : 1.5}
+                />
+                {badge && (
+                  <m.span
+                    initial={{ scale: 0.95, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="absolute -top-1 right-2 w-2 h-2 rounded-full bg-accent shadow-glow pulse-soft"
                   />
                 )}
               </div>
               <span
-                className="text-[0.5625rem] font-semibold tracking-wide"
-                style={{ color: isActive ? 'var(--interactive-primary)' : 'var(--text-tertiary)' }}
+                className={`text-[0.5625rem] font-semibold tracking-wide transition-colors ${isActive ? 'text-accent' : 'text-fg-subtle'}`}
               >
                 {label}
               </span>
@@ -211,37 +166,29 @@ export function Layout({ children }: LayoutProps) {
 
       <AnimatePresence>
         {!isOnline && (
-          <motion.div
+          <m.div
             key="offline-banner"
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="flex items-center justify-center gap-2 py-2 px-4 offline-pulse flex-shrink-0"
-            style={{
-              backgroundColor: 'rgba(255,69,58,0.12)',
-              borderBottom: '1px solid rgba(255,69,58,0.25)',
-            }}
+            className="flex items-center justify-center gap-2 py-2 px-4 offline-pulse flex-shrink-0 bg-error/12 border-b border-error/25"
           >
-            <WifiOff className="w-3.5 h-3.5" style={{ color: 'var(--error)' }} />
-            <span className="text-[0.75rem] font-medium" style={{ color: 'var(--error)' }}>
-              {t('common.offline')}
-            </span>
-          </motion.div>
+            <WifiOff className="w-3.5 h-3.5 text-error" />
+            <span className="text-xs font-medium text-error">{t('common.offline')}</span>
+          </m.div>
         )}
       </AnimatePresence>
 
-      <AnimatePresence mode="wait">
-        <motion.main
-          key={location.pathname}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          transition={{ type: 'spring' as const, stiffness: 250, damping: 25 }}
-          className="flex-1 px-4 pt-4 pb-24 overflow-y-auto"
-        >
-          {children}
-        </motion.main>
-      </AnimatePresence>
+      {/* Sin AnimatePresence mode="wait": el exit bloqueante hacía lento el cambio de tab */}
+      <m.main
+        key={location.pathname}
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.16, ease: 'easeOut' }}
+        className="flex-1 px-4 pt-4 pb-24 overflow-y-auto"
+      >
+        {children}
+      </m.main>
     </div>
   );
 }
