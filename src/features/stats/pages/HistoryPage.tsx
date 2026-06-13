@@ -159,6 +159,7 @@ export function HistoryPage() {
   } = useCardioStore();
   const [view, setView] = useState<'all' | 'sets' | 'workouts' | 'cardio'>('all');
   const [filterExercise, setFilterExercise] = useState('');
+  const [searchText, setSearchText] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const {
@@ -198,8 +199,15 @@ export function HistoryPage() {
 
   const exercises = [...new Set(recentSets.map((s) => s.exercise?.name).filter(Boolean))];
 
+  const search = searchText.trim().toLowerCase();
   const filteredSets = recentSets
     .filter((s) => !filterExercise || s.exercise?.name === filterExercise)
+    .filter((s) => {
+      if (!search) return true;
+      const name = s.exercise?.name?.toLowerCase() ?? '';
+      const notes = s.notes?.toLowerCase() ?? '';
+      return name.includes(search) || notes.includes(search);
+    })
     .sort(
       (a, b) =>
         new Date(b.workout?.started_at ?? '').getTime() -
@@ -275,6 +283,162 @@ export function HistoryPage() {
     }
   };
 
+  const saveBlob = async (fileName: string, data: string, mime: string) => {
+    if (Capacitor.isNativePlatform()) {
+      try {
+        await Filesystem.writeFile({
+          path: fileName,
+          data,
+          directory: Directory.Cache,
+          encoding: Encoding.UTF8,
+        });
+        const uriResult = await Filesystem.getUri({ directory: Directory.Cache, path: fileName });
+        await Share.share({
+          title: 'Exportar Historial',
+          url: uriResult.uri,
+          dialogTitle: 'Compartir Historial',
+        });
+      } catch (err) {
+        devError('Error export native', err);
+        toast.error('Error al exportar histórico');
+      }
+    } else {
+      const blob = new Blob([data], { type: mime });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = fileName;
+      link.click();
+    }
+  };
+
+  const exportToJson = async () => {
+    const payload = {
+      app: 'GymLog',
+      version: 2,
+      exported_at: new Date().toISOString(),
+      workouts: workouts.map((w) => ({
+        started_at: w.started_at,
+        finished_at: w.ended_at ?? null,
+        sets: [...w.sets]
+          .sort((a, b) => a.set_num - b.set_num)
+          .map((s) => ({
+            exercise: s.exercise?.name ?? null,
+            set_num: s.set_num,
+            reps: s.reps,
+            weight: s.weight,
+            is_warmup: s.is_warmup ?? false,
+            rpe: typeof s.rpe === 'number' ? s.rpe : null,
+            notes: s.notes ?? null,
+          })),
+      })),
+      cardio: cardioSessions,
+    };
+    const fileName = `gymlog_${new Date().toISOString().split('T')[0]}.json`;
+    await saveBlob(fileName, JSON.stringify(payload, null, 2), 'application/json;charset=utf-8;');
+  };
+
+  const importFromJson = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) {
+      toast.error('Selecciona un archivo e inicia sesión');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const parsed = JSON.parse((event.target?.result as string) || '{}');
+        const importedWorkouts = Array.isArray(parsed?.workouts) ? parsed.workouts : null;
+        if (!importedWorkouts) {
+          toast.error(t('history.import_json_invalid'));
+          return;
+        }
+
+        toast.info('Cargando datos...');
+        const exerciseList = await fetchExercises(user.id);
+        const resolveExerciseId = async (name: string): Promise<string | null> => {
+          const clean = (name || '').trim();
+          if (clean.length < 2) return null;
+          const existing = exerciseList.find(
+            (ex) => ex?.name?.toLowerCase() === clean.toLowerCase(),
+          );
+          if (existing?.id) return existing.id;
+          const { data: newEx, error } = await supabase
+            .from('exercises')
+            .insert({ name: clean, user_id: user.id, muscle_group: 'Otro' })
+            .select('id, name')
+            .single();
+          if (error || !newEx) return null;
+          exerciseList.push({
+            id: newEx.id,
+            name: clean,
+            muscle_group: 'Otro',
+            muscle_detail: null,
+            equipment: 'Gimnasio',
+            movement: null,
+            is_bilateral: true,
+            is_compound: false,
+            is_public: false,
+            description: null,
+            media_url: null,
+            user_id: user.id,
+            created_at: '',
+          });
+          return newEx.id;
+        };
+
+        let imported = 0;
+        for (const w of importedWorkouts) {
+          const sets = Array.isArray(w?.sets) ? w.sets : [];
+          // Agrupa sets por ejercicio: la RPC guarda un ejercicio por llamada.
+          const byExercise = new Map<string, typeof sets>();
+          for (const s of sets) {
+            const exName = String(s?.exercise ?? '').trim();
+            if (!exName) continue;
+            const group = byExercise.get(exName) ?? [];
+            group.push(s);
+            byExercise.set(exName, group);
+          }
+          const startedAt = w?.started_at || new Date().toISOString();
+          const finishedAt = w?.finished_at || startedAt;
+
+          for (const [exName, exSets] of byExercise) {
+            const exerciseId = await resolveExerciseId(exName);
+            if (!exerciseId) continue;
+            const setsPayload = exSets
+              .map((s: Record<string, unknown>, i: number) => ({
+                set_num: Number(s.set_num) || i + 1,
+                reps: Number(s.reps) || 0,
+                weight: Number(s.weight) || 0,
+                is_warmup: !!s.is_warmup,
+                notes: typeof s.notes === 'string' ? s.notes : '',
+                rpe: s.rpe != null ? String(s.rpe) : '',
+              }))
+              .filter((s: { reps: number }) => s.reps > 0);
+            if (!setsPayload.length) continue;
+            const { error } = await supabase.rpc('save_workout_with_sets', {
+              p_user_id: user.id,
+              p_exercise_id: exerciseId,
+              p_started_at: startedAt,
+              p_finished_at: finishedAt,
+              p_sets: setsPayload,
+            });
+            if (!error) imported += 1;
+          }
+        }
+
+        refetchSets();
+        refetchWorkouts();
+        queryClient.invalidateQueries({ queryKey: ['personalRecords'] });
+        toast.success(t('history.import_success', { count: imported }));
+      } catch (err) {
+        devError('Error import JSON', err);
+        toast.error(t('history.import_error'));
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
   const importFromCsv = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) {
@@ -340,6 +504,10 @@ export function HistoryPage() {
               equipment: 'Gimnasio',
               movement: null,
               is_bilateral: true,
+              is_compound: false,
+              is_public: false,
+              description: null,
+              media_url: null,
               user_id: user.id,
               created_at: '',
             });
@@ -669,6 +837,14 @@ export function HistoryPage() {
 
           {view === 'sets' && (
             <>
+              <input
+                type="search"
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                placeholder={t('history.search_placeholder')}
+                aria-label={t('history.search_placeholder')}
+                className="flex-1 min-w-[10rem] bg-surface border border-line-strong rounded-lg text-fg text-base p-2 outline-none"
+              />
               <select
                 value={filterExercise}
                 onChange={(e) => setFilterExercise(e.target.value)}
@@ -687,9 +863,24 @@ export function HistoryPage() {
               >
                 {t('history.export_btn')}
               </button>
+              <button
+                onClick={exportToJson}
+                className="bg-surface border border-line-strong rounded-lg text-accent text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
+              >
+                {t('history.export_json')}
+              </button>
               <label className="bg-surface border border-line-strong rounded-lg text-fg-muted text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]">
                 {t('history.import_btn')}
                 <input type="file" accept=".csv,.txt" onChange={importFromCsv} className="hidden" />
+              </label>
+              <label className="bg-surface border border-line-strong rounded-lg text-fg-muted text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]">
+                {t('history.import_json')}
+                <input
+                  type="file"
+                  accept=".json,application/json"
+                  onChange={importFromJson}
+                  className="hidden"
+                />
               </label>
             </>
           )}

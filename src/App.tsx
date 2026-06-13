@@ -9,6 +9,7 @@ import { OnboardingModal } from '@features/auth/components/OnboardingModal';
 import { App as CapApp } from '@capacitor/app';
 import { supabase } from '@shared/lib/supabase';
 import { useWorkoutReminder } from '@features/routine/hooks/useWorkoutReminder';
+import { useFatigueSuggestion } from '@features/stats/hooks/useFatigueSuggestion';
 import { useBackgroundNotifications } from '@shared/hooks/useBackgroundNotifications';
 import { Capacitor } from '@capacitor/core';
 import { toast } from 'sonner';
@@ -41,6 +42,11 @@ const CardioPage = lazy(() =>
 );
 const UserStatsPage = lazy(() =>
   import('@features/stats/pages/UserStatsPage').then((m) => ({ default: m.UserStatsPage })),
+);
+const ExerciseLibraryPage = lazy(() =>
+  import('@features/workout/pages/ExerciseLibraryPage').then((m) => ({
+    default: m.ExerciseLibraryPage,
+  })),
 );
 
 function Loading() {
@@ -124,6 +130,14 @@ function AnimatedRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/exercises"
+        element={
+          <ProtectedRoute>
+            <ExerciseLibraryPage />
+          </ProtectedRoute>
+        }
+      />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
@@ -174,6 +188,7 @@ function AppRoutes() {
   const navigate = useNavigate();
 
   useWorkoutReminder();
+  useFatigueSuggestion();
   useBackgroundNotifications();
   usePWAUpdate();
 

@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useRoutineStore, dayLabels } from '@features/routine/stores/routineStore';
 import { Layout } from '@app/components/Layout';
-import type { Routine, DayOfWeek } from '@features/routine/stores/routineStore';
+import type { Routine, DayOfWeek, RoutineExercise } from '@features/routine/stores/routineStore';
 import { fetchExercises } from '@shared/api/queries';
+import { SortableExerciseList } from '@features/routine/components/SortableExerciseList';
 
 const DAYS = Object.keys(dayLabels) as DayOfWeek[];
 
@@ -19,6 +21,7 @@ export function RoutinePage() {
     activeRoutineId,
     setActiveRoutine,
     addRoutine,
+    cloneRoutine,
     deleteRoutine,
     loadFromDb,
     checkAndBackup,
@@ -29,7 +32,7 @@ export function RoutinePage() {
 
   const { data: exercises = [] } = useQuery({
     queryKey: ['exercises', user?.id],
-    queryFn: () => fetchExercises(user!.id),
+    queryFn: () => fetchExercises(user?.id),
     enabled: !!user?.id,
   });
 
@@ -57,13 +60,24 @@ export function RoutinePage() {
     }
   };
 
+  const handleUseAsTemplate = (e: React.MouseEvent, routineId: string) => {
+    e.stopPropagation();
+    const newId = cloneRoutine(routineId);
+    if (!newId) return;
+    setActiveRoutine(newId);
+    if (user) {
+      useRoutineStore.getState().saveToDb(user.id);
+    }
+    toast.success(t('routine.cloned'));
+  };
+
   const handleCreateRoutine = () => {
     if (!newRoutineName.trim()) return;
 
     const newRoutine: Routine = {
       id: `custom-${Date.now()}`,
       name: newRoutineName,
-      description: newRoutineDesc || 'Rutina personalizada',
+      description: newRoutineDesc || t('routine.custom_default_desc'),
       isCustom: true,
       createdAt: new Date().toISOString(),
       days: {
@@ -89,7 +103,7 @@ export function RoutinePage() {
   };
 
   const handleDeleteRoutine = (id: string) => {
-    if (confirm('¿Eliminar esta rutina?')) {
+    if (confirm(t('routine.delete_confirm'))) {
       deleteRoutine(id);
       if (user) {
         useRoutineStore.getState().saveToDb(user.id);
@@ -128,6 +142,19 @@ export function RoutinePage() {
     }
   };
 
+  const reorderDay = (day: DayOfWeek, next: RoutineExercise[]) => {
+    if (!activeRoutine) return;
+
+    const updatedDays = { ...activeRoutine.days };
+    updatedDays[day] = { ...updatedDays[day], exercises: next };
+
+    useRoutineStore.getState().updateRoutine(activeRoutine.id, { days: updatedDays });
+
+    if (user) {
+      useRoutineStore.getState().saveToDb(user.id);
+    }
+  };
+
   return (
     <Layout>
       <div className="text-lg font-bold mb-4 text-accent">{t('routine.title')}</div>
@@ -140,7 +167,15 @@ export function RoutinePage() {
             {routines.map((routine) => (
               <div
                 key={routine.id}
+                role="button"
+                tabIndex={0}
                 onClick={() => handleSelectRoutine(routine.id)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleSelectRoutine(routine.id);
+                  }
+                }}
                 className="p-4 rounded-2xl cursor-pointer transition-all active:scale-[0.99]"
                 style={{
                   backgroundColor: 'var(--bg-surface-2)',
@@ -148,22 +183,30 @@ export function RoutinePage() {
                   boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset',
                 }}
               >
-                <div className="flex justify-between items-center">
-                  <div>
+                <div className="flex justify-between items-center gap-3">
+                  <div className="min-w-0">
                     <div className="text-base font-semibold text-fg">{routine.name}</div>
                     <div className="text-xs mt-0.5 text-fg-subtle">{routine.description}</div>
                   </div>
                   {!routine.isCustom && (
-                    <span
-                      className="text-[0.5625rem] px-2 py-1 rounded-pill font-bold uppercase tracking-wide"
-                      style={{
-                        backgroundColor: 'rgba(200,255,0,0.08)',
-                        color: 'var(--interactive-primary)',
-                        border: '1px solid rgba(200,255,0,0.15)',
-                      }}
-                    >
-                      Predefinida
-                    </span>
+                    <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                      <span
+                        className="text-[0.5625rem] px-2 py-1 rounded-pill font-bold uppercase tracking-wide"
+                        style={{
+                          backgroundColor: 'rgba(200,255,0,0.08)',
+                          color: 'var(--interactive-primary)',
+                          border: '1px solid rgba(200,255,0,0.15)',
+                        }}
+                      >
+                        {t('routine.predefined')}
+                      </span>
+                      <button
+                        onClick={(e) => handleUseAsTemplate(e, routine.id)}
+                        className="min-h-11 text-xs px-3 py-1.5 rounded-lg font-medium bg-surface text-accent border border-line-glass active:scale-[0.98]"
+                      >
+                        {t('routine.use_template')}
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -178,7 +221,7 @@ export function RoutinePage() {
               color: 'var(--interactive-primary-fg)',
             }}
           >
-            + Crear rutina personalizada
+            {t('routine.create_custom')}
           </button>
         </>
       ) : (
@@ -243,7 +286,7 @@ export function RoutinePage() {
                     border: 'none',
                   }}
                 >
-                  <option value="">+ Añadir</option>
+                  <option value="">{t('routine.add_exercise')}</option>
                   {exerciseNames
                     .filter(
                       (name) =>
@@ -260,10 +303,14 @@ export function RoutinePage() {
 
             {activeRoutine?.days[selectedDay].exercises.length === 0 ? (
               <div className="text-center py-6 text-xs text-fg-subtle">
-                {activeRoutine?.isCustom
-                  ? 'Añade ejercicios con el selector de arriba'
-                  : 'Descanso'}
+                {activeRoutine?.isCustom ? t('routine.empty_custom_day') : t('routine.rest_day')}
               </div>
+            ) : activeRoutine?.isCustom ? (
+              <SortableExerciseList
+                exercises={activeRoutine.days[selectedDay].exercises}
+                onReorder={(next) => reorderDay(selectedDay, next)}
+                onRemove={(i) => removeExerciseFromDay(selectedDay, i)}
+              />
             ) : (
               <div className="space-y-1.5">
                 {activeRoutine?.days[selectedDay].exercises.map((ex, i) => (
@@ -279,14 +326,6 @@ export function RoutinePage() {
                         </div>
                       )}
                     </div>
-                    {activeRoutine?.isCustom && (
-                      <button
-                        onClick={() => removeExerciseFromDay(selectedDay, i)}
-                        className="w-7 h-7 flex items-center justify-center rounded-lg text-lg text-fg-subtle"
-                      >
-                        ×
-                      </button>
-                    )}
                   </div>
                 ))}
               </div>
@@ -298,7 +337,7 @@ export function RoutinePage() {
               onClick={() => handleDeleteRoutine(activeRoutine.id)}
               className="mt-4 text-sm text-error"
             >
-              Eliminar rutina
+              {t('routine.delete_routine')}
             </button>
           )}
         </>
@@ -307,11 +346,11 @@ export function RoutinePage() {
       {showCreate && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
           <div className="rounded-xl p-4 w-full max-w-sm bg-surface">
-            <div className="text-lg font-bold mb-4 text-fg">Nueva Rutina</div>
+            <div className="text-lg font-bold mb-4 text-fg">{t('routine.new_routine')}</div>
 
             <input
               type="text"
-              placeholder="Nombre"
+              placeholder={t('routine.name_placeholder')}
               value={newRoutineName}
               onChange={(e) => setNewRoutineName(e.target.value)}
               className="w-full p-2 rounded-lg text-sm mb-2 bg-surface-2 border border-line-strong text-fg"
@@ -319,7 +358,7 @@ export function RoutinePage() {
 
             <input
               type="text"
-              placeholder="Descripción (opcional)"
+              placeholder={t('routine.desc_placeholder')}
               value={newRoutineDesc}
               onChange={(e) => setNewRoutineDesc(e.target.value)}
               className="w-full p-2 rounded-lg text-sm mb-4 bg-surface-2 border border-line-strong text-fg"
@@ -330,7 +369,7 @@ export function RoutinePage() {
                 onClick={() => setShowCreate(false)}
                 className="flex-1 py-2 rounded-lg text-sm bg-surface-2 text-fg-muted"
               >
-                Cancelar
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleCreateRoutine}
@@ -340,7 +379,7 @@ export function RoutinePage() {
                   color: 'var(--interactive-primary-fg)',
                 }}
               >
-                Crear
+                {t('common.create')}
               </button>
             </div>
           </div>

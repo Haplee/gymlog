@@ -11,6 +11,8 @@ import {
   isNative,
   cancelAllScheduled,
   syncRoutineReminders,
+  scheduleStreakReminder,
+  scheduleWeeklySummaryReminder,
 } from '@shared/lib/notifications';
 import { getReminderDays } from '@features/routine/hooks/useWorkoutReminder';
 import { toast } from 'sonner';
@@ -49,6 +51,8 @@ export function SettingsPage() {
     setShowWarmupSets,
     restAutoStart,
     setRestAutoStart,
+    restDuration,
+    setRestDuration,
   } = useSettingsStore();
   const [notifEnabled, setNotifEnabled] = useState(false);
   const [biometricSupport, setBiometricSupport] = useState<{ available: boolean; message: string }>(
@@ -128,8 +132,10 @@ export function SettingsPage() {
         if (user) {
           await supabase.from('profiles').update({ notifications_enabled: true }).eq('id', user.id);
         }
-        // Reprogramar recordatorios de rutina con el permiso ya concedido
+        // Reprogramar todas las alarmas nativas con el permiso ya concedido
         await syncRoutineReminders(getReminderDays());
+        await scheduleStreakReminder();
+        await scheduleWeeklySummaryReminder();
         toast.success('Notificaciones activadas');
       } else {
         localStorage.setItem('notif_disabled', 'true');
@@ -350,6 +356,39 @@ export function SettingsPage() {
               />
             </button>
           </div>
+
+          {restAutoStart && (
+            <div className="mt-4 pt-4 border-t border-line">
+              <div className="text-base text-fg">{t('settings.rest_duration')}</div>
+              <div className="text-xs mb-2 text-fg-subtle">{t('settings.rest_duration_desc')}</div>
+              <div className="flex gap-1.5">
+                {[60, 90, 120, 180].map((seconds) => (
+                  <button
+                    key={seconds}
+                    onClick={() => setRestDuration(seconds)}
+                    aria-pressed={restDuration === seconds}
+                    className="flex-1 min-h-11 rounded-lg text-sm font-medium border"
+                    style={{
+                      backgroundColor:
+                        restDuration === seconds
+                          ? 'var(--interactive-primary)'
+                          : 'var(--bg-surface-2)',
+                      color:
+                        restDuration === seconds
+                          ? 'var(--interactive-primary-fg)'
+                          : 'var(--text-secondary)',
+                      borderColor:
+                        restDuration === seconds
+                          ? 'var(--interactive-primary)'
+                          : 'var(--border-glass)',
+                    }}
+                  >
+                    {seconds < 120 ? `${seconds}s` : `${seconds / 60}min`}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <button

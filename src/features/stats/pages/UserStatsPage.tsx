@@ -18,6 +18,9 @@ import {
   isWorkingSet,
 } from '../utils/kpiCalculations';
 import { analyzeMuscleRecovery, getDaysSinceLastWorkout } from '../utils/fatigueAnalysis';
+import { comparePeriods } from '../utils/periodComparison';
+import { projectNextVolume } from '../utils/volumeProjection';
+import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft,
   Lightbulb,
@@ -35,6 +38,7 @@ import { calcular1RM } from '@shared/lib/brzycki';
 import { SectionLabel } from '../components/userStats/SectionLabel';
 import { DayFrequencyChart } from '../components/userStats/DayFrequencyChart';
 import { TopExercisesList } from '../components/userStats/TopExercisesList';
+import { BodyMeasurements } from '../components/userStats/BodyMeasurements';
 
 // recharts es pesado: cargar estos charts bajo demanda lo saca del chunk de la página
 const WeeklyVolumeChart = lazy(() =>
@@ -360,6 +364,7 @@ function generateTips(params: {
 
 export function UserStatsPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const { sessions: cardioSessions, syncFromRemote: syncCardio } = useCardioStore();
 
@@ -400,6 +405,7 @@ export function UserStatsPage() {
   const avgDuration = useMemo(() => calculateAverageSessionDuration(workouts), [workouts]);
   const totalPRs = useMemo(() => calculateAllTimePRsCount(personalRecords), [personalRecords]);
   const muscleRecovery = useMemo(() => analyzeMuscleRecovery(recentSets), [recentSets]);
+  const periodComparison = useMemo(() => comparePeriods(recentSets, 30), [recentSets]);
 
   // Muscle group distribution
   const muscleDistribution = useMemo(() => {
@@ -449,6 +455,11 @@ export function UserStatsPage() {
       return { week: `S${i + 1}`, vol, label: format(weekStart, 'dd/MM', { locale: es }) };
     });
   }, [recentSets]);
+
+  const volumeProjection = useMemo(
+    () => projectNextVolume(weeklyVolumeData.map((w) => w.vol)),
+    [weeklyVolumeData],
+  );
 
   // Workout frequency by day of week
   const dayFrequency = useMemo(() => {
@@ -661,11 +672,70 @@ export function UserStatsPage() {
           )}
         </section>
 
+        {/* ── Medidas corporales ── */}
+        <BodyMeasurements userId={user.id} />
+
         {/* ── Volumen semanal ── */}
         {weeklyVolumeData.some((w) => w.vol > 0) && (
           <Suspense fallback={<ChartFallback />}>
             <WeeklyVolumeChart data={weeklyVolumeData} volumeChange={volumeChange} />
           </Suspense>
+        )}
+
+        {/* ── Comparación de periodo + proyección ── */}
+        {(periodComparison.current.volume > 0 || periodComparison.previous.volume > 0) && (
+          <section className="space-y-3">
+            <SectionLabel>{t('stats.comparison_title')}</SectionLabel>
+            <div className="grid grid-cols-2 gap-3">
+              {(
+                [
+                  { key: 'current', stats: periodComparison.current },
+                  { key: 'previous', stats: periodComparison.previous },
+                ] as const
+              ).map(({ key, stats }) => (
+                <div
+                  key={key}
+                  className="rounded-card p-4 bg-surface border border-line shadow-card"
+                >
+                  <div className="text-2xs uppercase font-semibold text-fg-subtle">
+                    {t(`stats.comparison_${key}`)}
+                  </div>
+                  <div className="font-mono font-bold text-2xl text-fg mt-1">
+                    {(stats.volume / 1000).toFixed(1)}t
+                  </div>
+                  <div className="text-xs text-fg-subtle">
+                    {stats.sessions} {t('stats.comparison_sessions')}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div
+              className="text-sm font-semibold text-center"
+              style={{
+                color: periodComparison.volumeChangePct >= 0 ? 'var(--success)' : 'var(--error)',
+              }}
+            >
+              {periodComparison.volumeChangePct >= 0 ? '+' : ''}
+              {periodComparison.volumeChangePct}% volumen
+            </div>
+
+            {volumeProjection && (
+              <div className="rounded-card p-4 bg-surface border border-line shadow-card flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-medium text-fg">{t('stats.projection_title')}</div>
+                  <div className="text-xs text-fg-subtle">
+                    {t(`stats.trend_${volumeProjection.trend}`)}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="font-mono font-bold text-xl text-accent">
+                    {(volumeProjection.projected / 1000).toFixed(1)}t
+                  </div>
+                  <div className="text-2xs text-fg-subtle">{t('stats.projection_next')}</div>
+                </div>
+              </div>
+            )}
+          </section>
         )}
 
         {/* ── Día favorito ── */}

@@ -9,6 +9,8 @@ export const isNative = (): boolean => Capacitor.isNativePlatform();
 export const NOTIF_IDS = {
   TIMER: 990001,
   GENERIC: 990010,
+  STREAK_DAILY: 990020,
+  WEEKLY_SUMMARY: 990030,
   /** +1..7 (convención Capacitor: 1=domingo … 7=sábado) */
   ROUTINE_REMINDER_BASE: 991000,
 } as const;
@@ -34,6 +36,14 @@ const CHANNELS = [
 /** Hora local del recordatorio de rutina */
 const REMINDER_HOUR = 18;
 const REMINDER_MINUTE = 30;
+
+/** Hora de la alerta de racha en peligro */
+const STREAK_HOUR = 20;
+const STREAK_MINUTE = 0;
+
+/** Hora del resumen semanal (lunes) */
+const SUMMARY_HOUR = 9;
+const SUMMARY_MINUTE = 0;
 
 /**
  * Solo permite navegar a URLs http(s) del propio origen.
@@ -252,12 +262,107 @@ export async function syncRoutineReminders(days: ReminderDay[]): Promise<void> {
         schedule: {
           on: { weekday: weekday as Weekday, hour: REMINDER_HOUR, minute: REMINDER_MINUTE },
           allowWhileIdle: true,
+          repeats: true,
         },
       })),
     });
     devLog('[Notifications] Recordatorios sincronizados:', days.length);
   } catch (e) {
     devError('[Notifications] Error sincronizando recordatorios:', e);
+  }
+}
+
+/* ── Racha en peligro — alarma nativa diaria ────────────────────────
+   Se programa como notificación recurrente diaria a las 20:00.
+   Dispara aunque la app esté cerrada. Cuando la app se abre y
+   detecta que ya entrenó hoy, cancela la del día actual. */
+
+export async function scheduleStreakReminder(): Promise<void> {
+  if (!isNative()) return;
+  if (!(await canNotifyAsync())) return;
+
+  try {
+    await LocalNotifications.cancel({ notifications: [{ id: NOTIF_IDS.STREAK_DAILY }] });
+
+    // Calcular próximo trigger: hoy a las 20:00, o mañana si ya pasó
+    const now = new Date();
+    const trigger = new Date(now);
+    trigger.setHours(STREAK_HOUR, STREAK_MINUTE, 0, 0);
+    if (trigger.getTime() <= now.getTime()) {
+      trigger.setDate(trigger.getDate() + 1);
+    }
+
+    await LocalNotifications.schedule({
+      notifications: [
+        {
+          id: NOTIF_IDS.STREAK_DAILY,
+          title: '🔥 ¿Hoy no entrenas?',
+          body: 'No pierdas tu racha. Un entrenamiento rápido cuenta.',
+          channelId: 'reminders',
+          extra: { url: '/' },
+          schedule: {
+            at: trigger,
+            every: 'day',
+            allowWhileIdle: true,
+            repeats: true,
+          },
+        },
+      ],
+    });
+    devLog('[Notifications] Racha diaria programada a las', STREAK_HOUR + ':' + STREAK_MINUTE);
+  } catch (e) {
+    devError('[Notifications] Error programando racha:', e);
+  }
+}
+
+/** Cancela la notificación de racha del día (el usuario ya entrenó). */
+export async function cancelStreakReminder(): Promise<void> {
+  if (!isNative()) return;
+  try {
+    await LocalNotifications.cancel({ notifications: [{ id: NOTIF_IDS.STREAK_DAILY }] });
+  } catch {
+    // nada que cancelar
+  }
+}
+
+/* ── Resumen semanal — alarma nativa los lunes ──────────────────────
+   Notificación recurrente semanal los lunes a las 09:00. El body es
+   genérico (no podemos consultar Supabase desde background nativo).
+   Al abrir la app el lunes, se dispara una notificación inmediata
+   con datos reales si aplica. */
+
+export async function scheduleWeeklySummaryReminder(): Promise<void> {
+  if (!isNative()) return;
+  if (!(await canNotifyAsync())) return;
+
+  try {
+    await LocalNotifications.cancel({ notifications: [{ id: NOTIF_IDS.WEEKLY_SUMMARY }] });
+
+    // Capacitor weekday: 1=domingo, 2=lunes ... 7=sábado
+    const MONDAY: Weekday = 2;
+
+    await LocalNotifications.schedule({
+      notifications: [
+        {
+          id: NOTIF_IDS.WEEKLY_SUMMARY,
+          title: '📊 Tu semana en GymLog',
+          body: 'Revisa tu progreso de la semana pasada',
+          channelId: 'reminders',
+          extra: { url: '/stats' },
+          schedule: {
+            on: { weekday: MONDAY, hour: SUMMARY_HOUR, minute: SUMMARY_MINUTE },
+            allowWhileIdle: true,
+            repeats: true,
+          },
+        },
+      ],
+    });
+    devLog(
+      '[Notifications] Resumen semanal programado: lunes',
+      SUMMARY_HOUR + ':' + SUMMARY_MINUTE,
+    );
+  } catch (e) {
+    devError('[Notifications] Error programando resumen semanal:', e);
   }
 }
 

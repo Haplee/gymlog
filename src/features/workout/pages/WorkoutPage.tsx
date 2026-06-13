@@ -24,8 +24,9 @@ import { RestTimer } from '@features/workout/components/RestTimer';
 import { WorkoutSessionStats } from '@features/workout/components/WorkoutSessionStats';
 import { LastSessionCard } from '@features/workout/components/LastSessionCard';
 import { WorkoutSetList } from '@features/workout/components/WorkoutSetList';
+import { PlatesCalculator } from '@features/workout/components/PlatesCalculator';
 import type { ExerciseNote } from '@shared/lib/types';
-import { Trash2, Plus, StickyNote, AlertCircle } from 'lucide-react';
+import { Trash2, Plus, StickyNote, AlertCircle, Calculator, BookOpen } from 'lucide-react';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { impact, notificationHaptic, ImpactStyle, NotificationType } from '@shared/lib/haptics';
@@ -98,14 +99,10 @@ export function WorkoutPage() {
     clearPersistedState,
   } = useWorkoutStore();
 
-  const { sound, showWarmupSets, restAutoStart } = useSettingsStore();
+  const { sound, showWarmupSets, restAutoStart, restDuration: defaultRest } = useSettingsStore();
   const { getActiveRoutine, getTodayRoutine, checkAndBackup } = useRoutineStore();
   const { unit: weightUnit, convert, convertFromDisplay: convertToKg } = useWeight();
-  const {
-    start: startRestTimer,
-    isRunning: restTimerRunning,
-    duration: restDuration,
-  } = useRestTimerStore();
+  const { start: startRestTimer, isRunning: restTimerRunning } = useRestTimerStore();
 
   const [message, setMessage] = useState('');
   const [saving, setSaving] = useState(false);
@@ -114,6 +111,7 @@ export function WorkoutPage() {
   const [noteText, setNoteText] = useState('');
   const [setErrors, setSetErrors] = useState<Record<number, string>>({});
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
+  const [showPlates, setShowPlates] = useState(false);
   const [showResumeBanner, setShowResumeBanner] = useState(() => {
     if (startedAt && sets.length > 0) {
       return Date.now() - new Date(startedAt).getTime() < 12 * 60 * 60 * 1000;
@@ -179,6 +177,20 @@ export function WorkoutPage() {
   );
 
   const validSetCount = useMemo(() => sets.filter((s) => s.reps && s.weight).length, [sets]);
+
+  // Mejor 1RM estimado de la sesión (excluye calentamientos). Pesos en kg.
+  const bestEstimate = useMemo(() => {
+    let best: { weightKg: number; e1rm: number } | null = null;
+    for (const s of sets) {
+      if (s.isWarmup) continue;
+      const w = Number(s.weight);
+      const r = Number(s.reps);
+      if (!Number.isFinite(w) || !Number.isFinite(r) || w <= 0 || r <= 0) continue;
+      const e1rm = calcular1RM(w, r);
+      if (!best || e1rm > best.e1rm) best = { weightKg: w, e1rm };
+    }
+    return best;
+  }, [sets]);
 
   const playFeedbackSound = useCallback(() => {
     try {
@@ -309,7 +321,7 @@ export function WorkoutPage() {
     const lastHasData = lastSet && lastSet.reps && lastSet.weight;
     addSet();
     if (restAutoStart && lastHasData && !restTimerRunning) {
-      startRestTimer(restDuration);
+      startRestTimer(defaultRest);
     }
   };
 
@@ -325,6 +337,8 @@ export function WorkoutPage() {
           weight: String(s.weight),
           notes: '',
           isWarmup: false,
+          rpe: '',
+          setType: 'normal' as const,
         })),
       );
       void impact(ImpactStyle.Light);
@@ -454,6 +468,14 @@ export function WorkoutPage() {
           />
         )}
 
+        <button
+          onClick={() => navigate('/exercises')}
+          className="mt-2 w-full py-1.5 px-2 rounded-lg text-xs flex items-center justify-center gap-1.5 bg-surface border border-line-strong text-fg-muted"
+        >
+          <BookOpen className="w-3.5 h-3.5" />
+          {t('library.open')}
+        </button>
+
         {/* Last Session Reference */}
         {user && activeExerciseId && (
           <LastSessionCard
@@ -538,13 +560,28 @@ export function WorkoutPage() {
         transition={{ duration: 0.25, ease: 'easeOut', delay: 0.1 }}
         className={`rounded-2xl p-4 bg-surface border border-line-strong shadow-card ${saveSuccess ? 'success-pulse' : ''}`}
       >
-        <div className="text-base font-medium mb-2 text-fg">
-          {selectedExercise
-            ? `${t('workout.sets')} — ${selectedExercise.name}`
-            : customExerciseName
-              ? `${t('workout.sets')} — ${customExerciseName}`
-              : t('workout.sets')}
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <div className="text-base font-medium text-fg min-w-0 truncate">
+            {selectedExercise
+              ? `${t('workout.sets')} — ${selectedExercise.name}`
+              : customExerciseName
+                ? `${t('workout.sets')} — ${customExerciseName}`
+                : t('workout.sets')}
+          </div>
+          <button
+            onClick={() => setShowPlates(true)}
+            aria-label={t('workout.plates_calc')}
+            className="flex-shrink-0 min-h-11 px-2.5 flex items-center gap-1.5 rounded-lg text-xs bg-surface-2 border border-line-glass text-fg-muted"
+          >
+            <Calculator className="w-4 h-4" />
+          </button>
         </div>
+
+        {bestEstimate && (
+          <div className="text-xs mb-2 text-accent">
+            {t('workout.e1rm')}: {convert(bestEstimate.e1rm).toFixed(1)} {weightUnit}
+          </div>
+        )}
 
         <div className="flex gap-2 mb-1.5 text-2xs font-semibold uppercase text-fg-subtle">
           <div className="w-6 h-8 flex items-center"></div>
@@ -654,6 +691,13 @@ export function WorkoutPage() {
       </m.div>
 
       <RestTimer />
+
+      <PlatesCalculator
+        key={showPlates ? `plates-${Math.round(bestEstimate?.weightKg ?? 0)}` : 'plates-closed'}
+        open={showPlates}
+        initialTargetKg={bestEstimate?.weightKg}
+        onClose={() => setShowPlates(false)}
+      />
     </Layout>
   );
 }
