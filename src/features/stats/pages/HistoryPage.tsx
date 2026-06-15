@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -8,7 +8,7 @@ import { useWorkoutStore } from '@features/workout/stores/workoutStore';
 import { useCardioStore, CARDIO_LABELS } from '@features/cardio/stores/cardioStore';
 import { Layout } from '@app/components/Layout';
 import { supabase } from '@shared/lib/supabase';
-import { shareWorkout } from '@shared/lib/share';
+import { shareWorkoutImage } from '@shared/lib/shareImage';
 import type { WorkoutWithSets, WorkoutSetWithDetails } from '@shared/lib/types';
 import { toast } from 'sonner';
 import { Capacitor } from '@capacitor/core';
@@ -16,11 +16,12 @@ import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 import { fetchWorkouts, fetchRecentSets, fetchExercises } from '@shared/api/queries';
 import { EmptyHistory } from '@shared/components/EmptyStates';
+import { SwipeToDelete } from '@shared/components/SwipeToDelete';
 import { Modal, Button } from '@shared/components/ui';
 import { CardioTypeIcon } from '@shared/components/CardioIcons';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { ChevronRight, Trash2, Repeat, Share2, BarChart2 } from 'lucide-react';
+import { ChevronRight, Trash2, Repeat, Share2, BarChart2, Pencil } from 'lucide-react';
 import { devError } from '@shared/lib/devtools';
 
 interface GroupedWorkout {
@@ -64,14 +65,7 @@ function ExerciseRow({
           <span className="text-base font-medium text-fg">{exercise}</span>
         </div>
         <div className="flex items-center gap-2">
-          <span
-            className="text-[0.5625rem] px-1.5 py-0.5 rounded-pill font-bold"
-            style={{
-              backgroundColor: 'rgba(200,255,0,0.08)',
-              color: 'var(--interactive-primary)',
-              border: '1px solid rgba(200,255,0,0.15)',
-            }}
-          >
+          <span className="text-2xs px-1.5 py-0.5 rounded-pill font-bold font-mono tabular-nums bg-accent/10 text-accent border border-line-accent">
             {sortedSets.length} {t('history.series_plural')}
           </span>
           <button
@@ -101,13 +95,7 @@ function ExerciseRow({
                     {s.reps} {t('workout.reps').toLowerCase()}
                   </span>
                   {s.is_warmup && (
-                    <span
-                      className="text-[0.5625rem] px-1.5 py-0.5 rounded-pill font-bold uppercase"
-                      style={{
-                        backgroundColor: 'rgba(245,158,11,0.12)',
-                        color: 'var(--warning)',
-                      }}
-                    >
+                    <span className="text-2xs px-1.5 py-0.5 rounded-pill font-bold uppercase bg-warning/15 text-warning">
                       W
                     </span>
                   )}
@@ -118,7 +106,9 @@ function ExerciseRow({
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-sm text-accent">{s.weight} kg</span>
+                  <span className="font-mono tabular-nums font-semibold text-sm text-accent">
+                    {s.weight} kg
+                  </span>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -146,6 +136,105 @@ function formatDuration(s: number): string {
   return `${m}min`;
 }
 
+interface EditRow {
+  id: string;
+  exercise: string;
+  reps: string;
+  weight: string;
+}
+
+function EditWorkoutModal({
+  workout,
+  onClose,
+  onSaved,
+}: {
+  workout: WorkoutWithSets;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const { t } = useTranslation();
+  const [rows, setRows] = useState<EditRow[]>(() =>
+    [...workout.sets]
+      .sort((a, b) => a.set_num - b.set_num)
+      .map((s) => ({
+        id: s.id,
+        exercise: s.exercise?.name ?? '',
+        reps: String(s.reps),
+        weight: String(s.weight),
+      })),
+  );
+  const [saving, setSaving] = useState(false);
+
+  const update = (id: string, field: 'reps' | 'weight', val: string) =>
+    setRows((r) => r.map((x) => (x.id === id ? { ...x, [field]: val } : x)));
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      for (const row of rows) {
+        const reps = parseInt(row.reps, 10);
+        const weight = parseFloat(row.weight.replace(',', '.'));
+        if (!Number.isFinite(reps) || reps <= 0 || !Number.isFinite(weight) || weight < 0) continue;
+        const { error } = await supabase
+          .from('workout_sets')
+          .update({ reps, weight })
+          .eq('id', row.id);
+        if (error) throw error;
+      }
+      toast.success(t('history.edit_saved'));
+      onSaved();
+    } catch (err) {
+      devError('Error editing workout', err);
+      toast.error(t('history.edit_error'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title={t('history.edit_title')}
+      icon={<Pencil className="w-5 h-5 text-accent" />}
+    >
+      <div className="space-y-2 max-h-[50vh] overflow-y-auto mb-4">
+        {rows.map((row, i) => (
+          <div key={row.id} className="flex items-center gap-2">
+            <span className="w-5 text-xs font-mono tabular-nums text-fg-subtle">{i + 1}</span>
+            <span className="flex-1 text-sm text-fg truncate">{row.exercise}</span>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={row.reps}
+              onChange={(e) => update(row.id, 'reps', e.target.value.replace(/[^\d]/g, ''))}
+              aria-label={`${t('workout.reps')} ${i + 1}`}
+              className="w-12 rounded-lg text-sm font-mono tabular-nums px-2 py-1.5 text-center outline-none bg-surface-2 border border-line text-fg"
+            />
+            <span className="text-xs text-fg-subtle">×</span>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={row.weight}
+              onChange={(e) => update(row.id, 'weight', e.target.value.replace(/[^\d.,]/g, ''))}
+              aria-label={`${t('workout.weight')} ${i + 1}`}
+              className="w-16 rounded-lg text-sm font-mono tabular-nums px-2 py-1.5 text-center outline-none bg-surface-2 border border-line text-fg"
+            />
+          </div>
+        ))}
+      </div>
+      <div className="flex gap-3">
+        <Button variant="secondary" onClick={onClose} className="flex-1">
+          {t('common.cancel')}
+        </Button>
+        <Button variant="primary" onClick={handleSave} disabled={saving} className="flex-1">
+          {t('common.save')}
+        </Button>
+      </div>
+    </Modal>
+  );
+}
+
 export function HistoryPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -161,6 +250,10 @@ export function HistoryPage() {
   const [filterExercise, setFilterExercise] = useState('');
   const [searchText, setSearchText] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [editWorkout, setEditWorkout] = useState<WorkoutWithSets | null>(null);
+  // Render incremental: limita los días montados y carga más al hacer scroll.
+  const [visibleDays, setVisibleDays] = useState(12);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   const {
     data: workouts = [],
@@ -179,10 +272,14 @@ export function HistoryPage() {
   } = useQuery({
     queryKey: ['recentSets', user?.id],
     queryFn: () => fetchRecentSets(user?.id ?? ''),
-    enabled: !!user?.id,
+    // Solo se necesita en la vista "Series": no bloquear la carga inicial (vista
+    // "Todo") con una segunda query pesada de sets.
+    enabled: !!user?.id && view === 'sets',
   });
 
-  const loading = loadingWorkouts || loadingSets;
+  // El skeleton de carga inicial depende solo de workouts; recentSets carga
+  // perezosamente al abrir la pestaña de series.
+  const loading = loadingWorkouts;
 
   useEffect(() => {
     if (!user) {
@@ -191,6 +288,20 @@ export function HistoryPage() {
     }
     void syncCardio(user.id);
   }, [user, navigate, syncCardio]);
+
+  // Infinite scroll: monta más días cuando el sentinel entra en viewport.
+  useEffect(() => {
+    const el = loadMoreRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) setVisibleDays((v) => v + 12);
+      },
+      { rootMargin: '400px' },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [view]);
 
   const handleRepeat = (workout: WorkoutWithSets) => {
     repeatWorkout(workout);
@@ -233,9 +344,9 @@ export function HistoryPage() {
     if (user) {
       refetchSets();
       refetchWorkouts();
-      queryClient.invalidateQueries({ queryKey: ['lastExerciseSets'] });
-      queryClient.invalidateQueries({ queryKey: ['personalRecords'] });
-      queryClient.invalidateQueries({ queryKey: ['workoutsAndSets'] });
+      queryClient.invalidateQueries({ queryKey: ['lastExerciseSets'], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ['personalRecords'], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ['workoutsAndSets'], refetchType: 'all' });
     }
     setDeleteId(null);
   };
@@ -428,7 +539,8 @@ export function HistoryPage() {
 
         refetchSets();
         refetchWorkouts();
-        queryClient.invalidateQueries({ queryKey: ['personalRecords'] });
+        queryClient.invalidateQueries({ queryKey: ['workoutsAndSets'], refetchType: 'all' });
+        queryClient.invalidateQueries({ queryKey: ['personalRecords'], refetchType: 'all' });
         toast.success(t('history.import_success', { count: imported }));
       } catch (err) {
         devError('Error import JSON', err);
@@ -786,7 +898,7 @@ export function HistoryPage() {
   return (
     <Layout>
       {/* Barra de filtros sticky con tratamiento glass */}
-      <div className="sticky top-0 z-20 py-2 -mt-2 mb-3 space-y-2 bg-base/90 backdrop-blur-md">
+      <div className="sticky top-0 z-20 py-2 -mt-2 mb-3 space-y-2 bg-base">
         {/* Segmented control de vista — píldora deslizante */}
         <div
           role="tablist"
@@ -890,9 +1002,11 @@ export function HistoryPage() {
       {view === 'all' ? (
         <div className="space-y-4">
           {timelineByDate.length === 0 ? (
-            <EmptyHistory />
+            <EmptyHistory
+              action={{ label: t('workout.start_cta'), onClick: () => navigate('/') }}
+            />
           ) : (
-            timelineByDate.map((group) => (
+            timelineByDate.slice(0, visibleDays).map((group) => (
               <div key={group.date}>
                 <div className="px-1 mb-2">
                   <span className="text-xs font-bold uppercase tracking-[0.1em] text-fg-subtle">
@@ -900,41 +1014,27 @@ export function HistoryPage() {
                   </span>
                 </div>
                 <div className="space-y-2">
-                  {group.items.map((item, i) =>
+                  {group.items.map((item) =>
                     item.kind === 'cardio' ? (
-                      <m.div
+                      <div
                         key={item.data.id}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.03 }}
                         className="rounded-2xl p-3.5 flex items-center justify-between bg-surface border border-line shadow-card transition-transform active:scale-[0.99]"
                       >
                         <div className="flex items-center gap-3">
-                          <div
-                            className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                            style={{ backgroundColor: 'rgba(239,68,68,0.12)' }}
-                          >
-                            <span style={{ color: '#ef4444' }}>
-                              <CardioTypeIcon type={item.data.type} className="w-4.5 h-4.5" />
-                            </span>
+                          <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-error/10 text-error">
+                            <CardioTypeIcon type={item.data.type} className="w-4.5 h-4.5" />
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-semibold text-fg">
                                 {CARDIO_LABELS[item.data.type]}
                               </span>
-                              <span
-                                className="text-xs px-1.5 py-0.5 rounded-pill font-bold"
-                                style={{
-                                  backgroundColor: 'rgba(239,68,68,0.1)',
-                                  color: '#ef4444',
-                                }}
-                              >
+                              <span className="text-2xs px-1.5 py-0.5 rounded-pill font-bold bg-error/10 text-error">
                                 Cardio
                               </span>
                             </div>
                             <div className="text-xs flex items-center gap-2 mt-0.5 text-fg-muted">
-                              <span className="font-mono font-semibold">
+                              <span className="font-mono tabular-nums font-semibold">
                                 {formatDuration(item.data.duration)}
                               </span>
                               {item.data.distance && <span>· {item.data.distance}km</span>}
@@ -948,13 +1048,10 @@ export function HistoryPage() {
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
-                      </m.div>
+                      </div>
                     ) : (
-                      <m.div
+                      <div
                         key={item.data.id}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.03 }}
                         className="rounded-2xl overflow-hidden bg-surface border border-line shadow-card"
                       >
                         <div className="px-3 py-2.5">
@@ -966,18 +1063,18 @@ export function HistoryPage() {
                                   minute: '2-digit',
                                 })}
                               </span>
-                              <span
-                                className="text-xs px-1.5 py-0.5 rounded-pill font-bold"
-                                style={{
-                                  backgroundColor: 'rgba(200,255,0,0.08)',
-                                  color: 'var(--interactive-primary)',
-                                  border: '1px solid rgba(200,255,0,0.15)',
-                                }}
-                              >
+                              <span className="text-2xs px-1.5 py-0.5 rounded-pill font-bold bg-accent/10 text-accent border border-line-accent">
                                 Fuerza
                               </span>
                             </div>
                             <div className="flex gap-3">
+                              <button
+                                onClick={() => setEditWorkout(item.data)}
+                                className="flex items-center gap-1 text-xs font-semibold text-fg-muted"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                                {t('history.edit')}
+                              </button>
                               <button
                                 onClick={() => handleRepeat(item.data)}
                                 className="flex items-center gap-1 text-xs font-semibold text-accent"
@@ -994,7 +1091,7 @@ export function HistoryPage() {
                                     (sum, s) => sum + s.reps * s.weight,
                                     0,
                                   );
-                                  const success = await shareWorkout({
+                                  const success = await shareWorkoutImage({
                                     exerciseCount: uniqueExercises,
                                     totalSets: item.data.sets.length,
                                     totalVolume: volume,
@@ -1021,12 +1118,15 @@ export function HistoryPage() {
                             ))}
                           </div>
                         </div>
-                      </m.div>
+                      </div>
                     ),
                   )}
                 </div>
               </div>
             ))
+          )}
+          {visibleDays < timelineByDate.length && (
+            <div ref={loadMoreRef} className="h-1" aria-hidden="true" />
           )}
         </div>
       ) : view === 'cardio' ? (
@@ -1036,58 +1136,65 @@ export function HistoryPage() {
               Sin sesiones de cardio registradas
             </div>
           ) : (
-            cardioSessions.map((session, i) => (
-              <m.div
+            cardioSessions.map((session) => (
+              <SwipeToDelete
                 key={session.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.03 }}
-                className="rounded-2xl p-4 flex items-center justify-between bg-surface border border-line"
+                onDelete={() => void deleteCardioSession(session.id, user?.id ?? null)}
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-surface-2">
-                    <span className="text-accent">
-                      <CardioTypeIcon type={session.type} className="w-4.5 h-4.5" />
-                    </span>
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-fg">
-                        {CARDIO_LABELS[session.type]}
-                      </span>
-                      <span className="font-mono text-sm font-semibold text-accent">
-                        {formatDuration(session.duration)}
+                <div className="p-4 flex items-center justify-between bg-surface border border-line rounded-2xl">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-surface-2">
+                      <span className="text-accent">
+                        <CardioTypeIcon type={session.type} className="w-4.5 h-4.5" />
                       </span>
                     </div>
-                    <div className="text-xs flex items-center gap-2 text-fg-subtle">
-                      <span>
-                        {formatDistanceToNow(parseISO(session.startedAt), {
-                          addSuffix: true,
-                          locale: es,
-                        })}
-                      </span>
-                      {session.distance && <span>· {session.distance}km</span>}
-                      {session.calories && <span>· {session.calories}kcal</span>}
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-fg">
+                          {CARDIO_LABELS[session.type]}
+                        </span>
+                        <span className="font-mono text-sm font-semibold text-accent">
+                          {formatDuration(session.duration)}
+                        </span>
+                      </div>
+                      <div className="text-xs flex items-center gap-2 text-fg-subtle">
+                        <span>
+                          {formatDistanceToNow(parseISO(session.startedAt), {
+                            addSuffix: true,
+                            locale: es,
+                          })}
+                        </span>
+                        {session.distance && <span>· {session.distance}km</span>}
+                        {session.calories && <span>· {session.calories}kcal</span>}
+                      </div>
+                      {session.notes && (
+                        <div className="text-xs italic mt-0.5 text-fg-subtle">{session.notes}</div>
+                      )}
                     </div>
-                    {session.notes && (
-                      <div className="text-xs italic mt-0.5 text-fg-subtle">{session.notes}</div>
-                    )}
                   </div>
+                  <button
+                    onClick={() => void deleteCardioSession(session.id, user?.id ?? null)}
+                    className="p-2 rounded-lg ml-2 flex-shrink-0 text-fg-subtle"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
-                <button
-                  onClick={() => void deleteCardioSession(session.id, user?.id ?? null)}
-                  className="p-2 rounded-lg ml-2 flex-shrink-0 text-fg-subtle"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </m.div>
+              </SwipeToDelete>
             ))
           )}
         </div>
       ) : view === 'sets' ? (
         <div className="rounded-2xl overflow-hidden bg-surface border border-line-strong shadow-card">
-          {filteredSets.length === 0 ? (
-            <EmptyHistory />
+          {loadingSets ? (
+            <div className="p-3 space-y-2">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="skeleton h-10 rounded-lg" />
+              ))}
+            </div>
+          ) : filteredSets.length === 0 ? (
+            <EmptyHistory
+              action={{ label: t('workout.start_cta'), onClick: () => navigate('/') }}
+            />
           ) : (
             (() => {
               const grouped: Record<string, Record<string, typeof filteredSets>> = {};
@@ -1133,14 +1240,13 @@ export function HistoryPage() {
       ) : (
         <div className="space-y-2">
           {groupedWorkouts.length === 0 ? (
-            <EmptyHistory />
+            <EmptyHistory
+              action={{ label: t('workout.start_cta'), onClick: () => navigate('/') }}
+            />
           ) : (
             groupedWorkouts.map((group, gi) => (
-              <m.div
+              <div
                 key={gi}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: gi * 0.04 }}
                 className="rounded-2xl overflow-hidden bg-surface border border-line-strong shadow-card"
               >
                 {/* Cabecera fecha/volumen */}
@@ -1163,6 +1269,13 @@ export function HistoryPage() {
                       </span>
                       <div className="flex gap-3">
                         <button
+                          onClick={() => setEditWorkout(wo)}
+                          className="flex items-center gap-1 text-xs font-semibold text-fg-muted"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                          {t('history.edit')}
+                        </button>
+                        <button
                           onClick={() => handleRepeat(wo)}
                           className="flex items-center gap-1 text-xs font-semibold text-accent"
                         >
@@ -1175,7 +1288,7 @@ export function HistoryPage() {
                               ...new Set(wo.sets.map((s) => s.exercise?.name)),
                             ].length;
                             const volume = wo.sets.reduce((sum, s) => sum + s.reps * s.weight, 0);
-                            const success = await shareWorkout({
+                            const success = await shareWorkoutImage({
                               exerciseCount: uniqueExercises,
                               totalSets: wo.sets.length,
                               totalVolume: volume,
@@ -1203,10 +1316,24 @@ export function HistoryPage() {
                     </div>
                   </div>
                 ))}
-              </m.div>
+              </div>
             ))
           )}
         </div>
+      )}
+
+      {editWorkout && (
+        <EditWorkoutModal
+          workout={editWorkout}
+          onClose={() => setEditWorkout(null)}
+          onSaved={() => {
+            refetchSets();
+            refetchWorkouts();
+            queryClient.invalidateQueries({ queryKey: ['workoutsAndSets'], refetchType: 'all' });
+            queryClient.invalidateQueries({ queryKey: ['personalRecords'], refetchType: 'all' });
+            setEditWorkout(null);
+          }}
+        />
       )}
 
       <Modal

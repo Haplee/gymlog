@@ -69,7 +69,7 @@ export function WorkoutSetList({
             transition={{ delay: i * 0.03, type: 'spring', stiffness: 320, damping: 26 }}
             className="mb-2"
           >
-            <div className="flex items-stretch gap-1">
+            <div className="flex items-center gap-1.5">
               {showWarmupSets && (
                 <button
                   onClick={() => {
@@ -78,7 +78,7 @@ export function WorkoutSetList({
                   }}
                   aria-pressed={s.isWarmup}
                   aria-label={`Serie ${i + 1}: calentamiento`}
-                  className={`w-8 self-stretch rounded text-xs font-bold flex items-center justify-center transition-colors border ${
+                  className={`w-9 h-12 flex-shrink-0 rounded-lg text-sm font-bold flex items-center justify-center transition-colors border ${
                     s.isWarmup
                       ? 'bg-warning border-solid border-warning text-fg-inverse'
                       : 'bg-transparent border-dashed border-fg-subtle text-fg-subtle'
@@ -88,17 +88,17 @@ export function WorkoutSetList({
                 </button>
               )}
               <div
-                className={`w-6 h-8 flex items-center justify-center text-sm font-medium rounded ${
-                  isNewPR ? 'bg-accent text-accent-fg' : 'bg-transparent text-fg-muted'
+                className={`w-7 h-12 flex-shrink-0 flex items-center justify-center text-base font-mono font-semibold tabular-nums rounded-lg ${
+                  isNewPR ? 'bg-accent text-accent-fg' : 'bg-transparent text-fg-subtle'
                 }`}
               >
                 {i + 1}
               </div>
-              <div className="flex-1 flex flex-col">
-                <label className="text-2xs block mb-1 text-fg-subtle">{t('workout.reps')}</label>
+              <div className="flex-1 min-w-0 flex flex-col">
                 <input
                   type="text"
                   inputMode="numeric"
+                  aria-label={`${t('workout.reps')} ${i + 1}`}
                   pattern="[0-9]*"
                   placeholder="0"
                   value={s.reps}
@@ -113,16 +113,16 @@ export function WorkoutSetList({
                       });
                     }
                   }}
-                  className={`w-full rounded-lg text-sm px-2 py-1.5 outline-none text-center text-fg border ${
-                    setErrors[i] ? 'bg-error/10 border-error' : 'bg-surface border-line'
+                  className={`w-full rounded-lg text-lg font-mono tabular-nums px-2 py-3 outline-none text-center text-fg border ${
+                    setErrors[i] ? 'bg-error/10 border-error' : 'bg-surface-2 border-line'
                   }`}
                 />
               </div>
-              <div className="relative flex-1 flex flex-col">
-                <label className="text-2xs block mb-1 text-fg-subtle">{weightUnit}</label>
+              <div className="relative flex-1 min-w-0 flex flex-col">
                 <input
                   type="text"
                   inputMode="decimal"
+                  aria-label={`${weightUnit} ${i + 1}`}
                   pattern="[0-9]*[.,]?[0-9]*"
                   placeholder="0"
                   value={
@@ -176,8 +176,8 @@ export function WorkoutSetList({
                       return n;
                     });
                   }}
-                  className={`w-full rounded-lg text-sm px-2 py-1.5 outline-none text-center text-fg border ${
-                    setErrors[i] ? 'bg-error/10 border-error' : 'bg-surface border-line'
+                  className={`w-full rounded-lg text-lg font-mono tabular-nums px-2 py-3 outline-none text-center text-fg border ${
+                    setErrors[i] ? 'bg-error/10 border-error' : 'bg-surface-2 border-line'
                   }`}
                 />
                 {isNewPR && (
@@ -193,18 +193,18 @@ export function WorkoutSetList({
               )}
               <button
                 onClick={() => setExpandedNoteIdx(expandedNoteIdx === i ? null : i)}
-                className={`w-6 h-8 flex items-center justify-center bg-transparent border rounded cursor-pointer ${
+                className={`w-9 h-12 flex-shrink-0 flex items-center justify-center bg-transparent border rounded-lg cursor-pointer ${
                   s.notes || s.rpe || (s.setType && s.setType !== 'normal')
                     ? 'border-accent text-accent'
                     : 'border-line text-fg-subtle'
                 }`}
                 title="Nota de la serie"
               >
-                <StickyNote className="w-3 h-3" />
+                <StickyNote className="w-4 h-4" />
               </button>
               <button
                 onClick={() => removeSet(i)}
-                className="w-6 h-8 flex items-center justify-center bg-transparent border rounded cursor-pointer text-lg border-line text-fg-subtle"
+                className="w-9 h-12 flex-shrink-0 flex items-center justify-center bg-transparent border rounded-lg cursor-pointer border-line text-fg-subtle"
               >
                 <X className="w-4 h-4" />
               </button>

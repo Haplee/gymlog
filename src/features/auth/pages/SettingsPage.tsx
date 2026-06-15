@@ -14,6 +14,7 @@ import {
   scheduleStreakReminder,
   scheduleWeeklySummaryReminder,
 } from '@shared/lib/notifications';
+import { registerPushNotifications, unregisterPushToken } from '@shared/lib/push';
 import { getReminderDays } from '@features/routine/hooks/useWorkoutReminder';
 import { toast } from 'sonner';
 import BiometricPlugin from '@shared/lib/biometric';
@@ -41,8 +42,12 @@ export function SettingsPage() {
     setSound,
     language,
     setLanguage,
+    theme,
+    setTheme,
     biometricEnabled,
     setBiometricEnabled,
+    notificationsEnabled,
+    setNotificationsEnabled,
     trainingReminders,
     setTrainingReminders,
     unitSystem,
@@ -54,7 +59,6 @@ export function SettingsPage() {
     restDuration,
     setRestDuration,
   } = useSettingsStore();
-  const [notifEnabled, setNotifEnabled] = useState(false);
   const [biometricSupport, setBiometricSupport] = useState<{ available: boolean; message: string }>(
     { available: false, message: '' },
   );
@@ -72,9 +76,8 @@ export function SettingsPage() {
         .eq('id', user.id)
         .single();
       if (data) {
-        setNotifEnabled(!!data.notifications_enabled);
-        if (data.notifications_enabled) localStorage.removeItem('notif_disabled');
-        else localStorage.setItem('notif_disabled', 'true');
+        // setNotificationsEnabled espeja el flag en localStorage internamente
+        setNotificationsEnabled(!!data.notifications_enabled);
       }
     };
 
@@ -101,7 +104,7 @@ export function SettingsPage() {
 
     fetchConfig();
     checkBio();
-  }, [user, navigate, biometricEnabled, setBiometricEnabled]);
+  }, [user, navigate, biometricEnabled, setBiometricEnabled, setNotificationsEnabled]);
 
   const playFeedbackSound = useCallback(() => {
     try {
@@ -117,18 +120,19 @@ export function SettingsPage() {
   }, []);
 
   const handlePushToggle = async () => {
-    const newValue = !notifEnabled;
+    const newValue = !notificationsEnabled;
     if (newValue) {
-      localStorage.removeItem('notif_disabled');
+      // Habilita temporalmente para que requestPermission no se autobloquee
+      setNotificationsEnabled(true);
 
       if (!isNative() && 'Notification' in window && Notification.permission === 'denied') {
+        setNotificationsEnabled(false);
         toast.error('Permiso de notificaciones denegado en el navegador');
         return;
       }
 
       const granted = await requestPermission();
       if (granted) {
-        setNotifEnabled(true);
         if (user) {
           await supabase.from('profiles').update({ notifications_enabled: true }).eq('id', user.id);
         }
@@ -136,19 +140,22 @@ export function SettingsPage() {
         await syncRoutineReminders(getReminderDays());
         await scheduleStreakReminder();
         await scheduleWeeklySummaryReminder();
+        // Registrar token push remoto
+        if (user) void registerPushNotifications(user.id);
         toast.success('Notificaciones activadas');
       } else {
-        localStorage.setItem('notif_disabled', 'true');
+        setNotificationsEnabled(false);
         toast.error('No se concedieron permisos de notificación');
       }
     } else {
-      setNotifEnabled(false);
-      localStorage.setItem('notif_disabled', 'true');
+      setNotificationsEnabled(false);
       if (user) {
         await supabase.from('profiles').update({ notifications_enabled: false }).eq('id', user.id);
       }
       // Sin notificaciones: limpiar todo lo programado en el sistema
       await cancelAllScheduled();
+      // Y eliminar el token push remoto del dispositivo
+      await unregisterPushToken();
     }
   };
 
@@ -191,12 +198,12 @@ export function SettingsPage() {
       <div className="space-y-3 pb-20">
         {!isNative() && (
           <a
-            href="https://github.com/Haplee/pesos/releases/download/2.9.1/GymLog-v2.9.1.apk"
+            href="https://github.com/Haplee/pesos/releases/download/3.0.0/GymLog-v3.0.0.apk"
             download
             className="block rounded-2xl p-4 scale-in border text-center bg-surface border-line-accent text-accent shadow-card transition-transform active:scale-[0.99]"
           >
             <div className="text-base font-semibold">Descargar App Android</div>
-            <div className="text-xs mt-1 opacity-70">GymLog v2.9.1</div>
+            <div className="text-xs mt-1 opacity-70">GymLog v3.0.0</div>
           </a>
         )}
 
@@ -212,6 +219,24 @@ export function SettingsPage() {
                 className="flex-1"
               >
                 {lang === 'es' ? 'Español' : 'English'}
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        {/* Tema */}
+        <div className="rounded-2xl p-4 scale-in bg-surface border border-line-strong shadow-card">
+          <div className="text-sm font-medium mb-3 text-fg">{t('settings.theme')}</div>
+          <div className="flex gap-2">
+            {(['dark', 'light'] as const).map((mode) => (
+              <Button
+                key={mode}
+                variant={theme === mode ? 'primary' : 'secondary'}
+                onClick={() => setTheme(mode)}
+                className="flex-1"
+                aria-pressed={theme === mode}
+              >
+                {mode === 'dark' ? t('settings.theme_dark') : t('settings.theme_light')}
               </Button>
             ))}
           </div>
@@ -234,7 +259,7 @@ export function SettingsPage() {
               aria-label={t('settings.sound')}
             >
               <div
-                className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${sound ? 'left-7' : 'left-1'}`}
+                className={`absolute top-1 w-4 h-4 rounded-full bg-fg shadow-sm transition-all ${sound ? 'left-7' : 'left-1'}`}
               />
             </button>
           </div>
@@ -249,12 +274,12 @@ export function SettingsPage() {
             </div>
             <button
               onClick={handlePushToggle}
-              className={`w-12 h-6 rounded-full transition-all relative ${notifEnabled ? 'bg-accent toggle-on' : 'bg-surface-3'}`}
-              aria-pressed={notifEnabled}
+              className={`w-12 h-6 rounded-full transition-all relative ${notificationsEnabled ? 'bg-accent toggle-on' : 'bg-surface-3'}`}
+              aria-pressed={notificationsEnabled}
               aria-label={t('settings.notifications')}
             >
               <div
-                className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${notifEnabled ? 'left-7' : 'left-1'}`}
+                className={`absolute top-1 w-4 h-4 rounded-full bg-fg shadow-sm transition-all ${notificationsEnabled ? 'left-7' : 'left-1'}`}
               />
             </button>
           </div>
@@ -275,7 +300,7 @@ export function SettingsPage() {
                 aria-label={'Acceso Biométrico'}
               >
                 <div
-                  className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${biometricEnabled ? 'left-7' : 'left-1'}`}
+                  className={`absolute top-1 w-4 h-4 rounded-full bg-fg shadow-sm transition-all ${biometricEnabled ? 'left-7' : 'left-1'}`}
                 />
               </button>
             </div>
@@ -296,7 +321,7 @@ export function SettingsPage() {
               aria-label={'Recordatorios de entreno'}
             >
               <div
-                className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${trainingReminders ? 'left-7' : 'left-1'}`}
+                className={`absolute top-1 w-4 h-4 rounded-full bg-fg shadow-sm transition-all ${trainingReminders ? 'left-7' : 'left-1'}`}
               />
             </button>
           </div>
@@ -333,7 +358,7 @@ export function SettingsPage() {
               aria-label={'Series de calentamiento'}
             >
               <div
-                className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${showWarmupSets ? 'left-7' : 'left-1'}`}
+                className={`absolute top-1 w-4 h-4 rounded-full bg-fg shadow-sm transition-all ${showWarmupSets ? 'left-7' : 'left-1'}`}
               />
             </button>
           </div>
@@ -352,7 +377,7 @@ export function SettingsPage() {
               aria-pressed={restAutoStart}
             >
               <div
-                className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${restAutoStart ? 'left-7' : 'left-1'}`}
+                className={`absolute top-1 w-4 h-4 rounded-full bg-fg shadow-sm transition-all ${restAutoStart ? 'left-7' : 'left-1'}`}
               />
             </button>
           </div>
@@ -405,7 +430,7 @@ export function SettingsPage() {
         <div className="rounded-2xl p-6 scale-in flex flex-col items-center text-center bg-surface border border-line-strong">
           <GymLogLogo size="lg" variant="stacked" className="mb-4" />
           <div className="text-sm font-bold text-accent mb-4 uppercase tracking-[0.2em] bg-accent/10 px-3 py-1 rounded-full">
-            Version 2.9
+            Version 3.0
           </div>
           <div className="text-sm leading-relaxed text-fg-subtle max-w-[240px]">
             Tu compañero definitivo para el seguimiento de entrenamientos de fuerza.

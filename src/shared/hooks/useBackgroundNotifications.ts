@@ -12,6 +12,8 @@ import {
 import { devError, devLog } from '@shared/lib/devtools';
 import { supabase } from '@shared/lib/supabase';
 import { toLocalDateKey } from '@shared/lib/dateKeys';
+import { useSettingsStore } from '@shared/stores/settingsStore';
+import { registerPushNotifications } from '@shared/lib/push';
 
 /**
  * Gestión de notificaciones background:
@@ -28,15 +30,35 @@ import { toLocalDateKey } from '@shared/lib/dateKeys';
 export function useBackgroundNotifications() {
   const userId = useAuthStore((s) => s.user?.id);
 
-  // Programar alarmas nativas una vez (persisten tras reinicio)
+  // Al arrancar (o al cambiar de usuario): sincronizar el flag de notificaciones
+  // con la DB y reprogramar las alarmas nativas si procede. Sin esto, tras
+  // reiniciar la app el toggle/localStorage quedaba desfasado y no se reprogramaba.
   useEffect(() => {
     if (!userId) return;
-    if (!isNative()) return;
 
     void (async () => {
+      // 1. Sincronizar notifications_enabled (fuente multi-dispositivo: DB)
+      try {
+        const { data } = await supabase
+          .from('profiles')
+          .select('notifications_enabled')
+          .eq('id', userId)
+          .single();
+        if (data) {
+          useSettingsStore.getState().setNotificationsEnabled(!!data.notifications_enabled);
+        }
+      } catch (e) {
+        devError('[Background] Error sincronizando notifications_enabled:', e);
+      }
+
+      // 2. Reprogramar alarmas nativas (persisten tras reinicio) si hay permiso
+      //    y las notificaciones están activas (canNotifyAsync lee notif_disabled)
+      if (!isNative()) return;
       if (!(await canNotifyAsync())) return;
       await scheduleStreakReminder();
       await scheduleWeeklySummaryReminder();
+      // Registro push remoto (refresca el token del dispositivo en cada arranque)
+      void registerPushNotifications(userId);
       devLog('[Background] Alarmas nativas programadas');
     })();
   }, [userId]);

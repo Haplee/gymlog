@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# APKs (artefactos de build / release — no versionar)
+*.apk
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

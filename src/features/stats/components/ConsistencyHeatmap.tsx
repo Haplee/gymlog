@@ -27,7 +27,7 @@ export const ConsistencyHeatmap = memo(function ConsistencyHeatmap({
   const maxVolume = Math.max(...data.map((d) => d.volume), 1);
 
   const getIntensity = (volume: number): string => {
-    if (volume === 0) return 'bg-[#1a1a1a]';
+    if (volume === 0) return 'bg-surface-2';
     const ratio = volume / maxVolume;
     if (ratio < 0.2) return 'bg-[#2d4a2d]';
     if (ratio < 0.4) return 'bg-[#3d6b3d]';
@@ -125,7 +125,7 @@ export const ConsistencyHeatmap = memo(function ConsistencyHeatmap({
                   <div
                     key={di}
                     className={`w-4 h-4 rounded-[3px] transition-all hover:scale-110 cursor-pointer ${
-                      day.volume > 0 ? getIntensity(day.volume) : 'bg-[#1a1a1a]'
+                      day.volume > 0 ? getIntensity(day.volume) : 'bg-surface-2'
                     }`}
                     title={
                       day.date
@@ -142,7 +142,7 @@ export const ConsistencyHeatmap = memo(function ConsistencyHeatmap({
 
       <div className="flex items-center justify-end gap-1 mt-4">
         <span className="text-[0.5rem] text-fg-subtle">Menos</span>
-        <div className="w-3 h-3 rounded-[3px] bg-[#1a1a1a]" />
+        <div className="w-3 h-3 rounded-[3px] bg-surface-2" />
         <div className="w-3 h-3 rounded-[3px] bg-[#2d4a2d]" />
         <div className="w-3 h-3 rounded-[3px] bg-[#3d6b3d]" />
         <div className="w-3 h-3 rounded-[3px] bg-[#4d8c4d]" />

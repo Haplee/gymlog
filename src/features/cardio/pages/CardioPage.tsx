@@ -113,20 +113,25 @@ function ActiveSessionCard({ userId }: { userId: string | null }) {
     >
       {!showFinish ? (
         <>
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
+          <div className="mb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span
+                  className={`w-2 h-2 rounded-full bg-accent shadow-glow ${isPaused ? '' : 'pulse-soft'}`}
+                  aria-hidden="true"
+                />
+                <span className="text-2xs font-semibold uppercase tracking-[0.14em] text-fg-subtle">
+                  {label} · {isPaused ? 'En pausa' : 'En curso'}
+                </span>
+              </div>
               {activeType && (
                 <span className="text-accent">
                   <CardioTypeIcon type={activeType} className="w-5 h-5" />
                 </span>
               )}
-              <div>
-                <div className="text-sm font-semibold text-fg">{label}</div>
-                <div className="text-xs text-fg-subtle">{isPaused ? 'En pausa' : 'En curso'}</div>
-              </div>
             </div>
             <div
-              className={`font-mono text-2xl font-bold tabular-nums text-accent ${
+              className={`mt-1.5 font-mono font-bold tabular-nums leading-none tracking-tight text-fg text-[2.75rem] ${
                 isPaused ? '' : 'timer-pulse'
               }`}
             >

@@ -99,7 +99,7 @@ export function Layout({ children }: LayoutProps) {
 
   return (
     <div className="min-h-screen min-h-[100dvh] flex flex-col overflow-hidden bg-base">
-      <header className="px-4 py-3 flex-shrink-0 bg-surface/85 backdrop-blur-xl border-b border-line-glass">
+      <header className="px-4 py-3 flex-shrink-0 bg-surface border-b border-line-glass">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-[10px] flex items-center justify-center bg-gradient-to-br from-accent to-accent-dim shadow-btn-accent">
@@ -118,7 +118,7 @@ export function Layout({ children }: LayoutProps) {
         </div>
       </header>
 
-      <nav className="flex flex-shrink-0 relative z-10 safe-area-bottom bg-black/95 backdrop-blur-xl border-t border-line-glass shadow-[0_-1px_0_rgba(255,255,255,0.04)]">
+      <nav className="flex flex-shrink-0 relative z-10 safe-area-bottom bg-surface border-t border-line">
         {tabs.map((tab) => {
           const isActive = location.pathname === tab.path;
           const { Icon, label, badge } = tab;

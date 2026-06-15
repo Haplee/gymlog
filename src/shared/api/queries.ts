@@ -114,7 +114,7 @@ export const fetchWorkoutsPaginated = async (
   return { workouts: mappedWorkouts, nextCursor };
 };
 
-export const fetchWorkouts = async (userId: string, limit = 1000): Promise<WorkoutWithSets[]> => {
+export const fetchWorkouts = async (userId: string, limit = 250): Promise<WorkoutWithSets[]> => {
   const { data: workouts, error } = await supabase
     .from('workouts')
     .select('*')
@@ -383,6 +383,48 @@ export const addBodyMeasurement = async (
 
 export const deleteBodyMeasurement = async (id: string): Promise<void> => {
   const { error } = await supabase.from('body_measurements').delete().eq('id', id);
+  if (error) throw error;
+};
+
+export interface ExerciseGoal {
+  id: string;
+  exercise_id: string;
+  target_one_rm: number;
+}
+
+export const fetchExerciseGoals = async (userId: string): Promise<ExerciseGoal[]> => {
+  const { data, error } = await supabase
+    .from('exercise_goals')
+    .select('id, exercise_id, target_one_rm')
+    .eq('user_id', userId);
+  if (error) {
+    // Tabla puede no existir aún (migración sin aplicar) — degradar a vacío.
+    devWarn('[Goals] fetch error:', error.message);
+    return [];
+  }
+  return (data as ExerciseGoal[]) ?? [];
+};
+
+export const upsertExerciseGoal = async (
+  userId: string,
+  exerciseId: string,
+  targetOneRm: number,
+): Promise<void> => {
+  const { error } = await supabase
+    .from('exercise_goals')
+    .upsert(
+      { user_id: userId, exercise_id: exerciseId, target_one_rm: targetOneRm },
+      { onConflict: 'user_id,exercise_id' },
+    );
+  if (error) throw error;
+};
+
+export const deleteExerciseGoal = async (userId: string, exerciseId: string): Promise<void> => {
+  const { error } = await supabase
+    .from('exercise_goals')
+    .delete()
+    .eq('user_id', userId)
+    .eq('exercise_id', exerciseId);
   if (error) throw error;
 };
 

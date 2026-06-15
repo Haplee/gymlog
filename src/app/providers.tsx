@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import { queryClient } from './queryClient';
 import { idbPersister } from './queryPersister';
 import { isNative, initNotifications } from '@shared/lib/notifications';
+import { useSettingsStore } from '@shared/stores/settingsStore';
 import '@shared/lib/i18n';
 
 interface ProvidersProps {
@@ -12,6 +13,8 @@ interface ProvidersProps {
 }
 
 export function Providers({ children }: ProvidersProps) {
+  const theme = useSettingsStore((s) => s.theme);
+
   useEffect(() => {
     if (!isNative()) return;
 
@@ -33,7 +36,7 @@ export function Providers({ children }: ProvidersProps) {
         position="bottom-center"
         closeButton
         duration={3500}
-        theme="dark"
+        theme={theme}
         toastOptions={{
           style: {
             background: 'var(--bg-surface)',

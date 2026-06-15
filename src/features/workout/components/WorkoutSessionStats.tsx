@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Clock, Zap, Layers, XCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { XCircle } from 'lucide-react';
 import { m } from 'framer-motion';
 
 interface WorkoutSessionStatsProps {
@@ -9,12 +10,17 @@ interface WorkoutSessionStatsProps {
   onCancel?: () => void;
 }
 
+/**
+ * Scoreboard de la sesión activa: el cronómetro (Geist Mono) es el héroe; volumen
+ * y series lo acompañan como marcador. Un punto "rec" indica sesión en curso.
+ */
 export function WorkoutSessionStats({
   startedAt,
   totalVolume,
   totalSets,
   onCancel,
 }: WorkoutSessionStatsProps) {
+  const { t } = useTranslation();
   const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
@@ -37,49 +43,58 @@ export function WorkoutSessionStats({
     <m.div
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex items-center gap-0 mb-3 rounded-2xl overflow-hidden bg-surface border border-line shadow-card"
+      className="mb-3 rounded-2xl px-4 py-3.5 bg-surface border border-line shadow-card"
     >
-      <div className="flex-1 flex flex-col items-center py-2.5 gap-0.5">
-        <Clock className="w-3.5 h-3.5 mb-0.5 text-accent" />
-        <span className="font-mono text-sm font-bold tabular-nums text-fg">
-          {String(mins).padStart(2, '0')}:{String(secs).padStart(2, '0')}
-        </span>
-        <span className="text-2xs uppercase text-fg-subtle">Tiempo</span>
-      </div>
-
-      <div className="w-px self-stretch bg-line" />
-
-      <div className="flex-1 flex flex-col items-center py-2.5 gap-0.5">
-        <Zap className="w-3.5 h-3.5 mb-0.5 text-fg-subtle" />
-        <span className="text-sm font-bold text-fg">{volumeDisplay}</span>
-        <span className="text-2xs uppercase text-fg-subtle">Volumen</span>
-      </div>
-
-      <div className="w-px self-stretch bg-line" />
-
-      <div className="flex-1 flex flex-col items-center py-2.5 gap-0.5">
-        <Layers className="w-3.5 h-3.5 mb-0.5 text-fg-subtle" />
-        <span className="text-sm font-bold text-fg">{totalSets}</span>
-        <span className="text-2xs uppercase text-fg-subtle">Series</span>
-      </div>
-
-      {onCancel && (
-        <>
-          <div className="w-px self-stretch bg-line" />
+      {/* Eyebrow + indicador rec + cancelar */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span
+            className="w-2 h-2 rounded-full bg-accent shadow-glow pulse-soft"
+            aria-hidden="true"
+          />
+          <span className="text-2xs font-semibold uppercase tracking-[0.14em] text-fg-subtle">
+            {t('workout.active_session')}
+          </span>
+        </div>
+        {onCancel && (
           <button
             onClick={() => {
-              if (window.confirm('¿Cancelar y eliminar la sesión de entrenamiento actual?')) {
-                onCancel();
-              }
+              if (window.confirm(t('workout.cancel_confirm'))) onCancel();
             }}
-            className="px-3 flex flex-col items-center justify-center transition-colors hover:opacity-70 active:opacity-50"
-            title="Cancelar entrenamiento"
+            className="flex items-center gap-1 min-h-9 px-2 -mr-2 rounded-lg text-error transition-opacity active:opacity-50"
+            title={t('workout.cancel_session')}
           >
-            <XCircle className="w-4 h-4 mb-0.5 text-error" />
-            <span className="text-2xs uppercase font-bold text-error">Cancelar</span>
+            <XCircle className="w-4 h-4" />
+            <span className="text-2xs font-semibold uppercase">{t('common.cancel')}</span>
           </button>
-        </>
-      )}
+        )}
+      </div>
+
+      {/* Héroe: cronómetro mono */}
+      <div className="mt-1.5 font-mono font-bold tabular-nums leading-none tracking-tight text-fg text-[2.75rem]">
+        {String(mins).padStart(2, '0')}
+        <span className="text-fg-subtle">:</span>
+        {String(secs).padStart(2, '0')}
+      </div>
+
+      {/* Marcador: volumen · series */}
+      <div className="mt-2.5 flex items-center gap-5">
+        <div className="flex items-baseline gap-1.5">
+          <span className="font-mono font-bold tabular-nums text-base text-fg">
+            {volumeDisplay}
+          </span>
+          <span className="text-2xs uppercase tracking-wide text-fg-subtle">
+            {t('workout.volume')}
+          </span>
+        </div>
+        <span className="w-px h-3.5 bg-line" aria-hidden="true" />
+        <div className="flex items-baseline gap-1.5">
+          <span className="font-mono font-bold tabular-nums text-base text-fg">{totalSets}</span>
+          <span className="text-2xs uppercase tracking-wide text-fg-subtle">
+            {t('workout.sets')}
+          </span>
+        </div>
+      </div>
     </m.div>
   );
 }
