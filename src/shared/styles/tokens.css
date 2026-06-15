@@ -118,4 +118,52 @@
   --bottom-nav-height: 64px;
 }
 
+/* ════════════════════════════════════════════════
+   Modo claro — overrides sobre :root (default oscuro).
+   Solo se redefinen los tokens base; los mapeos backward-compat
+   usan var() y se resuelven al valor claro automáticamente.
+   El acento lima (#c8ff00 con fg negro) mantiene contraste AA.
+   ════════════════════════════════════════════════ */
+:root.light {
+  color-scheme: light;
+
+  /* ── Base (fondo gris-claro para que las superficies blancas resalten) ─── */
+  --bg-base: #eef0f3;
+  --bg-surface: #ffffff;
+  --bg-surface-2: #f2f4f7;
+  --bg-surface-3: #e4e7eb;
+  --bg-glass: rgba(0, 0, 0, 0.03);
+
+  /* ── Texto (contraste AA sobre fondos claros) ─── */
+  --text-primary: #0d0f12;
+  --text-secondary: #474b52;
+  --text-tertiary: #5e636b; /* ≥4.5:1 sobre superficies claras */
+  --text-inverse: #ffffff;
+
+  /* ── Interactivo ─────────────────────────────── */
+  --interactive-secondary: #e7eaee;
+  --interactive-hover: #dadee3;
+
+  /* ── Bordes (algo más marcados para definir cards sobre claro) ─── */
+  --icon-bg-accent: rgba(160, 204, 0, 0.18);
+  --icon-bg-danger: rgba(255, 69, 58, 0.12);
+  --border-subtle: #e1e4e9;
+  --border-default: #ccd1d8;
+  --border-accent: rgba(160, 204, 0, 0.5);
+  --border-glass: rgba(0, 0, 0, 0.09);
+
+  /* ── Sombras (más suaves sobre fondo claro) ───── */
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.14);
+  --glow-accent: 0 0 20px rgba(160, 204, 0, 0.2);
+  --glow-error: 0 0 16px rgba(255, 69, 58, 0.18);
+
+  /* Overrides de las sombras definidas en el @theme de index.css (oscuras por
+     defecto). En claro deben ser sutiles, sin el inset blanco. */
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05), 0 6px 18px rgba(0, 0, 0, 0.08);
+  --shadow-glow: 0 0 18px rgba(160, 204, 0, 0.18);
+  --shadow-btn-accent: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 2px 8px rgba(160, 204, 0, 0.22);
+}
+
 /* Keyframes y clases de animación viven en index.css (fuente única). */

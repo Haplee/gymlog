@@ -5,7 +5,13 @@ import { useAuthStore } from '@features/auth/stores/authStore';
 import { useCardioStore, CARDIO_LABELS } from '@features/cardio/stores/cardioStore';
 import { Layout } from '@app/components/Layout';
 import { subWeeks, startOfWeek, eachWeekOfInterval, subDays } from 'date-fns';
-import { fetchWorkoutsAndSets, fetchPersonalRecords } from '@shared/api/queries';
+import {
+  fetchWorkoutsAndSets,
+  fetchPersonalRecords,
+  fetchExerciseGoals,
+  upsertExerciseGoal,
+  deleteExerciseGoal,
+} from '@shared/api/queries';
 import { calcular1RM } from '@shared/lib/brzycki';
 import { Skeleton } from '@shared/components/ui/Skeleton';
 import { KPICard } from '../components/KPICards';
@@ -46,7 +52,7 @@ import { FatigueAnalysis } from '../components/FatigueAnalysis';
 import { CHART_COLORS } from '../constants';
 import { toast } from 'sonner';
 import { m } from 'framer-motion';
-import { TrendingUp, Target, Calculator, ChevronDown } from 'lucide-react';
+import { TrendingUp, Target, Calculator, ChevronDown, AlertTriangle } from 'lucide-react';
 import { devError } from '@shared/lib/devtools';
 
 type PeriodFilter = '4semanas' | '3meses' | '6meses' | '1año';
@@ -121,6 +127,7 @@ export function StatsPage() {
   const [rmWeight, setRmWeight] = useState('');
   const [rmReps, setRmReps] = useState('');
   const [rmResult, setRmResult] = useState<number | null>(null);
+  const [goalInput, setGoalInput] = useState('');
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['workoutsAndSets', user?.id],
@@ -137,6 +144,12 @@ export function StatsPage() {
   const { data: personalRecords = [] } = useQuery({
     queryKey: ['personalRecords', user?.id],
     queryFn: () => fetchPersonalRecords(user?.id ?? ''),
+    enabled: !!user?.id,
+  });
+
+  const { data: exerciseGoals = [], refetch: refetchGoals } = useQuery({
+    queryKey: ['exerciseGoals', user?.id],
+    queryFn: () => fetchExerciseGoals(user?.id ?? ''),
     enabled: !!user?.id,
   });
 
@@ -172,7 +185,77 @@ export function StatsPage() {
     return [...new Set(recentSets.map((s) => s.exercise?.name).filter(Boolean))] as string[];
   }, [recentSets]);
 
+  // Estancamiento: ejercicios entrenados en las últimas 2 semanas cuyo PR no
+  // mejora desde hace ≥5 semanas. Señal para variar carga/volumen.
+  const stagnantExercises = useMemo(() => {
+    const now = new Date().getTime();
+    const week = 7 * 24 * 60 * 60 * 1000;
+    const nameById = new Map<string, string>();
+    const trainedRecently = new Set<string>();
+    for (const s of recentSets) {
+      if (s.exercise_id && s.exercise?.name) nameById.set(s.exercise_id, s.exercise.name);
+      const d = new Date(s.workout?.started_at ?? 0).getTime();
+      if (s.exercise_id && now - d < 2 * week) trainedRecently.add(s.exercise_id);
+    }
+    return personalRecords
+      .filter((pr) => {
+        if (!pr.exercise_id || !trainedRecently.has(pr.exercise_id) || !pr.achieved_at)
+          return false;
+        return now - new Date(pr.achieved_at).getTime() > 5 * week;
+      })
+      .map((pr) => ({
+        id: pr.exercise_id as string,
+        name: nameById.get(pr.exercise_id as string) ?? 'Ejercicio',
+        weeks: Math.floor((now - new Date(pr.achieved_at as string).getTime()) / week),
+      }))
+      .sort((a, b) => b.weeks - a.weeks)
+      .slice(0, 4);
+  }, [recentSets, personalRecords]);
+
   const activeExercise = selectedExercise || uniqueExercises[0] || '';
+
+  // Objetivo 1RM del ejercicio activo: id, mejor marca actual y meta fijada.
+  const activeExerciseId = useMemo(
+    () => recentSets.find((s) => s.exercise?.name === activeExercise)?.exercise_id ?? null,
+    [recentSets, activeExercise],
+  );
+  const currentBest1rm = useMemo(() => {
+    let best = 0;
+    for (const s of recentSets) {
+      if (s.exercise?.name !== activeExercise) continue;
+      if ((s as { is_warmup?: boolean | null }).is_warmup) continue;
+      const e = calcular1RM(s.weight, s.reps);
+      if (e > best) best = e;
+    }
+    return Math.round(best);
+  }, [recentSets, activeExercise]);
+  const activeGoal = useMemo(
+    () => exerciseGoals.find((g) => g.exercise_id === activeExerciseId)?.target_one_rm ?? null,
+    [exerciseGoals, activeExerciseId],
+  );
+
+  const handleSaveGoal = async () => {
+    const target = parseFloat(goalInput.replace(',', '.'));
+    if (!user || !activeExerciseId || !Number.isFinite(target) || target <= 0) return;
+    try {
+      await upsertExerciseGoal(user.id, activeExerciseId, target);
+      setGoalInput('');
+      await refetchGoals();
+      toast.success('Objetivo guardado');
+    } catch {
+      toast.error('No se pudo guardar el objetivo');
+    }
+  };
+
+  const handleClearGoal = async () => {
+    if (!user || !activeExerciseId) return;
+    try {
+      await deleteExerciseGoal(user.id, activeExerciseId);
+      await refetchGoals();
+    } catch {
+      toast.error('No se pudo quitar el objetivo');
+    }
+  };
 
   const weeklyVolumeData = useMemo(() => {
     const weeks = PERIOD_WEEKS[periodFilter];
@@ -430,6 +513,33 @@ export function StatsPage() {
               </div>
             </div>
           </m.div>
+
+          {stagnantExercises.length > 0 && (
+            <m.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="rounded-card p-4 bg-surface border border-line"
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <AlertTriangle className="w-4 h-4 text-warning" />
+                <span className="text-sm font-semibold text-fg">Posible estancamiento</span>
+              </div>
+              <div className="space-y-2">
+                {stagnantExercises.map((ex) => (
+                  <div key={ex.id} className="flex items-center justify-between">
+                    <span className="text-sm text-fg-muted truncate pr-2">{ex.name}</span>
+                    <span className="text-xs font-mono tabular-nums text-warning flex-shrink-0">
+                      {ex.weeks} sem sin PR
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-fg-subtle mt-3">
+                Prueba subir peso, cambiar el rango de reps o variar el ejercicio.
+              </p>
+            </m.div>
+          )}
         </section>
 
         {/* ── Cardio ── */}
@@ -712,6 +822,62 @@ export function StatsPage() {
                       <span className="font-semibold text-accent">
                         {progressionData[progressionData.length - 1]?.value.toFixed(1)} kg
                       </span>
+                    </div>
+                  )}
+
+                  {activeExerciseId && (
+                    <div className="pt-3 border-t border-line">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-semibold text-fg">Objetivo 1RM</span>
+                        {activeGoal != null && (
+                          <span className="text-2xs font-mono tabular-nums text-fg-subtle">
+                            {currentBest1rm} / {activeGoal} kg
+                          </span>
+                        )}
+                      </div>
+                      {activeGoal != null ? (
+                        <>
+                          <div className="h-2 rounded-full bg-surface-2 overflow-hidden">
+                            <div
+                              className="h-full bg-accent rounded-full"
+                              style={{
+                                width: `${Math.min(100, Math.round((currentBest1rm / activeGoal) * 100))}%`,
+                              }}
+                            />
+                          </div>
+                          <div className="flex items-center justify-between mt-2">
+                            <span className="text-2xs text-fg-subtle">
+                              {currentBest1rm >= activeGoal
+                                ? '¡Objetivo alcanzado! 🎉'
+                                : `Faltan ${(activeGoal - currentBest1rm).toFixed(1)} kg`}
+                            </span>
+                            <button
+                              onClick={handleClearGoal}
+                              className="text-2xs text-fg-subtle underline"
+                            >
+                              Quitar
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            value={goalInput}
+                            onChange={(e) => setGoalInput(e.target.value.replace(/[^\d.,]/g, ''))}
+                            placeholder={`p.ej. ${currentBest1rm + 5} kg`}
+                            className="flex-1 rounded-lg text-sm px-3 py-2 outline-none bg-surface-2 border border-line text-fg"
+                          />
+                          <button
+                            onClick={handleSaveGoal}
+                            disabled={!goalInput}
+                            className="px-4 rounded-lg text-sm font-semibold bg-accent text-accent-fg disabled:opacity-50"
+                          >
+                            Fijar
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

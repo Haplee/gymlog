@@ -48,7 +48,13 @@ const labels = {
   },
 };
 
-export function EmptyState({ type }: { type: EmptyStateProps['icon'] }) {
+export function EmptyState({
+  type,
+  action,
+}: {
+  type: EmptyStateProps['icon'];
+  action?: { label: string; onClick: () => void };
+}) {
   const { title, desc } = labels[type];
   const Icon = icons[type];
 
@@ -79,22 +85,36 @@ export function EmptyState({ type }: { type: EmptyStateProps['icon'] }) {
       <m.p variants={itemVariants} className="text-sm max-w-xs mb-6 text-fg-muted">
         {desc}
       </m.p>
+
+      {action && (
+        <m.button
+          variants={itemVariants}
+          onClick={action.onClick}
+          className="px-5 py-2.5 rounded-pill text-sm font-semibold bg-accent text-accent-fg shadow-btn-accent transition-transform active:scale-[0.97]"
+        >
+          {action.label}
+        </m.button>
+      )}
     </m.div>
   );
 }
 
-export function EmptyWorkout() {
-  return <EmptyState type="workout" />;
+interface EmptyActionProps {
+  action?: { label: string; onClick: () => void };
 }
 
-export function EmptyHistory() {
-  return <EmptyState type="history" />;
+export function EmptyWorkout({ action }: EmptyActionProps) {
+  return <EmptyState type="workout" action={action} />;
 }
 
-export function EmptyStats() {
-  return <EmptyState type="stats" />;
+export function EmptyHistory({ action }: EmptyActionProps) {
+  return <EmptyState type="history" action={action} />;
 }
 
-export function EmptyRoutine() {
-  return <EmptyState type="routine" />;
+export function EmptyStats({ action }: EmptyActionProps) {
+  return <EmptyState type="stats" action={action} />;
+}
+
+export function EmptyRoutine({ action }: EmptyActionProps) {
+  return <EmptyState type="routine" action={action} />;
 }

@@ -176,12 +176,7 @@ export function RoutinePage() {
                     handleSelectRoutine(routine.id);
                   }
                 }}
-                className="p-4 rounded-2xl cursor-pointer transition-all active:scale-[0.99]"
-                style={{
-                  backgroundColor: 'var(--bg-surface-2)',
-                  border: '1px solid var(--border-glass)',
-                  boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset',
-                }}
+                className="p-4 rounded-2xl cursor-pointer transition-all active:scale-[0.99] bg-surface-2 border border-line-glass shadow-card"
               >
                 <div className="flex justify-between items-center gap-3">
                   <div className="min-w-0">
@@ -190,14 +185,7 @@ export function RoutinePage() {
                   </div>
                   {!routine.isCustom && (
                     <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                      <span
-                        className="text-[0.5625rem] px-2 py-1 rounded-pill font-bold uppercase tracking-wide"
-                        style={{
-                          backgroundColor: 'rgba(200,255,0,0.08)',
-                          color: 'var(--interactive-primary)',
-                          border: '1px solid rgba(200,255,0,0.15)',
-                        }}
-                      >
+                      <span className="text-2xs px-2 py-1 rounded-pill font-bold uppercase tracking-wide bg-accent/10 text-accent border border-line-accent">
                         {t('routine.predefined')}
                       </span>
                       <button
@@ -215,11 +203,7 @@ export function RoutinePage() {
 
           <button
             onClick={() => setShowCreate(true)}
-            className="w-full mt-4 py-3 rounded-lg font-medium"
-            style={{
-              backgroundColor: 'var(--interactive-primary)',
-              color: 'var(--interactive-primary-fg)',
-            }}
+            className="w-full mt-4 py-3 rounded-lg font-semibold bg-accent text-accent-fg shadow-btn-accent active:scale-[0.98]"
           >
             {t('routine.create_custom')}
           </button>
@@ -240,7 +224,7 @@ export function RoutinePage() {
           </div>
 
           {todayRoutine && todayRoutine.exercises.length > 0 && (
-            <div className="mb-4 p-3 rounded-lg" style={{ backgroundColor: 'rgba(200,255,0,0.1)' }}>
+            <div className="mb-4 p-3 rounded-lg bg-accent/10 border border-line-accent">
               <div className="text-xs font-medium mb-2 text-accent">
                 {t('routine.today')} - {todayRoutine.name}
               </div>
