@@ -8,6 +8,76 @@ import type {
   ExerciseNote,
 } from '@shared/lib/types';
 
+const mapWorkout = (wo: Record<string, unknown>): WorkoutWithSets =>
+  ({
+    ...wo,
+    started_at: wo.started_at,
+    ended_at: wo.finished_at,
+    sets: (wo.sets as WorkoutSetWithDetails[]) ?? [],
+  }) as unknown as WorkoutWithSets;
+
+/**
+ * Resuelve workouts + sets anidados en una sola llamada RPC (join en servidor),
+ * evitando el patrón cliente `.in('workout_id', [muchos UUIDs])` que puede
+ * superar el límite de longitud de URL de PostgREST en historiales grandes.
+ *
+ * Fallback al doble round-trip clásico si la RPC no existe (deploys antiguos).
+ */
+const fetchWorkoutsWithSets = async (
+  userId: string,
+  limit: number,
+  cursor: string | null = null,
+): Promise<WorkoutWithSets[]> => {
+  const { data, error } = await supabase.rpc('get_workouts_with_sets', {
+    p_user_id: userId,
+    p_limit: limit,
+    p_cursor: cursor,
+  });
+
+  if (error) {
+    devWarn('[fetchWorkoutsWithSets] RPC failed, falling back to legacy:', error.message);
+    return legacyFetchWorkoutsWithSets(userId, limit, cursor);
+  }
+
+  return ((data as Record<string, unknown>[]) || []).map(mapWorkout);
+};
+
+/** Camino legacy: workouts + sets en dos queries con `.in` (solo fallback). */
+const legacyFetchWorkoutsWithSets = async (
+  userId: string,
+  limit: number,
+  cursor: string | null = null,
+): Promise<WorkoutWithSets[]> => {
+  let query = supabase
+    .from('workouts')
+    .select('*')
+    .eq('user_id', userId)
+    .order('started_at', { ascending: false })
+    .limit(limit);
+
+  if (cursor) query = query.lt('started_at', cursor);
+
+  const { data: workouts, error } = await query;
+  if (error) throw error;
+  if (!workouts || workouts.length === 0) return [];
+
+  const ids = workouts.map((w) => w.id);
+
+  const { data: allSets, error: setsError } = await supabase
+    .from('workout_sets')
+    .select(
+      'id, weight, reps, set_num, exercise_id, workout_id, created_at, notes, is_warmup, rpe, exercise:exercises(name, muscle_group), workout:workouts(started_at)',
+    )
+    .in('workout_id', ids)
+    .order('created_at', { ascending: false });
+
+  if (setsError) throw setsError;
+
+  return workouts.map((wo) =>
+    mapWorkout({ ...wo, sets: (allSets || []).filter((s) => s.workout_id === wo.id) }),
+  );
+};
+
 /**
  * Obtiene workouts con sus sets asociados para un usuario
  * @param userId - ID del usuario
@@ -16,45 +86,9 @@ import type {
  */
 export const fetchWorkoutsAndSets = async (userId: string, limit = 200) => {
   try {
-    const { data: workoutIds, error } = await supabase
-      .from('workouts')
-      .select('*')
-      .eq('user_id', userId)
-      .order('started_at', { ascending: false })
-      .limit(limit);
-
-    if (error) {
-      devError('Error fetching workouts:', error);
-      throw error;
-    }
-    if (!workoutIds || workoutIds.length === 0) return { workouts: [], sets: [] };
-
-    const ids = workoutIds.map((w) => w.id);
-
-    const { data: allSets, error: setsError } = await supabase
-      .from('workout_sets')
-      .select(
-        'id, weight, reps, set_num, exercise_id, workout_id, created_at, notes, is_warmup, rpe, exercise:exercises(name, muscle_group), workout:workouts(started_at)',
-      )
-      .in('workout_id', ids)
-      .order('created_at', { ascending: false });
-
-    if (setsError) {
-      devError('Error fetching sets:', setsError);
-      throw setsError;
-    }
-
-    const workouts: WorkoutWithSets[] = workoutIds.map((wo) => {
-      const sets = (allSets || []).filter((s) => s.workout_id === wo.id);
-      return {
-        ...wo,
-        started_at: wo.started_at,
-        ended_at: wo.finished_at,
-        sets: sets as unknown as WorkoutSetWithDetails[],
-      } as WorkoutWithSets;
-    });
-
-    return { workouts, sets: (allSets as unknown as WorkoutSetWithDetails[]) || [] };
+    const workouts = await fetchWorkoutsWithSets(userId, limit);
+    const sets = workouts.flatMap((w) => w.sets as WorkoutSetWithDetails[]);
+    return { workouts, sets };
   } catch (err) {
     devError('fetchWorkoutsAndSets error:', err);
     throw err;
@@ -71,80 +105,17 @@ export const fetchWorkoutsPaginated = async (
   cursor: string | null = null,
   limit = 20,
 ): Promise<PaginatedWorkoutsResponse> => {
-  let query = supabase
-    .from('workouts')
-    .select('*')
-    .eq('user_id', userId)
-    .order('started_at', { ascending: false })
-    .limit(limit);
-
-  if (cursor) {
-    query = query.lt('started_at', cursor);
-  }
-
-  const { data: workouts, error } = await query;
-
-  if (error) throw error;
-  if (!workouts || workouts.length === 0) return { workouts: [], nextCursor: null };
-
-  const ids = workouts.map((w) => w.id);
-
-  const { data: allSets, error: setsError } = await supabase
-    .from('workout_sets')
-    .select(
-      'id, weight, reps, set_num, exercise_id, workout_id, created_at, notes, is_warmup, rpe, exercise:exercises(name)',
-    )
-    .in('workout_id', ids);
-
-  if (setsError) throw setsError;
-
-  const mappedWorkouts = workouts.map((wo) => {
-    const sets = (allSets || []).filter((s) => s.workout_id === wo.id);
-    return {
-      ...wo,
-      started_at: wo.started_at,
-      ended_at: wo.finished_at,
-      sets: sets as unknown as WorkoutSetWithDetails[],
-    } as unknown as WorkoutWithSets;
-  });
+  const workouts = await fetchWorkoutsWithSets(userId, limit, cursor);
+  if (workouts.length === 0) return { workouts: [], nextCursor: null };
 
   const nextCursor =
     workouts.length === limit ? (workouts[workouts.length - 1]?.started_at ?? null) : null;
 
-  return { workouts: mappedWorkouts, nextCursor };
+  return { workouts, nextCursor };
 };
 
 export const fetchWorkouts = async (userId: string, limit = 1000): Promise<WorkoutWithSets[]> => {
-  const { data: workouts, error } = await supabase
-    .from('workouts')
-    .select('*')
-    .eq('user_id', userId)
-    .order('started_at', { ascending: false })
-    .limit(limit);
-
-  if (error) throw error;
-  if (!workouts || workouts.length === 0) return [];
-
-  const ids = workouts.map((w) => w.id);
-
-  const { data: allSets, error: setsError } = await supabase
-    .from('workout_sets')
-    .select(
-      'id, weight, reps, set_num, exercise_id, workout_id, created_at, notes, is_warmup, rpe, exercise:exercises(name)',
-    )
-    .in('workout_id', ids);
-
-  if (setsError) throw setsError;
-
-  return workouts.map((wo) => {
-    const sets = (allSets || []).filter((s) => s.workout_id === wo.id);
-    return {
-      ...wo,
-      started_at: wo.started_at,
-      ended_at: wo.finished_at,
-      sets: sets as unknown as WorkoutSetWithDetails[],
-    } as unknown as WorkoutWithSets;
-  });
+  return fetchWorkoutsWithSets(userId, limit);
 };
 
 export const fetchRecentSets = async (
@@ -152,36 +123,11 @@ export const fetchRecentSets = async (
   limit = 1000,
 ): Promise<WorkoutSetWithDetails[]> => {
   try {
-    const { data: workoutIds, error: woError } = await supabase
-      .from('workouts')
-      .select('id')
-      .eq('user_id', userId)
-      .order('started_at', { ascending: false })
-      .limit(300);
-
-    if (woError) {
-      devError('Error fetching workout IDs:', woError);
-      throw woError;
-    }
-    if (!workoutIds || workoutIds.length === 0) return [];
-
-    const ids = workoutIds.map((w) => w.id);
-
-    const { data, error: setsError } = await supabase
-      .from('workout_sets')
-      .select(
-        'id, weight, reps, set_num, exercise_id, workout_id, created_at, notes, is_warmup, rpe, exercise:exercises(name), workout:workouts(started_at)',
-      )
-      .in('workout_id', ids)
-      .order('created_at', { ascending: false })
-      .limit(limit);
-
-    if (setsError) {
-      devError('Error fetching recent sets:', setsError);
-      throw setsError;
-    }
-
-    return (data as unknown as WorkoutSetWithDetails[]) || [];
+    const workouts = await fetchWorkoutsWithSets(userId, 300);
+    const sets = workouts
+      .flatMap((w) => w.sets as WorkoutSetWithDetails[])
+      .sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''));
+    return sets.slice(0, limit);
   } catch (err) {
     devError('fetchRecentSets error:', err);
     throw err;

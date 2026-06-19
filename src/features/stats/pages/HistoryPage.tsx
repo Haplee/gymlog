@@ -634,7 +634,7 @@ export function HistoryPage() {
   if (loading) {
     return (
       <Layout>
-        <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-[var(--radius-xl)] overflow-hidden">
+        <div className="glass glass-sheen rounded-[var(--radius-xl)] overflow-hidden">
           <div className="skeleton h-12 w-full"></div>
         </div>
       </Layout>
@@ -947,8 +947,11 @@ export function HistoryPage() {
         <div
           className="rounded-[var(--radius-lg)] overflow-hidden"
           style={{
-            backgroundColor: 'var(--bg-surface)',
-            border: '1px solid var(--border-default)',
+            background: 'var(--glass-bg)',
+            backdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+            WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+            border: '1px solid var(--glass-border)',
+            boxShadow: 'var(--glass-shadow)',
           }}
         >
           {filteredSets.length === 0 ? (

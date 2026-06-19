@@ -24,7 +24,13 @@ export function WeeklyVolumeChart({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.35 }}
         className="rounded-[var(--radius-xl)] p-4"
-        style={{ backgroundColor: 'var(--bg-surface)' }}
+        style={{
+          background: 'var(--glass-bg)',
+          backdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+          WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+          border: '1px solid var(--glass-border)',
+          boxShadow: 'var(--glass-shadow)',
+        }}
       >
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">

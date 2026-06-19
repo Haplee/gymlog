@@ -93,8 +93,11 @@ export function RestTimer() {
     <div
       className="rounded-[var(--radius-lg)] p-4 mt-3"
       style={{
-        backgroundColor: 'var(--bg-surface)',
-        border: '1px solid var(--border-subtle)',
+        background: 'var(--glass-bg)',
+        backdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+        WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+        border: '1px solid var(--glass-border)',
+        boxShadow: 'var(--glass-shadow)',
       }}
     >
       <div className="flex items-center justify-between mb-4">

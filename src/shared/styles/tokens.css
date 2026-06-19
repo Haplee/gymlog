@@ -37,6 +37,19 @@
   --border-accent: rgba(200, 255, 0, 0.2);
   --border-glass: rgba(255, 255, 255, 0.07);
 
+  /* ── Liquid Glass ────────────────────────────── */
+  --glass-blur: 32px;
+  --glass-saturate: 180%;
+  --glass-bg: rgba(255, 255, 255, 0.03); /* tarjetas */
+  --glass-bg-strong: rgba(20, 20, 20, 0.28); /* chrome sobre contenido */
+  --glass-border: rgba(255, 255, 255, 0.12); /* borde especular */
+  --glass-highlight: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0) 40%
+  );
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+
   /* ── Radios ─────────────────────────────────── */
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -103,6 +116,46 @@
   /* ── Layout ──────────────────────────────────── */
   --header-height: 60px;
   --bottom-nav-height: 64px;
+}
+
+/* ════════════════════════════════════════════════
+   Estilos visuales seleccionables por el usuario
+   (data-style en <html>, persistido en dispositivo).
+   Por defecto / 'glass' = Liquid Glass (tokens base).
+   ════════════════════════════════════════════════ */
+
+/* Cristal intenso: más blur, casi invisible */
+:root[data-style='intense'] {
+  --glass-blur: 44px;
+  --glass-bg: rgba(255, 255, 255, 0.02);
+  --glass-bg-strong: rgba(20, 20, 20, 0.18);
+}
+
+/* Cristal sutil: poco blur, más sólido */
+:root[data-style='subtle'] {
+  --glass-blur: 12px;
+  --glass-bg: rgba(255, 255, 255, 0.06);
+  --glass-bg-strong: rgba(17, 17, 17, 0.72);
+}
+
+/* Sólido: sin cristal — superficies opacas clásicas */
+:root[data-style='solid'] {
+  --glass-blur: 0px;
+  --glass-saturate: 100%;
+  --glass-bg: var(--bg-surface);
+  --glass-bg-strong: var(--bg-surface);
+  --glass-border: var(--border-default);
+  --glass-highlight: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0) 40%
+  );
+  --glass-shadow: var(--shadow-card);
+}
+
+/* Sólido oculta el fondo ambiental para evitar manchas tras superficies opacas */
+:root[data-style='solid'] .glass-ambient {
+  display: none;
 }
 
 @keyframes success-pulse {

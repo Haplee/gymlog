@@ -19,8 +19,11 @@ export function TopExercisesList({ data }: { data: TopExerciseItem[] }) {
         transition={{ delay: 0.5 }}
         className="rounded-[var(--radius-xl)] overflow-hidden"
         style={{
-          backgroundColor: 'var(--bg-surface)',
-          border: '1px solid var(--border-subtle)',
+          background: 'var(--glass-bg)',
+          backdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+          WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+          border: '1px solid var(--glass-border)',
+          boxShadow: 'var(--glass-shadow)',
         }}
       >
         {data.map((ex, i) => {

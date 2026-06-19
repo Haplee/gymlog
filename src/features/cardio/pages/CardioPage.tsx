@@ -278,7 +278,13 @@ function WeeklyStats({ sessions }: { sessions: CardioSession[] }) {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       className="rounded-[var(--radius-lg)] p-4 mb-3"
-      style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}
+      style={{
+        background: 'var(--glass-bg)',
+        backdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+        WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+        border: '1px solid var(--glass-border)',
+        boxShadow: 'var(--glass-shadow)',
+      }}
     >
       <div
         className="text-[0.75rem] font-semibold uppercase mb-3 flex items-center gap-1.5"
@@ -474,7 +480,13 @@ export function CardioPage() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           className="rounded-[var(--radius-lg)] p-4 mb-3"
-          style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}
+          style={{
+            background: 'var(--glass-bg)',
+            backdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+            WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+            border: '1px solid var(--glass-border)',
+            boxShadow: 'var(--glass-shadow)',
+          }}
         >
           <div
             className="text-[0.75rem] font-semibold uppercase mb-3 flex items-center gap-1.5"
@@ -525,7 +537,13 @@ export function CardioPage() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           className="rounded-[var(--radius-lg)] p-4"
-          style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}
+          style={{
+            background: 'var(--glass-bg)',
+            backdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+            WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+            border: '1px solid var(--glass-border)',
+            boxShadow: 'var(--glass-shadow)',
+          }}
         >
           <div
             className="text-[0.75rem] font-semibold uppercase mb-2 flex items-center gap-1.5"

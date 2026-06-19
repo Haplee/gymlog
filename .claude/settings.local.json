@@ -249,7 +249,20 @@
       "PowerShell(foreach \\($b in @\\('main','correccion_scripts','060526','140526','fix/cierre-pendiente-2026-06-02','fix/tecnicos-informe-factura-y-panel','simpleza-270526'\\)\\) { $n = \\(git log $b --format='%s%n%b' | Select-String -Pattern 'claude|anthropic' -CaseSensitive:$false | Measure-Object\\).Count; \"$b : $n\" })",
       "Bash(graphify label *)",
       "Bash(env)",
-      "Bash(python *)"
+      "Bash(python *)",
+      "Bash(npx tsc *)",
+      "Bash(echo \"EXIT_TSC:$?\")",
+      "Bash(npx eslint *)",
+      "Bash(echo \"EXIT_ESLINT:$?\")",
+      "Bash(echo \"TSC_EXIT:$?\")",
+      "Bash(echo \"ESLINT_EXIT:$?\")",
+      "Bash(xargs wc -l)",
+      "mcp__claude_ai_Supabase__list_projects",
+      "mcp__claude_ai_Supabase__list_tables",
+      "mcp__claude_ai_Supabase__apply_migration",
+      "mcp__claude_ai_Supabase__get_advisors",
+      "mcp__claude_ai_Supabase__list_migrations",
+      "mcp__claude_ai_Supabase__execute_sql"
     ]
   }
 }

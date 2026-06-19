@@ -38,7 +38,13 @@ export function WorkoutSessionStats({
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       className="flex items-center gap-0 mb-3 rounded-[var(--radius-lg)] overflow-hidden"
-      style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}
+      style={{
+        background: 'var(--glass-bg)',
+        backdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+        WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+        border: '1px solid var(--glass-border)',
+        boxShadow: 'var(--glass-shadow)',
+      }}
     >
       <div className="flex-1 flex flex-col items-center py-2.5 gap-0.5">
         <Clock className="w-3.5 h-3.5 mb-0.5" style={{ color: 'var(--interactive-primary)' }} />

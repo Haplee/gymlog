@@ -68,7 +68,13 @@ function BigKPI({
       animate={{ opacity: 1, scale: 1 }}
       transition={{ delay, type: 'spring', stiffness: 300, damping: 24 }}
       className="rounded-[var(--radius-xl)] p-4 flex flex-col gap-2"
-      style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}
+      style={{
+        background: 'var(--glass-bg)',
+        backdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+        WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+        border: '1px solid var(--glass-border)',
+        boxShadow: 'var(--glass-shadow)',
+      }}
     >
       <div
         className="w-8 h-8 rounded-[var(--radius-md)] flex items-center justify-center"
@@ -538,7 +544,13 @@ export function UserStatsPage() {
             <div
               key={i}
               className="h-24 rounded-[var(--radius-xl)] animate-pulse"
-              style={{ backgroundColor: 'var(--bg-surface)' }}
+              style={{
+                background: 'var(--glass-bg)',
+                backdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+                WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+                border: '1px solid var(--glass-border)',
+                boxShadow: 'var(--glass-shadow)',
+              }}
             />
           ))}
         </div>
@@ -557,7 +569,13 @@ export function UserStatsPage() {
         <button
           onClick={() => navigate(-1)}
           className="w-9 h-9 rounded-[var(--radius-md)] flex items-center justify-center transition-colors"
-          style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}
+          style={{
+            background: 'var(--glass-bg)',
+            backdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+            WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+            border: '1px solid var(--glass-border)',
+            boxShadow: 'var(--glass-shadow)',
+          }}
           onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface-2)')}
           onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
         >
@@ -685,7 +703,13 @@ export function UserStatsPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.55 }}
               className="rounded-[var(--radius-xl)] p-4"
-              style={{ backgroundColor: 'var(--bg-surface)' }}
+              style={{
+                background: 'var(--glass-bg)',
+                backdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+                WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+                border: '1px solid var(--glass-border)',
+                boxShadow: 'var(--glass-shadow)',
+              }}
             >
               <div className="space-y-2">
                 {muscleRecovery.slice(0, 6).map(({ name, daysSinceLast, status }) => {
@@ -747,7 +771,13 @@ export function UserStatsPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
               className="rounded-[var(--radius-xl)] p-4"
-              style={{ backgroundColor: 'var(--bg-surface)' }}
+              style={{
+                background: 'var(--glass-bg)',
+                backdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+                WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+                border: '1px solid var(--glass-border)',
+                boxShadow: 'var(--glass-shadow)',
+              }}
             >
               <div className="flex items-center gap-2 mb-4">
                 <Lightbulb className="w-4 h-4" style={{ color: '#ffd60a' }} />

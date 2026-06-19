@@ -64,7 +64,11 @@ export function BottomSheet({
             transition={{ duration: 0.2 }}
             onClick={onClose}
             className="fixed inset-0 z-[var(--z-modal)]"
-            style={{ backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
+            style={{
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+            }}
             aria-hidden="true"
           />
 
@@ -79,8 +83,8 @@ export function BottomSheet({
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-            className="fixed bottom-0 left-0 right-0 z-[calc(var(--z-modal)+1)] flex flex-col rounded-t-[var(--radius-2xl)]"
-            style={{ backgroundColor: 'var(--bg-surface)', maxHeight: `${maxHeightVh}dvh` }}
+            className="glass-strong glass-sheen fixed bottom-0 left-0 right-0 z-[calc(var(--z-modal)+1)] flex flex-col rounded-t-[var(--radius-2xl)]"
+            style={{ maxHeight: `${maxHeightVh}dvh` }}
           >
             <div
               className="h-1 flex-shrink-0 rounded-t-full"

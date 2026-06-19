@@ -29,7 +29,7 @@ export function RoutinePage() {
 
   const { data: exercises = [] } = useQuery({
     queryKey: ['exercises', user?.id],
-    queryFn: () => fetchExercises(user!.id),
+    queryFn: () => fetchExercises(user?.id),
     enabled: !!user?.id,
   });
 
@@ -144,7 +144,15 @@ export function RoutinePage() {
             {routines.map((routine) => (
               <div
                 key={routine.id}
+                role="button"
+                tabIndex={0}
                 onClick={() => handleSelectRoutine(routine.id)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleSelectRoutine(routine.id);
+                  }
+                }}
                 className="p-4 rounded-[var(--radius-lg)] cursor-pointer transition-all active:scale-[0.99]"
                 style={{
                   backgroundColor: 'var(--bg-surface-2)',
@@ -255,7 +263,16 @@ export function RoutinePage() {
             ))}
           </div>
 
-          <div className="rounded-lg p-3" style={{ backgroundColor: 'var(--bg-surface)' }}>
+          <div
+            className="rounded-lg p-3"
+            style={{
+              background: 'var(--glass-bg)',
+              backdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+              WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+              border: '1px solid var(--glass-border)',
+              boxShadow: 'var(--glass-shadow)',
+            }}
+          >
             <div className="flex justify-between items-center mb-3">
               <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
                 {dayLabels[selectedDay]}
@@ -350,7 +367,13 @@ export function RoutinePage() {
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
           <div
             className="rounded-xl p-4 w-full max-w-sm"
-            style={{ backgroundColor: 'var(--bg-surface)' }}
+            style={{
+              background: 'var(--glass-bg)',
+              backdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+              WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+              border: '1px solid var(--glass-border)',
+              boxShadow: 'var(--glass-shadow)',
+            }}
           >
             <div className="text-lg font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
               Nueva Rutina

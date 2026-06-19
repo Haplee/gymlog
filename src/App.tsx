@@ -1,6 +1,6 @@
 import { useEffect, useState, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, MotionConfig } from 'framer-motion';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
 import { PermissionRequests } from '@app/components/PermissionRequests';
@@ -159,6 +159,7 @@ function usePWAUpdate() {
       if (customEvent.detail) {
         updateFn = customEvent.detail;
         toast.info('Nueva versión disponible', {
+          id: 'sw-update',
           description: 'Actualiza para disfrutar de las últimas mejoras.',
           duration: 8000,
           action: {
@@ -299,10 +300,14 @@ function AppRoutes() {
 export default function App() {
   return (
     <ErrorBoundary>
-      <BrowserRouter>
-        <PermissionRequests />
-        <AppRoutes />
-      </BrowserRouter>
+      {/* reducedMotion="user": todas las animaciones framer-motion respetan
+          la preferencia del SO sin gatear cada componente. */}
+      <MotionConfig reducedMotion="user">
+        <BrowserRouter>
+          <PermissionRequests />
+          <AppRoutes />
+        </BrowserRouter>
+      </MotionConfig>
     </ErrorBoundary>
   );
 }

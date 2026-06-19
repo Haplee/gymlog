@@ -58,7 +58,7 @@ export function FatigueAnalysis({
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-[var(--bg-surface)] rounded-[var(--radius-xl)] p-5"
+      className="glass glass-sheen rounded-[var(--radius-xl)] p-5"
     >
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">

@@ -10,6 +10,8 @@ inject();
 
 // Registro SW con prompt de actualización (vite-plugin-pwa registerType='prompt')
 if ('serviceWorker' in navigator) {
+  // Solo se avisa una vez por carga; evita el toast en bucle.
+  let updatePrompted = false;
   navigator.serviceWorker
     .register('/sw.js', { scope: '/' })
     .then((reg) => {
@@ -18,6 +20,8 @@ if ('serviceWorker' in navigator) {
         if (!newWorker) return;
         newWorker.addEventListener('statechange', () => {
           if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            if (updatePrompted) return;
+            updatePrompted = true;
             devLog('[SW] New version available, prompting user...');
             window.dispatchEvent(
               new CustomEvent('sw-update-available', {

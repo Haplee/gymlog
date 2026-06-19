@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useTranslation } from 'react-i18next';
 import { useRateLimit } from '@shared/hooks/useRateLimit';
-import { GymLogLogo } from '@/shared/components/ui';
+import { GymLogLogo, Input } from '@/shared/components/ui';
 import { tv } from '@shared/styles/themeVars';
+import { checkPasswordStrength } from '@shared/lib/passwordStrength';
 
 export function AuthPage() {
   const navigate = useNavigate();
@@ -51,6 +52,15 @@ export function AuthPage() {
     if (isSignUp && username.length < 3) {
       setError('El usuario debe tener al menos 3 caracteres');
       return;
+    }
+
+    // Registro: fuerza de contraseña en cliente (mitigación de HIBP, plan Free).
+    if (isSignUp) {
+      const pw = checkPasswordStrength(password);
+      if (!pw.ok) {
+        setError(pw.message ?? 'Contraseña no válida');
+        return;
+      }
     }
 
     if (!recordAttempt()) {
@@ -117,52 +127,59 @@ export function AuthPage() {
         className="w-full max-w-[300px] space-y-4 fade-in-up"
       >
         {isSignUp && (
-          <div className="fade-in-up">
-            <input
-              type="text"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              className="w-full rounded-[var(--radius-lg)] text-base py-3.5 px-4 outline-none transition-all bg-[var(--bg-surface)] border border-[var(--border-default)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--interactive-primary)] focus:shadow-[0_0_0_2px_var(--interactive-primary)]/30"
-              placeholder={t('auth.name')}
-            />
-          </div>
+          <Input
+            type="text"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            placeholder={t('auth.name')}
+            aria-label={t('auth.name')}
+            autoComplete="name"
+            className="fade-in-up"
+          />
         )}
 
         {isSignUp && (
-          <div className="fade-in-up">
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full rounded-[var(--radius-lg)] text-base py-3.5 px-4 outline-none transition-all bg-[var(--bg-surface)] border border-[var(--border-default)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--interactive-primary)] focus:shadow-[0_0_0_2px_var(--interactive-primary)]/30"
-              placeholder={t('auth.username')}
-            />
-          </div>
+          <Input
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder={t('auth.username')}
+            aria-label={t('auth.username')}
+            autoComplete="username"
+            autoCapitalize="none"
+            spellCheck={false}
+            className="fade-in-up"
+          />
         )}
 
-        <div className="fade-in-up">
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-[var(--radius-lg)] text-base py-3.5 px-4 outline-none transition-all bg-[var(--bg-surface)] border border-[var(--border-default)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--interactive-primary)] focus:shadow-[0_0_0_2px_var(--interactive-primary)]/30"
-            placeholder={t('auth.email')}
-          />
-        </div>
+        <Input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder={t('auth.email')}
+          aria-label={t('auth.email')}
+          autoComplete="email"
+          inputMode="email"
+          autoCapitalize="none"
+          spellCheck={false}
+          className="fade-in-up"
+        />
 
-        <div className="fade-in-up">
-          <div className="relative">
-            <input
-              type={isRevealing ? 'text' : 'password'}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-[var(--radius-lg)] text-base py-3.5 px-4 outline-none transition-all pr-12 bg-[var(--bg-surface)] border border-[var(--border-default)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--interactive-primary)] focus:shadow-[0_0_0_2px_var(--interactive-primary)]/30"
-              placeholder={t('auth.password')}
-            />
+        <Input
+          type={isRevealing ? 'text' : 'password'}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder={t('auth.password')}
+          aria-label={t('auth.password')}
+          autoComplete={isSignUp ? 'new-password' : 'current-password'}
+          className="fade-in-up"
+          iconRight={
             <button
               type="button"
               onClick={() => setIsRevealing(!isRevealing)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 bg-transparent border-none p-1 transition-all hover:scale-110 text-[var(--text-tertiary)]"
+              aria-label={isRevealing ? t('auth.hide_password') : t('auth.show_password')}
+              aria-pressed={isRevealing}
+              className="bg-transparent border-none p-1 transition-all hover:scale-110 text-[var(--text-tertiary)]"
             >
               {isRevealing ? (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -190,17 +207,25 @@ export function AuthPage() {
                 </svg>
               )}
             </button>
-          </div>
-        </div>
+          }
+        />
 
         {error && (
-          <div className="fade-in-up text-center text-sm py-2 rounded-[var(--radius-md)] bg-[var(--error)]/10 text-[var(--error)] error-shake">
+          <div
+            role="alert"
+            aria-live="assertive"
+            className="fade-in-up text-center text-sm py-2 rounded-[var(--radius-md)] bg-[var(--error)]/10 text-[var(--error)] error-shake"
+          >
             {error}
           </div>
         )}
 
         {message && (
-          <div className="fade-in-up text-center text-sm py-2 rounded-[var(--radius-md)] bg-[var(--success)]/10 text-[var(--success)] success-pulse">
+          <div
+            role="status"
+            aria-live="polite"
+            className="fade-in-up text-center text-sm py-2 rounded-[var(--radius-md)] bg-[var(--success)]/10 text-[var(--success)] success-pulse"
+          >
             {message}
           </div>
         )}

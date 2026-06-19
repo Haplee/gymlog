@@ -14,7 +14,8 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 const variantStyles: Record<Variant, string> = {
   primary:
     'bg-[var(--interactive-primary)] text-[var(--interactive-primary-fg)] font-semibold active:scale-[0.97]',
-  secondary: 'bg-[var(--bg-surface-2)] text-[var(--text-primary)] active:scale-[0.97]',
+  secondary:
+    'bg-[var(--glass-bg)] backdrop-blur-md border border-[var(--glass-border)] text-[var(--text-primary)] active:scale-[0.97]',
   ghost: 'bg-transparent text-[var(--text-secondary)] hover:bg-[var(--interactive-hover)]',
   danger: 'bg-[var(--error)] text-[var(--interactive-primary-fg)] active:scale-[0.97]',
   icon: 'bg-transparent text-[var(--text-tertiary)] hover:bg-[var(--interactive-hover)] aspect-square',

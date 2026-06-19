@@ -42,10 +42,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           }
           aria-invalid={hasError}
           className={[
-            'w-full bg-[var(--bg-surface-2)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)]',
-            'border border-[var(--border-default)] rounded-[var(--radius-md)] px-4 py-3.5 text-[0.9375rem]',
+            'w-full bg-[var(--glass-bg)] backdrop-blur-md text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)]',
+            'border border-[var(--glass-border)] rounded-[var(--radius-md)] px-4 py-3.5 text-[0.9375rem]',
             'transition-all duration-150',
-            'focus:outline-none focus:border-[var(--interactive-primary)]',
+            'focus:border-[var(--interactive-primary)]',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--interactive-primary)]/60',
             'disabled:opacity-50 disabled:cursor-not-allowed',
             iconLeft ? 'pl-10' : '',
             iconRight ? 'pr-10' : '',
@@ -61,7 +62,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       </div>
 
       {error && (
-        <p id={`${inputId}-error`} role="alert" className="text-[0.6875rem] text-[var(--error)]">
+        <p
+          id={`${inputId}-error`}
+          role="alert"
+          aria-live="assertive"
+          className="text-[0.6875rem] text-[var(--error)]"
+        >
           {error}
         </p>
       )}

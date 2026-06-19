@@ -44,6 +44,8 @@ export function SettingsPage() {
     setShowWarmupSets,
     restAutoStart,
     setRestAutoStart,
+    visualStyle,
+    setVisualStyle,
   } = useSettingsStore();
   const [notifEnabled, setNotifEnabled] = useState(false);
   const [biometricSupport, setBiometricSupport] = useState<{ available: boolean; message: string }>(
@@ -212,6 +214,37 @@ export function SettingsPage() {
                 className="flex-1"
               >
                 {lang === 'es' ? 'Español' : 'English'}
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        {/* Estilo visual */}
+        <div
+          className="rounded-2xl p-4 scale-in"
+          style={{ backgroundColor: bgCard, border: `1px solid ${border}` }}
+        >
+          <div className="text-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
+            Estilo visual
+          </div>
+          <div className="text-[0.75rem] mb-3" style={{ color: 'var(--text-muted)' }}>
+            Apariencia de tarjetas y menús en tu dispositivo
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {(
+              [
+                { id: 'glass', label: 'Líquido' },
+                { id: 'intense', label: 'Intenso' },
+                { id: 'subtle', label: 'Sutil' },
+                { id: 'solid', label: 'Sólido' },
+              ] as const
+            ).map((opt) => (
+              <Button
+                key={opt.id}
+                variant={visualStyle === opt.id ? 'primary' : 'secondary'}
+                onClick={() => setVisualStyle(opt.id)}
+              >
+                {opt.label}
               </Button>
             ))}
           </div>

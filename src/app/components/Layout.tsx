@@ -90,16 +90,23 @@ export function Layout({ children }: LayoutProps) {
       className="min-h-screen min-h-[100dvh] flex flex-col overflow-hidden"
       style={{ backgroundColor: 'var(--bg-base)' }}
     >
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[var(--z-toast)] focus:px-4 focus:py-2 focus:rounded-[var(--radius-md)] focus:bg-[var(--interactive-primary)] focus:text-[var(--interactive-primary-fg)] focus:font-semibold"
+      >
+        Saltar al contenido
+      </a>
+      <div className="glass-ambient" aria-hidden="true" />
       <header
-        className="px-4 py-3 flex-shrink-0"
+        className="glass-strong glass-sheen px-4 py-3 flex-shrink-0 relative z-10"
         style={{
-          backgroundColor: 'rgba(17,17,17,0.85)',
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
-          borderBottom: '1px solid var(--border-glass)',
+          borderTop: 'none',
+          borderLeft: 'none',
+          borderRight: 'none',
+          boxShadow: 'none',
         }}
       >
-        <div className="flex items-center justify-between">
+        <div className="relative z-[2] flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div
               className="w-8 h-8 rounded-[10px] flex items-center justify-center"
@@ -141,13 +148,12 @@ export function Layout({ children }: LayoutProps) {
       </header>
 
       <nav
-        className="flex flex-shrink-0 relative z-10"
+        className="glass-strong glass-sheen flex flex-shrink-0 relative z-10"
         style={{
-          backgroundColor: 'rgba(0,0,0,0.95)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          borderTop: '1px solid var(--border-glass)',
-          boxShadow: '0 -1px 0 rgba(255,255,255,0.04)',
+          borderBottom: 'none',
+          borderLeft: 'none',
+          borderRight: 'none',
+          boxShadow: '0 -1px 0 rgba(255,255,255,0.06)',
           paddingBottom: 'env(safe-area-inset-bottom)',
         }}
       >
@@ -164,7 +170,7 @@ export function Layout({ children }: LayoutProps) {
                   preloadChunk(tab.path);
                 }
               }}
-              className="flex-1 py-3 flex flex-col items-center gap-1 relative transition-opacity active:opacity-60"
+              className="flex-1 py-3 flex flex-col items-center gap-1 relative z-[2] transition-opacity active:opacity-60"
             >
               <div className="relative">
                 <Icon
@@ -216,7 +222,7 @@ export function Layout({ children }: LayoutProps) {
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="flex items-center justify-center gap-2 py-2 px-4 offline-pulse flex-shrink-0"
+            className="relative z-10 flex items-center justify-center gap-2 py-2 px-4 offline-pulse flex-shrink-0"
             style={{
               backgroundColor: 'rgba(255,69,58,0.12)',
               borderBottom: '1px solid rgba(255,69,58,0.25)',
@@ -233,11 +239,12 @@ export function Layout({ children }: LayoutProps) {
       <AnimatePresence mode="wait">
         <motion.main
           key={location.pathname}
+          id="main-content"
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -20 }}
           transition={{ type: 'spring' as const, stiffness: 250, damping: 25 }}
-          className="flex-1 px-4 pt-4 pb-24 overflow-y-auto"
+          className="relative z-10 flex-1 px-4 pt-4 pb-24 overflow-y-auto"
         >
           {children}
         </motion.main>

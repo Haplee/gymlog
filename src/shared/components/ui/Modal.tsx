@@ -72,6 +72,11 @@ export function Modal({
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
           className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4"
+          style={{
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+          }}
           onClick={(e) => {
             if (e.target === e.currentTarget) onClose();
           }}
@@ -86,8 +91,7 @@ export function Modal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="relative z-10 w-full rounded-[var(--radius-xl)] overflow-hidden max-w-md"
-            style={{ backgroundColor: 'var(--bg-surface)' }}
+            className="glass-strong glass-sheen relative z-10 w-full rounded-[var(--radius-xl)] overflow-hidden max-w-md"
           >
             <div
               className="absolute top-0 left-0 right-0 h-1"

@@ -93,7 +93,9 @@ export default defineConfig(({ mode }) => {
           ],
         },
         devOptions: {
-          enabled: true,
+          // SW desactivado en dev: con HMR se regenera constantemente y dispara
+          // el toast de "nueva versión" en bucle.
+          enabled: false,
           type: 'module',
         },
       }),

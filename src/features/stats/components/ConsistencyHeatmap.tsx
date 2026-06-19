@@ -79,7 +79,7 @@ export const ConsistencyHeatmap = memo(function ConsistencyHeatmap({
 
   if (data.length === 0) {
     return (
-      <div className="bg-[var(--bg-surface)] rounded-[var(--radius-lg)] p-4">
+      <div className="glass glass-sheen rounded-[var(--radius-lg)] p-4">
         <div className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-3">
           Consistencia
         </div>
@@ -94,7 +94,7 @@ export const ConsistencyHeatmap = memo(function ConsistencyHeatmap({
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-[var(--bg-surface)] rounded-[var(--radius-lg)] p-4"
+      className="glass glass-sheen rounded-[var(--radius-lg)] p-4"
     >
       <div className="text-[0.8125rem] font-medium mb-3 text-[var(--text-secondary)]">
         Consistencia

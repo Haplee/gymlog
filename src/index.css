@@ -34,6 +34,56 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+/* ── Liquid Glass ──────────────────────────────────
+   Backdrop refractivo: blobs suaves para que el blur
+   tenga algo que muestrear sobre el fondo casi negro. */
+.glass-ambient {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 50% at 15% 0%, rgba(200, 255, 0, 0.06), transparent 70%),
+    radial-gradient(55% 45% at 90% 15%, rgba(10, 132, 255, 0.05), transparent 70%),
+    radial-gradient(70% 60% at 50% 100%, rgba(200, 255, 0, 0.04), transparent 70%);
+}
+
+/* Superficie de cristal — tarjetas */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+/* Cristal denso — chrome (header, nav, modales, sheets) */
+.glass-strong {
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+/* Brillo especular superior — el detalle que vende el liquid glass.
+   Requiere position: relative + overflow recortado en el contenedor. */
+.glass-sheen {
+  position: relative;
+  /* Aísla el contexto de apilado para que ::before (z-index:-1) pinte
+     siempre sobre el relleno de cristal y nunca tras un ancestro. */
+  isolation: isolate;
+}
+.glass-sheen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--glass-highlight);
+  pointer-events: none;
+  z-index: -1; /* detrás del contenido, sobre el relleno de cristal */
+}
+
 /* Scrollbar invisible en mobile */
 * {
   scrollbar-width: none;
@@ -446,4 +496,53 @@ input[type='number'] {
   background: linear-gradient(90deg, #1c1c22 25%, #2a2a32 50%, #1c1c22 75%);
   background-size: 200% 100%;
   animation: skeleton-loading 1.5s infinite;
+}
+
+/* ── Tipografía ─────────────────────────────────────
+   Mejor reparto de líneas: titulares equilibrados,
+   párrafos sin huérfanas. */
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+p {
+  text-wrap: pretty;
+}
+
+/* ── Utilidades ─────────────────────────────────────
+   Cifras alineadas en columnas (KPIs, tablas). */
+.nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Foco visible reutilizable. Sustituye los `focus:outline-none`
+   sueltos: solo aparece con teclado (focus-visible). */
+.focus-ring:focus-visible {
+  outline: 2px solid var(--interactive-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ── prefers-reduced-motion ─────────────────────────
+   Respeta la preferencia del SO: calma animaciones y
+   transiciones (incluye keyframes y framer-motion vía
+   useReducedMotion en los componentes). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .offline-pulse,
+  .success-pulse,
+  .slide-up,
+  .scale-in,
+  .fade-in-up {
+    animation: none !important;
+  }
 }

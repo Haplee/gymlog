@@ -354,7 +354,13 @@ export function StatsPage() {
           >
             <div
               className="relative overflow-hidden rounded-[var(--radius-xl)] p-4"
-              style={{ backgroundColor: 'var(--bg-surface)' }}
+              style={{
+                background: 'var(--glass-bg)',
+                backdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+                WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+                border: '1px solid var(--glass-border)',
+                boxShadow: 'var(--glass-shadow)',
+              }}
             >
               <div
                 className="absolute top-0 left-0 bottom-0 w-[3px] rounded-l-[var(--radius-xl)]"
@@ -394,7 +400,13 @@ export function StatsPage() {
 
             <div
               className="relative overflow-hidden rounded-[var(--radius-xl)] p-4"
-              style={{ backgroundColor: 'var(--bg-surface)' }}
+              style={{
+                background: 'var(--glass-bg)',
+                backdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+                WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+                border: '1px solid var(--glass-border)',
+                boxShadow: 'var(--glass-shadow)',
+              }}
             >
               <div
                 className="absolute top-0 left-0 bottom-0 w-[3px] rounded-l-[var(--radius-xl)]"
@@ -511,7 +523,13 @@ export function StatsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.16 }}
                 className="rounded-[var(--radius-xl)] p-4"
-                style={{ backgroundColor: 'var(--bg-surface)' }}
+                style={{
+                  background: 'var(--glass-bg)',
+                  backdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+                  WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+                  border: '1px solid var(--glass-border)',
+                  boxShadow: 'var(--glass-shadow)',
+                }}
               >
                 <div className="flex items-center gap-2 mb-3">
                   <svg
@@ -591,7 +609,13 @@ export function StatsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.18 }}
             className="rounded-[var(--radius-xl)] p-4"
-            style={{ backgroundColor: 'var(--bg-surface)' }}
+            style={{
+              background: 'var(--glass-bg)',
+              backdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+              WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+              border: '1px solid var(--glass-border)',
+              boxShadow: 'var(--glass-shadow)',
+            }}
           >
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
@@ -644,7 +668,13 @@ export function StatsPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.22 }}
               className="rounded-[var(--radius-xl)] p-4"
-              style={{ backgroundColor: 'var(--bg-surface)' }}
+              style={{
+                background: 'var(--glass-bg)',
+                backdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+                WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+                border: '1px solid var(--glass-border)',
+                boxShadow: 'var(--glass-shadow)',
+              }}
             >
               <div className="flex items-center gap-2 mb-3">
                 <Target className="w-4 h-4" style={{ color: 'var(--interactive-primary)' }} />
@@ -666,7 +696,13 @@ export function StatsPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.26 }}
               className="rounded-[var(--radius-xl)] p-4"
-              style={{ backgroundColor: 'var(--bg-surface)' }}
+              style={{
+                background: 'var(--glass-bg)',
+                backdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+                WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+                border: '1px solid var(--glass-border)',
+                boxShadow: 'var(--glass-shadow)',
+              }}
             >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
@@ -783,7 +819,13 @@ export function StatsPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
           className="rounded-[var(--radius-xl)] p-4"
-          style={{ backgroundColor: 'var(--bg-surface)' }}
+          style={{
+            background: 'var(--glass-bg)',
+            backdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+            WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+            border: '1px solid var(--glass-border)',
+            boxShadow: 'var(--glass-shadow)',
+          }}
         >
           <div className="flex items-center gap-2 mb-4">
             <Calculator className="w-4 h-4" style={{ color: 'var(--interactive-primary)' }} />

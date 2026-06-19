@@ -63,12 +63,7 @@ export function WorkoutExerciseCard({
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, x: 20, height: 0, marginBottom: 0 }}
         transition={{ duration: 0.2 }}
-        className="relative group flex items-center gap-2 p-3 rounded-[var(--radius-md)]"
-        style={{
-          backgroundColor: 'var(--bg-surface-2)',
-          border: '1px solid var(--border-glass)',
-          boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset',
-        }}
+        className="glass glass-sheen relative group flex items-center gap-2 p-3 rounded-[var(--radius-md)]"
         onKeyDown={handleKeyDown}
         role="listitem"
         aria-label={`Ejercicio ${exerciseName}`}
