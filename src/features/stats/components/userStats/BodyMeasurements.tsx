@@ -167,7 +167,7 @@ export function BodyMeasurements({ userId }: { userId: string }) {
             {[...measurements].reverse().map((entry) => (
               <div
                 key={entry.id}
-                className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-surface-2 border border-line-glass"
+                className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-surface-2 border border-line"
               >
                 <div className="text-xs text-fg-subtle">
                   {entry.date ? format(parseISO(entry.date), 'dd MMM yyyy', { locale: es }) : '—'}

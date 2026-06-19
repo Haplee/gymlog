@@ -249,27 +249,33 @@ function WeeklyStats({ sessions }: { sessions: CardioSession[] }) {
       </div>
       <div className="grid grid-cols-3 gap-0">
         <div className="flex flex-col items-center py-1">
-          <span className="text-lg font-bold font-mono text-fg">{weekSessions.length}</span>
+          <span className="text-lg font-bold font-mono text-fg tabular-nums">
+            {weekSessions.length}
+          </span>
           <span className="text-2xs uppercase text-fg-subtle">Sesiones</span>
         </div>
         <div className="flex flex-col items-center py-1 border-x border-line">
-          <span className="text-lg font-bold font-mono text-fg">{formatDuration(totalTime)}</span>
+          <span className="text-lg font-bold font-mono text-fg tabular-nums">
+            {formatDuration(totalTime)}
+          </span>
           <span className="text-2xs uppercase text-fg-subtle">Tiempo</span>
         </div>
         <div className="flex flex-col items-center py-1">
           {totalDist > 0 ? (
             <>
-              <span className="text-lg font-bold font-mono text-fg">{totalDist.toFixed(1)}km</span>
+              <span className="text-lg font-bold font-mono text-fg tabular-nums">
+                {totalDist.toFixed(1)}km
+              </span>
               <span className="text-2xs uppercase text-fg-subtle">Distancia</span>
             </>
           ) : totalCals > 0 ? (
             <>
-              <span className="text-lg font-bold font-mono text-fg">{totalCals}</span>
+              <span className="text-lg font-bold font-mono text-fg tabular-nums">{totalCals}</span>
               <span className="text-2xs uppercase text-fg-subtle">kcal</span>
             </>
           ) : (
             <>
-              <span className="text-lg font-bold font-mono text-fg">—</span>
+              <span className="text-lg font-bold font-mono text-fg tabular-nums">—</span>
               <span className="text-2xs uppercase text-fg-subtle">km</span>
             </>
           )}
@@ -379,6 +385,7 @@ export function CardioPage() {
 
   return (
     <Layout>
+      <h1 className="text-xl font-extrabold mb-4 text-accent text-balance">Cardio</h1>
       <ActiveSessionCard userId={user?.id ?? null} />
 
       {/* Quick Start */}

@@ -60,7 +60,7 @@ export function PlatesCalculator({ open, initialTargetKg, onClose }: PlatesCalcu
             style={{
               backgroundColor: bar === b ? 'var(--interactive-primary)' : 'var(--bg-surface-2)',
               color: bar === b ? 'var(--interactive-primary-fg)' : 'var(--text-secondary)',
-              borderColor: bar === b ? 'var(--interactive-primary)' : 'var(--border-glass)',
+              borderColor: bar === b ? 'var(--interactive-primary)' : 'var(--border-subtle)',
             }}
           >
             {b}
@@ -68,7 +68,7 @@ export function PlatesCalculator({ open, initialTargetKg, onClose }: PlatesCalcu
         ))}
       </div>
 
-      <div className="rounded-xl p-3 bg-surface-2 border border-line-glass">
+      <div className="rounded-xl p-3 bg-surface-2 border border-line">
         <div className="text-2xs uppercase font-semibold mb-2 text-fg-subtle">
           {t('workout.plates_each_side')}
         </div>

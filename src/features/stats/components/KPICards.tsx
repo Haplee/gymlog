@@ -191,7 +191,7 @@ export const KPICard = memo(function KPICard({
 
         {/* Value */}
         <m.div
-          className="font-mono font-bold leading-none tracking-tight text-3xl text-fg"
+          className="font-mono font-bold leading-none tracking-tight text-3xl text-fg tabular-nums"
           initial={{ y: 8, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.05 }}

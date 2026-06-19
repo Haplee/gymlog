@@ -84,7 +84,7 @@ function ExerciseRow({
           {sortedSets.map((s) => (
             <div
               key={s.id}
-              className="flex flex-col gap-1 px-3 py-2 rounded-xl ml-7 bg-surface-2 border border-line-glass"
+              className="flex flex-col gap-1 px-3 py-2 rounded-xl ml-7 bg-surface-2 border border-line"
             >
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-3">
@@ -897,7 +897,8 @@ export function HistoryPage() {
 
   return (
     <Layout>
-      {/* Barra de filtros sticky con tratamiento glass */}
+      <h1 className="text-xl font-extrabold mb-4 text-accent text-balance">Historial</h1>
+      {/* Barra de filtros sticky */}
       <div className="sticky top-0 z-20 py-2 -mt-2 mb-3 space-y-2 bg-base">
         {/* Segmented control de vista — píldora deslizante */}
         <div
@@ -1111,7 +1112,7 @@ export function HistoryPage() {
                             {item.data.sets.map((s, si) => (
                               <span
                                 key={si}
-                                className="px-2 py-1 rounded-pill text-xs bg-surface-2 border border-line-glass text-fg-muted"
+                                className="px-2 py-1 rounded-pill text-xs bg-surface-2 border border-line text-fg-muted"
                               >
                                 {s.exercise?.name}: {s.reps}×{s.weight}
                               </span>
@@ -1308,7 +1309,7 @@ export function HistoryPage() {
                       {wo.sets.map((s: WorkoutSetWithDetails, si) => (
                         <span
                           key={si}
-                          className="px-2 py-1 rounded-pill text-xs bg-surface-2 border border-line-glass text-fg-muted"
+                          className="px-2 py-1 rounded-pill text-xs bg-surface-2 border border-line text-fg-muted"
                         >
                           {s.exercise?.name}: {s.reps}×{s.weight}
                         </span>

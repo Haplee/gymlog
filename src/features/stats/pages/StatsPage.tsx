@@ -380,6 +380,7 @@ export function StatsPage() {
 
   return (
     <Layout>
+      <h1 className="text-xl font-extrabold mb-4 text-accent text-balance">Estadísticas</h1>
       <div className="space-y-5">
         {/* ── Entrenamiento ── */}
         <section className="space-y-3">
@@ -470,7 +471,7 @@ export function StatsPage() {
                   </svg>
                 </div>
                 <div
-                  className="font-mono font-bold leading-none"
+                  className="font-mono font-bold leading-none tabular-nums"
                   style={{ fontSize: '2.25rem', color: 'var(--text-primary)' }}
                 >
                   {maxStreak}
@@ -504,7 +505,7 @@ export function StatsPage() {
                   </svg>
                 </div>
                 <div
-                  className="font-mono font-bold leading-none"
+                  className="font-mono font-bold leading-none tabular-nums"
                   style={{ fontSize: '2.25rem', color: 'var(--interactive-primary)' }}
                 >
                   {totalPRs}
@@ -934,7 +935,7 @@ export function StatsPage() {
           </div>
           <div className="mt-4 text-center">
             <div className="text-xs mb-1 text-fg-subtle">1RM estimado</div>
-            <div className="text-3xl font-bold font-mono text-accent">
+            <div className="text-3xl font-bold font-mono text-accent tabular-nums">
               {rmResult ? `${rmResult.toFixed(1)} kg` : '—'}
             </div>
           </div>

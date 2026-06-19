@@ -12,7 +12,6 @@
   --color-surface: var(--bg-surface);
   --color-surface-2: var(--bg-surface-2);
   --color-surface-3: var(--bg-surface-3);
-  --color-glass: var(--bg-glass);
   --color-accent: var(--interactive-primary);
   --color-accent-dim: var(--interactive-primary-dim);
   --color-accent-fg: var(--interactive-primary-fg);
@@ -28,7 +27,6 @@
   --color-line: var(--border-subtle);
   --color-line-strong: var(--border-default);
   --color-line-accent: var(--border-accent);
-  --color-line-glass: var(--border-glass);
 }
 
 @theme {

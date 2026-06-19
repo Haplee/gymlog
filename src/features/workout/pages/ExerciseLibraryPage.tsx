@@ -88,7 +88,7 @@ export function ExerciseLibraryPage() {
         >
           <ArrowLeft className="w-4 h-4 text-fg-muted" />
         </button>
-        <h1 className="text-lg font-bold text-fg">{t('library.title')}</h1>
+        <h1 className="text-xl font-extrabold text-fg text-balance">{t('library.title')}</h1>
       </m.div>
 
       <input

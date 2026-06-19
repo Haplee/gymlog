@@ -101,7 +101,9 @@ function BigKPI({
       >
         <Icon className="w-4 h-4" style={{ color }} />
       </div>
-      <div className="relative font-mono font-bold text-2xl leading-none text-fg">{value}</div>
+      <div className="relative font-mono font-bold text-2xl leading-none text-fg tabular-nums">
+        {value}
+      </div>
       <div className="relative text-xs text-fg-subtle">{label}</div>
     </m.div>
   );
@@ -583,7 +585,7 @@ export function UserStatsPage() {
           <ArrowLeft className="w-4 h-4 text-fg-muted" />
         </button>
         <div>
-          <h1 className="text-lg font-bold text-fg">Mis Estadísticas</h1>
+          <h1 className="text-xl font-extrabold text-fg text-balance">Mis Estadísticas</h1>
           <p className="text-xs text-fg-subtle">Análisis completo de tu progreso</p>
         </div>
       </m.div>
@@ -641,7 +643,10 @@ export function UserStatsPage() {
                 transition={{ delay: 0.2 + i * 0.04 }}
                 className="rounded-2xl p-3 text-center bg-surface border border-line shadow-card"
               >
-                <div className="font-mono font-bold text-xl" style={{ color: item.color }}>
+                <div
+                  className="font-mono font-bold text-xl tabular-nums"
+                  style={{ color: item.color }}
+                >
                   {item.value}
                 </div>
                 <div className="text-2xs mt-1 text-fg-subtle">{item.label}</div>
@@ -700,7 +705,7 @@ export function UserStatsPage() {
                   <div className="text-2xs uppercase font-semibold text-fg-subtle">
                     {t(`stats.comparison_${key}`)}
                   </div>
-                  <div className="font-mono font-bold text-2xl text-fg mt-1">
+                  <div className="font-mono font-bold text-2xl text-fg mt-1 tabular-nums">
                     {(stats.volume / 1000).toFixed(1)}t
                   </div>
                   <div className="text-xs text-fg-subtle">
@@ -728,7 +733,7 @@ export function UserStatsPage() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="font-mono font-bold text-xl text-accent">
+                  <div className="font-mono font-bold text-xl text-accent tabular-nums">
                     {(volumeProjection.projected / 1000).toFixed(1)}t
                   </div>
                   <div className="text-2xs text-fg-subtle">{t('stats.projection_next')}</div>

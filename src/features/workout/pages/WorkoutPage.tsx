@@ -435,6 +435,7 @@ export function WorkoutPage() {
 
   return (
     <Layout>
+      <h1 className="text-xl font-extrabold mb-4 text-accent text-balance">{t('workout.title')}</h1>
       <AnimatePresence>
         {showResumeBanner && startedAt && (
           <ResumeWorkoutBanner
@@ -605,7 +606,7 @@ export function WorkoutPage() {
           <button
             onClick={() => setShowPlates(true)}
             aria-label={t('workout.plates_calc')}
-            className="flex-shrink-0 min-h-11 px-2.5 flex items-center gap-1.5 rounded-lg text-xs bg-surface-2 border border-line-glass text-fg-muted"
+            className="flex-shrink-0 min-h-11 px-2.5 flex items-center gap-1.5 rounded-lg text-xs bg-surface-2 border border-line text-fg-muted"
           >
             <Calculator className="w-4 h-4" />
           </button>

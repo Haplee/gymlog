@@ -34,7 +34,7 @@ function SortableRow({ exercise, onRemove }: { exercise: RoutineExercise; onRemo
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={`flex items-center justify-between px-3 py-3 rounded-xl bg-surface-2 border border-line-glass ${
+      className={`flex items-center justify-between px-3 py-3 rounded-xl bg-surface-2 border border-line ${
         isDragging ? 'opacity-60' : ''
       }`}
     >
