@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# APKs (artefactos de build / release — no versionar)
+*.apk
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -31,3 +34,11 @@ dist-ssr
 test-results/
 supabase/test-results/
 graphify-out/
+
+# Build artifacts (local only)
+coverage/
+dev-dist/
+versiones/
+
+# screenshot generado por scripts/icon-preview.mjs
+scripts/icon-preview.png

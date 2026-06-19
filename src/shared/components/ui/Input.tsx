@@ -20,7 +20,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       {label && (
         <label
           htmlFor={inputId}
-          className="text-[0.6875rem] font-medium"
+          className="text-xs font-medium"
           style={{ color: hasError ? 'var(--error)' : 'var(--text-secondary)' }}
         >
           {label}
@@ -29,9 +29,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
 
       <div className="relative flex items-center">
         {iconLeft && (
-          <span className="absolute left-3.5 text-[var(--text-tertiary)] pointer-events-none">
-            {iconLeft}
-          </span>
+          <span className="absolute left-3.5 text-fg-subtle pointer-events-none">{iconLeft}</span>
         )}
 
         <input
@@ -42,37 +40,29 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           }
           aria-invalid={hasError}
           className={[
-            'w-full bg-[var(--glass-bg)] backdrop-blur-md text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)]',
-            'border border-[var(--glass-border)] rounded-[var(--radius-md)] px-4 py-3.5 text-[0.9375rem]',
+            'w-full bg-surface-2 text-fg placeholder:text-fg-subtle',
+            'border border-line-strong rounded-xl px-4 py-3.5 text-base',
             'transition-all duration-150',
-            'focus:border-[var(--interactive-primary)]',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--interactive-primary)]/60',
+            'focus:outline-none focus:border-accent',
             'disabled:opacity-50 disabled:cursor-not-allowed',
             iconLeft ? 'pl-10' : '',
             iconRight ? 'pr-10' : '',
-            hasError ? 'border-[var(--error)]' : '',
+            hasError ? 'border-error' : '',
             className,
           ].join(' ')}
           {...props}
         />
 
-        {iconRight && (
-          <span className="absolute right-3.5 text-[var(--text-tertiary)]">{iconRight}</span>
-        )}
+        {iconRight && <span className="absolute right-3.5 text-fg-subtle">{iconRight}</span>}
       </div>
 
       {error && (
-        <p
-          id={`${inputId}-error`}
-          role="alert"
-          aria-live="assertive"
-          className="text-[0.6875rem] text-[var(--error)]"
-        >
+        <p id={`${inputId}-error`} role="alert" className="text-xs text-error">
           {error}
         </p>
       )}
       {helperText && !error && (
-        <p id={`${inputId}-helper`} className="text-[0.6875rem] text-[var(--text-tertiary)]">
+        <p id={`${inputId}-helper`} className="text-xs text-fg-subtle">
           {helperText}
         </p>
       )}

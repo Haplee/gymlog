@@ -15,19 +15,7 @@ import {
   AreaChart,
   Area,
 } from 'recharts';
-
-const CHART_COLORS = [
-  '#c8ff00',
-  '#22c55e',
-  '#3b82f6',
-  '#f59e0b',
-  '#ef4444',
-  '#8b5cf6',
-  '#ec4899',
-  '#06b6d4',
-  '#84cc16',
-  '#14b8a6',
-];
+import { CHART_COLORS } from '../constants';
 
 export function MuscleGroupChart({ data }: { data: { name: string; value: number }[] }) {
   if (data.length === 0) return null;
@@ -79,15 +67,8 @@ export function MuscleGroupChart({ data }: { data: { name: string; value: number
                 className="w-2 h-2 rounded-full flex-shrink-0"
                 style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}
               />
-              <span
-                className="text-[0.75rem] truncate flex-1"
-                style={{ color: 'var(--text-secondary)' }}
-              >
-                {item.name}
-              </span>
-              <span className="text-[0.6875rem]" style={{ color: 'var(--text-tertiary)' }}>
-                {(item.value / 1000).toFixed(1)}t
-              </span>
+              <span className="text-xs truncate flex-1 text-fg-muted">{item.name}</span>
+              <span className="text-xs text-fg-subtle">{(item.value / 1000).toFixed(1)}t</span>
             </div>
           ))}
         </div>
@@ -116,7 +97,7 @@ export function VolumeChart({
           <button
             key={v}
             onClick={() => onViewChange(v)}
-            className="text-[0.5625rem] px-2 py-1 rounded-[var(--radius-pill)] transition-colors font-medium uppercase tracking-wide"
+            className="text-[0.5625rem] px-2 py-1 rounded-pill transition-colors font-medium uppercase tracking-wide"
             style={
               view === v
                 ? {
@@ -222,7 +203,7 @@ export function ProgressionChart({
 }) {
   if (data.length < 2) {
     return (
-      <div className="text-center py-8 text-sm" style={{ color: 'var(--text-tertiary)' }}>
+      <div className="text-center py-8 text-sm text-fg-subtle">
         <svg
           viewBox="0 0 24 24"
           className="w-8 h-8 mx-auto mb-2 opacity-40"

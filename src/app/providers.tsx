@@ -1,9 +1,11 @@
 import { useEffect } from 'react';
-import { QueryClientProvider } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { Toaster } from 'sonner';
 import type { ReactNode } from 'react';
 import { queryClient } from './queryClient';
-import { isNative, registerNativeNotificationListeners } from '@shared/lib/notifications';
+import { idbPersister } from './queryPersister';
+import { isNative, initNotifications } from '@shared/lib/notifications';
+import { useSettingsStore } from '@shared/stores/settingsStore';
 import '@shared/lib/i18n';
 
 interface ProvidersProps {
@@ -11,10 +13,12 @@ interface ProvidersProps {
 }
 
 export function Providers({ children }: ProvidersProps) {
+  const theme = useSettingsStore((s) => s.theme);
+
   useEffect(() => {
     if (!isNative()) return;
 
-    void registerNativeNotificationListeners();
+    void initNotifications();
 
     void (async () => {
       const { SplashScreen } = await import('@capacitor/splash-screen');
@@ -23,13 +27,16 @@ export function Providers({ children }: ProvidersProps) {
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{ persister: idbPersister, maxAge: 1000 * 60 * 60 * 24 }}
+    >
       {children}
       <Toaster
         position="bottom-center"
         closeButton
         duration={3500}
-        theme="dark"
+        theme={theme}
         toastOptions={{
           style: {
             background: 'var(--bg-surface)',
@@ -43,6 +50,6 @@ export function Providers({ children }: ProvidersProps) {
           },
         }}
       />
-    </QueryClientProvider>
+    </PersistQueryClientProvider>
   );
 }

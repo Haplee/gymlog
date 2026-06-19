@@ -6,11 +6,19 @@ import { useSettingsStore } from '@shared/stores/settingsStore';
 import { Layout } from '@app/components/Layout';
 import { Button, GymLogLogo } from '@/shared/components/ui';
 import { supabase } from '@shared/lib/supabase';
-import { requestPermission, isNative } from '@shared/lib/notifications';
+import {
+  requestPermission,
+  isNative,
+  cancelAllScheduled,
+  syncRoutineReminders,
+  scheduleStreakReminder,
+  scheduleWeeklySummaryReminder,
+} from '@shared/lib/notifications';
+import { registerPushNotifications, unregisterPushToken } from '@shared/lib/push';
+import { getReminderDays } from '@features/routine/hooks/useWorkoutReminder';
 import { toast } from 'sonner';
 import BiometricPlugin from '@shared/lib/biometric';
 import { devError } from '@shared/lib/devtools';
-import { tv } from '@shared/styles/themeVars';
 
 const playSound = (freq: number, duration: number, delay: number, ctx: AudioContext) => {
   const osc = ctx.createOscillator();
@@ -34,8 +42,12 @@ export function SettingsPage() {
     setSound,
     language,
     setLanguage,
+    theme,
+    setTheme,
     biometricEnabled,
     setBiometricEnabled,
+    notificationsEnabled,
+    setNotificationsEnabled,
     trainingReminders,
     setTrainingReminders,
     unitSystem,
@@ -44,10 +56,9 @@ export function SettingsPage() {
     setShowWarmupSets,
     restAutoStart,
     setRestAutoStart,
-    visualStyle,
-    setVisualStyle,
+    restDuration,
+    setRestDuration,
   } = useSettingsStore();
-  const [notifEnabled, setNotifEnabled] = useState(false);
   const [biometricSupport, setBiometricSupport] = useState<{ available: boolean; message: string }>(
     { available: false, message: '' },
   );
@@ -65,9 +76,8 @@ export function SettingsPage() {
         .eq('id', user.id)
         .single();
       if (data) {
-        setNotifEnabled(!!data.notifications_enabled);
-        if (data.notifications_enabled) localStorage.removeItem('notif_disabled');
-        else localStorage.setItem('notif_disabled', 'true');
+        // setNotificationsEnabled espeja el flag en localStorage internamente
+        setNotificationsEnabled(!!data.notifications_enabled);
       }
     };
 
@@ -94,7 +104,7 @@ export function SettingsPage() {
 
     fetchConfig();
     checkBio();
-  }, [user, navigate, biometricEnabled, setBiometricEnabled]);
+  }, [user, navigate, biometricEnabled, setBiometricEnabled, setNotificationsEnabled]);
 
   const playFeedbackSound = useCallback(() => {
     try {
@@ -110,32 +120,42 @@ export function SettingsPage() {
   }, []);
 
   const handlePushToggle = async () => {
-    const newValue = !notifEnabled;
+    const newValue = !notificationsEnabled;
     if (newValue) {
-      localStorage.removeItem('notif_disabled');
+      // Habilita temporalmente para que requestPermission no se autobloquee
+      setNotificationsEnabled(true);
 
       if (!isNative() && 'Notification' in window && Notification.permission === 'denied') {
+        setNotificationsEnabled(false);
         toast.error('Permiso de notificaciones denegado en el navegador');
         return;
       }
 
       const granted = await requestPermission();
       if (granted) {
-        setNotifEnabled(true);
         if (user) {
           await supabase.from('profiles').update({ notifications_enabled: true }).eq('id', user.id);
         }
+        // Reprogramar todas las alarmas nativas con el permiso ya concedido
+        await syncRoutineReminders(getReminderDays());
+        await scheduleStreakReminder();
+        await scheduleWeeklySummaryReminder();
+        // Registrar token push remoto
+        if (user) void registerPushNotifications(user.id);
         toast.success('Notificaciones activadas');
       } else {
-        localStorage.setItem('notif_disabled', 'true');
+        setNotificationsEnabled(false);
         toast.error('No se concedieron permisos de notificación');
       }
     } else {
-      setNotifEnabled(false);
-      localStorage.setItem('notif_disabled', 'true');
+      setNotificationsEnabled(false);
       if (user) {
         await supabase.from('profiles').update({ notifications_enabled: false }).eq('id', user.id);
       }
+      // Sin notificaciones: limpiar todo lo programado en el sistema
+      await cancelAllScheduled();
+      // Y eliminar el token push remoto del dispositivo
+      await unregisterPushToken();
     }
   };
 
@@ -169,42 +189,27 @@ export function SettingsPage() {
     }
   };
 
-  const { bgCard, borderDefault: border, accent } = tv;
-
   return (
     <Layout>
-      <div
-        className="fade-in-up text-[1.2rem] font-extrabold mb-4 scale-in"
-        style={{ color: accent }}
-      >
+      <div className="fade-in-up text-xl font-extrabold mb-4 scale-in text-accent">
         {t('settings.title')}
       </div>
 
       <div className="space-y-3 pb-20">
         {!isNative() && (
           <a
-            href="/GymLog-v2.9.0.apk"
+            href="https://github.com/Haplee/pesos/releases/download/3.0.0/GymLog-v3.0.0.apk"
             download
-            className="block rounded-2xl p-4 scale-in border text-center"
-            style={{
-              backgroundColor: bgCard,
-              borderColor: 'var(--color-primary)',
-              color: 'var(--color-primary)',
-            }}
+            className="block rounded-2xl p-4 scale-in border text-center bg-surface border-line-accent text-accent shadow-card transition-transform active:scale-[0.99]"
           >
-            <div className="text-[0.95rem] font-semibold">Descargar App Android</div>
-            <div className="text-[0.75rem] mt-1 opacity-70">GymLog v2.9.0</div>
+            <div className="text-base font-semibold">Descargar App Android</div>
+            <div className="text-xs mt-1 opacity-70">GymLog v3.0.0</div>
           </a>
         )}
 
         {/* Idioma */}
-        <div
-          className="rounded-2xl p-4 scale-in"
-          style={{ backgroundColor: bgCard, border: `1px solid ${border}` }}
-        >
-          <div className="text-sm font-medium mb-3" style={{ color: 'var(--text-primary)' }}>
-            {t('settings.language')}
-          </div>
+        <div className="rounded-2xl p-4 scale-in bg-surface border border-line-strong shadow-card">
+          <div className="text-sm font-medium mb-3 text-fg">{t('settings.language')}</div>
           <div className="flex gap-2">
             {['es', 'en'].map((lang) => (
               <Button
@@ -219,89 +224,62 @@ export function SettingsPage() {
           </div>
         </div>
 
-        {/* Estilo visual */}
-        <div
-          className="rounded-2xl p-4 scale-in"
-          style={{ backgroundColor: bgCard, border: `1px solid ${border}` }}
-        >
-          <div className="text-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
-            Estilo visual
-          </div>
-          <div className="text-[0.75rem] mb-3" style={{ color: 'var(--text-muted)' }}>
-            Apariencia de tarjetas y menús en tu dispositivo
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            {(
-              [
-                { id: 'glass', label: 'Líquido' },
-                { id: 'intense', label: 'Intenso' },
-                { id: 'subtle', label: 'Sutil' },
-                { id: 'solid', label: 'Sólido' },
-              ] as const
-            ).map((opt) => (
+        {/* Tema */}
+        <div className="rounded-2xl p-4 scale-in bg-surface border border-line-strong shadow-card">
+          <div className="text-sm font-medium mb-3 text-fg">{t('settings.theme')}</div>
+          <div className="flex gap-2">
+            {(['dark', 'light'] as const).map((mode) => (
               <Button
-                key={opt.id}
-                variant={visualStyle === opt.id ? 'primary' : 'secondary'}
-                onClick={() => setVisualStyle(opt.id)}
+                key={mode}
+                variant={theme === mode ? 'primary' : 'secondary'}
+                onClick={() => setTheme(mode)}
+                className="flex-1"
+                aria-pressed={theme === mode}
               >
-                {opt.label}
+                {mode === 'dark' ? t('settings.theme_dark') : t('settings.theme_light')}
               </Button>
             ))}
           </div>
         </div>
 
         {/* Sonido */}
-        <div
-          className="rounded-2xl p-4 scale-in"
-          style={{ backgroundColor: bgCard, border: `1px solid ${border}` }}
-        >
+        <div className="rounded-2xl p-4 scale-in bg-surface border border-line-strong shadow-card">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-[0.95rem]" style={{ color: 'var(--text-primary)' }}>
-                {t('settings.sound')}
-              </div>
-              <div className="text-[0.75rem]" style={{ color: 'var(--text-muted)' }}>
-                {t('settings.sound_desc')}
-              </div>
+              <div className="text-base text-fg">{t('settings.sound')}</div>
+              <div className="text-xs text-fg-subtle">{t('settings.sound_desc')}</div>
             </div>
             <button
               onClick={() => {
                 setSound(!sound);
                 if (!sound) playFeedbackSound();
               }}
-              className={`w-12 h-6 rounded-full transition-all relative ${sound ? 'bg-[--color-primary]' : 'bg-[--bg-base]'}`}
+              className={`w-12 h-6 rounded-full transition-all relative ${sound ? 'bg-accent toggle-on' : 'bg-surface-3'}`}
               aria-pressed={sound}
               aria-label={t('settings.sound')}
             >
               <div
-                className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${sound ? 'left-7' : 'left-1'}`}
+                className={`absolute top-1 w-4 h-4 rounded-full bg-fg shadow-sm transition-all ${sound ? 'left-7' : 'left-1'}`}
               />
             </button>
           </div>
         </div>
 
         {/* Notificaciones */}
-        <div
-          className="rounded-2xl p-4 scale-in"
-          style={{ backgroundColor: bgCard, border: `1px solid ${border}` }}
-        >
+        <div className="rounded-2xl p-4 scale-in bg-surface border border-line-strong shadow-card">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-[0.95rem]" style={{ color: 'var(--text-primary)' }}>
-                {t('settings.notifications')}
-              </div>
-              <div className="text-[0.75rem]" style={{ color: 'var(--text-muted)' }}>
-                {t('settings.notifications_desc')}
-              </div>
+              <div className="text-base text-fg">{t('settings.notifications')}</div>
+              <div className="text-xs text-fg-subtle">{t('settings.notifications_desc')}</div>
             </div>
             <button
               onClick={handlePushToggle}
-              className={`w-12 h-6 rounded-full transition-all relative ${notifEnabled ? 'bg-[--color-primary]' : 'bg-[--bg-base]'}`}
-              aria-pressed={notifEnabled}
+              className={`w-12 h-6 rounded-full transition-all relative ${notificationsEnabled ? 'bg-accent toggle-on' : 'bg-surface-3'}`}
+              aria-pressed={notificationsEnabled}
               aria-label={t('settings.notifications')}
             >
               <div
-                className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${notifEnabled ? 'left-7' : 'left-1'}`}
+                className={`absolute top-1 w-4 h-4 rounded-full bg-fg shadow-sm transition-all ${notificationsEnabled ? 'left-7' : 'left-1'}`}
               />
             </button>
           </div>
@@ -309,27 +287,20 @@ export function SettingsPage() {
 
         {/* Biometría (Solo Nativo) */}
         {isNative() && (
-          <div
-            className="rounded-2xl p-4 scale-in border"
-            style={{ backgroundColor: bgCard, borderColor: border }}
-          >
+          <div className="rounded-2xl p-4 scale-in bg-surface border border-line-strong shadow-card">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-[0.95rem]" style={{ color: 'var(--text-primary)' }}>
-                  Acceso Biométrico
-                </div>
-                <div className="text-[0.75rem]" style={{ color: 'var(--text-muted)' }}>
-                  Usa tu huella o cara para entrar
-                </div>
+                <div className="text-base text-fg">Acceso Biométrico</div>
+                <div className="text-xs text-fg-subtle">Usa tu huella o cara para entrar</div>
               </div>
               <button
                 onClick={handleBiometricToggle}
-                className={`w-12 h-6 rounded-full transition-all relative ${biometricEnabled ? 'bg-[--color-primary]' : 'bg-[--bg-base]'}`}
+                className={`w-12 h-6 rounded-full transition-all relative ${biometricEnabled ? 'bg-accent toggle-on' : 'bg-surface-3'}`}
                 aria-pressed={biometricEnabled}
                 aria-label={'Acceso Biométrico'}
               >
                 <div
-                  className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${biometricEnabled ? 'left-7' : 'left-1'}`}
+                  className={`absolute top-1 w-4 h-4 rounded-full bg-fg shadow-sm transition-all ${biometricEnabled ? 'left-7' : 'left-1'}`}
                 />
               </button>
             </div>
@@ -337,40 +308,28 @@ export function SettingsPage() {
         )}
 
         {/* Recordatorios de entrenamiento */}
-        <div
-          className="rounded-2xl p-4 scale-in border"
-          style={{ backgroundColor: bgCard, borderColor: border }}
-        >
+        <div className="rounded-2xl p-4 scale-in bg-surface border border-line-strong shadow-card">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-[0.95rem]" style={{ color: 'var(--text-primary)' }}>
-                Recordatorios de entreno
-              </div>
-              <div className="text-[0.75rem]" style={{ color: 'var(--text-muted)' }}>
-                Avisar si llevo 2 días sin entrenar
-              </div>
+              <div className="text-base text-fg">Recordatorios de entreno</div>
+              <div className="text-xs text-fg-subtle">Avisar si llevo 2 días sin entrenar</div>
             </div>
             <button
               onClick={() => setTrainingReminders(!trainingReminders)}
-              className={`w-12 h-6 rounded-full transition-all relative ${trainingReminders ? 'bg-[--color-primary]' : 'bg-[--bg-base]'}`}
+              className={`w-12 h-6 rounded-full transition-all relative ${trainingReminders ? 'bg-accent toggle-on' : 'bg-surface-3'}`}
               aria-pressed={trainingReminders}
               aria-label={'Recordatorios de entreno'}
             >
               <div
-                className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${trainingReminders ? 'left-7' : 'left-1'}`}
+                className={`absolute top-1 w-4 h-4 rounded-full bg-fg shadow-sm transition-all ${trainingReminders ? 'left-7' : 'left-1'}`}
               />
             </button>
           </div>
         </div>
 
         {/* Unidad de peso */}
-        <div
-          className="rounded-2xl p-4 scale-in"
-          style={{ backgroundColor: bgCard, border: `1px solid ${border}` }}
-        >
-          <div className="text-sm font-medium mb-3" style={{ color: 'var(--text-primary)' }}>
-            Unidad de peso
-          </div>
+        <div className="rounded-2xl p-4 scale-in bg-surface border border-line-strong shadow-card">
+          <div className="text-sm font-medium mb-3 text-fg">Unidad de peso</div>
           <div className="flex gap-2">
             {(['kg', 'lb'] as const).map((unit) => (
               <Button
@@ -386,56 +345,75 @@ export function SettingsPage() {
         </div>
 
         {/* Mostrar series de calentamiento */}
-        <div
-          className="rounded-2xl p-4 scale-in border"
-          style={{ backgroundColor: bgCard, borderColor: border }}
-        >
+        <div className="rounded-2xl p-4 scale-in bg-surface border border-line-strong shadow-card">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-[0.95rem]" style={{ color: 'var(--text-primary)' }}>
-                Series de calentamiento
-              </div>
-              <div className="text-[0.75rem]" style={{ color: 'var(--text-muted)' }}>
-                Marcar series de warmup
-              </div>
+              <div className="text-base text-fg">Series de calentamiento</div>
+              <div className="text-xs text-fg-subtle">Marcar series de warmup</div>
             </div>
             <button
               onClick={() => setShowWarmupSets(!showWarmupSets)}
-              className={`w-12 h-6 rounded-full transition-all relative ${showWarmupSets ? 'bg-[--color-primary]' : 'bg-[--bg-base]'}`}
+              className={`w-12 h-6 rounded-full transition-all relative ${showWarmupSets ? 'bg-accent toggle-on' : 'bg-surface-3'}`}
               aria-pressed={showWarmupSets}
               aria-label={'Series de calentamiento'}
             >
               <div
-                className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${showWarmupSets ? 'left-7' : 'left-1'}`}
+                className={`absolute top-1 w-4 h-4 rounded-full bg-fg shadow-sm transition-all ${showWarmupSets ? 'left-7' : 'left-1'}`}
               />
             </button>
           </div>
         </div>
 
         {/* Auto-iniciar temporizador descanso */}
-        <div
-          className="rounded-2xl p-4 scale-in border"
-          style={{ backgroundColor: bgCard, borderColor: border }}
-        >
+        <div className="rounded-2xl p-4 scale-in bg-surface border border-line-strong shadow-card">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-[0.95rem]" style={{ color: 'var(--text-primary)' }}>
-                Auto-iniciar descanso
-              </div>
-              <div className="text-[0.75rem]" style={{ color: 'var(--text-muted)' }}>
-                Inicia el temporizador al añadir serie
-              </div>
+              <div className="text-base text-fg">Auto-iniciar descanso</div>
+              <div className="text-xs text-fg-subtle">Inicia el temporizador al añadir serie</div>
             </div>
             <button
               onClick={() => setRestAutoStart(!restAutoStart)}
-              className={`w-12 h-6 rounded-full transition-all relative ${restAutoStart ? 'bg-[--color-primary]' : 'bg-[--bg-base]'}`}
+              className={`w-12 h-6 rounded-full transition-all relative ${restAutoStart ? 'bg-accent toggle-on' : 'bg-surface-3'}`}
               aria-pressed={restAutoStart}
             >
               <div
-                className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${restAutoStart ? 'left-7' : 'left-1'}`}
+                className={`absolute top-1 w-4 h-4 rounded-full bg-fg shadow-sm transition-all ${restAutoStart ? 'left-7' : 'left-1'}`}
               />
             </button>
           </div>
+
+          {restAutoStart && (
+            <div className="mt-4 pt-4 border-t border-line">
+              <div className="text-base text-fg">{t('settings.rest_duration')}</div>
+              <div className="text-xs mb-2 text-fg-subtle">{t('settings.rest_duration_desc')}</div>
+              <div className="flex gap-1.5">
+                {[60, 90, 120, 180].map((seconds) => (
+                  <button
+                    key={seconds}
+                    onClick={() => setRestDuration(seconds)}
+                    aria-pressed={restDuration === seconds}
+                    className="flex-1 min-h-11 rounded-lg text-sm font-medium border"
+                    style={{
+                      backgroundColor:
+                        restDuration === seconds
+                          ? 'var(--interactive-primary)'
+                          : 'var(--bg-surface-2)',
+                      color:
+                        restDuration === seconds
+                          ? 'var(--interactive-primary-fg)'
+                          : 'var(--text-secondary)',
+                      borderColor:
+                        restDuration === seconds
+                          ? 'var(--interactive-primary)'
+                          : 'var(--border-glass)',
+                    }}
+                  >
+                    {seconds < 120 ? `${seconds}s` : `${seconds / 60}min`}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <button
@@ -449,15 +427,12 @@ export function SettingsPage() {
           <div className="text-[1rem] font-semibold">{t('settings.logout')}</div>
         </button>
 
-        <div
-          className="rounded-2xl p-6 scale-in flex flex-col items-center text-center"
-          style={{ backgroundColor: bgCard, border: `1px solid ${border}` }}
-        >
+        <div className="rounded-2xl p-6 scale-in flex flex-col items-center text-center bg-surface border border-line-strong">
           <GymLogLogo size="lg" variant="stacked" className="mb-4" />
-          <div className="text-[0.8rem] font-bold text-[var(--interactive-primary)] mb-4 uppercase tracking-[0.2em] bg-[var(--interactive-primary)]/10 px-3 py-1 rounded-full">
-            Version 2.9
+          <div className="text-sm font-bold text-accent mb-4 uppercase tracking-[0.2em] bg-accent/10 px-3 py-1 rounded-full">
+            Version 3.0
           </div>
-          <div className="text-[0.85rem] leading-relaxed text-[var(--text-tertiary)] max-w-[240px]">
+          <div className="text-sm leading-relaxed text-fg-subtle max-w-[240px]">
             Tu compañero definitivo para el seguimiento de entrenamientos de fuerza.
           </div>
         </div>

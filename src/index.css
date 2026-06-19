@@ -1,6 +1,79 @@
 @import 'tailwindcss';
 @import './shared/styles/tokens.css';
 
+/* ════════════════════════════════════════════════
+   Tailwind v4 @theme — genera utilidades desde los
+   tokens de tokens.css (fuente única de colores).
+   bg-surface, text-fg-muted, border-line, bg-accent…
+   ════════════════════════════════════════════════ */
+@theme inline {
+  /* ── Colores → var(token) ── */
+  --color-base: var(--bg-base);
+  --color-surface: var(--bg-surface);
+  --color-surface-2: var(--bg-surface-2);
+  --color-surface-3: var(--bg-surface-3);
+  --color-glass: var(--bg-glass);
+  --color-accent: var(--interactive-primary);
+  --color-accent-dim: var(--interactive-primary-dim);
+  --color-accent-fg: var(--interactive-primary-fg);
+  --color-hover: var(--interactive-hover);
+  --color-fg: var(--text-primary);
+  --color-fg-muted: var(--text-secondary);
+  --color-fg-subtle: var(--text-tertiary);
+  --color-fg-inverse: var(--text-inverse);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --color-info: var(--info);
+  --color-line: var(--border-subtle);
+  --color-line-strong: var(--border-default);
+  --color-line-accent: var(--border-accent);
+  --color-line-glass: var(--border-glass);
+}
+
+@theme {
+  /* ── Fuentes (mismos valores que tokens.css) ── */
+  --font-sans: 'DM Sans', sans-serif;
+  --font-mono: 'Geist Mono', monospace;
+
+  /* ── Escala tipográfica (1rem = 15px) — usar pasos
+     con nombre, no arbitrarios text-[…] ── */
+  --text-2xs: 0.625rem;
+  --text-2xs--line-height: 1.3;
+  --text-xs: 0.6875rem;
+  --text-xs--line-height: 1.35;
+  --text-sm: 0.8125rem;
+  --text-sm--line-height: 1.4;
+  --text-base: 0.9375rem;
+  --text-base--line-height: 1.5;
+  --text-lg: 1.0625rem;
+  --text-lg--line-height: 1.45;
+  --text-xl: 1.25rem;
+  --text-xl--line-height: 1.4;
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: 1.3;
+  --text-3xl: 2.25rem;
+  --text-3xl--line-height: 1.1;
+
+  /* ── Radios extra (los pasos por defecto no se tocan):
+     rounded-card para tarjetas, rounded-pill para chips ── */
+  --radius-card: 24px;
+  --radius-pill: 999px;
+
+  /* ── Elevación: plano = sin sombra · elevado = shadow-card ·
+     flotante = shadow-lg / shadow-fab / shadow-glow ── */
+  /* sm/md/lg ajustados a tema oscuro (mismos valores que tokens.css) */
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.6);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.7);
+  --shadow-card: 0 1px 1px rgba(255, 255, 255, 0.04) inset, 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-fab: 0 4px 24px rgba(200, 255, 0, 0.2);
+  /* relieve para botones de acento: brillo superior + halo lima suave */
+  --shadow-btn-accent: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 2px 10px rgba(200, 255, 0, 0.18);
+  --shadow-glow: 0 0 20px rgba(200, 255, 0, 0.15);
+  --shadow-glow-error: 0 0 16px rgba(255, 69, 58, 0.25);
+}
+
 :root {
   font-family: var(--font-display);
   font-size: 15px;
@@ -29,59 +102,11 @@
 
 body {
   margin: 0;
-  background: var(--bg-base);
+  /* halo lima muy sutil arriba — da profundidad al negro plano */
+  background:
+    radial-gradient(120% 50% at 50% 0%, rgba(200, 255, 0, 0.035), transparent 60%), var(--bg-base);
   overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
-}
-
-/* ── Liquid Glass ──────────────────────────────────
-   Backdrop refractivo: blobs suaves para que el blur
-   tenga algo que muestrear sobre el fondo casi negro. */
-.glass-ambient {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(60% 50% at 15% 0%, rgba(200, 255, 0, 0.06), transparent 70%),
-    radial-gradient(55% 45% at 90% 15%, rgba(10, 132, 255, 0.05), transparent 70%),
-    radial-gradient(70% 60% at 50% 100%, rgba(200, 255, 0, 0.04), transparent 70%);
-}
-
-/* Superficie de cristal — tarjetas */
-.glass {
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
-}
-
-/* Cristal denso — chrome (header, nav, modales, sheets) */
-.glass-strong {
-  background: var(--glass-bg-strong);
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
-}
-
-/* Brillo especular superior — el detalle que vende el liquid glass.
-   Requiere position: relative + overflow recortado en el contenedor. */
-.glass-sheen {
-  position: relative;
-  /* Aísla el contexto de apilado para que ::before (z-index:-1) pinte
-     siempre sobre el relleno de cristal y nunca tras un ancestro. */
-  isolation: isolate;
-}
-.glass-sheen::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: var(--glass-highlight);
-  pointer-events: none;
-  z-index: -1; /* detrás del contenido, sobre el relleno de cristal */
 }
 
 /* Scrollbar invisible en mobile */
@@ -95,7 +120,7 @@ body {
 
 h1,
 h2 {
-  font-family: var(--heading);
+  font-family: var(--font-display);
   font-weight: 600;
   color: var(--text-h);
 }
@@ -119,7 +144,8 @@ p {
 
 code,
 .counter {
-  font-family: var(--mono);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums; /* dígitos de ancho fijo — timers sin saltos */
   display: inline-flex;
   border-radius: 4px;
   color: var(--text-h);
@@ -129,7 +155,7 @@ code {
   font-size: 15px;
   line-height: 135%;
   padding: 4px 8px;
-  background: var(--code-bg);
+  background: var(--bg-surface-2);
 }
 
 @keyframes slide-up {
@@ -200,6 +226,10 @@ code {
   animation: pulse 2s infinite;
 }
 
+.pulse-soft {
+  animation: pulse-soft 1.6s ease-in-out infinite;
+}
+
 .bounce-in {
   animation: bounce-in 0.5s ease-out forwards;
 }
@@ -250,6 +280,19 @@ input[type='number'] {
 
 .safe-area-right {
   padding-right: env(safe-area-inset-right);
+}
+
+/* Accesibilidad + fluidez: si el usuario pide menos movimiento, anulamos
+   animaciones y transiciones (también reduce jank en dispositivos lentos). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 @keyframes toggle-on {
@@ -493,56 +536,49 @@ input[type='number'] {
   animation: error-shake 0.4s ease-out;
 }
 .skeleton {
-  background: linear-gradient(90deg, #1c1c22 25%, #2a2a32 50%, #1c1c22 75%);
+  background: linear-gradient(
+    90deg,
+    var(--bg-surface-2) 25%,
+    var(--bg-surface-3) 50%,
+    var(--bg-surface-2) 75%
+  );
   background-size: 200% 100%;
   animation: skeleton-loading 1.5s infinite;
 }
 
-/* ── Tipografía ─────────────────────────────────────
-   Mejor reparto de líneas: titulares equilibrados,
-   párrafos sin huérfanas. */
-h1,
-h2,
-h3 {
-  text-wrap: balance;
-}
-p {
-  text-wrap: pretty;
-}
-
-/* ── Utilidades ─────────────────────────────────────
-   Cifras alineadas en columnas (KPIs, tablas). */
-.nums {
-  font-variant-numeric: tabular-nums;
-}
-
-/* Foco visible reutilizable. Sustituye los `focus:outline-none`
-   sueltos: solo aparece con teclado (focus-visible). */
-.focus-ring:focus-visible {
-  outline: 2px solid var(--interactive-primary);
-  outline-offset: 2px;
-  border-radius: var(--radius-sm);
-}
-
-/* ── prefers-reduced-motion ─────────────────────────
-   Respeta la preferencia del SO: calma animaciones y
-   transiciones (incluye keyframes y framer-motion vía
-   useReducedMotion en los componentes). */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
-    scroll-behavior: auto !important;
+@keyframes offline-pulse {
+  0%,
+  100% {
+    opacity: 1;
   }
+  50% {
+    opacity: 0.6;
+  }
+}
 
-  .offline-pulse,
-  .success-pulse,
+.offline-pulse {
+  animation: offline-pulse 2s ease-in-out infinite;
+}
+
+/* Accesibilidad: desactivar animaciones decorativas */
+@media (prefers-reduced-motion: reduce) {
   .slide-up,
+  .fade-in,
+  .fade-in-up,
+  .pulse,
+  .pulse-soft,
+  .bounce-in,
+  .slide-in-right,
+  .slide-out-left,
   .scale-in,
-  .fade-in-up {
+  .scale-out,
+  .shimmer,
+  .skeleton,
+  .success-pulse,
+  .timer-pulse,
+  .toggle-on,
+  .offline-pulse,
+  .ripple {
     animation: none !important;
   }
 }

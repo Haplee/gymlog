@@ -253,6 +253,127 @@ export const fetchLastExerciseSets = async (
   }));
 };
 
+export interface LibraryExercise {
+  id: string;
+  name: string;
+  muscle_group: string;
+  muscle_detail: string | null;
+  equipment: string | null;
+  movement: string | null;
+  description: string | null;
+  media_url: string | null;
+  is_compound: boolean | null;
+}
+
+export const fetchExerciseLibrary = async (
+  userId: string | undefined,
+): Promise<LibraryExercise[]> => {
+  let query = supabase
+    .from('exercises')
+    .select(
+      'id, name, muscle_group, muscle_detail, equipment, movement, description, media_url, is_compound',
+    )
+    .order('name');
+  if (userId) {
+    query = query.or(`user_id.eq.${userId},user_id.is.null`);
+  }
+  const { data, error } = await query;
+  if (error) {
+    devError('Error fetching exercise library:', error);
+    throw error;
+  }
+  return (data as LibraryExercise[]) || [];
+};
+
+export interface BodyMeasurement {
+  id: string;
+  user_id: string;
+  date: string;
+  weight_kg: number | null;
+  body_fat_pct: number | null;
+  muscle_mass_kg: number | null;
+  notes: string | null;
+  created_at: string | null;
+}
+
+export const fetchBodyMeasurements = async (userId: string): Promise<BodyMeasurement[]> => {
+  const { data, error } = await supabase
+    .from('body_measurements')
+    .select('id, user_id, date, weight_kg, body_fat_pct, muscle_mass_kg, notes, created_at')
+    .eq('user_id', userId)
+    .order('date', { ascending: true });
+  if (error) {
+    devError('Error fetching body measurements:', error);
+    throw error;
+  }
+  return (data as BodyMeasurement[]) || [];
+};
+
+export const addBodyMeasurement = async (
+  userId: string,
+  values: { weight_kg: number | null; body_fat_pct: number | null },
+): Promise<BodyMeasurement> => {
+  const { data, error } = await supabase
+    .from('body_measurements')
+    .insert({
+      user_id: userId,
+      date: new Date().toISOString().split('T')[0],
+      weight_kg: values.weight_kg,
+      body_fat_pct: values.body_fat_pct,
+    })
+    .select('id, user_id, date, weight_kg, body_fat_pct, muscle_mass_kg, notes, created_at')
+    .single();
+  if (error) throw error;
+  return data as BodyMeasurement;
+};
+
+export const deleteBodyMeasurement = async (id: string): Promise<void> => {
+  const { error } = await supabase.from('body_measurements').delete().eq('id', id);
+  if (error) throw error;
+};
+
+export interface ExerciseGoal {
+  id: string;
+  exercise_id: string;
+  target_one_rm: number;
+}
+
+export const fetchExerciseGoals = async (userId: string): Promise<ExerciseGoal[]> => {
+  const { data, error } = await supabase
+    .from('exercise_goals')
+    .select('id, exercise_id, target_one_rm')
+    .eq('user_id', userId);
+  if (error) {
+    // Tabla puede no existir aún (migración sin aplicar) — degradar a vacío.
+    devWarn('[Goals] fetch error:', error.message);
+    return [];
+  }
+  return (data as ExerciseGoal[]) ?? [];
+};
+
+export const upsertExerciseGoal = async (
+  userId: string,
+  exerciseId: string,
+  targetOneRm: number,
+): Promise<void> => {
+  const { error } = await supabase
+    .from('exercise_goals')
+    .upsert(
+      { user_id: userId, exercise_id: exerciseId, target_one_rm: targetOneRm },
+      { onConflict: 'user_id,exercise_id' },
+    );
+  if (error) throw error;
+};
+
+export const deleteExerciseGoal = async (userId: string, exerciseId: string): Promise<void> => {
+  const { error } = await supabase
+    .from('exercise_goals')
+    .delete()
+    .eq('user_id', userId)
+    .eq('exercise_id', exerciseId);
+  if (error) throw error;
+};
+
 export const fetchVolumeByMuscleGroup = async (
   userId: string,
 ): Promise<{ muscle_group: string; total_volume: number }[]> => {

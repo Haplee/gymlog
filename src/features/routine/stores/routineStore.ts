@@ -43,6 +43,7 @@ interface RoutineStore {
   addRoutine: (routine: Routine) => void;
   updateRoutine: (id: string, routine: Partial<Routine>) => void;
   deleteRoutine: (id: string) => void;
+  cloneRoutine: (sourceId: string, name?: string) => string | null;
   setActiveRoutine: (id: string | null) => void;
 
   getActiveRoutine: () => Routine | null;
@@ -267,7 +268,7 @@ export const PREDEFINED_ROUTINES: Routine[] = [
   {
     id: 'fuerza',
     name: 'Fuerza (5x5)',
-    description: 'Rutina经典 de fuerza con peso compound',
+    description: 'Rutina clásica de fuerza con ejercicios compuestos',
     isCustom: false,
     createdAt: new Date().toISOString(),
     days: {
@@ -348,6 +349,108 @@ export const PREDEFINED_ROUTINES: Routine[] = [
       sunday: { name: 'Descanso', exercises: [] },
     },
   },
+  {
+    id: 'upper-lower',
+    name: 'Upper / Lower',
+    description: 'Cuatro días divididos en tren superior e inferior. Ideal para fuerza.',
+    isCustom: false,
+    createdAt: new Date().toISOString(),
+    days: {
+      monday: {
+        name: 'Upper A (Fuerza)',
+        exercises: [
+          { name: 'Press banca', sets: 4, reps: '5-6' },
+          { name: 'Remo de pie', sets: 4, reps: '6-8' },
+          { name: 'Press militar', sets: 3, reps: '6-8' },
+          { name: 'Jalón abierto', sets: 3, reps: '8-10' },
+          { name: ' curl bíceps', sets: 3, reps: '10-12' },
+          { name: 'Extensión tríceps', sets: 3, reps: '10-12' },
+        ],
+      },
+      tuesday: {
+        name: 'Lower A (Fuerza)',
+        exercises: [
+          { name: 'Sentadilla', sets: 4, reps: '5-6' },
+          { name: 'Peso muerto rumano', sets: 3, reps: '6-8' },
+          { name: 'Prensa', sets: 3, reps: '8-10' },
+          { name: 'Femoral sentado', sets: 3, reps: '10-12' },
+          { name: 'Elevación gemelos', sets: 4, reps: '12-15' },
+        ],
+      },
+      wednesday: { name: 'Descanso', exercises: [] },
+      thursday: {
+        name: 'Upper B (Hipertrofia)',
+        exercises: [
+          { name: 'Press inclinado', sets: 4, reps: '8-12' },
+          { name: 'Remo unilateral', sets: 4, reps: '10-12' },
+          { name: 'Elevaciones laterales', sets: 4, reps: '12-15' },
+          { name: 'Aperturas', sets: 3, reps: '12-15' },
+          { name: 'Martillo', sets: 3, reps: '12-15' },
+          { name: 'Tríceps cuerda', sets: 3, reps: '12-15' },
+        ],
+      },
+      friday: {
+        name: 'Lower B (Hipertrofia)',
+        exercises: [
+          { name: 'Peso muerto', sets: 4, reps: '6-8' },
+          { name: 'Prensa', sets: 4, reps: '12-15' },
+          { name: 'Extensiones cuádriceps', sets: 3, reps: '12-15' },
+          { name: 'Femoral sentado', sets: 3, reps: '12-15' },
+          { name: 'Elevación gemelos', sets: 4, reps: '15-20' },
+        ],
+      },
+      saturday: { name: 'Descanso', exercises: [] },
+      sunday: { name: 'Descanso', exercises: [] },
+    },
+  },
+  {
+    id: '531',
+    name: '5/3/1 (Wendler)',
+    description: 'Cuatro días basados en un levantamiento principal por sesión más accesorios.',
+    isCustom: false,
+    createdAt: new Date().toISOString(),
+    days: {
+      monday: {
+        name: 'Press militar',
+        exercises: [
+          { name: 'Press militar', sets: 3, reps: '5/3/1' },
+          { name: 'Jalón abierto', sets: 5, reps: '10' },
+          { name: 'Elevaciones laterales', sets: 4, reps: '12-15' },
+          { name: 'Extensión tríceps', sets: 3, reps: '12-15' },
+        ],
+      },
+      tuesday: {
+        name: 'Peso muerto',
+        exercises: [
+          { name: 'Peso muerto', sets: 3, reps: '5/3/1' },
+          { name: 'Sentadilla', sets: 5, reps: '10' },
+          { name: 'Femoral sentado', sets: 4, reps: '12-15' },
+          { name: 'Plancha', sets: 3, reps: '30-60s' },
+        ],
+      },
+      wednesday: { name: 'Descanso', exercises: [] },
+      thursday: {
+        name: 'Press banca',
+        exercises: [
+          { name: 'Press banca', sets: 3, reps: '5/3/1' },
+          { name: 'Press militar', sets: 5, reps: '10' },
+          { name: ' curl bíceps', sets: 4, reps: '12-15' },
+          { name: 'Tríceps cuerda', sets: 3, reps: '12-15' },
+        ],
+      },
+      friday: {
+        name: 'Sentadilla',
+        exercises: [
+          { name: 'Sentadilla', sets: 3, reps: '5/3/1' },
+          { name: 'Peso muerto rumano', sets: 5, reps: '10' },
+          { name: 'Prensa', sets: 4, reps: '12-15' },
+          { name: 'Elevación gemelos', sets: 4, reps: '15-20' },
+        ],
+      },
+      saturday: { name: 'Descanso', exercises: [] },
+      sunday: { name: 'Descanso', exercises: [] },
+    },
+  },
 ];
 
 const defaultRoutines: Routine[] = [...PREDEFINED_ROUTINES];
@@ -382,6 +485,26 @@ export const useRoutineStore = create<RoutineStore>()(
         });
       },
 
+      cloneRoutine: (sourceId, name) => {
+        const { routines } = get();
+        const source = routines.find((r) => r.id === sourceId);
+        if (!source) return null;
+
+        const newId = `custom-${Date.now()}`;
+        const clone: Routine = {
+          id: newId,
+          name: name?.trim() || `${source.name} (copia)`,
+          description: source.description,
+          isCustom: true,
+          createdAt: new Date().toISOString(),
+          // Deep clone days so edits to the copy never mutate the source template.
+          days: structuredClone(source.days),
+        };
+
+        set({ routines: [...routines, clone] });
+        return newId;
+      },
+
       setActiveRoutine: (id) => set({ activeRoutineId: id }),
 
       getActiveRoutine: () => {
@@ -404,15 +527,16 @@ export const useRoutineStore = create<RoutineStore>()(
       },
 
       saveToDb: async (userId: string) => {
-        const { routines, activeRoutineId } = get();
+        const { routines, activeRoutineId, lastBackup } = get();
 
         const customRoutines = routines.filter((r) => r.isCustom);
 
+        // La tabla real tiene una sola columna `routine` (jsonb): la usamos como
+        // contenedor de las rutinas custom + estado.
         const { error } = await supabase.from('user_routines').upsert(
           {
             user_id: userId,
-            routines: customRoutines,
-            active_routine_id: activeRoutineId,
+            routine: { routines: customRoutines, activeRoutineId, lastBackup },
             updated_at: new Date().toISOString(),
           },
           { onConflict: 'user_id' },
@@ -428,25 +552,27 @@ export const useRoutineStore = create<RoutineStore>()(
 
         const { data, error } = await supabase
           .from('user_routines')
-          .select('routines, active_routine_id, last_backup')
+          .select('routine')
           .eq('user_id', userId)
-          .single();
+          .maybeSingle();
 
-        if (!error && data) {
-          const { routines: dbRoutines, active_routine_id, last_backup } = data;
+        const container = (data?.routine ?? null) as {
+          routines?: Routine[];
+          activeRoutineId?: string | null;
+          lastBackup?: string | null;
+        } | null;
 
-          const { routines: predefined } = get();
-
-          const customRoutines = (dbRoutines || []) as Routine[];
+        if (!error && container) {
+          const customRoutines = (container.routines || []) as Routine[];
           const mergedRoutines = [
-            ...predefined,
-            ...customRoutines.filter((cr) => !predefined.some((pr) => pr.id === cr.id)),
+            ...PREDEFINED_ROUTINES,
+            ...customRoutines.filter((cr) => !PREDEFINED_ROUTINES.some((pr) => pr.id === cr.id)),
           ];
 
           set({
             routines: mergedRoutines,
-            activeRoutineId: active_routine_id,
-            lastBackup: last_backup,
+            activeRoutineId: container.activeRoutineId ?? null,
+            lastBackup: container.lastBackup ?? null,
             loading: false,
           });
         } else {

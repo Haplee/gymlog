@@ -40,6 +40,19 @@ if ('serviceWorker' in navigator) {
     .catch((err: unknown) => devWarn('[SW] Register failed:', err));
 }
 
+// Sentry (crash/error tracking) — privacy-first, solo si hay DSN configurado.
+const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
+if (sentryDsn) {
+  void import('@sentry/react').then((Sentry) => {
+    Sentry.init({
+      dsn: sentryDsn,
+      environment: import.meta.env.MODE,
+      tracesSampleRate: 0.1,
+      sendDefaultPii: false, // no enviar PII
+    });
+  });
+}
+
 const container = document.getElementById('root');
 if (!container) throw new Error('Root element not found');
 

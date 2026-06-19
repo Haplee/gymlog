@@ -59,9 +59,9 @@ export const checkWeeklySummary = async (userId: string) => {
     .gte('achieved_at', startOfPreviousWeek.toISOString())
     .lte('achieved_at', endOfPreviousWeek.toISOString());
 
-  notify('📊 Tu semana en GymLog', {
+  await notify('📊 Tu semana en GymLog', {
     body: `${totalSessions} sesiones · ${Math.round(totalVolume)} kg movidos · ${prCount || 0} récords`,
-    icon: '/icons/icon-192x192.png',
+    icon: '/icon-192x192.webp',
     url: '/stats',
   });
 

@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useTranslation } from 'react-i18next';
 import { useRateLimit } from '@shared/hooks/useRateLimit';
-import { GymLogLogo, Input } from '@/shared/components/ui';
-import { tv } from '@shared/styles/themeVars';
+import { GymLogLogo } from '@/shared/components/ui';
 import { checkPasswordStrength } from '@shared/lib/passwordStrength';
 
 export function AuthPage() {
@@ -109,16 +108,14 @@ export function AuthPage() {
     setAnimKey((prev) => prev + 1);
   };
 
-  const accent = tv.accent;
-
   return (
-    <div className="min-h-screen min-h-[100dvh] flex flex-col items-center justify-center p-6 bg-[var(--bg-base)]">
+    <div className="min-h-screen min-h-[100dvh] flex flex-col items-center justify-center p-6 bg-base">
       <div className="text-center mb-6 scale-in flex flex-col items-center">
         <GymLogLogo size="lg" variant="stacked" className="mb-4" />
-        <h1 className="text-[1.875rem] font-extrabold tracking-tight fade-in-up text-[var(--text-primary)]">
-          Gym<span style={{ color: accent }}>Log</span>
+        <h1 className="text-[1.875rem] font-extrabold tracking-tight fade-in-up text-fg">
+          Gym<span className="text-accent">Log</span>
         </h1>
-        <p className="text-[var(--text-secondary)] mt-2 text-sm">{t('auth.subtitle')}</p>
+        <p className="text-fg-muted mt-2 text-sm">{t('auth.subtitle')}</p>
       </div>
 
       <form
@@ -127,59 +124,52 @@ export function AuthPage() {
         className="w-full max-w-[300px] space-y-4 fade-in-up"
       >
         {isSignUp && (
-          <Input
-            type="text"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            placeholder={t('auth.name')}
-            aria-label={t('auth.name')}
-            autoComplete="name"
-            className="fade-in-up"
-          />
+          <div className="fade-in-up">
+            <input
+              type="text"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              className="w-full rounded-2xl text-base py-3.5 px-4 outline-none transition-all bg-surface border border-line-strong text-fg placeholder:text-fg-subtle focus:border-accent focus:shadow-[0_0_0_2px_var(--interactive-primary)]/30"
+              placeholder={t('auth.name')}
+            />
+          </div>
         )}
 
         {isSignUp && (
-          <Input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder={t('auth.username')}
-            aria-label={t('auth.username')}
-            autoComplete="username"
-            autoCapitalize="none"
-            spellCheck={false}
-            className="fade-in-up"
-          />
+          <div className="fade-in-up">
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-full rounded-2xl text-base py-3.5 px-4 outline-none transition-all bg-surface border border-line-strong text-fg placeholder:text-fg-subtle focus:border-accent focus:shadow-[0_0_0_2px_var(--interactive-primary)]/30"
+              placeholder={t('auth.username')}
+            />
+          </div>
         )}
 
-        <Input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder={t('auth.email')}
-          aria-label={t('auth.email')}
-          autoComplete="email"
-          inputMode="email"
-          autoCapitalize="none"
-          spellCheck={false}
-          className="fade-in-up"
-        />
+        <div className="fade-in-up">
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full rounded-2xl text-base py-3.5 px-4 outline-none transition-all bg-surface border border-line-strong text-fg placeholder:text-fg-subtle focus:border-accent focus:shadow-[0_0_0_2px_var(--interactive-primary)]/30"
+            placeholder={t('auth.email')}
+          />
+        </div>
 
-        <Input
-          type={isRevealing ? 'text' : 'password'}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder={t('auth.password')}
-          aria-label={t('auth.password')}
-          autoComplete={isSignUp ? 'new-password' : 'current-password'}
-          className="fade-in-up"
-          iconRight={
+        <div className="fade-in-up">
+          <div className="relative">
+            <input
+              type={isRevealing ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full rounded-2xl text-base py-3.5 px-4 outline-none transition-all pr-12 bg-surface border border-line-strong text-fg placeholder:text-fg-subtle focus:border-accent focus:shadow-[0_0_0_2px_var(--interactive-primary)]/30"
+              placeholder={t('auth.password')}
+            />
             <button
               type="button"
               onClick={() => setIsRevealing(!isRevealing)}
-              aria-label={isRevealing ? t('auth.hide_password') : t('auth.show_password')}
-              aria-pressed={isRevealing}
-              className="bg-transparent border-none p-1 transition-all hover:scale-110 text-[var(--text-tertiary)]"
+              className="absolute right-4 top-1/2 -translate-y-1/2 bg-transparent border-none p-1 transition-all hover:scale-110 text-fg-subtle"
             >
               {isRevealing ? (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -207,25 +197,17 @@ export function AuthPage() {
                 </svg>
               )}
             </button>
-          }
-        />
+          </div>
+        </div>
 
         {error && (
-          <div
-            role="alert"
-            aria-live="assertive"
-            className="fade-in-up text-center text-sm py-2 rounded-[var(--radius-md)] bg-[var(--error)]/10 text-[var(--error)] error-shake"
-          >
+          <div className="fade-in-up text-center text-sm py-2 rounded-xl bg-error/10 text-error error-shake">
             {error}
           </div>
         )}
 
         {message && (
-          <div
-            role="status"
-            aria-live="polite"
-            className="fade-in-up text-center text-sm py-2 rounded-[var(--radius-md)] bg-[var(--success)]/10 text-[var(--success)] success-pulse"
-          >
+          <div className="fade-in-up text-center text-sm py-2 rounded-xl bg-success/10 text-success success-pulse">
             {message}
           </div>
         )}
@@ -240,11 +222,9 @@ export function AuthPage() {
                 ? t('auth.signup')
                 : t('auth.login')
           }
-          className="w-full py-4 rounded-[var(--radius-lg)] text-base font-bold transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
-          style={{
-            backgroundColor: isBlocked ? 'var(--text-tertiary)' : accent,
-            color: 'var(--interactive-primary-fg)',
-          }}
+          className={`w-full py-4 rounded-2xl text-base font-bold transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 text-accent-fg ${
+            isBlocked ? 'bg-fg-subtle' : 'bg-accent'
+          }`}
         >
           {loading ? (
             <span className="inline-flex items-center gap-2">
@@ -276,16 +256,16 @@ export function AuthPage() {
         </button>
 
         <div className="relative flex items-center py-2">
-          <div className="flex-grow border-t border-[var(--border-default)]"></div>
-          <span className="mx-4 text-xs text-[var(--text-tertiary)]">o</span>
-          <div className="flex-grow border-t border-[var(--border-default)]"></div>
+          <div className="flex-grow border-t border-line-strong"></div>
+          <span className="mx-4 text-xs text-fg-subtle">o</span>
+          <div className="flex-grow border-t border-line-strong"></div>
         </div>
 
         <button
           type="button"
           onClick={handleGoogleLogin}
           disabled={googleLoading}
-          className="w-full py-4 rounded-[var(--radius-lg)] text-base flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 bg-[var(--bg-surface)] border border-[var(--border-default)] text-[var(--text-primary)]"
+          className="w-full py-4 rounded-2xl text-base flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 bg-surface border border-line-strong text-fg"
         >
           {googleLoading ? (
             <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
@@ -331,15 +311,14 @@ export function AuthPage() {
           <button
             type="button"
             onClick={toggleMode}
-            className="text-sm bg-transparent border-none transition-all hover:scale-105"
-            style={{ color: accent }}
+            className="text-sm bg-transparent border-none transition-all hover:scale-105 text-accent"
           >
             {isSignUp ? t('auth.switch_login') : t('auth.switch_signup')}
           </button>
         </div>
       </form>
 
-      <p className="text-xs mt-8 fade-in-up text-[var(--text-tertiary)]">Tus datos están seguros</p>
+      <p className="text-xs mt-8 fade-in-up text-fg-subtle">Tus datos están seguros</p>
     </div>
   );
 }

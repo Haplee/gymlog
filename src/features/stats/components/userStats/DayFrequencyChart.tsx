@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Zap } from 'lucide-react';
 import { SectionLabel } from './SectionLabel';
 
@@ -18,24 +18,17 @@ export function DayFrequencyChart({
   return (
     <section className="space-y-3">
       <SectionLabel>Consistencia por día</SectionLabel>
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="rounded-[var(--radius-xl)] p-4"
-        style={{ backgroundColor: 'var(--bg-surface)' }}
+        className="rounded-card p-4 bg-surface"
       >
         {bestDay && (
           <div className="flex items-center gap-2 mb-4">
             <Zap className="w-4 h-4" style={{ color: '#fbbf24' }} />
-            <span
-              className="text-[0.8125rem] font-medium"
-              style={{ color: 'var(--text-secondary)' }}
-            >
-              Tu día favorito:{' '}
-              <span className="font-bold" style={{ color: 'var(--text-primary)' }}>
-                {bestDay}
-              </span>
+            <span className="text-sm font-medium text-fg-muted">
+              Tu día favorito: <span className="font-bold text-fg">{bestDay}</span>
             </span>
           </div>
         )}
@@ -43,14 +36,9 @@ export function DayFrequencyChart({
           {data.map(({ day, count, pct }, i) => (
             <div key={day}>
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[0.8125rem] w-8" style={{ color: 'var(--text-secondary)' }}>
-                  {day}
-                </span>
-                <div
-                  className="flex-1 mx-3 h-2 rounded-full overflow-hidden"
-                  style={{ backgroundColor: 'var(--bg-surface-2)' }}
-                >
-                  <motion.div
+                <span className="text-sm w-8 text-fg-muted">{day}</span>
+                <div className="flex-1 mx-3 h-2 rounded-full overflow-hidden bg-surface-2">
+                  <m.div
                     initial={{ width: 0 }}
                     animate={{ width: `${pct}%` }}
                     transition={{ delay: 0.45 + i * 0.04, duration: 0.5 }}
@@ -60,17 +48,12 @@ export function DayFrequencyChart({
                     }}
                   />
                 </div>
-                <span
-                  className="text-[0.75rem] font-mono w-6 text-right"
-                  style={{ color: 'var(--text-tertiary)' }}
-                >
-                  {count}
-                </span>
+                <span className="text-xs font-mono w-6 text-right text-fg-subtle">{count}</span>
               </div>
             </div>
           ))}
         </div>
-      </motion.div>
+      </m.div>
     </section>
   );
 }

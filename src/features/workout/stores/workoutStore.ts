@@ -11,6 +11,10 @@ const SetDataSchema = z.object({
   weight: z.string().min(1, 'Min 1 kg').max(6, 'Max 999999'),
   isWarmup: z.boolean().default(false),
   notes: z.string().max(500).optional().default(''),
+  // RPE 1-10 como string ('' = sin valor). Validado a SMALLINT en la RPC.
+  rpe: z.string().max(2).optional().default(''),
+  // Tipo de serie avanzado. 'normal' por defecto.
+  setType: z.enum(['normal', 'dropset', 'rest_pause', 'amrap']).optional().default('normal'),
 });
 
 type SetData = z.infer<typeof SetDataSchema>;
@@ -39,12 +43,14 @@ interface WorkoutState extends PersistedWorkout {
   clearPersistedState: () => void;
 }
 
-const makeSet = (reps = '', weight = '', isWarmup = false, notes = ''): SetData => ({
+const makeSet = (reps = '', weight = '', isWarmup = false, notes = '', rpe = ''): SetData => ({
   id: crypto.randomUUID(),
   reps,
   weight,
   isWarmup,
   notes,
+  rpe,
+  setType: 'normal',
 });
 
 export const useWorkoutStore = create<WorkoutState>()(
@@ -64,14 +70,16 @@ export const useWorkoutStore = create<WorkoutState>()(
         set({
           activeExerciseId: exerciseId,
           customExerciseName: '',
-          sets: sortedSets.map((s) =>
-            makeSet(
+          sets: sortedSets.map((s) => {
+            const rpeVal = (s as { rpe?: number | null }).rpe;
+            return makeSet(
               String(s.reps),
               String(s.weight),
               !!(s as { is_warmup?: boolean | null }).is_warmup,
               (s as { notes?: string | null }).notes ?? '',
-            ),
-          ),
+              rpeVal != null ? String(rpeVal) : '',
+            );
+          }),
           startedAt: new Date().toISOString(),
         });
       },
@@ -151,6 +159,8 @@ export const useWorkoutStore = create<WorkoutState>()(
             weight: Number(s.weight),
             is_warmup: !!s.isWarmup,
             notes: s.notes?.trim() || '',
+            rpe: s.rpe?.trim() || '',
+            set_type: s.setType || 'normal',
           }));
 
           const { error: rpcError } = await supabase.rpc('save_workout_with_sets', {

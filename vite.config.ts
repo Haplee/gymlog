@@ -25,7 +25,8 @@ export default defineConfig(({ mode }) => {
           manualChunks: {
             recharts: ['recharts'],
             supabase: ['@supabase/supabase-js'],
-            motion: ['framer-motion'],
+            // framer-motion sin manualChunk: con LazyMotion, Rollup separa el core (m)
+            // de las features (domMax), que cargan async vía motionFeatures.ts
             query: ['@tanstack/react-query'],
             confetti: ['canvas-confetti'],
           },
@@ -42,13 +43,26 @@ export default defineConfig(({ mode }) => {
       VitePWA({
         registerType: 'prompt',
         includeAssets: ['favicon.ico', 'apple-touch-icon.webp', 'masked-icon.svg'],
+        // Manifest único (antes existía public/manifest.json duplicado que lo eclipsaba)
         manifest: {
           name: 'GymLog',
           short_name: 'GymLog',
           description: 'Tu diario de entrenamiento de fuerza',
-          theme_color: '#0a0a0c',
-          background_color: '#0a0a0c',
+          lang: 'es',
+          theme_color: '#080808',
+          background_color: '#080808',
           display: 'standalone',
+          orientation: 'portrait',
+          categories: ['fitness', 'health', 'sports'],
+          shortcuts: [
+            {
+              name: 'Nuevo Entrenamiento',
+              short_name: 'Entrenar',
+              description: 'Iniciar nuevo entrenamiento',
+              url: '/',
+              icons: [{ src: 'icon-192x192.webp', sizes: '192x192', type: 'image/webp' }],
+            },
+          ],
           icons: [
             {
               src: 'icon-192x192.webp',

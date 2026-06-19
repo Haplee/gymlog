@@ -35,12 +35,12 @@ export function OnboardingModal({ user, onComplete }: OnboardingModalProps) {
       title={t('onboarding.title')}
       onClose={() => {}}
       showCloseButton={false}
-      icon={<Target className="w-5 h-5" style={{ color: 'var(--interactive-primary)' }} />}
+      icon={<Target className="w-5 h-5 text-accent" />}
     >
       <div className="space-y-6">
         {step === 1 && (
           <div className="space-y-4">
-            <p className="text-[var(--text-secondary)] text-sm">{t('onboarding.subtitle')}</p>
+            <p className="text-fg-muted text-sm">{t('onboarding.subtitle')}</p>
             <label className="block text-sm font-medium mb-2">{t('onboarding.goal')}</label>
             <div className="grid grid-cols-2 gap-2">
               {goals.map((g) => (
@@ -49,8 +49,8 @@ export function OnboardingModal({ user, onComplete }: OnboardingModalProps) {
                   onClick={() => setData({ ...data, goal: g })}
                   className={`p-3 rounded-xl border text-sm transition-all ${
                     data.goal === g
-                      ? 'border-[var(--interactive-primary)] text-[var(--interactive-primary)]'
-                      : 'bg-[var(--bg-surface-2)] border-[var(--border-subtle)] text-[var(--text-secondary)]'
+                      ? 'border-accent text-accent'
+                      : 'bg-surface-2 border-line text-fg-muted'
                   }`}
                   style={data.goal === g ? { backgroundColor: 'rgba(200,255,0,0.1)' } : {}}
                 >
@@ -64,7 +64,7 @@ export function OnboardingModal({ user, onComplete }: OnboardingModalProps) {
         {step === 2 && (
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" style={{ color: 'var(--interactive-primary)' }} />
+              <Calendar className="w-4 h-4 text-accent" />
               <label className="block text-sm font-medium">{t('onboarding.days')}</label>
             </div>
             <div className="flex justify-between gap-2">
@@ -73,9 +73,7 @@ export function OnboardingModal({ user, onComplete }: OnboardingModalProps) {
                   key={d}
                   onClick={() => setData({ ...data, days_per_week: d })}
                   className={`flex-1 aspect-square rounded-full border flex items-center justify-center transition-all text-sm font-medium ${
-                    data.days_per_week === d
-                      ? 'border-[var(--interactive-primary)]'
-                      : 'border-[var(--border-subtle)]'
+                    data.days_per_week === d ? 'border-accent' : 'border-line'
                   }`}
                   style={
                     data.days_per_week === d
@@ -93,7 +91,7 @@ export function OnboardingModal({ user, onComplete }: OnboardingModalProps) {
           </div>
         )}
 
-        <div className="flex gap-3 pt-4 border-t border-[var(--border-subtle)]">
+        <div className="flex gap-3 pt-4 border-t border-line">
           {step > 1 ? (
             <Button variant="secondary" onClick={() => setStep(step - 1)} className="flex-1">
               <ChevronLeft className="w-4 h-4 mr-1" />

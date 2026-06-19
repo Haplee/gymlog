@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useWorkoutStore } from '@features/workout/stores/workoutStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
@@ -18,19 +18,29 @@ import {
   saveExerciseNote,
   deleteExerciseNote,
   deleteExercise,
+  fetchWorkoutsPaginated,
 } from '@shared/api/queries';
 import { ExerciseSelector } from '@features/workout/components/ExerciseSelector';
 import { RestTimer } from '@features/workout/components/RestTimer';
 import { WorkoutSessionStats } from '@features/workout/components/WorkoutSessionStats';
 import { LastSessionCard } from '@features/workout/components/LastSessionCard';
 import { WorkoutSetList } from '@features/workout/components/WorkoutSetList';
+import { PlatesCalculator } from '@features/workout/components/PlatesCalculator';
 import type { ExerciseNote } from '@shared/lib/types';
-import { Trash2, Plus, StickyNote, AlertCircle } from 'lucide-react';
+import {
+  Trash2,
+  Plus,
+  StickyNote,
+  AlertCircle,
+  Calculator,
+  BookOpen,
+  Trophy,
+  Repeat,
+} from 'lucide-react';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { impact, notificationHaptic, ImpactStyle, NotificationType } from '@shared/lib/haptics';
 import { devError } from '@shared/lib/devtools';
-import { tv } from '@shared/styles/themeVars';
 
 const containerVariants = {
   hidden: { opacity: 0, y: 12 },
@@ -51,31 +61,31 @@ function ResumeWorkoutBanner({
 }) {
   const { t } = useTranslation();
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="mb-4 p-4 rounded-xl border-2 border-[--color-primary] bg-[--color-primary]/5 flex flex-col gap-3"
+      className="mb-4 p-4 rounded-xl border-2 border-accent bg-accent/5 flex flex-col gap-3"
     >
-      <div className="flex items-center gap-2 text-[--color-primary]">
+      <div className="flex items-center gap-2 text-accent">
         <AlertCircle className="w-5 h-5" />
         <span className="font-semibold text-sm">{t('workout.resume_banner')}</span>
       </div>
-      <p className="text-xs text-[--text-secondary]">{t('workout.resume_desc')}</p>
+      <p className="text-xs text-fg-muted">{t('workout.resume_desc')}</p>
       <div className="flex gap-2">
         <button
           onClick={onContinue}
-          className="flex-1 py-2 rounded-lg bg-[--color-primary] text-[--interactive-primary-fg] text-xs font-bold"
+          className="flex-1 py-2 rounded-lg bg-accent text-accent-fg text-xs font-bold"
         >
           {t('workout.continue')}
         </button>
         <button
           onClick={onDiscard}
-          className="flex-1 py-2 rounded-lg border border-[--border-default] text-[--text-secondary] text-xs font-medium"
+          className="flex-1 py-2 rounded-lg border border-line-strong text-fg-muted text-xs font-medium"
         >
           {t('workout.discard')}
         </button>
       </div>
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -96,17 +106,14 @@ export function WorkoutPage() {
     removeSet,
     removeAllSets,
     saveWorkout,
+    repeatWorkout,
     clearPersistedState,
   } = useWorkoutStore();
 
-  const { sound, showWarmupSets, restAutoStart } = useSettingsStore();
+  const { sound, showWarmupSets, restAutoStart, restDuration: defaultRest } = useSettingsStore();
   const { getActiveRoutine, getTodayRoutine, checkAndBackup } = useRoutineStore();
   const { unit: weightUnit, convert, convertFromDisplay: convertToKg } = useWeight();
-  const {
-    start: startRestTimer,
-    isRunning: restTimerRunning,
-    duration: restDuration,
-  } = useRestTimerStore();
+  const { start: startRestTimer, isRunning: restTimerRunning } = useRestTimerStore();
 
   const [message, setMessage] = useState('');
   const [saving, setSaving] = useState(false);
@@ -115,6 +122,7 @@ export function WorkoutPage() {
   const [noteText, setNoteText] = useState('');
   const [setErrors, setSetErrors] = useState<Record<number, string>>({});
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
+  const [showPlates, setShowPlates] = useState(false);
   const [showResumeBanner, setShowResumeBanner] = useState(() => {
     if (startedAt && sets.length > 0) {
       return Date.now() - new Date(startedAt).getTime() < 12 * 60 * 60 * 1000;
@@ -141,6 +149,17 @@ export function WorkoutPage() {
     queryFn: () => fetchExerciseNotes(user?.id ?? '', activeExerciseId ?? ''),
     enabled: !!user?.id && !!activeExerciseId,
   });
+
+  // Último entreno completo: solo cuando no hay sesión en curso, para ofrecer
+  // "Repetir último entreno" como acción rápida.
+  const isIdle = sets.length === 0 && !startedAt;
+  const { data: lastWorkoutPage } = useQuery({
+    queryKey: ['lastWorkoutFull', user?.id],
+    queryFn: () => fetchWorkoutsPaginated(user?.id ?? '', null, 1),
+    enabled: !!user?.id && isIdle,
+    staleTime: 1000 * 60 * 5,
+  });
+  const lastWorkout = lastWorkoutPage?.workouts[0];
 
   const personalRecords = useMemo(
     () => Object.fromEntries(personalRecordsList.map((pr) => [pr.exercise_id, pr])),
@@ -180,6 +199,20 @@ export function WorkoutPage() {
   );
 
   const validSetCount = useMemo(() => sets.filter((s) => s.reps && s.weight).length, [sets]);
+
+  // Mejor 1RM estimado de la sesión (excluye calentamientos). Pesos en kg.
+  const bestEstimate = useMemo(() => {
+    let best: { weightKg: number; e1rm: number } | null = null;
+    for (const s of sets) {
+      if (s.isWarmup) continue;
+      const w = Number(s.weight);
+      const r = Number(s.reps);
+      if (!Number.isFinite(w) || !Number.isFinite(r) || w <= 0 || r <= 0) continue;
+      const e1rm = calcular1RM(w, r);
+      if (!best || e1rm > best.e1rm) best = { weightKg: w, e1rm };
+    }
+    return best;
+  }, [sets]);
 
   const playFeedbackSound = useCallback(() => {
     try {
@@ -275,12 +308,17 @@ export function WorkoutPage() {
       toast.success(t('workout.saved'));
       void notificationHaptic(NotificationType.Success);
       if (sound) playFeedbackSound();
-      queryClient.invalidateQueries({ queryKey: ['workouts'] });
-      queryClient.invalidateQueries({ queryKey: ['recentSets'] });
-      queryClient.invalidateQueries({ queryKey: ['personalRecords'] });
+      // refetchType: 'all' refresca también queries inactivas (p.ej. HistoryPage
+      // o StatsPage sin montar). Con refetchOnMount:false global, sin esto los
+      // datos guardados no aparecerían hasta un refetch manual.
+      queryClient.invalidateQueries({ queryKey: ['workouts'], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ['recentSets'], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ['workoutsAndSets'], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ['personalRecords'], refetchType: 'all' });
       if (activeExerciseId) {
         queryClient.invalidateQueries({
           queryKey: ['lastExerciseSets', user.id, activeExerciseId],
+          refetchType: 'all',
         });
       }
 
@@ -310,7 +348,7 @@ export function WorkoutPage() {
     const lastHasData = lastSet && lastSet.reps && lastSet.weight;
     addSet();
     if (restAutoStart && lastHasData && !restTimerRunning) {
-      startRestTimer(restDuration);
+      startRestTimer(defaultRest);
     }
   };
 
@@ -326,6 +364,8 @@ export function WorkoutPage() {
           weight: String(s.weight),
           notes: '',
           isWarmup: false,
+          rpe: '',
+          setType: 'normal' as const,
         })),
       );
       void impact(ImpactStyle.Light);
@@ -393,8 +433,6 @@ export function WorkoutPage() {
     [queryClient, setActiveExercise],
   );
 
-  const { bgCard, border, textPrimary, textSecondary, textMuted, accent } = tv;
-
   return (
     <Layout>
       <AnimatePresence>
@@ -418,41 +456,33 @@ export function WorkoutPage() {
       />
 
       {activeRoutine && todayRoutine && todayRoutine.exercises.length > 0 && (
-        <motion.div
+        <m.div
           variants={containerVariants}
           initial="hidden"
           animate="show"
-          className="mb-3 p-3 rounded-[var(--radius-lg)]"
-          style={{ backgroundColor: bgCard, border: '1px solid var(--border-subtle)' }}
+          transition={{ duration: 0.25, ease: 'easeOut' }}
+          className="mb-3 p-3 rounded-2xl bg-surface border border-line shadow-card"
         >
-          <div className="text-[0.8125rem] font-medium mb-1" style={{ color: accent }}>
-            {todayRoutine.name}
-          </div>
+          <div className="text-sm font-medium mb-1 text-accent">{todayRoutine.name}</div>
           <div className="flex flex-wrap gap-1.5">
             {todayRoutine.exercises.slice(0, 4).map((ex, i) => (
-              <span
-                key={i}
-                className="text-[0.6875rem] px-2 py-1 rounded-[var(--radius-pill)]"
-                style={{ backgroundColor: 'var(--bg-surface-2)', color: textSecondary }}
-              >
+              <span key={i} className="text-xs px-2 py-1 rounded-pill bg-surface-2 text-fg-muted">
                 {ex.name}
               </span>
             ))}
             {todayRoutine.exercises.length > 4 && (
-              <span className="text-[0.6875rem]" style={{ color: textMuted }}>
-                +{todayRoutine.exercises.length - 4}
-              </span>
+              <span className="text-xs text-fg-subtle">+{todayRoutine.exercises.length - 4}</span>
             )}
           </div>
-        </motion.div>
+        </m.div>
       )}
 
-      <motion.div
+      <m.div
         variants={containerVariants}
         initial="hidden"
         animate="show"
-        className="rounded-[var(--radius-lg)] p-4 mb-3"
-        style={{ backgroundColor: bgCard, border: `1px solid ${border}` }}
+        transition={{ duration: 0.25, ease: 'easeOut', delay: 0.05 }}
+        className="rounded-2xl p-4 mb-3 bg-surface border border-line-strong shadow-card"
       >
         {user && (
           <ExerciseSelector
@@ -464,6 +494,14 @@ export function WorkoutPage() {
             activeExerciseId={activeExerciseId}
           />
         )}
+
+        <button
+          onClick={() => navigate('/exercises')}
+          className="mt-2 w-full py-2 px-2 rounded-lg text-xs flex items-center justify-center gap-1.5 bg-surface-2 border border-line text-fg-muted transition-colors active:bg-hover"
+        >
+          <BookOpen className="w-3.5 h-3.5" />
+          {t('library.open')}
+        </button>
 
         {/* Last Session Reference */}
         {user && activeExerciseId && (
@@ -478,12 +516,7 @@ export function WorkoutPage() {
           <div className="flex gap-2 mt-3">
             <button
               onClick={() => setShowNotes(!showNotes)}
-              className="flex-1 py-1.5 px-2 rounded-lg text-xs flex items-center justify-center gap-1"
-              style={{
-                backgroundColor: bgCard,
-                border: `1px solid ${border}`,
-                color: textSecondary,
-              }}
+              className="flex-1 py-2 px-2 rounded-lg text-xs flex items-center justify-center gap-1 bg-surface-2 border border-line text-fg-muted transition-colors active:bg-hover"
             >
               <StickyNote className="w-3 h-3" />
               {t('workout.notes')} ({exerciseNotes.length})
@@ -491,12 +524,7 @@ export function WorkoutPage() {
             {selectedExercise.user_id && (
               <button
                 onClick={() => handleDeleteExercise(selectedExercise.id)}
-                className="py-1.5 px-2 rounded-lg text-xs flex items-center gap-1"
-                style={{
-                  backgroundColor: bgCard,
-                  border: `1px solid ${border}`,
-                  color: 'var(--error)',
-                }}
+                className="py-2 px-2 rounded-lg text-xs flex items-center gap-1 bg-surface-2 border border-line text-error transition-colors active:bg-hover"
               >
                 <Trash2 className="w-3 h-3" />
               </button>
@@ -505,28 +533,19 @@ export function WorkoutPage() {
         )}
 
         {showNotes && activeExerciseId && (
-          <div
-            className="mt-3 p-3 rounded-lg"
-            style={{ backgroundColor: bgCard, border: `1px solid ${border}` }}
-          >
-            <div className="text-xs font-medium mb-2" style={{ color: textSecondary }}>
-              {t('workout.no_notes')}
-            </div>
+          <div className="mt-3 p-3 rounded-lg bg-surface border border-line-strong">
+            <div className="text-xs font-medium mb-2 text-fg-muted">{t('workout.no_notes')}</div>
             {exerciseNotes.length > 0 && (
               <div className="space-y-2 mb-3 max-h-24 overflow-y-auto">
                 {exerciseNotes.map((note) => (
                   <div
                     key={note.id}
-                    className="flex items-start justify-between p-2 rounded"
-                    style={{ backgroundColor: 'var(--bg-surface-2)' }}
+                    className="flex items-start justify-between p-2 rounded bg-surface-2"
                   >
-                    <div className="text-xs" style={{ color: textPrimary }}>
-                      {note.note}
-                    </div>
+                    <div className="text-xs text-fg">{note.note}</div>
                     <button
                       onClick={() => handleDeleteNote(note.id)}
-                      className="text-xs ml-2"
-                      style={{ color: 'var(--error)' }}
+                      className="text-xs ml-2 text-error"
                     >
                       ×
                     </button>
@@ -540,74 +559,95 @@ export function WorkoutPage() {
                 placeholder={t('workout.new_note')}
                 value={noteText}
                 onChange={(e) => setNoteText(e.target.value)}
-                className="flex-1 rounded-lg text-xs p-2 outline-none"
-                style={{
-                  backgroundColor: bgCard,
-                  border: `1px solid ${border}`,
-                  color: textPrimary,
-                }}
+                className="flex-1 rounded-lg text-xs p-2 outline-none bg-surface-2 border border-line text-fg"
               />
               <button
                 onClick={handleSaveNote}
                 disabled={!noteText.trim()}
-                className="p-2 rounded-lg"
-                style={{ backgroundColor: accent, color: 'var(--interactive-primary-fg)' }}
+                className="p-2 rounded-lg bg-accent text-accent-fg"
               >
                 <Plus className="w-4 h-4" />
               </button>
             </div>
           </div>
         )}
+      </m.div>
 
-        {currentPR && (
-          <div className="mt-3 text-[0.85rem]" style={{ color: accent }}>
-            {t('workout.recent_pr')}: {convert(Number(currentPR.weight)).toFixed(1)} {weightUnit} ×{' '}
-            {currentPR.reps} reps
-          </div>
-        )}
-      </motion.div>
-
-      <motion.div
+      <m.div
         variants={containerVariants}
         initial="hidden"
         animate="show"
-        className={`rounded-[var(--radius-lg)] p-4 ${saveSuccess ? 'success-pulse' : ''}`}
-        style={{ backgroundColor: bgCard, border: `1px solid ${border}` }}
+        transition={{ duration: 0.25, ease: 'easeOut', delay: 0.1 }}
+        className={`rounded-2xl p-4 bg-surface border border-line-strong shadow-card ${saveSuccess ? 'success-pulse' : ''}`}
       >
-        <div className="text-[0.9375rem] font-medium mb-2" style={{ color: textPrimary }}>
-          {selectedExercise
-            ? `${t('workout.sets')} — ${selectedExercise.name}`
-            : customExerciseName
-              ? `${t('workout.sets')} — ${customExerciseName}`
-              : t('workout.sets')}
+        <div className="flex items-start justify-between gap-2 mb-3">
+          <div className="min-w-0">
+            <div className="text-lg font-semibold leading-tight text-fg truncate">
+              {selectedExercise?.name ?? customExerciseName ?? t('workout.sets')}
+            </div>
+            {(currentPR || bestEstimate) && (
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+                {currentPR && (
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-accent">
+                    <Trophy className="w-3.5 h-3.5" aria-hidden="true" />
+                    {t('workout.recent_pr')} {convert(Number(currentPR.weight)).toFixed(1)}{' '}
+                    {weightUnit} × {currentPR.reps}
+                  </span>
+                )}
+                {bestEstimate && (
+                  <span className="font-mono tabular-nums text-xs text-fg-muted">
+                    {t('workout.e1rm')} {convert(bestEstimate.e1rm).toFixed(1)} {weightUnit}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+          <button
+            onClick={() => setShowPlates(true)}
+            aria-label={t('workout.plates_calc')}
+            className="flex-shrink-0 min-h-11 px-2.5 flex items-center gap-1.5 rounded-lg text-xs bg-surface-2 border border-line-glass text-fg-muted"
+          >
+            <Calculator className="w-4 h-4" />
+          </button>
         </div>
 
-        <div
-          className="flex gap-2 mb-1.5 text-[0.65rem] font-semibold uppercase"
-          style={{ color: textMuted }}
-        >
-          <div className="w-6 h-8 flex items-center"></div>
-          <div className="flex-1 text-center">{t('workout.reps')}</div>
-          <div className="flex-1 text-center">{weightUnit}</div>
-          <div className="w-6 h-8 flex items-center justify-center"></div>
-        </div>
+        {sets.length > 0 && (
+          <div className="flex gap-1.5 mb-1.5 text-2xs font-semibold uppercase text-fg-subtle">
+            {showWarmupSets && <div className="w-9 flex-shrink-0" />}
+            <div className="w-7 flex-shrink-0" />
+            <div className="flex-1 text-center">{t('workout.reps')}</div>
+            <div className="flex-1 text-center">{weightUnit}</div>
+            <div className="w-9 flex-shrink-0" />
+            <div className="w-9 flex-shrink-0" />
+          </div>
+        )}
 
         {sets.length === 0 ? (
-          <div
-            className="flex flex-col items-center justify-center py-8 gap-2"
-            style={{ color: textMuted }}
-          >
-            <div className="text-sm">{t('workout.empty_sets')}</div>
-            <button
-              onClick={addSet}
-              className="text-xs px-3 py-1.5 rounded-full"
-              style={{
-                backgroundColor: 'var(--interactive-primary)',
-                color: 'var(--interactive-primary-fg)',
-              }}
-            >
-              + Añadir serie
-            </button>
+          <div className="flex flex-col items-center justify-center text-center py-10 px-2 gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-surface-2 border border-line flex items-center justify-center">
+              <Plus className="w-7 h-7 text-accent" aria-hidden="true" />
+            </div>
+            <div>
+              <div className="text-base font-semibold text-fg">{t('workout.empty_sets')}</div>
+              <div className="text-sm text-fg-subtle mt-1">{t('workout.empty_hint')}</div>
+            </div>
+            <div className="flex flex-col items-stretch gap-2 w-full max-w-[16rem]">
+              <button
+                onClick={addSet}
+                className="w-full py-3 rounded-pill bg-accent text-accent-fg font-semibold shadow-btn-accent active:scale-[0.98]"
+              >
+                {t('workout.add_set')}
+              </button>
+              {lastWorkout && lastWorkout.sets.length > 0 && (
+                <button
+                  onClick={() => repeatWorkout(lastWorkout)}
+                  className="w-full py-3 rounded-pill bg-surface-2 border border-line text-fg-muted flex items-center justify-center gap-1.5 transition-colors active:bg-hover"
+                >
+                  <Repeat className="w-4 h-4" />
+                  {t('workout.repeat_last')}
+                </button>
+              )}
+            </div>
           </div>
         ) : (
           <WorkoutSetList
@@ -624,86 +664,90 @@ export function WorkoutPage() {
             t={t}
           />
         )}
+      </m.div>
 
-        <div className="flex gap-2 mt-4">
-          <button
-            onClick={handleAddSet}
-            className="flex-1 py-2 px-3 border border-dashed rounded-[var(--radius-lg)] text-sm font-medium cursor-pointer"
-            style={{ borderColor: border, color: textSecondary }}
-          >
-            {t('workout.add_set')}
-          </button>
-
-          {sets.length > 1 && (
-            <AnimatePresence mode="wait">
-              {confirmDeleteAll ? (
-                <motion.div
-                  key="confirm"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  className="flex gap-1"
-                >
-                  <button
-                    onClick={() => {
-                      removeAllSets();
-                      setConfirmDeleteAll(false);
-                    }}
-                    className="py-2 px-3 rounded-[var(--radius-lg)] text-sm font-medium"
-                    style={{ backgroundColor: 'var(--error)', color: '#fff' }}
-                  >
-                    ✓
-                  </button>
-                  <button
-                    onClick={() => setConfirmDeleteAll(false)}
-                    className="py-2 px-3 rounded-[var(--radius-lg)] text-sm border"
-                    style={{ borderColor: border, color: textMuted }}
-                  >
-                    ✕
-                  </button>
-                </motion.div>
-              ) : (
-                <motion.button
-                  key="delete-all"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  onClick={() => setConfirmDeleteAll(true)}
-                  className="py-2 px-3 border border-dashed rounded-[var(--radius-lg)] text-sm font-medium cursor-pointer"
-                  style={{ borderColor: border, color: 'var(--error)' }}
-                  title={t('workout.remove_all')}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </motion.button>
-              )}
-            </AnimatePresence>
+      {/* Barra de acción fija sobre la navegación inferior (solo con series) */}
+      {sets.length > 0 && (
+        <div className="sticky bottom-0 z-10 -mx-4 mt-3 px-4 pt-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] bg-base border-t border-line">
+          {message && (
+            <div
+              className="mb-2 text-center text-sm"
+              style={{ color: message.startsWith('✓') ? 'var(--success)' : 'var(--error)' }}
+            >
+              {message}
+            </div>
           )}
+          <div className="flex gap-2">
+            <button
+              onClick={handleAddSet}
+              className="flex-1 py-2 px-3 border border-dashed rounded-2xl text-sm font-medium cursor-pointer border-line-strong text-fg-muted"
+            >
+              {t('workout.add_set')}
+            </button>
 
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="flex-1 py-3 px-4 rounded-[var(--radius-pill)] text-[0.9375rem] font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{
-              backgroundColor: saveSuccess ? 'var(--success)' : accent,
-              color: 'var(--interactive-primary-fg)',
-              border: 'none',
-            }}
-          >
-            {saving ? t('workout.saving') : saveSuccess ? '✓' : t('workout.save_workout')}
-          </button>
-        </div>
+            {sets.length > 1 && (
+              <AnimatePresence mode="wait">
+                {confirmDeleteAll ? (
+                  <m.div
+                    key="confirm"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    className="flex gap-1"
+                  >
+                    <button
+                      onClick={() => {
+                        removeAllSets();
+                        setConfirmDeleteAll(false);
+                      }}
+                      className="py-2 px-3 rounded-2xl text-sm font-medium bg-error text-white"
+                    >
+                      ✓
+                    </button>
+                    <button
+                      onClick={() => setConfirmDeleteAll(false)}
+                      className="py-2 px-3 rounded-2xl text-sm border border-line-strong text-fg-subtle"
+                    >
+                      ✕
+                    </button>
+                  </m.div>
+                ) : (
+                  <m.button
+                    key="delete-all"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onClick={() => setConfirmDeleteAll(true)}
+                    className="py-2 px-3 border border-dashed rounded-2xl text-sm font-medium cursor-pointer border-line-strong text-error"
+                    title={t('workout.remove_all')}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </m.button>
+                )}
+              </AnimatePresence>
+            )}
 
-        {message && (
-          <div
-            className="mt-4 text-center text-sm"
-            style={{ color: message.startsWith('✓') ? 'var(--success)' : 'var(--error)' }}
-          >
-            {message}
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className={`flex-1 py-3 px-4 rounded-pill text-base font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-none text-accent-fg ${
+                saveSuccess ? 'bg-success' : 'bg-accent'
+              }`}
+            >
+              {saving ? t('workout.saving') : saveSuccess ? '✓' : t('workout.save_workout')}
+            </button>
           </div>
-        )}
-      </motion.div>
+        </div>
+      )}
 
       <RestTimer />
+
+      <PlatesCalculator
+        key={showPlates ? `plates-${Math.round(bestEstimate?.weightKg ?? 0)}` : 'plates-closed'}
+        open={showPlates}
+        initialTargetKg={bestEstimate?.weightKg}
+        onClose={() => setShowPlates(false)}
+      />
     </Layout>
   );
 }

@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Target } from 'lucide-react';
 import { Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { CHART_COLORS } from '../../constants';
@@ -15,18 +15,15 @@ export function MuscleDistributionChart({ data }: { data: MuscleDistributionItem
   return (
     <section className="space-y-3">
       <SectionLabel>Balance muscular</SectionLabel>
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.45 }}
-        className="rounded-[var(--radius-xl)] p-4"
-        style={{ backgroundColor: 'var(--bg-surface)' }}
+        className="rounded-card p-4 bg-surface"
       >
         <div className="flex items-center gap-2 mb-4">
-          <Target className="w-4 h-4" style={{ color: 'var(--interactive-primary)' }} />
-          <span className="text-[0.8125rem] font-medium" style={{ color: 'var(--text-secondary)' }}>
-            Distribución por grupo muscular
-          </span>
+          <Target className="w-4 h-4 text-accent" />
+          <span className="text-sm font-medium text-fg-muted">Distribución por grupo muscular</span>
         </div>
 
         {/* Pie chart */}
@@ -79,19 +76,14 @@ export function MuscleDistributionChart({ data }: { data: MuscleDistributionItem
                       className="w-2 h-2 rounded-full flex-shrink-0"
                       style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }}
                     />
-                    <span className="text-[0.8125rem]" style={{ color: 'var(--text-secondary)' }}>
-                      {name}
-                    </span>
+                    <span className="text-sm text-fg-muted">{name}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span
-                      className="text-[0.6875rem] font-mono"
-                      style={{ color: 'var(--text-tertiary)' }}
-                    >
+                    <span className="text-xs font-mono text-fg-subtle">
                       {(value / 1000).toFixed(1)}t
                     </span>
                     <span
-                      className="text-[0.625rem] font-bold px-1.5 py-0.5 rounded-full"
+                      className="text-2xs font-bold px-1.5 py-0.5 rounded-full"
                       style={{
                         backgroundColor: `${CHART_COLORS[i % CHART_COLORS.length]}20`,
                         color: CHART_COLORS[i % CHART_COLORS.length],
@@ -101,11 +93,8 @@ export function MuscleDistributionChart({ data }: { data: MuscleDistributionItem
                     </span>
                   </div>
                 </div>
-                <div
-                  className="h-1.5 rounded-full overflow-hidden"
-                  style={{ backgroundColor: 'var(--bg-surface-2)' }}
-                >
-                  <motion.div
+                <div className="h-1.5 rounded-full overflow-hidden bg-surface-2">
+                  <m.div
                     initial={{ width: 0 }}
                     animate={{ width: `${pct}%` }}
                     transition={{ delay: 0.5 + i * 0.05, duration: 0.5 }}
@@ -117,7 +106,7 @@ export function MuscleDistributionChart({ data }: { data: MuscleDistributionItem
             );
           })}
         </div>
-      </motion.div>
+      </m.div>
     </section>
   );
 }
