@@ -160,10 +160,9 @@ export const KPICard = memo(function KPICard({
 
   return (
     <m.div
-      initial={{ opacity: 0, scale: 0.95 }}
+      initial={{ opacity: 0, scale: 0.97 }}
       animate={{ opacity: 1, scale: 1 }}
-      whileHover={{ scale: 1.02 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
       className="relative overflow-hidden rounded-card p-4 bg-surface shadow-card"
     >
       {/* Left accent bar */}

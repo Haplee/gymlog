@@ -897,9 +897,8 @@ export function HistoryPage() {
 
   return (
     <Layout>
-      <h1 className="text-xl font-extrabold mb-4 text-accent text-balance">Historial</h1>
-      {/* Barra de filtros sticky */}
-      <div className="sticky top-0 z-20 py-2 -mt-2 mb-3 space-y-2 bg-base">
+      {/* Barra de filtros: scrollea con el contenido (no fija) */}
+      <div className="mb-3 space-y-2">
         {/* Segmented control de vista — píldora deslizante */}
         <div
           role="tablist"

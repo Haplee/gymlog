@@ -64,7 +64,7 @@
   --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.6);
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.6);
   --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.7);
-  --shadow-card: 0 1px 1px rgba(255, 255, 255, 0.04) inset, 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-card: 0 6px 20px rgba(0, 0, 0, 0.5);
   --shadow-fab: 0 4px 24px rgba(200, 255, 0, 0.2);
   /* relieve para botones de acento: brillo superior + halo lima suave */
   --shadow-btn-accent: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 2px 10px rgba(200, 255, 0, 0.18);
@@ -105,6 +105,60 @@ body {
     radial-gradient(120% 50% at 50% 0%, rgba(200, 255, 0, 0.035), transparent 60%), var(--bg-base);
   overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
+}
+
+/* ════════════════════════════════════════════════
+   Fluidez / rendimiento táctil (WebView Android)
+   ════════════════════════════════════════════════ */
+
+/* Sin resaltado azul al tocar; respuesta de tap inmediata (sin delay de doble-tap) */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+a,
+button,
+[role='button'],
+label,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+
+/* Scroll con momentum y sin encadenar el rebote al contenedor padre */
+.overflow-y-auto,
+.overflow-auto,
+.overflow-y-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* El contenedor de páginas usa touch-action: pan-y para que el swipe horizontal
+   cambie de sección. Los scrollers horizontales internos (píldoras, carruseles)
+   y los sliders re-habilitan ambos ejes para conservar su gesto propio. */
+.overflow-x-auto,
+.overflow-x-scroll,
+input[type='range'] {
+  touch-action: pan-x pan-y;
+}
+
+/* Las capas animadas suben a GPU → menos repaints durante scroll/transición */
+.timer-pulse,
+.pulse-soft,
+.offline-pulse {
+  will-change: transform, opacity;
+}
+
+/* Respeta la preferencia del sistema: corta animaciones costosas */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Scrollbar invisible en mobile */

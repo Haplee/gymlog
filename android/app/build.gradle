@@ -3,7 +3,11 @@ apply plugin: 'kotlin-android'
 
 def keystorePropertiesFile = rootProject.file("local.properties")
 def keystoreProperties = new Properties()
-keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+// En CI no existe local.properties (gitignored: SDK + claves de firma).
+// Cargar solo si está, para no romper assembleDebug en GitHub Actions.
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
 
 android {
     namespace = "com.franvi.gymlog"

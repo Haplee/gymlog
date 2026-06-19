@@ -191,10 +191,6 @@ export function SettingsPage() {
 
   return (
     <Layout>
-      <h1 className="fade-in-up text-xl font-extrabold mb-4 scale-in text-accent text-balance">
-        {t('settings.title')}
-      </h1>
-
       <div className="space-y-3 pb-20">
         {!isNative() && (
           <a

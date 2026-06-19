@@ -380,7 +380,6 @@ export function StatsPage() {
 
   return (
     <Layout>
-      <h1 className="text-xl font-extrabold mb-4 text-accent text-balance">Estadísticas</h1>
       <div className="space-y-5">
         {/* ── Entrenamiento ── */}
         <section className="space-y-3">

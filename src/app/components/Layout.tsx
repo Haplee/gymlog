@@ -98,7 +98,7 @@ export function Layout({ children }: LayoutProps) {
   }, [user?.id]);
 
   return (
-    <div className="min-h-screen min-h-[100dvh] flex flex-col overflow-hidden bg-base">
+    <div className="h-screen h-[100dvh] flex flex-col overflow-hidden bg-base">
       <header className="px-4 py-3 flex-shrink-0 bg-surface border-b border-line">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -118,7 +118,7 @@ export function Layout({ children }: LayoutProps) {
         </div>
       </header>
 
-      <nav className="flex flex-shrink-0 relative z-10 safe-area-bottom bg-base">
+      <nav className="flex flex-shrink-0 relative z-10 bg-base">
         {tabs.map((tab) => {
           const isActive = location.pathname === tab.path;
           const { Icon, label, badge } = tab;
@@ -179,16 +179,20 @@ export function Layout({ children }: LayoutProps) {
         )}
       </AnimatePresence>
 
-      {/* Sin AnimatePresence mode="wait": el exit bloqueante hacía lento el cambio de tab */}
-      <m.main
-        key={location.pathname}
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.16, ease: 'easeOut' }}
-        className="flex-1 px-4 pt-4 pb-24 overflow-y-auto"
-      >
-        {children}
-      </m.main>
+      {/* El scroller es un <main> plano: framer-motion dejaba estilos inline
+          (will-change/transform) en él, lo que rompe position:sticky de sus
+          descendientes (barra de filtros del historial). La transición de página
+          vive en un wrapper interno (solo opacidad, sin transform). */}
+      <main className="flex-1 min-h-0 px-4 pt-4 pb-24 overflow-y-auto">
+        <m.div
+          key={location.pathname}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.16, ease: 'easeOut' }}
+        >
+          {children}
+        </m.div>
+      </main>
     </div>
   );
 }

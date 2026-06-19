@@ -435,7 +435,6 @@ export function WorkoutPage() {
 
   return (
     <Layout>
-      <h1 className="text-xl font-extrabold mb-4 text-accent text-balance">{t('workout.title')}</h1>
       <AnimatePresence>
         {showResumeBanner && startedAt && (
           <ResumeWorkoutBanner

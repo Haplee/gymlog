@@ -385,7 +385,6 @@ export function CardioPage() {
 
   return (
     <Layout>
-      <h1 className="text-xl font-extrabold mb-4 text-accent text-balance">Cardio</h1>
       <ActiveSessionCard userId={user?.id ?? null} />
 
       {/* Quick Start */}
