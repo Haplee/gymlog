@@ -7,7 +7,8 @@ import { useCardioStore } from '@features/cardio/stores/cardioStore';
 import { queryClient } from '@app/queryClient';
 import { fetchWorkoutsAndSets, fetchWorkouts, fetchRecentSets } from '@shared/api/queries';
 import { m, AnimatePresence } from 'framer-motion';
-import { Dumbbell, BarChart3, History, Settings, Heart, WifiOff } from 'lucide-react';
+import { Dumbbell, BarChart3, History, Settings, Heart, WifiOff, RefreshCw } from 'lucide-react';
+import { useOutboxStore } from '@shared/stores/outboxStore';
 
 interface LayoutProps {
   children: ReactNode;
@@ -69,6 +70,7 @@ export function Layout({ children }: LayoutProps) {
   const workoutSets = useWorkoutStore((s) => s.sets);
   const workoutStartedAt = useWorkoutStore((s) => s.startedAt);
   const cardioActive = useCardioStore((s) => s.isActive);
+  const pendingSync = useOutboxStore((s) => s.pending);
   const trainBadge = !!workoutStartedAt && workoutSets.length > 0;
 
   const tabs = [
@@ -99,7 +101,10 @@ export function Layout({ children }: LayoutProps) {
 
   return (
     <div className="h-screen h-[100dvh] flex flex-col overflow-hidden bg-base">
-      <header className="px-4 py-3 flex-shrink-0 bg-surface border-b border-line">
+      <header
+        className="px-4 pb-3 flex-shrink-0 bg-surface border-b border-line"
+        style={{ paddingTop: 'calc(var(--inset-top, env(safe-area-inset-top)) + 0.75rem)' }}
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-[10px] flex items-center justify-center bg-gradient-to-br from-accent to-accent-dim shadow-btn-accent">
@@ -175,6 +180,25 @@ export function Layout({ children }: LayoutProps) {
           >
             <WifiOff className="w-3.5 h-3.5 text-error" />
             <span className="text-xs font-medium text-error">{t('common.offline')}</span>
+          </m.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {pendingSync > 0 && (
+          <m.div
+            key="pending-sync"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="flex items-center justify-center gap-2 py-1.5 px-4 flex-shrink-0 bg-accent/10 border-b border-line-accent"
+          >
+            <RefreshCw className="w-3.5 h-3.5 text-accent" />
+            <span className="text-xs font-medium text-accent">
+              {pendingSync === 1
+                ? t('workout.pending_sync_one')
+                : t('workout.pending_sync_other', { count: pendingSync })}
+            </span>
           </m.div>
         )}
       </AnimatePresence>

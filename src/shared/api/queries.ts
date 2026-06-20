@@ -160,7 +160,7 @@ export const fetchExercises = async (userId: string | undefined): Promise<Exerci
 export const fetchPersonalRecords = async (userId: string): Promise<PersonalRecord[]> => {
   const { data, error } = await supabase
     .from('personal_records')
-    .select('id, user_id, exercise_id, weight, reps, one_rm, workout_set_id, achieved_at')
+    .select('id, user_id, exercise_id, weight, reps, one_rm, rep_band, workout_set_id, achieved_at')
     .eq('user_id', userId);
 
   if (error) {

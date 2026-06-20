@@ -58,6 +58,8 @@ export function SettingsPage() {
     setRestAutoStart,
     restDuration,
     setRestDuration,
+    restByExercise,
+    setRestByExercise,
   } = useSettingsStore();
   const [biometricSupport, setBiometricSupport] = useState<{ available: boolean; message: string }>(
     { available: false, message: '' },
@@ -407,6 +409,24 @@ export function SettingsPage() {
                     {seconds < 120 ? `${seconds}s` : `${seconds / 60}min`}
                   </button>
                 ))}
+              </div>
+
+              <div className="mt-4 pt-4 border-t border-line flex items-center justify-between">
+                <div>
+                  <div className="text-base text-fg">{t('settings.rest_by_exercise')}</div>
+                  <div className="text-xs text-fg-subtle">
+                    {t('settings.rest_by_exercise_desc')}
+                  </div>
+                </div>
+                <button
+                  onClick={() => setRestByExercise(!restByExercise)}
+                  className={`w-12 h-6 rounded-full transition-all relative ${restByExercise ? 'bg-accent toggle-on' : 'bg-surface-3'}`}
+                  aria-pressed={restByExercise}
+                >
+                  <div
+                    className={`absolute top-1 w-4 h-4 rounded-full bg-fg shadow-sm transition-all ${restByExercise ? 'left-7' : 'left-1'}`}
+                  />
+                </button>
               </div>
             </div>
           )}

@@ -1,5 +1,6 @@
 import { Dumbbell, Calendar, BarChart3, CheckSquare, Sparkles } from 'lucide-react';
 import { m } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 const containerVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -29,25 +30,6 @@ const icons = {
   routine: CheckSquare,
 };
 
-const labels = {
-  workout: {
-    title: 'Empieza a entrenar',
-    desc: 'Selecciona un ejercicio, añade tus series y guarda tu primer entrenamiento.',
-  },
-  history: {
-    title: 'Sin historial aún',
-    desc: 'Guarda entrenamientos y aparecerán aquí para que puedas revisarlos.',
-  },
-  stats: {
-    title: 'Sin estadísticas',
-    desc: 'Completa entrenamientos para ver tu progreso y tendencias aquí.',
-  },
-  routine: {
-    title: 'Sin rutina configurada',
-    desc: 'Planifica tu semana asignando ejercicios a cada día.',
-  },
-};
-
 export function EmptyState({
   type,
   action,
@@ -55,7 +37,9 @@ export function EmptyState({
   type: EmptyStateProps['icon'];
   action?: { label: string; onClick: () => void };
 }) {
-  const { title, desc } = labels[type];
+  const { t } = useTranslation();
+  const title = t(`empty.${type}_title`);
+  const desc = t(`empty.${type}_desc`);
   const Icon = icons[type];
 
   return (
