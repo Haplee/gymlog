@@ -26,7 +26,7 @@ import { WorkoutSessionStats } from '@features/workout/components/WorkoutSession
 import { LastSessionCard } from '@features/workout/components/LastSessionCard';
 import { WorkoutSetList } from '@features/workout/components/WorkoutSetList';
 import { PlatesCalculator } from '@features/workout/components/PlatesCalculator';
-import type { ExerciseNote } from '@shared/lib/types';
+import type { ExerciseNote, PersonalRecord } from '@shared/lib/types';
 import {
   Trash2,
   Plus,
@@ -36,6 +36,7 @@ import {
   BookOpen,
   Trophy,
   Repeat,
+  Star,
 } from 'lucide-react';
 import { z } from 'zod';
 import { toast } from 'sonner';
@@ -108,9 +109,19 @@ export function WorkoutPage() {
     saveWorkout,
     repeatWorkout,
     clearPersistedState,
+    sessionNotes,
+    sessionRating,
+    setSessionNotes,
+    setSessionRating,
   } = useWorkoutStore();
 
-  const { sound, showWarmupSets, restAutoStart, restDuration: defaultRest } = useSettingsStore();
+  const {
+    sound,
+    showWarmupSets,
+    restAutoStart,
+    restDuration: defaultRest,
+    restByExercise,
+  } = useSettingsStore();
   const { getActiveRoutine, getTodayRoutine, checkAndBackup } = useRoutineStore();
   const { unit: weightUnit, convert, convertFromDisplay: convertToKg } = useWeight();
   const { start: startRestTimer, isRunning: restTimerRunning } = useRestTimerStore();
@@ -161,10 +172,16 @@ export function WorkoutPage() {
   });
   const lastWorkout = lastWorkoutPage?.workouts[0];
 
-  const personalRecords = useMemo(
-    () => Object.fromEntries(personalRecordsList.map((pr) => [pr.exercise_id, pr])),
-    [personalRecordsList],
-  );
+  // Ahora hay varios PR por ejercicio (uno por banda de reps). Agrupamos por
+  // ejercicio y, para el indicador principal, tomamos el de mayor 1RM estimado.
+  const prsByExercise = useMemo(() => {
+    const map: Record<string, PersonalRecord[]> = {};
+    for (const pr of personalRecordsList) {
+      (map[pr.exercise_id] ??= []).push(pr);
+    }
+    for (const k in map) map[k].sort((a, b) => a.rep_band - b.rep_band);
+    return map;
+  }, [personalRecordsList]);
 
   useEffect(() => {
     if (!user) {
@@ -183,7 +200,14 @@ export function WorkoutPage() {
     () => exercises.find((e) => e.id === activeExerciseId),
     [exercises, activeExerciseId],
   );
-  const currentPR = activeExerciseId ? personalRecords[activeExerciseId] : null;
+  const currentPRs = useMemo(
+    () => (activeExerciseId ? (prsByExercise[activeExerciseId] ?? []) : []),
+    [activeExerciseId, prsByExercise],
+  );
+  const currentPR = useMemo(() => {
+    if (!currentPRs.length) return null;
+    return currentPRs.reduce((best, pr) => ((pr.one_rm ?? 0) > (best.one_rm ?? 0) ? pr : best));
+  }, [currentPRs]);
 
   const activeRoutine = getActiveRoutine();
   const todayRoutine = getTodayRoutine();
@@ -302,6 +326,14 @@ export function WorkoutPage() {
     if (result.error) {
       setMessage(result.error.message);
       toast.error(result.error.message);
+    } else if (result.queued) {
+      // Guardado offline: se sincronizará al volver la conexión.
+      setSaveSuccess(true);
+      setMessage(t('workout.saved_offline'));
+      toast.success(t('workout.saved_offline'));
+      void notificationHaptic(NotificationType.Success);
+      setTimeout(() => setMessage(''), 2500);
+      setTimeout(() => setSaveSuccess(false), 300);
     } else {
       setSaveSuccess(true);
       setMessage(t('workout.saved'));
@@ -347,8 +379,13 @@ export function WorkoutPage() {
     const lastSet = sets.at(-1);
     const lastHasData = lastSet && lastSet.reps && lastSet.weight;
     addSet();
-    if (restAutoStart && lastHasData && !restTimerRunning) {
-      startRestTimer(defaultRest);
+    if (restAutoStart && lastHasData && !restTimerRunning && defaultRest > 0) {
+      // Ejercicios compuestos descansan más (≈2×), capado a 10 min.
+      const rest =
+        restByExercise && selectedExercise?.is_compound
+          ? Math.min(defaultRest * 2, 600)
+          : defaultRest;
+      startRestTimer(rest);
     }
   };
 
@@ -601,6 +638,21 @@ export function WorkoutPage() {
                 )}
               </div>
             )}
+            {currentPRs.length > 1 && (
+              <div className="mt-1.5 flex flex-wrap gap-1">
+                {currentPRs.map((pr) => (
+                  <span
+                    key={pr.rep_band}
+                    className="text-2xs font-mono tabular-nums px-1.5 py-0.5 rounded-pill bg-surface-2 border border-line text-fg-muted"
+                    title={t('workout.pr_by_band')}
+                  >
+                    {pr.rep_band === 15 ? '15+' : pr.rep_band}r ·{' '}
+                    {convert(Number(pr.weight)).toFixed(0)}
+                    {weightUnit}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
           <button
             onClick={() => setShowPlates(true)}
@@ -668,7 +720,45 @@ export function WorkoutPage() {
 
       {/* Barra de acción fija sobre la navegación inferior (solo con series) */}
       {sets.length > 0 && (
-        <div className="sticky bottom-0 z-10 -mx-4 mt-3 px-4 pt-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] bg-base border-t border-line">
+        <div className="-mx-4 mt-3 px-4 pt-3 pb-3 bg-base border-t border-line">
+          <div className="mb-3 flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-fg-muted">
+                {t('workout.session_rating')}
+              </span>
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    aria-label={`${t('workout.session_rating')} ${n}`}
+                    aria-pressed={sessionRating === n}
+                    onClick={() => {
+                      void impact(ImpactStyle.Light);
+                      setSessionRating(sessionRating === n ? null : n);
+                    }}
+                    className="min-h-11 min-w-9 flex items-center justify-center"
+                  >
+                    <Star
+                      className={`w-5 h-5 transition-colors ${
+                        sessionRating && n <= sessionRating
+                          ? 'fill-accent text-accent'
+                          : 'text-fg-subtle'
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+            <textarea
+              value={sessionNotes}
+              onChange={(e) => setSessionNotes(e.target.value)}
+              placeholder={t('workout.session_notes_placeholder')}
+              rows={2}
+              aria-label={t('workout.session_notes')}
+              className="w-full resize-none rounded-lg text-sm p-2 outline-none bg-surface-2 border border-line text-fg placeholder:text-fg-subtle"
+            />
+          </div>
           {message && (
             <div
               className="mb-2 text-center text-sm"

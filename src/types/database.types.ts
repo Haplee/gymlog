@@ -198,6 +198,7 @@ export type Database = {
           exercise_id: string;
           id: string;
           one_rm: number | null;
+          rep_band: number;
           reps: number;
           user_id: string;
           weight: number;
@@ -208,6 +209,7 @@ export type Database = {
           exercise_id: string;
           id?: string;
           one_rm?: number | null;
+          rep_band: number;
           reps: number;
           user_id: string;
           weight: number;
@@ -218,6 +220,7 @@ export type Database = {
           exercise_id?: string;
           id?: string;
           one_rm?: number | null;
+          rep_band?: number;
           reps?: number;
           user_id?: string;
           weight?: number;
@@ -567,6 +570,8 @@ export type Database = {
         Args: {
           p_exercise_id: string;
           p_finished_at: string;
+          p_notes?: string;
+          p_rating?: number;
           p_sets: Json;
           p_started_at: string;
           p_user_id: string;

@@ -8,6 +8,12 @@ import { PageSkeleton } from '@shared/components/ui/Skeleton';
 import { OnboardingModal } from '@features/auth/components/OnboardingModal';
 import { App as CapApp } from '@capacitor/app';
 import { supabase } from '@shared/lib/supabase';
+import { useQueryClient } from '@tanstack/react-query';
+import { flushWorkoutOutbox } from '@shared/lib/workoutOutbox';
+import { useOutboxStore } from '@shared/stores/outboxStore';
+import { updateWidget } from '@shared/lib/widget';
+import { fetchWorkouts } from '@shared/api/queries';
+import { calculateCurrentStreak } from '@features/stats/utils/kpiCalculations';
 import { useWorkoutReminder } from '@features/routine/hooks/useWorkoutReminder';
 import { useFatigueSuggestion } from '@features/stats/hooks/useFatigueSuggestion';
 import { useBackgroundNotifications } from '@shared/hooks/useBackgroundNotifications';
@@ -143,6 +149,67 @@ function AnimatedRoutes() {
   );
 }
 
+/** Sincroniza la cola offline de entrenos al arrancar y al recuperar conexión. */
+function useWorkoutOutboxSync() {
+  const queryClient = useQueryClient();
+  const refresh = useOutboxStore((s) => s.refresh);
+
+  useEffect(() => {
+    let cancelled = false;
+    const sync = async () => {
+      const flushed = await flushWorkoutOutbox();
+      if (cancelled) return;
+      if (flushed > 0) {
+        queryClient.invalidateQueries({ queryKey: ['workouts'], refetchType: 'all' });
+        queryClient.invalidateQueries({ queryKey: ['recentSets'], refetchType: 'all' });
+        queryClient.invalidateQueries({ queryKey: ['workoutsAndSets'], refetchType: 'all' });
+        queryClient.invalidateQueries({ queryKey: ['personalRecords'], refetchType: 'all' });
+      }
+      void refresh();
+    };
+    void refresh();
+    void sync();
+    const onOnline = () => void sync();
+    window.addEventListener('online', onOnline);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('online', onOnline);
+    };
+  }, [queryClient, refresh]);
+}
+
+/** Mantiene el widget Android (racha + último entreno) al día. No-op en web/iOS. */
+function useWidgetSync() {
+  const { user } = useAuthStore();
+  useEffect(() => {
+    if (!user?.id || !Capacitor.isNativePlatform()) return;
+    let cancelled = false;
+    const sync = async () => {
+      try {
+        const workouts = await fetchWorkouts(user.id, 400);
+        if (cancelled) return;
+        const streak = calculateCurrentStreak(workouts);
+        const last = workouts[0];
+        const names = last
+          ? [...new Set(last.sets.map((s) => s.exercise?.name).filter(Boolean))]
+          : [];
+        await updateWidget(streak, names.slice(0, 2).join(', '));
+      } catch {
+        /* ignore */
+      }
+    };
+    void sync();
+    const onVis = () => {
+      if (document.visibilityState === 'visible') void sync();
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      cancelled = true;
+      document.removeEventListener('visibilitychange', onVis);
+    };
+  }, [user?.id]);
+}
+
 /** Hook para manejar actualizaciones de la PWA */
 function usePWAUpdate() {
   useEffect(() => {
@@ -191,6 +258,8 @@ function AppRoutes() {
   useFatigueSuggestion();
   useBackgroundNotifications();
   usePWAUpdate();
+  useWorkoutOutboxSync();
+  useWidgetSync();
 
   // Inicializar tema al arrancar
   useEffect(() => {

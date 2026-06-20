@@ -262,7 +262,10 @@
       "mcp__claude_ai_Supabase__apply_migration",
       "mcp__claude_ai_Supabase__get_advisors",
       "mcp__claude_ai_Supabase__list_migrations",
-      "mcp__claude_ai_Supabase__execute_sql"
+      "mcp__claude_ai_Supabase__execute_sql",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(echo \"lint_exit:$?\")",
+      "Bash(npx vitest *)"
     ]
   }
 }

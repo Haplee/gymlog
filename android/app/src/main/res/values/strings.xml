@@ -9,4 +9,7 @@
     <string name="shortcut_stats_short">Estadísticas</string>
     <string name="shortcut_stats_long">Ver progreso y estadísticas</string>
     <string name="shortcut_disabled_message">Acceso directo no disponible</string>
+    <string name="widget_streak_caption">días de racha</string>
+    <string name="widget_no_data">Toca para entrenar</string>
+    <string name="widget_label">Racha GymLog</string>
 </resources>
