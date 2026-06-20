@@ -20,6 +20,7 @@
     "commit": "git-cz",
     "gen:types": "supabase gen types typescript --project-id eoltmipoklizewxdpzfa > src/types/database.types.ts",
     "build:android": "npm run build && npx cap sync android",
+    "apk": "npm run build:android && node scripts/build-apk.mjs",
     "build:ios": "npm run build && npx cap sync ios",
     "open:android": "npx cap open android",
     "open:ios": "npx cap open ios",

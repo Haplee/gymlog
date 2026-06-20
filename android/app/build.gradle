@@ -77,3 +77,18 @@ if (file('google-services.json').exists()) {
 } else {
     logger.warn("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
 }
+
+// Cada build release deja el APK en la raíz del repo como GymLog.apk, para tener
+// siempre el último a mano en cada versión (Android Studio, gradlew o CI).
+tasks.configureEach { task ->
+    if (task.name == "assembleRelease") {
+        task.doLast {
+            copy {
+                from layout.buildDirectory.file("outputs/apk/release/app-release.apk")
+                into "${rootDir}/.."
+                rename { "GymLog.apk" }
+            }
+            logger.lifecycle("APK release copiado a la raíz del repo: GymLog.apk")
+        }
+    }
+}

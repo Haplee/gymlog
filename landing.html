@@ -2,566 +2,835 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/gimnasia.svg" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.webp" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#080808" />
-    <meta name="description" content="GymLog - Tu diario de entrenamiento de fuerza. Registra series, ejercicios, PRs y sigue tu progreso en el gimnasio." />
+
+    <!-- SEO -->
+    <title>GymLog — Tu diario de entrenamiento de fuerza y cardio</title>
+    <meta name="description" content="Registra series, pesos y repeticiones, sigue tus récords personales, rachas y estadísticas. App gratis para Android, sin anuncios y con modo offline. Descarga el APK." />
+    <link rel="canonical" href="https://pesos-wine.vercel.app/" />
+    <meta name="author" content="Francisco Vidal Mateo" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="GymLog" />
+    <meta property="og:title" content="GymLog — Tu entreno, tu progreso" />
+    <meta property="og:description" content="Registra cada serie, supera tus récords y mantén la racha. App de gimnasio gratis, sin anuncios, offline. Descarga el APK Android." />
+    <meta property="og:image" content="pwa-512x512.webp" />
+    <meta property="og:locale" content="es_ES" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="GymLog — Tu entreno, tu progreso" />
+    <meta name="twitter:description" content="App de gimnasio gratis, sin anuncios, offline. Descarga el APK Android." />
+    <meta name="twitter:image" content="pwa-512x512.webp" />
+
+    <!-- Icons -->
+    <link rel="icon" type="image/svg+xml" href="gimnasia.svg" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.webp" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <!-- Fonts: DM Sans (display) + Geist Mono (números) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&display=swap" rel="stylesheet" />
-    <title>GymLog - Diario de Entrenamiento de Fuerza</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=Geist+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
     <style>
+      /* ===== Design tokens (mismos que la app) ===== */
+      :root {
+        --bg-base: #080808;
+        --bg-surface: #111111;
+        --bg-elevated: #16160d;
+        --line: rgba(255, 255, 255, 0.08);
+        --line-strong: rgba(255, 255, 255, 0.14);
+        --accent: #c8ff00;
+        --accent-soft: rgba(200, 255, 0, 0.1);
+        --accent-ring: rgba(200, 255, 0, 0.3);
+        --text: #f4f4f4;
+        --text-muted: #b4b4b4;   /* AA en cuerpo sobre #080808 */
+        --text-faint: #8a8a8a;   /* sólo texto grande/decorativo */
+        --radius: 16px;
+        --radius-lg: 24px;
+        --pill: 999px;
+        --shadow-card: 0 8px 30px rgba(0, 0, 0, 0.4);
+        --shadow-fab: 0 10px 40px rgba(200, 255, 0, 0.25);
+        --ease: cubic-bezier(0.22, 1, 0.36, 1);
+        --font-display: 'DM Sans', system-ui, -apple-system, sans-serif;
+        --font-mono: 'Geist Mono', ui-monospace, 'SFMono-Regular', monospace;
+      }
+
       * { margin: 0; padding: 0; box-sizing: border-box; }
-      html, body {
-        min-height: 100vh;
+      html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+      @media (prefers-reduced-motion: reduce) {
+        html { scroll-behavior: auto; }
+        *, *::before, *::after {
+          animation-duration: 0.001ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.001ms !important;
+        }
+      }
+      body {
         min-height: 100dvh;
-        background: #080808;
-        font-family: 'DM Sans', system-ui, sans-serif;
-        color: #fff;
+        background: var(--bg-base);
+        font-family: var(--font-display);
+        color: var(--text);
+        line-height: 1.6;
         overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
       }
-      .container {
-        max-width: 600px;
-        margin: 0 auto;
-        padding: 0 1.5rem;
+      a { color: inherit; }
+      :focus-visible {
+        outline: 3px solid var(--accent);
+        outline-offset: 3px;
+        border-radius: 6px;
       }
-      /* Hero */
-      .hero {
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        text-align: center;
-        padding: 6rem 1.5rem 4rem;
-        position: relative;
-      }
-      .hero::before {
-        content: '';
+      .skip-link {
         position: absolute;
+        left: -9999px;
         top: 0;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 300px;
-        height: 300px;
-        background: radial-gradient(circle, rgba(200,255,0,0.15) 0%, transparent 70%);
-        pointer-events: none;
+        z-index: 100;
+        background: var(--accent);
+        color: #000;
+        padding: 0.75rem 1.25rem;
+        border-radius: 0 0 12px 0;
+        font-weight: 700;
       }
-      .logo {
-        width: 100px;
-        height: 100px;
-        margin-bottom: 2rem;
-        position: relative;
-        z-index: 1;
+      .skip-link:focus { left: 0; }
+
+      .wrap { max-width: 1080px; margin: 0 auto; padding: 0 1.25rem; }
+      .mono { font-family: var(--font-mono); font-feature-settings: 'tnum' 1; letter-spacing: -0.02em; }
+
+      /* ===== Nav ===== */
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        background: rgba(8, 8, 8, 0.72);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--line);
       }
-      .badge {
+      .nav-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 60px;
+      }
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-weight: 800;
+        font-size: 1.15rem;
+        letter-spacing: -0.02em;
+        text-decoration: none;
+      }
+      .brand svg { width: 30px; height: 30px; }
+      .brand b { color: var(--accent); }
+      .nav-cta {
         display: inline-flex;
         align-items: center;
         gap: 0.5rem;
-        background: rgba(200,255,0,0.1);
-        border: 1px solid rgba(200,255,0,0.3);
-        color: #c8ff00;
-        padding: 0.5rem 1rem;
-        border-radius: 999px;
-        font-size: 0.85rem;
-        font-weight: 500;
-        margin-bottom: 1.5rem;
+        min-height: 44px;
+        padding: 0 1.1rem;
+        background: var(--accent);
+        color: #000;
+        font-weight: 700;
+        font-size: 0.92rem;
+        text-decoration: none;
+        border-radius: var(--pill);
+        transition: transform 0.2s var(--ease);
       }
-      .badge::before {
-        content: '';
-        width: 6px;
-        height: 6px;
-        background: #c8ff00;
-        border-radius: 50%;
-        animation: pulse 2s infinite;
-      }
-      @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.4; }
-      }
-      h1 {
-        font-size: 2.5rem;
-        font-weight: 800;
-        line-height: 1.1;
-        margin-bottom: 1rem;
-        letter-spacing: -0.03em;
-      }
-      h1 span { color: #c8ff00; }
-      .subtitle {
-        font-size: 1.1rem;
-        color: #888;
-        line-height: 1.6;
-        margin-bottom: 2.5rem;
-        max-width: 320px;
-      }
-      .cta-group {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        width: 100%;
-        max-width: 300px;
-      }
+      .nav-cta svg { width: 17px; height: 17px; }
+      .nav-cta:hover { transform: translateY(-1px); }
+      .nav-cta:active { transform: translateY(0) scale(0.98); }
+
+      /* ===== Buttons ===== */
       .btn {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 0.75rem;
-        padding: 1rem 1.5rem;
+        gap: 0.7rem;
+        min-height: 52px;
+        padding: 0 1.6rem;
         border-radius: 14px;
-        font-size: 1rem;
-        font-weight: 600;
+        font-size: 1.02rem;
+        font-weight: 700;
         text-decoration: none;
-        transition: all 0.2s ease;
-        cursor: pointer;
         border: none;
+        cursor: pointer;
+        transition: transform 0.2s var(--ease), background 0.2s var(--ease);
       }
-      .btn-primary {
-        background: #c8ff00;
-        color: #000;
-      }
-      .btn-primary:hover { transform: scale(1.02); opacity: 0.95; }
-      .btn-primary:active { transform: scale(0.98); }
-      .btn-secondary {
-        background: rgba(255,255,255,0.05);
-        color: #fff;
-        border: 1px solid rgba(255,255,255,0.1);
-      }
-      .btn-secondary:hover { background: rgba(255,255,255,0.1); }
       .btn svg { width: 20px; height: 20px; }
-      /* Features */
-      .features {
-        padding: 4rem 0;
-      }
-      .features h2 {
-        font-size: 1.75rem;
-        font-weight: 700;
-        text-align: center;
-        margin-bottom: 3rem;
-      }
-      .feature-grid {
-        display: grid;
-        gap: 1rem;
-      }
-      .feature-card {
-        background: rgba(255,255,255,0.03);
-        border: 1px solid rgba(255,255,255,0.06);
-        border-radius: 16px;
-        padding: 1.5rem;
-        transition: all 0.2s ease;
-      }
-      .feature-card:hover {
-        border-color: rgba(200,255,0,0.3);
-        background: rgba(200,255,0,0.03);
-      }
-      .feature-icon {
-        width: 48px;
-        height: 48px;
-        background: rgba(200,255,0,0.1);
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 1rem;
-      }
-      .feature-icon svg {
-        width: 24px;
-        height: 24px;
-        color: #c8ff00;
-      }
-      .feature-card h3 {
-        font-size: 1.1rem;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-      }
-      .feature-card p {
-        font-size: 0.9rem;
-        color: #666;
-        line-height: 1.5;
-      }
-      /* How it works */
-      .how-it-works {
-        padding: 4rem 0;
-      }
-      .how-it-works h2 {
-        font-size: 1.75rem;
-        font-weight: 700;
-        text-align: center;
-        margin-bottom: 3rem;
-      }
-      .step-list {
-        display: flex;
-        flex-direction: column;
-        gap: 0;
-      }
-      .step {
-        display: flex;
-        gap: 1.5rem;
-        padding: 1.5rem 0;
-        position: relative;
-      }
-      .step:not(:last-child)::after {
+      .btn-primary { position: relative; background: var(--accent); color: #000; }
+      .btn-primary:hover { transform: translateY(-2px); }
+      .btn-primary:active { transform: translateY(0) scale(0.98); }
+      /* Pulso del CTA (animista) — glow GPU-friendly vía opacity/scale del ::after */
+      .btn-primary::after {
         content: '';
         position: absolute;
-        left: 19px;
-        top: 60px;
-        bottom: 0;
-        width: 2px;
-        background: rgba(255,255,255,0.1);
+        inset: 0;
+        border-radius: inherit;
+        box-shadow: 0 0 0 2px var(--accent);
+        opacity: 0;
+        animation: ctaPulse 2.8s var(--ease) infinite;
+        pointer-events: none;
       }
-      .step-number {
-        width: 40px;
-        height: 40px;
-        background: rgba(200,255,0,0.1);
-        border: 2px solid #c8ff00;
+      @keyframes ctaPulse {
+        0% { opacity: 0.5; transform: scale(1); }
+        70%, 100% { opacity: 0; transform: scale(1.12); }
+      }
+      .btn-ghost {
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--text);
+        border: 1px solid var(--line-strong);
+      }
+      .btn-ghost:hover { background: rgba(255, 255, 255, 0.08); transform: translateY(-2px); }
+
+      /* ===== Reveal (transition.style clip-path) ===== */
+      .reveal {
+        opacity: 0;
+        transform: translateY(22px);
+        clip-path: inset(0 0 100% 0);
+        transition:
+          opacity 0.7s var(--ease),
+          transform 0.7s var(--ease),
+          clip-path 0.8s var(--ease);
+        transition-delay: var(--d, 0ms);
+      }
+      .reveal.in {
+        opacity: 1;
+        transform: none;
+        clip-path: inset(0 0 0 0);
+      }
+
+      /* ===== Hero ===== */
+      .hero { position: relative; padding: clamp(3rem, 8vw, 6rem) 0 3.5rem; }
+      .hero::before {
+        content: '';
+        position: absolute;
+        top: -10%;
+        left: 50%;
+        width: min(680px, 90vw);
+        height: 480px;
+        transform: translateX(-50%);
+        background: radial-gradient(circle, rgba(200, 255, 0, 0.16) 0%, transparent 68%);
+        pointer-events: none;
+        z-index: 0;
+      }
+      .hero-grid {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        gap: 2.5rem;
+        align-items: center;
+      }
+      @media (min-width: 860px) {
+        .hero-grid { grid-template-columns: 1.05fr 0.95fr; gap: 3rem; }
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+        background: var(--accent-soft);
+        border: 1px solid var(--accent-ring);
+        color: var(--accent);
+        padding: 0.45rem 0.9rem;
+        border-radius: var(--pill);
+        font-size: 0.82rem;
+        font-weight: 600;
+        margin-bottom: 1.25rem;
+      }
+      .badge .dot {
+        width: 7px; height: 7px;
+        background: var(--accent);
         border-radius: 50%;
+        animation: blink 2s ease-in-out infinite;
+      }
+      @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+      h1 {
+        font-size: clamp(2.3rem, 7vw, 3.8rem);
+        font-weight: 800;
+        line-height: 1.05;
+        letter-spacing: -0.035em;
+        margin-bottom: 1.1rem;
+      }
+      /* Shiny + blur-in text (reactbits) */
+      .shiny {
+        background: linear-gradient(100deg, var(--accent) 20%, #f4ffd0 40%, #ffffff 50%, #f4ffd0 60%, var(--accent) 80%);
+        background-size: 200% auto;
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        color: var(--accent);
+        animation: shine 6s linear infinite;
+      }
+      @keyframes shine { to { background-position: 200% center; } }
+      .blur-in { animation: blurIn 0.9s var(--ease) both; }
+      @keyframes blurIn {
+        from { opacity: 0; filter: blur(12px); transform: translateY(10px); }
+        to { opacity: 1; filter: blur(0); transform: none; }
+      }
+      .lede {
+        font-size: clamp(1.02rem, 2.6vw, 1.18rem);
+        color: var(--text-muted);
+        max-width: 46ch;
+        margin-bottom: 1.9rem;
+      }
+      .hero-cta { display: flex; flex-wrap: wrap; gap: 0.9rem; margin-bottom: 1.4rem; }
+      .hero-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem 1.25rem;
+        font-size: 0.85rem;
+        color: var(--text-faint);
+      }
+      .hero-meta span { display: inline-flex; align-items: center; gap: 0.4rem; }
+      .hero-meta svg { width: 15px; height: 15px; color: var(--accent); }
+
+      /* ===== Phone mockup + dataviz (rosencharts) ===== */
+      .phone {
+        position: relative;
+        width: min(300px, 78vw);
+        margin: 0 auto;
+        aspect-ratio: 300 / 600;
+        background: var(--bg-surface);
+        border: 1px solid var(--line-strong);
+        border-radius: 38px;
+        padding: 14px;
+        box-shadow: var(--shadow-card);
+      }
+      .phone::before {
+        content: '';
+        position: absolute;
+        top: 14px; left: 50%;
+        transform: translateX(-50%);
+        width: 96px; height: 22px;
+        background: #000;
+        border-radius: var(--pill);
+        z-index: 2;
+      }
+      .screen {
+        width: 100%; height: 100%;
+        background: linear-gradient(180deg, #0c0c0c, #050505);
+        border-radius: 26px;
+        padding: 2.4rem 1.1rem 1.1rem;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        gap: 0.9rem;
+      }
+      .screen-h { display: flex; align-items: baseline; justify-content: space-between; }
+      .screen-h small { color: var(--text-faint); font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; }
+      .screen-h .v { color: var(--accent); font-size: 1.6rem; font-weight: 700; }
+      .screen-h .v small { color: var(--text-faint); font-size: 0.6rem; }
+      .chart { width: 100%; height: 96px; }
+      .chart .grid-l { stroke: rgba(255, 255, 255, 0.06); stroke-width: 1; }
+      .chart .area { fill: url(#g); opacity: 0; transition: opacity 1s ease 0.5s; }
+      .chart .line {
+        fill: none;
+        stroke: var(--accent);
+        stroke-width: 2.5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-dasharray: 320;
+        stroke-dashoffset: 320;
+        transition: stroke-dashoffset 1.4s var(--ease) 0.3s;
+      }
+      .chart .dot { fill: var(--accent); opacity: 0; transition: opacity 0.3s ease 1.5s; }
+      .phone.in .chart .line { stroke-dashoffset: 0; }
+      .phone.in .chart .area,
+      .phone.in .chart .dot { opacity: 1; }
+      .bars { display: flex; align-items: flex-end; gap: 6px; height: 60px; }
+      .bars i {
+        flex: 1;
+        background: linear-gradient(180deg, var(--accent), rgba(200, 255, 0, 0.25));
+        border-radius: 4px 4px 2px 2px;
+        height: var(--h, 30%);
+        transform: scaleY(0);
+        transform-origin: bottom;
+        transition: transform 0.6s var(--ease);
+        transition-delay: calc(var(--i, 0) * 90ms + 0.6s);
+      }
+      .phone.in .bars i { transform: scaleY(1); }
+      .pr {
         display: flex;
         align-items: center;
-        justify-content: center;
+        gap: 0.6rem;
+        background: var(--accent-soft);
+        border: 1px solid var(--accent-ring);
+        border-radius: 12px;
+        padding: 0.6rem 0.75rem;
+        font-size: 0.72rem;
+      }
+      .pr svg { width: 18px; height: 18px; color: var(--accent); flex-shrink: 0; }
+      .pr b { color: var(--accent); }
+      .pr span { color: var(--text-muted); display: block; }
+
+      /* ===== Section heading ===== */
+      .section { padding: clamp(3rem, 8vw, 5rem) 0; }
+      .eyebrow {
+        color: var(--accent);
+        font-size: 0.78rem;
         font-weight: 700;
-        color: #c8ff00;
-        flex-shrink: 0;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        margin-bottom: 0.6rem;
       }
-      .step-content h3 {
-        font-size: 1rem;
-        font-weight: 600;
-        margin-bottom: 0.25rem;
-      }
-      .step-content p {
-        font-size: 0.9rem;
-        color: #666;
-        line-height: 1.5;
-      }
-      /* Stats */
-      .stats {
-        padding: 4rem 0;
-      }
-      .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 1rem;
-      }
-      .stat-card {
-        text-align: center;
-        padding: 1.5rem 1rem;
-        background: rgba(255,255,255,0.02);
-        border-radius: 16px;
-      }
-      .stat-value {
-        font-size: 2rem;
+      .section h2 {
+        font-size: clamp(1.7rem, 4.5vw, 2.5rem);
         font-weight: 800;
-        color: #c8ff00;
-        margin-bottom: 0.25rem;
+        letter-spacing: -0.03em;
+        line-height: 1.1;
+        margin-bottom: 0.7rem;
       }
-      .stat-label {
-        font-size: 0.8rem;
-        color: #666;
+      .section .sub { color: var(--text-muted); max-width: 52ch; margin-bottom: 2.5rem; }
+
+      /* ===== Stats strip ===== */
+      .stats-strip {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1px;
+        background: var(--line);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
       }
-      /* Download */
-      .download {
-        padding: 4rem 0 6rem;
+      @media (min-width: 640px) { .stats-strip { grid-template-columns: repeat(4, 1fr); } }
+      .stat {
+        background: var(--bg-base);
+        padding: 1.6rem 1rem;
         text-align: center;
       }
-      .download h2 {
-        font-size: 1.75rem;
+      .stat .n { font-size: clamp(1.8rem, 5vw, 2.4rem); font-weight: 700; color: var(--accent); }
+      .stat .l { font-size: 0.82rem; color: var(--text-muted); margin-top: 0.2rem; }
+
+      /* ===== Features ===== */
+      .feature-grid { display: grid; gap: 1rem; }
+      @media (min-width: 600px) { .feature-grid { grid-template-columns: repeat(2, 1fr); } }
+      @media (min-width: 920px) { .feature-grid { grid-template-columns: repeat(3, 1fr); } }
+      .card {
+        background: var(--bg-surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 1.6rem;
+        transition: border-color 0.25s var(--ease), transform 0.25s var(--ease);
+      }
+      .card:hover { border-color: var(--accent-ring); transform: translateY(-3px); }
+      .ic {
+        width: 46px; height: 46px;
+        display: flex; align-items: center; justify-content: center;
+        background: var(--accent-soft);
+        border-radius: 12px;
+        margin-bottom: 1rem;
+      }
+      .ic svg { width: 23px; height: 23px; color: var(--accent); }
+      .card h3 { font-size: 1.08rem; font-weight: 700; margin-bottom: 0.4rem; }
+      .card p { font-size: 0.92rem; color: var(--text-muted); }
+
+      /* ===== How it works ===== */
+      .steps { display: grid; gap: 1.25rem; }
+      @media (min-width: 760px) { .steps { grid-template-columns: repeat(3, 1fr); } }
+      .step {
+        background: var(--bg-surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 1.6rem;
+      }
+      .step .n {
+        width: 42px; height: 42px;
+        display: flex; align-items: center; justify-content: center;
+        border: 2px solid var(--accent);
+        border-radius: 50%;
+        color: var(--accent);
         font-weight: 700;
         margin-bottom: 1rem;
       }
-      .download p {
-        color: #666;
-        margin-bottom: 2rem;
+      .step h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.35rem; }
+      .step p { color: var(--text-muted); font-size: 0.92rem; }
+      .how-foot { margin-top: 1.75rem; }
+      .text-link {
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        color: var(--accent); font-weight: 600; text-decoration: none;
+        min-height: 44px;
       }
-      .download-options {
+      .text-link svg { width: 17px; height: 17px; transition: transform 0.2s var(--ease); }
+      .text-link:hover svg { transform: translateX(4px); }
+
+      /* ===== Screenshots ===== */
+      .shots {
+        display: grid;
+        gap: 1.25rem;
+        grid-template-columns: repeat(2, 1fr);
+      }
+      @media (min-width: 760px) { .shots { grid-template-columns: repeat(4, 1fr); } }
+      .shot {
+        aspect-ratio: 9 / 18;
+        background: linear-gradient(180deg, var(--bg-surface), #0a0a0a);
+        border: 1px solid var(--line-strong);
+        border-radius: 22px;
+        padding: 1rem 0.7rem;
         display: flex;
         flex-direction: column;
-        gap: 1rem;
-        align-items: center;
+        gap: 0.55rem;
+        overflow: hidden;
       }
-      .download-card {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        padding: 1rem 1.5rem;
-        background: rgba(255,255,255,0.03);
-        border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 14px;
-        text-decoration: none;
-        color: #fff;
-        width: 100%;
-        max-width: 320px;
-        transition: all 0.2s ease;
-      }
-      .download-card:hover {
-        border-color: rgba(200,255,0,0.3);
-        transform: scale(1.02);
-      }
-      .download-icon {
-        width: 48px;
-        height: 48px;
-        background: rgba(200,255,0,0.1);
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-      }
-      .download-icon svg { width: 24px; height: 24px; color: #c8ff00; }
-      .download-info { text-align: left; }
-      .download-info h4 { font-weight: 600; margin-bottom: 0.25rem; }
-      .download-info span { font-size: 0.8rem; color: #666; }
-      /* Footer */
-      footer {
-        padding: 2rem;
+      .shot .cap { font-size: 0.7rem; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.06em; }
+      .shot .big { font-size: 1.4rem; font-weight: 700; color: var(--accent); }
+      .shot .rowbar { height: 10px; border-radius: 4px; background: rgba(255, 255, 255, 0.06); }
+      .shot .rowbar.a { width: 90%; background: var(--accent-soft); }
+      .shot .rowbar.b { width: 65%; }
+      .shot .rowbar.c { width: 78%; }
+      .shot .mini-bars { display: flex; align-items: flex-end; gap: 4px; height: 50px; margin-top: auto; }
+      .shot .mini-bars i { flex: 1; background: var(--accent-soft); border-radius: 3px; }
+
+      /* ===== Final CTA ===== */
+      .final {
         text-align: center;
-        border-top: 1px solid rgba(255,255,255,0.05);
+        background:
+          radial-gradient(circle at 50% 0%, rgba(200, 255, 0, 0.12), transparent 60%),
+          var(--bg-surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        padding: clamp(2.5rem, 7vw, 4rem) 1.5rem;
       }
-      footer p { font-size: 0.85rem; color: #444; }
-      /* Scroll indicator */
-      .scroll-hint {
-        position: absolute;
-        bottom: 2rem;
-        left: 50%;
-        transform: translateX(-50%);
+      .final h2 { margin-bottom: 0.7rem; }
+      .final p { color: var(--text-muted); max-width: 44ch; margin: 0 auto 1.9rem; }
+      .final .hero-cta { justify-content: center; }
+
+      /* ===== Footer ===== */
+      footer {
+        border-top: 1px solid var(--line);
+        padding: 2.5rem 0;
+        margin-top: 3rem;
+      }
+      .foot-inner {
         display: flex;
-        flex-direction: column;
+        flex-wrap: wrap;
+        gap: 1rem 2rem;
         align-items: center;
-        gap: 0.5rem;
-        color: #444;
-        font-size: 0.75rem;
-        animation: bounce 2s infinite;
+        justify-content: space-between;
       }
-      .scroll-hint svg { width: 20px; height: 20px; }
-      @keyframes bounce {
-        0%, 100% { transform: translateX(-50%) translateY(0); }
-        50% { transform: translateX(-50%) translateY(8px); }
+      .foot-links { display: flex; flex-wrap: wrap; gap: 0.25rem 1.5rem; }
+      .foot-links a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
       }
-      /* Responsive */
-      @media (min-width: 480px) {
-        h1 { font-size: 3.5rem; }
-        .stats-grid { grid-template-columns: repeat(3, 1fr); }
-        .feature-grid { grid-template-columns: repeat(2, 1fr); }
-        .step { padding: 2rem 0; }
-      }
+      .foot-links a:hover { color: var(--accent); }
+      .foot-meta { color: var(--text-faint); font-size: 0.82rem; }
     </style>
   </head>
   <body>
-    <!-- Hero -->
-    <section class="hero">
-      <svg class="logo" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect width="100" height="100" rx="24" fill="#1a1a1f"/>
-        <path d="M25 50h50M50 30v40M35 40l15-10 15 10M35 60l15 10 15-10" stroke="#c8ff00" stroke-width="4" stroke-linecap="round"/>
-      </svg>
-      
-      <div class="badge">v3.0.0 Disponible ahora</div>
-      
-      <h1>Tu Entreno,<br><span>Tu Progreso</span></h1>
-      
-      <p class="subtitle">
-        Registra cada serie, controla tus pesos y celebra tus récords personales. 
-        Todo lo que necesitas para crecer en el gimnasio.
-      </p>
-      
-      <div class="cta-group">
-        <a href="https://pesos-wine.vercel.app/app" class="btn btn-primary">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="5 3 19 12 5 21 5 3"/>
-          </svg>
-          Usar la App
-        </a>
-        <a href="https://github.com/Haplee/pesos/releases/download/3.0.0/GymLog-v3.0.0.apk" class="btn btn-secondary" download>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="7 10 12 15 17 10"/>
-            <line x1="12" y1="15" x2="12" y2="3"/>
-          </svg>
-          Descargar APK
-        </a>
-      </div>
-      
-      <div class="scroll-hint">
-        <span>Descubre más</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="6 9 12 15 18 9"/>
-        </svg>
-      </div>
-    </section>
+    <a class="skip-link" href="#main">Saltar al contenido</a>
 
-    <!-- Features -->
-    <section class="features">
-      <div class="container">
-        <h2>Todo lo que necesitas</h2>
-        <div class="feature-grid">
-          <div class="feature-card">
-            <div class="feature-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 20V10M18 20V4M6 20v-4"/>
-              </svg>
+    <!-- Nav -->
+    <nav class="nav" aria-label="Principal">
+      <div class="wrap nav-inner">
+        <a class="brand" href="#main" aria-label="GymLog, inicio">
+          <svg viewBox="0 0 100 100" fill="none" aria-hidden="true">
+            <rect width="100" height="100" rx="24" fill="#1a1a1f" />
+            <path d="M25 50h50M50 30v40M35 40l15-10 15 10M35 60l15 10 15-10" stroke="#c8ff00" stroke-width="5" stroke-linecap="round" />
+          </svg>
+          Gym<b>Log</b>
+        </a>
+        <a class="nav-cta" href="https://github.com/Haplee/gymlog/releases/download/3.2/GymLog-v3.2.apk" download>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          Descargar
+        </a>
+      </div>
+    </nav>
+
+    <main id="main">
+      <!-- Hero -->
+      <section class="hero">
+        <div class="wrap hero-grid">
+          <div>
+            <span class="badge"><span class="dot" aria-hidden="true"></span> v3.2.0 · Disponible ahora</span>
+            <h1 class="blur-in">Tu entreno,<br /><span class="shiny">tu progreso</span></h1>
+            <p class="lede">
+              Registra cada serie, controla tus pesos y celebra cada récord personal.
+              Fuerza, cardio, rachas y estadísticas — todo en una app rápida, gratis y sin anuncios.
+            </p>
+            <div class="hero-cta">
+              <a class="btn btn-primary" href="https://github.com/Haplee/gymlog/releases/download/3.2/GymLog-v3.2.apk" download>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                Descargar APK Android
+              </a>
+              <a class="btn btn-ghost" href="https://pesos-wine.vercel.app/app">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="2" y1="12" x2="22" y2="12" />
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                </svg>
+                Probar online
+              </a>
             </div>
-            <h3>Registro de Series</h3>
-            <p>Anota pesos, repeticiones y series de calentamiento. Sin esfuerzo, sin papel.</p>
+            <div class="hero-meta">
+              <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12" /></svg> 100% gratis</span>
+              <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12" /></svg> Sin anuncios</span>
+              <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12" /></svg> Funciona offline</span>
+            </div>
           </div>
-          
-          <div class="feature-card">
-            <div class="feature-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 7 7 7 7M18 9h1.5a2.5 2.5 0 0 0 0-5C17 4 17 7 17 7"/>
-                <path d="M4 22h16M10 22V9M14 22V9M6 9v6a6 6 0 0 0 12 0V9"/>
+
+          <!-- Mockup con mini-dataviz -->
+          <div class="phone" id="phone" aria-hidden="true">
+            <div class="screen">
+              <div class="screen-h">
+                <div>
+                  <small>Volumen semanal</small>
+                  <div class="v" data-count="12450" data-suffix=" kg">0 kg</div>
+                </div>
+                <small>+18%</small>
+              </div>
+              <svg class="chart" viewBox="0 0 280 96" preserveAspectRatio="none" role="img" aria-label="Gráfico de progresión de volumen">
+                <defs>
+                  <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#c8ff00" stop-opacity="0.35" />
+                    <stop offset="100%" stop-color="#c8ff00" stop-opacity="0" />
+                  </linearGradient>
+                </defs>
+                <line class="grid-l" x1="0" y1="32" x2="280" y2="32" />
+                <line class="grid-l" x1="0" y1="64" x2="280" y2="64" />
+                <path class="area" d="M0,78 L40,70 L80,72 L120,52 L160,56 L200,34 L240,30 L280,16 L280,96 L0,96 Z" />
+                <path class="line" d="M0,78 L40,70 L80,72 L120,52 L160,56 L200,34 L240,30 L280,16" />
+                <circle class="dot" cx="280" cy="16" r="4" />
               </svg>
+              <div class="bars">
+                <i style="--h: 40%; --i: 0"></i>
+                <i style="--h: 65%; --i: 1"></i>
+                <i style="--h: 50%; --i: 2"></i>
+                <i style="--h: 85%; --i: 3"></i>
+                <i style="--h: 70%; --i: 4"></i>
+                <i style="--h: 100%; --i: 5"></i>
+              </div>
+              <div class="pr">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 7 7 7 7M18 9h1.5a2.5 2.5 0 0 0 0-5C17 4 17 7 17 7M4 22h16M10 22V9M14 22V9M6 9v6a6 6 0 0 0 12 0V9" /></svg>
+                <span>Nuevo récord en Press Banca<br /><b>100 kg × 5</b></span>
+              </div>
             </div>
-            <h3>Rutinas Predefinidas</h3>
-            <p>Accede a rutinas de Press de Banca, Sentadilla, Peso Muerto y más. Listas para usar.</p>
-          </div>
-          
-          <div class="feature-card">
-            <div class="feature-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M6 18L18 6M6 6l12 12"/>
-                <circle cx="12" cy="12" r="10"/>
-              </svg>
-            </div>
-            <h3>Tu Biblioteca de Ejercicios</h3>
-            <p>Crea y guarda tus ejercicios favoritos. Acceso rápido a los que más usas.</p>
-          </div>
-          
-          <div class="feature-card">
-            <div class="feature-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-              </svg>
-            </div>
-            <h3>Celebrar PRs</h3>
-            <p>Detecta automáticamente cuando superas tu récord personal. ¡Confetti incluido!</p>
-          </div>
-          
-          <div class="feature-card">
-            <div class="feature-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="18" y1="20" x2="18" y2="10"/>
-                <line x1="12" y1="20" x2="12" y2="4"/>
-                <line x1="6" y1="20" x2="6" y2="14"/>
-              </svg>
-            </div>
-            <h3>Estadísticas Detalladas</h3>
-            <p>Gráficos de volumen, historial de PRs y calor de frecuencia de entrenamiento.</p>
-          </div>
-          
-          <div class="feature-card">
-            <div class="feature-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-              </svg>
-            </div>
-            <h3>Historial Completo</h3>
-            <p>Consulta todos tus entrenamientos pasado. Revisa, aprende y supera tus marcas.</p>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- How it works -->
-    <section class="how-it-works">
-      <div class="container">
-        <h2>Tan simple como 1, 2, 3</h2>
-        <div class="step-list">
-          <div class="step">
-            <div class="step-number">1</div>
-            <div class="step-content">
+      <!-- Stats strip -->
+      <section class="section" style="padding-top: 0" aria-label="Cifras">
+        <div class="wrap">
+          <div class="stats-strip reveal">
+            <div class="stat"><div class="n mono" data-count="100" data-suffix="%">0%</div><div class="l">Gratis, para siempre</div></div>
+            <div class="stat"><div class="n mono" data-count="0">0</div><div class="l">Anuncios</div></div>
+            <div class="stat"><div class="n mono">24/7</div><div class="l">Offline</div></div>
+            <div class="stat"><div class="n mono" data-count="6" data-suffix="+">0+</div><div class="l">Grupos musculares</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Features -->
+      <section class="section" id="features">
+        <div class="wrap">
+          <p class="eyebrow reveal">Todo en una app</p>
+          <h2 class="reveal" style="--d: 60ms">Hecho para progresar</h2>
+          <p class="sub reveal" style="--d: 120ms">Registro sin fricción y la analítica que de verdad mueve la aguja. Sin papel, sin hojas de cálculo.</p>
+          <div class="feature-grid">
+            <article class="card reveal" style="--d: 0ms">
+              <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 7 7 7 7M18 9h1.5a2.5 2.5 0 0 0 0-5C17 4 17 7 17 7M4 22h16M10 22V9M14 22V9M6 9v6a6 6 0 0 0 12 0V9" /></svg></div>
+              <h3>Registro de fuerza</h3>
+              <p>Series, repeticiones y peso en dos toques. Marca calentamientos y añade notas por ejercicio.</p>
+            </article>
+            <article class="card reveal" style="--d: 80ms">
+              <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2 2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zM5 5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2 2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zM7 12h10" /></svg></div>
+              <h3>Cardio con cronómetro</h3>
+              <p>Sesiones de cardio cronometradas con seguimiento de tiempo y constancia integrados.</p>
+            </article>
+            <article class="card reveal" style="--d: 160ms">
+              <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 7 7 7 7M18 9h1.5a2.5 2.5 0 0 0 0-5C17 4 17 7 17 7M4 22h16M10 22V9M14 22V9M6 9v6a6 6 0 0 0 12 0V9" /></svg></div>
+              <h3>Récords automáticos</h3>
+              <p>Detecta tus PRs de peso y 1RM estimado al instante. Con confetti cuando los superas.</p>
+            </article>
+            <article class="card reveal" style="--d: 0ms">
+              <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" /></svg></div>
+              <h3>Rachas y consistencia</h3>
+              <p>Mantén la racha viva. Heatmap de frecuencia y recordatorios si llevas días sin entrenar.</p>
+            </article>
+            <article class="card reveal" style="--d: 80ms">
+              <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></svg></div>
+              <h3>Estadísticas avanzadas</h3>
+              <p>Volumen, progresión por ejercicio, distribución muscular y fatiga. Datos claros, decisiones mejores.</p>
+            </article>
+            <article class="card reveal" style="--d: 160ms">
+              <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01" /></svg></div>
+              <h3>Offline + instalable</h3>
+              <p>Funciona sin conexión como PWA o app Android nativa. Tus datos, siempre disponibles.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- How it works -->
+      <section class="section" id="como-funciona">
+        <div class="wrap">
+          <p class="eyebrow reveal">Cómo funciona</p>
+          <h2 class="reveal" style="--d: 60ms">Tan simple como 1, 2, 3</h2>
+          <p class="sub reveal" style="--d: 120ms">Del primer set al primer récord en menos de un minuto.</p>
+          <div class="steps">
+            <div class="step reveal" style="--d: 0ms">
+              <div class="n mono">1</div>
               <h3>Elige tu ejercicio</h3>
-              <p>Selecciona de tu biblioteca o crea uno nuevo. Filtra por grupo muscular o busca por nombre.</p>
+              <p>Búscalo en tu biblioteca o crea uno nuevo. Filtra por grupo muscular o por nombre.</p>
             </div>
-          </div>
-          <div class="step">
-            <div class="step-number">2</div>
-            <div class="step-content">
+            <div class="step reveal" style="--d: 100ms">
+              <div class="n mono">2</div>
               <h3>Registra tus series</h3>
-              <p>Peso, repeticiones y listo. Añade notas si quieres. Marca series de calentamiento.</p>
+              <p>Peso y reps, listo. Añade notas o marca calentamientos si quieres.</p>
             </div>
-          </div>
-          <div class="step">
-            <div class="step-number">3</div>
-            <div class="step-content">
+            <div class="step reveal" style="--d: 200ms">
+              <div class="n mono">3</div>
               <h3>Revisa tu progreso</h3>
-              <p>Consulta estadísticas, supera tus PRs y mantén la consistencia. Sin complicaciones.</p>
+              <p>Estadísticas, PRs y rachas se actualizan solos. Sin complicaciones.</p>
+            </div>
+          </div>
+          <div class="how-foot reveal">
+            <a class="text-link" href="tutorial.html">
+              Ver la guía completa paso a paso
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Screenshots -->
+      <section class="section" id="capturas">
+        <div class="wrap">
+          <p class="eyebrow reveal">Por dentro</p>
+          <h2 class="reveal" style="--d: 60ms">Diseñada para el gimnasio</h2>
+          <p class="sub reveal" style="--d: 120ms">Interfaz oscura, números grandes y todo a un toque — pensada para usar entre series.</p>
+          <div class="shots">
+            <div class="shot reveal" style="--d: 0ms">
+              <span class="cap">Entreno</span>
+              <span class="big mono">100<small style="font-size: 0.7rem">kg</small></span>
+              <div class="rowbar a"></div><div class="rowbar b"></div><div class="rowbar c"></div>
+            </div>
+            <div class="shot reveal" style="--d: 80ms">
+              <span class="cap">Volumen</span>
+              <div class="mini-bars"><i style="height: 40%"></i><i style="height: 70%"></i><i style="height: 55%"></i><i style="height: 90%"></i><i style="height: 75%"></i></div>
+            </div>
+            <div class="shot reveal" style="--d: 160ms">
+              <span class="cap">Racha</span>
+              <span class="big mono">12<small style="font-size: 0.7rem"> días</small></span>
+              <div class="rowbar a"></div><div class="rowbar c"></div>
+            </div>
+            <div class="shot reveal" style="--d: 240ms">
+              <span class="cap">Récords</span>
+              <span class="big mono">+24</span>
+              <div class="rowbar b"></div><div class="rowbar a"></div><div class="rowbar c"></div>
             </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- Stats -->
-    <section class="stats">
-      <div class="container">
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-value">100%</div>
-            <div class="stat-label">Gratis</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value">0</div>
-            <div class="stat-label">Anuncios</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value">24/7</div>
-            <div class="stat-label">Acceso</div>
+      <!-- Final CTA -->
+      <section class="section">
+        <div class="wrap">
+          <div class="final reveal">
+            <h2>Empieza hoy. Es gratis.</h2>
+            <p>Descarga el APK para Android o pruébala al instante en el navegador. Sin registro obligatorio.</p>
+            <div class="hero-cta">
+              <a class="btn btn-primary" href="https://github.com/Haplee/gymlog/releases/download/3.2/GymLog-v3.2.apk" download>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                Descargar APK Android
+              </a>
+              <a class="btn btn-ghost" href="https://pesos-wine.vercel.app/app">Probar online</a>
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </main>
 
-    <!-- Download -->
-    <section class="download">
-      <div class="container">
-        <h2>Empieza hoy</h2>
-        <p>Disponible en cualquier dispositivo. Sin registro obligatorio.</p>
-        
-        <div class="download-options">
-          <a href="/app" class="download-card">
-            <div class="download-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="2" y1="12" x2="22" y2="12"/>
-                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-              </svg>
-            </div>
-            <div class="download-info">
-              <h4>Usar Online</h4>
-              <span>Accede desde cualquier navegador</span>
-            </div>
-          </a>
-          
-          <a href="https://github.com/Haplee/pesos/releases/download/3.0.0/GymLog-v3.0.0.apk" class="download-card" download>
-            <div class="download-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
-                <line x1="12" y1="18" x2="12.01" y2="18"/>
-              </svg>
-            </div>
-            <div class="download-info">
-              <h4>App Android</h4>
-              <span>Instala en tu móvil - APK v3.0.0</span>
-            </div>
-          </a>
-          
-          <a href="https://safari.rayxxb.com/gymlog" class="download-card">
-            <div class="download-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 20V10M18 20V4M6 20v-4"/>
-              </svg>
-            </div>
-            <div class="download-info">
-              <h4>App iOS (PWA)</h4>
-              <span>Añadir a pantalla de inicio desde Safari</span>
-            </div>
-          </a>
-        </div>
-      </div>
-    </section>
-
-    <!-- Footer -->
     <footer>
-      <p>GymLog © 2024-2026 · Tu compañero de entrenamiento</p>
+      <div class="wrap foot-inner">
+        <a class="brand" href="#main" aria-label="GymLog inicio">
+          <svg viewBox="0 0 100 100" fill="none" aria-hidden="true">
+            <rect width="100" height="100" rx="24" fill="#1a1a1f" />
+            <path d="M25 50h50M50 30v40M35 40l15-10 15 10M35 60l15 10 15-10" stroke="#c8ff00" stroke-width="5" stroke-linecap="round" />
+          </svg>
+          Gym<b>Log</b>
+        </a>
+        <nav class="foot-links" aria-label="Enlaces del pie">
+          <a href="tutorial.html">Tutorial</a>
+          <a href="https://github.com/Haplee/gymlog">Código (GitHub)</a>
+          <a href="https://github.com/Haplee/gymlog/releases/download/3.2/GymLog-v3.2.apk" download>Descargar APK</a>
+          <a href="https://pesos-wine.vercel.app/app">Abrir app</a>
+        </nav>
+      </div>
+      <div class="wrap foot-meta" style="margin-top: 1.25rem">
+        GymLog v3.2.0 · © 2024–2026 Francisco Vidal Mateo · Tu compañero de entrenamiento.
+      </div>
     </footer>
+
+    <script>
+      (function () {
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        // Count-up para números (mono)
+        function countUp(el) {
+          var target = parseFloat(el.getAttribute('data-count'));
+          var suffix = el.getAttribute('data-suffix') || '';
+          if (reduce || isNaN(target)) {
+            el.textContent = (isNaN(target) ? el.textContent : target.toLocaleString('es-ES')) + suffix;
+            return;
+          }
+          var dur = 1100, start = performance.now();
+          function tick(now) {
+            var p = Math.min((now - start) / dur, 1);
+            var eased = 1 - Math.pow(1 - p, 3);
+            var val = Math.round(target * eased);
+            el.textContent = val.toLocaleString('es-ES') + suffix;
+            if (p < 1) requestAnimationFrame(tick);
+          }
+          requestAnimationFrame(tick);
+        }
+
+        var reveals = document.querySelectorAll('.reveal');
+        var counters = document.querySelectorAll('[data-count]');
+        var phone = document.getElementById('phone');
+
+        if (reduce || !('IntersectionObserver' in window)) {
+          reveals.forEach(function (el) { el.classList.add('in'); });
+          if (phone) phone.classList.add('in');
+          counters.forEach(countUp);
+          return;
+        }
+
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (e) {
+            if (!e.isIntersecting) return;
+            e.target.classList.add('in');
+            if (e.target.hasAttribute('data-count')) countUp(e.target);
+            io.unobserve(e.target);
+          });
+        }, { threshold: 0.2, rootMargin: '0px 0px -8% 0px' });
+
+        reveals.forEach(function (el) { io.observe(el); });
+        counters.forEach(function (el) { io.observe(el); });
+        if (phone) io.observe(phone);
+      })();
+    </script>
   </body>
 </html>

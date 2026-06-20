@@ -265,7 +265,10 @@
       "mcp__claude_ai_Supabase__execute_sql",
       "Bash(echo \"EXIT:$?\")",
       "Bash(echo \"lint_exit:$?\")",
-      "Bash(npx vitest *)"
+      "Bash(npx vitest *)",
+      "WebFetch(domain:pesos-wine.vercel.app)",
+      "WebFetch(domain:haplee.github.io)",
+      "Bash(gh release *)"
     ]
   }
 }
