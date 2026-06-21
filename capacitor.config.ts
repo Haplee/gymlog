@@ -7,6 +7,11 @@ const config: CapacitorConfig = {
   server: {
     androidScheme: 'https',
   },
+  ios: {
+    // La app gestiona los safe-area insets vía env(safe-area-inset-*); evitamos
+    // que el WKWebView añada su propio inset y duplique el espaciado.
+    contentInset: 'never',
+  },
   plugins: {
     SplashScreen: {
       launchShowDuration: 1500,
