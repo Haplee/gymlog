@@ -10,15 +10,18 @@ código nativo iOS custom y se inyecta en el `ios/` efímero:
 - `BiometricPlugin.m` — bridge ObjC (`CAP_PLUGIN`) que registra el plugin y sus 3 métodos.
 - `Info.plist.patch.sh` — añade el URL scheme `com.franvi.gymlog` (deep links + OAuth)
   y `NSFaceIDUsageDescription`. Idempotente (`PlistBuddy`).
+- `add-plugin-to-target.rb` — registra los dos ficheros nativos en el target `App`
+  del `.pbxproj` (el template usa file refs explícitas, no synchronized groups).
+  Requiere la gema `xcodeproj` (incluida con CocoaPods).
 
 ## Qué hace el CI (`.github/workflows/ios-build.yml`)
 
 En runner `macos-latest`, sin firma (solo verifica compilación):
 
 1. `npm ci` + `npm run build` (con secrets Supabase del repo).
-2. `npx cap add ios` (genera `ios/`) + `npx cap sync ios`.
+2. `npx cap add ios --packagemanager CocoaPods` (genera `ios/`) + `npx cap sync ios`.
 3. Copia `BiometricPlugin.swift` y `.m` a `ios/App/App/`.
-4. Ejecuta `Info.plist.patch.sh`.
+4. `add-plugin-to-target.rb` (añade los ficheros al target) + `Info.plist.patch.sh`.
 5. `pod install` + `xcodebuild ... CODE_SIGNING_ALLOWED=NO`.
 
 Verde = bundle web + Capacitor iOS + plugin Swift + config de deep links compilan.
@@ -28,10 +31,11 @@ Verde = bundle web + Capacitor iOS + plugin Swift + config de deep links compila
 
 ```bash
 npm run build
-npx cap add ios          # genera ios/ (solo la primera vez)
+npx cap add ios --packagemanager CocoaPods   # genera ios/ (solo la primera vez)
 npx cap sync ios
 cp ios-custom/BiometricPlugin.swift ios-custom/BiometricPlugin.m ios/App/App/
-bash ios-custom/Info.plist.patch.sh
+ruby ios-custom/add-plugin-to-target.rb ios/App/App.xcodeproj
+bash ios-custom/Info.plist.patch.sh ios/App/App/Info.plist
 npx cap open ios         # abre Xcode
 ```
 
