@@ -49,12 +49,12 @@ export function ConnectionCard({
           {lastSyncLabel && <div className="text-xs text-fg-subtle mt-1">{lastSyncLabel}</div>}
           {hint && <div className="text-xs text-fg-subtle mt-2 leading-relaxed">{hint}</div>}
 
-          <div className="flex gap-2 mt-3">
+          <div className="flex flex-col gap-2 mt-3">
             <Button
               variant="primary"
               onClick={onPrimary}
               disabled={busy}
-              className="flex-1 min-h-11"
+              className="w-full whitespace-nowrap"
             >
               {primaryLabel}
             </Button>
@@ -63,7 +63,7 @@ export function ConnectionCard({
                 variant="secondary"
                 onClick={onSecondary}
                 disabled={busy}
-                className="min-h-11"
+                className="w-full whitespace-nowrap"
               >
                 {secondaryLabel}
               </Button>
