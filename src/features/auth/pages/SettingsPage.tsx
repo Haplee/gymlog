@@ -196,12 +196,12 @@ export function SettingsPage() {
       <div className="space-y-3 pb-20">
         {!isNative() && (
           <a
-            href="https://github.com/Haplee/gymlog/releases/download/v3.1.0-android/GymLog-v3.1.0.apk"
+            href="https://github.com/Haplee/gymlog/releases/download/v4.0.0/GymLog-v4.0.0.apk"
             download
             className="block rounded-2xl p-4 scale-in border text-center bg-surface border-line-accent text-accent shadow-card transition-transform active:scale-[0.99]"
           >
             <div className="text-base font-semibold">Descargar App Android</div>
-            <div className="text-xs mt-1 opacity-70">GymLog v3.2.0</div>
+            <div className="text-xs mt-1 opacity-70">GymLog v4.0.0</div>
           </a>
         )}
 
@@ -460,7 +460,7 @@ export function SettingsPage() {
         <div className="rounded-2xl p-6 scale-in flex flex-col items-center text-center bg-surface border border-line-strong">
           <GymLogLogo size="lg" variant="stacked" className="mb-4" />
           <div className="text-sm font-bold text-accent mb-4 uppercase tracking-[0.2em] bg-accent/10 px-3 py-1 rounded-full">
-            Version 3.2
+            Version 4.0
           </div>
           <div className="text-sm leading-relaxed text-fg-subtle max-w-[240px]">
             Tu compañero definitivo para el seguimiento de entrenamientos de fuerza.

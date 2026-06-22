@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=3ECF8E&height=120&section=header&text=GymLog%20v3.1.0&fontSize=50&fontColor=ffffff&animation=fadeIn" alt="Header animated wave" />
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=3ECF8E&height=120&section=header&text=GymLog%20v4.0.0&fontSize=50&fontColor=ffffff&animation=fadeIn" alt="Header animated wave" />
   
   <br>
 
@@ -31,7 +31,7 @@
 
 <br>
 
-## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/High%20Voltage.png" width="35" align="center" /> Core Features (v3.1.0)
+## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/High%20Voltage.png" width="35" align="center" /> Core Features (v4.0.0)
 
 <table>
   <tr>
@@ -289,7 +289,7 @@ npm run commit       # Commit con Commitizen (conventional changelog)
 
 ## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Mobile%20Phone.png" width="35" align="center" /> GymLog Mobile — Experiencia Nativa
 
-GymLog v3.1.0 funciona como app nativa completa en Android vía Capacitor 8:
+GymLog v4.0.0 funciona como app nativa completa en Android vía Capacitor 8:
 
 - **Haptic Feedback**: vibraciones táctiles al completar series, guardar entrenamientos y batir PRs
 - **Acceso Biométrico**: autenticación con huella dactilar o reconocimiento facial
@@ -350,6 +350,6 @@ Tablas en PostgreSQL (Supabase) con Row Level Security:
 <a href="https://www.instagram.com/franvidalmateo"><img src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white" /></a>
 
 <br><br>
-<b>GymLog v3.1.0</b> • Diseñado por <a href="https://github.com/Haplee">Haplee</a>
+<b>GymLog v4.0.0</b> • Diseñado por <a href="https://github.com/Haplee">Haplee</a>
 
 </div>
