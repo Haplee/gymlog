@@ -18,7 +18,7 @@ abort 'Target "App" no encontrado' unless target
 # Grupo "App" (mapea a ios/App/App, donde el workflow copió los ficheros).
 group = project.main_group['App'] || project.main_group.find_subpath('App', true)
 
-files = %w[BiometricPlugin.swift BiometricPlugin.m]
+files = %w[BiometricPlugin.swift BiometricPlugin.m HealthBridgePlugin.swift HealthBridgePlugin.m]
 files.each do |fname|
   already = target.source_build_phase.files_references.any? do |ref|
     ref.respond_to?(:display_name) && ref.display_name == fname
@@ -31,6 +31,18 @@ files.each do |fname|
   target.add_file_references([file_ref])
   puts "Añadido al target: #{fname}"
 end
+
+# Entitlement HealthKit: registrar el fichero y apuntar CODE_SIGN_ENTITLEMENTS.
+# (En el smoke build sin firma se ignora; necesario para device/distribución.)
+entitlements = 'App.entitlements'
+unless group.files.any? { |f| f.respond_to?(:display_name) && f.display_name == entitlements }
+  group.new_reference(entitlements)
+  puts "Añadido al grupo: #{entitlements}"
+end
+target.build_configurations.each do |config|
+  config.build_settings['CODE_SIGN_ENTITLEMENTS'] = 'App/App.entitlements'
+end
+puts 'CODE_SIGN_ENTITLEMENTS -> App/App.entitlements'
 
 project.save
 puts "Guardado #{project_path}"

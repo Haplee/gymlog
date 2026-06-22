@@ -33,9 +33,11 @@ jobs:
           fi
       - name: Sync Capacitor
         run: npx cap sync ios
-      - name: Inject custom native code (biometric plugin + Info.plist)
+      - name: Inject custom native code (biometric + health plugins + Info.plist)
         run: |
           cp ios-custom/BiometricPlugin.swift ios-custom/BiometricPlugin.m ios/App/App/
+          cp ios-custom/HealthBridgePlugin.swift ios-custom/HealthBridgePlugin.m ios/App/App/
+          cp ios-custom/App.entitlements ios/App/App/
           # El template usa file refs explícitas: hay que añadir los ficheros al
           # target App en el .pbxproj o no se compilan.
           gem list -i xcodeproj >/dev/null 2>&1 || sudo gem install xcodeproj --no-document

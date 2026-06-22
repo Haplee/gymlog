@@ -43,34 +43,46 @@ export type Database = {
       };
       cardio_sessions: {
         Row: {
+          avg_hr: number | null;
           calories: number | null;
           created_at: string;
           distance: number | null;
           duration: number;
+          external_id: string | null;
           id: string;
+          max_hr: number | null;
           notes: string | null;
+          source: string;
           started_at: string;
           type: string;
           user_id: string;
         };
         Insert: {
+          avg_hr?: number | null;
           calories?: number | null;
           created_at?: string;
           distance?: number | null;
           duration: number;
+          external_id?: string | null;
           id?: string;
+          max_hr?: number | null;
           notes?: string | null;
+          source?: string;
           started_at: string;
           type: string;
           user_id: string;
         };
         Update: {
+          avg_hr?: number | null;
           calories?: number | null;
           created_at?: string;
           distance?: number | null;
           duration?: number;
+          external_id?: string | null;
           id?: string;
+          max_hr?: number | null;
           notes?: string | null;
+          source?: string;
           started_at?: string;
           type?: string;
           user_id?: string;
@@ -375,6 +387,138 @@ export type Database = {
         };
         Relationships: [];
       };
+      wearable_connections: {
+        Row: {
+          access_expires_at: string | null;
+          created_at: string;
+          fitbit_user_id: string | null;
+          id: string;
+          last_error: string | null;
+          last_sync_at: string | null;
+          provider: string;
+          scopes: string[];
+          status: string;
+          updated_at: string;
+          user_id: string;
+          vault_access_secret_id: string | null;
+          vault_refresh_secret_id: string | null;
+        };
+        Insert: {
+          access_expires_at?: string | null;
+          created_at?: string;
+          fitbit_user_id?: string | null;
+          id?: string;
+          last_error?: string | null;
+          last_sync_at?: string | null;
+          provider: string;
+          scopes?: string[];
+          status?: string;
+          updated_at?: string;
+          user_id: string;
+          vault_access_secret_id?: string | null;
+          vault_refresh_secret_id?: string | null;
+        };
+        Update: {
+          access_expires_at?: string | null;
+          created_at?: string;
+          fitbit_user_id?: string | null;
+          id?: string;
+          last_error?: string | null;
+          last_sync_at?: string | null;
+          provider?: string;
+          scopes?: string[];
+          status?: string;
+          updated_at?: string;
+          user_id?: string;
+          vault_access_secret_id?: string | null;
+          vault_refresh_secret_id?: string | null;
+        };
+        Relationships: [];
+      };
+      wearable_daily: {
+        Row: {
+          avg_hr: number | null;
+          calories: number | null;
+          created_at: string;
+          date: string;
+          distance_km: number | null;
+          id: string;
+          max_hr: number | null;
+          resting_hr: number | null;
+          source: string;
+          steps: number | null;
+          user_id: string;
+        };
+        Insert: {
+          avg_hr?: number | null;
+          calories?: number | null;
+          created_at?: string;
+          date: string;
+          distance_km?: number | null;
+          id?: string;
+          max_hr?: number | null;
+          resting_hr?: number | null;
+          source: string;
+          steps?: number | null;
+          user_id: string;
+        };
+        Update: {
+          avg_hr?: number | null;
+          calories?: number | null;
+          created_at?: string;
+          date?: string;
+          distance_km?: number | null;
+          id?: string;
+          max_hr?: number | null;
+          resting_hr?: number | null;
+          source?: string;
+          steps?: number | null;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      wearable_sleep: {
+        Row: {
+          awake_min: number | null;
+          created_at: string;
+          date: string;
+          deep_min: number | null;
+          duration_min: number | null;
+          efficiency_pct: number | null;
+          id: string;
+          light_min: number | null;
+          rem_min: number | null;
+          source: string;
+          user_id: string;
+        };
+        Insert: {
+          awake_min?: number | null;
+          created_at?: string;
+          date: string;
+          deep_min?: number | null;
+          duration_min?: number | null;
+          efficiency_pct?: number | null;
+          id?: string;
+          light_min?: number | null;
+          rem_min?: number | null;
+          source: string;
+          user_id: string;
+        };
+        Update: {
+          awake_min?: number | null;
+          created_at?: string;
+          date?: string;
+          deep_min?: number | null;
+          duration_min?: number | null;
+          efficiency_pct?: number | null;
+          id?: string;
+          light_min?: number | null;
+          rem_min?: number | null;
+          source?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       workout_sets: {
         Row: {
           created_at: string | null;
@@ -566,6 +710,11 @@ export type Database = {
         Args: { p_cursor?: string; p_limit?: number; p_user_id: string };
         Returns: Json;
       };
+      import_wearable_workouts: {
+        Args: { p_rows: Json; p_user_id: string };
+        Returns: number;
+      };
+      pr_rep_band: { Args: { p_reps: number }; Returns: number };
       save_workout_with_sets: {
         Args: {
           p_exercise_id: string;
@@ -577,6 +726,36 @@ export type Database = {
           p_user_id: string;
         };
         Returns: string;
+      };
+      upsert_wearable_daily: {
+        Args: { p_rows: Json; p_user_id: string };
+        Returns: number;
+      };
+      upsert_wearable_sleep: {
+        Args: { p_rows: Json; p_user_id: string };
+        Returns: number;
+      };
+      wearable_get_tokens: {
+        Args: { p_provider: string; p_user_id: string };
+        Returns: {
+          access_expires_at: string;
+          access_token: string;
+          fitbit_user_id: string;
+          refresh_token: string;
+          scopes: string[];
+        }[];
+      };
+      wearable_store_tokens: {
+        Args: {
+          p_access: string;
+          p_expires_at: string;
+          p_fitbit_user_id: string;
+          p_provider: string;
+          p_refresh: string;
+          p_scopes: string[];
+          p_user_id: string;
+        };
+        Returns: undefined;
       };
     };
     Enums: {

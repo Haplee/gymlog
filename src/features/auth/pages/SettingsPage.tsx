@@ -305,6 +305,20 @@ export function SettingsPage() {
           </div>
         )}
 
+        {/* Dispositivos / Wearables */}
+        <button
+          onClick={() => navigate('/wearables')}
+          className="w-full text-left rounded-2xl p-4 scale-in bg-surface border border-line-strong shadow-card transition-transform active:scale-[0.99]"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-base text-fg">{t('settings.wearables')}</div>
+              <div className="text-xs text-fg-subtle">{t('settings.wearables_desc')}</div>
+            </div>
+            <span className="text-fg-subtle">›</span>
+          </div>
+        </button>
+
         {/* Recordatorios de entrenamiento */}
         <div className="rounded-2xl p-4 scale-in bg-surface border border-line-strong shadow-card">
           <div className="flex items-center justify-between">

@@ -46,6 +46,7 @@ import { SectionLabel } from '../components/userStats/SectionLabel';
 import { DayFrequencyChart } from '../components/userStats/DayFrequencyChart';
 import { TopExercisesList } from '../components/userStats/TopExercisesList';
 import { BodyMeasurements } from '../components/userStats/BodyMeasurements';
+import { WearablesSummary } from '@features/wearables/components/WearablesSummary';
 
 // recharts es pesado: cargar estos charts bajo demanda lo saca del chunk de la página
 const WeeklyVolumeChart = lazy(() =>
@@ -776,6 +777,9 @@ export function UserStatsPage() {
 
         {/* ── Medidas corporales ── */}
         <BodyMeasurements userId={user.id} />
+
+        {/* ── Wearables (sueño / pasos / FC) ── */}
+        <WearablesSummary />
 
         {/* ── Volumen semanal ── */}
         {weeklyVolumeData.some((w) => w.vol > 0) && (

@@ -54,6 +54,10 @@ const ExerciseLibraryPage = lazy(() =>
     default: m.ExerciseLibraryPage,
   })),
 );
+const WearablesPage = lazy(() =>
+  import('@features/wearables/pages/WearablesPage').then((m) => ({ default: m.WearablesPage })),
+);
+const FitbitCallback = lazy(() => import('@features/wearables/pages/FitbitCallback'));
 
 function Loading() {
   return (
@@ -80,6 +84,7 @@ function AnimatedRoutes() {
     <Routes location={location}>
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <AuthPage />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
+      <Route path="/auth/fitbit-callback" element={<FitbitCallback />} />
       <Route
         path="/"
         element={
@@ -141,6 +146,14 @@ function AnimatedRoutes() {
         element={
           <ProtectedRoute>
             <ExerciseLibraryPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/wearables"
+        element={
+          <ProtectedRoute>
+            <WearablesPage />
           </ProtectedRoute>
         }
       />
@@ -296,6 +309,26 @@ function AppRoutes() {
         }
         if (url.hostname === 'history') {
           navigate('/history', { replace: true });
+          return;
+        }
+        // Callback OAuth de Fitbit: com.franvi.gymlog://fitbit-callback?code=...&state=...
+        if (url.hostname === 'fitbit-callback') {
+          const code = url.searchParams.get('code');
+          const state = url.searchParams.get('state');
+          if (code && state) {
+            void import('@features/wearables/api/fitbit').then(({ completeFitbitExchange }) =>
+              completeFitbitExchange(code, state)
+                .then(() => {
+                  toast.success('Fitbit conectado');
+                  navigate('/wearables', { replace: true });
+                })
+                .catch((e) => {
+                  if (import.meta.env.DEV) devError('[Fitbit] exchange deep link:', e);
+                  toast.error('No se pudo conectar Fitbit');
+                  navigate('/wearables', { replace: true });
+                }),
+            );
+          }
           return;
         }
       }

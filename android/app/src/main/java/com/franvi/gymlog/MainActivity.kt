@@ -24,6 +24,7 @@ class MainActivity : BridgeActivity() {
         // Registrar plugins personalizados antes de super.onCreate
         registerPlugin(BiometricPlugin::class.java)
         registerPlugin(WidgetBridgePlugin::class.java)
+        registerPlugin(HealthBridgePlugin::class.java)
         
         super.onCreate(savedInstanceState)
         

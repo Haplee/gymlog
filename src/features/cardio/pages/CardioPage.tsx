@@ -13,7 +13,7 @@ import { CardioTypeIcon } from '@shared/components/CardioIcons';
 import { impact, notificationHaptic, ImpactStyle, NotificationType } from '@shared/lib/haptics';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Play, Pause, Square, Trash2, Timer, TrendingUp, Calendar } from 'lucide-react';
+import { Play, Pause, Square, Trash2, Timer, TrendingUp, Calendar, HeartPulse } from 'lucide-react';
 
 const CARDIO_TYPES: CardioType[] = [
   'running',
@@ -313,6 +313,17 @@ function SessionHistoryItem({
             </span>
             {session.distance && <span>· {session.distance}km</span>}
             {session.calories && <span>· {session.calories}kcal</span>}
+            {session.avgHr && (
+              <span className="flex items-center gap-0.5">
+                · <HeartPulse className="w-3 h-3" /> {session.avgHr}
+                {session.maxHr ? `/${session.maxHr}` : ''}
+              </span>
+            )}
+            {session.source && session.source !== 'manual' && (
+              <span className="px-1.5 py-0.5 rounded-pill bg-surface-2 text-2xs uppercase tracking-wide">
+                {session.source === 'fitbit' ? 'Fitbit' : 'Salud'}
+              </span>
+            )}
           </div>
           {session.notes && (
             <div className="text-xs italic mt-0.5 text-fg-subtle">{session.notes}</div>

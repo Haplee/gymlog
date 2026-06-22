@@ -22,6 +22,7 @@ interface SettingsState {
   restAutoStart: boolean;
   restDuration: number;
   restByExercise: boolean;
+  wearablesSyncOnOpen: boolean;
   setBiometricEnabled: (enabled: boolean) => void;
   setNotificationsEnabled: (enabled: boolean) => void;
   setTrainingReminders: (enabled: boolean) => void;
@@ -33,6 +34,7 @@ interface SettingsState {
   setRestAutoStart: (auto: boolean) => void;
   setRestDuration: (seconds: number) => void;
   setRestByExercise: (enabled: boolean) => void;
+  setWearablesSyncOnOpen: (enabled: boolean) => void;
   applyTheme: () => void;
 }
 
@@ -50,6 +52,7 @@ export const useSettingsStore = create<SettingsState>()(
       restAutoStart: false,
       restDuration: 90,
       restByExercise: true,
+      wearablesSyncOnOpen: true,
 
       setBiometricEnabled: (biometricEnabled) => set({ biometricEnabled }),
 
@@ -80,6 +83,7 @@ export const useSettingsStore = create<SettingsState>()(
       setRestAutoStart: (restAutoStart) => set({ restAutoStart }),
       setRestDuration: (restDuration) => set({ restDuration }),
       setRestByExercise: (restByExercise) => set({ restByExercise }),
+      setWearablesSyncOnOpen: (wearablesSyncOnOpen) => set({ wearablesSyncOnOpen }),
 
       applyTheme: () => {
         const { theme } = get();
