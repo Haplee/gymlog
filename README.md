@@ -12,7 +12,7 @@
   <p>PWA + app nativa Android para el registro y análisis de entrenamientos de <b>fuerza</b> y <b>cardio</b>. Diseñada con enfoque <b>offline-first</b>, autenticación con Google, notificaciones inteligentes y experiencia nativa real con Capacitor.</p>
 
   <p align="center">
-    <a href="https://pesos-wine.vercel.app"><img src="https://img.shields.io/badge/APP_Vercel-LIVE_DEMO-3ECF8E?style=for-the-badge&logo=vercel&logoColor=white" alt="Live Demo" /></a>
+    <a href="https://gymlog.vercel.app"><img src="https://img.shields.io/badge/APP_Vercel-LIVE_DEMO-3ECF8E?style=for-the-badge&logo=vercel&logoColor=white" alt="Live Demo" /></a>
     <a href="https://Haplee.github.io/gymlog/"><img src="https://img.shields.io/badge/APK_Download-Landing_Page-3ECF8E?style=for-the-badge&logo=android&logoColor=white" alt="Download APK" /></a>
   </p>
   
