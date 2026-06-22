@@ -196,7 +196,7 @@ export function SettingsPage() {
       <div className="space-y-3 pb-20">
         {!isNative() && (
           <a
-            href="https://github.com/Haplee/pesos/releases/download/v3.1.0-android/GymLog-v3.1.0.apk"
+            href="https://github.com/Haplee/gymlog/releases/download/v3.1.0-android/GymLog-v3.1.0.apk"
             download
             className="block rounded-2xl p-4 scale-in border text-center bg-surface border-line-accent text-accent shadow-card transition-transform active:scale-[0.99]"
           >

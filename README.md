@@ -13,11 +13,11 @@
 
   <p align="center">
     <a href="https://pesos-wine.vercel.app"><img src="https://img.shields.io/badge/APP_Vercel-LIVE_DEMO-3ECF8E?style=for-the-badge&logo=vercel&logoColor=white" alt="Live Demo" /></a>
-    <a href="https://Haplee.github.io/pesos/"><img src="https://img.shields.io/badge/APK_Download-Landing_Page-3ECF8E?style=for-the-badge&logo=android&logoColor=white" alt="Download APK" /></a>
+    <a href="https://Haplee.github.io/gymlog/"><img src="https://img.shields.io/badge/APK_Download-Landing_Page-3ECF8E?style=for-the-badge&logo=android&logoColor=white" alt="Download APK" /></a>
   </p>
   
   <p align="center">
-    <img src="https://img.shields.io/github/actions/workflow/status/Haplee/pesos/android-build.yml?style=flat-square&label=Android%20Build" />
+    <img src="https://img.shields.io/github/actions/workflow/status/Haplee/gymlog/android-build.yml?style=flat-square&label=Android%20Build" />
     <img src="https://img.shields.io/badge/React-19.2-61DAFB?style=flat-square&logo=react&logoColor=white" />
     <img src="https://img.shields.io/badge/TypeScript-5.7-3178C6?style=flat-square&logo=typescript&logoColor=white" />
     <img src="https://img.shields.io/badge/Vite-6.2-646CFF?style=flat-square&logo=vite&logoColor=white" />
@@ -26,7 +26,7 @@
     <img src="https://img.shields.io/badge/Supabase-DB+Auth-3ECF8E?style=flat-square&logo=supabase&logoColor=white" />
   </p>
   <br>
-  <img src="https://visitor-badge.laobi.icu/badge?page_id=Haplee.pesos&left_color=black&right_color=%233ECF8E&left_text=Visitantes" alt="Visitor Badge" />
+  <img src="https://visitor-badge.laobi.icu/badge?page_id=Haplee.gymlog&left_color=black&right_color=%233ECF8E&left_text=Visitantes" alt="Visitor Badge" />
 </div>
 
 <br>
@@ -302,7 +302,7 @@ GymLog v3.1.0 funciona como app nativa completa en Android vía Capacitor 8:
 
 ### Descargar APK
 
-Último APK disponible en **[GitHub Releases](https://github.com/Haplee/pesos/releases/latest)** o desde la [Landing Page](https://Haplee.github.io/pesos/).
+Último APK disponible en **[GitHub Releases](https://github.com/Haplee/gymlog/releases/latest)** o desde la [Landing Page](https://Haplee.github.io/gymlog/).
 
 ---
 
