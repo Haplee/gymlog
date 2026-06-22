@@ -27,7 +27,7 @@ export async function isAggregatorAvailable(): Promise<boolean> {
 
 export async function requestAggregatorPermission(): Promise<boolean> {
   try {
-    const { granted } = await HealthBridge.requestPermissions();
+    const { granted } = await HealthBridge.requestAuthorization();
     return granted;
   } catch (e) {
     devError('[HealthAggregator] permission error:', e);

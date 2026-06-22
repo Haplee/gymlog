@@ -18,7 +18,7 @@ public class HealthBridgePlugin: CAPPlugin, CAPBridgedPlugin {
     public let jsName = "HealthBridge"
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "isAvailable", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "requestPermissions", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "requestAuthorization", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "readAll", returnType: CAPPluginReturnPromise),
     ]
 
@@ -40,7 +40,7 @@ public class HealthBridgePlugin: CAPPlugin, CAPBridgedPlugin {
         call.resolve(["available": HKHealthStore.isHealthDataAvailable()])
     }
 
-    @objc func requestPermissions(_ call: CAPPluginCall) {
+    @objc func requestAuthorization(_ call: CAPPluginCall) {
         guard HKHealthStore.isHealthDataAvailable() else {
             call.resolve(["granted": false]); return
         }

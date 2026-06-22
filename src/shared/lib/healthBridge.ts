@@ -47,7 +47,7 @@ export interface HealthBridgePlugin {
   /** ¿Hay agregador de salud disponible en este dispositivo? */
   isAvailable(): Promise<{ available: boolean }>;
   /** Solicita permisos de lectura (pasos, HR, sueño, ejercicio). */
-  requestPermissions(): Promise<{ granted: boolean }>;
+  requestAuthorization(): Promise<{ granted: boolean }>;
   /** Lee datos en el rango [startDate, endDate] (ISO YYYY-MM-DD). */
   readAll(options: { startDate: string; endDate: string }): Promise<HealthReadResult>;
 }
@@ -56,7 +56,7 @@ const HealthBridge = registerPlugin<HealthBridgePlugin>('HealthBridge', {
   // Fallback web/PWA: no hay capa nativa, evita UNIMPLEMENTED.
   web: () => ({
     isAvailable: async () => ({ available: false }),
-    requestPermissions: async () => ({ granted: false }),
+    requestAuthorization: async () => ({ granted: false }),
     readAll: async () => ({ daily: [], sleep: [], workouts: [] }),
   }),
 });

@@ -61,7 +61,7 @@ class HealthBridgePlugin : Plugin() {
     }
 
     @PluginMethod
-    fun requestPermissions(call: PluginCall) {
+    fun requestAuthorization(call: PluginCall) {
         val client = clientOrNull()
         if (client == null) {
             val ret = JSObject(); ret.put("granted", false); call.resolve(ret); return
