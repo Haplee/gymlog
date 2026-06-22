@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Health Connect exige minSdk 26; mantenemos minSdk 24 y lo inhabilitamos
+         en runtime (HealthConnectClient.getSdkStatus) en versiones inferiores. -->
+    <uses-sdk tools:overrideLibrary="androidx.health.connect.client" />
 
     <application
         android:allowBackup="false"
