@@ -71,7 +71,7 @@ Everyone (PEGI 3 / Everyone)
 
 ## Privacy policy URL
 
-https://pesos-wine.vercel.app/privacy-policy.html
+https://gymlog.vercel.app/privacy-policy.html
 
 ---
 

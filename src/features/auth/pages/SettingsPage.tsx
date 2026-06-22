@@ -196,7 +196,7 @@ export function SettingsPage() {
       <div className="space-y-3 pb-20">
         {!isNative() && (
           <a
-            href="https://github.com/Haplee/pesos/releases/download/v3.1.0-android/GymLog-v3.1.0.apk"
+            href="https://github.com/Haplee/gymlog/releases/download/v3.1.0-android/GymLog-v3.1.0.apk"
             download
             className="block rounded-2xl p-4 scale-in border text-center bg-surface border-line-accent text-accent shadow-card transition-transform active:scale-[0.99]"
           >
@@ -304,6 +304,20 @@ export function SettingsPage() {
             </div>
           </div>
         )}
+
+        {/* Dispositivos / Wearables */}
+        <button
+          onClick={() => navigate('/wearables')}
+          className="w-full text-left rounded-2xl p-4 scale-in bg-surface border border-line-strong shadow-card transition-transform active:scale-[0.99]"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-base text-fg">{t('settings.wearables')}</div>
+              <div className="text-xs text-fg-subtle">{t('settings.wearables_desc')}</div>
+            </div>
+            <span className="text-fg-subtle">›</span>
+          </div>
+        </button>
 
         {/* Recordatorios de entrenamiento */}
         <div className="rounded-2xl p-4 scale-in bg-surface border border-line-strong shadow-card">

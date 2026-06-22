@@ -33,6 +33,10 @@ export interface CardioSession {
   calories?: number;
   notes?: string;
   pendingSync?: boolean;
+  // Importado de wearables (Fitbit / Health Connect / HealthKit)
+  avgHr?: number;
+  maxHr?: number;
+  source?: string;
 }
 
 interface CardioState {
@@ -181,7 +185,9 @@ export const useCardioStore = create<CardioState>()(
         try {
           const { data, error } = await supabase
             .from('cardio_sessions')
-            .select('id, type, started_at, duration, distance, calories, notes')
+            .select(
+              'id, type, started_at, duration, distance, calories, notes, avg_hr, max_hr, source',
+            )
             .eq('user_id', userId)
             .order('started_at', { ascending: false })
             .limit(200);
@@ -197,6 +203,9 @@ export const useCardioStore = create<CardioState>()(
             distance: r.distance ?? undefined,
             calories: r.calories ?? undefined,
             notes: r.notes ?? undefined,
+            avgHr: r.avg_hr ?? undefined,
+            maxHr: r.max_hr ?? undefined,
+            source: r.source ?? undefined,
             pendingSync: false,
           }));
 

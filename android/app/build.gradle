@@ -67,6 +67,8 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
     implementation "androidx.biometric:biometric:$androidxBiometricVersion"
     implementation "androidx.work:work-runtime-ktx:$androidxWorkVersion"
+    implementation "androidx.health.connect:connect-client:$healthConnectVersion"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$kotlinxCoroutinesVersion"
     implementation project(':capacitor-cordova-android-plugins')
 }
 
