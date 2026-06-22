@@ -268,13 +268,7 @@
       "Bash(npx vitest *)",
       "WebFetch(domain:pesos-wine.vercel.app)",
       "WebFetch(domain:haplee.github.io)",
-      "Bash(gh release *)",
-      "PowerShell(npm run *)",
-      "mcp__claude_ai_Supabase__generate_typescript_types",
-      "mcp__claude_ai_Supabase__deploy_edge_function",
-      "Bash(gh repo *)",
-      "Bash(npm run *)",
-      "Bash(gh workflow *)"
+      "Bash(gh release *)"
     ]
   }
 }
