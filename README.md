@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=3ECF8E&height=120&section=header&text=GymLog%20v2.9.0&fontSize=50&fontColor=ffffff&animation=fadeIn" alt="Header animated wave" />
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=3ECF8E&height=120&section=header&text=GymLog%20v4.0.0&fontSize=50&fontColor=ffffff&animation=fadeIn" alt="Header animated wave" />
   
   <br>
 
@@ -12,12 +12,12 @@
   <p>PWA + app nativa Android para el registro y análisis de entrenamientos de <b>fuerza</b> y <b>cardio</b>. Diseñada con enfoque <b>offline-first</b>, autenticación con Google, notificaciones inteligentes y experiencia nativa real con Capacitor.</p>
 
   <p align="center">
-    <a href="https://pesos-wine.vercel.app"><img src="https://img.shields.io/badge/APP_Vercel-LIVE_DEMO-3ECF8E?style=for-the-badge&logo=vercel&logoColor=white" alt="Live Demo" /></a>
-    <a href="https://Haplee.github.io/pesos/"><img src="https://img.shields.io/badge/APK_Download-Landing_Page-3ECF8E?style=for-the-badge&logo=android&logoColor=white" alt="Download APK" /></a>
+    <a href="https://gymlog.vercel.app"><img src="https://img.shields.io/badge/APP_Vercel-LIVE_DEMO-3ECF8E?style=for-the-badge&logo=vercel&logoColor=white" alt="Live Demo" /></a>
+    <a href="https://Haplee.github.io/gymlog/"><img src="https://img.shields.io/badge/APK_Download-Landing_Page-3ECF8E?style=for-the-badge&logo=android&logoColor=white" alt="Download APK" /></a>
   </p>
   
   <p align="center">
-    <img src="https://img.shields.io/github/actions/workflow/status/Haplee/pesos/android-build.yml?style=flat-square&label=Android%20Build" />
+    <img src="https://img.shields.io/github/actions/workflow/status/Haplee/gymlog/android-build.yml?style=flat-square&label=Android%20Build" />
     <img src="https://img.shields.io/badge/React-19.2-61DAFB?style=flat-square&logo=react&logoColor=white" />
     <img src="https://img.shields.io/badge/TypeScript-5.7-3178C6?style=flat-square&logo=typescript&logoColor=white" />
     <img src="https://img.shields.io/badge/Vite-6.2-646CFF?style=flat-square&logo=vite&logoColor=white" />
@@ -26,12 +26,12 @@
     <img src="https://img.shields.io/badge/Supabase-DB+Auth-3ECF8E?style=flat-square&logo=supabase&logoColor=white" />
   </p>
   <br>
-  <img src="https://visitor-badge.laobi.icu/badge?page_id=Haplee.pesos&left_color=black&right_color=%233ECF8E&left_text=Visitantes" alt="Visitor Badge" />
+  <img src="https://visitor-badge.laobi.icu/badge?page_id=Haplee.gymlog&left_color=black&right_color=%233ECF8E&left_text=Visitantes" alt="Visitor Badge" />
 </div>
 
 <br>
 
-## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/High%20Voltage.png" width="35" align="center" /> Core Features (v2.9.0)
+## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/High%20Voltage.png" width="35" align="center" /> Core Features (v4.0.0)
 
 <table>
   <tr>
@@ -80,6 +80,28 @@
 
 ---
 
+## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Symbols/Sparkles.png" width="35" align="center" /> Novedades v3.0 → v3.1
+
+- **🎨 Overhaul visual v3** + **modo claro** opcional (además del tema oscuro lima).
+- **🔔 Notificaciones push remotas** (FCM) además de las locales.
+- **📚 Biblioteca de ejercicios** ampliada: compuesto/aislado, equipamiento, músculo, descripción.
+- **🧮 Calculadora de discos** (plates) para montar la barra.
+- **📏 Medidas corporales**: peso, % grasa y masa muscular con seguimiento temporal.
+- **🎯 Objetivos de 1RM** por ejercicio y proyección de volumen.
+- **↕️ Reordenar ejercicios** por arrastre (dnd-kit).
+- **💾 Persistencia de queries** (TanStack Query + IndexedDB) para arranque offline.
+- **🩹 Captura de errores** con Sentry.
+- **✅ v3.1**: validación de fuerza de contraseña, RPC `get_workouts_with_sets`
+  (historiales grandes), jerarquía visual pulida (`tabular-nums`, títulos `<h1>`
+  consistentes) y corrección de variables de entorno en el build del APK.
+
+> ⚠️ **Variables de entorno**: crea `.env.local` con `VITE_SUPABASE_URL` y
+> `VITE_SUPABASE_KEY` (la anon key es pública, del cliente). Sin ellas el build
+> arranca en **pantalla negra**. En Vercel y GitHub Actions deben existir como
+> secrets con los mismos nombres.
+
+---
+
 ## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Hammer%20and%20Wrench.png" width="35" align="center" /> Stack Tecnológico
 
 | Capa               | Tecnología              | Función                                                                    |
@@ -94,6 +116,9 @@
 | **i18n**           | i18next + react-i18next | Multiidioma ES/EN con detección automática y persistencia.                 |
 | **Backend**        | Supabase                | PostgreSQL, Auth (Google OAuth), RLS, tipos auto-generados.                |
 | **PWA**            | vite-plugin-pwa         | Service worker, instalable, offline-first, prompt de actualización in-app. |
+| **Persistencia**   | TanStack Persist + idb  | Caché de queries en IndexedDB para arranque sin red.                       |
+| **Drag & Drop**    | dnd-kit                 | Reordenar ejercicios de rutina por arrastre.                               |
+| **Errores**        | Sentry                  | Captura y reporte de errores en producción.                                |
 | **CI/CD**          | GitHub Actions          | Build Android automatizado con firma y generación de APK.                  |
 
 ---
@@ -264,7 +289,7 @@ npm run commit       # Commit con Commitizen (conventional changelog)
 
 ## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Mobile%20Phone.png" width="35" align="center" /> GymLog Mobile — Experiencia Nativa
 
-GymLog v2.9.0 funciona como app nativa completa en Android vía Capacitor 8:
+GymLog v4.0.0 funciona como app nativa completa en Android vía Capacitor 8:
 
 - **Haptic Feedback**: vibraciones táctiles al completar series, guardar entrenamientos y batir PRs
 - **Acceso Biométrico**: autenticación con huella dactilar o reconocimiento facial
@@ -277,13 +302,13 @@ GymLog v2.9.0 funciona como app nativa completa en Android vía Capacitor 8:
 
 ### Descargar APK
 
-Último APK disponible en **[GitHub Releases](https://github.com/Haplee/pesos/releases/latest)** o desde la [Landing Page](https://Haplee.github.io/pesos/).
+Último APK disponible en **[GitHub Releases](https://github.com/Haplee/gymlog/releases/latest)** o desde la [Landing Page](https://Haplee.github.io/gymlog/).
 
 ---
 
 ## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Card%20Index%20Dividers.png" width="35" align="center" /> Modelo de Datos
 
-10 tablas en PostgreSQL (Supabase) con Row Level Security:
+Tablas en PostgreSQL (Supabase) con Row Level Security:
 
 | Tabla               | Descripción                                                                                                 |
 | ------------------- | ----------------------------------------------------------------------------------------------------------- |
@@ -296,7 +321,10 @@ GymLog v2.9.0 funciona como app nativa completa en Android vía Capacitor 8:
 | `exercise_notes`    | Notas técnicas por ejercicio (CRUDs del usuario)                                                            |
 | `user_routines`     | Rutinas semanales con config JSON y flag de activa                                                          |
 | `cardio_sessions`   | Sesiones de cardio: tipo, duración, distancia, calorías, notas                                              |
-| `body_measurements` | Mediciones corporales: peso y % grasa                                                                       |
+| `body_measurements` | Mediciones corporales: peso, % grasa y masa muscular                                                        |
+| `exercise_goals`    | Objetivos de 1RM por ejercicio y usuario                                                                    |
+| `routine_templates` | Plantillas de rutina predefinidas                                                                           |
+| `push_tokens`       | Tokens de dispositivo para notificaciones push remotas (FCM)                                                |
 
 ---
 
@@ -322,6 +350,6 @@ GymLog v2.9.0 funciona como app nativa completa en Android vía Capacitor 8:
 <a href="https://www.instagram.com/franvidalmateo"><img src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white" /></a>
 
 <br><br>
-<b>GymLog v2.9.0</b> • Diseñado por <a href="https://github.com/Haplee">Haplee</a>
+<b>GymLog v4.0.0</b> • Diseñado por <a href="https://github.com/Haplee">Haplee</a>
 
 </div>

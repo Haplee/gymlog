@@ -23,6 +23,8 @@ class MainActivity : BridgeActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         // Registrar plugins personalizados antes de super.onCreate
         registerPlugin(BiometricPlugin::class.java)
+        registerPlugin(WidgetBridgePlugin::class.java)
+        registerPlugin(HealthBridgePlugin::class.java)
         
         super.onCreate(savedInstanceState)
         
@@ -43,10 +45,27 @@ class MainActivity : BridgeActivity() {
                 WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
         }
 
-        // 3. Configurar Insets Listener
+        // 3. Configurar Insets Listener: publicar los insets reales de las barras
+        //    del sistema como variables CSS. El WebView de Android devuelve ~0 en
+        //    env(safe-area-inset-top) para la barra de estado, así que la web los
+        //    lee de --inset-* en su lugar.
         ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { _, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val d = resources.displayMetrics.density
+            val top = (bars.top / d).toInt()
+            val right = (bars.right / d).toInt()
+            val bottom = (bars.bottom / d).toInt()
+            val left = (bars.left / d).toInt()
+            val js = """
+                document.documentElement.style.setProperty('--inset-top', '${top}px');
+                document.documentElement.style.setProperty('--inset-right', '${right}px');
+                document.documentElement.style.setProperty('--inset-bottom', '${bottom}px');
+                document.documentElement.style.setProperty('--inset-left', '${left}px');
+            """.trimIndent()
+            bridge?.webView?.post { bridge.webView.evaluateJavascript(js, null) }
             insets
         }
+        ViewCompat.requestApplyInsets(window.decorView)
 
         // 4. Forzar iconos claros/oscuros según el tema
         val controller = WindowInsetsControllerCompat(window, window.decorView)

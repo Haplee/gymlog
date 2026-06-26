@@ -7,7 +7,8 @@ import { useCardioStore } from '@features/cardio/stores/cardioStore';
 import { queryClient } from '@app/queryClient';
 import { fetchWorkoutsAndSets, fetchWorkouts, fetchRecentSets } from '@shared/api/queries';
 import { m, AnimatePresence } from 'framer-motion';
-import { Dumbbell, BarChart3, History, Settings, Heart, WifiOff } from 'lucide-react';
+import { Dumbbell, BarChart3, History, Settings, Heart, WifiOff, RefreshCw } from 'lucide-react';
+import { useOutboxStore } from '@shared/stores/outboxStore';
 
 interface LayoutProps {
   children: ReactNode;
@@ -69,6 +70,7 @@ export function Layout({ children }: LayoutProps) {
   const workoutSets = useWorkoutStore((s) => s.sets);
   const workoutStartedAt = useWorkoutStore((s) => s.startedAt);
   const cardioActive = useCardioStore((s) => s.isActive);
+  const pendingSync = useOutboxStore((s) => s.pending);
   const trainBadge = !!workoutStartedAt && workoutSets.length > 0;
 
   const tabs = [
@@ -98,8 +100,11 @@ export function Layout({ children }: LayoutProps) {
   }, [user?.id]);
 
   return (
-    <div className="min-h-screen min-h-[100dvh] flex flex-col overflow-hidden bg-base">
-      <header className="px-4 py-3 flex-shrink-0 bg-surface border-b border-line-glass">
+    <div className="h-screen h-[100dvh] flex flex-col overflow-hidden bg-base">
+      <header
+        className="px-4 pb-3 flex-shrink-0 bg-surface border-b border-line"
+        style={{ paddingTop: 'calc(var(--inset-top, env(safe-area-inset-top)) + 0.75rem)' }}
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-[10px] flex items-center justify-center bg-gradient-to-br from-accent to-accent-dim shadow-btn-accent">
@@ -118,7 +123,7 @@ export function Layout({ children }: LayoutProps) {
         </div>
       </header>
 
-      <nav className="flex flex-shrink-0 relative z-10 safe-area-bottom bg-surface border-t border-line">
+      <nav className="flex flex-shrink-0 relative z-10 bg-base">
         {tabs.map((tab) => {
           const isActive = location.pathname === tab.path;
           const { Icon, label, badge } = tab;
@@ -179,16 +184,39 @@ export function Layout({ children }: LayoutProps) {
         )}
       </AnimatePresence>
 
-      {/* Sin AnimatePresence mode="wait": el exit bloqueante hacía lento el cambio de tab */}
-      <m.main
-        key={location.pathname}
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.16, ease: 'easeOut' }}
-        className="flex-1 px-4 pt-4 pb-24 overflow-y-auto"
-      >
-        {children}
-      </m.main>
+      <AnimatePresence>
+        {pendingSync > 0 && (
+          <m.div
+            key="pending-sync"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="flex items-center justify-center gap-2 py-1.5 px-4 flex-shrink-0 bg-accent/10 border-b border-line-accent"
+          >
+            <RefreshCw className="w-3.5 h-3.5 text-accent" />
+            <span className="text-xs font-medium text-accent">
+              {pendingSync === 1
+                ? t('workout.pending_sync_one')
+                : t('workout.pending_sync_other', { count: pendingSync })}
+            </span>
+          </m.div>
+        )}
+      </AnimatePresence>
+
+      {/* El scroller es un <main> plano: framer-motion dejaba estilos inline
+          (will-change/transform) en él, lo que rompe position:sticky de sus
+          descendientes (barra de filtros del historial). La transición de página
+          vive en un wrapper interno (solo opacidad, sin transform). */}
+      <main className="flex-1 min-h-0 px-4 pt-4 pb-24 overflow-y-auto">
+        <m.div
+          key={location.pathname}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.16, ease: 'easeOut' }}
+        >
+          {children}
+        </m.div>
+      </main>
     </div>
   );
 }

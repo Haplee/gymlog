@@ -11,8 +11,7 @@ export const checkWeeklySummary = async (userId: string) => {
   // Simple approximation for the previous week string
   const lastWeekDate = new Date(now);
   lastWeekDate.setDate(lastWeekDate.getDate() - 7);
-  const year = lastWeekDate.getFullYear();
-  // Get week number
+  // Get ISO week number
   const d = new Date(
     Date.UTC(lastWeekDate.getFullYear(), lastWeekDate.getMonth(), lastWeekDate.getDate()),
   );
@@ -20,8 +19,10 @@ export const checkWeeklySummary = async (userId: string) => {
   d.setUTCDate(d.getUTCDate() + 4 - dayNum);
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
   const weekNo = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+  // Año ISO (el del jueves de esa semana), coherente con weekNo en el límite de año
+  const isoYear = d.getUTCFullYear();
 
-  const key = `weekly_summary_${year}_${weekNo}`;
+  const key = `weekly_summary_${isoYear}_${weekNo}`;
   if (localStorage.getItem(key)) return;
 
   // Fetch last week's workouts

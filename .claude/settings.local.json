@@ -250,7 +250,30 @@
       "Bash(graphify label *)",
       "Bash(env)",
       "Bash(python *)",
-      "Bash(npm run *)"
+      "Bash(npx tsc *)",
+      "Bash(echo \"EXIT_TSC:$?\")",
+      "Bash(npx eslint *)",
+      "Bash(echo \"EXIT_ESLINT:$?\")",
+      "Bash(echo \"TSC_EXIT:$?\")",
+      "Bash(echo \"ESLINT_EXIT:$?\")",
+      "Bash(xargs wc -l)",
+      "mcp__claude_ai_Supabase__list_projects",
+      "mcp__claude_ai_Supabase__list_tables",
+      "mcp__claude_ai_Supabase__apply_migration",
+      "mcp__claude_ai_Supabase__get_advisors",
+      "mcp__claude_ai_Supabase__list_migrations",
+      "mcp__claude_ai_Supabase__execute_sql",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(echo \"lint_exit:$?\")",
+      "Bash(npx vitest *)",
+      "WebFetch(domain:pesos-wine.vercel.app)",
+      "WebFetch(domain:haplee.github.io)",
+      "Bash(gh release *)",
+      "Bash(npm run *)",
+      "Bash(adb install *)",
+      "Bash(adb uninstall *)",
+      "Bash(adb shell *)",
+      "Bash(rm -rf .release-artifact GymLog-v4.0.0.apk)"
     ]
   }
 }

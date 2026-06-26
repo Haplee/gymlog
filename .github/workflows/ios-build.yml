@@ -1,12 +1,14 @@
 name: iOS Build
-# Solo manual: el proyecto no tiene plataforma iOS configurada (sin ios/App/Podfile),
-# así que en push/PR fallaba. Ejecútalo a mano cuando exista el proyecto iOS.
+# Compila el proyecto iOS SIN FIRMAR en un runner macOS (smoke test): verifica
+# que el bundle web + Capacitor iOS + el plugin de biometría Swift + la config de
+# deep links compilan. NO produce un IPA instalable — distribuir requiere cuenta
+# Apple Developer + firma. Repo público => runner macOS gratuito.
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    tags: ['v*']
 
-# Compila el proyecto iOS SIN FIRMAR en un runner macOS (smoke test: verifica
-# que el proyecto Capacitor iOS compila). No produce un IPA instalable —
-# distribuir requiere cuenta Apple Developer + firma.
 jobs:
   build:
     runs-on: macos-latest
@@ -19,14 +21,28 @@ jobs:
       - name: Install deps
         run: npm ci
       - name: Build web
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_KEY: ${{ secrets.VITE_SUPABASE_KEY }}
         run: npm run build
       - name: Add iOS platform (if missing)
+        # Cap 8 usa SPM por defecto; forzamos CocoaPods (Podfile + .xcworkspace).
         run: |
           if [ ! -d "ios" ]; then
-            npx cap add ios
+            npx cap add ios --packagemanager CocoaPods
           fi
       - name: Sync Capacitor
         run: npx cap sync ios
+      - name: Inject custom native code (biometric + health plugins + Info.plist)
+        run: |
+          cp ios-custom/BiometricPlugin.swift ios-custom/BiometricPlugin.m ios/App/App/
+          cp ios-custom/HealthBridgePlugin.swift ios-custom/HealthBridgePlugin.m ios/App/App/
+          cp ios-custom/App.entitlements ios/App/App/
+          # El template usa file refs explícitas: hay que añadir los ficheros al
+          # target App en el .pbxproj o no se compilan.
+          gem list -i xcodeproj >/dev/null 2>&1 || sudo gem install xcodeproj --no-document
+          ruby ios-custom/add-plugin-to-target.rb ios/App/App.xcodeproj
+          bash ios-custom/Info.plist.patch.sh ios/App/App/Info.plist
       - name: Install CocoaPods
         run: cd ios/App && pod install
       - name: Build (unsigned, simulator)

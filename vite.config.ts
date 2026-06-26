@@ -9,6 +9,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const sbUrl = env.VITE_SUPABASE_URL;
   const sbKey = env.VITE_SUPABASE_KEY;
+  const fitbitClientId = env.VITE_FITBIT_CLIENT_ID ?? '';
 
   return {
     resolve: {
@@ -36,6 +37,7 @@ export default defineConfig(({ mode }) => {
     define: {
       'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(sbUrl),
       'import.meta.env.VITE_SUPABASE_KEY': JSON.stringify(sbKey),
+      'import.meta.env.VITE_FITBIT_CLIENT_ID': JSON.stringify(fitbitClientId),
     },
     plugins: [
       react(),
@@ -107,7 +109,9 @@ export default defineConfig(({ mode }) => {
           ],
         },
         devOptions: {
-          enabled: true,
+          // SW desactivado en dev: con HMR se regenera constantemente y dispara
+          // el toast de "nueva versión" en bucle.
+          enabled: false,
           type: 'module',
         },
       }),

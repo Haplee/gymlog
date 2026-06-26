@@ -8,6 +8,12 @@ import { PageSkeleton } from '@shared/components/ui/Skeleton';
 import { OnboardingModal } from '@features/auth/components/OnboardingModal';
 import { App as CapApp } from '@capacitor/app';
 import { supabase } from '@shared/lib/supabase';
+import { useQueryClient } from '@tanstack/react-query';
+import { flushWorkoutOutbox } from '@shared/lib/workoutOutbox';
+import { useOutboxStore } from '@shared/stores/outboxStore';
+import { updateWidget } from '@shared/lib/widget';
+import { fetchWorkouts } from '@shared/api/queries';
+import { calculateCurrentStreak } from '@features/stats/utils/kpiCalculations';
 import { useWorkoutReminder } from '@features/routine/hooks/useWorkoutReminder';
 import { useFatigueSuggestion } from '@features/stats/hooks/useFatigueSuggestion';
 import { useBackgroundNotifications } from '@shared/hooks/useBackgroundNotifications';
@@ -48,6 +54,10 @@ const ExerciseLibraryPage = lazy(() =>
     default: m.ExerciseLibraryPage,
   })),
 );
+const WearablesPage = lazy(() =>
+  import('@features/wearables/pages/WearablesPage').then((m) => ({ default: m.WearablesPage })),
+);
+const FitbitCallback = lazy(() => import('@features/wearables/pages/FitbitCallback'));
 
 function Loading() {
   return (
@@ -74,6 +84,7 @@ function AnimatedRoutes() {
     <Routes location={location}>
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <AuthPage />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
+      <Route path="/auth/fitbit-callback" element={<FitbitCallback />} />
       <Route
         path="/"
         element={
@@ -138,9 +149,78 @@ function AnimatedRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/wearables"
+        element={
+          <ProtectedRoute>
+            <WearablesPage />
+          </ProtectedRoute>
+        }
+      />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
+}
+
+/** Sincroniza la cola offline de entrenos al arrancar y al recuperar conexión. */
+function useWorkoutOutboxSync() {
+  const queryClient = useQueryClient();
+  const refresh = useOutboxStore((s) => s.refresh);
+
+  useEffect(() => {
+    let cancelled = false;
+    const sync = async () => {
+      const flushed = await flushWorkoutOutbox();
+      if (cancelled) return;
+      if (flushed > 0) {
+        queryClient.invalidateQueries({ queryKey: ['workouts'], refetchType: 'all' });
+        queryClient.invalidateQueries({ queryKey: ['recentSets'], refetchType: 'all' });
+        queryClient.invalidateQueries({ queryKey: ['workoutsAndSets'], refetchType: 'all' });
+        queryClient.invalidateQueries({ queryKey: ['personalRecords'], refetchType: 'all' });
+      }
+      void refresh();
+    };
+    void refresh();
+    void sync();
+    const onOnline = () => void sync();
+    window.addEventListener('online', onOnline);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('online', onOnline);
+    };
+  }, [queryClient, refresh]);
+}
+
+/** Mantiene el widget Android (racha + último entreno) al día. No-op en web/iOS. */
+function useWidgetSync() {
+  const { user } = useAuthStore();
+  useEffect(() => {
+    if (!user?.id || !Capacitor.isNativePlatform()) return;
+    let cancelled = false;
+    const sync = async () => {
+      try {
+        const workouts = await fetchWorkouts(user.id, 400);
+        if (cancelled) return;
+        const streak = calculateCurrentStreak(workouts);
+        const last = workouts[0];
+        const names = last
+          ? [...new Set(last.sets.map((s) => s.exercise?.name).filter(Boolean))]
+          : [];
+        await updateWidget(streak, names.slice(0, 2).join(', '));
+      } catch {
+        /* ignore */
+      }
+    };
+    void sync();
+    const onVis = () => {
+      if (document.visibilityState === 'visible') void sync();
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      cancelled = true;
+      document.removeEventListener('visibilitychange', onVis);
+    };
+  }, [user?.id]);
 }
 
 /** Hook para manejar actualizaciones de la PWA */
@@ -149,9 +229,11 @@ function usePWAUpdate() {
     let updateFn: (() => Promise<void>) | null = null;
 
     const handler = (e: Event) => {
-      const customEvent = e as CustomEvent<() => Promise<void>>;
-      if (customEvent.detail) {
-        updateFn = customEvent.detail;
+      const customEvent = e as CustomEvent<{
+        updateServiceWorker: () => Promise<void>;
+      }>;
+      if (customEvent.detail?.updateServiceWorker) {
+        updateFn = customEvent.detail.updateServiceWorker;
         toast.info('Nueva versión disponible', {
           description: 'Actualiza para disfrutar de las últimas mejoras.',
           duration: 8000,
@@ -191,6 +273,8 @@ function AppRoutes() {
   useFatigueSuggestion();
   useBackgroundNotifications();
   usePWAUpdate();
+  useWorkoutOutboxSync();
+  useWidgetSync();
 
   // Inicializar tema al arrancar
   useEffect(() => {
@@ -227,6 +311,26 @@ function AppRoutes() {
         }
         if (url.hostname === 'history') {
           navigate('/history', { replace: true });
+          return;
+        }
+        // Callback OAuth de Fitbit: com.franvi.gymlog://fitbit-callback?code=...&state=...
+        if (url.hostname === 'fitbit-callback') {
+          const code = url.searchParams.get('code');
+          const state = url.searchParams.get('state');
+          if (code && state) {
+            void import('@features/wearables/api/fitbit').then(({ completeFitbitExchange }) =>
+              completeFitbitExchange(code, state)
+                .then(() => {
+                  toast.success('Fitbit conectado');
+                  navigate('/wearables', { replace: true });
+                })
+                .catch((e) => {
+                  if (import.meta.env.DEV) devError('[Fitbit] exchange deep link:', e);
+                  toast.error('No se pudo conectar Fitbit');
+                  navigate('/wearables', { replace: true });
+                }),
+            );
+          }
           return;
         }
       }

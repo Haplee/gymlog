@@ -192,6 +192,87 @@ export function VolumeChart({
   );
 }
 
+export function ExerciseComparisonChart({
+  data,
+  nameA,
+  nameB,
+}: {
+  data: { date: string; a: number | null; b: number | null }[];
+  nameA: string;
+  nameB: string;
+}) {
+  if (data.length < 2) {
+    return (
+      <div className="text-center py-8 text-sm text-fg-subtle">
+        <p>Necesitas al menos 2 sesiones en común para comparar.</p>
+      </div>
+    );
+  }
+  const colorA = CHART_COLORS[0];
+  const colorB = CHART_COLORS[2];
+  return (
+    <div>
+      <div className="h-[180px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={data}>
+            <XAxis
+              dataKey="date"
+              tick={{ fill: 'var(--text-tertiary)', fontSize: 9 }}
+              axisLine={false}
+              tickLine={false}
+              tickFormatter={(v) => format(parseISO(v), 'dd/MM')}
+            />
+            <YAxis hide domain={['dataMin - 5', 'dataMax + 10']} />
+            <Tooltip
+              contentStyle={{
+                background: 'var(--bg-surface-3)',
+                border: '1px solid var(--border-default)',
+                borderRadius: 10,
+                fontSize: 12,
+              }}
+              labelStyle={{ color: 'var(--text-secondary)' }}
+              labelFormatter={(v) => format(parseISO(v as string), 'dd MMM', { locale: es })}
+              formatter={(value, key) => {
+                const numVal = typeof value === 'number' ? value : Number(value);
+                return [
+                  `${!isNaN(numVal) ? numVal.toFixed(1) : value} kg`,
+                  key === 'a' ? nameA : nameB,
+                ];
+              }}
+            />
+            <Line
+              type="monotone"
+              dataKey="a"
+              stroke={colorA}
+              strokeWidth={2.5}
+              dot={{ r: 3, fill: colorA }}
+              connectNulls
+            />
+            <Line
+              type="monotone"
+              dataKey="b"
+              stroke={colorB}
+              strokeWidth={2.5}
+              dot={{ r: 3, fill: colorB }}
+              connectNulls
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+      <div className="mt-3 flex items-center justify-center gap-4">
+        <div className="flex items-center gap-2">
+          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: colorA }} />
+          <span className="text-xs truncate text-fg-muted">{nameA}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: colorB }} />
+          <span className="text-xs truncate text-fg-muted">{nameB}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ProgressionChart({
   data,
   metric,

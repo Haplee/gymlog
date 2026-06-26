@@ -181,9 +181,14 @@ export function WorkoutSetList({
                   }`}
                 />
                 {isNewPR && (
-                  <span className="absolute -top-1 -right-1">
+                  <m.span
+                    initial={{ scale: 0, rotate: -20 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ type: 'spring', stiffness: 600, damping: 18 }}
+                    className="absolute -top-1 -right-1"
+                  >
                     <Trophy className="w-3 h-3 text-accent" />
-                  </span>
+                  </m.span>
                 )}
               </div>
               {s.setType && s.setType !== 'normal' && (

@@ -8,7 +8,6 @@
   --bg-surface: #111111;
   --bg-surface-2: #191919;
   --bg-surface-3: #222222;
-  --bg-glass: rgba(255, 255, 255, 0.04);
 
   /* ── Texto ───────────────────────────────────── */
   --text-primary: #ffffff;
@@ -49,7 +48,6 @@
   --border-subtle: #1e1e1e;
   --border-default: #282828;
   --border-accent: rgba(200, 255, 0, 0.2);
-  --border-glass: rgba(255, 255, 255, 0.07);
 
   /* ── Radios ─────────────────────────────────── */
   --radius-sm: 8px;
@@ -132,7 +130,6 @@
   --bg-surface: #ffffff;
   --bg-surface-2: #f2f4f7;
   --bg-surface-3: #e4e7eb;
-  --bg-glass: rgba(0, 0, 0, 0.03);
 
   /* ── Texto (contraste AA sobre fondos claros) ─── */
   --text-primary: #0d0f12;
@@ -150,7 +147,6 @@
   --border-subtle: #e1e4e9;
   --border-default: #ccd1d8;
   --border-accent: rgba(160, 204, 0, 0.5);
-  --border-glass: rgba(0, 0, 0, 0.09);
 
   /* ── Sombras (más suaves sobre fondo claro) ───── */
   --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.08);

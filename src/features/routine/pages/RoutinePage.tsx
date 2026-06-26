@@ -157,7 +157,7 @@ export function RoutinePage() {
 
   return (
     <Layout>
-      <div className="text-lg font-bold mb-4 text-accent">{t('routine.title')}</div>
+      <h1 className="text-xl font-extrabold mb-4 text-accent text-balance">{t('routine.title')}</h1>
 
       {!activeRoutineId ? (
         <>
@@ -176,7 +176,7 @@ export function RoutinePage() {
                     handleSelectRoutine(routine.id);
                   }
                 }}
-                className="p-4 rounded-2xl cursor-pointer transition-all active:scale-[0.99] bg-surface-2 border border-line-glass shadow-card"
+                className="p-4 rounded-2xl cursor-pointer transition-all active:scale-[0.99] bg-surface-2 border border-line shadow-card"
               >
                 <div className="flex justify-between items-center gap-3">
                   <div className="min-w-0">
@@ -190,7 +190,7 @@ export function RoutinePage() {
                       </span>
                       <button
                         onClick={(e) => handleUseAsTemplate(e, routine.id)}
-                        className="min-h-11 text-xs px-3 py-1.5 rounded-lg font-medium bg-surface text-accent border border-line-glass active:scale-[0.98]"
+                        className="min-h-11 text-xs px-3 py-1.5 rounded-lg font-medium bg-surface text-accent border border-line active:scale-[0.98]"
                       >
                         {t('routine.use_template')}
                       </button>
@@ -300,7 +300,7 @@ export function RoutinePage() {
                 {activeRoutine?.days[selectedDay].exercises.map((ex, i) => (
                   <div
                     key={i}
-                    className="flex items-center justify-between px-3 py-3 rounded-xl bg-surface-2 border border-line-glass"
+                    className="flex items-center justify-between px-3 py-3 rounded-xl bg-surface-2 border border-line"
                   >
                     <div>
                       <div className="text-base font-medium text-fg">{ex.name}</div>

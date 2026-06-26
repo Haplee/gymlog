@@ -3,7 +3,11 @@ apply plugin: 'kotlin-android'
 
 def keystorePropertiesFile = rootProject.file("local.properties")
 def keystoreProperties = new Properties()
-keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+// En CI no existe local.properties (gitignored: SDK + claves de firma).
+// Cargar solo si está, para no romper assembleDebug en GitHub Actions.
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
 
 android {
     namespace = "com.franvi.gymlog"
@@ -12,8 +16,8 @@ android {
         applicationId "com.franvi.gymlog"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 300
-        versionName "3.0.0"
+        versionCode 400
+        versionName "4.0.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
@@ -63,6 +67,8 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
     implementation "androidx.biometric:biometric:$androidxBiometricVersion"
     implementation "androidx.work:work-runtime-ktx:$androidxWorkVersion"
+    implementation "androidx.health.connect:connect-client:$healthConnectVersion"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$kotlinxCoroutinesVersion"
     implementation project(':capacitor-cordova-android-plugins')
 }
 
@@ -72,4 +78,19 @@ if (file('google-services.json').exists()) {
     apply plugin: 'com.google.gms.google-services'
 } else {
     logger.warn("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+}
+
+// Cada build release deja el APK en la raíz del repo como GymLog.apk, para tener
+// siempre el último a mano en cada versión (Android Studio, gradlew o CI).
+tasks.configureEach { task ->
+    if (task.name == "assembleRelease") {
+        task.doLast {
+            copy {
+                from layout.buildDirectory.file("outputs/apk/release/app-release.apk")
+                into "${rootDir}/.."
+                rename { "GymLog.apk" }
+            }
+            logger.lifecycle("APK release copiado a la raíz del repo: GymLog.apk")
+        }
+    }
 }

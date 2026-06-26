@@ -1,7 +1,7 @@
 {
   "name": "gymlog-v2",
   "private": true,
-  "version": "3.0.0",
+  "version": "4.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -20,6 +20,7 @@
     "commit": "git-cz",
     "gen:types": "supabase gen types typescript --project-id eoltmipoklizewxdpzfa > src/types/database.types.ts",
     "build:android": "npm run build && npx cap sync android",
+    "apk": "npm run build:android && node scripts/build-apk.mjs",
     "build:ios": "npm run build && npx cap sync ios",
     "open:android": "npx cap open android",
     "open:ios": "npx cap open ios",
@@ -76,6 +77,7 @@
     "@tailwindcss/vite": "^4.2.2",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^24.12.2",
     "@types/react": "^19.2.14",
@@ -90,6 +92,7 @@
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",
+    "fake-indexeddb": "^6.2.5",
     "globals": "^17.4.0",
     "husky": "^9.1.7",
     "jsdom": "^29.0.2",

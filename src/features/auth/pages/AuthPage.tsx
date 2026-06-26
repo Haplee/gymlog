@@ -4,6 +4,7 @@ import { useAuthStore } from '@features/auth/stores/authStore';
 import { useTranslation } from 'react-i18next';
 import { useRateLimit } from '@shared/hooks/useRateLimit';
 import { GymLogLogo } from '@/shared/components/ui';
+import { checkPasswordStrength } from '@shared/lib/passwordStrength';
 
 export function AuthPage() {
   const navigate = useNavigate();
@@ -50,6 +51,15 @@ export function AuthPage() {
     if (isSignUp && username.length < 3) {
       setError('El usuario debe tener al menos 3 caracteres');
       return;
+    }
+
+    // Registro: fuerza de contraseña en cliente (mitigación de HIBP, plan Free).
+    if (isSignUp) {
+      const pw = checkPasswordStrength(password);
+      if (!pw.ok) {
+        setError(pw.message ?? 'Contraseña no válida');
+        return;
+      }
     }
 
     if (!recordAttempt()) {

@@ -4,6 +4,8 @@ import { z } from 'zod';
 import { supabase } from '@shared/lib/supabase';
 import type { WorkoutWithSets } from '@shared/lib/types';
 import { devError } from '@shared/lib/devtools';
+import { enqueueWorkout, isNetworkError } from '@shared/lib/workoutOutbox';
+import { useOutboxStore } from '@shared/stores/outboxStore';
 
 const SetDataSchema = z.object({
   id: z.string().default(() => crypto.randomUUID()),
@@ -25,6 +27,8 @@ interface PersistedWorkout {
   customMuscleGroup: string;
   sets: SetData[];
   startedAt: string | null;
+  sessionNotes: string;
+  sessionRating: number | null;
 }
 
 interface WorkoutState extends PersistedWorkout {
@@ -34,12 +38,16 @@ interface WorkoutState extends PersistedWorkout {
   repeatWorkout: (workout: WorkoutWithSets) => void;
   setActiveExercise: (id: string | null) => void;
   setCustomExerciseName: (name: string) => void;
+  setSessionNotes: (notes: string) => void;
+  setSessionRating: (rating: number | null) => void;
   addSet: () => void;
   setSets: (sets: SetData[]) => void;
   updateSet: (index: number, data: Partial<SetData>) => void;
   removeSet: (index: number) => void;
   removeAllSets: () => void;
-  saveWorkout: (userId: string) => Promise<{ error: Error | null; success: boolean }>;
+  saveWorkout: (
+    userId: string,
+  ) => Promise<{ error: Error | null; success: boolean; queued?: boolean }>;
   clearPersistedState: () => void;
 }
 
@@ -61,6 +69,8 @@ export const useWorkoutStore = create<WorkoutState>()(
       customMuscleGroup: 'Otro',
       sets: [],
       startedAt: null,
+      sessionNotes: '',
+      sessionRating: null,
       loading: false,
       error: null,
       repeatWorkout: (workout: WorkoutWithSets) => {
@@ -92,6 +102,8 @@ export const useWorkoutStore = create<WorkoutState>()(
         });
       },
       setCustomExerciseName: (name: string) => set({ customExerciseName: name }),
+      setSessionNotes: (notes: string) => set({ sessionNotes: notes }),
+      setSessionRating: (rating: number | null) => set({ sessionRating: rating }),
 
       addSet: () => {
         const last = get().sets.at(-1);
@@ -115,25 +127,18 @@ export const useWorkoutStore = create<WorkoutState>()(
       },
 
       saveWorkout: async (userId: string) => {
-        const { activeExerciseId, customExerciseName, customMuscleGroup, sets: setData } = get();
+        const {
+          activeExerciseId,
+          customExerciseName,
+          customMuscleGroup,
+          sets: setData,
+          sessionNotes,
+          sessionRating,
+        } = get();
 
-        let exerciseId = activeExerciseId;
-
-        if (!activeExerciseId && customExerciseName.trim()) {
-          const { data, error } = await supabase
-            .from('exercises')
-            .insert({
-              name: customExerciseName.trim(),
-              user_id: userId,
-              muscle_group: customMuscleGroup,
-            })
-            .select('id')
-            .single();
-          if (error) return { error, success: false };
-          exerciseId = data.id;
+        if (!activeExerciseId && !customExerciseName.trim()) {
+          return { error: new Error('Selecciona un ejercicio'), success: false };
         }
-
-        if (!exerciseId) return { error: new Error('Selecciona un ejercicio'), success: false };
 
         const validSets = setData.filter((s) => {
           const result = SetDataSchema.safeParse(s);
@@ -149,19 +154,73 @@ export const useWorkoutStore = create<WorkoutState>()(
         if (!validSets.length)
           return { error: new Error('Añade reps y kg válidas'), success: false };
 
-        try {
-          const startedAt = get().startedAt || new Date().toISOString();
-          const finishedAt = new Date().toISOString();
+        const startedAt = get().startedAt || new Date().toISOString();
+        const finishedAt = new Date().toISOString();
+        const notes = sessionNotes.trim() || undefined;
+        const rating = sessionRating ?? undefined;
 
-          const setsPayload = validSets.map((s, i) => ({
-            set_num: i + 1,
-            reps: Number(s.reps),
-            weight: Number(s.weight),
-            is_warmup: !!s.isWarmup,
-            notes: s.notes?.trim() || '',
-            rpe: s.rpe?.trim() || '',
-            set_type: s.setType || 'normal',
-          }));
+        const setsPayload = validSets.map((s, i) => ({
+          set_num: i + 1,
+          reps: Number(s.reps),
+          weight: Number(s.weight),
+          is_warmup: !!s.isWarmup,
+          notes: s.notes?.trim() || '',
+          rpe: s.rpe?.trim() || '',
+          set_type: s.setType || 'normal',
+        }));
+
+        const resetState = () =>
+          set({
+            sets: [],
+            activeExerciseId: null,
+            customExerciseName: '',
+            customMuscleGroup: 'Otro',
+            startedAt: null,
+            sessionNotes: '',
+            sessionRating: null,
+          });
+
+        // Encola el entreno en IndexedDB para sincronizarlo al volver la conexión.
+        const queueOffline = async () => {
+          await enqueueWorkout({
+            id: crypto.randomUUID(),
+            userId,
+            exerciseId: activeExerciseId,
+            customExerciseName: customExerciseName.trim(),
+            customMuscleGroup,
+            startedAt,
+            finishedAt,
+            sets: setsPayload,
+            notes,
+            rating,
+            createdAt: new Date().toISOString(),
+          });
+          resetState();
+          void useOutboxStore.getState().refresh();
+          return { error: null, success: true, queued: true };
+        };
+
+        // Sin conexión: encolar directamente (incluye crear ejercicio custom al sync).
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+          return queueOffline();
+        }
+
+        try {
+          let exerciseId = activeExerciseId;
+          if (!exerciseId && customExerciseName.trim()) {
+            const { data, error } = await supabase
+              .from('exercises')
+              .insert({
+                name: customExerciseName.trim(),
+                user_id: userId,
+                muscle_group: customMuscleGroup,
+              })
+              .select('id')
+              .single();
+            if (error) throw error;
+            exerciseId = data.id;
+          }
+          if (!exerciseId) return { error: new Error('Selecciona un ejercicio'), success: false };
 
           const { error: rpcError } = await supabase.rpc('save_workout_with_sets', {
             p_user_id: userId,
@@ -169,20 +228,19 @@ export const useWorkoutStore = create<WorkoutState>()(
             p_started_at: startedAt,
             p_finished_at: finishedAt,
             p_sets: setsPayload,
+            p_notes: notes,
+            p_rating: rating,
           });
 
           if (rpcError) throw rpcError;
 
-          set({
-            sets: [],
-            activeExerciseId: null,
-            customExerciseName: '',
-            customMuscleGroup: 'Otro',
-            startedAt: null,
-          });
-
+          resetState();
           return { error: null, success: true };
         } catch (err) {
+          // Error de red → encolar para reintentar. Otros errores → reportar.
+          if (isNetworkError(err)) {
+            return queueOffline();
+          }
           const message = err instanceof Error ? err.message : 'Error guardando';
           devError('[WorkoutStore] saveWorkout:', message);
           return { error: new Error(message), success: false };
@@ -196,6 +254,8 @@ export const useWorkoutStore = create<WorkoutState>()(
           customMuscleGroup: 'Otro',
           sets: [],
           startedAt: null,
+          sessionNotes: '',
+          sessionRating: null,
         }),
     }),
     {
@@ -207,6 +267,8 @@ export const useWorkoutStore = create<WorkoutState>()(
         customMuscleGroup: state.customMuscleGroup,
         sets: state.sets,
         startedAt: state.startedAt,
+        sessionNotes: state.sessionNotes,
+        sessionRating: state.sessionRating,
       }),
     },
   ),

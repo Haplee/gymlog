@@ -31,7 +31,14 @@ import {
   Clock,
   Flame,
   BarChart3,
+  Dumbbell,
+  Medal,
+  Weight,
+  Calendar,
+  type LucideIcon,
 } from 'lucide-react';
+import { computeAchievements } from '@shared/lib/achievements';
+import { toast } from 'sonner';
 import { format, subWeeks, startOfWeek, eachWeekOfInterval, subDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { calcular1RM } from '@shared/lib/brzycki';
@@ -39,6 +46,7 @@ import { SectionLabel } from '../components/userStats/SectionLabel';
 import { DayFrequencyChart } from '../components/userStats/DayFrequencyChart';
 import { TopExercisesList } from '../components/userStats/TopExercisesList';
 import { BodyMeasurements } from '../components/userStats/BodyMeasurements';
+import { WearablesSummary } from '@features/wearables/components/WearablesSummary';
 
 // recharts es pesado: cargar estos charts bajo demanda lo saca del chunk de la página
 const WeeklyVolumeChart = lazy(() =>
@@ -101,7 +109,9 @@ function BigKPI({
       >
         <Icon className="w-4 h-4" style={{ color }} />
       </div>
-      <div className="relative font-mono font-bold text-2xl leading-none text-fg">{value}</div>
+      <div className="relative font-mono font-bold text-2xl leading-none text-fg tabular-nums">
+        {value}
+      </div>
       <div className="relative text-xs text-fg-subtle">{label}</div>
     </m.div>
   );
@@ -159,6 +169,137 @@ function TipCard({ tip, index }: { tip: Tip; index: number }) {
   );
 }
 
+type TipT = (key: string, opts?: Record<string, number | string>) => string;
+
+const mkTip = (type: Tip['type'], title: string, message: string): Tip => ({
+  type,
+  title,
+  message,
+});
+
+function streakTip(t: TipT, streak: number): Tip | null {
+  if (streak >= 7)
+    return mkTip(
+      'success',
+      t('tips.streak_strong_title', { count: streak }),
+      t('tips.streak_strong_msg'),
+    );
+  if (streak >= 3)
+    return mkTip(
+      'success',
+      t('tips.streak_good_title', { count: streak }),
+      t('tips.streak_good_msg'),
+    );
+  return null;
+}
+
+function restTip(t: TipT, daysSinceLast: number): Tip | null {
+  if (daysSinceLast > 5)
+    return mkTip(
+      'danger',
+      t('tips.rest_long_title'),
+      t('tips.rest_long_msg', { count: daysSinceLast }),
+    );
+  if (daysSinceLast > 3)
+    return mkTip(
+      'warning',
+      t('tips.rest_mid_title', { count: daysSinceLast }),
+      t('tips.rest_mid_msg'),
+    );
+  return null;
+}
+
+function frequencyTip(t: TipT, sessionCount30d: number, totalWorkouts: number): Tip | null {
+  if (sessionCount30d < 8 && totalWorkouts >= 5)
+    return mkTip(
+      'warning',
+      t('tips.freq_low_title'),
+      t('tips.freq_low_msg', { count: sessionCount30d }),
+    );
+  return null;
+}
+
+function volumeTip(t: TipT, volumeChange: number, weeklyVolume: number): Tip | null {
+  if (volumeChange < -25)
+    return mkTip(
+      'warning',
+      t('tips.vol_down_title', { pct: Math.abs(volumeChange) }),
+      t('tips.vol_down_msg'),
+    );
+  if (volumeChange > 30)
+    return mkTip('warning', t('tips.vol_up_title', { pct: volumeChange }), t('tips.vol_up_msg'));
+  if (volumeChange > 0 && weeklyVolume > 0)
+    return mkTip(
+      'success',
+      t('tips.vol_progress_title', { pct: volumeChange }),
+      t('tips.vol_progress_msg'),
+    );
+  return null;
+}
+
+function balanceTips(t: TipT, muscleDistribution: { name: string; value: number }[]): Tip[] {
+  if (muscleDistribution.length === 0) return [];
+  const out: Tip[] = [];
+  const sumWhere = (groups: string[]) =>
+    muscleDistribution
+      .filter((m) => groups.some((p) => m.name.includes(p)))
+      .reduce((s, m) => s + m.value, 0);
+  const pushVol = sumWhere(PUSH_MUSCLES);
+  const pullVol = sumWhere(PULL_MUSCLES);
+  const legVol = sumWhere(LEG_MUSCLES);
+  const totalVol = muscleDistribution.reduce((s, m) => s + m.value, 0);
+
+  if (pushVol > 0 && pullVol > 0 && pushVol > pullVol * 1.6)
+    out.push(mkTip('warning', t('tips.balance_push_title'), t('tips.balance_push_msg')));
+  else if (pushVol > 0 && pullVol > 0 && pullVol > pushVol * 1.6)
+    out.push(mkTip('info', t('tips.balance_pull_title'), t('tips.balance_pull_msg')));
+
+  if (totalVol > 0 && legVol / totalVol < 0.15 && legVol > 0)
+    out.push(mkTip('warning', t('tips.legs_low_title'), t('tips.legs_low_msg')));
+  else if (totalVol > 0 && legVol === 0 && muscleDistribution.length >= 3)
+    out.push(mkTip('danger', t('tips.legs_none_title'), t('tips.legs_none_msg')));
+
+  return out;
+}
+
+function prTip(t: TipT, recentPRsCount: number, sessionCount30d: number): Tip | null {
+  if (recentPRsCount === 0 && sessionCount30d >= 8)
+    return mkTip('info', t('tips.pr_none_title'), t('tips.pr_none_msg'));
+  if (recentPRsCount >= 3)
+    return mkTip(
+      'success',
+      t('tips.pr_streak_title', { count: recentPRsCount }),
+      t('tips.pr_streak_msg'),
+    );
+  return null;
+}
+
+function durationTip(t: TipT, avgDuration: number): Tip | null {
+  if (avgDuration > 0 && avgDuration < 30)
+    return mkTip(
+      'info',
+      t('tips.dur_short_title'),
+      t('tips.dur_short_msg', { count: avgDuration }),
+    );
+  if (avgDuration > 120)
+    return mkTip(
+      'warning',
+      t('tips.dur_long_title'),
+      t('tips.dur_long_msg', { count: avgDuration }),
+    );
+  return null;
+}
+
+function diversityTip(t: TipT, uniqueExercises: number, sessionCount30d: number): Tip | null {
+  if (uniqueExercises < 4 && sessionCount30d >= 4)
+    return mkTip(
+      'info',
+      t('tips.variety_low_title'),
+      t('tips.variety_low_msg', { count: uniqueExercises }),
+    );
+  return null;
+}
+
 function generateTips(params: {
   sessionCount30d: number;
   currentStreak: number;
@@ -170,8 +311,8 @@ function generateTips(params: {
   totalWorkouts: number;
   avgDuration: number;
   uniqueExercises: number;
+  t: TipT;
 }): Tip[] {
-  const tips: Tip[] = [];
   const {
     sessionCount30d,
     currentStreak,
@@ -183,180 +324,37 @@ function generateTips(params: {
     totalWorkouts,
     avgDuration,
     uniqueExercises,
+    t,
   } = params;
 
   // Sin datos suficientes
   if (totalWorkouts < 3) {
-    tips.push({
-      type: 'info',
-      title: 'Comienza tu historial',
-      message:
-        'Registra al menos 3 entrenamientos para recibir consejos personalizados basados en tus datos.',
-    });
-    return tips;
+    return [mkTip('info', t('tips.start_title'), t('tips.start_msg'))];
   }
 
-  // Racha positiva
-  if (currentStreak >= 7) {
-    tips.push({
-      type: 'success',
-      title: `¡Racha de ${currentStreak} días!`,
-      message:
-        'Consistencia brutal. Asegúrate de incluir al menos 1-2 días de descanso activo por semana para optimizar la recuperación.',
-    });
-  } else if (currentStreak >= 3) {
-    tips.push({
-      type: 'success',
-      title: `Buena racha — ${currentStreak} días`,
-      message:
-        'Vas por buen camino. Mantén el ritmo y prioriza el sueño para maximizar las ganancias.',
-    });
-  }
+  const tips: Tip[] = [];
+  const add = (tip: Tip | null) => {
+    if (tip) tips.push(tip);
+  };
 
-  // Descanso excesivo
-  if (daysSinceLast > 5) {
-    tips.push({
-      type: 'danger',
-      title: 'Demasiado tiempo sin entrenar',
-      message: `Llevas ${daysSinceLast} días sin registrar un entrenamiento. La consistencia es el factor #1 para el progreso. ¡Vuelve hoy!`,
-    });
-  } else if (daysSinceLast > 3) {
-    tips.push({
-      type: 'warning',
-      title: `${daysSinceLast} días sin entrenar`,
-      message:
-        'Es normal descansar, pero si llevas más de 3 días sin entrenar planifica tu próxima sesión cuanto antes.',
-    });
-  }
+  add(streakTip(t, currentStreak));
+  add(restTip(t, daysSinceLast));
+  add(frequencyTip(t, sessionCount30d, totalWorkouts));
+  add(volumeTip(t, volumeChange, weeklyVolume));
+  tips.push(...balanceTips(t, muscleDistribution));
+  add(prTip(t, recentPRsCount, sessionCount30d));
+  add(durationTip(t, avgDuration));
+  add(diversityTip(t, uniqueExercises, sessionCount30d));
 
-  // Frecuencia baja
-  if (sessionCount30d < 8 && totalWorkouts >= 5) {
-    tips.push({
-      type: 'warning',
-      title: 'Frecuencia baja',
-      message: `Solo ${sessionCount30d} sesiones en los últimos 30 días. Para progresar consistentemente, apunta a 3-4 sesiones semanales.`,
-    });
-  }
-
-  // Volumen
-  if (volumeChange < -25) {
-    tips.push({
-      type: 'warning',
-      title: `Volumen cayó un ${Math.abs(volumeChange)}%`,
-      message:
-        'El volumen semanal bajó significativamente. Puede ser por un descanso planeado (bien) o falta de consistencia. Revisa tu plan.',
-    });
-  } else if (volumeChange > 30) {
-    tips.push({
-      type: 'warning',
-      title: `Volumen subió un ${volumeChange}%`,
-      message:
-        'Gran aumento de volumen. Asegúrate de que el incremento sea progresivo (máx. 10-15%/semana) para evitar sobreentrenamiento.',
-    });
-  } else if (volumeChange > 0 && weeklyVolume > 0) {
-    tips.push({
-      type: 'success',
-      title: `+${volumeChange}% de volumen esta semana`,
-      message:
-        'Progresión constante de volumen. Sigues acumulando estímulo de entrenamiento de forma correcta.',
-    });
-  }
-
-  // Balance push/pull
-  if (muscleDistribution.length > 0) {
-    const pushVol = muscleDistribution
-      .filter((m) => PUSH_MUSCLES.some((p) => m.name.includes(p)))
-      .reduce((s, m) => s + m.value, 0);
-    const pullVol = muscleDistribution
-      .filter((m) => PULL_MUSCLES.some((p) => m.name.includes(p)))
-      .reduce((s, m) => s + m.value, 0);
-    const legVol = muscleDistribution
-      .filter((m) => LEG_MUSCLES.some((p) => m.name.includes(p)))
-      .reduce((s, m) => s + m.value, 0);
-    const totalVol = muscleDistribution.reduce((s, m) => s + m.value, 0);
-
-    if (pushVol > 0 && pullVol > 0 && pushVol > pullVol * 1.6) {
-      tips.push({
-        type: 'warning',
-        title: 'Desequilibrio empuje/tracción',
-        message:
-          'Estás entrenando más músculo de empuje (pecho/hombros) que de tracción (espalda/bíceps). Esto puede causar problemas posturales. Aumenta el volumen de espalda.',
-      });
-    } else if (pushVol > 0 && pullVol > 0 && pullVol > pushVol * 1.6) {
-      tips.push({
-        type: 'info',
-        title: 'Más tracción que empuje',
-        message:
-          'Buen énfasis en espalda y bíceps. Considera equilibrar con ejercicios de pecho y hombros para un desarrollo completo.',
-      });
-    }
-
-    if (totalVol > 0 && legVol / totalVol < 0.15 && legVol > 0) {
-      tips.push({
-        type: 'warning',
-        title: 'Poco volumen de pierna',
-        message:
-          'Las piernas representan menos del 15% de tu volumen. Son el grupo muscular más grande del cuerpo — entrenarlas más mejora hormonas anabólicas y fuerza general.',
-      });
-    } else if (totalVol > 0 && legVol === 0 && muscleDistribution.length >= 3) {
-      tips.push({
-        type: 'danger',
-        title: 'No entrenas piernas',
-        message:
-          'No hay registro de ejercicios de pierna. Sentadilla, peso muerto y prensa son fundamentales para el progreso global.',
-      });
-    }
-  }
-
-  // PRs recientes
-  if (recentPRsCount === 0 && sessionCount30d >= 8) {
-    tips.push({
-      type: 'info',
-      title: 'Sin records recientes',
-      message:
-        'No has batido ningún record en los últimos 30 días. Prueba a aumentar el peso un 2.5% en tu ejercicio principal o añadir 1 rep más.',
-    });
-  } else if (recentPRsCount >= 3) {
-    tips.push({
-      type: 'success',
-      title: `${recentPRsCount} nuevos records recientes`,
-      message:
-        '¡Estás en racha de PRs! Tu progresión es excelente. Mantén la técnica impecable al aumentar la carga.',
-    });
-  }
-
-  // Duración media
-  if (avgDuration > 0 && avgDuration < 30) {
-    tips.push({
-      type: 'info',
-      title: 'Sesiones muy cortas',
-      message: `Promedio de ${avgDuration} minutos. Las sesiones ideales duran 45-75 min para un estímulo óptimo. Añade más ejercicios o series.`,
-    });
-  } else if (avgDuration > 120) {
-    tips.push({
-      type: 'warning',
-      title: 'Sesiones muy largas',
-      message: `Promedio de ${avgDuration} minutos. Entrenamientos de más de 2 horas pueden aumentar el cortisol. Optimiza el tiempo entre series.`,
-    });
-  }
-
-  // Diversidad de ejercicios
-  if (uniqueExercises < 4 && sessionCount30d >= 4) {
-    tips.push({
-      type: 'info',
-      title: 'Poca variedad de ejercicios',
-      message: `Solo ${uniqueExercises} ejercicios distintos. Añade variedad para estimular más fibras musculares y evitar adaptaciones.`,
-    });
-  }
-
-  // Sin tips negativos — añadir algo positivo
-  if (tips.filter((t) => t.type === 'success').length === 0 && totalWorkouts >= 10) {
-    tips.push({
-      type: 'success',
-      title: `${totalWorkouts} entrenamientos registrados`,
-      message:
-        '¡Llevas mucho tiempo registrando tus entrenos! La consistencia a largo plazo es la clave del éxito.',
-    });
+  // Sin tips de éxito — añadir algo positivo
+  if (tips.filter((x) => x.type === 'success').length === 0 && totalWorkouts >= 10) {
+    add(
+      mkTip(
+        'success',
+        t('tips.consistency_title', { count: totalWorkouts }),
+        t('tips.consistency_msg'),
+      ),
+    );
   }
 
   return tips.slice(0, 6);
@@ -485,6 +483,52 @@ export function UserStatsPage() {
     [recentSets],
   );
 
+  // Logros
+  const achievements = useMemo(
+    () =>
+      computeAchievements({
+        totalWorkouts: workouts.length,
+        maxStreak,
+        totalVolumeKg: totalVolumeAllTime,
+        prCount: totalPRs,
+        sessions30d: sessionCount30d,
+      }),
+    [workouts.length, maxStreak, totalVolumeAllTime, totalPRs, sessionCount30d],
+  );
+
+  // Detecta logros recién desbloqueados (no en la primera carga) → toast + confetti.
+  useEffect(() => {
+    const unlocked = achievements.filter((a) => a.unlocked).map((a) => a.id);
+    const raw = localStorage.getItem('gymlog-achievements-seen');
+    if (raw === null) {
+      localStorage.setItem('gymlog-achievements-seen', JSON.stringify(unlocked));
+      return;
+    }
+    let seen: string[] = [];
+    try {
+      seen = JSON.parse(raw);
+    } catch {
+      seen = [];
+    }
+    const fresh = unlocked.filter((id) => !seen.includes(id));
+    if (fresh.length) {
+      fresh.forEach((id) =>
+        toast.success(`${t('achievements.unlocked_toast')} ${t(`achievements.${id}`)}`),
+      );
+      void import('canvas-confetti')
+        .then((m) =>
+          m.default({
+            particleCount: 80,
+            spread: 60,
+            origin: { y: 0.7 },
+            colors: ['#c8ff00', '#ffffff'],
+          }),
+        )
+        .catch(() => {});
+      localStorage.setItem('gymlog-achievements-seen', JSON.stringify(unlocked));
+    }
+  }, [achievements, t]);
+
   // Unique exercises count
   const uniqueExercisesCount = useMemo(
     () => new Set(recentSets.map((s) => s.exercise?.name).filter(Boolean)).size,
@@ -528,6 +572,7 @@ export function UserStatsPage() {
         totalWorkouts: workouts.length,
         avgDuration,
         uniqueExercises: uniqueExercisesCount,
+        t,
       }),
     [
       sessionCount30d,
@@ -540,6 +585,7 @@ export function UserStatsPage() {
       workouts.length,
       avgDuration,
       uniqueExercisesCount,
+      t,
     ],
   );
 
@@ -583,15 +629,17 @@ export function UserStatsPage() {
           <ArrowLeft className="w-4 h-4 text-fg-muted" />
         </button>
         <div>
-          <h1 className="text-lg font-bold text-fg">Mis Estadísticas</h1>
-          <p className="text-xs text-fg-subtle">Análisis completo de tu progreso</p>
+          <h1 className="text-xl font-extrabold text-fg text-balance">
+            {t('userStats.page_title')}
+          </h1>
+          <p className="text-xs text-fg-subtle">{t('userStats.page_subtitle')}</p>
         </div>
       </m.div>
 
       <div className="space-y-5">
         {/* ── Hero KPIs ── */}
         <section className="space-y-3">
-          <SectionLabel>Resumen global</SectionLabel>
+          <SectionLabel>{t('userStats.global_summary')}</SectionLabel>
           <div className="grid grid-cols-2 gap-3">
             <BigKPI
               value={workouts.length}
@@ -641,7 +689,10 @@ export function UserStatsPage() {
                 transition={{ delay: 0.2 + i * 0.04 }}
                 className="rounded-2xl p-3 text-center bg-surface border border-line shadow-card"
               >
-                <div className="font-mono font-bold text-xl" style={{ color: item.color }}>
+                <div
+                  className="font-mono font-bold text-xl tabular-nums"
+                  style={{ color: item.color }}
+                >
                   {item.value}
                 </div>
                 <div className="text-2xs mt-1 text-fg-subtle">{item.label}</div>
@@ -658,7 +709,7 @@ export function UserStatsPage() {
             >
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4" style={{ color: 'var(--accent-sky)' }} />
-                <span className="text-sm text-fg-muted">Tiempo total de cardio</span>
+                <span className="text-sm text-fg-muted">{t('userStats.cardio_total_time')}</span>
               </div>
               <span
                 className="font-mono font-semibold text-sm"
@@ -672,8 +723,63 @@ export function UserStatsPage() {
           )}
         </section>
 
+        {/* ── Logros ── */}
+        <section className="space-y-3">
+          <SectionLabel>{t('achievements.title')}</SectionLabel>
+          <div className="grid grid-cols-2 gap-2">
+            {achievements.map((a, i) => {
+              const ACH_ICONS: Record<string, LucideIcon> = {
+                dumbbell: Dumbbell,
+                medal: Medal,
+                flame: Flame,
+                weight: Weight,
+                trophy: Trophy,
+                calendar: Calendar,
+              };
+              const Icon = ACH_ICONS[a.icon] ?? Trophy;
+              return (
+                <m.div
+                  key={a.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.03 * i }}
+                  className={`rounded-2xl p-3 flex items-center gap-3 border shadow-card ${
+                    a.unlocked
+                      ? 'bg-surface border-line-accent'
+                      : 'bg-surface border-line opacity-60'
+                  }`}
+                >
+                  <div
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                      a.unlocked ? 'bg-accent/15 text-accent' : 'bg-surface-2 text-fg-subtle'
+                    }`}
+                  >
+                    <Icon className="w-4.5 h-4.5" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium truncate text-fg">
+                      {t(`achievements.${a.id}`)}
+                    </div>
+                    {!a.unlocked && (
+                      <div className="mt-1 h-1 rounded-full bg-surface-2 overflow-hidden">
+                        <div
+                          className="h-full bg-accent/60 rounded-full"
+                          style={{ width: `${Math.round(a.progress * 100)}%` }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </m.div>
+              );
+            })}
+          </div>
+        </section>
+
         {/* ── Medidas corporales ── */}
         <BodyMeasurements userId={user.id} />
+
+        {/* ── Wearables (sueño / pasos / FC) ── */}
+        <WearablesSummary />
 
         {/* ── Volumen semanal ── */}
         {weeklyVolumeData.some((w) => w.vol > 0) && (
@@ -700,7 +806,7 @@ export function UserStatsPage() {
                   <div className="text-2xs uppercase font-semibold text-fg-subtle">
                     {t(`stats.comparison_${key}`)}
                   </div>
-                  <div className="font-mono font-bold text-2xl text-fg mt-1">
+                  <div className="font-mono font-bold text-2xl text-fg mt-1 tabular-nums">
                     {(stats.volume / 1000).toFixed(1)}t
                   </div>
                   <div className="text-xs text-fg-subtle">
@@ -728,7 +834,7 @@ export function UserStatsPage() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="font-mono font-bold text-xl text-accent">
+                  <div className="font-mono font-bold text-xl text-accent tabular-nums">
                     {(volumeProjection.projected / 1000).toFixed(1)}t
                   </div>
                   <div className="text-2xs text-fg-subtle">{t('stats.projection_next')}</div>
@@ -766,17 +872,17 @@ export function UserStatsPage() {
                   const colors = {
                     fresh: {
                       dot: 'var(--success)',
-                      label: 'Descansado',
+                      label: t('userStats.recovery_rested'),
                       bg: 'color-mix(in srgb, var(--success) 10%, transparent)',
                     },
                     moderate: {
                       dot: 'var(--warning)',
-                      label: 'Moderado',
+                      label: t('userStats.recovery_moderate'),
                       bg: 'color-mix(in srgb, var(--warning) 10%, transparent)',
                     },
                     'needs-attention': {
                       dot: 'var(--error)',
-                      label: 'Necesita trabajo',
+                      label: t('userStats.recovery_needs_work'),
                       bg: 'color-mix(in srgb, var(--error) 10%, transparent)',
                     },
                   }[status];
@@ -795,7 +901,9 @@ export function UserStatsPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-fg-subtle">
-                          {daysSinceLast >= 0 ? `hace ${daysSinceLast}d` : 'Sin datos'}
+                          {daysSinceLast >= 0
+                            ? t('userStats.days_ago', { count: daysSinceLast })
+                            : t('userStats.no_data_label')}
                         </span>
                         <span
                           className="text-2xs font-semibold px-1.5 py-0.5 rounded-full"
@@ -818,7 +926,7 @@ export function UserStatsPage() {
         {/* ── Consejos ── */}
         {tips.length > 0 && (
           <section className="space-y-3">
-            <SectionLabel>Consejos personalizados</SectionLabel>
+            <SectionLabel>{t('userStats.personalized_tips')}</SectionLabel>
             <m.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -844,10 +952,8 @@ export function UserStatsPage() {
         {workouts.length === 0 && (
           <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-16">
             <div className="text-5xl mb-4">📊</div>
-            <div className="text-base font-semibold mb-2 text-fg">Sin datos todavía</div>
-            <div className="text-sm text-fg-subtle">
-              Registra tus primeros entrenamientos para ver tus estadísticas aquí.
-            </div>
+            <div className="text-base font-semibold mb-2 text-fg">{t('userStats.empty_title')}</div>
+            <div className="text-sm text-fg-subtle">{t('userStats.empty_desc')}</div>
           </m.div>
         )}
       </div>

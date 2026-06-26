@@ -2,196 +2,169 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/gimnasia.svg" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.webp" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#080808" />
-    <meta name="description" content="Tutorial de GymLog - Aprende a usar la app paso a paso" />
+
+    <title>GymLog — Guía de uso paso a paso</title>
+    <meta name="description" content="Aprende a usar GymLog en minutos: registra entrenamientos de fuerza y cardio, marca récords, sigue tus rachas y estadísticas. Tutorial completo." />
+    <link rel="canonical" href="https://gymlog.vercel.app/tutorial.html" />
+
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="GymLog" />
+    <meta property="og:title" content="GymLog — Guía de uso paso a paso" />
+    <meta property="og:description" content="Tutorial completo: registra entrenamientos, marca PRs y sigue tu progreso con GymLog." />
+    <meta property="og:image" content="pwa-512x512.webp" />
+    <meta property="og:locale" content="es_ES" />
+
+    <link rel="icon" type="image/svg+xml" href="gimnasia.svg" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.webp" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&display=swap" rel="stylesheet" />
-    <title>GymLog - Tutorial</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=Geist+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
     <style>
+      :root {
+        --bg-base: #080808;
+        --bg-surface: #111111;
+        --line: rgba(255, 255, 255, 0.08);
+        --line-strong: rgba(255, 255, 255, 0.14);
+        --accent: #c8ff00;
+        --accent-soft: rgba(200, 255, 0, 0.1);
+        --accent-ring: rgba(200, 255, 0, 0.3);
+        --text: #f4f4f4;
+        --text-muted: #b4b4b4;
+        --text-faint: #8a8a8a;
+        --radius: 16px;
+        --pill: 999px;
+        --ease: cubic-bezier(0.22, 1, 0.36, 1);
+        --font-display: 'DM Sans', system-ui, -apple-system, sans-serif;
+        --font-mono: 'Geist Mono', ui-monospace, monospace;
+      }
       * { margin: 0; padding: 0; box-sizing: border-box; }
-      html, body {
-        min-height: 100vh;
+      html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+      @media (prefers-reduced-motion: reduce) {
+        html { scroll-behavior: auto; }
+        *, *::before, *::after {
+          animation-duration: 0.001ms !important;
+          transition-duration: 0.001ms !important;
+        }
+      }
+      body {
         min-height: 100dvh;
-        background: #080808;
-        font-family: 'DM Sans', system-ui, sans-serif;
-        color: #fff;
+        background: var(--bg-base);
+        font-family: var(--font-display);
+        color: var(--text);
+        line-height: 1.6;
         overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
       }
-      .container { max-width: 700px; margin: 0 auto; padding: 0 1.5rem; }
+      a { color: inherit; }
+      :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+      .skip-link { position: absolute; left: -9999px; top: 0; z-index: 100; background: var(--accent); color: #000; padding: 0.75rem 1.25rem; border-radius: 0 0 12px 0; font-weight: 700; }
+      .skip-link:focus { left: 0; }
+      .wrap { max-width: 760px; margin: 0 auto; padding: 0 1.25rem; }
+      .mono { font-family: var(--font-mono); }
+
+      /* Nav */
+      .nav { position: sticky; top: 0; z-index: 50; background: rgba(8, 8, 8, 0.72); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); }
+      .nav-inner { max-width: 760px; margin: 0 auto; padding: 0 1.25rem; display: flex; align-items: center; justify-content: space-between; height: 60px; }
+      .back { display: inline-flex; align-items: center; gap: 0.5rem; min-height: 44px; font-weight: 600; text-decoration: none; color: var(--text-muted); }
+      .back svg { width: 18px; height: 18px; transition: transform 0.2s var(--ease); }
+      .back:hover { color: var(--accent); }
+      .back:hover svg { transform: translateX(-3px); }
+      .nav-cta { display: inline-flex; align-items: center; gap: 0.5rem; min-height: 44px; padding: 0 1.1rem; background: var(--accent); color: #000; font-weight: 700; font-size: 0.9rem; text-decoration: none; border-radius: var(--pill); transition: transform 0.2s var(--ease); }
+      .nav-cta svg { width: 16px; height: 16px; }
+      .nav-cta:hover { transform: translateY(-1px); }
+
       /* Header */
-      .header {
-        padding: 3rem 0 2rem;
-        text-align: center;
-        border-bottom: 1px solid rgba(255,255,255,0.05);
-      }
-      .logo {
-        width: 60px;
-        height: 60px;
-        margin-bottom: 1.5rem;
-      }
-      h1 {
-        font-size: 2rem;
-        font-weight: 800;
-        margin-bottom: 0.5rem;
-      }
-      h1 span { color: #c8ff00; }
-      .subtitle { color: #666; font-size: 1rem; }
+      .header { padding: clamp(2.5rem, 7vw, 4rem) 0 2rem; text-align: center; border-bottom: 1px solid var(--line); }
+      .logo { width: 60px; height: 60px; margin-bottom: 1.25rem; }
+      h1 { font-size: clamp(1.9rem, 5vw, 2.6rem); font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.5rem; }
+      h1 span { color: var(--accent); }
+      .subtitle { color: var(--text-muted); font-size: 1.02rem; }
+
       /* Content */
-      .content { padding: 3rem 0; }
-      .section { margin-bottom: 3rem; }
-      .section h2 {
-        font-size: 1.4rem;
-        font-weight: 700;
-        color: #c8ff00;
-        margin-bottom: 1.5rem;
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-      }
-      .section h2 svg { width: 24px; height: 24px; }
-      .card {
-        background: rgba(255,255,255,0.03);
-        border: 1px solid rgba(255,255,255,0.06);
-        border-radius: 16px;
-        padding: 1.5rem;
-        margin-bottom: 1rem;
-      }
-      .card h3 {
-        font-size: 1rem;
-        font-weight: 600;
-        margin-bottom: 0.75rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-      }
-      .card h3 .step {
-        width: 24px;
-        height: 24px;
-        background: #c8ff00;
-        color: #000;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.8rem;
-        font-weight: 700;
-      }
-      .card p { color: #888; font-size: 0.9rem; line-height: 1.6; }
+      .content { padding: 2.5rem 0; }
+      .section { margin-bottom: 2.75rem; }
+      .section > h2 { font-size: 1.35rem; font-weight: 800; color: var(--accent); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.7rem; letter-spacing: -0.01em; }
+      .section > h2 svg { width: 24px; height: 24px; }
+      .card { background: var(--bg-surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.4rem; margin-bottom: 1rem; }
+      .card h3 { font-size: 1.02rem; font-weight: 700; margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.6rem; }
+      .card h3 .step { width: 26px; height: 26px; background: var(--accent); color: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.82rem; font-weight: 700; flex-shrink: 0; font-family: var(--font-mono); }
+      .card p { color: var(--text-muted); font-size: 0.94rem; }
       .card ul { margin-top: 0.75rem; padding-left: 1.25rem; }
-      .card li { color: #666; font-size: 0.85rem; margin-bottom: 0.5rem; line-height: 1.5; }
-      .tip {
-        background: rgba(200,255,0,0.08);
-        border: 1px solid rgba(200,255,0,0.2);
-        border-radius: 12px;
-        padding: 1rem;
-        margin-top: 1rem;
-      }
-      .tip strong { color: #c8ff00; }
-      .tip p { color: #999; font-size: 0.85rem; }
-      /* Features grid */
-      .features-grid {
-        display: grid;
-        gap: 1rem;
-      }
-      .feature {
-        display: flex;
-        gap: 1rem;
-        padding: 1rem;
-        background: rgba(255,255,255,0.02);
-        border-radius: 12px;
-      }
-      .feature-icon {
-        width: 40px;
-        height: 40px;
-        background: rgba(200,255,0,0.1);
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-      }
-      .feature-icon svg { width: 20px; height: 20px; color: #c8ff00; }
-      .feature h4 { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.25rem; }
-      .feature p { color: #666; font-size: 0.8rem; line-height: 1.4; }
-      /* Links */
-      .links {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-        margin-top: 2rem;
-      }
-      .link-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.75rem;
-        padding: 1rem;
-        background: rgba(255,255,255,0.05);
-        border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 12px;
-        text-decoration: none;
-        color: #fff;
-        font-weight: 500;
-        transition: all 0.2s;
-      }
-      .link-btn:hover { background: rgba(200,255,0,0.1); border-color: rgba(200,255,0,0.3); }
+      .card li { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.45rem; }
+      .card li strong { color: var(--text); }
+      .tip { background: var(--accent-soft); border: 1px solid var(--accent-ring); border-radius: 12px; padding: 0.9rem 1rem; margin-top: 1rem; }
+      .tip strong { color: var(--accent); }
+      .tip p { color: var(--text-muted); font-size: 0.88rem; }
+
+      .features-grid { display: grid; gap: 0.9rem; }
+      @media (min-width: 540px) { .features-grid { grid-template-columns: repeat(2, 1fr); } }
+      .feature { display: flex; gap: 0.9rem; padding: 1rem; background: var(--bg-surface); border: 1px solid var(--line); border-radius: 12px; }
+      .feature-icon { width: 42px; height: 42px; background: var(--accent-soft); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+      .feature-icon svg { width: 20px; height: 20px; color: var(--accent); }
+      .feature h3 { font-size: 0.96rem; font-weight: 700; margin-bottom: 0.2rem; }
+      .feature p { color: var(--text-muted); font-size: 0.84rem; line-height: 1.45; }
+
+      .links { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.5rem; }
+      .link-btn { display: flex; align-items: center; justify-content: center; gap: 0.7rem; min-height: 52px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--line-strong); border-radius: 12px; text-decoration: none; color: var(--text); font-weight: 600; transition: background 0.2s var(--ease), transform 0.2s var(--ease); }
+      .link-btn:hover { background: rgba(200, 255, 0, 0.08); border-color: var(--accent-ring); transform: translateY(-2px); }
       .link-btn svg { width: 20px; height: 20px; }
-      .link-btn.primary { background: #c8ff00; color: #000; border: none; }
-      .link-btn.primary:hover { opacity: 0.95; }
-      /* Footer */
-      footer {
-        padding: 2rem;
-        text-align: center;
-        border-top: 1px solid rgba(255,255,255,0.05);
-        color: #444;
-        font-size: 0.85rem;
-      }
-      /* Responsive */
-      @media (min-width: 500px) {
-        .features-grid { grid-template-columns: repeat(2, 1fr); }
-      }
+      .link-btn.primary { background: var(--accent); color: #000; border: none; }
+      .link-btn.primary:hover { transform: translateY(-2px); }
+
+      footer { padding: 2.25rem 1.25rem; text-align: center; border-top: 1px solid var(--line); color: var(--text-faint); font-size: 0.85rem; }
+
+      /* Reveal */
+      .reveal { opacity: 0; transform: translateY(18px); clip-path: inset(0 0 100% 0); transition: opacity 0.6s var(--ease), transform 0.6s var(--ease), clip-path 0.7s var(--ease); }
+      .reveal.in { opacity: 1; transform: none; clip-path: inset(0 0 0 0); }
     </style>
   </head>
   <body>
-    <div class="container">
-      <!-- Header -->
-      <header class="header">
-        <svg class="logo" viewBox="0 0 100 100" fill="none">
-          <rect width="100" height="100" rx="24" fill="#1a1a1f"/>
-          <path d="M25 50h50M50 30v40M35 40l15-10 15 10M35 60l15 10 15-10" stroke="#c8ff00" stroke-width="4" stroke-linecap="round"/>
+    <a class="skip-link" href="#main">Saltar al contenido</a>
+
+    <nav class="nav" aria-label="Principal">
+      <div class="nav-inner">
+        <a class="back" href="landing.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" /></svg>
+          Inicio
+        </a>
+        <a class="nav-cta" href="https://github.com/Haplee/gymlog/releases/download/v4.0.0/GymLog-v4.0.0.apk" download>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+          Descargar
+        </a>
+      </div>
+    </nav>
+
+    <header class="header">
+      <div class="wrap">
+        <svg class="logo" viewBox="0 0 100 100" fill="none" aria-hidden="true">
+          <rect width="100" height="100" rx="24" fill="#1a1a1f" />
+          <path d="M25 50h50M50 30v40M35 40l15-10 15 10M35 60l15 10 15-10" stroke="#c8ff00" stroke-width="5" stroke-linecap="round" />
         </svg>
         <h1>Guía de <span>GymLog</span></h1>
         <p class="subtitle">Aprende a usar la app en minutos</p>
-      </header>
+      </div>
+    </header>
 
-      <!-- Content -->
-      <main class="content">
-        <!-- Getting Started -->
-        <section class="section">
-          <h2>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="5 3 19 12 5 21 5 3"/>
-            </svg>
-            Primeros Pasos
-          </h2>
-          
+    <main id="main" class="content">
+      <div class="wrap">
+        <!-- Primeros pasos -->
+        <section class="section reveal">
+          <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3" /></svg> Primeros pasos</h2>
           <div class="card">
-            <h3><span class="step">1</span> Accede a la App</h3>
-            <p>Puedes usar GymLog desde cualquier navegador web o instalarla como app en tu móvil.</p>
-            <div class="tip">
-              <p><strong>💡 Consejo:</strong> En iPhone, desde Safari pulsa el botón de compartir y selecciona "Añadir a pantalla de inicio" para tenerla como una app native.</p>
-            </div>
+            <h3><span class="step">1</span> Accede a la app</h3>
+            <p>Usa GymLog desde cualquier navegador o instálala en tu móvil como app.</p>
+            <div class="tip"><p><strong>💡 Consejo:</strong> en iPhone, desde Safari pulsa «Compartir» → «Añadir a pantalla de inicio» para tenerla como app nativa.</p></div>
           </div>
-
           <div class="card">
             <h3><span class="step">2</span> Crea tu cuenta</h3>
-            <p>Regístrate con tu email o usa Google para acceder. Solo necesitas un email para empezar.</p>
+            <p>Regístrate con tu email o accede con Google. Solo necesitas un email para empezar.</p>
           </div>
-
           <div class="card">
             <h3><span class="step">3</span> Configura tus preferencias</h3>
             <p>En Ajustes puedes cambiar:</p>
@@ -204,168 +177,107 @@
           </div>
         </section>
 
-        <!-- Recording Workout -->
-        <section class="section">
-          <h2>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 20V10M18 20V4M6 20v-4"/>
-            </svg>
-            Registrar un Entrenamiento
-          </h2>
-          
+        <!-- Registrar entrenamiento -->
+        <section class="section reveal">
+          <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20V10M18 20V4M6 20v-4" /></svg> Registrar un entrenamiento</h2>
           <div class="card">
             <h3><span class="step">1</span> Selecciona un ejercicio</h3>
-            <p>Busca en tu biblioteca o elige de las rutinas predefinidas: Press de Banca, Sentadilla, Peso Muerto, etc.</p>
+            <p>Búscalo en tu biblioteca o elige de las rutinas predefinidas: Press de Banca, Sentadilla, Peso Muerto, etc.</p>
           </div>
-
           <div class="card">
             <h3><span class="step">2</span> Añade tus series</h3>
             <p>Para cada serie indica:</p>
             <ul>
-              <li><strong>Peso:</strong> El peso que has levantado (en kg o lb)</li>
-              <li><strong>Repeticiones:</strong> El número de reps completadas</li>
-              <li><strong>Warmup:</strong> Marca si es serie de calentamiento</li>
+              <li><strong>Peso:</strong> el peso levantado (kg o lb)</li>
+              <li><strong>Repeticiones:</strong> número de reps completadas</li>
+              <li><strong>Calentamiento:</strong> marca si es una serie de warmup</li>
             </ul>
           </div>
-
           <div class="card">
             <h3><span class="step">3</span> Guarda y celebra</h3>
-            <p>Pulsa "Guardar" al finalizar. Si has batido un récord personal, ¡celebrarás con confetti!</p>
-            <div class="tip">
-              <p><strong>🏆 PR:</strong> Cuando superas tu mejor marca en peso o estimado 1RM, la app lo detecta automáticamente.</p>
-            </div>
+            <p>Pulsa «Guardar» al terminar. Si bates un récord personal, ¡lo celebras con confetti!</p>
+            <div class="tip"><p><strong>🏆 PR:</strong> cuando superas tu mejor marca de peso o 1RM estimado, la app lo detecta automáticamente.</p></div>
           </div>
         </section>
 
-        <!-- Key Features -->
-        <section class="section">
-          <h2>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-            </svg>
-            Funciones Principales
-          </h2>
-          
+        <!-- Funciones -->
+        <section class="section reveal">
+          <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" /></svg> Funciones principales</h2>
           <div class="features-grid">
             <div class="feature">
-              <div class="feature-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                  <polyline points="14 2 14 8 20 8"/>
-                  <line x1="16" y1="13" x2="8" y2="13"/>
-                  <line x1="16" y1="17" x2="8" y2="17"/>
-                </svg>
-              </div>
-              <div>
-                <h4>Rutinas Predefinidas</h4>
-                <p>Accede a rutinas populares como PPL, Full Body, y ejercicios individuales.</p>
-              </div>
+              <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg></div>
+              <div><h3>Rutinas predefinidas</h3><p>PPL, Full Body y ejercicios individuales listos para usar.</p></div>
             </div>
-            
             <div class="feature">
-              <div class="feature-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="18" y1="20" x2="18" y2="10"/>
-                  <line x1="12" y1="20" x2="12" y2="4"/>
-                  <line x1="6" y1="20" x2="6" y2="14"/>
-                </svg>
-              </div>
-              <div>
-                <h4>Estadísticas</h4>
-                <p>Gráficos de volumen, progresión y distribución muscular.</p>
-              </div>
+              <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></svg></div>
+              <div><h3>Estadísticas</h3><p>Gráficos de volumen, progresión y distribución muscular.</p></div>
             </div>
-            
             <div class="feature">
-              <div class="feature-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10"/>
-                  <polyline points="12 6 12 12 16 14"/>
-                </svg>
-              </div>
-              <div>
-                <h4>Historial Completo</h4>
-                <p>Consulta todos tus entrenamientos pasados y revisa tu progreso.</p>
-              </div>
+              <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg></div>
+              <div><h3>Historial completo</h3><p>Consulta todos tus entrenamientos pasados y revisa tu progreso.</p></div>
             </div>
-            
             <div class="feature">
-              <div class="feature-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                  <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                </svg>
-              </div>
-              <div>
-                <h4>Recordatorios</h4>
-                <p>Recibe avisos si llevas 2 días sin entrenar.</p>
-              </div>
+              <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg></div>
+              <div><h3>Recordatorios</h3><p>Recibe avisos si llevas días sin entrenar y mantén la racha.</p></div>
             </div>
           </div>
         </section>
 
-        <!-- Tips -->
-        <section class="section">
-          <h2>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="16" x2="12" y2="12"/>
-              <line x1="12" y1="8" x2="12.01" y2="8"/>
-            </svg>
-            Consejos
-          </h2>
-          
+        <!-- Consejos -->
+        <section class="section reveal">
+          <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg> Consejos</h2>
           <div class="card">
-            <h3>Usa notas en ejercicios</h3>
-            <p>Añade notas a cada ejercicio para recordar técnicas, molestias o metas específicas. Las notas se guardan y aparecen cuando seleccionas el ejercicio.</p>
+            <h3>Usa notas en los ejercicios</h3>
+            <p>Añade notas para recordar técnica, molestias o metas. Se guardan y aparecen al seleccionar el ejercicio.</p>
           </div>
-
           <div class="card">
-            <h3>Marca series de calentamiento</h3>
-            <p>Activa "Series de calentamiento" en Ajustes para poder marcar tus warmups. No cuentan para tus estadísticas de volumen.</p>
+            <h3>Marca las series de calentamiento</h3>
+            <p>Activa «Series de calentamiento» en Ajustes. No cuentan para tus estadísticas de volumen.</p>
           </div>
-
           <div class="card">
             <h3>Revisa tu progreso</h3>
-            <p>En la pestaña de Estadísticas puedes ver tu racha actual, volumen semanal, y gráficos de progresión por ejercicio.</p>
+            <p>En Estadísticas ves tu racha actual, volumen semanal y gráficos de progresión por ejercicio.</p>
           </div>
         </section>
 
-        <!-- Download Links -->
-        <section class="section">
-          <h2>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="7 10 12 15 17 10"/>
-              <line x1="12" y1="15" x2="12" y2="3"/>
-            </svg>
-            Descargar App
-          </h2>
-          
+        <!-- Descargar -->
+        <section class="section reveal">
+          <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg> Descargar la app</h2>
           <div class="links">
-            <a href="https://pesos-wine.vercel.app/app" class="link-btn primary">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="2" y1="12" x2="22" y2="12"/>
-                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-              </svg>
-              Usar GymLog Online
+            <a class="link-btn primary" href="https://gymlog.vercel.app/app">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>
+              Usar GymLog online
             </a>
-            <a href="https://github.com/Haplee/pesos/releases/download/3.0.0/GymLog-v3.0.0.apk" class="link-btn" download>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
-                <line x1="12" y1="18" x2="12.01" y2="18"/>
-              </svg>
+            <a class="link-btn" href="https://github.com/Haplee/gymlog/releases/download/v4.0.0/GymLog-v4.0.0.apk" download>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="2" ry="2" /><line x1="12" y1="18" x2="12.01" y2="18" /></svg>
               Descargar APK (Android)
             </a>
           </div>
         </section>
-      </main>
+      </div>
+    </main>
 
-      <!-- Footer -->
-      <footer>
-        <p>GymLog v3.0.0 © 2024-2026 · Tu compañero de entrenamiento</p>
-      </footer>
-    </div>
+    <footer>
+      <p>GymLog v4.0.0 · © 2024–2026 Francisco Vidal Mateo · Tu compañero de entrenamiento.</p>
+    </footer>
+
+    <script>
+      (function () {
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var reveals = document.querySelectorAll('.reveal');
+        if (reduce || !('IntersectionObserver' in window)) {
+          reveals.forEach(function (el) { el.classList.add('in'); });
+          return;
+        }
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (e) {
+            if (!e.isIntersecting) return;
+            e.target.classList.add('in');
+            io.unobserve(e.target);
+          });
+        }, { threshold: 0.15, rootMargin: '0px 0px -6% 0px' });
+        reveals.forEach(function (el) { io.observe(el); });
+      })();
+    </script>
   </body>
 </html>

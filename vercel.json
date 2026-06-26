@@ -30,10 +30,10 @@
       ]
     },
     {
-      "source": "/GymLog-v2.8.2.apk",
+      "source": "/GymLog-v4.0.0.apk",
       "headers": [
         { "key": "Content-Type", "value": "application/vnd.android.package-archive" },
-        { "key": "Content-Disposition", "value": "attachment; filename=GymLog-v2.8.0.apk" }
+        { "key": "Content-Disposition", "value": "attachment; filename=GymLog-v4.0.0.apk" }
       ]
     },
     {

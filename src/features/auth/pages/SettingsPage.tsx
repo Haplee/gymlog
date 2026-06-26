@@ -58,6 +58,8 @@ export function SettingsPage() {
     setRestAutoStart,
     restDuration,
     setRestDuration,
+    restByExercise,
+    setRestByExercise,
   } = useSettingsStore();
   const [biometricSupport, setBiometricSupport] = useState<{ available: boolean; message: string }>(
     { available: false, message: '' },
@@ -191,19 +193,15 @@ export function SettingsPage() {
 
   return (
     <Layout>
-      <div className="fade-in-up text-xl font-extrabold mb-4 scale-in text-accent">
-        {t('settings.title')}
-      </div>
-
       <div className="space-y-3 pb-20">
         {!isNative() && (
           <a
-            href="https://github.com/Haplee/pesos/releases/download/3.0.0/GymLog-v3.0.0.apk"
+            href="https://github.com/Haplee/gymlog/releases/download/v4.0.0/GymLog-v4.0.0.apk"
             download
             className="block rounded-2xl p-4 scale-in border text-center bg-surface border-line-accent text-accent shadow-card transition-transform active:scale-[0.99]"
           >
             <div className="text-base font-semibold">Descargar App Android</div>
-            <div className="text-xs mt-1 opacity-70">GymLog v3.0.0</div>
+            <div className="text-xs mt-1 opacity-70">GymLog v4.0.0</div>
           </a>
         )}
 
@@ -307,6 +305,20 @@ export function SettingsPage() {
           </div>
         )}
 
+        {/* Dispositivos / Wearables */}
+        <button
+          onClick={() => navigate('/wearables')}
+          className="w-full text-left rounded-2xl p-4 scale-in bg-surface border border-line-strong shadow-card transition-transform active:scale-[0.99]"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-base text-fg">{t('settings.wearables')}</div>
+              <div className="text-xs text-fg-subtle">{t('settings.wearables_desc')}</div>
+            </div>
+            <span className="text-fg-subtle">›</span>
+          </div>
+        </button>
+
         {/* Recordatorios de entrenamiento */}
         <div className="rounded-2xl p-4 scale-in bg-surface border border-line-strong shadow-card">
           <div className="flex items-center justify-between">
@@ -405,12 +417,30 @@ export function SettingsPage() {
                       borderColor:
                         restDuration === seconds
                           ? 'var(--interactive-primary)'
-                          : 'var(--border-glass)',
+                          : 'var(--border-subtle)',
                     }}
                   >
                     {seconds < 120 ? `${seconds}s` : `${seconds / 60}min`}
                   </button>
                 ))}
+              </div>
+
+              <div className="mt-4 pt-4 border-t border-line flex items-center justify-between">
+                <div>
+                  <div className="text-base text-fg">{t('settings.rest_by_exercise')}</div>
+                  <div className="text-xs text-fg-subtle">
+                    {t('settings.rest_by_exercise_desc')}
+                  </div>
+                </div>
+                <button
+                  onClick={() => setRestByExercise(!restByExercise)}
+                  className={`w-12 h-6 rounded-full transition-all relative ${restByExercise ? 'bg-accent toggle-on' : 'bg-surface-3'}`}
+                  aria-pressed={restByExercise}
+                >
+                  <div
+                    className={`absolute top-1 w-4 h-4 rounded-full bg-fg shadow-sm transition-all ${restByExercise ? 'left-7' : 'left-1'}`}
+                  />
+                </button>
               </div>
             </div>
           )}
@@ -424,13 +454,13 @@ export function SettingsPage() {
             color: '#ffffff',
           }}
         >
-          <div className="text-[1rem] font-semibold">{t('settings.logout')}</div>
+          <div className="text-base font-semibold">{t('settings.logout')}</div>
         </button>
 
         <div className="rounded-2xl p-6 scale-in flex flex-col items-center text-center bg-surface border border-line-strong">
           <GymLogLogo size="lg" variant="stacked" className="mb-4" />
           <div className="text-sm font-bold text-accent mb-4 uppercase tracking-[0.2em] bg-accent/10 px-3 py-1 rounded-full">
-            Version 3.0
+            Version 4.0
           </div>
           <div className="text-sm leading-relaxed text-fg-subtle max-w-[240px]">
             Tu compañero definitivo para el seguimiento de entrenamientos de fuerza.

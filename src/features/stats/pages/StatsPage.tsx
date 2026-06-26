@@ -28,6 +28,9 @@ const VolumeChart = lazy(() =>
 const ProgressionChart = lazy(() =>
   import('../components/Charts').then((mod) => ({ default: mod.ProgressionChart })),
 );
+const ExerciseComparisonChart = lazy(() =>
+  import('../components/Charts').then((mod) => ({ default: mod.ExerciseComparisonChart })),
+);
 
 function ChartFallback() {
   return <div className="h-56 skeleton rounded-2xl" aria-hidden="true" />;
@@ -128,6 +131,8 @@ export function StatsPage() {
   const [rmReps, setRmReps] = useState('');
   const [rmResult, setRmResult] = useState<number | null>(null);
   const [goalInput, setGoalInput] = useState('');
+  const [compareA, setCompareA] = useState('');
+  const [compareB, setCompareB] = useState('');
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['workoutsAndSets', user?.id],
@@ -284,6 +289,31 @@ export function StatsPage() {
   const progressionData = useMemo(() => {
     return buildProgressionData(recentSets, activeExercise, metricFilter);
   }, [recentSets, activeExercise, metricFilter]);
+
+  // Comparador: mejor 1RM estimado por día para dos ejercicios, alineado por fecha.
+  const cmpA = compareA || uniqueExercises[0] || '';
+  const cmpB = compareB || uniqueExercises[1] || '';
+  const comparisonData = useMemo(() => {
+    if (!cmpA || !cmpB || cmpA === cmpB) return [];
+    const byDateA = new Map<string, number>();
+    const byDateB = new Map<string, number>();
+    for (const s of recentSets) {
+      if ((s as { is_warmup?: boolean | null }).is_warmup) continue;
+      const name = s.exercise?.name;
+      const dateStr = s.workout?.started_at;
+      if (!name || !dateStr) continue;
+      const day = dateStr.slice(0, 10);
+      const e = calcular1RM(s.weight, s.reps);
+      if (name === cmpA) byDateA.set(day, Math.max(byDateA.get(day) ?? 0, e));
+      if (name === cmpB) byDateB.set(day, Math.max(byDateB.get(day) ?? 0, e));
+    }
+    const days = [...new Set([...byDateA.keys(), ...byDateB.keys()])].sort();
+    return days.map((day) => ({
+      date: day,
+      a: byDateA.has(day) ? Math.round(byDateA.get(day) as number) : null,
+      b: byDateB.has(day) ? Math.round(byDateB.get(day) as number) : null,
+    }));
+  }, [recentSets, cmpA, cmpB]);
 
   // Cardio stats
   const cardioStats = useMemo(() => {
@@ -470,7 +500,7 @@ export function StatsPage() {
                   </svg>
                 </div>
                 <div
-                  className="font-mono font-bold leading-none"
+                  className="font-mono font-bold leading-none tabular-nums"
                   style={{ fontSize: '2.25rem', color: 'var(--text-primary)' }}
                 >
                   {maxStreak}
@@ -504,7 +534,7 @@ export function StatsPage() {
                   </svg>
                 </div>
                 <div
-                  className="font-mono font-bold leading-none"
+                  className="font-mono font-bold leading-none tabular-nums"
                   style={{ fontSize: '2.25rem', color: 'var(--interactive-primary)' }}
                 >
                   {totalPRs}
@@ -884,6 +914,56 @@ export function StatsPage() {
               )}
             </m.div>
           )}
+
+          {/* Comparador de ejercicios */}
+          {uniqueExercises.length >= 2 && (
+            <m.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="rounded-card p-4 bg-surface"
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <TrendingUp className="w-4 h-4 text-accent" />
+                <span className="text-sm font-semibold text-fg">Comparar ejercicios</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                <select
+                  value={cmpA}
+                  onChange={(e) => setCompareA(e.target.value)}
+                  aria-label="Ejercicio A"
+                  className="w-full rounded-xl text-sm p-2.5 bg-surface-2 border border-line-strong text-fg"
+                >
+                  {uniqueExercises.map((ex) => (
+                    <option key={ex} value={ex}>
+                      {ex}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={cmpB}
+                  onChange={(e) => setCompareB(e.target.value)}
+                  aria-label="Ejercicio B"
+                  className="w-full rounded-xl text-sm p-2.5 bg-surface-2 border border-line-strong text-fg"
+                >
+                  {uniqueExercises.map((ex) => (
+                    <option key={ex} value={ex}>
+                      {ex}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {cmpA === cmpB ? (
+                <div className="text-center py-8 text-sm text-fg-subtle">
+                  Elige dos ejercicios distintos.
+                </div>
+              ) : (
+                <Suspense fallback={<ChartFallback />}>
+                  <ExerciseComparisonChart data={comparisonData} nameA={cmpA} nameB={cmpB} />
+                </Suspense>
+              )}
+            </m.div>
+          )}
         </section>
 
         {/* ── Recuperación ── */}
@@ -934,7 +1014,7 @@ export function StatsPage() {
           </div>
           <div className="mt-4 text-center">
             <div className="text-xs mb-1 text-fg-subtle">1RM estimado</div>
-            <div className="text-3xl font-bold font-mono text-accent">
+            <div className="text-3xl font-bold font-mono text-accent tabular-nums">
               {rmResult ? `${rmResult.toFixed(1)} kg` : '—'}
             </div>
           </div>

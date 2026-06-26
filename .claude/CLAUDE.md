@@ -1,7 +1,7 @@
 # GymLog — CLAUDE.md
 
 > PWA + app Android nativa (Capacitor) para registro de entrenamiento de fuerza y cardio.
-> Autor: Francisco Vidal Mateo (GitHub: Haplee) · Repo: github.com/Haplee/pesos
+> Autor: Francisco Vidal Mateo (GitHub: Haplee) · Repo: github.com/Haplee/gymlog
 
 ---
 

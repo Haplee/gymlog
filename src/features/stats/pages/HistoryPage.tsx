@@ -5,6 +5,12 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { m } from 'framer-motion';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useWorkoutStore } from '@features/workout/stores/workoutStore';
+import {
+  useRoutineStore,
+  type Routine,
+  type DayOfWeek,
+  type RoutineExercise,
+} from '@features/routine/stores/routineStore';
 import { useCardioStore, CARDIO_LABELS } from '@features/cardio/stores/cardioStore';
 import { Layout } from '@app/components/Layout';
 import { supabase } from '@shared/lib/supabase';
@@ -21,7 +27,24 @@ import { Modal, Button } from '@shared/components/ui';
 import { CardioTypeIcon } from '@shared/components/CardioIcons';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { ChevronRight, Trash2, Repeat, Share2, BarChart2, Pencil } from 'lucide-react';
+import {
+  tokenizeCsvLine,
+  parseImportNumber as parseNumber,
+  parseImportDate as parseDate,
+  isHeaderLine,
+  buildExportCsv,
+  buildExportJson,
+} from '@features/stats/utils/exportImport';
+import {
+  ChevronRight,
+  Trash2,
+  Repeat,
+  Share2,
+  BarChart2,
+  Pencil,
+  Star,
+  BookmarkPlus,
+} from 'lucide-react';
 import { devError } from '@shared/lib/devtools';
 
 interface GroupedWorkout {
@@ -84,7 +107,7 @@ function ExerciseRow({
           {sortedSets.map((s) => (
             <div
               key={s.id}
-              className="flex flex-col gap-1 px-3 py-2 rounded-xl ml-7 bg-surface-2 border border-line-glass"
+              className="flex flex-col gap-1 px-3 py-2 rounded-xl ml-7 bg-surface-2 border border-line"
             >
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-3">
@@ -129,11 +152,82 @@ function ExerciseRow({
   );
 }
 
+function WorkoutMeta({ workout }: { workout: WorkoutWithSets }) {
+  const rating = workout.rating ?? null;
+  const notes = workout.notes?.trim();
+  if (!rating && !notes) return null;
+  return (
+    <div className="mt-2 flex flex-col gap-1">
+      {rating ? (
+        <div className="flex items-center gap-0.5">
+          {[1, 2, 3, 4, 5].map((n) => (
+            <Star
+              key={n}
+              className={`w-3.5 h-3.5 ${n <= rating ? 'fill-accent text-accent' : 'text-fg-subtle'}`}
+              aria-hidden="true"
+            />
+          ))}
+        </div>
+      ) : null}
+      {notes ? <div className="text-xs italic text-fg-subtle">“{notes}”</div> : null}
+    </div>
+  );
+}
+
 function formatDuration(s: number): string {
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
   if (h > 0) return `${h}h ${m}m`;
   return `${m}min`;
+}
+
+function repsRange(reps: number[]): string {
+  if (!reps.length) return '';
+  const min = Math.min(...reps);
+  const max = Math.max(...reps);
+  return min === max ? String(min) : `${min}-${max}`;
+}
+
+// Crea una rutina custom a partir de los entrenos de un día: agrupa por ejercicio
+// (sets = nº de series, reps = rango observado) y los coloca en el día de hoy.
+function buildTemplateFromWorkouts(dayWorkouts: WorkoutWithSets[], name: string): Routine {
+  const map = new Map<string, number[]>();
+  for (const wo of dayWorkouts) {
+    for (const s of wo.sets) {
+      const exName = s.exercise?.name?.trim();
+      if (!exName) continue;
+      const arr = map.get(exName) ?? [];
+      arr.push(s.reps);
+      map.set(exName, arr);
+    }
+  }
+  const exercises: RoutineExercise[] = [...map].map(([exName, reps]) => ({
+    name: exName,
+    sets: reps.length,
+    reps: repsRange(reps),
+  }));
+  const mkRest = () => ({ name: 'Descanso', exercises: [] as RoutineExercise[] });
+  const days: Routine['days'] = {
+    monday: mkRest(),
+    tuesday: mkRest(),
+    wednesday: mkRest(),
+    thursday: mkRest(),
+    friday: mkRest(),
+    saturday: mkRest(),
+    sunday: mkRest(),
+  };
+  const today = (
+    ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as DayOfWeek[]
+  )[new Date().getDay()];
+  days[today] = { name, exercises };
+  return {
+    id: `custom-${Date.now()}`,
+    name,
+    description: '',
+    isCustom: true,
+    createdAt: new Date().toISOString(),
+    days,
+  };
 }
 
 interface EditRow {
@@ -241,6 +335,7 @@ export function HistoryPage() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const { repeatWorkout } = useWorkoutStore();
+  const { addRoutine, saveToDb: saveRoutinesToDb } = useRoutineStore();
   const {
     sessions: cardioSessions,
     deleteSession: deleteCardioSession,
@@ -308,6 +403,16 @@ export function HistoryPage() {
     navigate('/');
   };
 
+  const handleSaveTemplate = (dayWorkouts: WorkoutWithSets[], label: string) => {
+    const hasExercises = dayWorkouts.some((w) => w.sets.length > 0);
+    if (!hasExercises) return;
+    const name = `${t('history.template_prefix')} ${label}`;
+    addRoutine(buildTemplateFromWorkouts(dayWorkouts, name));
+    if (user) void saveRoutinesToDb(user.id);
+    toast.success(t('history.template_saved'));
+    navigate('/routines');
+  };
+
   const exercises = [...new Set(recentSets.map((s) => s.exercise?.name).filter(Boolean))];
 
   const search = searchText.trim().toLowerCase();
@@ -352,16 +457,7 @@ export function HistoryPage() {
   };
 
   const exportToExcel = async () => {
-    const BOM = '\uFEFF';
-    let csv = BOM + 'Fecha,Ejercicio,Repeticiones,Peso\n';
-
-    filteredSets.forEach((s: WorkoutSetWithDetails) => {
-      const exName = s.exercise?.name || 'Desconocido';
-      const safeName = exName.replace(/"/g, '""');
-      const dateFormatted = s.workout?.started_at ? s.workout.started_at.split('T')[0] : '';
-      csv += `${dateFormatted},"${safeName}",${s.reps ?? 0},${s.weight ?? 0}\n`;
-    });
-
+    const csv = buildExportCsv(filteredSets);
     const fileName = `gymlog_${new Date().toISOString().split('T')[0]}.csv`;
 
     if (Capacitor.isNativePlatform()) {
@@ -377,13 +473,13 @@ export function HistoryPage() {
           path: fileName,
         });
         await Share.share({
-          title: 'Exportar Historial',
+          title: t('history.export_share_title'),
           url: uriResult.uri,
-          dialogTitle: 'Compartir Historial',
+          dialogTitle: t('history.export_share_dialog'),
         });
       } catch (e) {
         devError('Error export native', e);
-        toast.error('Error al exportar histórico');
+        toast.error(t('history.export_error'));
       }
     } else {
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -405,13 +501,13 @@ export function HistoryPage() {
         });
         const uriResult = await Filesystem.getUri({ directory: Directory.Cache, path: fileName });
         await Share.share({
-          title: 'Exportar Historial',
+          title: t('history.export_share_title'),
           url: uriResult.uri,
-          dialogTitle: 'Compartir Historial',
+          dialogTitle: t('history.export_share_dialog'),
         });
       } catch (err) {
         devError('Error export native', err);
-        toast.error('Error al exportar histórico');
+        toast.error(t('history.export_error'));
       }
     } else {
       const blob = new Blob([data], { type: mime });
@@ -423,35 +519,18 @@ export function HistoryPage() {
   };
 
   const exportToJson = async () => {
-    const payload = {
-      app: 'GymLog',
-      version: 2,
-      exported_at: new Date().toISOString(),
-      workouts: workouts.map((w) => ({
-        started_at: w.started_at,
-        finished_at: w.ended_at ?? null,
-        sets: [...w.sets]
-          .sort((a, b) => a.set_num - b.set_num)
-          .map((s) => ({
-            exercise: s.exercise?.name ?? null,
-            set_num: s.set_num,
-            reps: s.reps,
-            weight: s.weight,
-            is_warmup: s.is_warmup ?? false,
-            rpe: typeof s.rpe === 'number' ? s.rpe : null,
-            notes: s.notes ?? null,
-          })),
-      })),
-      cardio: cardioSessions,
-    };
     const fileName = `gymlog_${new Date().toISOString().split('T')[0]}.json`;
-    await saveBlob(fileName, JSON.stringify(payload, null, 2), 'application/json;charset=utf-8;');
+    await saveBlob(
+      fileName,
+      buildExportJson(workouts, cardioSessions),
+      'application/json;charset=utf-8;',
+    );
   };
 
   const importFromJson = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) {
-      toast.error('Selecciona un archivo e inicia sesión');
+      toast.error(t('history.select_file_login'));
       return;
     }
     const reader = new FileReader();
@@ -464,7 +543,7 @@ export function HistoryPage() {
           return;
         }
 
-        toast.info('Cargando datos...');
+        toast.info(t('history.loading_data'));
         const exerciseList = await fetchExercises(user.id);
         const resolveExerciseId = async (name: string): Promise<string | null> => {
           const clean = (name || '').trim();
@@ -554,14 +633,14 @@ export function HistoryPage() {
   const importFromCsv = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) {
-      toast.error('Selecciona un archivo e inicia sesión');
+      toast.error(t('history.select_file_login'));
       return;
     }
 
     const validExtensions = ['.csv', '.txt'];
     const fileName = file.name.toLowerCase();
     if (!validExtensions.some((ext) => fileName.endsWith(ext))) {
-      toast.error('Formato no válido');
+      toast.error(t('history.invalid_format'));
       return;
     }
 
@@ -571,18 +650,18 @@ export function HistoryPage() {
         const text = event.target?.result as string;
 
         if (!text || text.trim().length === 0) {
-          toast.error('El archivo está vacío');
+          toast.error(t('history.file_empty'));
           return;
         }
 
         const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
 
         if (lines.length < 2) {
-          toast.error('El archivo no tiene suficientes datos');
+          toast.error(t('history.file_insufficient'));
           return;
         }
 
-        toast.info('Cargando datos...');
+        toast.info(t('history.loading_data'));
         const exerciseList = await fetchExercises(user.id);
 
         const getExerciseId = async (name: string): Promise<string | null> => {
@@ -629,73 +708,6 @@ export function HistoryPage() {
           }
         };
 
-        const parseNumber = (val: string | undefined): number | null => {
-          if (!val) return null;
-          let cleaned = val.replace(/["']/g, '').trim().toLowerCase();
-          if (cleaned === '' || cleaned === '-' || cleaned === 'no' || cleaned === 'n/a')
-            return null;
-          cleaned = cleaned
-            .replace(/[a-z]/g, ' ')
-            .replace(/[^\d,.-]/g, ' ')
-            .replace(/,/g, '.')
-            .replace(/\s+/g, ' ')
-            .trim();
-          const num = parseFloat(cleaned);
-          return !isNaN(num) && num > 0 && num < 2000 ? Math.round(num * 10) / 10 : null;
-        };
-
-        const parseDate = (dateStr: string): string | null => {
-          if (!dateStr || dateStr.trim() === '') return null;
-          const cleaned = dateStr.trim();
-          if (/^\d{4}-\d{2}-\d{2}$/.test(cleaned)) return cleaned;
-          const formats = [
-            { regex: /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/, day: 1, month: 2, year: 3 },
-            { regex: /^(\d{1,2})-(\d{1,2})-(\d{4})$/, day: 1, month: 2, year: 3 },
-            { regex: /^(\d{1,2})\/(\d{1,2})\/(\d{2})$/, day: 1, month: 2, year: 3 },
-          ];
-          for (const fmt of formats) {
-            const match = cleaned.match(fmt.regex);
-            if (match) {
-              let year = parseInt(match[fmt.year], 10);
-              const month = parseInt(match[fmt.month], 10);
-              const day = parseInt(match[fmt.day], 10);
-              if (year < 100) year += 2000;
-              if (day >= 1 && day <= 31 && month >= 1 && month <= 12) {
-                return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-              }
-            }
-          }
-          return null;
-        };
-
-        const isHeaderLine = (firstCol: string): boolean => {
-          const lower = firstCol.toLowerCase();
-          const headers = [
-            'tren superior',
-            'tren inferior',
-            'pecho',
-            'espalda',
-            'hombro',
-            'multiarticulares',
-            'isquio',
-            'femoral',
-            'abductores',
-            'adductores',
-            'cuádriceps',
-            'gemelos',
-            'tibiales',
-            'bíceps',
-            'tríceps',
-            'piernas',
-            'brazo',
-            'espalda baja',
-            'glúteos',
-            'core',
-            'abdomen',
-          ];
-          return headers.some((h) => lower.includes(h));
-        };
-
         let imported = 0;
         const errors: string[] = [];
         const dateWorkoutMap: Record<string, string> = {};
@@ -708,23 +720,7 @@ export function HistoryPage() {
 
           if (line.length > 1000) continue;
 
-          const cols: string[] = [];
-          let inQuotes = false;
-          let current = '';
-
-          for (let j = 0; j < line.length; j++) {
-            const char = line[j];
-            if (char === '"') {
-              inQuotes = !inQuotes;
-            } else if (char === ',' && !inQuotes) {
-              cols.push(current.trim());
-              current = '';
-            } else {
-              current += char;
-            }
-          }
-          cols.push(current.trim());
-
+          const cols = tokenizeCsvLine(line);
           while (cols.length < 5) cols.push('');
 
           const firstCol = cols[0].replace(/^"|"$/g, '').trim();
@@ -828,20 +824,24 @@ export function HistoryPage() {
           await refetchWorkouts();
         }
 
-        let message = imported > 0 ? `Importados: ${imported}` : 'No se pudieron importar datos';
+        let message =
+          imported > 0
+            ? t('history.import_success', { count: imported })
+            : t('history.import_none');
 
-        if (errors.length > 0) message += ` (${errors.length} errores obvios saltados)`;
+        if (errors.length > 0)
+          message += ` ${t('history.import_skipped', { count: errors.length })}`;
 
         if (imported > 0) toast.success(message);
         else toast.error(message);
       } catch (err) {
         devError('Import error:', err);
-        toast.error('Error inesperado al importar datos');
+        toast.error(t('history.import_unexpected'));
       }
     };
 
     reader.onerror = () => {
-      toast.error('Error al leer el archivo desde tu dispositivo');
+      toast.error(t('history.read_file_error'));
     };
 
     reader.readAsText(file);
@@ -897,8 +897,8 @@ export function HistoryPage() {
 
   return (
     <Layout>
-      {/* Barra de filtros sticky con tratamiento glass */}
-      <div className="sticky top-0 z-20 py-2 -mt-2 mb-3 space-y-2 bg-base">
+      {/* Barra de filtros: scrollea con el contenido (no fija) */}
+      <div className="mb-3 space-y-2">
         {/* Segmented control de vista — píldora deslizante */}
         <div
           role="tablist"
@@ -907,7 +907,7 @@ export function HistoryPage() {
         >
           {(
             [
-              { id: 'all', label: 'Todo' },
+              { id: 'all', label: t('history.view_all') },
               { id: 'workouts', label: t('history.workouts_view') },
               { id: 'sets', label: t('history.sets_view') },
               { id: 'cardio', label: 'Cardio' },
@@ -944,7 +944,7 @@ export function HistoryPage() {
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg font-semibold text-sm transition-all hover:scale-[1.02] active:scale-[0.98] bg-accent/10 border border-line-accent text-accent"
           >
             <BarChart2 className="w-4 h-4" />
-            Mis estadísticas
+            {t('history.my_stats')}
           </button>
 
           {view === 'sets' && (
@@ -1008,10 +1008,27 @@ export function HistoryPage() {
           ) : (
             timelineByDate.slice(0, visibleDays).map((group) => (
               <div key={group.date}>
-                <div className="px-1 mb-2">
+                <div className="px-1 mb-2 flex items-center justify-between">
                   <span className="text-xs font-bold uppercase tracking-[0.1em] text-fg-subtle">
                     {group.date}
                   </span>
+                  {group.items.some((it) => it.kind === 'workout') && (
+                    <button
+                      onClick={() =>
+                        handleSaveTemplate(
+                          group.items
+                            .filter((it) => it.kind === 'workout')
+                            .map((it) => it.data as WorkoutWithSets),
+                          group.date,
+                        )
+                      }
+                      className="flex items-center gap-1 text-2xs font-semibold text-accent"
+                      title={t('history.save_as_template')}
+                    >
+                      <BookmarkPlus className="w-3.5 h-3.5" />
+                      {t('history.save_as_template')}
+                    </button>
+                  )}
                 </div>
                 <div className="space-y-2">
                   {group.items.map((item) =>
@@ -1111,12 +1128,13 @@ export function HistoryPage() {
                             {item.data.sets.map((s, si) => (
                               <span
                                 key={si}
-                                className="px-2 py-1 rounded-pill text-xs bg-surface-2 border border-line-glass text-fg-muted"
+                                className="px-2 py-1 rounded-pill text-xs bg-surface-2 border border-line text-fg-muted"
                               >
                                 {s.exercise?.name}: {s.reps}×{s.weight}
                               </span>
                             ))}
                           </div>
+                          <WorkoutMeta workout={item.data} />
                         </div>
                       </div>
                     ),
@@ -1133,7 +1151,7 @@ export function HistoryPage() {
         <div className="space-y-2">
           {cardioSessions.length === 0 ? (
             <div className="text-center py-12 text-sm text-fg-subtle">
-              Sin sesiones de cardio registradas
+              {t('history.cardio_empty')}
             </div>
           ) : (
             cardioSessions.map((session) => (
@@ -1202,7 +1220,7 @@ export function HistoryPage() {
                 const date = s.workout?.started_at
                   ? new Date(s.workout.started_at).toLocaleDateString()
                   : 'Sin fecha';
-                const exercise = s.exercise?.name || 'Desconocido';
+                const exercise = s.exercise?.name || t('history.unknown_exercise');
                 if (!grouped[date]) grouped[date] = {};
                 if (!grouped[date][exercise]) grouped[date][exercise] = [];
                 grouped[date][exercise].push(s);
@@ -1254,9 +1272,18 @@ export function HistoryPage() {
                   <span className="text-2xs font-bold uppercase tracking-[0.12em] text-fg-subtle">
                     {group.date}
                   </span>
-                  <span className="text-xs font-mono text-fg-subtle">
-                    {group.totalSets} series · {(group.totalVolume / 1000).toFixed(1)}t
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-mono text-fg-subtle">
+                      {group.totalSets} series · {(group.totalVolume / 1000).toFixed(1)}t
+                    </span>
+                    <button
+                      onClick={() => handleSaveTemplate(group.workouts, group.date)}
+                      className="flex items-center gap-1 text-xs font-semibold text-accent"
+                      title={t('history.save_as_template')}
+                    >
+                      <BookmarkPlus className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
                 {group.workouts.map((wo) => (
                   <div key={wo.id} className="px-3 py-2.5 border-b border-line">
@@ -1308,12 +1335,13 @@ export function HistoryPage() {
                       {wo.sets.map((s: WorkoutSetWithDetails, si) => (
                         <span
                           key={si}
-                          className="px-2 py-1 rounded-pill text-xs bg-surface-2 border border-line-glass text-fg-muted"
+                          className="px-2 py-1 rounded-pill text-xs bg-surface-2 border border-line text-fg-muted"
                         >
                           {s.exercise?.name}: {s.reps}×{s.weight}
                         </span>
                       ))}
                     </div>
+                    <WorkoutMeta workout={wo} />
                   </div>
                 ))}
               </div>
@@ -1343,7 +1371,7 @@ export function HistoryPage() {
         icon={<Trash2 className="w-5 h-5 text-error" />}
         variant="danger"
       >
-        <p className="text-fg-muted mb-6">Esta acción no se puede deshacer.</p>
+        <p className="text-fg-muted mb-6">{t('history.delete_irreversible')}</p>
         <div className="flex gap-3">
           <Button variant="secondary" onClick={() => setDeleteId(null)} className="flex-1">
             {t('common.cancel')}

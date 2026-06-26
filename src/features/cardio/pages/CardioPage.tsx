@@ -13,7 +13,7 @@ import { CardioTypeIcon } from '@shared/components/CardioIcons';
 import { impact, notificationHaptic, ImpactStyle, NotificationType } from '@shared/lib/haptics';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Play, Pause, Square, Trash2, Timer, TrendingUp, Calendar } from 'lucide-react';
+import { Play, Pause, Square, Trash2, Timer, TrendingUp, Calendar, HeartPulse } from 'lucide-react';
 
 const CARDIO_TYPES: CardioType[] = [
   'running',
@@ -249,27 +249,33 @@ function WeeklyStats({ sessions }: { sessions: CardioSession[] }) {
       </div>
       <div className="grid grid-cols-3 gap-0">
         <div className="flex flex-col items-center py-1">
-          <span className="text-lg font-bold font-mono text-fg">{weekSessions.length}</span>
+          <span className="text-lg font-bold font-mono text-fg tabular-nums">
+            {weekSessions.length}
+          </span>
           <span className="text-2xs uppercase text-fg-subtle">Sesiones</span>
         </div>
         <div className="flex flex-col items-center py-1 border-x border-line">
-          <span className="text-lg font-bold font-mono text-fg">{formatDuration(totalTime)}</span>
+          <span className="text-lg font-bold font-mono text-fg tabular-nums">
+            {formatDuration(totalTime)}
+          </span>
           <span className="text-2xs uppercase text-fg-subtle">Tiempo</span>
         </div>
         <div className="flex flex-col items-center py-1">
           {totalDist > 0 ? (
             <>
-              <span className="text-lg font-bold font-mono text-fg">{totalDist.toFixed(1)}km</span>
+              <span className="text-lg font-bold font-mono text-fg tabular-nums">
+                {totalDist.toFixed(1)}km
+              </span>
               <span className="text-2xs uppercase text-fg-subtle">Distancia</span>
             </>
           ) : totalCals > 0 ? (
             <>
-              <span className="text-lg font-bold font-mono text-fg">{totalCals}</span>
+              <span className="text-lg font-bold font-mono text-fg tabular-nums">{totalCals}</span>
               <span className="text-2xs uppercase text-fg-subtle">kcal</span>
             </>
           ) : (
             <>
-              <span className="text-lg font-bold font-mono text-fg">—</span>
+              <span className="text-lg font-bold font-mono text-fg tabular-nums">—</span>
               <span className="text-2xs uppercase text-fg-subtle">km</span>
             </>
           )}
@@ -307,6 +313,17 @@ function SessionHistoryItem({
             </span>
             {session.distance && <span>· {session.distance}km</span>}
             {session.calories && <span>· {session.calories}kcal</span>}
+            {session.avgHr && (
+              <span className="flex items-center gap-0.5">
+                · <HeartPulse className="w-3 h-3" /> {session.avgHr}
+                {session.maxHr ? `/${session.maxHr}` : ''}
+              </span>
+            )}
+            {session.source && session.source !== 'manual' && (
+              <span className="px-1.5 py-0.5 rounded-pill bg-surface-2 text-2xs uppercase tracking-wide">
+                {session.source === 'fitbit' ? 'Fitbit' : 'Salud'}
+              </span>
+            )}
           </div>
           {session.notes && (
             <div className="text-xs italic mt-0.5 text-fg-subtle">{session.notes}</div>
