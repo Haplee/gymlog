@@ -229,9 +229,11 @@ function usePWAUpdate() {
     let updateFn: (() => Promise<void>) | null = null;
 
     const handler = (e: Event) => {
-      const customEvent = e as CustomEvent<() => Promise<void>>;
-      if (customEvent.detail) {
-        updateFn = customEvent.detail;
+      const customEvent = e as CustomEvent<{
+        updateServiceWorker: () => Promise<void>;
+      }>;
+      if (customEvent.detail?.updateServiceWorker) {
+        updateFn = customEvent.detail.updateServiceWorker;
         toast.info('Nueva versión disponible', {
           description: 'Actualiza para disfrutar de las últimas mejoras.',
           duration: 8000,

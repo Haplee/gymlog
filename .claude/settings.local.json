@@ -268,7 +268,12 @@
       "Bash(npx vitest *)",
       "WebFetch(domain:pesos-wine.vercel.app)",
       "WebFetch(domain:haplee.github.io)",
-      "Bash(gh release *)"
+      "Bash(gh release *)",
+      "Bash(npm run *)",
+      "Bash(adb install *)",
+      "Bash(adb uninstall *)",
+      "Bash(adb shell *)",
+      "Bash(rm -rf .release-artifact GymLog-v4.0.0.apk)"
     ]
   }
 }

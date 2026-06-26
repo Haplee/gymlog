@@ -1,6 +1,6 @@
 import { openDB, type IDBPDatabase } from 'idb';
 import { supabase } from './supabase';
-import { devError } from './devtools';
+import { devError, devLog } from './devtools';
 
 const DB_NAME = 'gymlog-outbox';
 const STORE = 'workouts';
@@ -29,6 +29,9 @@ export interface OutboxSet {
   set_type: string;
 }
 
+const MAX_RETRIES = 5;
+const BASE_DELAY_MS = 2_000;
+
 export interface OutboxWorkout {
   id: string;
   userId: string;
@@ -41,6 +44,7 @@ export interface OutboxWorkout {
   notes?: string;
   rating?: number | null;
   createdAt: string;
+  retryCount?: number;
 }
 
 /** Heurística: ¿el error parece de red (sin conexión / fetch fallido)? */
@@ -72,9 +76,14 @@ async function removeWorkout(id: string): Promise<void> {
   await (await getDb()).delete(STORE, id);
 }
 
+function retryDelay(attempt: number): number {
+  return BASE_DELAY_MS * 2 ** (attempt - 1) + Math.random() * 1_000;
+}
+
 /**
  * Intenta enviar todos los entrenos en cola. Devuelve cuántos se sincronizaron.
- * Los que fallan se conservan para el siguiente intento.
+ * Los que fallan por error de red se conservan con backoff exponencial.
+ * Los que exceden MAX_RETRIES se descartan para no atascar la cola.
  */
 export async function flushWorkoutOutbox(): Promise<number> {
   const pending = await getPendingWorkouts();
@@ -83,6 +92,13 @@ export async function flushWorkoutOutbox(): Promise<number> {
   let flushed = 0;
   for (const w of pending) {
     try {
+      const attempt = (w.retryCount ?? 0) + 1;
+      if (attempt > MAX_RETRIES) {
+        devError(`[workoutOutbox] descartado tras ${MAX_RETRIES} intentos: ${w.id}`);
+        await removeWorkout(w.id);
+        continue;
+      }
+
       let exerciseId = w.exerciseId;
       if (!exerciseId && w.customExerciseName.trim()) {
         const { data, error } = await supabase
@@ -98,7 +114,6 @@ export async function flushWorkoutOutbox(): Promise<number> {
         exerciseId = data.id;
       }
       if (!exerciseId) {
-        // Entrada inválida (sin ejercicio): descartar para no bloquear la cola.
         await removeWorkout(w.id);
         continue;
       }
@@ -117,9 +132,15 @@ export async function flushWorkoutOutbox(): Promise<number> {
       await removeWorkout(w.id);
       flushed += 1;
     } catch (err) {
-      if (isNetworkError(err)) break; // sin red: parar y reintentar más tarde
+      if (isNetworkError(err)) {
+        w.retryCount = (w.retryCount ?? 0) + 1;
+        await (await getDb()).put(STORE, w);
+        devLog(
+          `[workoutOutbox] reintento ${w.retryCount}/${MAX_RETRIES} en ${retryDelay(w.retryCount)}ms: ${w.id}`,
+        );
+        break;
+      }
       devError('[workoutOutbox] flush entry failed:', err);
-      // Error no de red (p.ej. validación): descartar para no atascar la cola.
       await removeWorkout(w.id);
     }
   }

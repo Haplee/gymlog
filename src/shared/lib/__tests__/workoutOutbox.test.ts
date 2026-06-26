@@ -148,4 +148,27 @@ describe('workoutOutbox — persistencia y flush', () => {
     expect(rpcMock).not.toHaveBeenCalled();
     expect(await countPendingWorkouts()).toBe(0);
   });
+
+  it('error de red incrementa retryCount y conserva la entrada', async () => {
+    const { enqueueWorkout, flushWorkoutOutbox, getPendingWorkouts } = await loadOutbox();
+    rpcMock.mockResolvedValue({ error: new Error('Failed to fetch') });
+
+    await enqueueWorkout(makeEntry({ id: 'retry-1' }));
+    await flushWorkoutOutbox();
+
+    const pending = await getPendingWorkouts();
+    expect(pending).toHaveLength(1);
+    expect(pending[0].retryCount).toBe(1);
+  });
+
+  it('descarta entrada tras MAX_RETRIES intentos fallidos', async () => {
+    const { enqueueWorkout, flushWorkoutOutbox, countPendingWorkouts } = await loadOutbox();
+    rpcMock.mockResolvedValue({ error: new Error('Failed to fetch') });
+
+    await enqueueWorkout(makeEntry({ id: 'maxed', retryCount: 5 }));
+    const flushed = await flushWorkoutOutbox();
+
+    expect(flushed).toBe(0);
+    expect(await countPendingWorkouts()).toBe(0);
+  });
 });

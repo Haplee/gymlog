@@ -43,7 +43,7 @@ export default defineConfig(({ mode }) => {
       react(),
       tailwindcss(),
       VitePWA({
-        registerType: 'autoUpdate',
+        registerType: 'prompt',
         includeAssets: ['favicon.ico', 'apple-touch-icon.webp', 'masked-icon.svg'],
         // Manifest único (antes existía public/manifest.json duplicado que lo eclipsaba)
         manifest: {
