@@ -1,10 +1,10 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
 import { Layout } from '@app/components/Layout';
-import { Button, GymLogLogo } from '@/shared/components/ui';
+import { SectionHeader, SegmentedControl, Toggle } from '@shared/components/ui';
 import { supabase } from '@shared/lib/supabase';
 import {
   requestPermission,
@@ -19,6 +19,7 @@ import { getReminderDays } from '@features/routine/hooks/useWorkoutReminder';
 import { toast } from 'sonner';
 import BiometricPlugin from '@shared/lib/biometric';
 import { devError } from '@shared/lib/devtools';
+import { ChevronRight, Download, LogOut, Ruler, Watch } from 'lucide-react';
 
 const playSound = (freq: number, duration: number, delay: number, ctx: AudioContext) => {
   const osc = ctx.createOscillator();
@@ -32,6 +33,32 @@ const playSound = (freq: number, duration: number, delay: number, ctx: AudioCont
   osc.start(ctx.currentTime + delay);
   osc.stop(ctx.currentTime + delay + duration);
 };
+
+function SettingRow({
+  label,
+  desc,
+  control,
+  divider = true,
+}: {
+  label: string;
+  desc?: string;
+  control: ReactNode;
+  divider?: boolean;
+}) {
+  return (
+    <div
+      className={`flex items-center justify-between gap-3 px-4 py-3.5 ${
+        divider ? 'dotted-separator' : ''
+      }`}
+    >
+      <div className="min-w-0">
+        <div className="text-base text-fg">{label}</div>
+        {desc && <div className="text-xs mt-0.5 text-fg-subtle">{desc}</div>}
+      </div>
+      <div className="flex-shrink-0">{control}</div>
+    </div>
+  );
+}
 
 export function SettingsPage() {
   const { t } = useTranslation();
@@ -129,7 +156,7 @@ export function SettingsPage() {
 
       if (!isNative() && 'Notification' in window && Notification.permission === 'denied') {
         setNotificationsEnabled(false);
-        toast.error('Permiso de notificaciones denegado en el navegador');
+        toast.error(t('settings.notif_denied_browser'));
         return;
       }
 
@@ -144,10 +171,10 @@ export function SettingsPage() {
         await scheduleWeeklySummaryReminder();
         // Registrar token push remoto
         if (user) void registerPushNotifications(user.id);
-        toast.success('Notificaciones activadas');
+        toast.success(t('settings.notif_on'));
       } else {
         setNotificationsEnabled(false);
-        toast.error('No se concedieron permisos de notificación');
+        toast.error(t('settings.notif_denied'));
       }
     } else {
       setNotificationsEnabled(false);
@@ -165,305 +192,296 @@ export function SettingsPage() {
     if (!isNative()) return;
 
     if (!biometricSupport.available) {
-      toast.error(`Biometría no disponible: ${biometricSupport.message}`);
+      toast.error(t('settings.biometric_unavailable', { message: biometricSupport.message }));
       return;
     }
 
     if (!biometricEnabled) {
-      const loadId = toast.loading('Verificando identidad...');
+      const loadId = toast.loading(t('settings.biometric_verifying'));
       try {
         const result = await BiometricPlugin.authenticate();
         if (result.success) {
           setBiometricEnabled(true);
           await BiometricPlugin.setBiometricEnabled({ enabled: true });
-          toast.success('Acceso biométrico activado', { id: loadId });
+          toast.success(t('settings.biometric_on'), { id: loadId });
         } else {
-          toast.error(result.message || 'Autenticación fallida', { id: loadId });
+          toast.error(result.message || t('settings.biometric_failed'), { id: loadId });
         }
       } catch (e) {
-        toast.error('Error al conectar con el sensor', { id: loadId });
+        toast.error(t('settings.biometric_sensor_error'), { id: loadId });
         devError('Error biometric:', e);
       }
     } else {
       setBiometricEnabled(false);
       await BiometricPlugin.setBiometricEnabled({ enabled: false });
-      toast.success('Acceso biométrico desactivado');
+      toast.success(t('settings.biometric_off'));
     }
   };
 
+  const emailName = user?.email?.split('@')[0] ?? '';
+  const isGoogle = user?.app_metadata?.provider === 'google';
+
   return (
     <Layout>
-      <div className="space-y-3 pb-20">
+      <h1 className="text-headline font-display text-fg mb-4">{t('settings.title')}</h1>
+
+      <div className="space-y-6 pb-20">
+        {/* Perfil */}
+        <div className="rounded-lg p-4 bg-surface border border-line">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-sm flex items-center justify-center bg-accent/10 border border-line-accent text-accent font-display font-bold text-lg uppercase">
+              {emailName.slice(0, 1) || '?'}
+            </div>
+            <div className="min-w-0">
+              <div className="text-data font-display font-bold text-fg truncate">{emailName}</div>
+              <div className="text-xs text-fg-subtle truncate">{user?.email}</div>
+            </div>
+          </div>
+          {isGoogle && (
+            <span className="label-caps inline-block mt-3 px-2 py-1 rounded-sm bg-surface-2 border border-line text-fg-muted">
+              {t('settings.google_account')}
+            </span>
+          )}
+          <button
+            onClick={() => navigate('/user-stats')}
+            className="w-full mt-3 flex items-center justify-between gap-3 min-h-11 px-3 rounded-sm bg-surface-2 border border-line text-left active:scale-[0.99] transition-transform"
+          >
+            <span className="flex items-center gap-2 text-sm text-fg">
+              <Ruler className="w-4 h-4 text-accent" />
+              {t('settings.my_measurements')}
+            </span>
+            <ChevronRight className="w-4 h-4 text-fg-subtle" />
+          </button>
+        </div>
+
         {!isNative() && (
           <a
             href="https://github.com/Haplee/gymlog/releases/download/v4.0.0/GymLog-v4.0.0.apk"
             download
-            className="block rounded-2xl p-4 scale-in border text-center bg-surface border-line-accent text-accent shadow-card transition-transform active:scale-[0.99]"
+            className="flex items-center justify-center gap-2 rounded-sm p-3.5 border text-center bg-surface border-line-accent text-accent transition-transform active:scale-[0.99]"
           >
-            <div className="text-base font-semibold">Descargar App Android</div>
-            <div className="text-xs mt-1 opacity-70">GymLog v4.0.0</div>
+            <Download className="w-4 h-4" />
+            <span className="label-caps">{t('settings.download_apk_title')}</span>
           </a>
         )}
 
-        {/* Idioma */}
-        <div className="rounded-2xl p-4 scale-in bg-surface border border-line-strong shadow-card">
-          <div className="text-sm font-medium mb-3 text-fg">{t('settings.language')}</div>
-          <div className="flex gap-2">
-            {['es', 'en'].map((lang) => (
-              <Button
-                key={lang}
-                variant={language === lang ? 'primary' : 'secondary'}
-                onClick={() => setLanguage(lang)}
-                className="flex-1"
-              >
-                {lang === 'es' ? 'Español' : 'English'}
-              </Button>
-            ))}
+        {/* Preferencias */}
+        <section>
+          <SectionHeader title={t('settings.preferences')} />
+          <div className="rounded-lg bg-surface border border-line overflow-hidden">
+            <SettingRow
+              label={t('settings.language')}
+              control={
+                <SegmentedControl
+                  options={[
+                    { value: 'es', label: 'ES' },
+                    { value: 'en', label: 'EN' },
+                  ]}
+                  value={language as 'es' | 'en'}
+                  onChange={(v) => setLanguage(v)}
+                  ariaLabel={t('settings.language')}
+                />
+              }
+            />
+            <SettingRow
+              label={t('settings.theme')}
+              control={
+                <SegmentedControl
+                  options={[
+                    { value: 'dark', label: t('settings.theme_dark') },
+                    { value: 'light', label: t('settings.theme_light') },
+                  ]}
+                  value={theme}
+                  onChange={(v) => setTheme(v)}
+                  ariaLabel={t('settings.theme')}
+                />
+              }
+            />
+            <SettingRow
+              label={t('settings.weight_unit')}
+              control={
+                <SegmentedControl
+                  options={[
+                    { value: 'kg', label: 'KG' },
+                    { value: 'lb', label: 'LB' },
+                  ]}
+                  value={unitSystem}
+                  onChange={(v) => setUnitSystem(v)}
+                  ariaLabel={t('settings.weight_unit')}
+                />
+              }
+            />
+            <SettingRow
+              label={t('settings.sound')}
+              desc={t('settings.sound_desc')}
+              control={
+                <Toggle
+                  checked={sound}
+                  onChange={(v) => {
+                    setSound(v);
+                    if (v) playFeedbackSound();
+                  }}
+                  ariaLabel={t('settings.sound')}
+                />
+              }
+            />
+            <SettingRow
+              label={t('settings.warmup_sets')}
+              desc={t('settings.warmup_sets_desc')}
+              control={
+                <Toggle
+                  checked={showWarmupSets}
+                  onChange={setShowWarmupSets}
+                  ariaLabel={t('settings.warmup_sets')}
+                />
+              }
+              divider={false}
+            />
           </div>
-        </div>
+        </section>
 
-        {/* Tema */}
-        <div className="rounded-2xl p-4 scale-in bg-surface border border-line-strong shadow-card">
-          <div className="text-sm font-medium mb-3 text-fg">{t('settings.theme')}</div>
-          <div className="flex gap-2">
-            {(['dark', 'light'] as const).map((mode) => (
-              <Button
-                key={mode}
-                variant={theme === mode ? 'primary' : 'secondary'}
-                onClick={() => setTheme(mode)}
-                className="flex-1"
-                aria-pressed={theme === mode}
-              >
-                {mode === 'dark' ? t('settings.theme_dark') : t('settings.theme_light')}
-              </Button>
-            ))}
-          </div>
-        </div>
+        {/* Entrenamiento */}
+        <section>
+          <SectionHeader title={t('settings.training')} />
+          <div className="rounded-lg bg-surface border border-line overflow-hidden">
+            <SettingRow
+              label={t('settings.training_reminders')}
+              desc={t('settings.training_reminders_desc')}
+              control={
+                <Toggle
+                  checked={trainingReminders}
+                  onChange={setTrainingReminders}
+                  ariaLabel={t('settings.training_reminders')}
+                />
+              }
+            />
+            <SettingRow
+              label={t('settings.rest_autostart')}
+              desc={t('settings.rest_autostart_desc')}
+              control={
+                <Toggle
+                  checked={restAutoStart}
+                  onChange={setRestAutoStart}
+                  ariaLabel={t('settings.rest_autostart')}
+                />
+              }
+              divider={restAutoStart}
+            />
 
-        {/* Sonido */}
-        <div className="rounded-2xl p-4 scale-in bg-surface border border-line-strong shadow-card">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-base text-fg">{t('settings.sound')}</div>
-              <div className="text-xs text-fg-subtle">{t('settings.sound_desc')}</div>
-            </div>
-            <button
-              onClick={() => {
-                setSound(!sound);
-                if (!sound) playFeedbackSound();
-              }}
-              className={`w-12 h-6 rounded-full transition-all relative ${sound ? 'bg-accent toggle-on' : 'bg-surface-3'}`}
-              aria-pressed={sound}
-              aria-label={t('settings.sound')}
-            >
-              <div
-                className={`absolute top-1 w-4 h-4 rounded-full bg-fg shadow-sm transition-all ${sound ? 'left-7' : 'left-1'}`}
-              />
-            </button>
+            {restAutoStart && (
+              <div className="px-4 py-3.5">
+                <div className="text-base text-fg">{t('settings.rest_duration')}</div>
+                <div className="text-xs mb-2.5 text-fg-subtle">
+                  {t('settings.rest_duration_desc')}
+                </div>
+                <div className="flex gap-1.5">
+                  {[60, 90, 120, 180].map((seconds) => (
+                    <button
+                      key={seconds}
+                      onClick={() => setRestDuration(seconds)}
+                      aria-pressed={restDuration === seconds}
+                      className={`flex-1 min-h-11 rounded-sm text-sm font-display font-bold tabular border transition-colors ${
+                        restDuration === seconds
+                          ? 'bg-accent text-accent-fg border-accent'
+                          : 'bg-surface-2 text-fg-muted border-line'
+                      }`}
+                    >
+                      {seconds < 120 ? `${seconds}s` : `${seconds / 60}min`}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="dotted-separator mt-4" />
+                <div className="pt-3.5 flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-base text-fg">{t('settings.rest_by_exercise')}</div>
+                    <div className="text-xs mt-0.5 text-fg-subtle">
+                      {t('settings.rest_by_exercise_desc')}
+                    </div>
+                  </div>
+                  <Toggle
+                    checked={restByExercise}
+                    onChange={setRestByExercise}
+                    ariaLabel={t('settings.rest_by_exercise')}
+                  />
+                </div>
+              </div>
+            )}
           </div>
-        </div>
+        </section>
 
         {/* Notificaciones */}
-        <div className="rounded-2xl p-4 scale-in bg-surface border border-line-strong shadow-card">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-base text-fg">{t('settings.notifications')}</div>
-              <div className="text-xs text-fg-subtle">{t('settings.notifications_desc')}</div>
-            </div>
-            <button
-              onClick={handlePushToggle}
-              className={`w-12 h-6 rounded-full transition-all relative ${notificationsEnabled ? 'bg-accent toggle-on' : 'bg-surface-3'}`}
-              aria-pressed={notificationsEnabled}
-              aria-label={t('settings.notifications')}
-            >
-              <div
-                className={`absolute top-1 w-4 h-4 rounded-full bg-fg shadow-sm transition-all ${notificationsEnabled ? 'left-7' : 'left-1'}`}
-              />
-            </button>
-          </div>
-        </div>
-
-        {/* Biometría (Solo Nativo) */}
-        {isNative() && (
-          <div className="rounded-2xl p-4 scale-in bg-surface border border-line-strong shadow-card">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-base text-fg">Acceso Biométrico</div>
-                <div className="text-xs text-fg-subtle">Usa tu huella o cara para entrar</div>
-              </div>
-              <button
-                onClick={handleBiometricToggle}
-                className={`w-12 h-6 rounded-full transition-all relative ${biometricEnabled ? 'bg-accent toggle-on' : 'bg-surface-3'}`}
-                aria-pressed={biometricEnabled}
-                aria-label={'Acceso Biométrico'}
-              >
-                <div
-                  className={`absolute top-1 w-4 h-4 rounded-full bg-fg shadow-sm transition-all ${biometricEnabled ? 'left-7' : 'left-1'}`}
+        <section>
+          <SectionHeader title={t('settings.notifications')} />
+          <div className="rounded-lg bg-surface border border-line overflow-hidden">
+            <SettingRow
+              label={t('settings.notifications')}
+              desc={t('settings.notifications_desc')}
+              control={
+                <Toggle
+                  checked={notificationsEnabled}
+                  onChange={() => handlePushToggle()}
+                  ariaLabel={t('settings.notifications')}
                 />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Dispositivos / Wearables */}
-        <button
-          onClick={() => navigate('/wearables')}
-          className="w-full text-left rounded-2xl p-4 scale-in bg-surface border border-line-strong shadow-card transition-transform active:scale-[0.99]"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-base text-fg">{t('settings.wearables')}</div>
-              <div className="text-xs text-fg-subtle">{t('settings.wearables_desc')}</div>
-            </div>
-            <span className="text-fg-subtle">›</span>
-          </div>
-        </button>
-
-        {/* Recordatorios de entrenamiento */}
-        <div className="rounded-2xl p-4 scale-in bg-surface border border-line-strong shadow-card">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-base text-fg">Recordatorios de entreno</div>
-              <div className="text-xs text-fg-subtle">Avisar si llevo 2 días sin entrenar</div>
-            </div>
-            <button
-              onClick={() => setTrainingReminders(!trainingReminders)}
-              className={`w-12 h-6 rounded-full transition-all relative ${trainingReminders ? 'bg-accent toggle-on' : 'bg-surface-3'}`}
-              aria-pressed={trainingReminders}
-              aria-label={'Recordatorios de entreno'}
-            >
-              <div
-                className={`absolute top-1 w-4 h-4 rounded-full bg-fg shadow-sm transition-all ${trainingReminders ? 'left-7' : 'left-1'}`}
-              />
-            </button>
-          </div>
-        </div>
-
-        {/* Unidad de peso */}
-        <div className="rounded-2xl p-4 scale-in bg-surface border border-line-strong shadow-card">
-          <div className="text-sm font-medium mb-3 text-fg">Unidad de peso</div>
-          <div className="flex gap-2">
-            {(['kg', 'lb'] as const).map((unit) => (
-              <Button
-                key={unit}
-                variant={unitSystem === unit ? 'primary' : 'secondary'}
-                onClick={() => setUnitSystem(unit)}
-                className="flex-1"
-              >
-                {unit}
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        {/* Mostrar series de calentamiento */}
-        <div className="rounded-2xl p-4 scale-in bg-surface border border-line-strong shadow-card">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-base text-fg">Series de calentamiento</div>
-              <div className="text-xs text-fg-subtle">Marcar series de warmup</div>
-            </div>
-            <button
-              onClick={() => setShowWarmupSets(!showWarmupSets)}
-              className={`w-12 h-6 rounded-full transition-all relative ${showWarmupSets ? 'bg-accent toggle-on' : 'bg-surface-3'}`}
-              aria-pressed={showWarmupSets}
-              aria-label={'Series de calentamiento'}
-            >
-              <div
-                className={`absolute top-1 w-4 h-4 rounded-full bg-fg shadow-sm transition-all ${showWarmupSets ? 'left-7' : 'left-1'}`}
-              />
-            </button>
-          </div>
-        </div>
-
-        {/* Auto-iniciar temporizador descanso */}
-        <div className="rounded-2xl p-4 scale-in bg-surface border border-line-strong shadow-card">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-base text-fg">Auto-iniciar descanso</div>
-              <div className="text-xs text-fg-subtle">Inicia el temporizador al añadir serie</div>
-            </div>
-            <button
-              onClick={() => setRestAutoStart(!restAutoStart)}
-              className={`w-12 h-6 rounded-full transition-all relative ${restAutoStart ? 'bg-accent toggle-on' : 'bg-surface-3'}`}
-              aria-pressed={restAutoStart}
-            >
-              <div
-                className={`absolute top-1 w-4 h-4 rounded-full bg-fg shadow-sm transition-all ${restAutoStart ? 'left-7' : 'left-1'}`}
-              />
-            </button>
-          </div>
-
-          {restAutoStart && (
-            <div className="mt-4 pt-4 border-t border-line">
-              <div className="text-base text-fg">{t('settings.rest_duration')}</div>
-              <div className="text-xs mb-2 text-fg-subtle">{t('settings.rest_duration_desc')}</div>
-              <div className="flex gap-1.5">
-                {[60, 90, 120, 180].map((seconds) => (
-                  <button
-                    key={seconds}
-                    onClick={() => setRestDuration(seconds)}
-                    aria-pressed={restDuration === seconds}
-                    className="flex-1 min-h-11 rounded-lg text-sm font-medium border"
-                    style={{
-                      backgroundColor:
-                        restDuration === seconds
-                          ? 'var(--interactive-primary)'
-                          : 'var(--bg-surface-2)',
-                      color:
-                        restDuration === seconds
-                          ? 'var(--interactive-primary-fg)'
-                          : 'var(--text-secondary)',
-                      borderColor:
-                        restDuration === seconds
-                          ? 'var(--interactive-primary)'
-                          : 'var(--border-subtle)',
-                    }}
-                  >
-                    {seconds < 120 ? `${seconds}s` : `${seconds / 60}min`}
-                  </button>
-                ))}
-              </div>
-
-              <div className="mt-4 pt-4 border-t border-line flex items-center justify-between">
-                <div>
-                  <div className="text-base text-fg">{t('settings.rest_by_exercise')}</div>
-                  <div className="text-xs text-fg-subtle">
-                    {t('settings.rest_by_exercise_desc')}
-                  </div>
-                </div>
-                <button
-                  onClick={() => setRestByExercise(!restByExercise)}
-                  className={`w-12 h-6 rounded-full transition-all relative ${restByExercise ? 'bg-accent toggle-on' : 'bg-surface-3'}`}
-                  aria-pressed={restByExercise}
-                >
-                  <div
-                    className={`absolute top-1 w-4 h-4 rounded-full bg-fg shadow-sm transition-all ${restByExercise ? 'left-7' : 'left-1'}`}
+              }
+              divider={isNative()}
+            />
+            {isNative() && (
+              <SettingRow
+                label={t('settings.biometric')}
+                desc={t('settings.biometric_desc')}
+                control={
+                  <Toggle
+                    checked={biometricEnabled}
+                    onChange={() => handleBiometricToggle()}
+                    ariaLabel={t('settings.biometric')}
                   />
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <button
-          onClick={() => signOut()}
-          className="w-full rounded-2xl p-4 cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98] scale-in border-none shadow-md"
-          style={{
-            backgroundColor: 'var(--color-danger)',
-            color: '#ffffff',
-          }}
-        >
-          <div className="text-base font-semibold">{t('settings.logout')}</div>
-        </button>
-
-        <div className="rounded-2xl p-6 scale-in flex flex-col items-center text-center bg-surface border border-line-strong">
-          <GymLogLogo size="lg" variant="stacked" className="mb-4" />
-          <div className="text-sm font-bold text-accent mb-4 uppercase tracking-[0.2em] bg-accent/10 px-3 py-1 rounded-full">
-            Version 4.0
+                }
+                divider={false}
+              />
+            )}
           </div>
-          <div className="text-sm leading-relaxed text-fg-subtle max-w-[240px]">
-            Tu compañero definitivo para el seguimiento de entrenamientos de fuerza.
+        </section>
+
+        {/* Datos */}
+        <section>
+          <SectionHeader title={t('settings.data')} />
+          <div className="rounded-lg bg-surface border border-line overflow-hidden">
+            <button
+              onClick={() => navigate('/wearables')}
+              className="w-full flex items-center justify-between gap-3 px-4 py-3.5 text-left active:bg-hover"
+            >
+              <span className="flex items-center gap-2.5 min-w-0">
+                <Watch className="w-4 h-4 flex-shrink-0 text-accent" />
+                <span className="min-w-0">
+                  <span className="block text-base text-fg">{t('settings.wearables')}</span>
+                  <span className="block text-xs mt-0.5 text-fg-subtle">
+                    {t('settings.wearables_desc')}
+                  </span>
+                </span>
+              </span>
+              <ChevronRight className="w-4 h-4 flex-shrink-0 text-fg-subtle" />
+            </button>
+          </div>
+        </section>
+
+        {/* Cuenta */}
+        <section>
+          <SectionHeader title={t('settings.account')} />
+          <div className="rounded-lg bg-surface border border-line overflow-hidden">
+            <button
+              onClick={() => signOut()}
+              className="w-full flex items-center gap-2.5 px-4 py-3.5 text-left text-error active:bg-hover"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="text-base font-semibold">{t('settings.logout')}</span>
+            </button>
+          </div>
+        </section>
+
+        <div className="pt-2 text-center">
+          <div className="label-caps text-fg-subtle">
+            {t('settings.version')} — {t('settings.tagline')}
           </div>
         </div>
       </div>

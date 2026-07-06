@@ -4,7 +4,9 @@ import { test, expect } from '@playwright/test';
 const ROUTES = [
   { path: '/routines', match: /login|routines|\/$/ },
   { path: '/exercises', match: /login|exercises|\/$/ },
+  { path: '/stats', match: /login|stats|\/$/ },
   { path: '/user-stats', match: /login|user-stats|\/$/ },
+  { path: '/history', match: /login|history|\/$/ },
   { path: '/cardio', match: /login|cardio|\/$/ },
   { path: '/settings', match: /login|settings|\/$/ },
 ];

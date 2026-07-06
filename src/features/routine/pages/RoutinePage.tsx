@@ -9,6 +9,7 @@ import { Layout } from '@app/components/Layout';
 import type { Routine, DayOfWeek, RoutineExercise } from '@features/routine/stores/routineStore';
 import { fetchExercises } from '@shared/api/queries';
 import { SortableExerciseList } from '@features/routine/components/SortableExerciseList';
+import { Chip, SectionHeader } from '@shared/components/ui';
 
 const DAYS = Object.keys(dayLabels) as DayOfWeek[];
 
@@ -157,13 +158,13 @@ export function RoutinePage() {
 
   return (
     <Layout>
-      <h1 className="text-xl font-extrabold mb-4 text-accent text-balance">{t('routine.title')}</h1>
+      <h1 className="text-headline font-display text-fg mb-4 text-balance">{t('routine.title')}</h1>
 
       {!activeRoutineId ? (
         <>
-          <div className="text-sm mb-3 text-fg-muted">{t('routine.select')}</div>
+          <SectionHeader title={t('routine.select')} />
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             {routines.map((routine) => (
               <div
                 key={routine.id}
@@ -176,25 +177,25 @@ export function RoutinePage() {
                     handleSelectRoutine(routine.id);
                   }
                 }}
-                className="p-4 rounded-2xl cursor-pointer transition-all active:scale-[0.99] bg-surface-2 border border-line shadow-card"
+                className="p-4 rounded-lg cursor-pointer transition-all active:scale-[0.99] bg-surface border border-line"
               >
+                {!routine.isCustom && (
+                  <span className="label-caps inline-block px-1.5 py-0.5 mb-2 rounded-sm bg-surface-3 text-fg-muted">
+                    {t('routine.predefined')}
+                  </span>
+                )}
                 <div className="flex justify-between items-center gap-3">
                   <div className="min-w-0">
-                    <div className="text-base font-semibold text-fg">{routine.name}</div>
-                    <div className="text-xs mt-0.5 text-fg-subtle">{routine.description}</div>
+                    <div className="text-data font-display font-bold text-fg">{routine.name}</div>
+                    <div className="text-xs mt-1 text-fg-subtle">{routine.description}</div>
                   </div>
                   {!routine.isCustom && (
-                    <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                      <span className="text-2xs px-2 py-1 rounded-pill font-bold uppercase tracking-wide bg-accent/10 text-accent border border-line-accent">
-                        {t('routine.predefined')}
-                      </span>
-                      <button
-                        onClick={(e) => handleUseAsTemplate(e, routine.id)}
-                        className="min-h-11 text-xs px-3 py-1.5 rounded-lg font-medium bg-surface text-accent border border-line active:scale-[0.98]"
-                      >
-                        {t('routine.use_template')}
-                      </button>
-                    </div>
+                    <button
+                      onClick={(e) => handleUseAsTemplate(e, routine.id)}
+                      className="flex-shrink-0 min-h-11 label-caps px-3 py-1.5 rounded-sm bg-transparent text-accent border border-line-accent active:scale-[0.98] transition-transform"
+                    >
+                      {t('routine.use_template')}
+                    </button>
                   )}
                 </div>
               </div>
@@ -203,7 +204,7 @@ export function RoutinePage() {
 
           <button
             onClick={() => setShowCreate(true)}
-            className="w-full mt-4 py-3 rounded-lg font-semibold bg-accent text-accent-fg shadow-btn-accent active:scale-[0.98]"
+            className="w-full mt-5 min-h-12 rounded-sm text-sm font-display font-bold uppercase tracking-[0.12em] bg-accent text-accent-fg shadow-btn-accent active:scale-[0.98] transition-transform"
           >
             {t('routine.create_custom')}
           </button>
@@ -212,25 +213,25 @@ export function RoutinePage() {
         <>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <div className="text-lg font-bold text-fg">{activeRoutine?.name}</div>
+              <div className="text-data font-display font-bold text-fg">{activeRoutine?.name}</div>
               <div className="text-xs text-fg-subtle">{activeRoutine?.description}</div>
             </div>
             <button
               onClick={() => setActiveRoutine(null)}
-              className="text-sm px-3 py-1 rounded bg-surface-2 text-fg-muted"
+              className="label-caps min-h-11 px-3 py-1.5 rounded-sm bg-surface-2 border border-line text-fg-muted"
             >
               {t('routine.change')}
             </button>
           </div>
 
           {todayRoutine && todayRoutine.exercises.length > 0 && (
-            <div className="mb-4 p-3 rounded-lg bg-accent/10 border border-line-accent">
-              <div className="text-xs font-medium mb-2 text-accent">
-                {t('routine.today')} - {todayRoutine.name}
+            <div className="mb-4 p-3 rounded-md bg-accent/10 border border-line-accent">
+              <div className="label-caps mb-2 text-accent">
+                {t('routine.today')} — {todayRoutine.name}
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {todayRoutine.exercises.map((ex, i) => (
-                  <span key={i} className="text-xs px-2 py-1 rounded bg-surface-2 text-fg">
+                  <span key={i} className="text-xs px-2 py-1 rounded-sm bg-surface-2 text-fg">
                     {ex.name}
                   </span>
                 ))}
@@ -238,37 +239,27 @@ export function RoutinePage() {
             </div>
           )}
 
-          <div className="flex gap-1 mb-3 overflow-x-auto">
+          <div className="flex gap-1.5 mb-4 overflow-x-auto pb-1">
             {DAYS.map((day) => (
-              <button
+              <Chip
                 key={day}
+                variant="day"
+                selected={selectedDay === day}
                 onClick={() => setSelectedDay(day)}
-                className="flex-shrink-0 px-3 py-1.5 text-xs rounded-lg font-medium transition-all"
-                style={{
-                  backgroundColor:
-                    selectedDay === day ? 'var(--interactive-primary)' : 'var(--bg-surface)',
-                  color:
-                    selectedDay === day ? 'var(--interactive-primary-fg)' : 'var(--text-secondary)',
-                }}
               >
                 {dayLabels[day].slice(0, 3)}
-              </button>
+              </Chip>
             ))}
           </div>
 
-          <div className="rounded-lg p-3 bg-surface">
-            <div className="flex justify-between items-center mb-3">
-              <div className="text-sm font-medium text-fg">{dayLabels[selectedDay]}</div>
+          <div className="rounded-lg p-3 bg-surface border border-line">
+            <div className="dotted-separator flex justify-between items-center pb-2 mb-3">
+              <div className="label-caps text-fg-subtle">{dayLabels[selectedDay]}</div>
               {activeRoutine?.isCustom && (
                 <select
                   value=""
                   onChange={(e) => e.target.value && addExerciseToDay(selectedDay, e.target.value)}
-                  className="text-xs p-1 rounded"
-                  style={{
-                    backgroundColor: 'var(--bg-surface-2)',
-                    color: 'var(--interactive-primary)',
-                    border: 'none',
-                  }}
+                  className="text-xs p-1.5 rounded-sm bg-surface-2 text-accent border border-line cursor-pointer"
                 >
                   <option value="">{t('routine.add_exercise')}</option>
                   {exerciseNames
@@ -296,20 +287,22 @@ export function RoutinePage() {
                 onRemove={(i) => removeExerciseFromDay(selectedDay, i)}
               />
             ) : (
-              <div className="space-y-1.5">
+              <div>
                 {activeRoutine?.days[selectedDay].exercises.map((ex, i) => (
                   <div
                     key={i}
-                    className="flex items-center justify-between px-3 py-3 rounded-xl bg-surface-2 border border-line"
+                    className={`flex items-center justify-between px-1 py-3.5 ${
+                      i < activeRoutine.days[selectedDay].exercises.length - 1
+                        ? 'dotted-separator'
+                        : ''
+                    }`}
                   >
-                    <div>
-                      <div className="text-base font-medium text-fg">{ex.name}</div>
-                      {ex.sets && (
-                        <div className="text-xs mt-0.5 text-fg-subtle">
-                          {ex.sets} series × {ex.reps}
-                        </div>
-                      )}
-                    </div>
+                    <div className="text-base font-medium text-fg">{ex.name}</div>
+                    {ex.sets && (
+                      <div className="font-display font-bold text-sm tabular text-fg-muted">
+                        {ex.sets} × {ex.reps}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -319,7 +312,7 @@ export function RoutinePage() {
           {activeRoutine?.isCustom && (
             <button
               onClick={() => handleDeleteRoutine(activeRoutine.id)}
-              className="mt-4 text-sm text-error"
+              className="mt-4 min-h-11 label-caps text-error"
             >
               {t('routine.delete_routine')}
             </button>
@@ -329,15 +322,17 @@ export function RoutinePage() {
 
       {showCreate && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-          <div className="rounded-xl p-4 w-full max-w-sm bg-surface">
-            <div className="text-lg font-bold mb-4 text-fg">{t('routine.new_routine')}</div>
+          <div className="rounded-lg p-4 w-full max-w-sm bg-surface border border-line">
+            <div className="text-data font-display font-bold mb-4 text-fg">
+              {t('routine.new_routine')}
+            </div>
 
             <input
               type="text"
               placeholder={t('routine.name_placeholder')}
               value={newRoutineName}
               onChange={(e) => setNewRoutineName(e.target.value)}
-              className="w-full p-2 rounded-lg text-sm mb-2 bg-surface-2 border border-line-strong text-fg"
+              className="w-full p-2.5 rounded-sm text-sm mb-2 bg-surface-2 border border-line-strong text-fg placeholder:text-fg-subtle focus:border-accent outline-none"
             />
 
             <input
@@ -345,23 +340,19 @@ export function RoutinePage() {
               placeholder={t('routine.desc_placeholder')}
               value={newRoutineDesc}
               onChange={(e) => setNewRoutineDesc(e.target.value)}
-              className="w-full p-2 rounded-lg text-sm mb-4 bg-surface-2 border border-line-strong text-fg"
+              className="w-full p-2.5 rounded-sm text-sm mb-4 bg-surface-2 border border-line-strong text-fg placeholder:text-fg-subtle focus:border-accent outline-none"
             />
 
             <div className="flex gap-2">
               <button
                 onClick={() => setShowCreate(false)}
-                className="flex-1 py-2 rounded-lg text-sm bg-surface-2 text-fg-muted"
+                className="flex-1 min-h-11 rounded-sm text-sm bg-surface-2 text-fg-muted"
               >
                 {t('common.cancel')}
               </button>
               <button
                 onClick={handleCreateRoutine}
-                className="flex-1 py-2 rounded-lg text-sm font-medium"
-                style={{
-                  backgroundColor: 'var(--interactive-primary)',
-                  color: 'var(--interactive-primary-fg)',
-                }}
+                className="flex-1 min-h-11 rounded-sm text-sm font-display font-bold uppercase tracking-[0.08em] bg-accent text-accent-fg"
               >
                 {t('common.create')}
               </button>

@@ -44,7 +44,7 @@ export function DayFrequencyChart({
                     transition={{ delay: 0.45 + i * 0.04, duration: 0.5 }}
                     className="h-full rounded-full"
                     style={{
-                      backgroundColor: pct === 100 ? '#c8ff00' : pct > 60 ? '#22c55e' : '#3b82f6',
+                      backgroundColor: pct === 100 ? '#60eca8' : pct > 60 ? '#3ecf8e' : '#38bdf8',
                     }}
                   />
                 </div>

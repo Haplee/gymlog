@@ -33,7 +33,7 @@ export const ConsistencyHeatmap = memo(function ConsistencyHeatmap({
     if (ratio < 0.4) return 'bg-[#3d6b3d]';
     if (ratio < 0.6) return 'bg-[#4d8c4d]';
     if (ratio < 0.8) return 'bg-[#6bad6b]';
-    return 'bg-[#c8ff00]';
+    return 'bg-accent';
   };
 
   const getVolumeLabel = (volume: number): string => {
@@ -79,7 +79,7 @@ export const ConsistencyHeatmap = memo(function ConsistencyHeatmap({
 
   if (data.length === 0) {
     return (
-      <div className="bg-surface rounded-2xl p-4 shadow-card">
+      <div className="bg-surface rounded-lg p-4 shadow-card">
         <div className="text-sm font-medium text-fg-muted mb-3">Consistencia</div>
         <div className="text-xs text-fg-subtle text-center py-8">Sin datos de entrenamiento</div>
       </div>
@@ -90,7 +90,7 @@ export const ConsistencyHeatmap = memo(function ConsistencyHeatmap({
     <m.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-surface rounded-2xl p-4 shadow-card"
+      className="bg-surface rounded-lg p-4 shadow-card"
     >
       <div className="text-sm font-medium mb-3 text-fg-muted">Consistencia</div>
 
@@ -147,7 +147,7 @@ export const ConsistencyHeatmap = memo(function ConsistencyHeatmap({
         <div className="w-3 h-3 rounded-[3px] bg-[#3d6b3d]" />
         <div className="w-3 h-3 rounded-[3px] bg-[#4d8c4d]" />
         <div className="w-3 h-3 rounded-[3px] bg-[#6bad6b]" />
-        <div className="w-3 h-3 rounded-[3px] bg-[#c8ff00]" />
+        <div className="w-3 h-3 rounded-[3px] bg-accent" />
         <span className="text-[0.5rem] text-fg-subtle">Más</span>
       </div>
     </m.div>

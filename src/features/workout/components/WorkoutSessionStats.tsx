@@ -11,7 +11,7 @@ interface WorkoutSessionStatsProps {
 }
 
 /**
- * Scoreboard de la sesión activa: el cronómetro (Geist Mono) es el héroe; volumen
+ * Scoreboard de la sesión activa: el cronómetro (Space Grotesk) es el héroe; volumen
  * y series lo acompañan como marcador. Un punto "rec" indica sesión en curso.
  */
 export function WorkoutSessionStats({
@@ -43,7 +43,7 @@ export function WorkoutSessionStats({
     <m.div
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="mb-3 rounded-2xl px-4 py-3.5 bg-surface border border-line shadow-card"
+      className="mb-3 rounded-lg px-4 py-3.5 bg-surface border border-line shadow-card"
     >
       {/* Eyebrow + indicador rec + cancelar */}
       <div className="flex items-center justify-between">

@@ -7,7 +7,7 @@ import { useCardioStore } from '@features/cardio/stores/cardioStore';
 import { queryClient } from '@app/queryClient';
 import { fetchWorkoutsAndSets, fetchWorkouts, fetchRecentSets } from '@shared/api/queries';
 import { m, AnimatePresence } from 'framer-motion';
-import { Dumbbell, BarChart3, History, Settings, Heart, WifiOff, RefreshCw } from 'lucide-react';
+import { Home, Dumbbell, Footprints, History, Settings, WifiOff, RefreshCw } from 'lucide-react';
 import { useOutboxStore } from '@shared/stores/outboxStore';
 
 interface LayoutProps {
@@ -36,6 +36,8 @@ const prefetchPageData = (path: string, userId: string) => {
 const preloadChunk = (path: string) => {
   if (path === '/') {
     import('@features/workout/pages/WorkoutPage');
+  } else if (path === '/routines') {
+    import('@features/routine/pages/RoutinePage');
   } else if (path === '/cardio') {
     import('@features/cardio/pages/CardioPage');
   } else if (path === '/stats') {
@@ -74,9 +76,9 @@ export function Layout({ children }: LayoutProps) {
   const trainBadge = !!workoutStartedAt && workoutSets.length > 0;
 
   const tabs = [
-    { path: '/', Icon: Dumbbell, label: t('workout.title'), id: 'train', badge: trainBadge },
-    { path: '/cardio', Icon: Heart, label: 'Cardio', id: 'cardio', badge: cardioActive },
-    { path: '/stats', Icon: BarChart3, label: t('stats.title'), id: 'stats', badge: false },
+    { path: '/', Icon: Home, label: t('nav.home'), id: 'home', badge: trainBadge },
+    { path: '/routines', Icon: Dumbbell, label: t('routine.title'), id: 'routines', badge: false },
+    { path: '/cardio', Icon: Footprints, label: 'Cardio', id: 'cardio', badge: cardioActive },
     { path: '/history', Icon: History, label: t('history.title'), id: 'history', badge: false },
     { path: '/settings', Icon: Settings, label: t('settings.title'), id: 'settings', badge: false },
   ];
@@ -92,7 +94,7 @@ export function Layout({ children }: LayoutProps) {
     if (!user?.id) return;
     const idle = window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 1500));
     const handle = idle(() => {
-      ['/', '/cardio', '/stats', '/history', '/settings'].forEach(preloadChunk);
+      ['/', '/routines', '/cardio', '/stats', '/history', '/settings'].forEach(preloadChunk);
     });
     return () => {
       (window.cancelIdleCallback ?? window.clearTimeout)(handle as number);
@@ -102,72 +104,28 @@ export function Layout({ children }: LayoutProps) {
   return (
     <div className="h-screen h-[100dvh] flex flex-col overflow-hidden bg-base">
       <header
-        className="px-4 pb-3 flex-shrink-0 bg-surface border-b border-line"
-        style={{ paddingTop: 'calc(var(--inset-top, env(safe-area-inset-top)) + 0.75rem)' }}
+        className="px-4 flex-shrink-0 bg-base border-b border-line"
+        style={{ paddingTop: 'var(--inset-top, env(safe-area-inset-top))' }}
       >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-[10px] flex items-center justify-center bg-gradient-to-br from-accent to-accent-dim shadow-btn-accent">
-              <Dumbbell className="w-4 h-4 text-accent-fg" />
-            </div>
-            <div className="text-lg font-bold leading-none tracking-tight text-fg">
-              Gym<span className="text-accent">Log</span>
-            </div>
-          </div>
+        <div
+          className="relative flex items-center justify-between"
+          style={{ height: 'var(--header-height)' }}
+        >
+          <span
+            className="absolute left-1/2 -translate-x-1/2 font-display font-bold text-base tracking-[0.2em] text-fg select-none"
+            aria-hidden="true"
+          >
+            GYMLOG
+          </span>
+          <span className="w-8" />
           {user && (
-            <div className="flex items-center gap-2 px-2.5 py-1 rounded-pill bg-surface-2 border border-line">
-              <div className="w-1.5 h-1.5 rounded-full bg-success shadow-[0_0_6px_var(--success)]" />
+            <div className="flex items-center gap-2 px-2.5 py-1 rounded-sm bg-surface border border-line">
+              <div className="w-1.5 h-1.5 bg-success" />
               <span className="text-xs font-medium text-fg-muted">{user.email?.split('@')[0]}</span>
             </div>
           )}
         </div>
       </header>
-
-      <nav className="flex flex-shrink-0 relative z-10 bg-base">
-        {tabs.map((tab) => {
-          const isActive = location.pathname === tab.path;
-          const { Icon, label, badge } = tab;
-          return (
-            <Link
-              key={tab.path}
-              to={tab.path}
-              onPointerEnter={() => {
-                if (user?.id) {
-                  prefetchPageData(tab.path, user.id);
-                  preloadChunk(tab.path);
-                }
-              }}
-              className="flex-1 py-3 flex flex-col items-center gap-1 relative transition-opacity active:opacity-60"
-            >
-              <div className="relative px-3.5 py-0.5">
-                {isActive && (
-                  <m.div
-                    layoutId="activeTabPill"
-                    className="absolute inset-0 rounded-pill bg-accent/12"
-                    transition={{ type: 'spring', stiffness: 500, damping: 32 }}
-                  />
-                )}
-                <Icon
-                  className={`relative w-5 h-5 transition-colors ${isActive ? 'text-accent' : 'text-fg-subtle'}`}
-                  strokeWidth={isActive ? 2 : 1.5}
-                />
-                {badge && (
-                  <m.span
-                    initial={{ scale: 0.95, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    className="absolute -top-1 right-2 w-2 h-2 rounded-full bg-accent shadow-glow pulse-soft"
-                  />
-                )}
-              </div>
-              <span
-                className={`text-[0.5625rem] font-semibold tracking-wide transition-colors ${isActive ? 'text-accent' : 'text-fg-subtle'}`}
-              >
-                {label}
-              </span>
-            </Link>
-          );
-        })}
-      </nav>
 
       <AnimatePresence>
         {!isOnline && (
@@ -217,6 +175,59 @@ export function Layout({ children }: LayoutProps) {
           {children}
         </m.div>
       </main>
+
+      <nav
+        className="flex flex-shrink-0 relative z-10 bg-surface border-t border-line"
+        style={{
+          height:
+            'calc(var(--bottom-nav-height) + var(--inset-bottom, env(safe-area-inset-bottom)))',
+          paddingBottom: 'var(--inset-bottom, env(safe-area-inset-bottom))',
+        }}
+      >
+        {tabs.map((tab) => {
+          const isActive = location.pathname === tab.path;
+          const { Icon, label, badge } = tab;
+          return (
+            <Link
+              key={tab.path}
+              to={tab.path}
+              onPointerEnter={() => {
+                if (user?.id) {
+                  prefetchPageData(tab.path, user.id);
+                  preloadChunk(tab.path);
+                }
+              }}
+              className="flex-1 flex flex-col items-center justify-center gap-1 relative transition-opacity active:opacity-60"
+            >
+              {isActive && (
+                <m.div
+                  layoutId="activeTabBar"
+                  className="absolute top-0 left-3 right-3 h-0.5 bg-accent"
+                  transition={{ type: 'spring', stiffness: 500, damping: 32 }}
+                />
+              )}
+              <div className="relative">
+                <Icon
+                  className={`w-5 h-5 transition-colors ${isActive ? 'text-accent' : 'text-fg-subtle'}`}
+                  strokeWidth={isActive ? 2 : 1.5}
+                />
+                {badge && (
+                  <m.span
+                    initial={{ scale: 0.95, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="absolute -top-1 -right-1.5 w-2 h-2 bg-accent shadow-glow pulse-soft"
+                  />
+                )}
+              </div>
+              <span
+                className={`label-caps transition-colors ${isActive ? 'text-accent' : 'text-fg-subtle'}`}
+              >
+                {label}
+              </span>
+            </Link>
+          );
+        })}
+      </nav>
     </div>
   );
 }

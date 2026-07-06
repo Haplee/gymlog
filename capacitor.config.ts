@@ -15,16 +15,16 @@ const config: CapacitorConfig = {
   plugins: {
     SplashScreen: {
       launchShowDuration: 1500,
-      backgroundColor: '#080808',
+      backgroundColor: '#0a0a0b',
       showSpinner: false,
     },
     StatusBar: {
       style: 'DARK',
-      backgroundColor: '#080808',
+      backgroundColor: '#0a0a0b',
       overlaysWebView: true,
     },
     LocalNotifications: {
-      iconColor: '#c8ff00',
+      iconColor: '#60eca8',
       smallIcon: 'icon',
     },
   },

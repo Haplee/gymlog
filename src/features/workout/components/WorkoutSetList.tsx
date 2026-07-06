@@ -113,7 +113,7 @@ export function WorkoutSetList({
                       });
                     }
                   }}
-                  className={`w-full rounded-lg text-lg font-mono tabular-nums px-2 py-3 outline-none text-center text-fg border ${
+                  className={`w-full rounded-sm text-2xl font-display font-bold tabular-nums px-2 py-3 outline-none text-center text-fg border focus:border-accent ${
                     setErrors[i] ? 'bg-error/10 border-error' : 'bg-surface-2 border-line'
                   }`}
                 />
@@ -176,7 +176,7 @@ export function WorkoutSetList({
                       return n;
                     });
                   }}
-                  className={`w-full rounded-lg text-lg font-mono tabular-nums px-2 py-3 outline-none text-center text-fg border ${
+                  className={`w-full rounded-sm text-2xl font-display font-bold tabular-nums px-2 py-3 outline-none text-center text-fg border focus:border-accent ${
                     setErrors[i] ? 'bg-error/10 border-error' : 'bg-surface-2 border-line'
                   }`}
                 />

@@ -50,8 +50,8 @@ export function WeeklyVolumeChart({
             <AreaChart data={data}>
               <defs>
                 <linearGradient id="userStatsGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#c8ff00" stopOpacity={0.35} />
-                  <stop offset="100%" stopColor="#c8ff00" stopOpacity={0.02} />
+                  <stop offset="0%" stopColor="#60eca8" stopOpacity={0.35} />
+                  <stop offset="100%" stopColor="#60eca8" stopOpacity={0.02} />
                 </linearGradient>
               </defs>
               <XAxis
@@ -76,7 +76,7 @@ export function WeeklyVolumeChart({
               <Area
                 type="monotone"
                 dataKey="vol"
-                stroke="#c8ff00"
+                stroke="#60eca8"
                 strokeWidth={2.5}
                 fill="url(#userStatsGrad)"
               />

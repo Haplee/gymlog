@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal } from '@shared/components/ui';
+import { BottomSheet } from '@shared/components/ui';
 import { calcularDiscos, DEFAULT_BAR_KG } from '@shared/lib/plates';
 
 interface PlatesCalculatorProps {
@@ -33,7 +33,7 @@ export function PlatesCalculator({ open, initialTargetKg, onClose }: PlatesCalcu
   }, [target, bar]);
 
   return (
-    <Modal open={open} onClose={onClose} title={t('workout.plates_calc')}>
+    <BottomSheet open={open} onClose={onClose} title={t('workout.plates_calc')}>
       <label className="text-2xs uppercase font-semibold text-fg-subtle">
         {t('workout.plates_target')} (kg)
       </label>
@@ -68,7 +68,7 @@ export function PlatesCalculator({ open, initialTargetKg, onClose }: PlatesCalcu
         ))}
       </div>
 
-      <div className="rounded-xl p-3 bg-surface-2 border border-line">
+      <div className="rounded-md p-3 bg-surface-2 border border-line">
         <div className="text-2xs uppercase font-semibold mb-2 text-fg-subtle">
           {t('workout.plates_each_side')}
         </div>
@@ -79,7 +79,7 @@ export function PlatesCalculator({ open, initialTargetKg, onClose }: PlatesCalcu
             {result.perSide.map((p) => (
               <div
                 key={p.weight}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-pill bg-surface border border-line-strong"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-sm bg-surface border border-line-strong"
               >
                 <span className="font-mono text-base font-bold text-accent">{p.weight}</span>
                 <span className="text-xs text-fg-muted">× {p.count}</span>
@@ -98,6 +98,6 @@ export function PlatesCalculator({ open, initialTargetKg, onClose }: PlatesCalcu
           </div>
         )}
       </div>
-    </Modal>
+    </BottomSheet>
   );
 }

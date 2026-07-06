@@ -33,7 +33,7 @@ const ExerciseComparisonChart = lazy(() =>
 );
 
 function ChartFallback() {
-  return <div className="h-56 skeleton rounded-2xl" aria-hidden="true" />;
+  return <div className="h-56 skeleton rounded-lg" aria-hidden="true" />;
 }
 import {
   calculateCurrentStreak,
@@ -55,7 +55,16 @@ import { FatigueAnalysis } from '../components/FatigueAnalysis';
 import { CHART_COLORS } from '../constants';
 import { toast } from 'sonner';
 import { m } from 'framer-motion';
-import { TrendingUp, Target, Calculator, ChevronDown, AlertTriangle } from 'lucide-react';
+import {
+  TrendingUp,
+  Target,
+  Calculator,
+  ChevronDown,
+  AlertTriangle,
+  ArrowLeft,
+  Ruler,
+} from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { devError } from '@shared/lib/devtools';
 
 type PeriodFilter = '4semanas' | '3meses' | '6meses' | '1año';
@@ -114,6 +123,7 @@ function calculateMuscleGroupDistribution(
 }
 
 export function StatsPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const { sessions: cardioSessions, syncFromRemote: syncCardio } = useCardioStore();
@@ -401,8 +411,8 @@ export function StatsPage() {
               <Skeleton key={i} className="h-28 rounded-card" />
             ))}
           </div>
-          <Skeleton className="h-56 rounded-2xl" />
-          <Skeleton className="h-40 rounded-2xl" />
+          <Skeleton className="h-56 rounded-lg" />
+          <Skeleton className="h-40 rounded-lg" />
         </div>
       </Layout>
     );
@@ -410,6 +420,28 @@ export function StatsPage() {
 
   return (
     <Layout>
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <button
+            onClick={() => navigate(-1)}
+            aria-label={t('common.back')}
+            className="w-11 h-11 flex-shrink-0 rounded-sm flex items-center justify-center bg-surface border border-line hover:bg-surface-2"
+          >
+            <ArrowLeft className="w-4 h-4 text-fg-muted" />
+          </button>
+          <h1 className="text-headline font-display text-fg text-balance truncate">
+            {t('stats.title')}
+          </h1>
+        </div>
+        <button
+          onClick={() => navigate('/user-stats')}
+          aria-label={t('settings.my_measurements')}
+          className="w-11 h-11 flex-shrink-0 rounded-sm flex items-center justify-center bg-surface border border-line text-accent hover:bg-surface-2"
+        >
+          <Ruler className="w-4 h-4" />
+        </button>
+      </div>
+
       <div className="space-y-5">
         {/* ── Entrenamiento ── */}
         <section className="space-y-3">
@@ -721,7 +753,7 @@ export function StatsPage() {
                   <button
                     key={p}
                     onClick={() => setPeriodFilter(p)}
-                    className="text-[0.5625rem] px-2 py-1 rounded-pill transition-colors font-medium"
+                    className="text-[0.5625rem] px-2 py-1 rounded-sm transition-colors font-medium"
                     style={
                       periodFilter === p
                         ? {
@@ -806,7 +838,7 @@ export function StatsPage() {
                   <select
                     value={selectedExercise}
                     onChange={(e) => setSelectedExercise(e.target.value)}
-                    className="w-full rounded-xl text-sm p-3 bg-surface-2 border border-line-strong text-fg"
+                    className="w-full rounded-md text-sm p-3 bg-surface-2 border border-line-strong text-fg"
                   >
                     {uniqueExercises.map((ex) => (
                       <option key={ex} value={ex}>
@@ -820,7 +852,7 @@ export function StatsPage() {
                       <button
                         key={m}
                         onClick={() => setMetricFilter(m)}
-                        className="flex-1 text-xs py-2 rounded-xl transition-colors font-medium"
+                        className="flex-1 text-xs py-2 rounded-md transition-colors font-medium"
                         style={
                           metricFilter === m
                             ? {
@@ -932,7 +964,7 @@ export function StatsPage() {
                   value={cmpA}
                   onChange={(e) => setCompareA(e.target.value)}
                   aria-label="Ejercicio A"
-                  className="w-full rounded-xl text-sm p-2.5 bg-surface-2 border border-line-strong text-fg"
+                  className="w-full rounded-md text-sm p-2.5 bg-surface-2 border border-line-strong text-fg"
                 >
                   {uniqueExercises.map((ex) => (
                     <option key={ex} value={ex}>
@@ -944,7 +976,7 @@ export function StatsPage() {
                   value={cmpB}
                   onChange={(e) => setCompareB(e.target.value)}
                   aria-label="Ejercicio B"
-                  className="w-full rounded-xl text-sm p-2.5 bg-surface-2 border border-line-strong text-fg"
+                  className="w-full rounded-md text-sm p-2.5 bg-surface-2 border border-line-strong text-fg"
                 >
                   {uniqueExercises.map((ex) => (
                     <option key={ex} value={ex}>
@@ -995,7 +1027,7 @@ export function StatsPage() {
                   setRmWeight(e.target.value);
                   calcRM(e.target.value, rmReps);
                 }}
-                className="w-full rounded-xl text-base p-3 outline-none bg-surface-2 border border-line-strong text-fg"
+                className="w-full rounded-md text-base p-3 outline-none bg-surface-2 border border-line-strong text-fg"
               />
             </div>
             <div>
@@ -1008,7 +1040,7 @@ export function StatsPage() {
                   setRmReps(e.target.value);
                   calcRM(rmWeight, e.target.value);
                 }}
-                className="w-full rounded-xl text-base p-3 outline-none bg-surface-2 border border-line-strong text-fg"
+                className="w-full rounded-md text-base p-3 outline-none bg-surface-2 border border-line-strong text-fg"
               />
             </div>
           </div>

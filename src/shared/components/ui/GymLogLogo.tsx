@@ -5,8 +5,6 @@
 
 import React from 'react';
 
-/** v2.6.5 - Cache Bashing Final */
-
 export interface GymLogLogoProps {
   /**
    * Pixel sizes for icon mode: xs=24, sm=32, md=48, lg=64, xl=96.
@@ -14,8 +12,8 @@ export interface GymLogLogoProps {
    */
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   /**
-   * 'icon': Only the lime square.
-   * 'stacked': Lime square with text inside (app icon style).
+   * 'icon': Only the accent square.
+   * 'stacked': Accent square with text inside (app icon style).
    * 'horizontal': Icon + text to the right.
    */
   variant?: 'icon' | 'stacked' | 'horizontal';
@@ -33,6 +31,12 @@ const SIZES = {
 
 const BASE_SIZE = 120; // Base size for stacked variant
 
+const textStyle: React.CSSProperties = {
+  fontFamily: 'var(--font-display)',
+  fontWeight: 700,
+  letterSpacing: '-0.03em',
+};
+
 const GymLogLogo: React.FC<GymLogLogoProps> = ({
   size = 'md',
   variant = 'stacked',
@@ -42,27 +46,16 @@ const GymLogLogo: React.FC<GymLogLogoProps> = ({
   const pixelSize = SIZES[size] || SIZES.md;
   const scale = pixelSize / SIZES.md;
 
-  // Font Import
-  const fontStyle = `
-    @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@800&display=swap');
-    .gymlog-text {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 800;
-      text-transform: none;
-      font-style: normal;
-    }
-  `;
-
   const containerBaseStyle: React.CSSProperties = {
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#c8ff00',
-    borderRadius: '24%',
+    backgroundColor: 'var(--interactive-primary)',
+    color: 'var(--interactive-primary-fg)',
+    borderRadius: '18%',
     overflow: 'hidden',
     userSelect: 'none',
     boxSizing: 'border-box',
-    boxShadow: '0 4px 12px rgba(200,255,0,0.25)',
     ...style,
   };
 
@@ -82,7 +75,7 @@ const GymLogLogo: React.FC<GymLogLogoProps> = ({
   }
 
   if (variant === 'stacked') {
-    const finalSize = (BASE_SIZE - 20) * scale; // Reduced base size to fix "too large" issue
+    const finalSize = (BASE_SIZE - 20) * scale;
     return (
       <div
         className={className}
@@ -94,20 +87,17 @@ const GymLogLogo: React.FC<GymLogLogoProps> = ({
           padding: `${finalSize * 0.12}px`,
         }}
       >
-        <style>{fontStyle}</style>
         <div style={{ marginBottom: finalSize * 0.04 }}>
           <DumbbellIcon size={finalSize * 0.6} />
         </div>
         <span
-          className="gymlog-text"
           style={{
-            color: '#000',
-            fontSize: `${finalSize * 0.2}px`,
+            ...textStyle,
+            fontSize: `${finalSize * 0.18}px`,
             lineHeight: 1,
-            letterSpacing: '-0.02em',
           }}
         >
-          GymLog
+          GYMLOG
         </span>
       </div>
     );
@@ -124,27 +114,24 @@ const GymLogLogo: React.FC<GymLogLogoProps> = ({
           ...style,
         }}
       >
-        <style>{fontStyle}</style>
         <div
           style={{
             ...containerBaseStyle,
             width: pixelSize,
             height: pixelSize,
-            borderRadius: '22%',
           }}
         >
           <DumbbellIcon size={pixelSize * 0.72} />
         </div>
         <span
-          className="gymlog-text"
           style={{
-            color: '#ffffff', // White for premium contrast on dark backgrounds
-            fontSize: `${pixelSize * 0.65}px`,
+            ...textStyle,
+            color: 'var(--text-primary)',
+            fontSize: `${pixelSize * 0.6}px`,
             lineHeight: 1,
-            letterSpacing: '-0.02em',
           }}
         >
-          Gym<span style={{ color: '#c8ff00' }}>Log</span>
+          GYM<span style={{ color: 'var(--interactive-primary)' }}>LOG</span>
         </span>
       </div>
     );

@@ -3,8 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useTranslation } from 'react-i18next';
 import { useRateLimit } from '@shared/hooks/useRateLimit';
-import { GymLogLogo } from '@/shared/components/ui';
+import { useSettingsStore } from '@shared/stores/settingsStore';
 import { checkPasswordStrength } from '@shared/lib/passwordStrength';
+import { Download } from 'lucide-react';
+
+const APK_URL = 'https://github.com/Haplee/gymlog/releases/download/v4.0.0/GymLog-v4.0.0.apk';
+
+const inputClass =
+  'w-full bg-transparent border-0 border-b border-line-strong rounded-none text-base py-3 px-1 outline-none transition-colors text-fg placeholder:text-fg-subtle focus:border-accent';
 
 export function AuthPage() {
   const navigate = useNavigate();
@@ -17,6 +23,8 @@ export function AuthPage() {
   const [animKey, setAnimKey] = useState(0);
   const { t } = useTranslation();
   const { signIn, signUp, signInWithGoogle } = useAuthStore();
+  const language = useSettingsStore((s) => s.language);
+  const setLanguage = useSettingsStore((s) => s.setLanguage);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -109,67 +117,72 @@ export function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen min-h-[100dvh] flex flex-col items-center justify-center p-6 bg-base">
-      <div className="text-center mb-6 scale-in flex flex-col items-center">
-        <GymLogLogo size="lg" variant="stacked" className="mb-4" />
-        <h1 className="text-[1.875rem] font-extrabold tracking-tight fade-in-up text-fg">
-          Gym<span className="text-accent">Log</span>
-        </h1>
-        <p className="text-fg-muted mt-2 text-sm">{t('auth.subtitle')}</p>
-      </div>
+    <div className="relative min-h-screen min-h-[100dvh] flex flex-col px-6 bg-base overflow-hidden">
+      {/* Grid ambiental Stitch */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 pointer-events-none opacity-40"
+        style={{
+          backgroundImage:
+            'linear-gradient(var(--border-subtle) 1px, transparent 1px), linear-gradient(90deg, var(--border-subtle) 1px, transparent 1px)',
+          backgroundSize: '48px 48px',
+        }}
+      />
 
-      <form
-        onSubmit={handleSubmit}
-        key={animKey}
-        className="w-full max-w-[300px] space-y-4 fade-in-up"
-      >
-        {isSignUp && (
-          <div className="fade-in-up">
+      <div className="relative flex-1 flex flex-col justify-center w-full max-w-sm mx-auto py-10">
+        <div className="fade-in-up">
+          <h1 className="text-display-huge font-display text-fg select-none">GYMLOG</h1>
+          <p className="label-caps text-accent mt-2">{t('auth.subtitle')}</p>
+        </div>
+
+        <div className="dotted-separator mt-8 mb-8" />
+
+        <form onSubmit={handleSubmit} key={animKey} className="space-y-5 fade-in-up">
+          {isSignUp && (
             <input
               type="text"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className="w-full rounded-2xl text-base py-3.5 px-4 outline-none transition-all bg-surface border border-line-strong text-fg placeholder:text-fg-subtle focus:border-accent focus:shadow-[0_0_0_2px_var(--interactive-primary)]/30"
+              className={`${inputClass} fade-in-up`}
               placeholder={t('auth.name')}
+              aria-label={t('auth.name')}
             />
-          </div>
-        )}
+          )}
 
-        {isSignUp && (
-          <div className="fade-in-up">
+          {isSignUp && (
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full rounded-2xl text-base py-3.5 px-4 outline-none transition-all bg-surface border border-line-strong text-fg placeholder:text-fg-subtle focus:border-accent focus:shadow-[0_0_0_2px_var(--interactive-primary)]/30"
+              className={`${inputClass} fade-in-up`}
               placeholder={t('auth.username')}
+              aria-label={t('auth.username')}
             />
-          </div>
-        )}
+          )}
 
-        <div className="fade-in-up">
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-2xl text-base py-3.5 px-4 outline-none transition-all bg-surface border border-line-strong text-fg placeholder:text-fg-subtle focus:border-accent focus:shadow-[0_0_0_2px_var(--interactive-primary)]/30"
+            className={inputClass}
             placeholder={t('auth.email')}
+            aria-label={t('auth.email')}
           />
-        </div>
 
-        <div className="fade-in-up">
           <div className="relative">
             <input
               type={isRevealing ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-2xl text-base py-3.5 px-4 outline-none transition-all pr-12 bg-surface border border-line-strong text-fg placeholder:text-fg-subtle focus:border-accent focus:shadow-[0_0_0_2px_var(--interactive-primary)]/30"
+              className={`${inputClass} pr-12`}
               placeholder={t('auth.password')}
+              aria-label={t('auth.password')}
             />
             <button
               type="button"
               onClick={() => setIsRevealing(!isRevealing)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 bg-transparent border-none p-1 transition-all hover:scale-110 text-fg-subtle"
+              aria-label={isRevealing ? t('auth.hide_password') : t('auth.show_password')}
+              className="absolute right-1 top-1/2 -translate-y-1/2 bg-transparent border-none p-2 -m-2 min-w-11 min-h-11 flex items-center justify-center text-fg-subtle transition-colors hover:text-fg"
             >
               {isRevealing ? (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -198,36 +211,72 @@ export function AuthPage() {
               )}
             </button>
           </div>
-        </div>
 
-        {error && (
-          <div className="fade-in-up text-center text-sm py-2 rounded-xl bg-error/10 text-error error-shake">
-            {error}
+          {error && (
+            <div
+              role="alert"
+              className="fade-in-up text-center text-sm py-2.5 px-3 rounded-sm bg-error/10 border border-error/25 text-error error-shake"
+            >
+              {error}
+            </div>
+          )}
+
+          {message && (
+            <div className="fade-in-up text-center text-sm py-2.5 px-3 rounded-sm bg-success/10 border border-success/25 text-success success-pulse">
+              {message}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading || isBlocked}
+            className={`w-full min-h-12 rounded-sm text-sm font-display font-bold uppercase tracking-[0.12em] transition-all active:scale-[0.98] disabled:opacity-50 text-accent-fg ${
+              isBlocked ? 'bg-fg-subtle' : 'bg-accent shadow-btn-accent'
+            }`}
+          >
+            {loading ? (
+              <span className="inline-flex items-center gap-2">
+                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    fill="none"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                  />
+                </svg>
+                {t('auth.loading')}
+              </span>
+            ) : isBlocked ? (
+              `Wait ${cooldownSeconds}s`
+            ) : isSignUp ? (
+              t('auth.signup')
+            ) : (
+              t('auth.login')
+            )}
+          </button>
+
+          <div className="relative flex items-center py-1">
+            <div className="flex-grow dotted-separator" />
+            <span className="mx-4 label-caps text-fg-subtle">o</span>
+            <div className="flex-grow dotted-separator" />
           </div>
-        )}
 
-        {message && (
-          <div className="fade-in-up text-center text-sm py-2 rounded-xl bg-success/10 text-success success-pulse">
-            {message}
-          </div>
-        )}
-
-        <button
-          type="submit"
-          disabled={loading || isBlocked}
-          aria-label={
-            isBlocked
-              ? `Blocked ${cooldownSeconds}s`
-              : isSignUp
-                ? t('auth.signup')
-                : t('auth.login')
-          }
-          className={`w-full py-4 rounded-2xl text-base font-bold transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 text-accent-fg ${
-            isBlocked ? 'bg-fg-subtle' : 'bg-accent'
-          }`}
-        >
-          {loading ? (
-            <span className="inline-flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            disabled={googleLoading}
+            className="w-full min-h-12 px-5 rounded-sm text-sm font-display font-bold uppercase tracking-[0.12em] flex items-center justify-between gap-3 transition-all active:scale-[0.98] disabled:opacity-50 bg-surface border border-line-strong text-fg"
+          >
+            <span>{t('auth.signin_google')}</span>
+            {googleLoading ? (
               <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
                 <circle
                   className="opacity-25"
@@ -244,81 +293,67 @@ export function AuthPage() {
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                 />
               </svg>
-              {t('auth.loading')}
-            </span>
-          ) : isBlocked ? (
-            `Wait ${cooldownSeconds}s`
-          ) : isSignUp ? (
-            t('auth.signup')
-          ) : (
-            t('auth.login')
-          )}
-        </button>
-
-        <div className="relative flex items-center py-2">
-          <div className="flex-grow border-t border-line-strong"></div>
-          <span className="mx-4 text-xs text-fg-subtle">o</span>
-          <div className="flex-grow border-t border-line-strong"></div>
-        </div>
-
-        <button
-          type="button"
-          onClick={handleGoogleLogin}
-          disabled={googleLoading}
-          className="w-full py-4 rounded-2xl text-base flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 bg-surface border border-line-strong text-fg"
-        >
-          {googleLoading ? (
-            <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-                fill="none"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-              />
-            </svg>
-          ) : (
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
-              <path
-                fill="#4285F4"
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-              />
-              <path
-                fill="#34A853"
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-              />
-              <path
-                fill="#FBBC05"
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-              />
-              <path
-                fill="#EA4335"
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-              />
-            </svg>
-          )}
-          {t('auth.signin_google')}
-        </button>
-
-        <div className="text-center pt-2">
-          <button
-            type="button"
-            onClick={toggleMode}
-            className="text-sm bg-transparent border-none transition-all hover:scale-105 text-accent"
-          >
-            {isSignUp ? t('auth.switch_login') : t('auth.switch_signup')}
+            ) : (
+              <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
+                <path
+                  fill="#4285F4"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                />
+              </svg>
+            )}
           </button>
-        </div>
-      </form>
 
-      <p className="text-xs mt-8 fade-in-up text-fg-subtle">Tus datos están seguros</p>
+          <div className="text-center pt-1">
+            <button
+              type="button"
+              onClick={toggleMode}
+              className="text-sm bg-transparent border-none p-2 transition-colors text-accent hover:text-accent-dim"
+            >
+              {isSignUp ? t('auth.switch_login') : t('auth.switch_signup')}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <footer
+        className="relative flex items-center justify-between w-full max-w-sm mx-auto pt-4 pb-6"
+        style={{ paddingBottom: 'calc(var(--inset-bottom, env(safe-area-inset-bottom)) + 1.5rem)' }}
+      >
+        <div className="flex items-center gap-1">
+          {(['en', 'es'] as const).map((lng) => (
+            <button
+              key={lng}
+              type="button"
+              onClick={() => setLanguage(lng)}
+              aria-pressed={language === lng}
+              className={`label-caps px-3 py-2.5 min-h-11 rounded-sm transition-colors ${
+                language === lng ? 'text-accent' : 'text-fg-subtle hover:text-fg-muted'
+              }`}
+            >
+              {lng.toUpperCase()}
+            </button>
+          ))}
+        </div>
+        <a
+          href={APK_URL}
+          className="label-caps inline-flex items-center gap-2 px-3 py-2.5 min-h-11 rounded-sm text-fg-subtle hover:text-fg-muted transition-colors"
+        >
+          <Download className="w-3.5 h-3.5" />
+          {t('auth.download_apk')}
+        </a>
+      </footer>
     </div>
   );
 }

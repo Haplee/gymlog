@@ -1,14 +1,14 @@
 // Paleta para gráficos (recharts/SVG no resuelve var() de forma fiable
 // en atributos fill/stroke, así que se usan valores literales).
 export const CHART_COLORS = [
-  '#c8ff00',
-  '#22c55e',
-  '#3b82f6',
-  '#f59e0b',
-  '#ef4444',
-  '#8b5cf6',
-  '#ec4899',
-  '#06b6d4',
-  '#84cc16',
-  '#14b8a6',
+  '#60eca8',
+  '#3ecf8e',
+  '#38bdf8',
+  '#fbbf24',
+  '#fb7185',
+  '#818cf8',
+  '#c4b5fd',
+  '#2dd4bf',
+  '#4ade80',
+  '#94a3b8',
 ];

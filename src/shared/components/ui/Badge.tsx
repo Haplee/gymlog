@@ -19,7 +19,7 @@ export function Badge({ children, variant = 'default', size = 'sm' }: BadgeProps
 
   return (
     <span
-      className={`inline-flex items-center rounded-pill font-medium ${sizeStyles} ${variantStyles[variant]}`}
+      className={`inline-flex items-center rounded-sm font-medium ${sizeStyles} ${variantStyles[variant]}`}
     >
       {children}
     </span>

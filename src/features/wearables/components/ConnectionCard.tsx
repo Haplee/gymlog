@@ -31,14 +31,14 @@ export function ConnectionCard({
   hint,
 }: ConnectionCardProps) {
   return (
-    <div className="rounded-2xl p-4 scale-in bg-surface border border-line-strong shadow-card">
+    <div className="rounded-lg p-4 scale-in bg-surface border border-line-strong shadow-card">
       <div className="flex items-start gap-3">
         <div className="shrink-0 text-accent mt-0.5">{icon}</div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <div className="text-base text-fg">{title}</div>
             <span
-              className={`text-xs px-2 py-0.5 rounded-pill ${
+              className={`text-xs px-2 py-0.5 rounded-sm ${
                 connected ? 'bg-accent/15 text-accent' : 'bg-surface-3 text-fg-subtle'
               }`}
             >

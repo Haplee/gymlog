@@ -41,6 +41,7 @@ import {
   Repeat,
   Share2,
   BarChart2,
+  BarChart3,
   Pencil,
   Star,
   BookmarkPlus,
@@ -88,7 +89,7 @@ function ExerciseRow({
           <span className="text-base font-medium text-fg">{exercise}</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-2xs px-1.5 py-0.5 rounded-pill font-bold font-mono tabular-nums bg-accent/10 text-accent border border-line-accent">
+          <span className="text-2xs px-1.5 py-0.5 rounded-sm font-bold font-mono tabular-nums bg-accent/10 text-accent border border-line-accent">
             {sortedSets.length} {t('history.series_plural')}
           </span>
           <button
@@ -107,7 +108,7 @@ function ExerciseRow({
           {sortedSets.map((s) => (
             <div
               key={s.id}
-              className="flex flex-col gap-1 px-3 py-2 rounded-xl ml-7 bg-surface-2 border border-line"
+              className="flex flex-col gap-1 px-3 py-2 rounded-md ml-7 bg-surface-2 border border-line"
             >
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-3">
@@ -118,12 +119,12 @@ function ExerciseRow({
                     {s.reps} {t('workout.reps').toLowerCase()}
                   </span>
                   {s.is_warmup && (
-                    <span className="text-2xs px-1.5 py-0.5 rounded-pill font-bold uppercase bg-warning/15 text-warning">
+                    <span className="text-2xs px-1.5 py-0.5 rounded-sm font-bold uppercase bg-warning/15 text-warning">
                       W
                     </span>
                   )}
                   {typeof s.rpe === 'number' && (
-                    <span className="text-[0.5625rem] px-1.5 py-0.5 rounded-pill font-bold bg-surface-3 text-fg-muted">
+                    <span className="text-[0.5625rem] px-1.5 py-0.5 rounded-sm font-bold bg-surface-3 text-fg-muted">
                       RPE {s.rpe}
                     </span>
                   )}
@@ -888,7 +889,7 @@ export function HistoryPage() {
             <div className="skeleton h-10 w-24 rounded-lg" />
           </div>
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="skeleton h-16 rounded-2xl" />
+            <div key={i} className="skeleton h-16 rounded-lg" />
           ))}
         </div>
       </Layout>
@@ -903,7 +904,7 @@ export function HistoryPage() {
         <div
           role="tablist"
           aria-label="Vista del historial"
-          className="flex p-1 rounded-pill bg-surface border border-line"
+          className="flex p-1 rounded-sm bg-surface border border-line"
         >
           {(
             [
@@ -921,14 +922,14 @@ export function HistoryPage() {
                 role="tab"
                 aria-selected={active}
                 onClick={() => setView(v.id)}
-                className={`relative flex-1 py-2.5 text-xs font-semibold rounded-pill transition-colors ${
+                className={`relative flex-1 py-2.5 text-xs font-semibold rounded-sm transition-colors ${
                   active ? 'text-accent-fg' : 'text-fg-muted active:text-fg'
                 }`}
               >
                 {active && (
                   <m.div
                     layoutId="historyViewPill"
-                    className="absolute inset-0 rounded-pill bg-accent shadow-btn-accent"
+                    className="absolute inset-0 rounded-sm bg-accent shadow-btn-accent"
                     transition={{ type: 'spring', stiffness: 500, damping: 35 }}
                   />
                 )}
@@ -939,6 +940,14 @@ export function HistoryPage() {
         </div>
 
         <div className="flex gap-2 flex-wrap">
+          <button
+            onClick={() => navigate('/stats')}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg font-semibold text-sm transition-all hover:scale-[1.02] active:scale-[0.98] bg-accent/10 border border-line-accent text-accent"
+          >
+            <BarChart3 className="w-4 h-4" />
+            {t('stats.title')}
+          </button>
+
           <button
             onClick={() => navigate('/user-stats')}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg font-semibold text-sm transition-all hover:scale-[1.02] active:scale-[0.98] bg-accent/10 border border-line-accent text-accent"
@@ -1035,10 +1044,10 @@ export function HistoryPage() {
                     item.kind === 'cardio' ? (
                       <div
                         key={item.data.id}
-                        className="rounded-2xl p-3.5 flex items-center justify-between bg-surface border border-line shadow-card transition-transform active:scale-[0.99]"
+                        className="rounded-lg p-3.5 flex items-center justify-between bg-surface border border-line shadow-card transition-transform active:scale-[0.99]"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-error/10 text-error">
+                          <div className="w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0 bg-error/10 text-error">
                             <CardioTypeIcon type={item.data.type} className="w-4.5 h-4.5" />
                           </div>
                           <div>
@@ -1046,7 +1055,7 @@ export function HistoryPage() {
                               <span className="text-sm font-semibold text-fg">
                                 {CARDIO_LABELS[item.data.type]}
                               </span>
-                              <span className="text-2xs px-1.5 py-0.5 rounded-pill font-bold bg-error/10 text-error">
+                              <span className="text-2xs px-1.5 py-0.5 rounded-sm font-bold bg-error/10 text-error">
                                 Cardio
                               </span>
                             </div>
@@ -1069,7 +1078,7 @@ export function HistoryPage() {
                     ) : (
                       <div
                         key={item.data.id}
-                        className="rounded-2xl overflow-hidden bg-surface border border-line shadow-card"
+                        className="rounded-lg overflow-hidden bg-surface border border-line shadow-card"
                       >
                         <div className="px-3 py-2.5">
                           <div className="flex justify-between items-center mb-2">
@@ -1080,7 +1089,7 @@ export function HistoryPage() {
                                   minute: '2-digit',
                                 })}
                               </span>
-                              <span className="text-2xs px-1.5 py-0.5 rounded-pill font-bold bg-accent/10 text-accent border border-line-accent">
+                              <span className="text-2xs px-1.5 py-0.5 rounded-sm font-bold bg-accent/10 text-accent border border-line-accent">
                                 Fuerza
                               </span>
                             </div>
@@ -1128,7 +1137,7 @@ export function HistoryPage() {
                             {item.data.sets.map((s, si) => (
                               <span
                                 key={si}
-                                className="px-2 py-1 rounded-pill text-xs bg-surface-2 border border-line text-fg-muted"
+                                className="px-2 py-1 rounded-sm text-xs bg-surface-2 border border-line text-fg-muted"
                               >
                                 {s.exercise?.name}: {s.reps}×{s.weight}
                               </span>
@@ -1159,9 +1168,9 @@ export function HistoryPage() {
                 key={session.id}
                 onDelete={() => void deleteCardioSession(session.id, user?.id ?? null)}
               >
-                <div className="p-4 flex items-center justify-between bg-surface border border-line rounded-2xl">
+                <div className="p-4 flex items-center justify-between bg-surface border border-line rounded-lg">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-surface-2">
+                    <div className="w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0 bg-surface-2">
                       <span className="text-accent">
                         <CardioTypeIcon type={session.type} className="w-4.5 h-4.5" />
                       </span>
@@ -1202,7 +1211,7 @@ export function HistoryPage() {
           )}
         </div>
       ) : view === 'sets' ? (
-        <div className="rounded-2xl overflow-hidden bg-surface border border-line-strong shadow-card">
+        <div className="rounded-lg overflow-hidden bg-surface border border-line-strong shadow-card">
           {loadingSets ? (
             <div className="p-3 space-y-2">
               {[1, 2, 3, 4, 5].map((i) => (
@@ -1265,7 +1274,7 @@ export function HistoryPage() {
             groupedWorkouts.map((group, gi) => (
               <div
                 key={gi}
-                className="rounded-2xl overflow-hidden bg-surface border border-line-strong shadow-card"
+                className="rounded-lg overflow-hidden bg-surface border border-line-strong shadow-card"
               >
                 {/* Cabecera fecha/volumen */}
                 <div className="px-3 py-2 flex justify-between items-center bg-surface-2 border-b border-line">
@@ -1335,7 +1344,7 @@ export function HistoryPage() {
                       {wo.sets.map((s: WorkoutSetWithDetails, si) => (
                         <span
                           key={si}
-                          className="px-2 py-1 rounded-pill text-xs bg-surface-2 border border-line text-fg-muted"
+                          className="px-2 py-1 rounded-sm text-xs bg-surface-2 border border-line text-fg-muted"
                         >
                           {s.exercise?.name}: {s.reps}×{s.weight}
                         </span>

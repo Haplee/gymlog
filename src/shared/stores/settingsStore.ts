@@ -6,8 +6,8 @@ export type Theme = 'dark' | 'light';
 
 /** Color de chrome (status bar / theme-color) por tema; coincide con --bg-base. */
 const THEME_CHROME: Record<Theme, string> = {
-  dark: '#080808',
-  light: '#eef0f3',
+  dark: '#0a0a0b',
+  light: '#f3f5f3',
 };
 
 interface SettingsState {
@@ -94,7 +94,7 @@ export const useSettingsStore = create<SettingsState>()(
         // Sincroniza el chrome del navegador/PWA con el tema activo
         const chrome = THEME_CHROME[theme];
         document.querySelector('meta[name="theme-color"]')?.setAttribute('content', chrome);
-        // El <body> tiene un fondo #080808 inline en index.html que no adapta;
+        // El <body> tiene un fondo #0a0a0b inline en index.html que no adapta;
         // forzarlo aquí evita franjas oscuras en las safe-area en modo claro.
         document.body.style.backgroundColor = chrome;
 

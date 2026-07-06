@@ -96,7 +96,7 @@ export function BottomSheet({
                 <div className="flex items-center gap-2">
                   {icon && (
                     <div
-                      className="w-8 h-8 rounded-xl flex items-center justify-center"
+                      className="w-8 h-8 rounded-md flex items-center justify-center"
                       style={{ backgroundColor: iconBg }}
                     >
                       {icon}

@@ -61,7 +61,7 @@ const MuscleDistributionChart = lazy(() =>
 );
 
 function ChartFallback() {
-  return <div className="h-56 skeleton rounded-2xl" aria-hidden="true" />;
+  return <div className="h-56 skeleton rounded-lg" aria-hidden="true" />;
 }
 const PUSH_MUSCLES = ['Pecho', 'Hombro', 'Hombros', 'Tríceps'];
 const PULL_MUSCLES = ['Espalda', 'Bíceps', 'Antebrazo', 'Espalda baja'];
@@ -104,7 +104,7 @@ function BigKPI({
         }}
       />
       <div
-        className="relative w-8 h-8 rounded-xl flex items-center justify-center"
+        className="relative w-8 h-8 rounded-md flex items-center justify-center"
         style={{ backgroundColor: `color-mix(in srgb, ${color} 12%, transparent)` }}
       >
         <Icon className="w-4 h-4" style={{ color }} />
@@ -157,7 +157,7 @@ function TipCard({ tip, index }: { tip: Tip; index: number }) {
       initial={{ opacity: 0, x: -12 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: 0.05 * index, type: 'spring', stiffness: 280, damping: 22 }}
-      className="flex gap-3 p-3.5 rounded-2xl"
+      className="flex gap-3 p-3.5 rounded-lg"
       style={{ backgroundColor: config.bg, border: `1px solid ${config.border}` }}
     >
       <Icon className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: config.color }} />
@@ -521,7 +521,7 @@ export function UserStatsPage() {
             particleCount: 80,
             spread: 60,
             origin: { y: 0.7 },
-            colors: ['#c8ff00', '#ffffff'],
+            colors: ['#60eca8', '#ffffff'],
           }),
         )
         .catch(() => {});
@@ -600,7 +600,7 @@ export function UserStatsPage() {
         {/* Replica el layout real: header + grid KPI 2col + chart */}
         <div className="space-y-4">
           <div className="flex items-center gap-3">
-            <div className="skeleton w-11 h-11 rounded-xl" />
+            <div className="skeleton w-11 h-11 rounded-md" />
             <div className="skeleton h-5 w-40 rounded-lg" />
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -608,7 +608,7 @@ export function UserStatsPage() {
               <div key={i} className="skeleton h-28 rounded-card" />
             ))}
           </div>
-          <div className="skeleton h-56 rounded-2xl" />
+          <div className="skeleton h-56 rounded-lg" />
         </div>
       </Layout>
     );
@@ -624,7 +624,7 @@ export function UserStatsPage() {
       >
         <button
           onClick={() => navigate(-1)}
-          className="w-11 h-11 rounded-xl flex items-center justify-center transition-colors bg-surface border border-line hover:bg-surface-2"
+          className="w-11 h-11 rounded-md flex items-center justify-center transition-colors bg-surface border border-line hover:bg-surface-2"
         >
           <ArrowLeft className="w-4 h-4 text-fg-muted" />
         </button>
@@ -687,7 +687,7 @@ export function UserStatsPage() {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 + i * 0.04 }}
-                className="rounded-2xl p-3 text-center bg-surface border border-line shadow-card"
+                className="rounded-lg p-3 text-center bg-surface border border-line shadow-card"
               >
                 <div
                   className="font-mono font-bold text-xl tabular-nums"
@@ -705,7 +705,7 @@ export function UserStatsPage() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="rounded-2xl p-3.5 flex items-center justify-between bg-surface border border-line"
+              className="rounded-lg p-3.5 flex items-center justify-between bg-surface border border-line"
             >
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4" style={{ color: 'var(--accent-sky)' }} />
@@ -743,14 +743,14 @@ export function UserStatsPage() {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.03 * i }}
-                  className={`rounded-2xl p-3 flex items-center gap-3 border shadow-card ${
+                  className={`rounded-lg p-3 flex items-center gap-3 border shadow-card ${
                     a.unlocked
                       ? 'bg-surface border-line-accent'
                       : 'bg-surface border-line opacity-60'
                   }`}
                 >
                   <div
-                    className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                    className={`w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0 ${
                       a.unlocked ? 'bg-accent/15 text-accent' : 'bg-surface-2 text-fg-subtle'
                     }`}
                   >
@@ -889,7 +889,7 @@ export function UserStatsPage() {
                   return (
                     <div
                       key={name}
-                      className="flex items-center justify-between p-2.5 rounded-xl"
+                      className="flex items-center justify-between p-2.5 rounded-md"
                       style={{ backgroundColor: colors.bg }}
                     >
                       <div className="flex items-center gap-2">

@@ -74,7 +74,7 @@ export function EmptyState({
         <m.button
           variants={itemVariants}
           onClick={action.onClick}
-          className="px-5 py-2.5 rounded-pill text-sm font-semibold bg-accent text-accent-fg shadow-btn-accent transition-transform active:scale-[0.97]"
+          className="px-5 py-2.5 rounded-sm text-sm font-semibold bg-accent text-accent-fg shadow-btn-accent transition-transform active:scale-[0.97]"
         >
           {action.label}
         </m.button>

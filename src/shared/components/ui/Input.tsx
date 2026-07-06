@@ -6,10 +6,22 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: string;
   iconLeft?: ReactNode;
   iconRight?: ReactNode;
+  /** 'boxed' (defecto): caja con borde. 'underline': solo border-b estilo Stitch (search, formularios inline). */
+  variant?: 'boxed' | 'underline';
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
-  { label, helperText, error, iconLeft, iconRight, id, className = '', ...props },
+  {
+    label,
+    helperText,
+    error,
+    iconLeft,
+    iconRight,
+    id,
+    className = '',
+    variant = 'boxed',
+    ...props
+  },
   ref,
 ) {
   const inputId = id ?? label?.toLowerCase().replace(/\s+/g, '-');
@@ -40,8 +52,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           }
           aria-invalid={hasError}
           className={[
-            'w-full bg-surface-2 text-fg placeholder:text-fg-subtle',
-            'border border-line-strong rounded-xl px-4 py-3.5 text-base',
+            'w-full text-fg placeholder:text-fg-subtle',
+            variant === 'underline'
+              ? 'bg-transparent border-0 border-b border-line-strong rounded-none px-1 py-3 text-base'
+              : 'bg-surface-2 border border-line-strong rounded-sm px-4 py-3.5 text-base',
             'transition-all duration-150',
             'focus:outline-none focus:border-accent',
             'disabled:opacity-50 disabled:cursor-not-allowed',

@@ -78,7 +78,7 @@ export function FatigueAnalysis({
         <m.div
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="flex items-center gap-2 px-4 py-3 rounded-2xl mb-4"
+          className="flex items-center gap-2 px-4 py-3 rounded-lg mb-4"
           style={{ backgroundColor: 'rgba(255, 214, 10, 0.1)' }}
         >
           <AlertTriangle className="w-5 h-5 text-warning" />
@@ -101,12 +101,12 @@ export function FatigueAnalysis({
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="flex items-center gap-3 p-2.5 rounded-2xl"
+              className="flex items-center gap-3 p-2.5 rounded-lg"
               style={{ backgroundColor: config.bgColor }}
             >
               {/* Icono anatómico con fondo coloreado */}
               <div
-                className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
+                className="flex-shrink-0 w-10 h-10 rounded-md flex items-center justify-center"
                 style={{ backgroundColor: `${muscleColor}22` }}
               >
                 <div style={{ color: muscleColor }}>
@@ -168,11 +168,11 @@ export function FatigueAnalysis({
             const suggColor = MUSCLE_COLORS[suggestedGroup ?? ''] ?? 'var(--interactive-primary)';
             return (
               <div
-                className="flex items-center gap-3 px-4 py-3 rounded-2xl"
+                className="flex items-center gap-3 px-4 py-3 rounded-lg"
                 style={{ backgroundColor: `${suggColor}18` }}
               >
                 <div
-                  className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+                  className="w-11 h-11 rounded-md flex items-center justify-center flex-shrink-0"
                   style={{ backgroundColor: `${suggColor}28`, color: suggColor }}
                 >
                   <MuscleGroupIcon name={suggestedGroup ?? 'Otro'} className="w-7 h-7" />

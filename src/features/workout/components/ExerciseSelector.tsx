@@ -251,7 +251,7 @@ export function ExerciseSelector({ userId, onSelect, activeExerciseId }: Exercis
             transition={{ duration: 0.15 }}
             id="exercise-list"
             role="listbox"
-            className="absolute z-50 top-full left-0 right-0 mt-1.5 max-h-[26rem] overflow-y-auto rounded-2xl"
+            className="absolute z-50 top-full left-0 right-0 mt-1.5 max-h-[26rem] overflow-y-auto rounded-lg"
             style={dropdownStyle}
             onMouseDown={(e) => {
               const tag = (e.target as HTMLElement).tagName;
@@ -333,7 +333,7 @@ export function ExerciseSelector({ userId, onSelect, activeExerciseId }: Exercis
                             <span className="text-base font-medium">{ex.name}</span>
                             {ex.user_id === userId && (
                               <span
-                                className="text-[0.5625rem] px-1.5 py-0.5 rounded-pill font-medium ml-2 flex-shrink-0"
+                                className="text-[0.5625rem] px-1.5 py-0.5 rounded-sm font-medium ml-2 flex-shrink-0"
                                 style={{
                                   backgroundColor: 'rgba(200,255,0,0.1)',
                                   color: 'var(--interactive-primary)',
@@ -396,7 +396,7 @@ export function ExerciseSelector({ userId, onSelect, activeExerciseId }: Exercis
                                   <button
                                     key={mg}
                                     onClick={() => setEditingMuscleValue(mg)}
-                                    className="flex items-center gap-1 px-2.5 py-1 text-xs rounded-pill transition-colors border"
+                                    className="flex items-center gap-1 px-2.5 py-1 text-xs rounded-sm transition-colors border"
                                     style={{
                                       backgroundColor: active
                                         ? 'var(--interactive-primary)'
@@ -422,7 +422,7 @@ export function ExerciseSelector({ userId, onSelect, activeExerciseId }: Exercis
                                 })
                               }
                               disabled={updateMuscleMutation.isPending}
-                              className="w-full flex items-center justify-center py-2 rounded-xl text-sm font-semibold transition-transform active:scale-[0.98]"
+                              className="w-full flex items-center justify-center py-2 rounded-md text-sm font-semibold transition-transform active:scale-[0.98]"
                               style={{
                                 backgroundColor: 'var(--interactive-primary)',
                                 color: '#000',
@@ -474,7 +474,7 @@ export function ExerciseSelector({ userId, onSelect, activeExerciseId }: Exercis
                     if (suggested) setNewExerciseMuscle(suggested);
                   }}
                   placeholder={t('workout.exercise_name_placeholder')}
-                  className="w-full px-3 py-2 rounded-xl text-sm outline-none bg-surface-2 border border-line-strong text-fg"
+                  className="w-full px-3 py-2 rounded-md text-sm outline-none bg-surface-2 border border-line-strong text-fg"
                   autoFocus
                 />
                 <div className="mt-2 flex flex-wrap gap-1.5">
@@ -485,7 +485,7 @@ export function ExerciseSelector({ userId, onSelect, activeExerciseId }: Exercis
                         key={mg}
                         type="button"
                         onClick={() => setNewExerciseMuscle(mg)}
-                        className="flex items-center gap-1 px-2.5 py-1 text-xs rounded-pill transition-colors border"
+                        className="flex items-center gap-1 px-2.5 py-1 text-xs rounded-sm transition-colors border"
                         style={{
                           backgroundColor: active
                             ? 'var(--interactive-primary)'

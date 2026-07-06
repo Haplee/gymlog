@@ -1,11 +1,19 @@
 import { test, expect } from '@playwright/test';
 
+// El modal de pre-permiso de notificaciones (PermissionRequests) se muestra
+// cuando Notification.permission === 'default' (WebKit móvil) e intercepta
+// clicks. Se siembra el flag para que no aparezca en e2e.
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('gymlog_permissions_seen', 'true');
+  });
+});
+
 test('Debe cargar la página de login inicialmente', async ({ page }) => {
   await page.goto('/');
   await expect(page).toHaveURL(/.*login/);
-  // Verificar acceso
-  const title = page.locator('h1', { hasText: 'GymLog' });
-  await expect(title).toBeVisible();
+  // Wordmark del rediseño Stitch
+  await expect(page.getByRole('heading', { name: 'GYMLOG' })).toBeVisible();
 });
 
 test('Formulario de login cambia entre iniciar sesión y registro', async ({ page }) => {
@@ -13,14 +21,13 @@ test('Formulario de login cambia entre iniciar sesión y registro', async ({ pag
 
   // Por defecto es inicio de sesión
   const btnSubmit = page.locator('button[type="submit"]');
-  await expect(btnSubmit).toHaveText('Entrar');
+  await expect(btnSubmit).toHaveText(/iniciar sesión|login/i);
 
   // Cambiar a registro
-  const toggleBtn = page.locator('button', { hasText: '¿Sin cuenta? Crea una' });
-  await toggleBtn.click();
+  await page.getByRole('button', { name: /crea una|create one/i }).click();
 
-  await expect(btnSubmit).toHaveText('Crear cuenta');
-  await expect(page.locator('input[placeholder="Nombre completo"]')).toBeVisible();
+  await expect(btnSubmit).toHaveText(/registrarse|sign up/i);
+  await expect(page.getByLabel(/nombre completo|full name/i)).toBeVisible();
 });
 
 test('Rate limit muestra error después de demasiados intentos fallidos', async ({ page }) => {
@@ -39,6 +46,6 @@ test('Rate limit muestra error después de demasiados intentos fallidos', async 
   }
 
   // Debería bloquearlo
-  await expect(btnSubmit).toHaveText(/Espera \d+s/);
+  await expect(btnSubmit).toHaveText(/Wait \d+s/);
   await expect(btnSubmit).toBeDisabled();
 });

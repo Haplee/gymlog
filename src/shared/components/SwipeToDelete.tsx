@@ -22,7 +22,7 @@ export function SwipeToDelete({
   const iconOpacity = useTransform(x, [-96, -40, 0], [1, 0.6, 0]);
 
   return (
-    <div className={`relative overflow-hidden rounded-2xl ${className}`}>
+    <div className={`relative overflow-hidden rounded-lg ${className}`}>
       <div
         className={`absolute inset-y-0 right-0 flex items-center justify-end pr-5 transition-colors ${
           armed ? 'bg-error' : 'bg-error/70'

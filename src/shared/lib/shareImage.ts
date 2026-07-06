@@ -20,9 +20,9 @@ function buildCard({ exerciseCount, totalSets, totalVolume, date }: ShareCardPar
     'height:540px',
     'box-sizing:border-box',
     'padding:48px',
-    'background:#080808',
+    'background:#0a0a0b',
     'color:#ffffff',
-    "font-family:'DM Sans',sans-serif",
+    "font-family:'Inter',sans-serif",
     'display:flex',
     'flex-direction:column',
     'justify-content:space-between',
@@ -35,14 +35,14 @@ function buildCard({ exerciseCount, totalSets, totalVolume, date }: ShareCardPar
 
   const stat = (value: string, label: string) =>
     `<div style="display:flex;flex-direction:column;gap:4px">
-       <span style="font-family:'Geist Mono',monospace;font-size:40px;font-weight:700;color:#c8ff00;line-height:1">${value}</span>
+       <span style="font-family:'Space Grotesk',sans-serif;font-size:40px;font-weight:700;color:#60eca8;line-height:1">${value}</span>
        <span style="font-size:14px;text-transform:uppercase;letter-spacing:1px;color:#a0a0a0">${label}</span>
      </div>`;
 
   el.innerHTML = `
     <div style="display:flex;align-items:center;gap:10px">
-      <div style="width:36px;height:36px;border-radius:10px;background:#c8ff00;display:flex;align-items:center;justify-content:center;color:#000;font-weight:800;font-size:20px">G</div>
-      <span style="font-size:22px;font-weight:800">Gym<span style="color:#c8ff00">Log</span></span>
+      <div style="width:36px;height:36px;border-radius:10px;background:#60eca8;display:flex;align-items:center;justify-content:center;color:#000;font-weight:800;font-size:20px">G</div>
+      <span style="font-size:22px;font-weight:800">Gym<span style="color:#60eca8">Log</span></span>
     </div>
     <div>
       <div style="font-size:16px;color:#a0a0a0;margin-bottom:28px">${date ?? 'Entrenamiento'}</div>

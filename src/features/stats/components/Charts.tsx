@@ -97,7 +97,7 @@ export function VolumeChart({
           <button
             key={v}
             onClick={() => onViewChange(v)}
-            className="text-[0.5625rem] px-2 py-1 rounded-pill transition-colors font-medium uppercase tracking-wide"
+            className="text-[0.5625rem] px-2 py-1 rounded-sm transition-colors font-medium uppercase tracking-wide"
             style={
               view === v
                 ? {

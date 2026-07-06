@@ -65,7 +65,7 @@ function ResumeWorkoutBanner({
     <m.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="mb-4 p-4 rounded-xl border-2 border-accent bg-accent/5 flex flex-col gap-3"
+      className="mb-4 p-4 rounded-md border-2 border-accent bg-accent/5 flex flex-col gap-3"
     >
       <div className="flex items-center gap-2 text-accent">
         <AlertCircle className="w-5 h-5" />
@@ -276,7 +276,7 @@ export function WorkoutPage() {
       particleCount: 150,
       spread: 70,
       origin: { y: 0.6 },
-      colors: ['#c8ff00', '#ffffff', '#22c55e'],
+      colors: ['#60eca8', '#ffffff', '#3ecf8e'],
     });
   }, []);
 
@@ -498,12 +498,12 @@ export function WorkoutPage() {
           initial="hidden"
           animate="show"
           transition={{ duration: 0.25, ease: 'easeOut' }}
-          className="mb-3 p-3 rounded-2xl bg-surface border border-line shadow-card"
+          className="mb-3 p-3 rounded-lg bg-surface border border-line shadow-card"
         >
           <div className="text-sm font-medium mb-1 text-accent">{todayRoutine.name}</div>
           <div className="flex flex-wrap gap-1.5">
             {todayRoutine.exercises.slice(0, 4).map((ex, i) => (
-              <span key={i} className="text-xs px-2 py-1 rounded-pill bg-surface-2 text-fg-muted">
+              <span key={i} className="text-xs px-2 py-1 rounded-sm bg-surface-2 text-fg-muted">
                 {ex.name}
               </span>
             ))}
@@ -519,7 +519,7 @@ export function WorkoutPage() {
         initial="hidden"
         animate="show"
         transition={{ duration: 0.25, ease: 'easeOut', delay: 0.05 }}
-        className="rounded-2xl p-4 mb-3 bg-surface border border-line-strong shadow-card"
+        className="rounded-lg p-4 mb-3 bg-surface border border-line-strong shadow-card"
       >
         {user && (
           <ExerciseSelector
@@ -615,7 +615,7 @@ export function WorkoutPage() {
         initial="hidden"
         animate="show"
         transition={{ duration: 0.25, ease: 'easeOut', delay: 0.1 }}
-        className={`rounded-2xl p-4 bg-surface border border-line-strong shadow-card ${saveSuccess ? 'success-pulse' : ''}`}
+        className={`rounded-lg p-4 bg-surface border border-line-strong shadow-card ${saveSuccess ? 'success-pulse' : ''}`}
       >
         <div className="flex items-start justify-between gap-2 mb-3">
           <div className="min-w-0">
@@ -643,7 +643,7 @@ export function WorkoutPage() {
                 {currentPRs.map((pr) => (
                   <span
                     key={pr.rep_band}
-                    className="text-2xs font-mono tabular-nums px-1.5 py-0.5 rounded-pill bg-surface-2 border border-line text-fg-muted"
+                    className="text-2xs font-mono tabular-nums px-1.5 py-0.5 rounded-sm bg-surface-2 border border-line text-fg-muted"
                     title={t('workout.pr_by_band')}
                   >
                     {pr.rep_band === 15 ? '15+' : pr.rep_band}r ·{' '}
@@ -676,7 +676,7 @@ export function WorkoutPage() {
 
         {sets.length === 0 ? (
           <div className="flex flex-col items-center justify-center text-center py-10 px-2 gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-surface-2 border border-line flex items-center justify-center">
+            <div className="w-16 h-16 rounded-lg bg-surface-2 border border-line flex items-center justify-center">
               <Plus className="w-7 h-7 text-accent" aria-hidden="true" />
             </div>
             <div>
@@ -686,14 +686,14 @@ export function WorkoutPage() {
             <div className="flex flex-col items-stretch gap-2 w-full max-w-[16rem]">
               <button
                 onClick={addSet}
-                className="w-full py-3 rounded-pill bg-accent text-accent-fg font-semibold shadow-btn-accent active:scale-[0.98]"
+                className="w-full py-3 rounded-sm bg-accent text-accent-fg font-semibold shadow-btn-accent active:scale-[0.98]"
               >
                 {t('workout.add_set')}
               </button>
               {lastWorkout && lastWorkout.sets.length > 0 && (
                 <button
                   onClick={() => repeatWorkout(lastWorkout)}
-                  className="w-full py-3 rounded-pill bg-surface-2 border border-line text-fg-muted flex items-center justify-center gap-1.5 transition-colors active:bg-hover"
+                  className="w-full py-3 rounded-sm bg-surface-2 border border-line text-fg-muted flex items-center justify-center gap-1.5 transition-colors active:bg-hover"
                 >
                   <Repeat className="w-4 h-4" />
                   {t('workout.repeat_last')}
@@ -770,7 +770,7 @@ export function WorkoutPage() {
           <div className="flex gap-2">
             <button
               onClick={handleAddSet}
-              className="flex-1 py-2 px-3 border border-dashed rounded-2xl text-sm font-medium cursor-pointer border-line-strong text-fg-muted"
+              className="flex-1 py-2 px-3 border border-dashed rounded-lg text-sm font-medium cursor-pointer border-line-strong text-fg-muted"
             >
               {t('workout.add_set')}
             </button>
@@ -790,13 +790,13 @@ export function WorkoutPage() {
                         removeAllSets();
                         setConfirmDeleteAll(false);
                       }}
-                      className="py-2 px-3 rounded-2xl text-sm font-medium bg-error text-white"
+                      className="py-2 px-3 rounded-lg text-sm font-medium bg-error text-white"
                     >
                       ✓
                     </button>
                     <button
                       onClick={() => setConfirmDeleteAll(false)}
-                      className="py-2 px-3 rounded-2xl text-sm border border-line-strong text-fg-subtle"
+                      className="py-2 px-3 rounded-lg text-sm border border-line-strong text-fg-subtle"
                     >
                       ✕
                     </button>
@@ -808,7 +808,7 @@ export function WorkoutPage() {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     onClick={() => setConfirmDeleteAll(true)}
-                    className="py-2 px-3 border border-dashed rounded-2xl text-sm font-medium cursor-pointer border-line-strong text-error"
+                    className="py-2 px-3 border border-dashed rounded-lg text-sm font-medium cursor-pointer border-line-strong text-error"
                     title={t('workout.remove_all')}
                   >
                     <Trash2 className="w-4 h-4" />
@@ -820,7 +820,7 @@ export function WorkoutPage() {
             <button
               onClick={handleSave}
               disabled={saving}
-              className={`flex-1 py-3 px-4 rounded-pill text-base font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-none text-accent-fg ${
+              className={`flex-1 py-3 px-4 rounded-sm text-base font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-none text-accent-fg ${
                 saveSuccess ? 'bg-success' : 'bg-accent'
               }`}
             >

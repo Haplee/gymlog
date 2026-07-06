@@ -47,7 +47,7 @@ export function OnboardingModal({ user, onComplete }: OnboardingModalProps) {
                 <button
                   key={g}
                   onClick={() => setData({ ...data, goal: g })}
-                  className={`p-3 rounded-xl border text-sm transition-all ${
+                  className={`p-3 rounded-md border text-sm transition-all ${
                     data.goal === g
                       ? 'border-accent text-accent'
                       : 'bg-surface-2 border-line text-fg-muted'

@@ -98,7 +98,7 @@ export function Modal({
                 <div className="flex items-center gap-3 mb-4">
                   {icon && (
                     <div
-                      className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0"
+                      className="w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0"
                       style={{ backgroundColor: iconBg }}
                     >
                       {icon}
