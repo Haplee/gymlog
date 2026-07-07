@@ -1107,9 +1107,9 @@ export function HistoryPage() {
                     <button
                       onClick={() =>
                         handleSaveTemplate(
-                          group.items
-                            .filter((it) => it.kind === 'workout')
-                            .map((it) => it.data as WorkoutWithSets),
+                          group.items.flatMap((it) =>
+                            it.kind === 'workout' ? [it.data as WorkoutWithSets] : [],
+                          ),
                           group.date,
                         )
                       }
@@ -1387,6 +1387,7 @@ export function HistoryPage() {
                       </span>
                       <div className="flex gap-3">
                         <button
+                          type="button"
                           onClick={() => setEditWorkout(wo)}
                           className="flex items-center gap-1 text-xs font-semibold text-fg-muted"
                         >
@@ -1394,6 +1395,7 @@ export function HistoryPage() {
                           {t('history.edit')}
                         </button>
                         <button
+                          type="button"
                           onClick={() => handleRepeat(wo)}
                           className="flex items-center gap-1 text-xs font-semibold text-accent"
                         >
@@ -1401,6 +1403,7 @@ export function HistoryPage() {
                           {t('history.repeat')}
                         </button>
                         <button
+                          type="button"
                           onClick={async () => {
                             const uniqueExercises = [
                               ...new Set(wo.sets.map((s) => s.exercise?.name)),

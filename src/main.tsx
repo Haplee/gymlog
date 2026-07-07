@@ -8,8 +8,8 @@ import { Providers } from './app/providers.tsx';
 
 inject();
 
-// El SW se registra automáticamente via vite-plugin-pwa (registerType='prompt')
-// que emite 'sw-update-available' cuando hay nueva versión.
+// El SW se registra automáticamente via vite-plugin-pwa (registerType='autoUpdate').
+// Con skipWaiting + clientsClaim, la versión nueva se activa sin intervención del usuario.
 devLog('[PWA] vite-plugin-pwa gestiona el registro del SW');
 
 // Sentry (crash/error tracking) — privacy-first, solo si hay DSN configurado.

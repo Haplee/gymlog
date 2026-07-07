@@ -2,40 +2,24 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Capacitor } from '@capacitor/core';
-import { Watch, HeartPulse } from 'lucide-react';
+import { HeartPulse } from 'lucide-react';
 import { toast } from 'sonner';
 import { Layout } from '@app/components/Layout';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
-import { devError } from '@shared/lib/devtools';
 import { ConnectionCard } from '../components/ConnectionCard';
 import { SleepCard } from '../components/SleepCard';
-import {
-  useWearableConnections,
-  useWearableDaily,
-  useWearableSleep,
-} from '../hooks/useWearableConnections';
+import { useWearableDaily, useWearableSleep } from '../hooks/useWearableConnections';
 import { useWearableSync } from '../hooks/useWearableSync';
-import { startFitbitConnect, disconnectFitbit } from '../api/fitbit';
 import { isAggregatorAvailable, requestAggregatorPermission } from '../api/healthAggregator';
 
-function formatWhen(iso: string | null | undefined, lang: string): string | undefined {
-  if (!iso) return undefined;
-  try {
-    return new Date(iso).toLocaleString(lang, { dateStyle: 'short', timeStyle: 'short' });
-  } catch {
-    return iso;
-  }
-}
-
 export function WearablesPage() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const syncOnOpen = useSettingsStore((s) => s.wearablesSyncOnOpen);
   const setSyncOnOpen = useSettingsStore((s) => s.setWearablesSyncOnOpen);
 
-  const { data: connections, refetch: refetchConnections } = useWearableConnections();
   const { data: dailyList } = useWearableDaily();
   const { data: sleepList } = useWearableSleep();
   const { runSync, isSyncing } = useWearableSync();
@@ -49,29 +33,9 @@ export function WearablesPage() {
     void isAggregatorAvailable().then(setAggregatorAvailable);
   }, []);
 
-  const fitbit = (connections ?? []).find((c) => c.provider === 'fitbit');
   const isNative = Capacitor.isNativePlatform();
   const aggregatorTarget =
     Capacitor.getPlatform() === 'ios' ? t('wearables.health_aggregator') : 'Health Connect';
-
-  const handleConnectFitbit = async () => {
-    try {
-      await startFitbitConnect();
-    } catch (e) {
-      devError('[Wearables] connect fitbit:', e);
-      toast.error(t('wearables.connect_error'));
-    }
-  };
-
-  const handleDisconnectFitbit = async () => {
-    if (!user) return;
-    try {
-      await disconnectFitbit(user.id);
-      await refetchConnections();
-    } catch {
-      toast.error(t('wearables.sync_error'));
-    }
-  };
 
   const handleGrantAggregator = async () => {
     const granted = await requestAggregatorPermission();
@@ -86,28 +50,6 @@ export function WearablesPage() {
     <Layout>
       <div className="space-y-3 pb-20">
         <h1 className="text-xl font-bold text-fg px-1">{t('wearables.title')}</h1>
-
-        {/* Fitbit (web + nativo) */}
-        <ConnectionCard
-          title="Fitbit"
-          description="Fitbit Web API"
-          connected={!!fitbit}
-          statusLabel={fitbit ? t('wearables.connected') : t('wearables.disconnected')}
-          lastSyncLabel={
-            fitbit
-              ? t('wearables.last_sync', {
-                  when:
-                    formatWhen(fitbit.last_sync_at, i18n.language) ?? t('wearables.never_synced'),
-                })
-              : undefined
-          }
-          icon={<Watch size={22} />}
-          primaryLabel={fitbit ? t('wearables.sync_now') : t('wearables.connect_fitbit')}
-          onPrimary={fitbit ? () => void runSync() : () => void handleConnectFitbit()}
-          secondaryLabel={fitbit ? t('wearables.disconnect') : undefined}
-          onSecondary={fitbit ? () => void handleDisconnectFitbit() : undefined}
-          busy={isSyncing}
-        />
 
         {/* Agregador nativo (Health Connect / HealthKit) — solo en app */}
         {isNative ? (
@@ -153,6 +95,7 @@ export function WearablesPage() {
               <div className="text-xs text-fg-subtle">{t('wearables.sync_on_open_desc')}</div>
             </div>
             <button
+              type="button"
               onClick={() => setSyncOnOpen(!syncOnOpen)}
               className={`w-12 h-6 rounded-full transition-all relative ${syncOnOpen ? 'bg-accent toggle-on' : 'bg-surface-3'}`}
               aria-pressed={syncOnOpen}

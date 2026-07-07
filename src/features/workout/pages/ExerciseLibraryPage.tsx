@@ -70,7 +70,7 @@ export function ExerciseLibraryPage() {
     for (const e of exercises) {
       if (e.muscle_group) set.add(e.muscle_group);
     }
-    return [...set].sort((a, b) => a.localeCompare(b));
+    return Array.from(set).toSorted((a, b) => a.localeCompare(b));
   }, [exercises]);
 
   const filtered = useMemo(() => {

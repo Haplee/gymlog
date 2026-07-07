@@ -98,9 +98,9 @@
   `src/shared/styles/tokens.css` y tipografía DM Sans + Geist Mono.
 - **📴 Sync offline-first**: outbox en IndexedDB — los entrenamientos guardados sin
   conexión se encolan y se sincronizan automáticamente al recuperar red.
-- **⌚ Wearables**: integración con **Fitbit** (OAuth2 PKCE + edge function) y
-  **Health Connect / HealthKit** (plugin nativo propio `HealthBridge`). Importa
-  pasos, frecuencia cardíaca, sueño y workouts (Amazfit/Zepp, Samsung, Garmin…).
+- **⌚ Wearables**: integración con **Health Connect / HealthKit** (plugin nativo
+  propio `HealthBridge`). Importa pasos, frecuencia cardíaca, sueño y workouts
+  (Amazfit/Zepp, Samsung, Garmin…).
 - **🖼️ Avatares**: bucket público en Supabase Storage con RLS por carpeta de usuario.
 - **🍎 CI iOS**: workflow `ios-build.yml` (macOS + CocoaPods) además del build Android.
 - **🧪 CI de calidad**: `ci.yml` ejecuta lint, type-check y tests en cada push/PR.
@@ -125,33 +125,30 @@
 > ⚠️ **Variables de entorno**: crea `.env.local` con `VITE_SUPABASE_URL` y
 > `VITE_SUPABASE_KEY` (la anon key es pública, del cliente). Sin ellas el build
 > arranca en **pantalla negra**. En Vercel y GitHub Actions deben existir como
-> secrets con los mismos nombres. Para la integración Fitbit añade además
-> `VITE_FITBIT_CLIENT_ID` (client ID de la app registrada en dev.fitbit.com) y
-> los secrets `FITBIT_CLIENT_ID` / `FITBIT_CLIENT_SECRET` en Supabase
-> (`supabase secrets set`) para la edge function `fitbit-oauth`.
+> secrets con los mismos nombres.
 
 ---
 
 ## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Hammer%20and%20Wrench.png" width="35" align="center" /> Stack Tecnológico
 
-| Capa               | Tecnología                | Función                                                                          |
-| :----------------- | :------------------------ | :------------------------------------------------------------------------------- |
-| **Mobile Runtime** | Capacitor 8               | Puente nativo: haptics, biometría, notificaciones, deep links, share.            |
-| **Frontend**       | React 19, TypeScript      | UI reactiva con lazy loading y transiciones animadas (Framer Motion).            |
-| **Estilos**        | Tailwind CSS 4            | Sistema de diseño con design tokens y responsive.                                |
-| **Data Flow**      | TanStack Query v5         | Estado del servidor, caché, invalidación y sincronización con Supabase.          |
-| **Global Store**   | Zustand 5                 | Estado local persistido: workout activo, rutinas, cardio, ajustes.               |
-| **Gráficos**       | Recharts 3                | Volumen semanal, distribución muscular, progresión por ejercicio.                |
-| **Validación**     | Zod 3                     | Validación de series (reps/peso) con mensajes tipados.                           |
-| **i18n**           | i18next + react-i18next   | Multiidioma ES/EN con detección automática y persistencia.                       |
-| **Backend**        | Supabase                  | PostgreSQL, Auth (Google OAuth), RLS, tipos auto-generados.                      |
-| **PWA**            | vite-plugin-pwa           | Service worker, instalable, offline-first, prompt de actualización in-app.       |
-| **Persistencia**   | TanStack Persist + idb    | Caché de queries en IndexedDB para arranque sin red.                             |
-| **Drag & Drop**    | dnd-kit                   | Reordenar ejercicios de rutina por arrastre.                                     |
-| **Errores**        | Sentry                    | Captura y reporte de errores en producción.                                      |
-| **Wearables**      | Fitbit API + HealthBridge | OAuth2 PKCE vía edge function; Health Connect (Android) / HealthKit (iOS).       |
-| **Excel**          | exceljs                   | Export/import `.xlsx` de fuerza, cardio y rutinas (carga diferida).              |
-| **CI/CD**          | GitHub Actions            | Lint/tests (`ci.yml`), APK Android (`android-build.yml`), iOS (`ios-build.yml`). |
+| Capa               | Tecnología              | Función                                                                          |
+| :----------------- | :---------------------- | :------------------------------------------------------------------------------- |
+| **Mobile Runtime** | Capacitor 8             | Puente nativo: haptics, biometría, notificaciones, deep links, share.            |
+| **Frontend**       | React 19, TypeScript    | UI reactiva con lazy loading y transiciones animadas (Framer Motion).            |
+| **Estilos**        | Tailwind CSS 4          | Sistema de diseño con design tokens y responsive.                                |
+| **Data Flow**      | TanStack Query v5       | Estado del servidor, caché, invalidación y sincronización con Supabase.          |
+| **Global Store**   | Zustand 5               | Estado local persistido: workout activo, rutinas, cardio, ajustes.               |
+| **Gráficos**       | Recharts 3              | Volumen semanal, distribución muscular, progresión por ejercicio.                |
+| **Validación**     | Zod 3                   | Validación de series (reps/peso) con mensajes tipados.                           |
+| **i18n**           | i18next + react-i18next | Multiidioma ES/EN con detección automática y persistencia.                       |
+| **Backend**        | Supabase                | PostgreSQL, Auth (Google OAuth), RLS, tipos auto-generados.                      |
+| **PWA**            | vite-plugin-pwa         | Service worker, instalable, offline-first, prompt de actualización in-app.       |
+| **Persistencia**   | TanStack Persist + idb  | Caché de queries en IndexedDB para arranque sin red.                             |
+| **Drag & Drop**    | dnd-kit                 | Reordenar ejercicios de rutina por arrastre.                                     |
+| **Errores**        | Sentry                  | Captura y reporte de errores en producción.                                      |
+| **Wearables**      | HealthBridge (nativo)   | Plugin Capacitor propio: Health Connect (Android) / HealthKit (iOS).             |
+| **Excel**          | exceljs                 | Export/import `.xlsx` de fuerza, cardio y rutinas (carga diferida).              |
+| **CI/CD**          | GitHub Actions          | Lint/tests (`ci.yml`), APK Android (`android-build.yml`), iOS (`ios-build.yml`). |
 
 ---
 
@@ -213,9 +210,6 @@
 
 ### ⌚ Wearables — Dispositivos de Salud
 
-- **Fitbit**: conexión OAuth2 (Authorization Code + PKCE); el intercambio de tokens
-  y el sync ocurren en la edge function `fitbit-oauth` (tokens en Supabase Vault,
-  nunca en el cliente)
 - **Health Connect (Android) / HealthKit (iOS)**: plugin Capacitor propio
   `HealthBridge`; por aquí entran Amazfit (vía Zepp), Samsung, Garmin, Apple Watch…
 - **Datos importados**: pasos, distancia, calorías, frecuencia cardíaca (media/máx/reposo),
@@ -279,11 +273,11 @@ src/
 │   │   ├── components/   #   Charts, KPICards, ConsistencyHeatmap, FatigueAnalysis
 │   │   ├── pages/        #   StatsPage, HistoryPage, UserStatsPage
 │   │   └── utils/        #   kpiCalculations, progressionMetrics, fatigueAnalysis
-│   ├── wearables/        # Fitbit + Health Connect/HealthKit
-│   │   ├── api/          #   fitbit (OAuth PKCE), healthAggregator, queries
+│   ├── wearables/        # Health Connect / HealthKit (agregador nativo)
+│   │   ├── api/          #   healthAggregator, queries
 │   │   ├── components/   #   ConnectionCard, SleepCard, WearablesSummary
 │   │   ├── hooks/        #   useWearableConnections, useWearableSync
-│   │   └── pages/        #   WearablesPage, FitbitCallback
+│   │   └── pages/        #   WearablesPage
 │   └── workout/          # Registro en vivo de entrenamientos
 │       ├── api/          #   Queries específicas del workout
 │       ├── components/   #   ExerciseSelector, RestTimer, WorkoutSetList, LastSessionCard...
@@ -383,7 +377,7 @@ Tablas en PostgreSQL (Supabase) con Row Level Security:
 | `exercise_goals`       | Objetivos de 1RM por ejercicio y usuario                                                                    |
 | `routine_templates`    | Plantillas de rutina predefinidas                                                                           |
 | `push_tokens`          | Tokens de dispositivo para notificaciones push remotas (FCM)                                                |
-| `wearable_connections` | Conexiones por proveedor (fitbit / health_connect / healthkit) y último sync                                |
+| `wearable_connections` | Conexiones por proveedor (health_connect / healthkit) y último sync                                         |
 | `wearable_daily`       | Métricas diarias importadas: pasos, distancia, calorías, FC media/máx/reposo                                |
 | `wearable_sleep`       | Sueño por fases: duración, profundo, ligero, REM, despierto, eficiencia                                     |
 

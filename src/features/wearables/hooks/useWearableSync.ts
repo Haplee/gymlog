@@ -5,7 +5,6 @@ import { toast } from 'sonner';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
 import { devError } from '@shared/lib/devtools';
-import { syncFitbit } from '../api/fitbit';
 import { isAggregatorAvailable, syncAggregator } from '../api/healthAggregator';
 import { useWearableStore } from '../stores/wearableStore';
 import { useWearableConnections } from './useWearableConnections';
@@ -17,10 +16,9 @@ import {
 import type { WearableSyncResult } from '../types';
 
 /**
- * Orquesta la sincronización de todas las fuentes conectadas:
- *  - Fitbit (vía edge function) si hay conexión.
- *  - Agregador nativo (Health Connect / HealthKit) si está disponible.
- * Devuelve runSync (manual) y dispara sync al abrir si el usuario lo activó.
+ * Orquesta la sincronización del agregador nativo (Health Connect / HealthKit)
+ * si está disponible. Devuelve runSync (manual) y dispara sync al abrir si el
+ * usuario lo activó.
  */
 export function useWearableSync() {
   const { t } = useTranslation();
@@ -44,25 +42,16 @@ export function useWearableSync() {
   const runSync = useCallback(
     async (opts: { silent?: boolean } = {}) => {
       if (!userId || useWearableStore.getState().isSyncing) return;
-      const hasFitbit = (connections ?? []).some((c) => c.provider === 'fitbit');
       const aggregator = await isAggregatorAvailable();
-      if (!hasFitbit && !aggregator) return;
+      if (!aggregator) return;
 
       setSyncing(true);
       const totals: WearableSyncResult = { daily: 0, sleep: 0, workouts: 0 };
       try {
-        if (hasFitbit) {
-          const r = await syncFitbit(7);
-          totals.daily += r.daily;
-          totals.sleep += r.sleep;
-          totals.workouts += r.workouts;
-        }
-        if (aggregator) {
-          const r = await syncAggregator(userId, 7);
-          totals.daily += r.daily;
-          totals.sleep += r.sleep;
-          totals.workouts += r.workouts;
-        }
+        const r = await syncAggregator(userId, 7);
+        totals.daily += r.daily;
+        totals.sleep += r.sleep;
+        totals.workouts += r.workouts;
         setSynced();
         invalidate();
         if (!opts.silent) {
@@ -80,7 +69,7 @@ export function useWearableSync() {
         if (!opts.silent) toast.error(t('wearables.sync_error'));
       }
     },
-    [userId, connections, setSyncing, setSynced, setError, invalidate, t],
+    [userId, setSyncing, setSynced, setError, invalidate, t],
   );
 
   // Foreground-on-open: una vez por montaje, si el usuario lo tiene activado.

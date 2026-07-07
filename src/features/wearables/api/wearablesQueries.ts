@@ -9,9 +9,7 @@ export const WEARABLE_SLEEP_KEY = (userId: string) => ['wearableSleep', userId];
 export async function fetchWearableConnections(userId: string): Promise<WearableConnection[]> {
   const { data, error } = await supabase
     .from('wearable_connections')
-    .select(
-      'id, user_id, provider, status, scopes, fitbit_user_id, access_expires_at, last_sync_at, last_error, created_at, updated_at',
-    )
+    .select('id, user_id, provider, status, last_sync_at, last_error, created_at, updated_at')
     .eq('user_id', userId);
   if (error) throw error;
   return (data ?? []) as WearableConnection[];

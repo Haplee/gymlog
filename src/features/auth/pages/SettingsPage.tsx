@@ -362,7 +362,7 @@ export function SettingsPage() {
                     }}
                     maxLength={MAX_NAME_LENGTH}
                     placeholder={t('settings.name_placeholder')}
-                    autoFocus
+                    ref={(el) => el?.focus()}
                     aria-label={t('settings.edit_name')}
                     className="min-w-0 flex-1 bg-transparent border-0 border-b border-line-strong focus:border-accent outline-none text-data font-display font-bold text-fg py-0.5"
                   />

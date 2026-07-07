@@ -498,10 +498,11 @@ export function UserStatsPage() {
 
   // Detecta logros recién desbloqueados (no en la primera carga) → toast + confetti.
   useEffect(() => {
-    const unlocked = achievements.filter((a) => a.unlocked).map((a) => a.id);
-    const raw = localStorage.getItem('gymlog-achievements-seen');
+    const SEEN_KEY = 'gymlog-achievements-seen:v1';
+    const unlocked = achievements.flatMap((a) => (a.unlocked ? [a.id] : []));
+    const raw = localStorage.getItem(SEEN_KEY);
     if (raw === null) {
-      localStorage.setItem('gymlog-achievements-seen', JSON.stringify(unlocked));
+      localStorage.setItem(SEEN_KEY, JSON.stringify(unlocked));
       return;
     }
     let seen: string[] = [];
@@ -525,7 +526,7 @@ export function UserStatsPage() {
           }),
         )
         .catch(() => {});
-      localStorage.setItem('gymlog-achievements-seen', JSON.stringify(unlocked));
+      localStorage.setItem(SEEN_KEY, JSON.stringify(unlocked));
     }
   }, [achievements, t]);
 

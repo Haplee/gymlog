@@ -218,7 +218,11 @@ export function RestTimer() {
               >
                 Reiniciar
               </button>
-              <button onClick={stop} className="px-3 py-2 rounded-sm text-xs text-fg-subtle">
+              <button
+                type="button"
+                onClick={stop}
+                className="px-3 py-2 rounded-sm text-xs text-fg-subtle"
+              >
                 Cerrar
               </button>
             </div>

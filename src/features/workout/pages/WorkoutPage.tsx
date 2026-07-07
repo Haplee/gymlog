@@ -502,8 +502,11 @@ export function WorkoutPage() {
         >
           <div className="text-sm font-medium mb-1 text-accent">{todayRoutine.name}</div>
           <div className="flex flex-wrap gap-1.5">
-            {todayRoutine.exercises.slice(0, 4).map((ex, i) => (
-              <span key={i} className="text-xs px-2 py-1 rounded-sm bg-surface-2 text-fg-muted">
+            {todayRoutine.exercises.slice(0, 4).map((ex) => (
+              <span
+                key={ex.name}
+                className="text-xs px-2 py-1 rounded-sm bg-surface-2 text-fg-muted"
+              >
                 {ex.name}
               </span>
             ))}
