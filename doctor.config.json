@@ -1,0 +1,23 @@
+{
+  "$schema": "https://react.doctor/schema/config.json",
+  "ignore": {
+    "files": [
+      "android/**",
+      "ios/**",
+      "dist/**",
+      "dev-dist/**",
+      "coverage/**",
+      "graphify-out/**",
+      "**/assets/public/**"
+    ],
+    "overrides": [
+      {
+        "files": ["public/sw-custom.js", "supabase/functions/**"],
+        "rules": ["react-doctor/deslop/unused-file"]
+      }
+    ]
+  },
+  "rules": {
+    "react-doctor/supabase-client-owned-authz-field": "warn"
+  }
+}
