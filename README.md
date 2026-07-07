@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=3ECF8E&height=120&section=header&text=GymLog%20v4.0.0&fontSize=50&fontColor=ffffff&animation=fadeIn" alt="Header animated wave" />
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=3ECF8E&height=120&section=header&text=GymLog%20v0.5.0&fontSize=50&fontColor=ffffff&animation=fadeIn" alt="Header animated wave" />
   
   <br>
 
@@ -31,7 +31,7 @@
 
 <br>
 
-## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/High%20Voltage.png" width="35" align="center" /> Core Features (v4.0.0)
+## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/High%20Voltage.png" width="35" align="center" /> Core Features (v0.5.0)
 
 <table>
   <tr>
@@ -80,6 +80,33 @@
 
 ---
 
+## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Symbols/Sparkles.png" width="35" align="center" /> Novedades v0.5
+
+> **Versionado reiniciado a `0.5.0`.** A partir de aquí el número sube en cada
+> cambio significativo. En Android el `versionName` es `0.5.0` pero el
+> `versionCode` sigue creciendo (401, 402…) para que las apps ya instaladas
+> puedan actualizarse.
+
+- **📗 Export / Import Excel (`.xlsx`)**: exporta e importa **fuerza, cardio y
+  rutinas** en un libro de 3 hojas (`Entrenamientos`, `Cardio`, `Rutinas`). La hoja
+  de fuerza usa un grid de secciones por grupo muscular × columnas por fecha
+  (celda = `pesoxreps, pesoxreps`). El import acepta tanto ese formato como hojas
+  hechas a mano (texto libre en los pesos, fechas por sección). Round-trip sin
+  pérdida verificado con tests. Genera el `.xlsx` con `exceljs` (carga diferida).
+- **🎨 Rediseño completo de UI** al sistema **Stitch** (Swiss-Athletic): tema oscuro
+  único (base `#080808`, acento lima `#c8ff00`), design tokens centralizados en
+  `src/shared/styles/tokens.css` y tipografía DM Sans + Geist Mono.
+- **📴 Sync offline-first**: outbox en IndexedDB — los entrenamientos guardados sin
+  conexión se encolan y se sincronizan automáticamente al recuperar red.
+- **⌚ Wearables**: integración con **Fitbit** (OAuth2 PKCE + edge function) y
+  **Health Connect / HealthKit** (plugin nativo propio `HealthBridge`). Importa
+  pasos, frecuencia cardíaca, sueño y workouts (Amazfit/Zepp, Samsung, Garmin…).
+- **🖼️ Avatares**: bucket público en Supabase Storage con RLS por carpeta de usuario.
+- **🍎 CI iOS**: workflow `ios-build.yml` (macOS + CocoaPods) además del build Android.
+- **🧪 CI de calidad**: `ci.yml` ejecuta lint, type-check y tests en cada push/PR.
+
+---
+
 ## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Symbols/Sparkles.png" width="35" align="center" /> Novedades v3.0 → v3.1
 
 - **🎨 Overhaul visual v3** + **modo claro** opcional (además del tema oscuro lima).
@@ -98,28 +125,33 @@
 > ⚠️ **Variables de entorno**: crea `.env.local` con `VITE_SUPABASE_URL` y
 > `VITE_SUPABASE_KEY` (la anon key es pública, del cliente). Sin ellas el build
 > arranca en **pantalla negra**. En Vercel y GitHub Actions deben existir como
-> secrets con los mismos nombres.
+> secrets con los mismos nombres. Para la integración Fitbit añade además
+> `VITE_FITBIT_CLIENT_ID` (client ID de la app registrada en dev.fitbit.com) y
+> los secrets `FITBIT_CLIENT_ID` / `FITBIT_CLIENT_SECRET` en Supabase
+> (`supabase secrets set`) para la edge function `fitbit-oauth`.
 
 ---
 
 ## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Hammer%20and%20Wrench.png" width="35" align="center" /> Stack Tecnológico
 
-| Capa               | Tecnología              | Función                                                                    |
-| :----------------- | :---------------------- | :------------------------------------------------------------------------- |
-| **Mobile Runtime** | Capacitor 8             | Puente nativo: haptics, biometría, notificaciones, deep links, share.      |
-| **Frontend**       | React 19, TypeScript    | UI reactiva con lazy loading y transiciones animadas (Framer Motion).      |
-| **Estilos**        | Tailwind CSS 4          | Sistema de diseño con design tokens y responsive.                          |
-| **Data Flow**      | TanStack Query v5       | Estado del servidor, caché, invalidación y sincronización con Supabase.    |
-| **Global Store**   | Zustand 5               | Estado local persistido: workout activo, rutinas, cardio, ajustes.         |
-| **Gráficos**       | Recharts 3              | Volumen semanal, distribución muscular, progresión por ejercicio.          |
-| **Validación**     | Zod 3                   | Validación de series (reps/peso) con mensajes tipados.                     |
-| **i18n**           | i18next + react-i18next | Multiidioma ES/EN con detección automática y persistencia.                 |
-| **Backend**        | Supabase                | PostgreSQL, Auth (Google OAuth), RLS, tipos auto-generados.                |
-| **PWA**            | vite-plugin-pwa         | Service worker, instalable, offline-first, prompt de actualización in-app. |
-| **Persistencia**   | TanStack Persist + idb  | Caché de queries en IndexedDB para arranque sin red.                       |
-| **Drag & Drop**    | dnd-kit                 | Reordenar ejercicios de rutina por arrastre.                               |
-| **Errores**        | Sentry                  | Captura y reporte de errores en producción.                                |
-| **CI/CD**          | GitHub Actions          | Build Android automatizado con firma y generación de APK.                  |
+| Capa               | Tecnología                | Función                                                                          |
+| :----------------- | :------------------------ | :------------------------------------------------------------------------------- |
+| **Mobile Runtime** | Capacitor 8               | Puente nativo: haptics, biometría, notificaciones, deep links, share.            |
+| **Frontend**       | React 19, TypeScript      | UI reactiva con lazy loading y transiciones animadas (Framer Motion).            |
+| **Estilos**        | Tailwind CSS 4            | Sistema de diseño con design tokens y responsive.                                |
+| **Data Flow**      | TanStack Query v5         | Estado del servidor, caché, invalidación y sincronización con Supabase.          |
+| **Global Store**   | Zustand 5                 | Estado local persistido: workout activo, rutinas, cardio, ajustes.               |
+| **Gráficos**       | Recharts 3                | Volumen semanal, distribución muscular, progresión por ejercicio.                |
+| **Validación**     | Zod 3                     | Validación de series (reps/peso) con mensajes tipados.                           |
+| **i18n**           | i18next + react-i18next   | Multiidioma ES/EN con detección automática y persistencia.                       |
+| **Backend**        | Supabase                  | PostgreSQL, Auth (Google OAuth), RLS, tipos auto-generados.                      |
+| **PWA**            | vite-plugin-pwa           | Service worker, instalable, offline-first, prompt de actualización in-app.       |
+| **Persistencia**   | TanStack Persist + idb    | Caché de queries en IndexedDB para arranque sin red.                             |
+| **Drag & Drop**    | dnd-kit                   | Reordenar ejercicios de rutina por arrastre.                                     |
+| **Errores**        | Sentry                    | Captura y reporte de errores en producción.                                      |
+| **Wearables**      | Fitbit API + HealthBridge | OAuth2 PKCE vía edge function; Health Connect (Android) / HealthKit (iOS).       |
+| **Excel**          | exceljs                   | Export/import `.xlsx` de fuerza, cardio y rutinas (carga diferida).              |
+| **CI/CD**          | GitHub Actions            | Lint/tests (`ci.yml`), APK Android (`android-build.yml`), iOS (`ios-build.yml`). |
 
 ---
 
@@ -160,6 +192,17 @@
 - **Sección cardio**: KPIs de cardio + breakdown por tipo de actividad con barras animadas
 - **Calculadora 1RM**: cálculo rápido de repetición máxima estimada (Brzycki)
 
+### 📗 Historial — Export / Import
+
+- **Exportar a Excel (`.xlsx`)**: libro de 3 hojas — `Entrenamientos` (grid de
+  secciones por grupo muscular × fecha, celda `pesoxreps`), `Cardio` y `Rutinas`
+- **Exportar a JSON**: backup completo de workouts + cardio
+- **Importar Excel**: reconstruye fuerza, cardio y rutinas; acepta el formato
+  exportado y hojas manuales con pesos en texto libre y fechas por sección
+- **Importar CSV / JSON**: compatibilidad con el formato antiguo
+- **Web y app idénticas**: en nativo se comparte el fichero (Share), en web se
+  descarga (Blob) — mismo resultado
+
 ### 📅 Rutinas — Planificación Semanal
 
 - **Rutinas predefinidas** (Push/Pull/Legs, Full Body, etc.)
@@ -167,6 +210,17 @@
 - **Planificación diaria** (L-D): asignar ejercicios a cada día con series × reps sugeridos
 - **Vista "hoy"**: destaca los ejercicios que corresponden al día actual
 - **Backup automático** y persistencia en Supabase
+
+### ⌚ Wearables — Dispositivos de Salud
+
+- **Fitbit**: conexión OAuth2 (Authorization Code + PKCE); el intercambio de tokens
+  y el sync ocurren en la edge function `fitbit-oauth` (tokens en Supabase Vault,
+  nunca en el cliente)
+- **Health Connect (Android) / HealthKit (iOS)**: plugin Capacitor propio
+  `HealthBridge`; por aquí entran Amazfit (vía Zepp), Samsung, Garmin, Apple Watch…
+- **Datos importados**: pasos, distancia, calorías, frecuencia cardíaca (media/máx/reposo),
+  sueño por fases y workouts (se integran en el historial de cardio)
+- **Sync al abrir** configurable + botón de sincronización manual en `/wearables`
 
 ### 🔐 Autenticación y Seguridad
 
@@ -225,6 +279,11 @@ src/
 │   │   ├── components/   #   Charts, KPICards, ConsistencyHeatmap, FatigueAnalysis
 │   │   ├── pages/        #   StatsPage, HistoryPage, UserStatsPage
 │   │   └── utils/        #   kpiCalculations, progressionMetrics, fatigueAnalysis
+│   ├── wearables/        # Fitbit + Health Connect/HealthKit
+│   │   ├── api/          #   fitbit (OAuth PKCE), healthAggregator, queries
+│   │   ├── components/   #   ConnectionCard, SleepCard, WearablesSummary
+│   │   ├── hooks/        #   useWearableConnections, useWearableSync
+│   │   └── pages/        #   WearablesPage, FitbitCallback
 │   └── workout/          # Registro en vivo de entrenamientos
 │       ├── api/          #   Queries específicas del workout
 │       ├── components/   #   ExerciseSelector, RestTimer, WorkoutSetList, LastSessionCard...
@@ -267,14 +326,13 @@ npm run build:android      # Build web + sync Capacitor Android
 npm run open:android       # Abrir proyecto en Android Studio
 ```
 
-### 3. Pipeline CI/CD (GitHub Actions)
+### 3. Pipelines CI/CD (GitHub Actions)
 
-El workflow `.github/workflows/android-build.yml` se ejecuta en cada push:
-
-1. Compilación del bundle web optimizado
-2. Sincronización nativa con Capacitor
-3. Generación de APK firmado
-4. Verificación de linter
+| Workflow            | Disparo                   | Qué hace                                             |
+| ------------------- | ------------------------- | ---------------------------------------------------- |
+| `ci.yml`            | push / PR (main, develop) | Lint, type-check, tests (Vitest) y build             |
+| `android-build.yml` | push a main / tags `v*`   | Build web + `cap sync` + APK (artefacto descargable) |
+| `ios-build.yml`     | manual / push             | Smoke test iOS sin firmar (CocoaPods, runner macOS)  |
 
 ### 4. Utilidades
 
@@ -289,7 +347,7 @@ npm run commit       # Commit con Commitizen (conventional changelog)
 
 ## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Mobile%20Phone.png" width="35" align="center" /> GymLog Mobile — Experiencia Nativa
 
-GymLog v4.0.0 funciona como app nativa completa en Android vía Capacitor 8:
+GymLog v0.5.0 funciona como app nativa completa en Android vía Capacitor 8:
 
 - **Haptic Feedback**: vibraciones táctiles al completar series, guardar entrenamientos y batir PRs
 - **Acceso Biométrico**: autenticación con huella dactilar o reconocimiento facial
@@ -310,21 +368,24 @@ GymLog v4.0.0 funciona como app nativa completa en Android vía Capacitor 8:
 
 Tablas en PostgreSQL (Supabase) con Row Level Security:
 
-| Tabla               | Descripción                                                                                                 |
-| ------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `profiles`          | Perfil de usuario: nombre, avatar, unidad de peso, objetivo, días/semana, notificaciones                    |
-| `exercises`         | Catálogo de ejercicios: nombre, grupo muscular, equipamiento, bilateral. `user_id = null` para predefinidos |
-| `workouts`          | Sesiones de entrenamiento: timestamps, volumen total, series totales, duración                              |
-| `workout_sets`      | Series individuales: peso, reps, RPE, warmup, notas                                                         |
-| `workout_exercises` | Relación workout↔exercise con orden y notas                                                                 |
-| `personal_records`  | PRs por ejercicio: peso, reps, 1RM estimado, fecha de consecución                                           |
-| `exercise_notes`    | Notas técnicas por ejercicio (CRUDs del usuario)                                                            |
-| `user_routines`     | Rutinas semanales con config JSON y flag de activa                                                          |
-| `cardio_sessions`   | Sesiones de cardio: tipo, duración, distancia, calorías, notas                                              |
-| `body_measurements` | Mediciones corporales: peso, % grasa y masa muscular                                                        |
-| `exercise_goals`    | Objetivos de 1RM por ejercicio y usuario                                                                    |
-| `routine_templates` | Plantillas de rutina predefinidas                                                                           |
-| `push_tokens`       | Tokens de dispositivo para notificaciones push remotas (FCM)                                                |
+| Tabla                  | Descripción                                                                                                 |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `profiles`             | Perfil de usuario: nombre, avatar, unidad de peso, objetivo, días/semana, notificaciones                    |
+| `exercises`            | Catálogo de ejercicios: nombre, grupo muscular, equipamiento, bilateral. `user_id = null` para predefinidos |
+| `workouts`             | Sesiones de entrenamiento: timestamps, volumen total, series totales, duración                              |
+| `workout_sets`         | Series individuales: peso, reps, RPE, warmup, notas                                                         |
+| `workout_exercises`    | Relación workout↔exercise con orden y notas                                                                 |
+| `personal_records`     | PRs por ejercicio: peso, reps, 1RM estimado, fecha de consecución                                           |
+| `exercise_notes`       | Notas técnicas por ejercicio (CRUDs del usuario)                                                            |
+| `user_routines`        | Rutinas semanales con config JSON y flag de activa                                                          |
+| `cardio_sessions`      | Sesiones de cardio: tipo, duración, distancia, calorías, notas                                              |
+| `body_measurements`    | Mediciones corporales: peso, % grasa y masa muscular                                                        |
+| `exercise_goals`       | Objetivos de 1RM por ejercicio y usuario                                                                    |
+| `routine_templates`    | Plantillas de rutina predefinidas                                                                           |
+| `push_tokens`          | Tokens de dispositivo para notificaciones push remotas (FCM)                                                |
+| `wearable_connections` | Conexiones por proveedor (fitbit / health_connect / healthkit) y último sync                                |
+| `wearable_daily`       | Métricas diarias importadas: pasos, distancia, calorías, FC media/máx/reposo                                |
+| `wearable_sleep`       | Sueño por fases: duración, profundo, ligero, REM, despierto, eficiencia                                     |
 
 ---
 
@@ -350,6 +411,6 @@ Tablas en PostgreSQL (Supabase) con Row Level Security:
 <a href="https://www.instagram.com/franvidalmateo"><img src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white" /></a>
 
 <br><br>
-<b>GymLog v4.0.0</b> • Diseñado por <a href="https://github.com/Haplee">Haplee</a>
+<b>GymLog v0.5.0</b> • Diseñado por <a href="https://github.com/Haplee">Haplee</a>
 
 </div>

@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface": "#131314",
+                    "primary": "#60eca8",
+                    "on-error": "#690005",
+                    "on-tertiary-fixed-variant": "#76330d",
+                    "error": "#ffb4ab",
+                    "surface-bright": "#3a393a",
+                    "surface-dim": "#131314",
+                    "surface-container-low": "#1c1b1c",
+                    "on-secondary-container": "#b6b4b8",
+                    "outline-variant": "#3d4a41",
+                    "secondary-container": "#47464a",
+                    "surface-tint": "#51df9c",
+                    "on-tertiary-fixed": "#351000",
+                    "on-tertiary": "#561f00",
+                    "on-primary-fixed-variant": "#005233",
+                    "inverse-surface": "#e5e2e3",
+                    "tertiary": "#ffc7ae",
+                    "error-container": "#93000a",
+                    "background": "#131314",
+                    "secondary-fixed-dim": "#c8c6c9",
+                    "on-surface": "#e5e2e3",
+                    "on-primary-fixed": "#002112",
+                    "surface-container-lowest": "#0e0e0f",
+                    "surface-container-high": "#2a2a2b",
+                    "surface-container": "#201f20",
+                    "secondary-fixed": "#e4e1e5",
+                    "on-surface-variant": "#bbcabe",
+                    "on-secondary-fixed": "#1b1b1e",
+                    "primary-fixed": "#71fcb6",
+                    "on-secondary": "#303033",
+                    "on-primary": "#003822",
+                    "tertiary-container": "#ffa072",
+                    "on-error-container": "#ffdad6",
+                    "tertiary-fixed-dim": "#ffb694",
+                    "on-primary-container": "#005434",
+                    "primary-container": "#3ecf8e",
+                    "tertiary-fixed": "#ffdbcc",
+                    "inverse-primary": "#006c45",
+                    "on-secondary-fixed-variant": "#47464a",
+                    "inverse-on-surface": "#313031",
+                    "on-background": "#e5e2e3",
+                    "surface-container-highest": "#353436",
+                    "secondary": "#c8c6c9",
+                    "primary-fixed-dim": "#51df9c",
+                    "outline": "#869489",
+                    "on-tertiary-container": "#78350f",
+                    "surface-variant": "#353436"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-mobile": "20px",
+                    "gutter": "16px",
+                    "stack-lg": "48px",
+                    "unit": "4px",
+                    "stack-sm": "8px",
+                    "stack-md": "24px",
+                    "margin-desktop": "40px"
+            },
+            "fontFamily": {
+                    "label-caps": ["Inter"],
+                    "display-huge": ["Space Grotesk"],
+                    "headline-lg-mobile": ["Space Grotesk"],
+                    "headline-lg": ["Space Grotesk"],
+                    "body-md": ["Inter"],
+                    "data-mono": ["Space Grotesk"]
+            },
+            "fontSize": {
+                    "label-caps": ["11px", {"lineHeight": "12px", "letterSpacing": "0.1em", "fontWeight": "700"}],
+                    "display-huge": ["72px", {"lineHeight": "64px", "letterSpacing": "-0.04em", "fontWeight": "700"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "data-mono": ["18px", {"lineHeight": "20px", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #131314;
+            color: #e5e2e3;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .dotted-divider {
+            border-top: 1px dashed #3d4a41;
+            width: 100%;
+            height: 1px;
+        }
+        .custom-switch {
+            width: 44px;
+            height: 24px;
+            background-color: #353436;
+            border-radius: 99px;
+            position: relative;
+            transition: background-color 0.2s;
+        }
+        .custom-switch.active {
+            background-color: #60eca8;
+        }
+        .custom-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background-color: #e5e2e3;
+            border-radius: 50%;
+            transition: transform 0.2s;
+        }
+        .custom-switch.active::after {
+            transform: translateX(20px);
+            background-color: #003822;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-body-md select-none">
+<!-- Top App Bar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-margin-mobile h-14 bg-surface border-b border-outline-variant">
+<div class="flex items-center gap-4">
+<button class="hover:opacity-80 transition-opacity active:scale-95 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">arrow_back</span>
+</button>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile font-bold tracking-tighter text-on-surface uppercase">Ajustes</h1>
+</div>
+<button class="hover:opacity-80 transition-opacity active:scale-95">
+<span class="material-symbols-outlined text-primary">account_circle</span>
+</button>
+</header>
+<main class="pt-20 pb-32 px-margin-mobile max-w-md mx-auto">
+<!-- Profile Card -->
+<section class="bg-surface-container rounded-xl p-5 mb-8 flex items-center gap-4">
+<div class="relative">
+<img class="w-16 h-16 rounded-full object-cover border-2 border-primary" data-alt="Close-up portrait of a fit man named Alex Mercer with short hair, wearing professional athletic gear, in a moody dark-themed gym environment with soft green neon highlights. The lighting is cinematic and high-contrast, matching the Gymlog brand's elite athletic aesthetic. Professional studio photography style with sharp focus on facial features." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDhWvuQBucp0tXM0xf8LRPhHDyuNzKDrl10NWMWJLr5skzurv51tZGBFMuoqX03Gdzs99N7YiA1DYtWik4kk62pmir0N97NZJnO0DtYJwbHaKik6b7lAsLInNii4HAs9p2NTYPO6HzH2YImaHnZLjYlw9moPrvH2XhOTs7CN4QKMI4CzLDgv8cz_3yVQ1qRNIXDRVmxOZeK_l0nM5U9kW2qUR6e0EwNmGCQR4q8YCwZ6rHpsdVKEWmenBhCoMnEPpMajoZKHvWwncYJ"/>
+<div class="absolute -bottom-1 -right-1 bg-surface rounded-full p-1 border border-outline-variant">
+<span class="material-symbols-outlined text-[14px] text-primary" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+</div>
+<div class="flex-1">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">Alex Mercer</h2>
+<p class="text-on-surface-variant text-sm">alex.m@gmail.com</p>
+<div class="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 bg-surface-container-high rounded-full border border-outline-variant">
+<span class="material-symbols-outlined text-[14px] text-primary">google</span>
+<span class="font-label-caps text-label-caps text-on-surface uppercase">Cuenta de Google</span>
+</div>
+</div>
+</section>
+<!-- Section: Preferencias -->
+<section class="mb-8">
+<h3 class="font-label-caps text-label-caps text-primary uppercase mb-4 tracking-widest">Preferencias</h3>
+<div class="space-y-1">
+<!-- Unidades de peso -->
+<div class="flex items-center justify-between py-4 group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">scale</span>
+<span class="text-on-surface">Unidades de peso</span>
+</div>
+<div class="flex bg-surface-container rounded-lg p-1 border border-outline-variant">
+<button class="px-4 py-1.5 rounded-md bg-primary text-on-primary font-label-caps text-label-caps">KG</button>
+<button class="px-4 py-1.5 rounded-md text-on-surface-variant font-label-caps text-label-caps">LB</button>
+</div>
+</div>
+<div class="dotted-divider"></div>
+<!-- Recordatorio -->
+<div class="flex items-center justify-between py-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">notifications_active</span>
+<div>
+<p class="text-on-surface">Recordatorio de entrenamiento</p>
+<p class="text-xs text-primary font-data-mono">08:30 AM</p>
+</div>
+</div>
+<div class="custom-switch active" onclick="this.classList.toggle('active')"></div>
+</div>
+<div class="dotted-divider"></div>
+<!-- Temporizador -->
+<div class="flex items-center justify-between py-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">timer</span>
+<span class="text-on-surface">Temporizador de descanso</span>
+</div>
+<div class="flex items-center gap-2 text-primary font-data-mono bg-surface-container px-3 py-1.5 rounded-lg border border-outline-variant">
+<span>01:30</span>
+<span class="material-symbols-outlined text-sm">edit</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Section: Datos -->
+<section class="mb-8">
+<h3 class="font-label-caps text-label-caps text-primary uppercase mb-4 tracking-widest">Datos</h3>
+<div class="space-y-1">
+<button class="w-full flex items-center justify-between py-4 group text-left">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">file_export</span>
+<span class="text-on-surface">Exportar datos (CSV)</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-active:translate-x-1 transition-transform">chevron_right</span>
+</button>
+<div class="dotted-divider"></div>
+<div class="py-4">
+<div class="flex items-center justify-between mb-3">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">watch_spark</span>
+<span class="text-on-surface">Sincronización wearables</span>
+</div>
+</div>
+<div class="flex gap-3">
+<div class="flex items-center gap-2 px-3 py-2 bg-surface-container rounded-xl border border-outline-variant">
+<span class="material-symbols-outlined text-primary text-xl">fitbit</span>
+<span class="text-xs font-label-caps uppercase">Fitbit</span>
+</div>
+<div class="flex items-center gap-2 px-3 py-2 bg-surface-container rounded-xl border border-outline-variant">
+<span class="material-symbols-outlined text-primary text-xl">favorite</span>
+<span class="text-xs font-label-caps uppercase">Health Connect</span>
+</div>
+</div>
+</div>
+<div class="dotted-divider"></div>
+<button class="w-full flex items-center justify-between py-4 group text-left">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">refresh</span>
+<span class="text-on-surface">Regenerar rutina</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant">auto_awesome</span>
+</button>
+</div>
+</section>
+<!-- Section: Cuenta -->
+<section class="mb-12">
+<h3 class="font-label-caps text-label-caps text-primary uppercase mb-4 tracking-widest">Cuenta</h3>
+<button class="w-full flex items-center gap-3 py-4 text-error active:opacity-60 transition-opacity">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-bold">Cerrar sesión</span>
+</button>
+</section>
+<p class="text-center text-[10px] text-on-surface-variant font-label-caps opacity-40 uppercase tracking-widest">Gymlog v2.4.0 — High Performance Tracking</p>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-2 pb-safe bg-surface border-t border-outline-variant h-16">
+<button class="flex flex-col items-center justify-center text-on-surface-variant pt-1 hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-caps text-[10px] uppercase mt-1">Inicio</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant pt-1 hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="fitness_center">fitness_center</span>
+<span class="font-label-caps text-[10px] uppercase mt-1">Rutinas</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant pt-1 hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="directions_run">directions_run</span>
+<span class="font-label-caps text-[10px] uppercase mt-1">Cardio</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant pt-1 hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="monitoring">monitoring</span>
+<span class="font-label-caps text-[10px] uppercase mt-1">Historial</span>
+</button>
+<button class="flex flex-col items-center justify-center text-primary border-t-2 border-primary pt-1 translate-y-[-2px] transition-transform">
+<span class="material-symbols-outlined" data-icon="settings" style="font-variation-settings: 'FILL' 1;">settings</span>
+<span class="font-label-caps text-[10px] uppercase mt-1">Ajustes</span>
+</button>
+</nav>
+<script>
+        // Haptic-like interaction simulation
+        document.querySelectorAll('button, .custom-switch').forEach(el => {
+            el.addEventListener('click', () => {
+                if (window.navigator.vibrate) {
+                    window.navigator.vibrate(5);
+                }
+            });
+        });
+    </script>
+</body></html>

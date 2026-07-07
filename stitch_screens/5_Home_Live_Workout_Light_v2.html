@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>GymLog - Live Workout</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-primary-fixed": "#002112",
+                      "secondary-container": "#47464a",
+                      "on-tertiary-container": "#78350f",
+                      "primary-fixed": "#71fcb6",
+                      "tertiary-fixed": "#ffdbcc",
+                      "primary-fixed-dim": "#51df9c",
+                      "tertiary-container": "#ffa072",
+                      "secondary-fixed-dim": "#c8c6c9",
+                      "surface-tint": "#51df9c",
+                      "surface-container-high": "#2a2a2b",
+                      "surface-bright": "#3a393a",
+                      "inverse-on-surface": "#313031",
+                      "on-background": "#e5e2e3",
+                      "inverse-surface": "#e5e2e3",
+                      "on-primary-fixed-variant": "#005233",
+                      "on-tertiary-fixed": "#351000",
+                      "surface": "#131314",
+                      "inverse-primary": "#006c45",
+                      "surface-variant": "#353436",
+                      "on-primary": "#003822",
+                      "on-tertiary-fixed-variant": "#76330d",
+                      "on-error-container": "#ffdad6",
+                      "on-primary-container": "#005434",
+                      "surface-container-highest": "#353436",
+                      "error-container": "#93000a",
+                      "secondary": "#c8c6c9",
+                      "outline": "#869489",
+                      "on-secondary-fixed": "#1b1b1e",
+                      "on-surface": "#e5e2e3",
+                      "tertiary": "#ffc7ae",
+                      "on-secondary-fixed-variant": "#47464a",
+                      "surface-container-low": "#1c1b1c",
+                      "surface-container-lowest": "#0e0e0f",
+                      "primary": "#60eca8",
+                      "surface-dim": "#131314",
+                      "primary-container": "#3ecf8e",
+                      "tertiary-fixed-dim": "#ffb694",
+                      "surface-container": "#201f20",
+                      "on-error": "#690005",
+                      "on-secondary": "#303033",
+                      "outline-variant": "#3d4a41",
+                      "error": "#ffb4ab",
+                      "background": "#131314",
+                      "on-surface-variant": "#bbcabe",
+                      "on-secondary-container": "#b6b4b8",
+                      "on-tertiary": "#561f00",
+                      "secondary-fixed": "#e4e1e5",
+                      
+                      // Light Theme Overrides (Requested in prompt)
+                      "light-bg": "#FAFAF7",
+                      "light-text": "#17171A",
+                      "lime-accent": "#3ECF8E"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "unit": "4px",
+                      "margin-mobile": "20px",
+                      "stack-lg": "48px",
+                      "margin-desktop": "40px",
+                      "stack-sm": "8px",
+                      "gutter": "16px",
+                      "stack-md": "24px"
+              },
+              "fontFamily": {
+                      "label-caps": [
+                              "Inter"
+                      ],
+                      "data-mono": [
+                              "Space Grotesk"
+                      ],
+                      "headline-lg-mobile": [
+                              "Space Grotesk"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "display-huge": [
+                              "Space Grotesk"
+                      ],
+                      "headline-lg": [
+                              "Space Grotesk"
+                      ]
+              },
+              "fontSize": {
+                      "label-caps": [
+                              "11px",
+                              {
+                                      "lineHeight": "12px",
+                                      "letterSpacing": "0.1em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "data-mono": [
+                              "18px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "display-huge": [
+                              "72px",
+                              {
+                                      "lineHeight": "64px",
+                                      "letterSpacing": "-0.04em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "36px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        body {
+            background-color: #FAFAF7;
+            color: #17171A;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .dotted-separator {
+            border-bottom: 1px dotted #17171A;
+            opacity: 0.2;
+        }
+        
+        .hairline-lime {
+            border-bottom: 2px solid #3ECF8E;
+        }
+        
+        .tabular-nums {
+            font-variant-numeric: tabular-nums;
+        }
+        
+        /* Removing dark mode text colors to force the light theme requested */
+        .text-on-surface, .text-primary, .text-on-surface-variant {
+            color: #17171A !important;
+        }
+        .bg-surface, .bg-surface-container {
+            background-color: #FAFAF7 !important;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen pb-24 relative overflow-x-hidden">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-margin-mobile h-14 bg-surface border-b border-outline-variant flat no shadows transition-transform">
+<button class="hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">menu</span>
+</button>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile font-bold tracking-tighter text-on-surface uppercase">GYMLOG</h1>
+<button class="hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">account_circle</span>
+</button>
+</header>
+<!-- Main Content Area -->
+<main class="pt-20 px-margin-mobile max-w-md mx-auto">
+<!-- Status Row -->
+<div class="flex justify-between items-end mb-stack-md">
+<div>
+<p class="font-label-caps text-label-caps text-[#17171A] opacity-60 mb-1">CURRENT SESSION</p>
+<div class="font-headline-lg-mobile text-headline-lg-mobile font-bold tracking-tighter">PUSH DAY A</div>
+</div>
+<div class="text-right">
+<p class="font-label-caps text-label-caps text-[#17171A] opacity-60 mb-1">DURATION</p>
+<div class="font-data-mono text-data-mono tabular-nums text-[#3ECF8E]">42:15</div>
+</div>
+</div>
+<div class="dotted-separator mb-stack-md"></div>
+<!-- Exercise Card: Bench Press -->
+<section class="mb-stack-lg relative">
+<div class="flex justify-between items-center mb-stack-sm">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile font-bold tracking-tighter">Bench Press</h2>
+<div class="bg-[#17171A] text-white font-label-caps text-label-caps px-2 py-1 rounded">BARBELL</div>
+</div>
+<p class="font-body-md text-body-md text-[#17171A] opacity-70 mb-stack-md">Focus on explosive concentric phase.</p>
+<!-- Sets Header -->
+<div class="flex text-[#17171A] opacity-60 font-label-caps text-label-caps mb-2 px-1">
+<div class="w-12">SET</div>
+<div class="flex-1">LBS</div>
+<div class="flex-1">REPS</div>
+<div class="w-12 text-right">DONE</div>
+</div>
+<div class="dotted-separator mb-2"></div>
+<!-- Set 1 (Completed) -->
+<div class="flex items-center mb-2 px-1 py-2 opacity-50 transition-opacity">
+<div class="w-12 font-data-mono text-data-mono tabular-nums">1</div>
+<div class="flex-1 font-data-mono text-data-mono tabular-nums">135</div>
+<div class="flex-1 font-data-mono text-data-mono tabular-nums">10</div>
+<div class="w-12 text-right">
+<span class="material-symbols-outlined text-[#3ECF8E]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+</div>
+<div class="dotted-separator mb-2"></div>
+<!-- Set 2 (Active/Input) -->
+<div class="flex items-center mb-2 px-1 py-2 relative">
+<!-- Active Indicator -->
+<div class="absolute left-[-16px] top-1/2 transform -translate-y-1/2 w-1 h-8 bg-[#3ECF8E]"></div>
+<div class="w-12 font-data-mono text-data-mono tabular-nums font-bold">2</div>
+<div class="flex-1 pr-4">
+<input class="w-full bg-transparent border-0 border-b border-[#17171A] focus:ring-0 focus:border-[#3ECF8E] font-data-mono text-data-mono tabular-nums p-0 pb-1 text-center font-bold" type="number" value="185"/>
+</div>
+<div class="flex-1 pr-4">
+<input class="w-full bg-transparent border-0 border-b border-[#17171A] focus:ring-0 focus:border-[#3ECF8E] font-data-mono text-data-mono tabular-nums p-0 pb-1 text-center font-bold" type="number" value="8"/>
+</div>
+<div class="w-12 flex justify-end">
+<button class="w-8 h-8 flex items-center justify-center bg-[#3ECF8E] text-[#17171A] rounded hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1; font-size: 20px;">check</span>
+</button>
+</div>
+</div>
+<div class="dotted-separator mb-2"></div>
+<!-- Set 3 (Upcoming) -->
+<div class="flex items-center mb-2 px-1 py-2">
+<div class="w-12 font-data-mono text-data-mono tabular-nums">3</div>
+<div class="flex-1 font-data-mono text-data-mono tabular-nums">185</div>
+<div class="flex-1 font-data-mono text-data-mono tabular-nums">8</div>
+<div class="w-12 text-right">
+<div class="w-6 h-6 border-2 border-[#17171A] rounded opacity-20 inline-block"></div>
+</div>
+</div>
+<div class="mt-stack-sm flex gap-2">
+<button class="flex-1 py-3 border-[1.5px] border-[#17171A] font-label-caps text-label-caps text-[#17171A] rounded hover:bg-[#17171A] hover:text-white transition-colors">
+                    ADD SET
+                </button>
+<button class="flex-1 py-3 border-[1.5px] border-[#17171A] font-label-caps text-label-caps text-[#17171A] rounded hover:bg-[#17171A] hover:text-white transition-colors">
+                    NOTES
+                </button>
+</div>
+</section>
+<div class="dotted-separator mb-stack-md"></div>
+<!-- Rest Timer Overlay / Indicator -->
+<div class="bg-[#17171A] text-white p-4 rounded-lg flex items-center justify-between mb-stack-lg shadow-sm">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#3ECF8E]" style="font-variation-settings: 'FILL' 1;">timer</span>
+<div>
+<div class="font-label-caps text-label-caps opacity-70">REST TIMER</div>
+<div class="font-data-mono text-data-mono tabular-nums">01:45</div>
+</div>
+</div>
+<button class="font-label-caps text-label-caps border border-white/20 px-3 py-1 rounded hover:bg-white/10 transition-colors">
+                SKIP
+            </button>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-2 pb-safe bg-surface border-t border-outline-variant h-16 md:hidden">
+<!-- Home (Active) -->
+<a class="flex flex-col items-center justify-center text-primary border-t-2 border-primary pt-1 w-16 h-full hover:text-primary transition-colors translate-y-[-2px] transition-transform" href="#">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-label-caps text-label-caps">Home</span>
+</a>
+<!-- Routines -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant pt-1 w-16 h-full hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined mb-1">fitness_center</span>
+<span class="font-label-caps text-label-caps">Routines</span>
+</a>
+<!-- Cardio -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant pt-1 w-16 h-full hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined mb-1">directions_run</span>
+<span class="font-label-caps text-label-caps">Cardio</span>
+</a>
+<!-- Stats -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant pt-1 w-16 h-full hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined mb-1">monitoring</span>
+<span class="font-label-caps text-label-caps">Stats</span>
+</a>
+<!-- Settings -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant pt-1 w-16 h-full hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined mb-1">settings</span>
+<span class="font-label-caps text-label-caps">Settings</span>
+</a>
+</nav>
+<!-- Desktop Nav (Hidden on Mobile) -->
+<aside class="hidden md:flex fixed inset-y-0 left-0 z-[60] flex-col p-6 bg-surface-container border-r border-outline-variant h-full w-80 rounded-r-none flat no shadows transition-all duration-200 ease-in-out">
+<h2 class="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tighter mb-8">GYMLOG V2</h2>
+<nav class="flex flex-col gap-2">
+<!-- Training Log (Active - maps to Home/Live Workout intent) -->
+<a class="flex items-center gap-4 text-primary font-bold border-l-2 border-primary pl-4 py-3 hover:bg-surface-variant transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">history</span>
+<span class="font-label-caps text-label-caps">Training Log</span>
+</a>
+<!-- Exercise Library -->
+<a class="flex items-center gap-4 text-on-surface-variant pl-4 py-3 hover:bg-surface-variant transition-colors" href="#">
+<span class="material-symbols-outlined">list</span>
+<span class="font-label-caps text-label-caps">Exercise Library</span>
+</a>
+<!-- Personal Records -->
+<a class="flex items-center gap-4 text-on-surface-variant pl-4 py-3 hover:bg-surface-variant transition-colors" href="#">
+<span class="material-symbols-outlined">emoji_events</span>
+<span class="font-label-caps text-label-caps">Personal Records</span>
+</a>
+<!-- Settings -->
+<a class="flex items-center gap-4 text-on-surface-variant pl-4 py-3 hover:bg-surface-variant transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-caps text-label-caps">Settings</span>
+</a>
+</nav>
+</aside>
+</body></html>

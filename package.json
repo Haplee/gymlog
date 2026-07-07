@@ -1,7 +1,7 @@
 {
   "name": "gymlog-v2",
   "private": true,
-  "version": "4.0.0",
+  "version": "0.5.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -53,6 +53,7 @@
     "canvas-confetti": "^1.9.3",
     "cosmiconfig": "9.0.1",
     "date-fns": "^4.1.0",
+    "exceljs": "^4.4.0",
     "framer-motion": "^12.38.0",
     "html-to-image": "^1.11.13",
     "i18next": "^24.2.3",

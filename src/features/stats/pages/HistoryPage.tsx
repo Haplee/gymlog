@@ -9,6 +9,7 @@ import {
   useRoutineStore,
   type Routine,
   type DayOfWeek,
+  type DayRoutine,
   type RoutineExercise,
 } from '@features/routine/stores/routineStore';
 import { useCardioStore, CARDIO_LABELS } from '@features/cardio/stores/cardioStore';
@@ -32,9 +33,17 @@ import {
   parseImportNumber as parseNumber,
   parseImportDate as parseDate,
   isHeaderLine,
-  buildExportCsv,
   buildExportJson,
 } from '@features/stats/utils/exportImport';
+import {
+  exportAllToXlsx,
+  arrayBufferToBase64,
+  type ExcelStrengthSet,
+  type ExcelCardioRow,
+  type ExcelRoutineRow,
+} from '@features/stats/utils/excelExport';
+import { parseXlsxFile, DAY_LABELS } from '@features/stats/utils/excelImport';
+import { applyExcelImport } from '@features/stats/utils/applyExcelImport';
 import {
   ChevronRight,
   Trash2,
@@ -336,7 +345,7 @@ export function HistoryPage() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const { repeatWorkout } = useWorkoutStore();
-  const { addRoutine, saveToDb: saveRoutinesToDb } = useRoutineStore();
+  const { routines, addRoutine, saveToDb: saveRoutinesToDb } = useRoutineStore();
   const {
     sessions: cardioSessions,
     deleteSession: deleteCardioSession,
@@ -457,37 +466,74 @@ export function HistoryPage() {
     setDeleteId(null);
   };
 
-  const exportToExcel = async () => {
-    const csv = buildExportCsv(filteredSets);
-    const fileName = `gymlog_${new Date().toISOString().split('T')[0]}.csv`;
+  const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
+  const saveXlsx = async (fileName: string, buffer: ArrayBuffer) => {
     if (Capacitor.isNativePlatform()) {
-      try {
-        await Filesystem.writeFile({
-          path: fileName,
-          data: csv,
-          directory: Directory.Cache,
-          encoding: Encoding.UTF8,
-        });
-        const uriResult = await Filesystem.getUri({
-          directory: Directory.Cache,
-          path: fileName,
-        });
-        await Share.share({
-          title: t('history.export_share_title'),
-          url: uriResult.uri,
-          dialogTitle: t('history.export_share_dialog'),
-        });
-      } catch (e) {
-        devError('Error export native', e);
-        toast.error(t('history.export_error'));
-      }
+      // Sin `encoding`: Filesystem interpreta data como base64 (fichero binario).
+      await Filesystem.writeFile({
+        path: fileName,
+        data: arrayBufferToBase64(buffer),
+        directory: Directory.Cache,
+      });
+      const uriResult = await Filesystem.getUri({ directory: Directory.Cache, path: fileName });
+      await Share.share({
+        title: t('history.export_share_title'),
+        url: uriResult.uri,
+        dialogTitle: t('history.export_share_dialog'),
+      });
     } else {
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const blob = new Blob([buffer], { type: XLSX_MIME });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
       link.download = fileName;
       link.click();
+    }
+  };
+
+  const exportToExcel = async () => {
+    const fileName = `gymlog_${new Date().toISOString().split('T')[0]}.xlsx`;
+    try {
+      const strength: ExcelStrengthSet[] = workouts.flatMap((w) => {
+        const date = w.started_at ? w.started_at.split('T')[0] : '';
+        if (!date) return [];
+        return w.sets.map((s) => ({
+          date,
+          exercise: s.exercise?.name || 'Desconocido',
+          muscleGroup: s.exercise?.muscle_group || 'Otro',
+          setNum: s.set_num,
+          reps: s.reps,
+          weight: s.weight,
+        }));
+      });
+      const cardio: ExcelCardioRow[] = cardioSessions.map((c) => ({
+        date: c.startedAt.split('T')[0],
+        typeLabel: CARDIO_LABELS[c.type],
+        durationMin: Math.round(c.duration / 60),
+        distanceKm: c.distance ?? null,
+        calories: c.calories ?? null,
+        avgHr: c.avgHr ?? null,
+        maxHr: c.maxHr ?? null,
+        notes: c.notes ?? null,
+      }));
+      const routineRows: ExcelRoutineRow[] = routines.flatMap((r) =>
+        (Object.entries(r.days) as [DayOfWeek, DayRoutine][]).flatMap(([day, dayRoutine]) =>
+          dayRoutine.exercises.map((ex) => ({
+            routine: r.name,
+            description: r.description,
+            dayLabel: DAY_LABELS[day],
+            exercise: ex.name,
+            sets: ex.sets ?? null,
+            reps: ex.reps ?? null,
+            notes: ex.notes ?? null,
+          })),
+        ),
+      );
+      const buffer = await exportAllToXlsx({ strength, cardio, routines: routineRows });
+      await saveXlsx(fileName, buffer);
+    } catch (e) {
+      devError('Error export xlsx', e);
+      toast.error(t('history.export_error'));
     }
   };
 
@@ -631,6 +677,31 @@ export function HistoryPage() {
     e.target.value = '';
   };
 
+  const importExcelFile = async (file: File, userId: string) => {
+    try {
+      toast.info(t('history.loading_data'));
+      const parsed = await parseXlsxFile(await file.arrayBuffer());
+      const result = await applyExcelImport(userId, parsed);
+      for (const routine of parsed.routines) addRoutine(routine);
+      if (parsed.routines.length > 0) void saveRoutinesToDb(userId);
+      void syncCardio(userId);
+      refetchSets();
+      refetchWorkouts();
+      queryClient.invalidateQueries({ queryKey: ['workoutsAndSets'], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ['personalRecords'], refetchType: 'all' });
+      toast.success(
+        t('history.import_excel_success', {
+          sets: result.sets,
+          cardio: result.cardio,
+          routines: parsed.routines.length,
+        }),
+      );
+    } catch (err) {
+      devError('Error import xlsx', err);
+      toast.error(t('history.import_error'));
+    }
+  };
+
   const importFromCsv = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) {
@@ -638,8 +709,14 @@ export function HistoryPage() {
       return;
     }
 
-    const validExtensions = ['.csv', '.txt'];
     const fileName = file.name.toLowerCase();
+    if (fileName.endsWith('.xlsx')) {
+      void importExcelFile(file, user.id);
+      e.target.value = '';
+      return;
+    }
+
+    const validExtensions = ['.csv', '.txt'];
     if (!validExtensions.some((ext) => fileName.endsWith(ext))) {
       toast.error(t('history.invalid_format'));
       return;
@@ -992,7 +1069,12 @@ export function HistoryPage() {
               </button>
               <label className="bg-surface border border-line-strong rounded-lg text-fg-muted text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]">
                 {t('history.import_btn')}
-                <input type="file" accept=".csv,.txt" onChange={importFromCsv} className="hidden" />
+                <input
+                  type="file"
+                  accept=".csv,.txt,.xlsx"
+                  onChange={importFromCsv}
+                  className="hidden"
+                />
               </label>
               <label className="bg-surface border border-line-strong rounded-lg text-fg-muted text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]">
                 {t('history.import_json')}

@@ -23,6 +23,7 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_KEY: ${{ secrets.VITE_SUPABASE_KEY }}
+          VITE_FITBIT_CLIENT_ID: ${{ secrets.VITE_FITBIT_CLIENT_ID }}
         run: npm run build
       - name: Sync Capacitor
         run: npx cap sync android

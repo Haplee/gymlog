@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Gymlog - Live Workout</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed": "#002112",
+                        "secondary-container": "#47464a",
+                        "on-tertiary-container": "#78350f",
+                        "primary-fixed": "#71fcb6",
+                        "tertiary-fixed": "#ffdbcc",
+                        "primary-fixed-dim": "#51df9c",
+                        "tertiary-container": "#ffa072",
+                        "secondary-fixed-dim": "#c8c6c9",
+                        "surface-tint": "#51df9c",
+                        "surface-container-high": "#2a2a2b",
+                        "surface-bright": "#3a393a",
+                        "inverse-on-surface": "#313031",
+                        "on-background": "#e5e2e3",
+                        "inverse-surface": "#e5e2e3",
+                        "on-primary-fixed-variant": "#005233",
+                        "on-tertiary-fixed": "#351000",
+                        "surface": "#131314",
+                        "inverse-primary": "#006c45",
+                        "surface-variant": "#353436",
+                        "on-primary": "#003822",
+                        "on-tertiary-fixed-variant": "#76330d",
+                        "on-error-container": "#ffdad6",
+                        "on-primary-container": "#005434",
+                        "surface-container-highest": "#353436",
+                        "error-container": "#93000a",
+                        "secondary": "#c8c6c9",
+                        "outline": "#869489",
+                        "on-secondary-fixed": "#1b1b1e",
+                        "on-surface": "#e5e2e3",
+                        "tertiary": "#ffc7ae",
+                        "on-secondary-fixed-variant": "#47464a",
+                        "surface-container-low": "#1c1b1c",
+                        "surface-container-lowest": "#0e0e0f",
+                        "primary": "#60eca8",
+                        "surface-dim": "#131314",
+                        "primary-container": "#3ecf8e",
+                        "tertiary-fixed-dim": "#ffb694",
+                        "surface-container": "#201f20",
+                        "on-error": "#690005",
+                        "on-secondary": "#303033",
+                        "outline-variant": "#3d4a41",
+                        "error": "#ffb4ab",
+                        "background": "#131314",
+                        "on-surface-variant": "#bbcabe",
+                        "on-secondary-container": "#b6b4b8",
+                        "on-tertiary": "#561f00",
+                        "secondary-fixed": "#e4e1e5"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "margin-mobile": "20px",
+                        "stack-lg": "48px",
+                        "margin-desktop": "40px",
+                        "stack-sm": "8px",
+                        "gutter": "16px",
+                        "stack-md": "24px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["Inter"],
+                        "data-mono": ["Space Grotesk"],
+                        "headline-lg-mobile": ["Space Grotesk"],
+                        "body-md": ["Inter"],
+                        "display-huge": ["Space Grotesk"],
+                        "headline-lg": ["Space Grotesk"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["11px", { "lineHeight": "12px", "letterSpacing": "0.1em", "fontWeight": "700" }],
+                        "data-mono": ["18px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "display-huge": ["72px", { "lineHeight": "64px", "letterSpacing": "-0.04em", "fontWeight": "700" }],
+                        "headline-lg": ["32px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: #0A0A0B; color: #e5e2e3; }
+        .hairline-focus:focus-within { border-bottom: 2px solid #3ECF8E; }
+        .dotted-sep { border-bottom: 1px dotted #3d4a41; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-body-md antialiased pb-24 md:pb-0">
+<!-- TopAppBar (Mobile) -->
+<header class="md:hidden fixed top-0 w-full z-50 flex justify-between items-center px-margin-mobile h-14 bg-surface dark:bg-surface border-b border-outline-variant dark:border-outline-variant flat no shadows">
+<button class="text-primary dark:text-primary hover:opacity-80 transition-opacity active:scale-95 transition-transform flex items-center justify-center">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">menu</span>
+</button>
+<div class="font-headline-lg-mobile text-headline-lg-mobile font-bold tracking-tighter text-on-surface dark:text-on-surface uppercase">
+            GYMLOG
+        </div>
+<button class="text-primary dark:text-primary hover:opacity-80 transition-opacity active:scale-95 transition-transform flex items-center justify-center">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">account_circle</span>
+</button>
+</header>
+<!-- Top Nav (Desktop) -->
+<header class="hidden md:flex fixed top-0 w-full z-50 justify-between items-center px-margin-desktop h-16 bg-surface dark:bg-surface border-b border-outline-variant dark:border-outline-variant">
+<div class="font-headline-lg text-headline-lg font-bold tracking-tighter text-on-surface uppercase">GYMLOG V2</div>
+<nav class="flex gap-8">
+<a class="text-primary font-bold border-b-2 border-primary pb-1" href="#">Home</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors pb-1" href="#">Routines</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors pb-1" href="#">Cardio</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors pb-1" href="#">Stats</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors pb-1" href="#">Settings</a>
+</nav>
+</header>
+<main class="pt-16 md:pt-20 px-margin-mobile md:px-margin-desktop max-w-[600px] mx-auto min-h-screen flex flex-col">
+<!-- Status Row -->
+<div class="flex justify-between items-center mt-stack-sm mb-stack-md">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-outline"></span>
+<span class="font-data-mono text-data-mono text-on-surface-variant">45:12</span>
+</div>
+<button class="px-3 py-1 border-[1.5px] border-primary rounded font-label-caps text-label-caps text-primary uppercase">
+                Resume Session
+            </button>
+</div>
+<!-- Header -->
+<div class="mb-stack-lg">
+<h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface">Push Day · Monday</h1>
+</div>
+<!-- Current Exercise -->
+<section class="mb-stack-lg flex-grow">
+<div class="flex justify-between items-end mb-stack-sm">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">Bench Press</h2>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Set 4</span>
+</div>
+<!-- Input Area -->
+<div class="flex items-center gap-gutter mb-stack-md">
+<div class="flex-1 hairline-focus border-b border-outline-variant pb-1 flex justify-between items-baseline">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">KG</span>
+<input class="bg-transparent border-none text-right font-display-huge text-display-huge p-0 w-full focus:ring-0 text-on-surface" type="number" value="80"/>
+</div>
+<div class="flex-1 hairline-focus border-b border-outline-variant pb-1 flex justify-between items-baseline">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Reps</span>
+<input class="bg-transparent border-none text-right font-display-huge text-display-huge p-0 w-full focus:ring-0 text-on-surface" type="number" value="8"/>
+</div>
+<button class="w-16 h-16 bg-primary text-background rounded flex items-center justify-center flex-shrink-0 mt-auto">
+<span class="material-symbols-outlined" style="font-size: 32px;">check</span>
+</button>
+</div>
+<!-- Log Cards -->
+<div class="flex flex-col">
+<div class="flex items-center justify-between py-2 dotted-sep">
+<div class="flex items-center gap-4">
+<span class="font-data-mono text-data-mono text-on-surface-variant w-4">1</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase px-2 py-1 bg-surface-variant rounded">Warmup</span>
+</div>
+<div class="font-data-mono text-data-mono text-on-surface-variant">
+                        60 kg <span class="mx-2">×</span> 12
+                    </div>
+</div>
+<div class="flex items-center justify-between py-2 dotted-sep">
+<div class="flex items-center gap-4">
+<span class="font-data-mono text-data-mono text-on-surface-variant w-4">2</span>
+</div>
+<div class="font-data-mono text-data-mono text-on-surface-variant">
+                        75 kg <span class="mx-2">×</span> 10
+                    </div>
+</div>
+<div class="flex items-center justify-between py-2 dotted-sep relative">
+<div class="absolute left-0 top-0 bottom-0 w-[2px] bg-primary"></div>
+<div class="flex items-center gap-4 pl-3">
+<span class="font-data-mono text-data-mono text-primary w-4">3</span>
+<span class="font-label-caps text-label-caps text-background bg-primary uppercase px-2 py-1 rounded">PR</span>
+</div>
+<div class="font-data-mono text-data-mono text-primary font-bold">
+                        80 kg <span class="mx-2">×</span> 8
+                    </div>
+</div>
+</div>
+</section>
+<!-- Tools Row -->
+<div class="flex gap-2 overflow-x-auto hide-scrollbar pb-stack-sm mb-stack-md">
+<button class="px-4 py-2 bg-surface-container-high rounded font-label-caps text-label-caps text-on-surface uppercase whitespace-nowrap flex items-center gap-1 border-[1.5px] border-transparent hover:border-outline-variant">
+<span class="material-symbols-outlined" style="font-size: 16px;">calculate</span>
+                Plate Calc
+            </button>
+<button class="px-4 py-2 bg-surface-container-high rounded font-label-caps text-label-caps text-on-surface uppercase whitespace-nowrap flex items-center gap-1 border-[1.5px] border-transparent hover:border-outline-variant">
+<span class="material-symbols-outlined" style="font-size: 16px;">fitness_center</span>
+                1RM
+            </button>
+<button class="px-4 py-2 bg-surface-container-high rounded font-label-caps text-label-caps text-on-surface uppercase whitespace-nowrap flex items-center gap-1 border-[1.5px] border-transparent hover:border-outline-variant">
+<span class="material-symbols-outlined" style="font-size: 16px;">edit_note</span>
+                Notes
+            </button>
+</div>
+</main>
+<!-- Floating Rest Timer -->
+<div class="fixed bottom-20 md:bottom-8 right-margin-mobile md:right-margin-desktop bg-surface border-[1.5px] border-outline-variant rounded-lg p-3 flex flex-col gap-2 w-32 shadow-lg z-40">
+<div class="flex justify-between items-center">
+<span class="material-symbols-outlined text-primary" style="font-size: 18px;">timer</span>
+<span class="font-data-mono text-data-mono text-on-surface">01:30</span>
+</div>
+<div class="h-1 bg-surface-variant w-full overflow-hidden">
+<div class="h-full bg-primary w-[60%] border-r-[2px] border-transparent"></div>
+</div>
+</div>
+<!-- BottomNavBar (Mobile) -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 flex justify-around items-center px-2 pb-safe bg-surface dark:bg-surface h-16 border-t border-outline-variant dark:border-outline-variant flat no shadows">
+<a class="flex flex-col items-center justify-center text-primary dark:text-primary border-t-2 border-primary pt-1 hover:text-primary transition-colors active:translate-y-[-2px] transition-transform w-16" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-label-caps text-label-caps mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant pt-1 hover:text-primary transition-colors active:translate-y-[-2px] transition-transform w-16" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">fitness_center</span>
+<span class="font-label-caps text-label-caps mt-1">Routines</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant pt-1 hover:text-primary transition-colors active:translate-y-[-2px] transition-transform w-16" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">directions_run</span>
+<span class="font-label-caps text-label-caps mt-1">Cardio</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant pt-1 hover:text-primary transition-colors active:translate-y-[-2px] transition-transform w-16" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">monitoring</span>
+<span class="font-label-caps text-label-caps mt-1">Stats</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant pt-1 hover:text-primary transition-colors active:translate-y-[-2px] transition-transform w-16" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">settings</span>
+<span class="font-label-caps text-label-caps mt-1">Settings</span>
+</a>
+</nav>
+</body></html>

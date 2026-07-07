@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>GymLog - History</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed": "#002112",
+                        "secondary-container": "#47464a",
+                        "on-tertiary-container": "#78350f",
+                        "primary-fixed": "#71fcb6",
+                        "tertiary-fixed": "#ffdbcc",
+                        "primary-fixed-dim": "#51df9c",
+                        "tertiary-container": "#ffa072",
+                        "secondary-fixed-dim": "#c8c6c9",
+                        "surface-tint": "#51df9c",
+                        "surface-container-high": "#2a2a2b",
+                        "surface-bright": "#3a393a",
+                        "inverse-on-surface": "#313031",
+                        "on-background": "#e5e2e3",
+                        "inverse-surface": "#e5e2e3",
+                        "on-primary-fixed-variant": "#005233",
+                        "on-tertiary-fixed": "#351000",
+                        "surface": "#141416", /* Overridden per prompt */
+                        "inverse-primary": "#006c45",
+                        "surface-variant": "#353436",
+                        "on-primary": "#003822",
+                        "on-tertiary-fixed-variant": "#76330d",
+                        "on-error-container": "#ffdad6",
+                        "on-primary-container": "#005434",
+                        "surface-container-highest": "#353436",
+                        "error-container": "#93000a",
+                        "secondary": "#c8c6c9",
+                        "outline": "#869489",
+                        "on-secondary-fixed": "#1b1b1e",
+                        "on-surface": "#e5e2e3",
+                        "tertiary": "#ffc7ae",
+                        "on-secondary-fixed-variant": "#47464a",
+                        "surface-container-low": "#1c1b1c",
+                        "surface-container-lowest": "#0e0e0f",
+                        "primary": "#3ECF8E", /* Overridden per prompt */
+                        "surface-dim": "#131314",
+                        "primary-container": "#3ecf8e",
+                        "tertiary-fixed-dim": "#ffb694",
+                        "surface-container": "#201f20",
+                        "on-error": "#690005",
+                        "on-secondary": "#303033",
+                        "outline-variant": "#3d4a41",
+                        "error": "#ffb4ab",
+                        "background": "#0A0A0B", /* Overridden per prompt */
+                        "on-surface-variant": "#bbcabe",
+                        "on-secondary-container": "#b6b4b8",
+                        "on-tertiary": "#561f00",
+                        "secondary-fixed": "#e4e1e5"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "margin-mobile": "20px",
+                        "stack-lg": "48px",
+                        "margin-desktop": "40px",
+                        "stack-sm": "8px",
+                        "gutter": "16px",
+                        "stack-md": "24px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["Inter"],
+                        "data-mono": ["Space Grotesk"],
+                        "headline-lg-mobile": ["Space Grotesk"],
+                        "body-md": ["Inter"],
+                        "display-huge": ["Space Grotesk"],
+                        "headline-lg": ["Space Grotesk"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["11px", { "lineHeight": "12px", "letterSpacing": "0.1em", "fontWeight": "700" }],
+                        "data-mono": ["18px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "display-huge": ["72px", { "lineHeight": "64px", "letterSpacing": "-0.04em", "fontWeight": "700" }],
+                        "headline-lg": ["32px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Utility for 4px dotted separators */
+        .border-dotted-4px {
+            border-image: repeating-linear-gradient(to right, currentColor 0, currentColor 1px, transparent 1px, transparent 4px) 1;
+            border-width: 1px 0 0 0;
+            border-style: solid;
+        }
+        
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #353436;
+            border-radius: 4px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface antialiased flex flex-col min-h-screen pt-14 pb-16 md:pb-0 md:pl-80">
+<!-- Desktop Navigation Drawer (Hidden on Mobile) -->
+<nav class="hidden md:flex fixed inset-y-0 left-0 z-[60] flex-col p-6 bg-surface-container dark:bg-surface-container text-primary dark:text-primary h-full w-80 border-r border-outline-variant">
+<div class="mb-stack-lg">
+<h1 class="font-headline-lg text-headline-lg text-on-surface">GYMLOG V2</h1>
+</div>
+<ul class="flex flex-col gap-stack-sm flex-1">
+<li class="group cursor-pointer">
+<a class="flex items-center gap-unit p-unit hover:bg-surface-variant dark:hover:bg-surface-variant transition-all duration-200 ease-in-out text-primary dark:text-primary font-bold border-l-2 border-primary pl-4" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="font-label-caps text-label-caps">Training Log</span>
+</a>
+</li>
+<li class="group cursor-pointer">
+<a class="flex items-center gap-unit p-unit hover:bg-surface-variant dark:hover:bg-surface-variant transition-all duration-200 ease-in-out text-on-surface-variant dark:text-on-surface-variant pl-4" href="#">
+<span class="material-symbols-outlined">list</span>
+<span class="font-label-caps text-label-caps">Exercise Library</span>
+</a>
+</li>
+<li class="group cursor-pointer">
+<a class="flex items-center gap-unit p-unit hover:bg-surface-variant dark:hover:bg-surface-variant transition-all duration-200 ease-in-out text-on-surface-variant dark:text-on-surface-variant pl-4" href="#">
+<span class="material-symbols-outlined">emoji_events</span>
+<span class="font-label-caps text-label-caps">Personal Records</span>
+</a>
+</li>
+</ul>
+<div class="mt-auto">
+<a class="flex items-center gap-unit p-unit hover:bg-surface-variant dark:hover:bg-surface-variant transition-all duration-200 ease-in-out text-on-surface-variant dark:text-on-surface-variant pl-4" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-caps text-label-caps">Settings</span>
+</a>
+</div>
+</nav>
+<!-- Mobile Top App Bar -->
+<header class="md:hidden fixed top-0 w-full z-50 flex justify-between items-center px-margin-mobile h-14 bg-surface dark:bg-surface font-headline-lg-mobile text-headline-lg-mobile font-bold tracking-tighter text-on-surface dark:text-on-surface uppercase border-b border-outline-variant dark:border-outline-variant">
+<div class="flex items-center gap-unit text-on-surface-variant dark:text-on-surface-variant hover:opacity-80 transition-opacity cursor-pointer">
+<span class="material-symbols-outlined">menu</span>
+</div>
+<div>GYMLOG</div>
+<div class="flex items-center gap-unit text-on-surface-variant dark:text-on-surface-variant hover:opacity-80 transition-opacity cursor-pointer">
+<span class="material-symbols-outlined">account_circle</span>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 w-full max-w-4xl mx-auto p-margin-mobile md:p-margin-desktop">
+<!-- Page Header -->
+<div class="flex justify-between items-end mb-stack-lg pb-unit border-b border-outline-variant border-dotted-4px text-outline-variant">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg text-on-surface">TRAINING LOG</h2>
+<button class="text-on-surface hover:text-primary transition-colors pb-unit">
+<span class="material-symbols-outlined text-2xl">search</span>
+</button>
+</div>
+<!-- Timeline Log Entries -->
+<div class="flex flex-col gap-stack-md">
+<!-- Entry 1 -->
+<article class="relative flex flex-col md:flex-row gap-gutter md:gap-stack-lg group pt-unit border-t border-outline-variant border-dotted-4px text-outline-variant mt-0">
+<!-- Date Column -->
+<div class="w-full md:w-32 flex-shrink-0 flex items-start gap-unit">
+<span class="font-data-mono text-data-mono text-primary">OCT 24</span>
+</div>
+<!-- Content Column -->
+<div class="flex-1 flex flex-col gap-unit">
+<div class="flex justify-between items-start">
+<h3 class="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg text-on-surface uppercase leading-none">HEAVY PUSH</h3>
+<div class="font-data-mono text-data-mono text-on-surface-variant text-right">
+                            65m <br/>
+                            12.4k lb
+                        </div>
+</div>
+<div class="mt-stack-sm flex flex-col gap-unit text-on-surface-variant font-body-md text-body-md">
+<div class="flex justify-between items-center group-hover:text-on-surface transition-colors">
+<span>Barbell Bench Press</span>
+<span class="font-data-mono text-data-mono text-sm">4x8 @ 225</span>
+</div>
+<div class="flex justify-between items-center group-hover:text-on-surface transition-colors">
+<span class="flex items-center gap-2">Overhead Press <span class="w-2 h-2 rounded-full bg-primary inline-block"></span></span>
+<span class="font-data-mono text-data-mono text-sm">3x5 @ 135</span>
+</div>
+<div class="flex justify-between items-center group-hover:text-on-surface transition-colors">
+<span>Incline Dumbbell Press</span>
+<span class="font-data-mono text-data-mono text-sm">3x10 @ 80</span>
+</div>
+</div>
+</div>
+</article>
+<!-- Entry 2 -->
+<article class="relative flex flex-col md:flex-row gap-gutter md:gap-stack-lg group pt-unit border-t border-outline-variant border-dotted-4px text-outline-variant">
+<!-- Date Column -->
+<div class="w-full md:w-32 flex-shrink-0 flex items-start gap-unit">
+<span class="font-data-mono text-data-mono text-on-surface-variant">OCT 22</span>
+</div>
+<!-- Content Column -->
+<div class="flex-1 flex flex-col gap-unit">
+<div class="flex justify-between items-start">
+<h3 class="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg text-on-surface uppercase leading-none">PULL HYPERTROPHY</h3>
+<div class="font-data-mono text-data-mono text-on-surface-variant text-right">
+                            50m <br/>
+                            9.8k lb
+                        </div>
+</div>
+<div class="mt-stack-sm flex flex-col gap-unit text-on-surface-variant font-body-md text-body-md">
+<div class="flex justify-between items-center group-hover:text-on-surface transition-colors">
+<span>Pull-ups (Weighted)</span>
+<span class="font-data-mono text-data-mono text-sm">4x6 @ +45</span>
+</div>
+<div class="flex justify-between items-center group-hover:text-on-surface transition-colors">
+<span>Barbell Rows</span>
+<span class="font-data-mono text-data-mono text-sm">4x8 @ 185</span>
+</div>
+<div class="flex justify-between items-center group-hover:text-on-surface transition-colors">
+<span>Face Pulls</span>
+<span class="font-data-mono text-data-mono text-sm">3x15 @ 50</span>
+</div>
+</div>
+</div>
+</article>
+<!-- Entry 3 -->
+<article class="relative flex flex-col md:flex-row gap-gutter md:gap-stack-lg group pt-unit border-t border-outline-variant border-dotted-4px text-outline-variant">
+<!-- Date Column -->
+<div class="w-full md:w-32 flex-shrink-0 flex items-start gap-unit">
+<span class="font-data-mono text-data-mono text-on-surface-variant">OCT 20</span>
+</div>
+<!-- Content Column -->
+<div class="flex-1 flex flex-col gap-unit">
+<div class="flex justify-between items-start">
+<h3 class="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg text-on-surface uppercase leading-none">LEGS VOLUME</h3>
+<div class="font-data-mono text-data-mono text-on-surface-variant text-right">
+                            85m <br/>
+                            21.2k lb
+                        </div>
+</div>
+<div class="mt-stack-sm flex flex-col gap-unit text-on-surface-variant font-body-md text-body-md">
+<div class="flex justify-between items-center group-hover:text-on-surface transition-colors">
+<span class="flex items-center gap-2">Squat <span class="w-2 h-2 rounded-full bg-primary inline-block"></span></span>
+<span class="font-data-mono text-data-mono text-sm">5x5 @ 315</span>
+</div>
+<div class="flex justify-between items-center group-hover:text-on-surface transition-colors">
+<span>Romanian Deadlift</span>
+<span class="font-data-mono text-data-mono text-sm">3x8 @ 225</span>
+</div>
+<div class="flex justify-between items-center group-hover:text-on-surface transition-colors">
+<span>Calf Raises</span>
+<span class="font-data-mono text-data-mono text-sm">4x15 @ 100</span>
+</div>
+</div>
+</div>
+</article>
+</div>
+<!-- Load More -->
+<div class="mt-stack-lg pt-unit border-t border-outline-variant border-dotted-4px text-outline-variant flex justify-center">
+<button class="font-label-caps text-label-caps uppercase border-[1.5px] border-outline text-on-surface px-6 py-3 rounded-DEFAULT hover:border-primary hover:text-primary transition-colors focus:border-primary focus:outline-none">
+                LOAD PREVIOUS
+            </button>
+</div>
+</main>
+<!-- Mobile Bottom Navigation -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 flex justify-around items-center px-2 pb-safe bg-surface dark:bg-surface h-16 border-t border-outline-variant dark:border-outline-variant">
+<!-- Assuming Home maps to Training Log based on Intent Fallback, though 'Stats' or 'Routines' might also fit. We'll highlight Home. -->
+<a class="flex flex-col items-center justify-center text-primary dark:text-primary border-t-2 border-primary pt-1 translate-y-[-2px] transition-transform" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-label-caps text-label-caps">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant pt-1 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">fitness_center</span>
+<span class="font-label-caps text-label-caps">Routines</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant pt-1 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">directions_run</span>
+<span class="font-label-caps text-label-caps">Cardio</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant pt-1 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">monitoring</span>
+<span class="font-label-caps text-label-caps">Stats</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant pt-1 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-caps text-label-caps">Settings</span>
+</a>
+</nav>
+</body></html>

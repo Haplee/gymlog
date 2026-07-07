@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Body Measurements - GYMLOG</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed": "#002112",
+                        "secondary-container": "#47464a",
+                        "on-tertiary-container": "#78350f",
+                        "primary-fixed": "#71fcb6",
+                        "tertiary-fixed": "#ffdbcc",
+                        "primary-fixed-dim": "#51df9c",
+                        "tertiary-container": "#ffa072",
+                        "secondary-fixed-dim": "#c8c6c9",
+                        "surface-tint": "#51df9c",
+                        "surface-container-high": "#2a2a2b",
+                        "surface-bright": "#3a393a",
+                        "inverse-on-surface": "#313031",
+                        "on-background": "#e5e2e3",
+                        "inverse-surface": "#e5e2e3",
+                        "on-primary-fixed-variant": "#005233",
+                        "on-tertiary-fixed": "#351000",
+                        "surface": "#141416",
+                        "inverse-primary": "#006c45",
+                        "surface-variant": "#353436",
+                        "on-primary": "#003822",
+                        "on-tertiary-fixed-variant": "#76330d",
+                        "on-error-container": "#ffdad6",
+                        "on-primary-container": "#005434",
+                        "surface-container-highest": "#353436",
+                        "error-container": "#93000a",
+                        "secondary": "#c8c6c9",
+                        "outline": "#869489",
+                        "on-secondary-fixed": "#1b1b1e",
+                        "on-surface": "#e5e2e3",
+                        "tertiary": "#ffc7ae",
+                        "on-secondary-fixed-variant": "#47464a",
+                        "surface-container-low": "#1c1b1c",
+                        "surface-container-lowest": "#0e0e0f",
+                        "primary": "#3ecf8e",
+                        "surface-dim": "#131314",
+                        "primary-container": "#3ecf8e",
+                        "tertiary-fixed-dim": "#ffb694",
+                        "surface-container": "#201f20",
+                        "on-error": "#690005",
+                        "on-secondary": "#303033",
+                        "outline-variant": "#3d4a41",
+                        "error": "#ffb4ab",
+                        "background": "#0A0A0B",
+                        "on-surface-variant": "#bbcabe",
+                        "on-secondary-container": "#b6b4b8",
+                        "on-tertiary": "#561f00",
+                        "secondary-fixed": "#e4e1e5"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "margin-mobile": "20px",
+                        "stack-lg": "48px",
+                        "margin-desktop": "40px",
+                        "stack-sm": "8px",
+                        "gutter": "16px",
+                        "stack-md": "24px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["Inter", "sans-serif"],
+                        "data-mono": ["Space Grotesk", "monospace"],
+                        "headline-lg-mobile": ["Space Grotesk", "sans-serif"],
+                        "body-md": ["Inter", "sans-serif"],
+                        "display-huge": ["Space Grotesk", "sans-serif"],
+                        "headline-lg": ["Space Grotesk", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["11px", { "lineHeight": "12px", "letterSpacing": "0.1em", "fontWeight": "700" }],
+                        "data-mono": ["18px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "display-huge": ["72px", { "lineHeight": "64px", "letterSpacing": "-0.04em", "fontWeight": "700" }],
+                        "headline-lg": ["32px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .dotted-bg {
+            background-image: radial-gradient(var(--tw-colors-outline-variant) 1px, transparent 1px);
+            background-size: 8px 8px;
+        }
+        .dotted-border-t {
+            border-top: 1px dashed var(--tw-colors-outline-variant);
+        }
+        .dotted-border-b {
+            border-bottom: 1px dashed var(--tw-colors-outline-variant);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface min-h-screen flex flex-col font-body-md pb-24 md:pb-0 pt-14">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface border-b border-outline-variant dark:border-outline-variant fixed top-0 w-full z-50 flex justify-between items-center px-margin-mobile h-14">
+<button class="text-on-surface-variant dark:text-on-surface-variant hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile font-bold tracking-tighter text-on-surface dark:text-on-surface uppercase">GYMLOG</h1>
+<button class="text-on-surface-variant dark:text-on-surface-variant hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+</header>
+<!-- NavigationDrawer (Hidden on Mobile) -->
+<aside class="hidden md:flex fixed inset-y-0 left-0 z-[60] flex-col p-6 bg-surface-container dark:bg-surface-container h-full w-80 rounded-r-none border-r border-outline-variant mt-14">
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-stack-lg">GYMLOG V2</h2>
+<nav class="flex flex-col gap-4">
+<a class="flex items-center gap-3 text-on-surface-variant dark:text-on-surface-variant pl-4 py-2 hover:bg-surface-variant dark:hover:bg-surface-variant transition-all duration-200 ease-in-out font-label-caps text-label-caps uppercase" href="#">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+                Training Log
+            </a>
+<a class="flex items-center gap-3 text-on-surface-variant dark:text-on-surface-variant pl-4 py-2 hover:bg-surface-variant dark:hover:bg-surface-variant transition-all duration-200 ease-in-out font-label-caps text-label-caps uppercase" href="#">
+<span class="material-symbols-outlined" data-icon="list">list</span>
+                Exercise Library
+            </a>
+<a class="flex items-center gap-3 text-on-surface-variant dark:text-on-surface-variant pl-4 py-2 hover:bg-surface-variant dark:hover:bg-surface-variant transition-all duration-200 ease-in-out font-label-caps text-label-caps uppercase" href="#">
+<span class="material-symbols-outlined" data-icon="emoji_events">emoji_events</span>
+                Personal Records
+            </a>
+<a class="flex items-center gap-3 text-on-surface-variant dark:text-on-surface-variant pl-4 py-2 hover:bg-surface-variant dark:hover:bg-surface-variant transition-all duration-200 ease-in-out font-label-caps text-label-caps uppercase mt-auto border-t dotted-border-t pt-4" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+                Settings
+            </a>
+</nav>
+</aside>
+<main class="flex-grow flex flex-col md:ml-80 p-margin-mobile md:p-margin-desktop gap-stack-lg max-w-5xl mx-auto w-full">
+<!-- Hero Section -->
+<section class="flex flex-col items-start gap-unit">
+<div class="flex w-full justify-between items-center mb-unit">
+<span class="font-label-caps text-label-caps text-outline uppercase tracking-widest">Current Weight</span>
+<div class="flex border border-outline-variant rounded p-0.5 bg-surface">
+<button class="px-3 py-1 font-label-caps text-label-caps text-on-surface bg-surface-variant rounded-sm uppercase">KG</button>
+<button class="px-3 py-1 font-label-caps text-label-caps text-on-surface-variant hover:text-on-surface uppercase transition-colors">LB</button>
+</div>
+</div>
+<div class="flex items-baseline gap-4">
+<h2 class="font-display-huge text-display-huge text-on-surface tracking-tighter">82.4</h2>
+<div class="flex items-center text-primary font-data-mono text-data-mono">
+<span class="material-symbols-outlined" data-icon="arrow_downward" style="font-size: 20px;">arrow_downward</span>
+<span>1.2kg</span>
+</div>
+</div>
+<span class="font-label-caps text-label-caps text-outline uppercase">Last updated: Today, 08:30 AM</span>
+</section>
+<!-- Metrics Grid -->
+<section class="grid grid-cols-2 gap-gutter">
+<div class="bg-surface p-4 border border-outline-variant flex flex-col gap-2 relative">
+<div class="absolute top-0 left-0 w-full h-[2px] bg-primary"></div>
+<span class="font-label-caps text-label-caps text-outline uppercase">Body Fat</span>
+<div class="flex justify-between items-end">
+<span class="font-headline-lg text-headline-lg text-on-surface">14.2%</span>
+<span class="font-data-mono text-label-caps text-primary">-0.4%</span>
+</div>
+</div>
+<div class="bg-surface p-4 border border-outline-variant flex flex-col gap-2">
+<span class="font-label-caps text-label-caps text-outline uppercase">Muscle Mass</span>
+<div class="flex justify-between items-end">
+<span class="font-headline-lg text-headline-lg text-on-surface">41.8kg</span>
+<span class="font-data-mono text-label-caps text-primary">+0.2kg</span>
+</div>
+</div>
+</section>
+<!-- Chart Section -->
+<section class="bg-surface border border-outline-variant p-4 flex flex-col gap-stack-md h-64 relative overflow-hidden">
+<span class="font-label-caps text-label-caps text-outline uppercase z-10">Weight Trend (30 Days)</span>
+<div class="absolute inset-0 top-12 dotted-bg opacity-30 z-0"></div>
+<!-- Mock Line Chart -->
+<div class="absolute inset-0 top-16 left-4 right-4 z-10 flex items-end">
+<svg class="w-full h-full preserve-3d" preserveaspectratio="none" viewbox="0 0 100 50">
+<path d="M0,40 L10,38 L20,39 L30,35 L40,32 L50,33 L60,28 L70,25 L80,26 L90,20 L100,22" fill="none" stroke="var(--tw-colors-primary)" stroke-width="2" vector-effect="non-scaling-stroke"></path>
+<!-- Data Points -->
+<circle cx="10" cy="38" fill="var(--tw-colors-surface)" r="1.5" stroke="var(--tw-colors-primary)" stroke-width="1" vector-effect="non-scaling-stroke"></circle>
+<circle cx="50" cy="33" fill="var(--tw-colors-surface)" r="1.5" stroke="var(--tw-colors-primary)" stroke-width="1" vector-effect="non-scaling-stroke"></circle>
+<circle cx="90" cy="20" fill="var(--tw-colors-surface)" r="1.5" stroke="var(--tw-colors-primary)" stroke-width="1" vector-effect="non-scaling-stroke"></circle>
+</svg>
+</div>
+<!-- Axis labels mock -->
+<div class="absolute bottom-2 left-4 right-4 flex justify-between z-10">
+<span class="font-data-mono text-label-caps text-outline">Oct 1</span>
+<span class="font-data-mono text-label-caps text-outline">Oct 15</span>
+<span class="font-data-mono text-label-caps text-outline">Oct 30</span>
+</div>
+</section>
+<!-- Goals Section -->
+<section class="flex flex-col gap-4">
+<h3 class="font-label-caps text-label-caps text-outline uppercase tracking-widest border-b dotted-border-b pb-2">1RM Goals Progress</h3>
+<div class="flex flex-col gap-1">
+<div class="flex justify-between items-baseline mb-1">
+<span class="font-body-md font-bold text-on-surface uppercase">Deadlift</span>
+<span class="font-data-mono text-data-mono text-on-surface-variant">180 / 200 kg</span>
+</div>
+<div class="w-full h-1 bg-surface-variant">
+<div class="h-full bg-primary" style="width: 90%;"></div>
+</div>
+</div>
+<div class="flex flex-col gap-1 mt-2">
+<div class="flex justify-between items-baseline mb-1">
+<span class="font-body-md font-bold text-on-surface uppercase">Squat</span>
+<span class="font-data-mono text-data-mono text-on-surface-variant">140 / 160 kg</span>
+</div>
+<div class="w-full h-1 bg-surface-variant">
+<div class="h-full bg-primary" style="width: 87.5%;"></div>
+</div>
+</div>
+<div class="flex flex-col gap-1 mt-2">
+<div class="flex justify-between items-baseline mb-1">
+<span class="font-body-md font-bold text-on-surface uppercase">Bench Press</span>
+<span class="font-data-mono text-data-mono text-on-surface-variant">95 / 100 kg</span>
+</div>
+<div class="w-full h-1 bg-surface-variant">
+<div class="h-full bg-primary" style="width: 95%;"></div>
+</div>
+</div>
+</section>
+<!-- Spacer for FAB on mobile -->
+<div class="h-16 md:h-0"></div>
+</main>
+<!-- FAB / Bottom CTA -->
+<div class="fixed bottom-20 md:bottom-10 right-margin-mobile md:right-margin-desktop z-[55]">
+<button class="bg-primary text-[#0A0A0B] font-label-caps text-label-caps uppercase px-6 py-4 flex items-center gap-2 hover:bg-primary-container transition-colors shadow-lg border border-transparent">
+<span class="material-symbols-outlined" data-icon="add" style="font-size: 18px;">add</span>
+            Add Measurement
+        </button>
+</div>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 flex justify-around items-center px-2 pb-safe bg-surface dark:bg-surface h-16 border-t border-outline-variant dark:border-outline-variant">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant pt-1 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-caps text-label-caps mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant pt-1 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="fitness_center">fitness_center</span>
+<span class="font-label-caps text-label-caps mt-1">Routines</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant pt-1 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="directions_run">directions_run</span>
+<span class="font-label-caps text-label-caps mt-1">Cardio</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary dark:text-primary border-t-2 border-primary pt-1 transform active:translate-y-[-2px] transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="monitoring">monitoring</span>
+<span class="font-label-caps text-label-caps mt-1">Stats</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant pt-1 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-caps text-label-caps mt-1">Settings</span>
+</a>
+</nav>
+</body></html>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { m, type Variants } from 'framer-motion';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useTranslation } from 'react-i18next';
 import { useRateLimit } from '@shared/hooks/useRateLimit';
@@ -7,10 +8,25 @@ import { useSettingsStore } from '@shared/stores/settingsStore';
 import { checkPasswordStrength } from '@shared/lib/passwordStrength';
 import { Download } from 'lucide-react';
 
-const APK_URL = 'https://github.com/Haplee/gymlog/releases/download/v4.0.0/GymLog-v4.0.0.apk';
+const APK_URL = 'https://github.com/Haplee/gymlog/releases/download/v0.5.0/GymLog-v0.5.0.apk';
 
 const inputClass =
   'w-full bg-transparent border-0 border-b border-line-strong rounded-none text-base py-3 px-1 outline-none transition-colors text-fg placeholder:text-fg-subtle focus:border-accent';
+
+const stagger: Variants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.07, delayChildren: 0.1 } },
+};
+
+const rise: Variants = {
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 280, damping: 26 } },
+};
+
+const sweep: Variants = {
+  hidden: { opacity: 0, scaleX: 0 },
+  show: { opacity: 1, scaleX: 1, transition: { duration: 0.5, ease: 'easeOut' } },
+};
 
 export function AuthPage() {
   const navigate = useNavigate();
@@ -117,11 +133,14 @@ export function AuthPage() {
   };
 
   return (
-    <div className="relative min-h-screen min-h-[100dvh] flex flex-col px-6 bg-base overflow-hidden">
+    <div className="relative flex-1 flex flex-col px-6 bg-base overflow-hidden">
       {/* Grid ambiental Stitch */}
-      <div
+      <m.div
         aria-hidden="true"
-        className="absolute inset-0 pointer-events-none opacity-40"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 0.4 }}
+        transition={{ duration: 1.2, ease: 'easeOut' }}
+        className="absolute inset-0 pointer-events-none"
         style={{
           backgroundImage:
             'linear-gradient(var(--border-subtle) 1px, transparent 1px), linear-gradient(90deg, var(--border-subtle) 1px, transparent 1px)',
@@ -129,38 +148,53 @@ export function AuthPage() {
         }}
       />
 
-      <div className="relative flex-1 flex flex-col justify-center w-full max-w-sm mx-auto py-10">
-        <div className="fade-in-up">
+      <m.div
+        variants={stagger}
+        initial="hidden"
+        animate="show"
+        className="relative flex-1 flex flex-col justify-center w-full max-w-sm mx-auto py-4"
+      >
+        <m.div variants={rise}>
           <h1 className="text-display-huge font-display text-fg select-none">GYMLOG</h1>
           <p className="label-caps text-accent mt-2">{t('auth.subtitle')}</p>
-        </div>
+        </m.div>
 
-        <div className="dotted-separator mt-8 mb-8" />
+        <m.div variants={sweep} className="dotted-separator my-6 origin-left" />
 
-        <form onSubmit={handleSubmit} key={animKey} className="space-y-5 fade-in-up">
+        <m.form
+          variants={stagger}
+          initial="hidden"
+          animate="show"
+          onSubmit={handleSubmit}
+          key={animKey}
+          className="space-y-4"
+        >
           {isSignUp && (
-            <input
+            <m.input
+              variants={rise}
               type="text"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className={`${inputClass} fade-in-up`}
+              className={inputClass}
               placeholder={t('auth.name')}
               aria-label={t('auth.name')}
             />
           )}
 
           {isSignUp && (
-            <input
+            <m.input
+              variants={rise}
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className={`${inputClass} fade-in-up`}
+              className={inputClass}
               placeholder={t('auth.username')}
               aria-label={t('auth.username')}
             />
           )}
 
-          <input
+          <m.input
+            variants={rise}
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -169,7 +203,7 @@ export function AuthPage() {
             aria-label={t('auth.email')}
           />
 
-          <div className="relative">
+          <m.div variants={rise} className="relative">
             <input
               type={isRevealing ? 'text' : 'password'}
               value={password}
@@ -210,27 +244,35 @@ export function AuthPage() {
                 </svg>
               )}
             </button>
-          </div>
+          </m.div>
 
           {error && (
-            <div
+            <m.div
               role="alert"
-              className="fade-in-up text-center text-sm py-2.5 px-3 rounded-sm bg-error/10 border border-error/25 text-error error-shake"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center text-sm py-2.5 px-3 rounded-sm bg-error/10 border border-error/25 text-error error-shake"
             >
               {error}
-            </div>
+            </m.div>
           )}
 
           {message && (
-            <div className="fade-in-up text-center text-sm py-2.5 px-3 rounded-sm bg-success/10 border border-success/25 text-success success-pulse">
+            <m.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center text-sm py-2.5 px-3 rounded-sm bg-success/10 border border-success/25 text-success success-pulse"
+            >
               {message}
-            </div>
+            </m.div>
           )}
 
-          <button
+          <m.button
+            variants={rise}
+            whileTap={{ scale: 0.98 }}
             type="submit"
             disabled={loading || isBlocked}
-            className={`w-full min-h-12 rounded-sm text-sm font-display font-bold uppercase tracking-[0.12em] transition-all active:scale-[0.98] disabled:opacity-50 text-accent-fg ${
+            className={`w-full min-h-12 rounded-sm text-sm font-display font-bold uppercase tracking-[0.12em] transition-colors disabled:opacity-50 text-accent-fg ${
               isBlocked ? 'bg-fg-subtle' : 'bg-accent shadow-btn-accent'
             }`}
           >
@@ -261,19 +303,21 @@ export function AuthPage() {
             ) : (
               t('auth.login')
             )}
-          </button>
+          </m.button>
 
-          <div className="relative flex items-center py-1">
+          <m.div variants={rise} className="relative flex items-center py-0.5">
             <div className="flex-grow dotted-separator" />
             <span className="mx-4 label-caps text-fg-subtle">o</span>
             <div className="flex-grow dotted-separator" />
-          </div>
+          </m.div>
 
-          <button
+          <m.button
+            variants={rise}
+            whileTap={{ scale: 0.98 }}
             type="button"
             onClick={handleGoogleLogin}
             disabled={googleLoading}
-            className="w-full min-h-12 px-5 rounded-sm text-sm font-display font-bold uppercase tracking-[0.12em] flex items-center justify-between gap-3 transition-all active:scale-[0.98] disabled:opacity-50 bg-surface border border-line-strong text-fg"
+            className="w-full min-h-12 px-5 rounded-sm text-sm font-display font-bold uppercase tracking-[0.12em] flex items-center justify-between gap-3 transition-colors disabled:opacity-50 bg-surface border border-line-strong text-fg hover:border-line-accent"
           >
             <span>{t('auth.signin_google')}</span>
             {googleLoading ? (
@@ -313,9 +357,9 @@ export function AuthPage() {
                 />
               </svg>
             )}
-          </button>
+          </m.button>
 
-          <div className="text-center pt-1">
+          <m.div variants={rise} className="text-center">
             <button
               type="button"
               onClick={toggleMode}
@@ -323,13 +367,15 @@ export function AuthPage() {
             >
               {isSignUp ? t('auth.switch_login') : t('auth.switch_signup')}
             </button>
-          </div>
-        </form>
-      </div>
+          </m.div>
+        </m.form>
+      </m.div>
 
-      <footer
-        className="relative flex items-center justify-between w-full max-w-sm mx-auto pt-4 pb-6"
-        style={{ paddingBottom: 'calc(var(--inset-bottom, env(safe-area-inset-bottom)) + 1.5rem)' }}
+      <m.footer
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.9, duration: 0.5 }}
+        className="relative flex items-center justify-between w-full max-w-sm mx-auto pt-2 pb-4"
       >
         <div className="flex items-center gap-1">
           {(['en', 'es'] as const).map((lng) => (
@@ -353,7 +399,7 @@ export function AuthPage() {
           <Download className="w-3.5 h-3.5" />
           {t('auth.download_apk')}
         </a>
-      </footer>
+      </m.footer>
     </div>
   );
 }

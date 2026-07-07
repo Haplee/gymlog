@@ -42,3 +42,6 @@ versiones/
 
 # screenshot generado por scripts/icon-preview.mjs
 scripts/icon-preview.png
+
+# Local per-user Claude settings (never commit — may contain secrets)
+.claude/settings.local.json

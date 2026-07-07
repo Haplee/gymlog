@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>GYMLOG | Design System Reference</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Space+Grotesk:wght@500;600;700&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Space+Grotesk:wght@100..900&display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .dotted-separator {
+            background-image: linear-gradient(to right, #3d4a41 33%, rgba(255,255,255,0) 0%);
+            background-position: bottom;
+            background-size: 4px 1px;
+            background-repeat: repeat-x;
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #131314; }
+        ::-webkit-scrollbar-thumb { background: #353436; border-radius: 3px; }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface": "#131314",
+                      "primary": "#60eca8",
+                      "on-error": "#690005",
+                      "on-tertiary-fixed-variant": "#76330d",
+                      "error": "#ffb4ab",
+                      "surface-bright": "#3a393a",
+                      "surface-dim": "#131314",
+                      "surface-container-low": "#1c1b1c",
+                      "on-secondary-container": "#b6b4b8",
+                      "outline-variant": "#3d4a41",
+                      "secondary-container": "#47464a",
+                      "surface-tint": "#51df9c",
+                      "on-tertiary-fixed": "#351000",
+                      "on-tertiary": "#561f00",
+                      "on-primary-fixed-variant": "#005233",
+                      "inverse-surface": "#e5e2e3",
+                      "tertiary": "#ffc7ae",
+                      "error-container": "#93000a",
+                      "background": "#131314",
+                      "secondary-fixed-dim": "#c8c6c9",
+                      "on-surface": "#e5e2e3",
+                      "on-primary-fixed": "#002112",
+                      "surface-container-lowest": "#0e0e0f",
+                      "surface-container-high": "#2a2a2b",
+                      "surface-container": "#201f20",
+                      "secondary-fixed": "#e4e1e5",
+                      "on-surface-variant": "#bbcabe",
+                      "on-secondary-fixed": "#1b1b1e",
+                      "primary-fixed": "#71fcb6",
+                      "on-secondary": "#303033",
+                      "on-primary": "#003822",
+                      "tertiary-container": "#ffa072",
+                      "on-error-container": "#ffdad6",
+                      "tertiary-fixed-dim": "#ffb694",
+                      "on-primary-container": "#005434",
+                      "primary-container": "#3ecf8e",
+                      "tertiary-fixed": "#ffdbcc",
+                      "inverse-primary": "#006c45",
+                      "on-secondary-fixed-variant": "#47464a",
+                      "inverse-on-surface": "#313031",
+                      "on-background": "#e5e2e3",
+                      "surface-container-highest": "#353436",
+                      "secondary": "#c8c6c9",
+                      "primary-fixed-dim": "#51df9c",
+                      "outline": "#869489",
+                      "on-tertiary-container": "#78350f",
+                      "surface-variant": "#353436"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "margin-mobile": "20px",
+                      "gutter": "16px",
+                      "stack-lg": "48px",
+                      "unit": "4px",
+                      "stack-sm": "8px",
+                      "stack-md": "24px",
+                      "margin-desktop": "40px"
+              },
+              "fontFamily": {
+                      "label-caps": ["Inter"],
+                      "display-huge": ["Space Grotesk"],
+                      "headline-lg-mobile": ["Space Grotesk"],
+                      "headline-lg": ["Space Grotesk"],
+                      "body-md": ["Inter"],
+                      "data-mono": ["Space Grotesk"]
+              },
+              "fontSize": {
+                      "label-caps": ["11px", {"lineHeight": "12px", "letterSpacing": "0.1em", "fontWeight": "700"}],
+                      "display-huge": ["72px", {"lineHeight": "64px", "letterSpacing": "-0.04em", "fontWeight": "700"}],
+                      "headline-lg-mobile": ["24px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "headline-lg": ["32px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "data-mono": ["18px", {"lineHeight": "20px", "fontWeight": "500"}]
+              }
+            },
+          },
+        }
+      </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface min-h-screen pb-32 selection:bg-primary selection:text-on-primary">
+<!-- Top App Bar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-margin-mobile h-14 bg-surface border-b border-outline-variant">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary">menu</span>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile font-bold tracking-tighter text-on-surface uppercase">GYMLOG</h1>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant hover:opacity-80 transition-opacity">search</span>
+<span class="material-symbols-outlined text-primary hover:opacity-80 transition-opacity">account_circle</span>
+</div>
+</header>
+<main class="pt-24 px-margin-mobile max-w-6xl mx-auto">
+<!-- Header Info -->
+<section class="mb-stack-lg">
+<p class="font-label-caps text-label-caps text-primary mb-unit">V2.0 SYSTEM REFERENCE</p>
+<h2 class="font-headline-lg text-headline-lg mb-stack-md uppercase tracking-tighter">Guía de Estilo</h2>
+<div class="h-1 w-24 bg-primary"></div>
+</section>
+<!-- 1. Color Palette -->
+<section class="mb-stack-lg">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-stack-md border-l-2 border-primary pl-4">01. COLORES / PALETA</h3>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+<!-- Swatch -->
+<div class="space-y-2">
+<div class="h-20 w-full bg-surface border border-outline-variant rounded-sm"></div>
+<p class="font-label-caps text-label-caps">SURFACE / #131314</p>
+</div>
+<div class="space-y-2">
+<div class="h-20 w-full bg-primary rounded-sm"></div>
+<p class="font-label-caps text-label-caps">PRIMARY / #60ECA8</p>
+</div>
+<div class="space-y-2">
+<div class="h-20 w-full bg-surface-container-lowest rounded-sm"></div>
+<p class="font-label-caps text-label-caps">LOWEST / #0E0E0F</p>
+</div>
+<div class="space-y-2">
+<div class="h-20 w-full bg-surface-container rounded-sm"></div>
+<p class="font-label-caps text-label-caps">CONTAINER / #201F20</p>
+</div>
+<div class="space-y-2">
+<div class="h-20 w-full bg-surface-container-high rounded-sm"></div>
+<p class="font-label-caps text-label-caps">HIGH / #2A2A2B</p>
+</div>
+<div class="space-y-2">
+<div class="h-20 w-full bg-primary-container rounded-sm"></div>
+<p class="font-label-caps text-label-caps">PR-CONTAINER / #3ECF8E</p>
+</div>
+<div class="space-y-2">
+<div class="h-20 w-full bg-on-surface rounded-sm"></div>
+<p class="font-label-caps text-label-caps">ON-SURFACE / #E5E2E3</p>
+</div>
+<div class="space-y-2">
+<div class="h-20 w-full bg-error rounded-sm"></div>
+<p class="font-label-caps text-label-caps">ERROR / #FFB4AB</p>
+</div>
+</div>
+</section>
+<!-- 2. Typography -->
+<section class="mb-stack-lg">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-stack-md border-l-2 border-primary pl-4">02. TIPOGRAFÍA / ESCALA</h3>
+<div class="space-y-8">
+<div>
+<span class="font-label-caps text-label-caps text-outline mb-2 block">DISPLAY HUGE / Space Grotesk 72px</span>
+<h1 class="font-display-huge text-display-huge">88.5KG</h1>
+</div>
+<div class="dotted-separator pb-4">
+<span class="font-label-caps text-label-caps text-outline mb-2 block">HEADLINE LG / Space Grotesk 32px</span>
+<h2 class="font-headline-lg text-headline-lg uppercase">Resumen de Entrenamiento</h2>
+</div>
+<div class="dotted-separator pb-4">
+<span class="font-label-caps text-label-caps text-outline mb-2 block">BODY MD / Inter 16px</span>
+<p class="font-body-md text-body-md text-on-surface-variant">El rendimiento atlético se mide a través de la consistencia y la precisión de los datos registrados diariamente.</p>
+</div>
+<div>
+<span class="font-label-caps text-label-caps text-outline mb-2 block">DATA MONO / Space Grotesk 18px</span>
+<p class="font-data-mono text-data-mono">12 REPS x 4 SETS — 120KG</p>
+</div>
+</div>
+</section>
+<!-- 3. Spacing & Radius -->
+<section class="mb-stack-lg">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-stack-md border-l-2 border-primary pl-4">03. RITMO & RADIOS</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-stack-lg">
+<div class="space-y-4">
+<p class="font-label-caps text-label-caps mb-2">SISTEMA DE ESPACIADO (BASE 4PX)</p>
+<div class="flex items-end gap-2">
+<div class="w-4 h-4 bg-primary-container" title="unit (4px)"></div>
+<div class="w-8 h-8 bg-primary-container" title="stack-sm (8px)"></div>
+<div class="w-16 h-16 bg-primary-container" title="gutter (16px)"></div>
+<div class="w-24 h-24 bg-primary-container" title="stack-md (24px)"></div>
+</div>
+</div>
+<div class="space-y-4">
+<p class="font-label-caps text-label-caps mb-2">RADIOS DE BORDE</p>
+<div class="flex gap-4">
+<div class="w-16 h-16 border-2 border-primary rounded-sm flex items-center justify-center font-label-caps text-[10px]">SM (4px)</div>
+<div class="w-16 h-16 border-2 border-primary rounded-lg flex items-center justify-center font-label-caps text-[10px]">LG (8px)</div>
+<div class="w-16 h-16 border-2 border-primary rounded-xl flex items-center justify-center font-label-caps text-[10px]">XL (12px)</div>
+<div class="w-16 h-16 border-2 border-primary rounded-full flex items-center justify-center font-label-caps text-[10px]">FULL</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 4. Components -->
+<section class="mb-stack-lg">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-stack-md border-l-2 border-primary pl-4">04. COMPONENTES NÚCLEO</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-stack-md">
+<!-- Buttons & Actions -->
+<div class="p-6 bg-surface-container border border-outline-variant space-y-6">
+<p class="font-label-caps text-label-caps text-primary border-b border-outline-variant pb-2 mb-4">ACCIONES</p>
+<div class="flex flex-wrap gap-4">
+<button class="px-6 py-3 bg-primary text-on-primary font-label-caps text-label-caps rounded-sm hover:opacity-90 active:scale-95 transition-all">INICIAR SESIÓN</button>
+<button class="px-6 py-3 border-[1.5px] border-primary text-primary font-label-caps text-label-caps rounded-sm hover:bg-primary/10 transition-all">GHOST BUTTON</button>
+</div>
+<div class="space-y-2">
+<label class="font-label-caps text-label-caps text-outline block">CAMPO DE ENTRADA</label>
+<input class="w-full bg-transparent border-b border-outline-variant focus:border-primary focus:border-b-2 outline-none py-2 text-on-surface font-body-md transition-all" placeholder="Ej. Press de Banca" type="text"/>
+</div>
+<div class="flex items-center justify-between py-2 dotted-separator">
+<span class="font-body-md">Notificaciones Push</span>
+<div class="w-10 h-5 bg-primary-container rounded-full relative cursor-pointer">
+<div class="absolute right-1 top-1 w-3 h-3 bg-on-primary rounded-full"></div>
+</div>
+</div>
+</div>
+<!-- Cards & Stats -->
+<div class="p-6 bg-surface-container border border-outline-variant space-y-6">
+<p class="font-label-caps text-label-caps text-primary border-b border-outline-variant pb-2 mb-4">MÉTRICAS</p>
+<div class="flex justify-between items-end">
+<div>
+<span class="font-label-caps text-label-caps text-on-surface-variant">VOLUMEN TOTAL</span>
+<h4 class="font-display-huge text-4xl text-on-surface">14,250<span class="text-lg ml-1 text-outline">KG</span></h4>
+</div>
+<div class="w-12 h-12 flex items-center justify-center">
+<svg class="w-full h-full transform -rotate-90">
+<circle class="text-surface-container-highest" cx="24" cy="24" fill="transparent" r="20" stroke="currentColor" stroke-width="4"></circle>
+<circle class="text-primary" cx="24" cy="24" fill="transparent" r="20" stroke="currentColor" stroke-dasharray="125.6" stroke-dashoffset="30" stroke-width="4"></circle>
+</svg>
+</div>
+</div>
+<div class="flex gap-2">
+<span class="px-3 py-1 bg-surface-container-highest text-on-surface font-label-caps text-[10px] rounded-sm border border-outline-variant">HIPERTROFIA</span>
+<span class="px-3 py-1 bg-primary text-on-primary font-label-caps text-[10px] rounded-sm">PIERNA</span>
+<span class="px-3 py-1 bg-surface-container-highest text-on-surface font-label-caps text-[10px] rounded-sm border border-outline-variant">FUERZA</span>
+</div>
+</div>
+</div>
+</section>
+<!-- 5. Specialized UI -->
+<section class="mb-stack-lg">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-stack-md border-l-2 border-primary pl-4">05. ELEMENTOS ESPECIALIZADOS</h3>
+<div class="space-y-4">
+<!-- Log Entry Example -->
+<div class="p-4 border-t border-dotted border-outline-variant flex justify-between items-center group hover:bg-surface-container-low transition-colors">
+<div class="flex items-center gap-4">
+<span class="font-data-mono text-outline">01</span>
+<div>
+<p class="font-body-md font-bold">Sentadilla con Barra</p>
+<p class="font-label-caps text-[10px] text-on-surface-variant">RPE 8 • 3 MIN DESCANSO</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-data-mono text-primary">100 KG</p>
+<p class="font-label-caps text-[10px] text-outline">10 REPS</p>
+</div>
+</div>
+<div class="p-4 border-t border-dotted border-outline-variant flex justify-between items-center group hover:bg-surface-container-low transition-colors">
+<div class="flex items-center gap-4">
+<span class="font-data-mono text-outline">02</span>
+<div>
+<p class="font-body-md font-bold">Prensa de Piernas</p>
+<p class="font-label-caps text-[10px] text-on-surface-variant">RPE 9 • 2 MIN DESCANSO</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-data-mono text-primary">240 KG</p>
+<p class="font-label-caps text-[10px] text-outline">12 REPS</p>
+</div>
+</div>
+</div>
+</section>
+<!-- 6. Icons -->
+<section class="mb-stack-lg">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-stack-md border-l-2 border-primary pl-4">06. ICONOGRAFÍA / MATERIAL</h3>
+<div class="flex flex-wrap gap-8 p-6 bg-surface-container-lowest border border-outline-variant rounded-sm">
+<div class="flex flex-col items-center gap-2">
+<span class="material-symbols-outlined text-2xl">home</span>
+<span class="font-label-caps text-[9px] text-outline">HOME</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<span class="material-symbols-outlined text-2xl text-primary">fitness_center</span>
+<span class="font-label-caps text-[9px] text-outline">FITNESS</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<span class="material-symbols-outlined text-2xl">directions_run</span>
+<span class="font-label-caps text-[9px] text-outline">RUN</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<span class="material-symbols-outlined text-2xl">monitoring</span>
+<span class="font-label-caps text-[9px] text-outline">STATS</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<span class="material-symbols-outlined text-2xl">settings</span>
+<span class="font-label-caps text-[9px] text-outline">SETTINGS</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<span class="material-symbols-outlined text-2xl">history</span>
+<span class="font-label-caps text-[9px] text-outline">HISTORY</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<span class="material-symbols-outlined text-2xl">emoji_events</span>
+<span class="font-label-caps text-[9px] text-outline">AWARDS</span>
+</div>
+</div>
+</section>
+<!-- Image Placeholder Demonstration -->
+<section class="mb-stack-lg">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-stack-md border-l-2 border-primary pl-4">07. TRATAMIENTO DE IMAGEN</h3>
+<div class="relative h-64 w-full overflow-hidden rounded-sm group">
+<div class="absolute inset-0 bg-black/40 z-10 flex flex-col justify-end p-6 group-hover:bg-black/20 transition-all">
+<p class="font-label-caps text-primary mb-1">CONSEJO DE HOY</p>
+<h4 class="font-headline-lg-mobile text-on-surface uppercase font-bold">Optimiza tu Recuperación</h4>
+</div>
+<img class="w-full h-full object-cover" data-alt="A high-contrast cinematic photograph of a professional gym setting during early morning hours. The lighting is moody and focused, with deep shadows and sharp highlights on metallic weight plates and industrial training equipment. The color palette is dominated by dark charcoal and slate gray, with subtle electric lime green neon lights reflecting off polished surfaces. The overall aesthetic is minimalist, disciplined, and technologically advanced, evoking a sense of peak performance and athletic focus." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDH58hKo0hiD1eOnl2tlo49hAzQdVdA-NwcUoyrDl8plXc2V1zy7vKnlvOp3LZbJIRObpxouiBZx5sUHMZu1UiMt4FErS06MntSy8gg-ot0B_jXijEloufFTBFiTn-QkJtLBlvEmUbDIHSDDKPiDJpuF1FPUjkknIxvZBMSfBjsXRYAypRHqeF--f_vzuxseyRCjQnJTWJM4dsTQ9OMFMCoyKQCn4BwxRpiKzP35AfBw65FQ2Oo4RUuiqc7wS_tmJKocOeHMuoBBzYX"/>
+</div>
+</section>
+</main>
+<!-- FAB -->
+<button class="fixed bottom-20 right-6 w-14 h-14 bg-primary text-on-primary rounded-sm shadow-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-transform z-50">
+<span class="material-symbols-outlined text-3xl">add</span>
+</button>
+<!-- Bottom Navigation Shell -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-2 pb-safe bg-surface border-t border-outline-variant h-16">
+<div class="flex flex-col items-center justify-center text-primary border-t-2 border-primary pt-1 translate-y-[-2px] transition-transform cursor-pointer">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-caps text-label-caps mt-1">HOME</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant pt-1 hover:text-primary transition-colors cursor-pointer">
+<span class="material-symbols-outlined">fitness_center</span>
+<span class="font-label-caps text-label-caps mt-1">RUTINAS</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant pt-1 hover:text-primary transition-colors cursor-pointer">
+<span class="material-symbols-outlined">monitoring</span>
+<span class="font-label-caps text-label-caps mt-1">STATS</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant pt-1 hover:text-primary transition-colors cursor-pointer">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-caps text-label-caps mt-1">AJUSTES</span>
+</div>
+</nav>
+<script>
+        // Micro-interaction for buttons
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('mousedown', () => btn.classList.add('scale-95'));
+            btn.addEventListener('mouseup', () => btn.classList.remove('scale-95'));
+            btn.addEventListener('mouseleave', () => btn.classList.remove('scale-95'));
+        });
+
+        // Hover effect for dotted list items
+        document.querySelectorAll('.dotted-separator').forEach(item => {
+            item.addEventListener('mouseenter', () => {
+                item.style.backgroundImage = 'linear-gradient(to right, #60eca8 33%, rgba(255,255,255,0) 0%)';
+            });
+            item.addEventListener('mouseleave', () => {
+                item.style.backgroundImage = 'linear-gradient(to right, #3d4a41 33%, rgba(255,255,255,0) 0%)';
+            });
+        });
+    </script>
+</body></html>

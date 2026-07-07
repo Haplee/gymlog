@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, type ReactNode } from 'react';
+import { useEffect, useState, useCallback, useRef, type ChangeEvent, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@features/auth/stores/authStore';
@@ -19,7 +19,21 @@ import { getReminderDays } from '@features/routine/hooks/useWorkoutReminder';
 import { toast } from 'sonner';
 import BiometricPlugin from '@shared/lib/biometric';
 import { devError } from '@shared/lib/devtools';
-import { ChevronRight, Download, LogOut, Ruler, Watch } from 'lucide-react';
+import {
+  Camera,
+  Check,
+  ChevronRight,
+  Download,
+  Loader2,
+  LogOut,
+  Pencil,
+  Ruler,
+  Watch,
+  X,
+} from 'lucide-react';
+
+const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
+const MAX_NAME_LENGTH = 40;
 
 const playSound = (freq: number, duration: number, delay: number, ctx: AudioContext) => {
   const osc = ctx.createOscillator();
@@ -91,6 +105,12 @@ export function SettingsPage() {
   const [biometricSupport, setBiometricSupport] = useState<{ available: boolean; message: string }>(
     { available: false, message: '' },
   );
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [fullName, setFullName] = useState('');
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState('');
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!user) {
@@ -101,12 +121,14 @@ export function SettingsPage() {
     const fetchConfig = async () => {
       const { data } = await supabase
         .from('profiles')
-        .select('notifications_enabled')
+        .select('notifications_enabled, avatar_url, full_name')
         .eq('id', user.id)
         .single();
       if (data) {
         // setNotificationsEnabled espeja el flag en localStorage internamente
         setNotificationsEnabled(!!data.notifications_enabled);
+        setAvatarUrl(data.avatar_url);
+        setFullName(data.full_name ?? '');
       }
     };
 
@@ -218,7 +240,74 @@ export function SettingsPage() {
     }
   };
 
+  const handleAvatarChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || !user) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error(t('settings.photo_error'));
+      return;
+    }
+    if (file.size > MAX_AVATAR_BYTES) {
+      toast.error(t('settings.photo_too_large'));
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    try {
+      const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+      const path = `${user.id}/avatar-${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (uploadError) throw uploadError;
+
+      const { data: publicData } = supabase.storage.from('avatars').getPublicUrl(path);
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: publicData.publicUrl })
+        .eq('id', user.id);
+      if (updateError) throw updateError;
+
+      // Limpieza best-effort del avatar anterior (solo si vivía en nuestro bucket)
+      const previousPath = avatarUrl?.split('/avatars/')[1];
+      if (previousPath && previousPath !== path) {
+        void supabase.storage.from('avatars').remove([decodeURIComponent(previousPath)]);
+      }
+
+      setAvatarUrl(publicData.publicUrl);
+      toast.success(t('settings.photo_updated'));
+    } catch (err) {
+      devError('[Avatar] Error subiendo imagen:', err);
+      toast.error(t('settings.photo_error'));
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
+  const handleNameSave = async () => {
+    if (!user) return;
+    const trimmed = nameDraft.trim().slice(0, MAX_NAME_LENGTH);
+    if (!trimmed || trimmed === fullName) {
+      setIsEditingName(false);
+      return;
+    }
+    const { error } = await supabase
+      .from('profiles')
+      .update({ full_name: trimmed })
+      .eq('id', user.id);
+    if (error) {
+      devError('[Perfil] Error guardando nombre:', error);
+      toast.error(t('settings.name_error'));
+      return;
+    }
+    setFullName(trimmed);
+    setIsEditingName(false);
+    toast.success(t('settings.name_updated'));
+  };
+
   const emailName = user?.email?.split('@')[0] ?? '';
+  const displayName = fullName || emailName;
   const isGoogle = user?.app_metadata?.provider === 'google';
 
   return (
@@ -229,11 +318,86 @@ export function SettingsPage() {
         {/* Perfil */}
         <div className="rounded-lg p-4 bg-surface border border-line">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-sm flex items-center justify-center bg-accent/10 border border-line-accent text-accent font-display font-bold text-lg uppercase">
-              {emailName.slice(0, 1) || '?'}
-            </div>
-            <div className="min-w-0">
-              <div className="text-data font-display font-bold text-fg truncate">{emailName}</div>
+            <button
+              onClick={() => avatarInputRef.current?.click()}
+              disabled={isUploadingAvatar}
+              aria-label={t('settings.change_photo')}
+              className="relative w-14 h-14 flex-shrink-0 rounded-sm active:scale-95 transition-transform disabled:opacity-60"
+            >
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt=""
+                  className="w-14 h-14 rounded-sm object-cover border border-line-accent"
+                />
+              ) : (
+                <span className="w-14 h-14 rounded-sm flex items-center justify-center bg-accent/10 border border-line-accent text-accent font-display font-bold text-lg uppercase">
+                  {displayName.slice(0, 1) || '?'}
+                </span>
+              )}
+              <span className="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-sm flex items-center justify-center bg-accent text-accent-fg border border-base">
+                {isUploadingAvatar ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Camera className="w-3.5 h-3.5" />
+                )}
+              </span>
+            </button>
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleAvatarChange}
+            />
+            <div className="min-w-0 flex-1">
+              {isEditingName ? (
+                <div className="flex items-center gap-1">
+                  <input
+                    value={nameDraft}
+                    onChange={(e) => setNameDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') void handleNameSave();
+                      if (e.key === 'Escape') setIsEditingName(false);
+                    }}
+                    maxLength={MAX_NAME_LENGTH}
+                    placeholder={t('settings.name_placeholder')}
+                    autoFocus
+                    aria-label={t('settings.edit_name')}
+                    className="min-w-0 flex-1 bg-transparent border-0 border-b border-line-strong focus:border-accent outline-none text-data font-display font-bold text-fg py-0.5"
+                  />
+                  <button
+                    onClick={() => void handleNameSave()}
+                    aria-label={t('common.save')}
+                    className="w-11 h-11 -my-2 flex-shrink-0 flex items-center justify-center text-accent"
+                  >
+                    <Check className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setIsEditingName(false)}
+                    aria-label={t('common.cancel')}
+                    className="w-11 h-11 -my-2 -ml-2 flex-shrink-0 flex items-center justify-center text-fg-subtle"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center min-w-0">
+                  <div className="text-data font-display font-bold text-fg truncate">
+                    {displayName}
+                  </div>
+                  <button
+                    onClick={() => {
+                      setNameDraft(fullName || emailName);
+                      setIsEditingName(true);
+                    }}
+                    aria-label={t('settings.edit_name')}
+                    className="w-11 h-11 -my-2 flex-shrink-0 flex items-center justify-center text-fg-subtle active:text-accent"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
               <div className="text-xs text-fg-subtle truncate">{user?.email}</div>
             </div>
           </div>
@@ -256,7 +420,7 @@ export function SettingsPage() {
 
         {!isNative() && (
           <a
-            href="https://github.com/Haplee/gymlog/releases/download/v4.0.0/GymLog-v4.0.0.apk"
+            href="https://github.com/Haplee/gymlog/releases/download/v0.5.0/GymLog-v0.5.0.apk"
             download
             className="flex items-center justify-center gap-2 rounded-sm p-3.5 border text-center bg-surface border-line-accent text-accent transition-transform active:scale-[0.99]"
           >
