@@ -15,6 +15,7 @@ import {
   scheduleWeeklySummaryReminder,
 } from '@shared/lib/notifications';
 import { registerPushNotifications, unregisterPushToken } from '@shared/lib/push';
+import { useUpdateProfileCache } from '@features/auth/hooks/useProfile';
 import { getReminderDays } from '@features/routine/hooks/useWorkoutReminder';
 import { toast } from 'sonner';
 import BiometricPlugin from '@shared/lib/biometric';
@@ -110,6 +111,7 @@ export function SettingsPage() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const updateProfileCache = useUpdateProfileCache();
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -276,6 +278,7 @@ export function SettingsPage() {
       }
 
       setAvatarUrl(publicData.publicUrl);
+      updateProfileCache(user.id, { avatarUrl: publicData.publicUrl });
       toast.success(t('settings.photo_updated'));
     } catch (err) {
       devError('[Avatar] Error subiendo imagen:', err);
@@ -302,6 +305,7 @@ export function SettingsPage() {
       return;
     }
     setFullName(trimmed);
+    updateProfileCache(user.id, { fullName: trimmed });
     setIsEditingName(false);
     toast.success(t('settings.name_updated'));
   };
@@ -319,6 +323,7 @@ export function SettingsPage() {
         <div className="rounded-lg p-4 bg-surface border border-line">
           <div className="flex items-center gap-3">
             <button
+              type="button"
               onClick={() => avatarInputRef.current?.click()}
               disabled={isUploadingAvatar}
               aria-label={t('settings.change_photo')}
@@ -367,6 +372,7 @@ export function SettingsPage() {
                     className="min-w-0 flex-1 bg-transparent border-0 border-b border-line-strong focus:border-accent outline-none text-data font-display font-bold text-fg py-0.5"
                   />
                   <button
+                    type="button"
                     onClick={() => void handleNameSave()}
                     aria-label={t('common.save')}
                     className="w-11 h-11 -my-2 flex-shrink-0 flex items-center justify-center text-accent"
@@ -374,6 +380,7 @@ export function SettingsPage() {
                     <Check className="w-4 h-4" />
                   </button>
                   <button
+                    type="button"
                     onClick={() => setIsEditingName(false)}
                     aria-label={t('common.cancel')}
                     className="w-11 h-11 -my-2 -ml-2 flex-shrink-0 flex items-center justify-center text-fg-subtle"
@@ -387,6 +394,7 @@ export function SettingsPage() {
                     {displayName}
                   </div>
                   <button
+                    type="button"
                     onClick={() => {
                       setNameDraft(fullName || emailName);
                       setIsEditingName(true);
@@ -407,6 +415,7 @@ export function SettingsPage() {
             </span>
           )}
           <button
+            type="button"
             onClick={() => navigate('/user-stats')}
             className="w-full mt-3 flex items-center justify-between gap-3 min-h-11 px-3 rounded-sm bg-surface-2 border border-line text-left active:scale-[0.99] transition-transform"
           >
@@ -541,6 +550,7 @@ export function SettingsPage() {
                 <div className="flex gap-1.5">
                   {[60, 90, 120, 180].map((seconds) => (
                     <button
+                      type="button"
                       key={seconds}
                       onClick={() => setRestDuration(seconds)}
                       aria-pressed={restDuration === seconds}
@@ -612,6 +622,7 @@ export function SettingsPage() {
           <SectionHeader title={t('settings.data')} />
           <div className="rounded-lg bg-surface border border-line overflow-hidden">
             <button
+              type="button"
               onClick={() => navigate('/wearables')}
               className="w-full flex items-center justify-between gap-3 px-4 py-3.5 text-left active:bg-hover"
             >
@@ -634,6 +645,7 @@ export function SettingsPage() {
           <SectionHeader title={t('settings.account')} />
           <div className="rounded-lg bg-surface border border-line overflow-hidden">
             <button
+              type="button"
               onClick={() => signOut()}
               className="w-full flex items-center gap-2.5 px-4 py-3.5 text-left text-error active:bg-hover"
             >

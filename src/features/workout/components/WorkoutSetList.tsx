@@ -72,6 +72,7 @@ export function WorkoutSetList({
             <div className="flex items-center gap-1.5">
               {showWarmupSets && (
                 <button
+                  type="button"
                   onClick={() => {
                     void impact(ImpactStyle.Light);
                     updateSet(i, { isWarmup: !s.isWarmup });
@@ -197,6 +198,7 @@ export function WorkoutSetList({
                 </span>
               )}
               <button
+                type="button"
                 onClick={() => setExpandedNoteIdx(expandedNoteIdx === i ? null : i)}
                 className={`w-9 h-12 flex-shrink-0 flex items-center justify-center bg-transparent border rounded-lg cursor-pointer ${
                   s.notes || s.rpe || (s.setType && s.setType !== 'normal')
@@ -208,6 +210,7 @@ export function WorkoutSetList({
                 <StickyNote className="w-4 h-4" />
               </button>
               <button
+                type="button"
                 onClick={() => removeSet(i)}
                 className="w-9 h-12 flex-shrink-0 flex items-center justify-center bg-transparent border rounded-lg cursor-pointer border-line text-fg-subtle"
               >
@@ -232,6 +235,7 @@ export function WorkoutSetList({
                       const active = s.rpe === value;
                       return (
                         <button
+                          type="button"
                           key={value}
                           onClick={() => {
                             void impact(ImpactStyle.Light);
@@ -259,6 +263,7 @@ export function WorkoutSetList({
                       const active = (s.setType ?? 'normal') === value;
                       return (
                         <button
+                          type="button"
                           key={value}
                           onClick={() => {
                             void impact(ImpactStyle.Light);

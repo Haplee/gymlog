@@ -232,6 +232,7 @@ export function ExerciseSelector({ userId, onSelect, activeExerciseId }: Exercis
         />
         {query && (
           <button
+            type="button"
             onClick={() => setQuery('')}
             className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded-full"
             aria-label="Limpiar búsqueda"
@@ -325,6 +326,7 @@ export function ExerciseSelector({ userId, onSelect, activeExerciseId }: Exercis
                       >
                         <div className="flex items-center">
                           <button
+                            type="button"
                             onClick={() => handleSelect(ex)}
                             className="flex-1 px-3 py-3 text-left flex items-center justify-between transition-colors text-fg hover:bg-hover active:bg-hover"
                             role="option"
@@ -346,6 +348,7 @@ export function ExerciseSelector({ userId, onSelect, activeExerciseId }: Exercis
                           {/* Editar grupo muscular (solo ejercicios propios) */}
                           {ex.user_id === userId && (
                             <button
+                              type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (editingMuscleId === ex.id) {
@@ -372,6 +375,7 @@ export function ExerciseSelector({ userId, onSelect, activeExerciseId }: Exercis
                           )}
                           {ex.user_id === userId && (
                             <button
+                              type="button"
                               onClick={(e) => handleDeleteExercise(e, ex.id)}
                               disabled={deleteMutation.isPending}
                               className="px-2 py-2 transition-colors text-fg-subtle"
@@ -394,6 +398,7 @@ export function ExerciseSelector({ userId, onSelect, activeExerciseId }: Exercis
                                 const active = editingMuscleValue === mg;
                                 return (
                                   <button
+                                    type="button"
                                     key={mg}
                                     onClick={() => setEditingMuscleValue(mg)}
                                     className="flex items-center gap-1 px-2.5 py-1 text-xs rounded-sm transition-colors border"
@@ -415,6 +420,7 @@ export function ExerciseSelector({ userId, onSelect, activeExerciseId }: Exercis
                               })}
                             </div>
                             <button
+                              type="button"
                               onClick={() =>
                                 updateMuscleMutation.mutate({
                                   id: ex.id,
@@ -448,6 +454,7 @@ export function ExerciseSelector({ userId, onSelect, activeExerciseId }: Exercis
 
             {!isLoading && !isCreating && (
               <button
+                type="button"
                 onClick={() => {
                   setIsCreating(true);
                   setQuery('');

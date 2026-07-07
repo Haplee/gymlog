@@ -101,6 +101,7 @@ export function RestTimer() {
           Descanso
         </div>
         <button
+          type="button"
           onClick={() => {
             setRestAutoStart(!restAutoStart);
             void impact(ImpactStyle.Light);
@@ -204,6 +205,7 @@ export function RestTimer() {
             {/* Controls */}
             <div className="flex items-center gap-2 w-full justify-center">
               <button
+                type="button"
                 onClick={() => {
                   void impact(ImpactStyle.Light);
                   extend(30);
@@ -213,6 +215,7 @@ export function RestTimer() {
                 +30s
               </button>
               <button
+                type="button"
                 onClick={() => handleStart(duration)}
                 className="px-4 py-2 rounded-sm text-xs font-semibold tracking-wide bg-surface-2 border border-line-strong text-fg-muted"
               >
@@ -241,6 +244,7 @@ export function RestTimer() {
                 const active = s === selectedDuration && !customSecs;
                 return (
                   <button
+                    type="button"
                     key={s}
                     onClick={() => handleStart(s)}
                     className={`py-2.5 rounded-sm text-sm font-bold transition-all active:scale-95 ${
@@ -257,12 +261,14 @@ export function RestTimer() {
 
             <div className="flex items-center gap-2">
               <button
+                type="button"
                 onClick={() => adjustCustom(-15)}
                 className="w-9 h-9 rounded-sm flex items-center justify-center flex-shrink-0 bg-surface-2 border border-line text-fg-muted"
               >
                 <Minus className="w-3.5 h-3.5" />
               </button>
               <button
+                type="button"
                 onClick={() => handleStart(selectedDuration)}
                 className={`flex-1 h-9 rounded-sm text-sm font-bold transition-all active:scale-95 ${
                   customSecs
@@ -273,6 +279,7 @@ export function RestTimer() {
                 {`${selectedDuration}s`}
               </button>
               <button
+                type="button"
                 onClick={() => adjustCustom(15)}
                 className="w-9 h-9 rounded-sm flex items-center justify-center flex-shrink-0 bg-surface-2 border border-line text-fg-muted"
               >

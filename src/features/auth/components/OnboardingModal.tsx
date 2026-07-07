@@ -45,6 +45,7 @@ export function OnboardingModal({ user, onComplete }: OnboardingModalProps) {
             <div className="grid grid-cols-2 gap-2">
               {goals.map((g) => (
                 <button
+                  type="button"
                   key={g}
                   onClick={() => setData({ ...data, goal: g })}
                   className={`p-3 rounded-md border text-sm transition-all ${
@@ -70,6 +71,7 @@ export function OnboardingModal({ user, onComplete }: OnboardingModalProps) {
             <div className="flex justify-between gap-2">
               {[1, 2, 3, 4, 5, 6, 7].map((d) => (
                 <button
+                  type="button"
                   key={d}
                   onClick={() => setData({ ...data, days_per_week: d })}
                   className={`flex-1 aspect-square rounded-full border flex items-center justify-center transition-all text-sm font-medium ${

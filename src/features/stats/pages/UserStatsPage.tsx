@@ -624,6 +624,7 @@ export function UserStatsPage() {
         className="flex items-center gap-3 mb-5"
       >
         <button
+          type="button"
           onClick={() => navigate(-1)}
           className="w-11 h-11 rounded-md flex items-center justify-center transition-colors bg-surface border border-line hover:bg-surface-2"
         >

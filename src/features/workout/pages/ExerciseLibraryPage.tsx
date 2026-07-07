@@ -94,6 +94,7 @@ export function ExerciseLibraryPage() {
         className="flex items-center gap-3 mb-4"
       >
         <button
+          type="button"
           onClick={() => navigate(-1)}
           aria-label={t('common.back')}
           className="w-11 h-11 rounded-sm flex items-center justify-center bg-surface border border-line hover:bg-surface-2"
@@ -144,6 +145,7 @@ export function ExerciseLibraryPage() {
                 }`}
               >
                 <button
+                  type="button"
                   onClick={() => setExpandedId(expanded ? null : ex.id)}
                   aria-expanded={expanded}
                   className="w-full px-3 py-3.5 flex items-center justify-between gap-3 text-left active:bg-hover"

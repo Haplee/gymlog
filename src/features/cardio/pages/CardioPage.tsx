@@ -133,6 +133,7 @@ function ActiveSessionCard({ userId }: { userId: string | null }) {
 
           <div className="flex gap-2">
             <button
+              type="button"
               onClick={() => {
                 if (isPaused) resumeSession();
                 else pauseSession();
@@ -144,6 +145,7 @@ function ActiveSessionCard({ userId }: { userId: string | null }) {
               {isPaused ? t('cardio.resume') : t('cardio.pause')}
             </button>
             <button
+              type="button"
               onClick={handleStop}
               className="flex-1 min-h-12 rounded-sm flex items-center justify-center gap-2 text-sm font-display font-bold uppercase tracking-[0.1em] bg-transparent border border-line-strong text-fg transition-transform active:scale-[0.98]"
             >
@@ -197,12 +199,14 @@ function ActiveSessionCard({ userId }: { userId: string | null }) {
 
           <div className="flex gap-2">
             <button
+              type="button"
               onClick={handleDiscard}
               className="flex-1 min-h-11 rounded-sm text-sm border border-line text-fg-subtle"
             >
               {t('cardio.discard')}
             </button>
             <button
+              type="button"
               onClick={handleSave}
               className="flex-1 min-h-11 rounded-sm text-sm font-display font-bold uppercase tracking-[0.08em] bg-accent text-accent-fg transition-transform active:scale-[0.98]"
             >
@@ -327,6 +331,7 @@ function SessionHistoryItem({
             className="flex gap-1"
           >
             <button
+              type="button"
               onClick={() => {
                 onDelete();
                 setConfirmDelete(false);
@@ -337,6 +342,7 @@ function SessionHistoryItem({
               ✓
             </button>
             <button
+              type="button"
               onClick={() => setConfirmDelete(false)}
               aria-label={t('common.cancel')}
               className="w-8 h-8 rounded-sm flex items-center justify-center border border-line text-fg-muted"
@@ -395,6 +401,7 @@ export function CardioPage() {
           <div className="flex gap-2 overflow-x-auto pb-1">
             {CARDIO_TYPES.map((type) => (
               <button
+                type="button"
                 key={type}
                 onClick={() => handleStart(type)}
                 aria-label={CARDIO_LABELS[type]}

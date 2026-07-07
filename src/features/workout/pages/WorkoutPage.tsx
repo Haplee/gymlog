@@ -74,12 +74,14 @@ function ResumeWorkoutBanner({
       <p className="text-xs text-fg-muted">{t('workout.resume_desc')}</p>
       <div className="flex gap-2">
         <button
+          type="button"
           onClick={onContinue}
           className="flex-1 py-2 rounded-lg bg-accent text-accent-fg text-xs font-bold"
         >
           {t('workout.continue')}
         </button>
         <button
+          type="button"
           onClick={onDiscard}
           className="flex-1 py-2 rounded-lg border border-line-strong text-fg-muted text-xs font-medium"
         >
@@ -536,6 +538,7 @@ export function WorkoutPage() {
         )}
 
         <button
+          type="button"
           onClick={() => navigate('/exercises')}
           className="mt-2 w-full py-2 px-2 rounded-lg text-xs flex items-center justify-center gap-1.5 bg-surface-2 border border-line text-fg-muted transition-colors active:bg-hover"
         >
@@ -555,6 +558,7 @@ export function WorkoutPage() {
         {selectedExercise && (
           <div className="flex gap-2 mt-3">
             <button
+              type="button"
               onClick={() => setShowNotes(!showNotes)}
               className="flex-1 py-2 px-2 rounded-lg text-xs flex items-center justify-center gap-1 bg-surface-2 border border-line text-fg-muted transition-colors active:bg-hover"
             >
@@ -563,6 +567,7 @@ export function WorkoutPage() {
             </button>
             {selectedExercise.user_id && (
               <button
+                type="button"
                 onClick={() => handleDeleteExercise(selectedExercise.id)}
                 className="py-2 px-2 rounded-lg text-xs flex items-center gap-1 bg-surface-2 border border-line text-error transition-colors active:bg-hover"
               >
@@ -584,6 +589,7 @@ export function WorkoutPage() {
                   >
                     <div className="text-xs text-fg">{note.note}</div>
                     <button
+                      type="button"
                       onClick={() => handleDeleteNote(note.id)}
                       className="text-xs ml-2 text-error"
                     >
@@ -602,6 +608,7 @@ export function WorkoutPage() {
                 className="flex-1 rounded-lg text-xs p-2 outline-none bg-surface-2 border border-line text-fg"
               />
               <button
+                type="button"
                 onClick={handleSaveNote}
                 disabled={!noteText.trim()}
                 className="p-2 rounded-lg bg-accent text-accent-fg"
@@ -658,6 +665,7 @@ export function WorkoutPage() {
             )}
           </div>
           <button
+            type="button"
             onClick={() => setShowPlates(true)}
             aria-label={t('workout.plates_calc')}
             className="flex-shrink-0 min-h-11 px-2.5 flex items-center gap-1.5 rounded-lg text-xs bg-surface-2 border border-line text-fg-muted"
@@ -688,6 +696,7 @@ export function WorkoutPage() {
             </div>
             <div className="flex flex-col items-stretch gap-2 w-full max-w-[16rem]">
               <button
+                type="button"
                 onClick={addSet}
                 className="w-full py-3 rounded-sm bg-accent text-accent-fg font-semibold shadow-btn-accent active:scale-[0.98]"
               >
@@ -695,6 +704,7 @@ export function WorkoutPage() {
               </button>
               {lastWorkout && lastWorkout.sets.length > 0 && (
                 <button
+                  type="button"
                   onClick={() => repeatWorkout(lastWorkout)}
                   className="w-full py-3 rounded-sm bg-surface-2 border border-line text-fg-muted flex items-center justify-center gap-1.5 transition-colors active:bg-hover"
                 >
@@ -772,6 +782,7 @@ export function WorkoutPage() {
           )}
           <div className="flex gap-2">
             <button
+              type="button"
               onClick={handleAddSet}
               className="flex-1 py-2 px-3 border border-dashed rounded-lg text-sm font-medium cursor-pointer border-line-strong text-fg-muted"
             >
@@ -789,6 +800,7 @@ export function WorkoutPage() {
                     className="flex gap-1"
                   >
                     <button
+                      type="button"
                       onClick={() => {
                         removeAllSets();
                         setConfirmDeleteAll(false);
@@ -798,6 +810,7 @@ export function WorkoutPage() {
                       ✓
                     </button>
                     <button
+                      type="button"
                       onClick={() => setConfirmDeleteAll(false)}
                       className="py-2 px-3 rounded-lg text-sm border border-line-strong text-fg-subtle"
                     >
@@ -821,6 +834,7 @@ export function WorkoutPage() {
             )}
 
             <button
+              type="button"
               onClick={handleSave}
               disabled={saving}
               className={`flex-1 py-3 px-4 rounded-sm text-base font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-none text-accent-fg ${

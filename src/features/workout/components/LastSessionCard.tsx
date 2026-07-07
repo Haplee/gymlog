@@ -54,6 +54,7 @@ export function LastSessionCard({ userId, exerciseId, onCopySets }: LastSessionC
                 </span>
               </div>
               <button
+                type="button"
                 onClick={() =>
                   onCopySets(lastSets.map((s) => ({ reps: s.reps, weight: s.weight })))
                 }
@@ -85,6 +86,7 @@ export function LastSessionCard({ userId, exerciseId, onCopySets }: LastSessionC
                   </span>
                 </div>
                 <button
+                  type="button"
                   onClick={() =>
                     onCopySets(
                       Array.from({ length: lastSets.length || 1 }, () => ({

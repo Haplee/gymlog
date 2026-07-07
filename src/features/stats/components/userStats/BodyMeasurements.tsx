@@ -113,6 +113,7 @@ export function BodyMeasurements({ userId }: { userId: string }) {
             />
           </div>
           <button
+            type="button"
             onClick={handleAdd}
             disabled={addMutation.isPending}
             aria-label={t('measurements.add')}
@@ -182,6 +183,7 @@ export function BodyMeasurements({ userId }: { userId: string }) {
                     <span className="text-sm text-fg-muted">{entry.body_fat_pct}%</span>
                   )}
                   <button
+                    type="button"
                     onClick={() => deleteMutation.mutate(entry.id)}
                     aria-label={t('common.delete')}
                     className="w-8 h-8 flex items-center justify-center rounded-lg text-fg-subtle"

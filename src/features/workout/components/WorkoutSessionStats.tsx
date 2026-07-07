@@ -58,6 +58,7 @@ export function WorkoutSessionStats({
         </div>
         {onCancel && (
           <button
+            type="button"
             onClick={() => {
               if (window.confirm(t('workout.cancel_confirm'))) onCancel();
             }}
