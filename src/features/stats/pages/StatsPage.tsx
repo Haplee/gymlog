@@ -423,6 +423,7 @@ export function StatsPage() {
       <div className="flex items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-3 min-w-0">
           <button
+            type="button"
             onClick={() => navigate(-1)}
             aria-label={t('common.back')}
             className="w-11 h-11 flex-shrink-0 rounded-sm flex items-center justify-center bg-surface border border-line hover:bg-surface-2"
@@ -434,6 +435,7 @@ export function StatsPage() {
           </h1>
         </div>
         <button
+          type="button"
           onClick={() => navigate('/user-stats')}
           aria-label={t('settings.my_measurements')}
           className="w-11 h-11 flex-shrink-0 rounded-sm flex items-center justify-center bg-surface border border-line text-accent hover:bg-surface-2"
@@ -751,6 +753,7 @@ export function StatsPage() {
               <div className="flex gap-1">
                 {periodButtons.map((p) => (
                   <button
+                    type="button"
                     key={p}
                     onClick={() => setPeriodFilter(p)}
                     className="text-[0.5625rem] px-2 py-1 rounded-sm transition-colors font-medium"
@@ -822,6 +825,7 @@ export function StatsPage() {
                   <span className="text-sm font-semibold text-fg">Progresión</span>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setShowProgression(!showProgression)}
                   className="flex items-center gap-1 text-xs text-fg-subtle"
                 >
@@ -850,6 +854,7 @@ export function StatsPage() {
                   <div className="flex gap-1">
                     {metricButtons.map((m) => (
                       <button
+                        type="button"
                         key={m}
                         onClick={() => setMetricFilter(m)}
                         className="flex-1 text-xs py-2 rounded-md transition-colors font-medium"

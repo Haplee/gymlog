@@ -39,6 +39,7 @@ export class ErrorBoundary extends Component<Props, State> {
               Lo sentimos, ha ocurrido un error inesperado.
             </p>
             <button
+              type="button"
               onClick={() => window.location.reload()}
               className="px-4 py-2 rounded-lg bg-accent text-accent-fg font-medium"
             >

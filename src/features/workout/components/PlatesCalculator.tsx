@@ -53,6 +53,7 @@ export function PlatesCalculator({ open, initialTargetKg, onClose }: PlatesCalcu
       <div className="flex gap-1.5 mb-4">
         {BAR_OPTIONS.map((b) => (
           <button
+            type="button"
             key={b}
             onClick={() => setBar(b)}
             aria-pressed={bar === b}

@@ -102,6 +102,7 @@ function ExerciseRow({
             {sortedSets.length} {t('history.series_plural')}
           </span>
           <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
               onDelete(firstSet.id);
@@ -143,6 +144,7 @@ function ExerciseRow({
                     {s.weight} kg
                   </span>
                   <button
+                    type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       onDelete(s.id);
@@ -1018,6 +1020,7 @@ export function HistoryPage() {
 
         <div className="flex gap-2 flex-wrap">
           <button
+            type="button"
             onClick={() => navigate('/stats')}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg font-semibold text-sm transition-all hover:scale-[1.02] active:scale-[0.98] bg-accent/10 border border-line-accent text-accent"
           >
@@ -1026,6 +1029,7 @@ export function HistoryPage() {
           </button>
 
           <button
+            type="button"
             onClick={() => navigate('/user-stats')}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg font-semibold text-sm transition-all hover:scale-[1.02] active:scale-[0.98] bg-accent/10 border border-line-accent text-accent"
           >
@@ -1056,12 +1060,14 @@ export function HistoryPage() {
                 ))}
               </select>
               <button
+                type="button"
                 onClick={exportToExcel}
                 className="bg-surface border border-line-strong rounded-lg text-accent text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
                 {t('history.export_btn')}
               </button>
               <button
+                type="button"
                 onClick={exportToJson}
                 className="bg-surface border border-line-strong rounded-lg text-accent text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
@@ -1105,6 +1111,7 @@ export function HistoryPage() {
                   </span>
                   {group.items.some((it) => it.kind === 'workout') && (
                     <button
+                      type="button"
                       onClick={() =>
                         handleSaveTemplate(
                           group.items.flatMap((it) =>
@@ -1151,6 +1158,7 @@ export function HistoryPage() {
                           </div>
                         </div>
                         <button
+                          type="button"
                           onClick={() => void deleteCardioSession(item.data.id, user?.id ?? null)}
                           className="p-2 rounded-lg ml-2 flex-shrink-0 text-fg-subtle"
                         >
@@ -1177,6 +1185,7 @@ export function HistoryPage() {
                             </div>
                             <div className="flex gap-3">
                               <button
+                                type="button"
                                 onClick={() => setEditWorkout(item.data)}
                                 className="flex items-center gap-1 text-xs font-semibold text-fg-muted"
                               >
@@ -1184,6 +1193,7 @@ export function HistoryPage() {
                                 {t('history.edit')}
                               </button>
                               <button
+                                type="button"
                                 onClick={() => handleRepeat(item.data)}
                                 className="flex items-center gap-1 text-xs font-semibold text-accent"
                               >
@@ -1191,6 +1201,7 @@ export function HistoryPage() {
                                 {t('history.repeat')}
                               </button>
                               <button
+                                type="button"
                                 onClick={async () => {
                                   const uniqueExercises = [
                                     ...new Set(item.data.sets.map((s) => s.exercise?.name)),
@@ -1282,6 +1293,7 @@ export function HistoryPage() {
                     </div>
                   </div>
                   <button
+                    type="button"
                     onClick={() => void deleteCardioSession(session.id, user?.id ?? null)}
                     className="p-2 rounded-lg ml-2 flex-shrink-0 text-fg-subtle"
                   >
@@ -1368,6 +1380,7 @@ export function HistoryPage() {
                       {group.totalSets} series · {(group.totalVolume / 1000).toFixed(1)}t
                     </span>
                     <button
+                      type="button"
                       onClick={() => handleSaveTemplate(group.workouts, group.date)}
                       className="flex items-center gap-1 text-xs font-semibold text-accent"
                       title={t('history.save_as_template')}

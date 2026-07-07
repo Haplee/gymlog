@@ -191,6 +191,7 @@ export function RoutinePage() {
                   </div>
                   {!routine.isCustom && (
                     <button
+                      type="button"
                       onClick={(e) => handleUseAsTemplate(e, routine.id)}
                       className="flex-shrink-0 min-h-11 label-caps px-3 py-1.5 rounded-sm bg-transparent text-accent border border-line-accent active:scale-[0.98] transition-transform"
                     >
@@ -203,6 +204,7 @@ export function RoutinePage() {
           </div>
 
           <button
+            type="button"
             onClick={() => setShowCreate(true)}
             className="w-full mt-5 min-h-12 rounded-sm text-sm font-display font-bold uppercase tracking-[0.12em] bg-accent text-accent-fg shadow-btn-accent active:scale-[0.98] transition-transform"
           >
@@ -217,6 +219,7 @@ export function RoutinePage() {
               <div className="text-xs text-fg-subtle">{activeRoutine?.description}</div>
             </div>
             <button
+              type="button"
               onClick={() => setActiveRoutine(null)}
               className="label-caps min-h-11 px-3 py-1.5 rounded-sm bg-surface-2 border border-line text-fg-muted"
             >
@@ -311,6 +314,7 @@ export function RoutinePage() {
 
           {activeRoutine?.isCustom && (
             <button
+              type="button"
               onClick={() => handleDeleteRoutine(activeRoutine.id)}
               className="mt-4 min-h-11 label-caps text-error"
             >
@@ -345,12 +349,14 @@ export function RoutinePage() {
 
             <div className="flex gap-2">
               <button
+                type="button"
                 onClick={() => setShowCreate(false)}
                 className="flex-1 min-h-11 rounded-sm text-sm bg-surface-2 text-fg-muted"
               >
                 {t('common.cancel')}
               </button>
               <button
+                type="button"
                 onClick={handleCreateRoutine}
                 className="flex-1 min-h-11 rounded-sm text-sm font-display font-bold uppercase tracking-[0.08em] bg-accent text-accent-fg"
               >

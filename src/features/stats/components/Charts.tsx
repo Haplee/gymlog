@@ -95,6 +95,7 @@ export function VolumeChart({
       <div className="flex items-center justify-end mb-3 gap-1">
         {(['bar', 'area'] as ChartView[]).map((v) => (
           <button
+            type="button"
             key={v}
             onClick={() => onViewChange(v)}
             className="text-[0.5625rem] px-2 py-1 rounded-sm transition-colors font-medium uppercase tracking-wide"
