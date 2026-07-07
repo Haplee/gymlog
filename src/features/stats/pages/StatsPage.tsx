@@ -914,6 +914,7 @@ export function StatsPage() {
                                 : `Faltan ${(activeGoal - currentBest1rm).toFixed(1)} kg`}
                             </span>
                             <button
+                              type="button"
                               onClick={handleClearGoal}
                               className="text-2xs text-fg-subtle underline"
                             >
@@ -932,6 +933,7 @@ export function StatsPage() {
                             className="flex-1 rounded-lg text-sm px-3 py-2 outline-none bg-surface-2 border border-line text-fg"
                           />
                           <button
+                            type="button"
                             onClick={handleSaveGoal}
                             disabled={!goalInput}
                             className="px-4 rounded-lg text-sm font-semibold bg-accent text-accent-fg disabled:opacity-50"

@@ -182,7 +182,7 @@ export function WorkoutSetList({
                 />
                 {isNewPR && (
                   <m.span
-                    initial={{ scale: 0, rotate: -20 }}
+                    initial={{ scale: 0.5, rotate: -20 }}
                     animate={{ scale: 1, rotate: 0 }}
                     transition={{ type: 'spring', stiffness: 600, damping: 18 }}
                     className="absolute -top-1 -right-1"

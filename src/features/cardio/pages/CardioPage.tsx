@@ -307,7 +307,7 @@ function SessionHistoryItem({
             )}
             {session.source && session.source !== 'manual' && (
               <span className="label-caps px-1.5 py-0.5 rounded-sm bg-surface-2">
-                {session.source === 'fitbit' ? 'Fitbit' : t('cardio.health_source')}
+                {t('cardio.health_source')}
               </span>
             )}
           </div>

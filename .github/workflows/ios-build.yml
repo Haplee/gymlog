@@ -24,7 +24,6 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_KEY: ${{ secrets.VITE_SUPABASE_KEY }}
-          VITE_FITBIT_CLIENT_ID: ${{ secrets.VITE_FITBIT_CLIENT_ID }}
         run: npm run build
       - name: Add iOS platform (if missing)
         # Cap 8 usa SPM por defecto; forzamos CocoaPods (Podfile + .xcworkspace).

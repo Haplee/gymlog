@@ -30,7 +30,7 @@ import java.time.ZoneId
 
 // Puente a Health Connect (Android). Lee pasos, HR, sueño y ejercicios — por aquí
 // entran los datos de Amazfit (vía Zepp), Samsung, Garmin, etc. Devuelve el mismo
-// modelo normalizado que el plugin de HealthKit (iOS) y que la edge function Fitbit.
+// modelo normalizado que el plugin de HealthKit (iOS).
 @CapacitorPlugin(name = "HealthBridge")
 class HealthBridgePlugin : Plugin() {
     private val TAG = "HealthBridge"

@@ -33,7 +33,7 @@ export interface CardioSession {
   calories?: number;
   notes?: string;
   pendingSync?: boolean;
-  // Importado de wearables (Fitbit / Health Connect / HealthKit)
+  // Importado de wearables (Health Connect / HealthKit)
   avgHr?: number;
   maxHr?: number;
   source?: string;

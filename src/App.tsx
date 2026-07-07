@@ -18,7 +18,6 @@ import { useWorkoutReminder } from '@features/routine/hooks/useWorkoutReminder';
 import { useFatigueSuggestion } from '@features/stats/hooks/useFatigueSuggestion';
 import { useBackgroundNotifications } from '@shared/hooks/useBackgroundNotifications';
 import { Capacitor } from '@capacitor/core';
-import { toast } from 'sonner';
 import { devLog, devError } from '@shared/lib/devtools';
 import { ErrorBoundary } from '@shared/components/ErrorBoundary';
 
@@ -57,7 +56,6 @@ const ExerciseLibraryPage = lazy(() =>
 const WearablesPage = lazy(() =>
   import('@features/wearables/pages/WearablesPage').then((m) => ({ default: m.WearablesPage })),
 );
-const FitbitCallback = lazy(() => import('@features/wearables/pages/FitbitCallback'));
 
 function Loading() {
   return (
@@ -84,7 +82,6 @@ function AnimatedRoutes() {
     <Routes location={location}>
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <AuthPage />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
-      <Route path="/auth/fitbit-callback" element={<FitbitCallback />} />
       <Route
         path="/"
         element={
@@ -204,7 +201,7 @@ function useWidgetSync() {
         const streak = calculateCurrentStreak(workouts);
         const last = workouts[0];
         const names = last
-          ? [...new Set(last.sets.map((s) => s.exercise?.name).filter(Boolean))]
+          ? [...new Set(last.sets.flatMap((s) => (s.exercise?.name ? [s.exercise.name] : [])))]
           : [];
         await updateWidget(streak, names.slice(0, 2).join(', '));
       } catch {
@@ -223,46 +220,6 @@ function useWidgetSync() {
   }, [user?.id]);
 }
 
-/** Hook para manejar actualizaciones de la PWA */
-function usePWAUpdate() {
-  useEffect(() => {
-    let updateFn: (() => Promise<void>) | null = null;
-
-    const handler = (e: Event) => {
-      const customEvent = e as CustomEvent<{
-        updateServiceWorker: () => Promise<void>;
-      }>;
-      if (customEvent.detail?.updateServiceWorker) {
-        updateFn = customEvent.detail.updateServiceWorker;
-        toast.info('Nueva versión disponible', {
-          description: 'Actualiza para disfrutar de las últimas mejoras.',
-          duration: 8000,
-          action: {
-            label: 'Actualizar',
-            onClick: async () => {
-              try {
-                if (updateFn) {
-                  await updateFn();
-                  window.location.reload();
-                }
-              } catch (err) {
-                toast.error('Error al actualizar');
-                devError('Update failed:', err);
-              }
-            },
-          },
-        });
-      }
-    };
-
-    window.addEventListener('sw-update-available', handler);
-    return () => {
-      window.removeEventListener('sw-update-available', handler);
-      updateFn = null;
-    };
-  }, []);
-}
-
 function AppRoutes() {
   const { user, loading, initialized } = useAuthStore();
   const { applyTheme } = useSettingsStore();
@@ -272,7 +229,6 @@ function AppRoutes() {
   useWorkoutReminder();
   useFatigueSuggestion();
   useBackgroundNotifications();
-  usePWAUpdate();
   useWorkoutOutboxSync();
   useWidgetSync();
 
@@ -311,26 +267,6 @@ function AppRoutes() {
         }
         if (url.hostname === 'history') {
           navigate('/history', { replace: true });
-          return;
-        }
-        // Callback OAuth de Fitbit: com.franvi.gymlog://fitbit-callback?code=...&state=...
-        if (url.hostname === 'fitbit-callback') {
-          const code = url.searchParams.get('code');
-          const state = url.searchParams.get('state');
-          if (code && state) {
-            void import('@features/wearables/api/fitbit').then(({ completeFitbitExchange }) =>
-              completeFitbitExchange(code, state)
-                .then(() => {
-                  toast.success('Fitbit conectado');
-                  navigate('/wearables', { replace: true });
-                })
-                .catch((e) => {
-                  if (import.meta.env.DEV) devError('[Fitbit] exchange deep link:', e);
-                  toast.error('No se pudo conectar Fitbit');
-                  navigate('/wearables', { replace: true });
-                }),
-            );
-          }
           return;
         }
       }

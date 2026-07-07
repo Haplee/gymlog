@@ -9,7 +9,6 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const sbUrl = env.VITE_SUPABASE_URL;
   const sbKey = env.VITE_SUPABASE_KEY;
-  const fitbitClientId = env.VITE_FITBIT_CLIENT_ID ?? '';
 
   return {
     resolve: {
@@ -37,13 +36,12 @@ export default defineConfig(({ mode }) => {
     define: {
       'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(sbUrl),
       'import.meta.env.VITE_SUPABASE_KEY': JSON.stringify(sbKey),
-      'import.meta.env.VITE_FITBIT_CLIENT_ID': JSON.stringify(fitbitClientId),
     },
     plugins: [
       react(),
       tailwindcss(),
       VitePWA({
-        registerType: 'prompt',
+        registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'apple-touch-icon.webp', 'masked-icon.svg'],
         // Manifest único (antes existía public/manifest.json duplicado que lo eclipsaba)
         manifest: {
@@ -81,6 +79,8 @@ export default defineConfig(({ mode }) => {
         },
         workbox: {
           cleanupOutdatedCaches: true,
+          clientsClaim: true,
+          skipWaiting: true,
           globPatterns: ['**/*.{js,css,html,ico,png,svg,json,woff2}'],
           importScripts: ['sw-custom.js'],
           runtimeCaching: [

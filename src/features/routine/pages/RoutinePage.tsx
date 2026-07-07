@@ -230,8 +230,8 @@ export function RoutinePage() {
                 {t('routine.today')} — {todayRoutine.name}
               </div>
               <div className="flex flex-wrap gap-1.5">
-                {todayRoutine.exercises.map((ex, i) => (
-                  <span key={i} className="text-xs px-2 py-1 rounded-sm bg-surface-2 text-fg">
+                {todayRoutine.exercises.map((ex) => (
+                  <span key={ex.name} className="text-xs px-2 py-1 rounded-sm bg-surface-2 text-fg">
                     {ex.name}
                   </span>
                 ))}

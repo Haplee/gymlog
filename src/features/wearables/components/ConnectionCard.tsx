@@ -15,7 +15,7 @@ interface ConnectionCardProps {
   hint?: string;
 }
 
-/** Tarjeta de estado de una fuente de datos (Fitbit, agregador de salud, …). */
+/** Tarjeta de estado de una fuente de datos (agregador de salud). */
 export function ConnectionCard({
   title,
   description,

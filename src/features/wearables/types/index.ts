@@ -2,16 +2,13 @@
 // src/types/database.types.ts (se regenerará con gen:types tras aplicar la
 // migración); aquí declaramos las formas que consume el cliente.
 
-export type WearableProvider = 'fitbit' | 'health_connect' | 'healthkit';
+export type WearableProvider = 'health_connect' | 'healthkit';
 
 export interface WearableConnection {
   id: string;
   user_id: string;
   provider: WearableProvider;
   status: 'connected' | 'disconnected' | 'error';
-  scopes: string[];
-  fitbit_user_id: string | null;
-  access_expires_at: string | null;
   last_sync_at: string | null;
   last_error: string | null;
   created_at: string;

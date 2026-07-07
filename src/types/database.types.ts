@@ -389,49 +389,34 @@ export type Database = {
       };
       wearable_connections: {
         Row: {
-          access_expires_at: string | null;
           created_at: string;
-          fitbit_user_id: string | null;
           id: string;
           last_error: string | null;
           last_sync_at: string | null;
           provider: string;
-          scopes: string[];
           status: string;
           updated_at: string;
           user_id: string;
-          vault_access_secret_id: string | null;
-          vault_refresh_secret_id: string | null;
         };
         Insert: {
-          access_expires_at?: string | null;
           created_at?: string;
-          fitbit_user_id?: string | null;
           id?: string;
           last_error?: string | null;
           last_sync_at?: string | null;
           provider: string;
-          scopes?: string[];
           status?: string;
           updated_at?: string;
           user_id: string;
-          vault_access_secret_id?: string | null;
-          vault_refresh_secret_id?: string | null;
         };
         Update: {
-          access_expires_at?: string | null;
           created_at?: string;
-          fitbit_user_id?: string | null;
           id?: string;
           last_error?: string | null;
           last_sync_at?: string | null;
           provider?: string;
-          scopes?: string[];
           status?: string;
           updated_at?: string;
           user_id?: string;
-          vault_access_secret_id?: string | null;
-          vault_refresh_secret_id?: string | null;
         };
         Relationships: [];
       };
@@ -734,28 +719,6 @@ export type Database = {
       upsert_wearable_sleep: {
         Args: { p_rows: Json; p_user_id: string };
         Returns: number;
-      };
-      wearable_get_tokens: {
-        Args: { p_provider: string; p_user_id: string };
-        Returns: {
-          access_expires_at: string;
-          access_token: string;
-          fitbit_user_id: string;
-          refresh_token: string;
-          scopes: string[];
-        }[];
-      };
-      wearable_store_tokens: {
-        Args: {
-          p_access: string;
-          p_expires_at: string;
-          p_fitbit_user_id: string;
-          p_provider: string;
-          p_refresh: string;
-          p_scopes: string[];
-          p_user_id: string;
-        };
-        Returns: undefined;
       };
     };
     Enums: {
