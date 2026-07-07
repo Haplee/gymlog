@@ -15,6 +15,7 @@ import {
   scheduleWeeklySummaryReminder,
 } from '@shared/lib/notifications';
 import { registerPushNotifications, unregisterPushToken } from '@shared/lib/push';
+import { useUpdateProfileCache } from '@features/auth/hooks/useProfile';
 import { getReminderDays } from '@features/routine/hooks/useWorkoutReminder';
 import { toast } from 'sonner';
 import BiometricPlugin from '@shared/lib/biometric';
@@ -110,6 +111,7 @@ export function SettingsPage() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const updateProfileCache = useUpdateProfileCache();
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -276,6 +278,7 @@ export function SettingsPage() {
       }
 
       setAvatarUrl(publicData.publicUrl);
+      updateProfileCache(user.id, { avatarUrl: publicData.publicUrl });
       toast.success(t('settings.photo_updated'));
     } catch (err) {
       devError('[Avatar] Error subiendo imagen:', err);
@@ -302,6 +305,7 @@ export function SettingsPage() {
       return;
     }
     setFullName(trimmed);
+    updateProfileCache(user.id, { fullName: trimmed });
     setIsEditingName(false);
     toast.success(t('settings.name_updated'));
   };

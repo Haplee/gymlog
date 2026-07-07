@@ -9,6 +9,7 @@ import { fetchWorkoutsAndSets, fetchWorkouts, fetchRecentSets } from '@shared/ap
 import { m, AnimatePresence } from 'framer-motion';
 import { Home, Dumbbell, Footprints, History, Settings, WifiOff, RefreshCw } from 'lucide-react';
 import { useOutboxStore } from '@shared/stores/outboxStore';
+import { useProfile } from '@features/auth/hooks/useProfile';
 
 interface LayoutProps {
   children: ReactNode;
@@ -66,6 +67,7 @@ function useOnlineStatus() {
 
 export function Layout({ children }: LayoutProps) {
   const { user } = useAuthStore();
+  const { displayName, avatarUrl } = useProfile();
   const location = useLocation();
   const { t } = useTranslation();
   const isOnline = useOnlineStatus();
@@ -119,10 +121,25 @@ export function Layout({ children }: LayoutProps) {
           </span>
           <span className="w-8" />
           {user && (
-            <div className="flex items-center gap-2 px-2.5 py-1 rounded-sm bg-surface border border-line">
-              <div className="w-1.5 h-1.5 bg-success" />
-              <span className="text-xs font-medium text-fg-muted">{user.email?.split('@')[0]}</span>
-            </div>
+            <Link
+              to="/settings"
+              className="flex items-center gap-2 px-2.5 py-1 rounded-sm bg-surface border border-line"
+            >
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt=""
+                  width={20}
+                  height={20}
+                  className="w-5 h-5 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-1.5 h-1.5 bg-success" />
+              )}
+              <span className="text-xs font-medium text-fg-muted max-w-[8rem] truncate">
+                {displayName}
+              </span>
+            </Link>
           )}
         </div>
       </header>
