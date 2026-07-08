@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#080808" />
+    <meta name="theme-color" content="#0a0a0b" />
 
     <title>GymLog — Guía de uso paso a paso</title>
     <meta name="description" content="Aprende a usar GymLog en minutos: registra entrenamientos de fuerza y cardio, marca récords, sigue tus rachas y estadísticas. Tutorial completo." />
@@ -23,25 +23,28 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=Geist+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
     <style>
       :root {
-        --bg-base: #080808;
-        --bg-surface: #111111;
+        --bg-base: #0a0a0b;
+        --bg-surface: #141416;
         --line: rgba(255, 255, 255, 0.08);
         --line-strong: rgba(255, 255, 255, 0.14);
-        --accent: #c8ff00;
-        --accent-soft: rgba(200, 255, 0, 0.1);
-        --accent-ring: rgba(200, 255, 0, 0.3);
-        --text: #f4f4f4;
-        --text-muted: #b4b4b4;
-        --text-faint: #8a8a8a;
+        --accent: #60eca8;
+        --accent-dim: #3ecf8e;
+        --accent-fg: #003822;
+        --accent-soft: rgba(96, 236, 168, 0.1);
+        --accent-ring: rgba(96, 236, 168, 0.3);
+        --text: #e5e2e3;
+        --text-muted: #bbcabe;
+        --text-faint: #869489;
         --radius: 16px;
         --pill: 999px;
         --ease: cubic-bezier(0.22, 1, 0.36, 1);
-        --font-display: 'DM Sans', system-ui, -apple-system, sans-serif;
-        --font-mono: 'Geist Mono', ui-monospace, monospace;
+        --font-display: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+        --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+        --font-mono: 'Space Grotesk', ui-monospace, monospace;
       }
       * { margin: 0; padding: 0; box-sizing: border-box; }
       html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
@@ -55,27 +58,28 @@
       body {
         min-height: 100dvh;
         background: var(--bg-base);
-        font-family: var(--font-display);
+        font-family: var(--font-body);
         color: var(--text);
         line-height: 1.6;
         overflow-x: hidden;
         -webkit-font-smoothing: antialiased;
       }
       a { color: inherit; }
+      h1, h2, h3 { font-family: var(--font-display); }
       :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
-      .skip-link { position: absolute; left: -9999px; top: 0; z-index: 100; background: var(--accent); color: #000; padding: 0.75rem 1.25rem; border-radius: 0 0 12px 0; font-weight: 700; }
+      .skip-link { position: absolute; left: -9999px; top: 0; z-index: 100; background: var(--accent); color: var(--accent-fg); padding: 0.75rem 1.25rem; border-radius: 0 0 12px 0; font-weight: 700; }
       .skip-link:focus { left: 0; }
       .wrap { max-width: 760px; margin: 0 auto; padding: 0 1.25rem; }
       .mono { font-family: var(--font-mono); }
 
       /* Nav */
-      .nav { position: sticky; top: 0; z-index: 50; background: rgba(8, 8, 8, 0.72); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); }
+      .nav { position: sticky; top: 0; z-index: 50; background: rgba(10, 10, 11, 0.72); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); }
       .nav-inner { max-width: 760px; margin: 0 auto; padding: 0 1.25rem; display: flex; align-items: center; justify-content: space-between; height: 60px; }
       .back { display: inline-flex; align-items: center; gap: 0.5rem; min-height: 44px; font-weight: 600; text-decoration: none; color: var(--text-muted); }
       .back svg { width: 18px; height: 18px; transition: transform 0.2s var(--ease); }
       .back:hover { color: var(--accent); }
       .back:hover svg { transform: translateX(-3px); }
-      .nav-cta { display: inline-flex; align-items: center; gap: 0.5rem; min-height: 44px; padding: 0 1.1rem; background: var(--accent); color: #000; font-weight: 700; font-size: 0.9rem; text-decoration: none; border-radius: var(--pill); transition: transform 0.2s var(--ease); }
+      .nav-cta { display: inline-flex; align-items: center; gap: 0.5rem; min-height: 44px; padding: 0 1.1rem; background: var(--accent); color: var(--accent-fg); font-weight: 700; font-size: 0.9rem; text-decoration: none; border-radius: var(--pill); transition: transform 0.2s var(--ease); }
       .nav-cta svg { width: 16px; height: 16px; }
       .nav-cta:hover { transform: translateY(-1px); }
 
@@ -93,7 +97,7 @@
       .section > h2 svg { width: 24px; height: 24px; }
       .card { background: var(--bg-surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.4rem; margin-bottom: 1rem; }
       .card h3 { font-size: 1.02rem; font-weight: 700; margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.6rem; }
-      .card h3 .step { width: 26px; height: 26px; background: var(--accent); color: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.82rem; font-weight: 700; flex-shrink: 0; font-family: var(--font-mono); }
+      .card h3 .step { width: 26px; height: 26px; background: var(--accent); color: var(--accent-fg); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.82rem; font-weight: 700; flex-shrink: 0; font-family: var(--font-mono); }
       .card p { color: var(--text-muted); font-size: 0.94rem; }
       .card ul { margin-top: 0.75rem; padding-left: 1.25rem; }
       .card li { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.45rem; }
@@ -112,9 +116,9 @@
 
       .links { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.5rem; }
       .link-btn { display: flex; align-items: center; justify-content: center; gap: 0.7rem; min-height: 52px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--line-strong); border-radius: 12px; text-decoration: none; color: var(--text); font-weight: 600; transition: background 0.2s var(--ease), transform 0.2s var(--ease); }
-      .link-btn:hover { background: rgba(200, 255, 0, 0.08); border-color: var(--accent-ring); transform: translateY(-2px); }
+      .link-btn:hover { background: rgba(96, 236, 168, 0.08); border-color: var(--accent-ring); transform: translateY(-2px); }
       .link-btn svg { width: 20px; height: 20px; }
-      .link-btn.primary { background: var(--accent); color: #000; border: none; }
+      .link-btn.primary { background: var(--accent); color: var(--accent-fg); border: none; }
       .link-btn.primary:hover { transform: translateY(-2px); }
 
       footer { padding: 2.25rem 1.25rem; text-align: center; border-top: 1px solid var(--line); color: var(--text-faint); font-size: 0.85rem; }
@@ -143,8 +147,9 @@
     <header class="header">
       <div class="wrap">
         <svg class="logo" viewBox="0 0 100 100" fill="none" aria-hidden="true">
-          <rect width="100" height="100" rx="24" fill="#1a1a1f" />
-          <path d="M25 50h50M50 30v40M35 40l15-10 15 10M35 60l15 10 15-10" stroke="#c8ff00" stroke-width="5" stroke-linecap="round" />
+          <rect width="100" height="100" rx="24" fill="#60eca8" />
+          <path d="M32 50h36" stroke="#003822" stroke-width="7" stroke-linecap="round" />
+          <path d="M30 39v22M22 45v10M70 39v22M78 45v10" stroke="#003822" stroke-width="7" stroke-linecap="round" />
         </svg>
         <h1>Guía de <span>GymLog</span></h1>
         <p class="subtitle">Aprende a usar la app en minutos</p>

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#080808" />
+    <meta name="theme-color" content="#0a0a0b" />
 
     <!-- SEO -->
     <title>GymLog — Tu diario de entrenamiento de fuerza y cardio</title>
@@ -31,33 +31,36 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
-    <!-- Fonts: DM Sans (display) + Geist Mono (números) -->
+    <!-- Fonts: Space Grotesk (display) + Inter (cuerpo) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=Geist+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
     <style>
-      /* ===== Design tokens (mismos que la app) ===== */
+      /* ===== Design tokens (sistema Stitch — menta, igual que la app) ===== */
       :root {
-        --bg-base: #080808;
-        --bg-surface: #111111;
-        --bg-elevated: #16160d;
+        --bg-base: #0a0a0b;
+        --bg-surface: #141416;
+        --bg-elevated: #1c1b1e;
         --line: rgba(255, 255, 255, 0.08);
         --line-strong: rgba(255, 255, 255, 0.14);
-        --accent: #c8ff00;
-        --accent-soft: rgba(200, 255, 0, 0.1);
-        --accent-ring: rgba(200, 255, 0, 0.3);
-        --text: #f4f4f4;
-        --text-muted: #b4b4b4;   /* AA en cuerpo sobre #080808 */
-        --text-faint: #8a8a8a;   /* sólo texto grande/decorativo */
+        --accent: #60eca8;
+        --accent-dim: #3ecf8e;
+        --accent-fg: #003822;
+        --accent-soft: rgba(96, 236, 168, 0.1);
+        --accent-ring: rgba(96, 236, 168, 0.3);
+        --text: #e5e2e3;
+        --text-muted: #bbcabe;   /* AA en cuerpo sobre --bg-base */
+        --text-faint: #869489;   /* ≥4.5:1 sobre --bg-base (WCAG AA) */
         --radius: 16px;
         --radius-lg: 24px;
         --pill: 999px;
         --shadow-card: 0 8px 30px rgba(0, 0, 0, 0.4);
-        --shadow-fab: 0 10px 40px rgba(200, 255, 0, 0.25);
+        --shadow-fab: 0 10px 40px rgba(96, 236, 168, 0.25);
         --ease: cubic-bezier(0.22, 1, 0.36, 1);
-        --font-display: 'DM Sans', system-ui, -apple-system, sans-serif;
-        --font-mono: 'Geist Mono', ui-monospace, 'SFMono-Regular', monospace;
+        --font-display: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+        --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+        --font-mono: 'Space Grotesk', ui-monospace, 'SFMono-Regular', monospace;
       }
 
       * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -73,13 +76,14 @@
       body {
         min-height: 100dvh;
         background: var(--bg-base);
-        font-family: var(--font-display);
+        font-family: var(--font-body);
         color: var(--text);
         line-height: 1.6;
         overflow-x: hidden;
         -webkit-font-smoothing: antialiased;
       }
       a { color: inherit; }
+      h1, h2, h3, .brand { font-family: var(--font-display); }
       :focus-visible {
         outline: 3px solid var(--accent);
         outline-offset: 3px;
@@ -91,7 +95,7 @@
         top: 0;
         z-index: 100;
         background: var(--accent);
-        color: #000;
+        color: var(--accent-fg);
         padding: 0.75rem 1.25rem;
         border-radius: 0 0 12px 0;
         font-weight: 700;
@@ -106,7 +110,7 @@
         position: sticky;
         top: 0;
         z-index: 50;
-        background: rgba(8, 8, 8, 0.72);
+        background: rgba(10, 10, 11, 0.72);
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
         border-bottom: 1px solid var(--line);
@@ -135,7 +139,7 @@
         min-height: 44px;
         padding: 0 1.1rem;
         background: var(--accent);
-        color: #000;
+        color: var(--accent-fg);
         font-weight: 700;
         font-size: 0.92rem;
         text-decoration: none;
@@ -163,7 +167,7 @@
         transition: transform 0.2s var(--ease), background 0.2s var(--ease);
       }
       .btn svg { width: 20px; height: 20px; }
-      .btn-primary { position: relative; background: var(--accent); color: #000; }
+      .btn-primary { position: relative; background: var(--accent); color: var(--accent-fg); }
       .btn-primary:hover { transform: translateY(-2px); }
       .btn-primary:active { transform: translateY(0) scale(0.98); }
       /* Pulso del CTA (animista) — glow GPU-friendly vía opacity/scale del ::after */
@@ -215,7 +219,7 @@
         width: min(680px, 90vw);
         height: 480px;
         transform: translateX(-50%);
-        background: radial-gradient(circle, rgba(200, 255, 0, 0.16) 0%, transparent 68%);
+        background: radial-gradient(circle, rgba(96, 236, 168, 0.16) 0%, transparent 68%);
         pointer-events: none;
         z-index: 0;
       }
@@ -251,15 +255,16 @@
       @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 
       h1 {
+        font-family: var(--font-display);
         font-size: clamp(2.3rem, 7vw, 3.8rem);
-        font-weight: 800;
+        font-weight: 700;
         line-height: 1.05;
         letter-spacing: -0.035em;
         margin-bottom: 1.1rem;
       }
       /* Shiny + blur-in text (reactbits) */
       .shiny {
-        background: linear-gradient(100deg, var(--accent) 20%, #f4ffd0 40%, #ffffff 50%, #f4ffd0 60%, var(--accent) 80%);
+        background: linear-gradient(100deg, var(--accent) 20%, #d0ffe8 40%, #ffffff 50%, #d0ffe8 60%, var(--accent) 80%);
         background-size: 200% auto;
         -webkit-background-clip: text;
         background-clip: text;
@@ -346,7 +351,7 @@
       .bars { display: flex; align-items: flex-end; gap: 6px; height: 60px; }
       .bars i {
         flex: 1;
-        background: linear-gradient(180deg, var(--accent), rgba(200, 255, 0, 0.25));
+        background: linear-gradient(180deg, var(--accent), rgba(96, 236, 168, 0.25));
         border-radius: 4px 4px 2px 2px;
         height: var(--h, 30%);
         transform: scaleY(0);
@@ -490,7 +495,7 @@
       .final {
         text-align: center;
         background:
-          radial-gradient(circle at 50% 0%, rgba(200, 255, 0, 0.12), transparent 60%),
+          radial-gradient(circle at 50% 0%, rgba(96, 236, 168, 0.12), transparent 60%),
           var(--bg-surface);
         border: 1px solid var(--line);
         border-radius: var(--radius-lg);
@@ -534,8 +539,11 @@
       <div class="wrap nav-inner">
         <a class="brand" href="#main" aria-label="GymLog, inicio">
           <svg viewBox="0 0 100 100" fill="none" aria-hidden="true">
-            <rect width="100" height="100" rx="24" fill="#1a1a1f" />
-            <path d="M25 50h50M50 30v40M35 40l15-10 15 10M35 60l15 10 15-10" stroke="#c8ff00" stroke-width="5" stroke-linecap="round" />
+            <rect width="100" height="100" rx="22" fill="#60eca8" />
+            <g stroke="#003822" stroke-width="7" stroke-linecap="round" fill="none">
+              <path d="M32 50h36" />
+              <path d="M30 39v22M22 45v10M70 39v22M78 45v10" />
+            </g>
           </svg>
           Gym<b>Log</b>
         </a>
@@ -555,7 +563,7 @@
       <section class="hero">
         <div class="wrap hero-grid">
           <div>
-            <span class="badge"><span class="dot" aria-hidden="true"></span> v4.0.0 · Disponible ahora</span>
+            <span class="badge"><span class="dot" aria-hidden="true"></span> v4.1.0 · Disponible ahora</span>
             <h1 class="blur-in">Tu entreno,<br /><span class="shiny">tu progreso</span></h1>
             <p class="lede">
               Registra cada serie, controla tus pesos y celebra cada récord personal.
@@ -599,8 +607,8 @@
               <svg class="chart" viewBox="0 0 280 96" preserveAspectRatio="none" role="img" aria-label="Gráfico de progresión de volumen">
                 <defs>
                   <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#c8ff00" stop-opacity="0.35" />
-                    <stop offset="100%" stop-color="#c8ff00" stop-opacity="0" />
+                    <stop offset="0%" stop-color="#60eca8" stop-opacity="0.35" />
+                    <stop offset="100%" stop-color="#60eca8" stop-opacity="0" />
                   </linearGradient>
                 </defs>
                 <line class="grid-l" x1="0" y1="32" x2="280" y2="32" />
@@ -767,8 +775,11 @@
       <div class="wrap foot-inner">
         <a class="brand" href="#main" aria-label="GymLog inicio">
           <svg viewBox="0 0 100 100" fill="none" aria-hidden="true">
-            <rect width="100" height="100" rx="24" fill="#1a1a1f" />
-            <path d="M25 50h50M50 30v40M35 40l15-10 15 10M35 60l15 10 15-10" stroke="#c8ff00" stroke-width="5" stroke-linecap="round" />
+            <rect width="100" height="100" rx="22" fill="#60eca8" />
+            <g stroke="#003822" stroke-width="7" stroke-linecap="round" fill="none">
+              <path d="M32 50h36" />
+              <path d="M30 39v22M22 45v10M70 39v22M78 45v10" />
+            </g>
           </svg>
           Gym<b>Log</b>
         </a>
@@ -780,7 +791,7 @@
         </nav>
       </div>
       <div class="wrap foot-meta" style="margin-top: 1.25rem">
-        GymLog v4.0.0 · © 2024–2026 Francisco Vidal Mateo · Tu compañero de entrenamiento.
+        GymLog v4.1.0 · © 2024–2026 Francisco Vidal Mateo · Tu compañero de entrenamiento.
       </div>
     </footer>
 
