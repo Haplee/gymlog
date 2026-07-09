@@ -43,7 +43,6 @@ export function RestTimer() {
 
   useEffect(() => {
     if (!isRunning || !endTime) {
-      setDisplay(0);
       completedRef.current = false;
       return;
     }
@@ -67,11 +66,12 @@ export function RestTimer() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRunning, endTime]);
 
-  const mins = Math.floor(display / 60);
-  const secs = display % 60;
-  const pct = duration > 0 ? Math.max(0, display / duration) : 0;
+  const shown = !isRunning || !endTime ? 0 : display;
+  const mins = Math.floor(shown / 60);
+  const secs = shown % 60;
+  const pct = duration > 0 ? Math.max(0, shown / duration) : 0;
   const strokeOffset = CIRCUMFERENCE * (1 - pct);
-  const urgent = display <= 10 && display > 0;
+  const urgent = shown <= 10 && shown > 0;
   const selectedDuration = customSecs ?? duration;
 
   const accentColor = urgent ? 'var(--error)' : 'var(--interactive-primary)';
