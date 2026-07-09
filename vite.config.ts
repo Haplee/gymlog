@@ -29,6 +29,7 @@ export default defineConfig(({ mode }) => {
             // de las features (domMax), que cargan async vía motionFeatures.ts
             query: ['@tanstack/react-query'],
             confetti: ['canvas-confetti'],
+            excel: ['exceljs'],
           },
         },
       },

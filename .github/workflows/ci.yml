@@ -3,49 +3,83 @@ name: CI
 on:
   push:
     branches: [main, develop]
+    paths-ignore:
+      - '**.md'
+      - 'stitch_screens/**'
+      - 'docs/**'
   pull_request:
-    branches: [main, develop]
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'stitch_screens/**'
+      - 'docs/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  ci:
-    name: Lint · Type-check · Test · Build
+  quality:
+    name: Lint + Type-Check + Test
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: false
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version-file: '.nvmrc'
           cache: 'npm'
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Type-check
-        run: npm run type-check
+      - run: npm ci
 
       - name: Lint
         run: npm run lint
 
-      - name: Test
+      - name: Type Check
+        run: npm run type-check
+
+      - name: Unit Tests
+        run: npm run test
+
+      - name: Coverage
         run: npm run test:coverage
 
-      - name: Upload coverage
+      - name: Upload Coverage Report
         uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: coverage
+          name: coverage-report
           path: coverage/
+          retention-days: 14
+
+  build:
+    name: Build
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - run: npm ci
 
       - name: Build
         run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_KEY: ${{ secrets.VITE_SUPABASE_KEY }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
-      - name: Upload bundle report
+      - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: bundle-report
+          name: build-dist
           path: dist/
+          retention-days: 7

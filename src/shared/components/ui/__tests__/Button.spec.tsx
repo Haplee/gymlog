@@ -13,19 +13,18 @@ describe('Button', () => {
   });
 
   it('aplica variante primary por defecto', () => {
-    const { container } = render(<Button>Test</Button>);
-    const btn = container.querySelector('button')!;
-    expect(btn.className).toContain('bg-accent');
+    render(<Button>Test</Button>);
+    expect(screen.getByRole('button', { name: 'Test' }).className).toContain('bg-accent');
   });
 
   it('aplica variante danger', () => {
-    const { container } = render(<Button variant="danger">Eliminar</Button>);
-    expect(container.querySelector('button')!.className).toContain('bg-error');
+    render(<Button variant="danger">Eliminar</Button>);
+    expect(screen.getByRole('button', { name: 'Eliminar' }).className).toContain('bg-error');
   });
 
   it('size sm asigna clase h-9', () => {
-    const { container } = render(<Button size="sm">Pequeño</Button>);
-    expect(container.querySelector('button')!.className).toContain('h-9');
+    render(<Button size="sm">Pequeño</Button>);
+    expect(screen.getByRole('button', { name: 'Pequeño' }).className).toContain('h-9');
   });
 
   it('disabled desactiva el botón', () => {
@@ -34,27 +33,27 @@ describe('Button', () => {
   });
 
   it('loading muestra spinner y desactiva', () => {
-    const { container } = render(<Button loading>Cargando</Button>);
-    const btn = container.querySelector('button')!;
+    render(<Button loading>Cargando</Button>);
+    const btn = screen.getByRole('button', { name: 'Cargando' });
     expect(btn).toHaveProperty('disabled', true);
     expect(btn.querySelector('svg')).toBeDefined();
   });
 
   it('llama onClick al hacer clic', async () => {
     const onClick = vi.fn();
-    const { container } = render(<Button onClick={onClick}>Click</Button>);
-    await userEvent.click(container.querySelector('button')!);
+    render(<Button onClick={onClick}>Click</Button>);
+    await userEvent.click(screen.getByRole('button', { name: 'Click' }));
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
   it('no llama onClick cuando está deshabilitado', async () => {
     const onClick = vi.fn();
-    const { container } = render(
+    render(
       <Button disabled onClick={onClick}>
         No
       </Button>,
     );
-    await userEvent.click(container.querySelector('button')!);
+    await userEvent.click(screen.getByRole('button', { name: 'No' }));
     expect(onClick).not.toHaveBeenCalled();
   });
 });
