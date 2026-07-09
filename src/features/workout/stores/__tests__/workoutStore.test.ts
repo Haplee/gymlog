@@ -32,7 +32,14 @@ describe('useWorkoutStore', () => {
   beforeEach(() => {
     useWorkoutStore.getState().clearPersistedState();
     mockRpc.mockClear();
-    mockRpc.mockResolvedValue({ data: { id: 'wo-id' }, error: null });
+    mockRpc.mockResolvedValue({
+      data: { id: 'wo-id' },
+      error: null,
+      count: null,
+      status: 200,
+      statusText: 'OK',
+      success: true,
+    });
     mockFrom.mockClear();
     Object.defineProperty(navigator, 'onLine', { configurable: true, value: DEFAULT_ONLINE });
   });
