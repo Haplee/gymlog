@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 200" width="600" height="200">
+  <defs>
+    <style>
+      @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+      @keyframes typing1 { 0%{width:0} 20%{width:14ch} 80%{width:14ch} 100%{width:0} }
+      @keyframes typing2 { 0%{width:0} 20%{width:18ch} 80%{width:18ch} 100%{width:0} }
+      @keyframes typing3 { 0%{width:0} 20%{width:26ch} 80%{width:26ch} 100%{width:0} }
+      @keyframes typing4 { 0%{width:0} 20%{width:21ch} 80%{width:21ch} 100%{width:0} }
+      @keyframes fadeInOut { 0%,5%{opacity:0} 10%,95%{opacity:1} 100%{opacity:0} }
+      .cursor { animation: blink 1s step-end infinite }
+      .line1 { overflow:hidden; white-space:nowrap; animation: typing1 6s ease-in-out infinite }
+      .line2 { overflow:hidden; white-space:nowrap; animation: typing2 6s ease-in-out infinite 0.5s }
+      .line3 { overflow:hidden; white-space:nowrap; animation: typing3 6s ease-in-out infinite 1s }
+      .line4 { overflow:hidden; white-space:nowrap; animation: typing4 6s ease-in-out infinite 1.5s }
+    </style>
+  </defs>
+  <rect width="600" height="200" rx="10" fill="#0D1117"/>
+  <rect x="0" y="0" width="600" height="32" rx="10" fill="#161B22"/>
+  <circle cx="18" cy="16" r="5" fill="#ff5f57"/>
+  <circle cx="34" cy="16" r="5" fill="#ffbd2e"/>
+  <circle cx="50" cy="16" r="5" fill="#28c840"/>
+  <text x="300" y="21" text-anchor="middle" fill="#8b949e" font-family="monospace" font-size="11">bash — gymlog</text>
+
+  <text x="20" y="65" fill="#3ECF8E" font-family="monospace" font-size="14" font-weight="bold">$</text>
+  <text x="35" y="65" fill="#e6edf3" font-family="monospace" font-size="14" class="line1">
+    <tspan x="35">npm run dev</tspan>
+  </text>
+  <text x="35" y="65" fill="#e6edf3" font-family="monospace" font-size="14" class="cursor">|</text>
+
+  <text x="20" y="95" fill="#8b949e" font-family="monospace" font-size="12" style="animation:fadeInOut 6s ease-in-out infinite">
+    <tspan x="20">&gt; Vite dev server running at:</tspan>
+    <tspan x="20" dy="18" fill="#c8ff00">  http://localhost:5173</tspan>
+  </text>
+
+  <text x="20" y="145" fill="#3ECF8E" font-family="monospace" font-size="14" font-weight="bold">$</text>
+  <text x="35" y="145" fill="#e6edf3" font-family="monospace" font-size="14" class="line4">
+    <tspan x="35">npm run test</tspan>
+  </text>
+  <text x="35" y="145" fill="#e6edf3" font-family="monospace" font-size="14" class="cursor">|</text>
+
+  <text x="20" y="175" fill="#3ECF8E" font-family="monospace" font-size="12" style="animation:fadeInOut 7s ease-in-out infinite 3s">
+    <tspan x="20">✓ 153 tests passed in 2.81s</tspan>
+  </text>
+</svg>

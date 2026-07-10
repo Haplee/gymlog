@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 180" width="720" height="180">
+  <defs>
+    <linearGradient id="bar" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3ECF8E"/>
+      <stop offset="100%" stop-color="#2a9d6f"/>
+    </linearGradient>
+    <linearGradient id="bar2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#c8ff00"/>
+      <stop offset="100%" stop-color="#99cc00"/>
+    </linearGradient>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0D1117"/>
+      <stop offset="100%" stop-color="#161B22"/>
+    </linearGradient>
+  </defs>
+  <rect width="720" height="180" rx="12" fill="url(#bg)"/>
+  <text x="360" y="28" text-anchor="middle" fill="#8b949e" font-family="monospace" font-size="12">commits / month</text>
+
+  <!-- Apr 2026 — 149 commits, max = 149 -->
+  <rect x="60" y="140" width="80" fill="url(#bar2)" rx="4">
+    <animate attributeName="height" from="0" to="119" dur="0.6s" fill="freeze"/>
+    <animate attributeName="y" from="140" to="21" dur="0.6s" fill="freeze"/>
+  </rect>
+  <text x="100" y="168" text-anchor="middle" fill="#8b949e" font-family="monospace" font-size="10">Apr</text>
+  <text x="100" y="16" text-anchor="middle" fill="#c8ff00" font-family="monospace" font-size="11" font-weight="bold">149</text>
+
+  <!-- May 2026 — 12 commits -->
+  <rect x="200" y="140" width="80" fill="url(#bar)" rx="4">
+    <animate attributeName="height" from="0" to="10" dur="0.6s" begin="0.15s" fill="freeze"/>
+    <animate attributeName="y" from="140" to="130" dur="0.6s" begin="0.15s" fill="freeze"/>
+  </rect>
+  <text x="240" y="168" text-anchor="middle" fill="#8b949e" font-family="monospace" font-size="10">May</text>
+  <text x="240" y="126" text-anchor="middle" fill="#3ECF8E" font-family="monospace" font-size="11" font-weight="bold">12</text>
+
+  <!-- Jun 2026 — 38 commits -->
+  <rect x="340" y="140" width="80" fill="url(#bar)" rx="4">
+    <animate attributeName="height" from="0" to="30" dur="0.6s" begin="0.3s" fill="freeze"/>
+    <animate attributeName="y" from="140" to="110" dur="0.6s" begin="0.3s" fill="freeze"/>
+  </rect>
+  <text x="380" y="168" text-anchor="middle" fill="#8b949e" font-family="monospace" font-size="10">Jun</text>
+  <text x="380" y="106" text-anchor="middle" fill="#3ECF8E" font-family="monospace" font-size="11" font-weight="bold">38</text>
+
+  <!-- Jul 2026 — 21 commits -->
+  <rect x="480" y="140" width="80" fill="url(#bar)" rx="4">
+    <animate attributeName="height" from="0" to="17" dur="0.6s" begin="0.45s" fill="freeze"/>
+    <animate attributeName="y" from="140" to="123" dur="0.6s" begin="0.45s" fill="freeze"/>
+  </rect>
+  <text x="520" y="168" text-anchor="middle" fill="#8b949e" font-family="monospace" font-size="10">Jul</text>
+  <text x="520" y="119" text-anchor="middle" fill="#3ECF8E" font-family="monospace" font-size="11" font-weight="bold">21</text>
+
+  <!-- Total -->
+  <text x="660" y="140" text-anchor="middle" fill="#8b949e" font-family="monospace" font-size="10">Total</text>
+  <text x="660" y="120" text-anchor="middle" fill="#c8ff00" font-family="monospace" font-size="16" font-weight="bold">220</text>
+  <text x="660" y="106" text-anchor="middle" fill="#3ECF8E" font-family="monospace" font-size="9">commits</text>
+
+  <line x1="40" y1="140" x2="580" y2="140" stroke="#30363d" stroke-width="1"/>
+</svg>
