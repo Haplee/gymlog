@@ -53,22 +53,24 @@ npm run release          # standard-version — lo usa el usuario
 
 ```
 src/
-├── app/                  # Layout (header + bottom nav), providers, queryClient
+├── app/                  # Layout, PermissionRequests, providers, queryClient, queryPersister
+├── assets/               # hero.png (imágenes estáticas)
 ├── features/
 │   ├── auth/             # AuthPage, AuthCallback, SettingsPage, authStore
 │   ├── cardio/           # CardioPage, cardioStore (timer de sesión)
 │   ├── routine/          # RoutinePage, routineStore, useWorkoutReminder
-│   ├── stats/            # StatsPage, HistoryPage, UserStatsPage, charts, KPIs
+│   ├── stats/            # StatsPage, HistoryPage, UserStatsPage, charts, KPIs, constants.ts
+│   ├── wearables/        # integración wearables (api/ components/ hooks/ pages/ stores/ types/)
 │   └── workout/          # WorkoutPage (ruta /), stores, mutations, componentes
 │       └── cada feature: pages/ components/ stores/ hooks/ (y api/, utils/, types/)
 ├── shared/
 │   ├── api/queries.ts    # queries TanStack compartidas
-│   ├── components/       # EmptyStates, ErrorBoundary, MuscleIcons, ui/ (primitivas)
+│   ├── components/       # EmptyStates, ErrorBoundary, CardioIcons, SwipeToDelete, ui/ (primitivas)
+│   ├── constants/        # muscleColors.ts
 │   ├── hooks/ lib/       # utilidades (cálculos, formatters, validators, i18n)
-│   ├── stores/           # useUiStore, persistAuthToken
+│   ├── stores/           # outboxStore, settingsStore
 │   └── styles/tokens.css # design tokens (fuente única de verdad)
-├── types/database.types.ts  # GENERADO por gen:types — nunca editar a mano
-├── db/migrations/        # SQL espejo (las reales están en supabase/migrations/)
+├── types/                # database.types.ts (GENERADO por gen:types — nunca editar), global.d.ts
 ├── index.css             # @import tailwindcss + tokens.css, @theme, keyframes
 └── main.tsx / App.tsx    # entrada + router
 ```

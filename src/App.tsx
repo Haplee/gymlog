@@ -4,7 +4,7 @@ import { LazyMotion } from 'framer-motion';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
 import { PermissionRequests } from '@app/components/PermissionRequests';
-import { PageSkeleton } from '@shared/components/ui/Skeleton';
+import { PageSkeleton } from '@shared/components/ui';
 import { OnboardingModal } from '@features/auth/components/OnboardingModal';
 import { App as CapApp } from '@capacitor/app';
 import { supabase } from '@shared/lib/supabase';

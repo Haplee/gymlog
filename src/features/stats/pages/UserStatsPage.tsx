@@ -511,7 +511,8 @@ export function UserStatsPage() {
     } catch {
       seen = [];
     }
-    const fresh = unlocked.filter((id) => !seen.includes(id));
+    const seenSet = new Set(seen);
+    const fresh = unlocked.filter((id) => !seenSet.has(id));
     if (fresh.length) {
       fresh.forEach((id) =>
         toast.success(`${t('achievements.unlocked_toast')} ${t(`achievements.${id}`)}`),

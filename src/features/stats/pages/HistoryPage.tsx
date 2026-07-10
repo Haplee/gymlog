@@ -16,6 +16,8 @@ import { useCardioStore, CARDIO_LABELS } from '@features/cardio/stores/cardioSto
 import { Layout } from '@app/components/Layout';
 import { supabase } from '@shared/lib/supabase';
 import { shareWorkoutImage } from '@shared/lib/shareImage';
+import { formatDuration } from '@shared/lib/duration';
+import { formatDisplayDate } from '@shared/lib/formatDate';
 import type { WorkoutWithSets, WorkoutSetWithDetails } from '@shared/lib/types';
 import { toast } from 'sonner';
 import { Capacitor } from '@capacitor/core';
@@ -184,13 +186,6 @@ function WorkoutMeta({ workout }: { workout: WorkoutWithSets }) {
       {notes ? <div className="text-xs italic text-fg-subtle">“{notes}”</div> : null}
     </div>
   );
-}
-
-function formatDuration(s: number): string {
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}min`;
 }
 
 function repsRange(reps: number[]): string {
@@ -443,7 +438,7 @@ export function HistoryPage() {
     );
 
   const groupedWorkouts: GroupedWorkout[] = workouts.reduce((acc: GroupedWorkout[], wo) => {
-    const date = new Date(wo.started_at ?? '').toLocaleDateString();
+    const date = formatDisplayDate(wo.started_at ?? '');
     const existing = acc.find((g) => g.date === date);
     const volume = wo.sets.reduce((sum, s) => sum + s.reps * s.weight, 0);
     if (existing) {
@@ -934,12 +929,16 @@ export function HistoryPage() {
     | { kind: 'cardio'; data: (typeof cardioSessions)[0]; date: Date };
 
   const timelineItems: TimelineItem[] = [
-    ...workouts.map(
-      (wo): TimelineItem => ({ kind: 'workout', data: wo, date: new Date(wo.started_at ?? '') }),
-    ),
-    ...cardioSessions.map(
-      (s): TimelineItem => ({ kind: 'cardio', data: s, date: new Date(s.startedAt) }),
-    ),
+    ...workouts.map((wo): TimelineItem => ({
+      kind: 'workout',
+      data: wo,
+      date: new Date(wo.started_at ?? ''),
+    })),
+    ...cardioSessions.map((s): TimelineItem => ({
+      kind: 'cardio',
+      data: s,
+      date: new Date(s.startedAt),
+    })),
   ].sort((a, b) => b.date.getTime() - a.date.getTime());
 
   // Agrupar timeline por fecha local
@@ -1214,7 +1213,7 @@ export function HistoryPage() {
                                     exerciseCount: uniqueExercises,
                                     totalSets: item.data.sets.length,
                                     totalVolume: volume,
-                                    date: new Date(item.data.started_at ?? '').toLocaleDateString(),
+                                    date: formatDisplayDate(item.data.started_at ?? ''),
                                   });
                                   if (success) toast.success(t('history.shared_msg'));
                                   else toast.error('Error');
@@ -1321,7 +1320,7 @@ export function HistoryPage() {
               const grouped: Record<string, Record<string, typeof filteredSets>> = {};
               filteredSets.forEach((s: WorkoutSetWithDetails) => {
                 const date = s.workout?.started_at
-                  ? new Date(s.workout.started_at).toLocaleDateString()
+                  ? formatDisplayDate(s.workout.started_at)
                   : 'Sin fecha';
                 const exercise = s.exercise?.name || t('history.unknown_exercise');
                 if (!grouped[date]) grouped[date] = {};
@@ -1383,7 +1382,7 @@ export function HistoryPage() {
                       type="button"
                       onClick={() => handleSaveTemplate(group.workouts, group.date)}
                       className="flex items-center gap-1 text-xs font-semibold text-accent"
-                      title={t('history.save_as_template')}
+                      aria-label={t('history.save_as_template')}
                     >
                       <BookmarkPlus className="w-3.5 h-3.5" />
                     </button>
@@ -1426,7 +1425,7 @@ export function HistoryPage() {
                               exerciseCount: uniqueExercises,
                               totalSets: wo.sets.length,
                               totalVolume: volume,
-                              date: new Date(wo.started_at ?? '').toLocaleDateString(),
+                              date: formatDisplayDate(wo.started_at ?? ''),
                             });
                             if (success) toast.success(t('history.shared_msg'));
                             else toast.error('Error');

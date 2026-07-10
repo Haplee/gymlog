@@ -13,7 +13,7 @@ import {
   deleteExerciseGoal,
 } from '@shared/api/queries';
 import { calcular1RM } from '@shared/lib/brzycki';
-import { Skeleton } from '@shared/components/ui/Skeleton';
+import { Skeleton } from '@shared/components/ui';
 import { KPICard } from '../components/KPICards';
 import { CardioTypeIcon } from '@shared/components/CardioIcons';
 import type { ChartView } from '../components/Charts';

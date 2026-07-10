@@ -12,6 +12,7 @@ import {
 } from '@features/cardio/stores/cardioStore';
 import { CardioTypeIcon } from '@shared/components/CardioIcons';
 import { impact, notificationHaptic, ImpactStyle, NotificationType } from '@shared/lib/haptics';
+import { formatDuration } from '@shared/lib/duration';
 import { SectionHeader } from '@shared/components/ui';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -34,13 +35,6 @@ function formatSeconds(s: number): string {
   const sec = s % 60;
   if (h > 0) return `${h}h ${String(m).padStart(2, '0')}m`;
   return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
-}
-
-function formatDuration(s: number): string {
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}min`;
 }
 
 function ActiveSessionCard({ userId }: { userId: string | null }) {
