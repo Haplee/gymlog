@@ -1,3 +1,5 @@
+import { ExerciseRow, WorkoutMeta } from '@features/stats/components/HistoryRows';
+import { buildTemplateFromWorkouts } from '@features/stats/utils/historyHelpers';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -7,10 +9,8 @@ import { useAuthStore } from '@features/auth/stores/authStore';
 import { useWorkoutStore } from '@features/workout/stores/workoutStore';
 import {
   useRoutineStore,
-  type Routine,
   type DayOfWeek,
   type DayRoutine,
-  type RoutineExercise,
 } from '@features/routine/stores/routineStore';
 import { useCardioStore, CARDIO_LABELS } from '@features/cardio/stores/cardioStore';
 import { Layout } from '@app/components/Layout';
@@ -46,17 +46,7 @@ import {
 } from '@features/stats/utils/excelExport';
 import { parseXlsxFile, DAY_LABELS } from '@features/stats/utils/excelImport';
 import { applyExcelImport } from '@features/stats/utils/applyExcelImport';
-import {
-  ChevronRight,
-  Trash2,
-  Repeat,
-  Share2,
-  BarChart2,
-  BarChart3,
-  Pencil,
-  Star,
-  BookmarkPlus,
-} from 'lucide-react';
+import { Trash2, Repeat, Share2, BarChart2, BarChart3, Pencil, BookmarkPlus } from 'lucide-react';
 import { devError } from '@shared/lib/devtools';
 
 interface GroupedWorkout {
@@ -64,177 +54,6 @@ interface GroupedWorkout {
   workouts: WorkoutWithSets[];
   totalSets: number;
   totalVolume: number;
-}
-
-function ExerciseRow({
-  exercise,
-  sets,
-  onDelete,
-}: {
-  exercise: string;
-  sets: WorkoutSetWithDetails[];
-  onDelete: (id: string) => void;
-}) {
-  const { t } = useTranslation();
-  const [expanded, setExpanded] = useState(false);
-  const sortedSets = [...sets].sort((a, b) => a.set_num - b.set_num);
-  const firstSet = sortedSets[0];
-
-  return (
-    <div className="last:border-b-0 border-b border-line">
-      <div
-        onClick={() => setExpanded(!expanded)}
-        onKeyDown={(e) => e.key === 'Enter' && setExpanded(!expanded)}
-        role="button"
-        tabIndex={0}
-        className="px-3 py-3 flex justify-between items-center cursor-pointer transition-colors hover:bg-hover active:bg-hover"
-      >
-        <div className="flex items-center gap-3">
-          <ChevronRight
-            className="w-4 h-4 flex-shrink-0 transition-transform"
-            style={{
-              color: 'var(--text-tertiary)',
-              transform: expanded ? 'rotate(90deg)' : 'none',
-            }}
-          />
-          <span className="text-base font-medium text-fg">{exercise}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-2xs px-1.5 py-0.5 rounded-sm font-bold font-mono tabular-nums bg-accent/10 text-accent border border-line-accent">
-            {sortedSets.length} {t('history.series_plural')}
-          </span>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(firstSet.id);
-            }}
-            className="p-1.5 rounded-lg transition-colors text-fg-subtle hover:bg-error/10 active:bg-error/10"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      </div>
-      {expanded && (
-        <div className="px-3 pb-3 space-y-1.5">
-          {sortedSets.map((s) => (
-            <div
-              key={s.id}
-              className="flex flex-col gap-1 px-3 py-2 rounded-md ml-7 bg-surface-2 border border-line"
-            >
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-mono text-fg-subtle">
-                    {t('workout.sets')} {s.set_num}
-                  </span>
-                  <span className="text-sm text-fg-muted">
-                    {s.reps} {t('workout.reps').toLowerCase()}
-                  </span>
-                  {s.is_warmup && (
-                    <span className="text-2xs px-1.5 py-0.5 rounded-sm font-bold uppercase bg-warning/15 text-warning">
-                      W
-                    </span>
-                  )}
-                  {typeof s.rpe === 'number' && (
-                    <span className="text-[0.5625rem] px-1.5 py-0.5 rounded-sm font-bold bg-surface-3 text-fg-muted">
-                      RPE {s.rpe}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono tabular-nums font-semibold text-sm text-accent">
-                    {s.weight} kg
-                  </span>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDelete(s.id);
-                    }}
-                    className="p-1 rounded text-fg-subtle"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                </div>
-              </div>
-              {s.notes && <div className="text-xs italic pl-1 text-fg-subtle">“{s.notes}”</div>}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function WorkoutMeta({ workout }: { workout: WorkoutWithSets }) {
-  const rating = workout.rating ?? null;
-  const notes = workout.notes?.trim();
-  if (!rating && !notes) return null;
-  return (
-    <div className="mt-2 flex flex-col gap-1">
-      {rating ? (
-        <div className="flex items-center gap-0.5">
-          {[1, 2, 3, 4, 5].map((n) => (
-            <Star
-              key={n}
-              className={`w-3.5 h-3.5 ${n <= rating ? 'fill-accent text-accent' : 'text-fg-subtle'}`}
-              aria-hidden="true"
-            />
-          ))}
-        </div>
-      ) : null}
-      {notes ? <div className="text-xs italic text-fg-subtle">“{notes}”</div> : null}
-    </div>
-  );
-}
-
-function repsRange(reps: number[]): string {
-  if (!reps.length) return '';
-  const min = Math.min(...reps);
-  const max = Math.max(...reps);
-  return min === max ? String(min) : `${min}-${max}`;
-}
-
-// Crea una rutina custom a partir de los entrenos de un día: agrupa por ejercicio
-// (sets = nº de series, reps = rango observado) y los coloca en el día de hoy.
-function buildTemplateFromWorkouts(dayWorkouts: WorkoutWithSets[], name: string): Routine {
-  const map = new Map<string, number[]>();
-  for (const wo of dayWorkouts) {
-    for (const s of wo.sets) {
-      const exName = s.exercise?.name?.trim();
-      if (!exName) continue;
-      const arr = map.get(exName) ?? [];
-      arr.push(s.reps);
-      map.set(exName, arr);
-    }
-  }
-  const exercises: RoutineExercise[] = [...map].map(([exName, reps]) => ({
-    name: exName,
-    sets: reps.length,
-    reps: repsRange(reps),
-  }));
-  const mkRest = () => ({ name: 'Descanso', exercises: [] as RoutineExercise[] });
-  const days: Routine['days'] = {
-    monday: mkRest(),
-    tuesday: mkRest(),
-    wednesday: mkRest(),
-    thursday: mkRest(),
-    friday: mkRest(),
-    saturday: mkRest(),
-    sunday: mkRest(),
-  };
-  const today = (
-    ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as DayOfWeek[]
-  )[new Date().getDay()];
-  days[today] = { name, exercises };
-  return {
-    id: `custom-${Date.now()}`,
-    name,
-    description: '',
-    isCustom: true,
-    createdAt: new Date().toISOString(),
-    days,
-  };
 }
 
 interface EditRow {

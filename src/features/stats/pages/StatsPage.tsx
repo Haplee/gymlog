@@ -1,3 +1,10 @@
+import {
+  calculateMuscleGroupDistribution,
+  formatSeconds,
+  PERIOD_LABELS,
+  PERIOD_WEEKS,
+  type PeriodFilter,
+} from '@features/stats/utils/statsData';
 import { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -67,22 +74,6 @@ import {
 import { useTranslation } from 'react-i18next';
 import { devError } from '@shared/lib/devtools';
 
-type PeriodFilter = '4semanas' | '3meses' | '6meses' | '1año';
-
-const PERIOD_LABELS: Record<PeriodFilter, string> = {
-  '4semanas': '4 sem',
-  '3meses': '3 mes',
-  '6meses': '6 mes',
-  '1año': '1 año',
-};
-
-const PERIOD_WEEKS: Record<PeriodFilter, number> = {
-  '4semanas': 4,
-  '3meses': 12,
-  '6meses': 24,
-  '1año': 52,
-};
-
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-3 px-1">
@@ -92,34 +83,6 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
       <div className="flex-1 h-px" style={{ backgroundColor: 'var(--border-subtle)' }} />
     </div>
   );
-}
-
-function formatSeconds(s: number): string {
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}m`;
-}
-
-function calculateMuscleGroupDistribution(
-  sets: {
-    weight: number;
-    reps: number;
-    is_warmup?: boolean | null;
-    exercise?: { muscle_group?: string | null } | null;
-  }[],
-) {
-  const distribution: Record<string, number> = {};
-  sets
-    .filter((s) => !s.is_warmup)
-    .forEach((s) => {
-      const muscleGroup = s.exercise?.muscle_group || 'Otro';
-      const volume = s.weight * s.reps;
-      distribution[muscleGroup] = (distribution[muscleGroup] || 0) + volume;
-    });
-  return Object.entries(distribution)
-    .map(([name, value]) => ({ name, value }))
-    .sort((a, b) => b.value - a.value);
 }
 
 export function StatsPage() {

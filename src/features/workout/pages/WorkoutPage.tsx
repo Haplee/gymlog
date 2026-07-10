@@ -1,3 +1,4 @@
+import { ResumeWorkoutBanner } from '@features/workout/components/ResumeWorkoutBanner';
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -27,17 +28,7 @@ import { LastSessionCard } from '@features/workout/components/LastSessionCard';
 import { WorkoutSetList } from '@features/workout/components/WorkoutSetList';
 import { PlatesCalculator } from '@features/workout/components/PlatesCalculator';
 import type { ExerciseNote, PersonalRecord } from '@shared/lib/types';
-import {
-  Trash2,
-  Plus,
-  StickyNote,
-  AlertCircle,
-  Calculator,
-  BookOpen,
-  Trophy,
-  Repeat,
-  Star,
-} from 'lucide-react';
+import { Trash2, Plus, StickyNote, Calculator, BookOpen, Trophy, Repeat, Star } from 'lucide-react';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { impact, notificationHaptic, ImpactStyle, NotificationType } from '@shared/lib/haptics';
@@ -52,45 +43,6 @@ const setSchema = z.object({
   reps: z.coerce.number().positive('Las repeticiones deben ser mayores a 0'),
   weight: z.coerce.number().nonnegative('El peso no puede ser negativo'),
 });
-
-function ResumeWorkoutBanner({
-  onContinue,
-  onDiscard,
-}: {
-  onContinue: () => void;
-  onDiscard: () => void;
-}) {
-  const { t } = useTranslation();
-  return (
-    <m.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="mb-4 p-4 rounded-md border-2 border-accent bg-accent/5 flex flex-col gap-3"
-    >
-      <div className="flex items-center gap-2 text-accent">
-        <AlertCircle className="w-5 h-5" />
-        <span className="font-semibold text-sm">{t('workout.resume_banner')}</span>
-      </div>
-      <p className="text-xs text-fg-muted">{t('workout.resume_desc')}</p>
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={onContinue}
-          className="flex-1 py-2 rounded-lg bg-accent text-accent-fg text-xs font-bold"
-        >
-          {t('workout.continue')}
-        </button>
-        <button
-          type="button"
-          onClick={onDiscard}
-          className="flex-1 py-2 rounded-lg border border-line-strong text-fg-muted text-xs font-medium"
-        >
-          {t('workout.discard')}
-        </button>
-      </div>
-    </m.div>
-  );
-}
 
 export function WorkoutPage() {
   const navigate = useNavigate();
