@@ -56,3 +56,7 @@ scripts/icon-preview.png
 .opencode/
 AGENTS.md
 GEMINI.md
+
+# Analisis de levantamientos (docs/LIFT_ANALYSIS_PLAN.md) — entorno y salidas locales
+tools/lift-analysis/.venv/
+tools/lift-analysis/out/

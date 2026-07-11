@@ -5,6 +5,7 @@ import { supabase } from '@shared/lib/supabase';
 import type { WorkoutWithSets } from '@shared/lib/types';
 import { devError } from '@shared/lib/devtools';
 import { enqueueWorkout, isNetworkError } from '@shared/lib/workoutOutbox';
+import { resolveOrCreateExercise } from '@shared/lib/resolveOrCreateExercise';
 import { useOutboxStore } from '@shared/stores/outboxStore';
 
 const SetDataSchema = z.object({
@@ -208,17 +209,11 @@ export const useWorkoutStore = create<WorkoutState>()(
         try {
           let exerciseId = activeExerciseId;
           if (!exerciseId && customExerciseName.trim()) {
-            const { data, error } = await supabase
-              .from('exercises')
-              .insert({
-                name: customExerciseName.trim(),
-                user_id: userId,
-                muscle_group: customMuscleGroup,
-              })
-              .select('id')
-              .single();
-            if (error) throw error;
-            exerciseId = data.id;
+            exerciseId = await resolveOrCreateExercise(
+              userId,
+              customExerciseName,
+              customMuscleGroup,
+            );
           }
           if (!exerciseId) return { error: new Error('Selecciona un ejercicio'), success: false };
 

@@ -1,4 +1,5 @@
 import type { CapacitorConfig } from '@capacitor/cli';
+import { KeyboardResize } from '@capacitor/keyboard';
 
 const config: CapacitorConfig = {
   appId: 'com.franvi.gymlog',
@@ -26,6 +27,13 @@ const config: CapacitorConfig = {
     LocalNotifications: {
       iconColor: '#60eca8',
       smallIcon: 'icon',
+    },
+    Keyboard: {
+      // Encoge el WebView al abrir el teclado para que los inputs del final de
+      // la pantalla (RPE, peso, notas) no queden tapados — con contentInset
+      // 'never' en iOS el motor no redimensiona el viewport por sí solo.
+      resize: KeyboardResize.Body,
+      resizeOnFullScreen: true,
     },
   },
 };

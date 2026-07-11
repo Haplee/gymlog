@@ -37,6 +37,18 @@ describe('isNetworkError', () => {
     expect(isNetworkError(new Error('unauthorized'))).toBe(false);
     expect(isNetworkError(null)).toBe(false);
   });
+
+  it('false para errores con código SQLSTATE/PGRST aunque el mensaje mencione fetch', () => {
+    vi.stubGlobal('navigator', { onLine: true });
+    // Respuesta real del servidor: la petición llegó, no es un fallo de red.
+    expect(isNetworkError({ code: '23505', message: 'failed to fetch unique row' })).toBe(false);
+    expect(isNetworkError({ code: 'PGRST116', message: 'network of results' })).toBe(false);
+    // Sin código de servidor (códigos de socket Node, etc.), la heurística
+    // por mensaje sigue aplicando.
+    expect(isNetworkError(Object.assign(new Error('fetch failed'), { code: 'ECONNREFUSED' }))).toBe(
+      true,
+    );
+  });
 });
 
 // Helpers de los tests de persistencia: importan el módulo "fresco" para que su
@@ -78,9 +90,14 @@ describe('workoutOutbox — persistencia y flush', () => {
     rpcMock.mockReset();
     fromMock.mockReset();
     vi.stubGlobal('navigator', { onLine: true });
+    // Los caminos de error logean via devError/devLog — silenciados para no
+    // ensuciar la salida del runner con fallos esperados.
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'log').mockImplementation(() => {});
   });
 
   afterEach(() => {
+    vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
 

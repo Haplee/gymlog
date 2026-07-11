@@ -66,7 +66,8 @@ function Loading() {
 }
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
+  const loading = useAuthStore((s) => s.loading);
   if (loading) return <Loading />;
   if (!user) return <Navigate to="/login" replace />;
   return <>{children}</>;
@@ -74,7 +75,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function AnimatedRoutes() {
   const location = useLocation();
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
 
   // La transición de página vive en Layout (m.main). Animar aquí también
   // duplicaba exit+enter (dos mode="wait" encadenados) y hacía lento el cambio de tab.
@@ -190,7 +191,7 @@ function useWorkoutOutboxSync() {
 
 /** Mantiene el widget Android (racha + último entreno) al día. No-op en web/iOS. */
 function useWidgetSync() {
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
   useEffect(() => {
     if (!user?.id || !Capacitor.isNativePlatform()) return;
     let cancelled = false;
@@ -221,7 +222,9 @@ function useWidgetSync() {
 }
 
 function AppRoutes() {
-  const { user, loading, initialized } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
+  const loading = useAuthStore((s) => s.loading);
+  const initialized = useAuthStore((s) => s.initialized);
   const { applyTheme } = useSettingsStore();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const navigate = useNavigate();
@@ -310,8 +313,13 @@ function AppRoutes() {
   useEffect(() => {
     if (initialized && user) {
       const checkProfile = async () => {
-        const { data } = await supabase.from('profiles').select('goal').eq('id', user.id).single();
-        if (data && !data.goal) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('goal')
+          .eq('id', user.id)
+          .maybeSingle();
+        // Sin fila de perfil (usuario antiguo) o sin goal → onboarding.
+        if (!error && (!data || !data.goal)) {
           setShowOnboarding(true);
         }
       };

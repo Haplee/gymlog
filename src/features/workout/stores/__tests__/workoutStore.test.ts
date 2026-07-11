@@ -1,4 +1,4 @@
-import { beforeEach, describe, it, expect, vi } from 'vitest';
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 
 vi.mock('@shared/lib/supabase', () => {
   const rpc = vi.fn().mockResolvedValue({ data: { id: 'wo-id' }, error: null });
@@ -19,17 +19,31 @@ vi.mock('@shared/stores/outboxStore', () => ({
   useOutboxStore: { getState: () => ({ refresh: vi.fn() }) },
 }));
 
+vi.mock('@shared/lib/resolveOrCreateExercise', () => ({
+  resolveOrCreateExercise: vi.fn().mockResolvedValue('test-exercise-id'),
+}));
+
 import { useWorkoutStore } from '../workoutStore';
 import { supabase } from '@shared/lib/supabase';
+import { resolveOrCreateExercise } from '@shared/lib/resolveOrCreateExercise';
 
 const mockRpc = vi.mocked(supabase.rpc);
-const mockFrom = vi.mocked(supabase.from);
+const mockResolveExercise = vi.mocked(resolveOrCreateExercise);
 
 // jsdom no define navigator.onLine → lo fijamos manualmente
 const DEFAULT_ONLINE = true;
 
+// Los tests de camino-error logean via devError — silenciado para no ensuciar
+// la salida del runner con fallos esperados.
+let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+
 describe('useWorkoutStore', () => {
+  afterEach(() => {
+    consoleErrorSpy.mockRestore();
+  });
+
   beforeEach(() => {
+    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     useWorkoutStore.getState().clearPersistedState();
     mockRpc.mockClear();
     mockRpc.mockResolvedValue({
@@ -40,7 +54,8 @@ describe('useWorkoutStore', () => {
       statusText: 'OK',
       success: true,
     });
-    mockFrom.mockClear();
+    mockResolveExercise.mockClear();
+    mockResolveExercise.mockResolvedValue('test-exercise-id');
     Object.defineProperty(navigator, 'onLine', { configurable: true, value: DEFAULT_ONLINE });
   });
 
@@ -222,7 +237,7 @@ describe('useWorkoutStore', () => {
 
       const result = await store.saveWorkout('user-1');
 
-      expect(mockFrom).toHaveBeenCalledWith('exercises');
+      expect(mockResolveExercise).toHaveBeenCalledWith('user-1', 'Press banca', 'Otro');
       expect(mockRpc).toHaveBeenCalledWith(
         'save_workout_with_sets',
         expect.objectContaining({
@@ -234,19 +249,7 @@ describe('useWorkoutStore', () => {
     });
 
     it('debería devolver error si crear ejercicio custom falla', async () => {
-      const failingSingle = vi
-        .fn()
-        .mockResolvedValue({ data: null, error: new Error('Insert failed') });
-      const failingSelect = vi.fn(() => ({ single: failingSingle }));
-      const failingInsert = vi.fn(() => ({ select: failingSelect }));
-      const failingFrom = vi.fn(() => ({
-        insert: failingInsert,
-        upsert: vi.fn().mockResolvedValue({ data: { id: 'test-exercise-id' }, error: null }),
-        select: vi.fn(() => ({ single: failingSingle })),
-      }));
-      (supabase.from as ReturnType<typeof vi.fn>).mockImplementation(
-        failingFrom as unknown as typeof supabase.from,
-      );
+      mockResolveExercise.mockRejectedValue(new Error('Insert failed'));
       const store = useWorkoutStore.getState();
       store.setCustomExerciseName('Press banca');
       store.updateSet(0, { reps: '10', weight: '100' });

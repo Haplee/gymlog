@@ -25,11 +25,13 @@ export function useProfile() {
     enabled: !!userId,
     staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<Profile> => {
+      // maybeSingle: si la fila aún no existe (usuario antiguo sin backfill)
+      // no queremos un error, solo el fallback al prefijo del email.
       const { data } = await supabase
         .from('profiles')
         .select('full_name, avatar_url')
         .eq('id', userId as string)
-        .single();
+        .maybeSingle();
       return {
         fullName: data?.full_name ?? '',
         avatarUrl: data?.avatar_url ?? null,

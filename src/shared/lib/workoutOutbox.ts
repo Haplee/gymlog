@@ -1,6 +1,7 @@
 import { openDB, type IDBPDatabase } from 'idb';
 import { supabase } from './supabase';
 import { devError, devLog } from './devtools';
+import { resolveOrCreateExercise } from './resolveOrCreateExercise';
 
 const DB_NAME = 'gymlog-outbox';
 const STORE = 'workouts';
@@ -50,6 +51,14 @@ export interface OutboxWorkout {
 /** Heurística: ¿el error parece de red (sin conexión / fetch fallido)? */
 export function isNetworkError(err: unknown): boolean {
   if (typeof navigator !== 'undefined' && !navigator.onLine) return true;
+  // Un error con código SQLSTATE o PGRST es una respuesta real del servidor
+  // (la petición llegó): no es de red aunque el mensaje mencione 'fetch'.
+  if (typeof err === 'object' && err !== null && 'code' in err) {
+    const code = (err as { code: unknown }).code;
+    if (typeof code === 'string' && (/^[0-9A-Z]{5}$/.test(code) || code.startsWith('PGRST'))) {
+      return false;
+    }
+  }
   const msg = (err instanceof Error ? err.message : String(err ?? '')).toLowerCase();
   return (
     msg.includes('failed to fetch') ||
@@ -101,17 +110,11 @@ export async function flushWorkoutOutbox(): Promise<number> {
 
       let exerciseId = w.exerciseId;
       if (!exerciseId && w.customExerciseName.trim()) {
-        const { data, error } = await supabase
-          .from('exercises')
-          .insert({
-            name: w.customExerciseName.trim(),
-            user_id: w.userId,
-            muscle_group: w.customMuscleGroup,
-          })
-          .select('id')
-          .single();
-        if (error) throw error;
-        exerciseId = data.id;
+        exerciseId = await resolveOrCreateExercise(
+          w.userId,
+          w.customExerciseName,
+          w.customMuscleGroup,
+        );
       }
       if (!exerciseId) {
         await removeWorkout(w.id);

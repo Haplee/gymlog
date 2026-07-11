@@ -125,7 +125,7 @@ export function SettingsPage() {
         .from('profiles')
         .select('notifications_enabled, avatar_url, full_name')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
       if (data) {
         // setNotificationsEnabled espeja el flag en localStorage internamente
         setNotificationsEnabled(!!data.notifications_enabled);
@@ -187,7 +187,11 @@ export function SettingsPage() {
       const granted = await requestPermission();
       if (granted) {
         if (user) {
-          await supabase.from('profiles').update({ notifications_enabled: true }).eq('id', user.id);
+          // upsert: crea la fila de perfil si no existe (un UPDATE sobre 0
+          // filas "triunfa" sin guardar nada — así se perdían los ajustes).
+          await supabase
+            .from('profiles')
+            .upsert({ id: user.id, notifications_enabled: true }, { onConflict: 'id' });
         }
         // Reprogramar todas las alarmas nativas con el permiso ya concedido
         await syncRoutineReminders(getReminderDays());
@@ -203,7 +207,9 @@ export function SettingsPage() {
     } else {
       setNotificationsEnabled(false);
       if (user) {
-        await supabase.from('profiles').update({ notifications_enabled: false }).eq('id', user.id);
+        await supabase
+          .from('profiles')
+          .upsert({ id: user.id, notifications_enabled: false }, { onConflict: 'id' });
       }
       // Sin notificaciones: limpiar todo lo programado en el sistema
       await cancelAllScheduled();
@@ -265,10 +271,11 @@ export function SettingsPage() {
       if (uploadError) throw uploadError;
 
       const { data: publicData } = supabase.storage.from('avatars').getPublicUrl(path);
+      // upsert: crea la fila de perfil si no existe (un UPDATE sobre 0 filas
+      // "triunfa" sin guardar nada — así se perdía la foto al recargar).
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ avatar_url: publicData.publicUrl })
-        .eq('id', user.id);
+        .upsert({ id: user.id, avatar_url: publicData.publicUrl }, { onConflict: 'id' });
       if (updateError) throw updateError;
 
       // Limpieza best-effort del avatar anterior (solo si vivía en nuestro bucket)
@@ -297,8 +304,7 @@ export function SettingsPage() {
     }
     const { error } = await supabase
       .from('profiles')
-      .update({ full_name: trimmed })
-      .eq('id', user.id);
+      .upsert({ id: user.id, full_name: trimmed }, { onConflict: 'id' });
     if (error) {
       devError('[Perfil] Error guardando nombre:', error);
       toast.error(t('settings.name_error'));

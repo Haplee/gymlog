@@ -12,6 +12,7 @@ import androidx.health.connect.client.records.RestingHeartRateRecord
 import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
+import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import com.getcapacitor.JSArray
@@ -221,6 +222,26 @@ class HealthBridgePlugin : Plugin() {
             o.put("type", mapExerciseType(rec.exerciseType))
             o.put("started_at", rec.startTime.toString())
             o.put("duration", (rec.endTime.epochSecond - rec.startTime.epochSecond).toInt())
+            // Distancia (km) y calorías (kcal) de la sesión — mismo contrato que
+            // el plugin de HealthKit (iOS). Best-effort: sin datos o sin permiso
+            // de agregación, la sesión se devuelve igualmente sin esos campos.
+            try {
+                val agg = client.aggregate(
+                    AggregateRequest(
+                        metrics = setOf(
+                            DistanceRecord.DISTANCE_TOTAL,
+                            TotalCaloriesBurnedRecord.ENERGY_TOTAL,
+                        ),
+                        timeRangeFilter = TimeRangeFilter.between(rec.startTime, rec.endTime),
+                    ),
+                )
+                agg[DistanceRecord.DISTANCE_TOTAL]?.inKilometers
+                    ?.takeIf { it > 0 }?.let { o.put("distance", it) }
+                agg[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories
+                    ?.takeIf { it > 0 }?.let { o.put("calories", it.toInt()) }
+            } catch (e: Exception) {
+                Log.w(TAG, "readWorkouts aggregate: ${e.message}")
+            }
             arr.put(o)
         }
         return arr
@@ -238,6 +259,7 @@ class HealthBridgePlugin : Plugin() {
         ExerciseSessionRecord.EXERCISE_TYPE_ELLIPTICAL -> "elliptical"
         ExerciseSessionRecord.EXERCISE_TYPE_WALKING,
         ExerciseSessionRecord.EXERCISE_TYPE_HIKING -> "walking"
+        ExerciseSessionRecord.EXERCISE_TYPE_JUMP_ROPE -> "jump_rope"
         else -> "other"
     }
 

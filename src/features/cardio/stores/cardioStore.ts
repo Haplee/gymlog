@@ -4,14 +4,7 @@ import { supabase } from '@shared/lib/supabase';
 import { devError, devWarn } from '@shared/lib/devtools';
 
 export type CardioType =
-  | 'running'
-  | 'cycling'
-  | 'rowing'
-  | 'swimming'
-  | 'elliptical'
-  | 'walking'
-  | 'jump_rope'
-  | 'other';
+  'running' | 'cycling' | 'rowing' | 'swimming' | 'elliptical' | 'walking' | 'jump_rope' | 'other';
 
 export const CARDIO_LABELS: Record<CardioType, string> = {
   running: 'Correr',
@@ -125,15 +118,18 @@ export const useCardioStore = create<CardioState>()(
         if (userId) {
           const { data, error } = await supabase
             .from('cardio_sessions')
-            .insert({
-              user_id: userId,
-              type: session.type,
-              started_at: session.startedAt,
-              duration: session.duration,
-              distance: session.distance ?? null,
-              calories: session.calories ?? null,
-              notes: session.notes ?? null,
-            })
+            .upsert(
+              {
+                user_id: userId,
+                type: session.type,
+                started_at: session.startedAt,
+                duration: session.duration,
+                distance: session.distance ?? null,
+                calories: session.calories ?? null,
+                notes: session.notes ?? null,
+              },
+              { onConflict: 'user_id,started_at' },
+            )
             .select('id')
             .single();
           if (!error && data?.id) {
@@ -195,6 +191,11 @@ export const useCardioStore = create<CardioState>()(
             devError('[CardioStore] syncFromRemote failed:', error.message);
             return;
           }
+          // Normaliza timestamps a epoch ms para comparar instantes, no strings:
+          // el cliente genera '...Z' pero Supabase (timestamptz) devuelve '...+00:00',
+          // así que la comparación por string cruda nunca casaba y no deduplicaba.
+          const toEpoch = (iso: string) => new Date(iso).getTime();
+
           const remote: CardioSession[] = (data || []).map((r) => ({
             id: r.id,
             type: r.type as CardioType,
@@ -210,17 +211,17 @@ export const useCardioStore = create<CardioState>()(
           }));
 
           // Push pending or unknown local sessions
-          const remoteStartedSet = new Set(remote.map((r) => r.startedAt));
+          const remoteStartedSet = new Set(remote.map((r) => toEpoch(r.startedAt)));
           const pending = get().sessions.filter(
             (s) =>
               s.pendingSync ||
-              (!remote.some((r) => r.id === s.id) && !remoteStartedSet.has(s.startedAt)),
+              (!remote.some((r) => r.id === s.id) && !remoteStartedSet.has(toEpoch(s.startedAt))),
           );
           const stillPending: CardioSession[] = [];
           if (pending.length > 0) {
             const { data: inserted, error: pushErr } = await supabase
               .from('cardio_sessions')
-              .insert(
+              .upsert(
                 pending.map((s) => ({
                   user_id: userId,
                   type: s.type,
@@ -230,6 +231,7 @@ export const useCardioStore = create<CardioState>()(
                   calories: s.calories ?? null,
                   notes: s.notes ?? null,
                 })),
+                { onConflict: 'user_id,started_at' },
               )
               .select('id, type, started_at, duration, distance, calories, notes');
             if (!pushErr && inserted && inserted.length > 0) {

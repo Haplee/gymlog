@@ -3,6 +3,14 @@ import { AnimatePresence, m } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { Capacitor } from '@capacitor/core';
+
+// backdrop-filter provoca jank en el WebView de Android de gama media/baja al
+// animar la apertura/cierre; ahí se sustituye por un fondo más opaco.
+const IS_ANDROID = Capacitor.getPlatform() === 'android';
+const BACKDROP_STYLE = IS_ANDROID
+  ? { backgroundColor: 'rgba(0,0,0,0.6)' }
+  : { backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' };
 
 interface BottomSheetProps {
   open: boolean;
@@ -64,7 +72,7 @@ export function BottomSheet({
             transition={{ duration: 0.2 }}
             onClick={onClose}
             className="fixed inset-0 z-[var(--z-modal)]"
-            style={{ backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
+            style={BACKDROP_STYLE}
             aria-hidden="true"
           />
 

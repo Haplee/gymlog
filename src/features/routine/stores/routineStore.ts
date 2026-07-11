@@ -4,13 +4,7 @@ import { supabase } from '@shared/lib/supabase';
 import { devError, devLog } from '@shared/lib/devtools';
 
 export type DayOfWeek =
-  | 'monday'
-  | 'tuesday'
-  | 'wednesday'
-  | 'thursday'
-  | 'friday'
-  | 'saturday'
-  | 'sunday';
+  'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
 
 export interface RoutineExercise {
   name: string;
@@ -498,6 +492,8 @@ export const useRoutineStore = create<RoutineStore>()(
           isCustom: true,
           createdAt: new Date().toISOString(),
           // Deep clone days so edits to the copy never mutate the source template.
+          // structuredClone requiere Chromium 98+ / Safari 15.4+ — cubierto por
+          // los WebView de Capacitor y los navegadores que soporta la PWA.
           days: structuredClone(source.days),
         };
 
@@ -544,7 +540,12 @@ export const useRoutineStore = create<RoutineStore>()(
 
         if (error) {
           devError('Error saving routines:', error);
+          return;
         }
+        // Cada guardado explícito (cambios de rutina, logout) cuenta como
+        // backup: así la ventana de 3 días de checkAndBackup no depende solo
+        // del lastBackup persistido en localStorage.
+        set({ lastBackup: new Date().toISOString() });
       },
 
       loadFromDb: async (userId: string) => {

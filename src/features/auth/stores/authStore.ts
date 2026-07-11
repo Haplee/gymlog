@@ -6,6 +6,7 @@ import { Capacitor } from '@capacitor/core';
 import { Browser } from '@capacitor/browser';
 import { queryClient } from '@app/queryClient';
 import { useWorkoutStore } from '@features/workout/stores/workoutStore';
+import { useRoutineStore } from '@features/routine/stores/routineStore';
 import { devError, devLog, devWarn } from '@shared/lib/devtools';
 
 // Guardamos la subscripción fuera del store para que HMR y StrictMode
@@ -28,7 +29,7 @@ interface AuthState {
   signOut: () => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   loading: true,
   initialized: false,
@@ -79,11 +80,15 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   signUp: async (email, password, fullName, username) => {
     devLog('[Auth] signUp started for:', email);
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/auth/callback`,
+        // El trigger handle_new_user crea el perfil leyendo estos metadatos.
+        // El INSERT directo a profiles que había aquí nunca funcionó: con
+        // verificación por email no hay sesión todavía y RLS lo bloqueaba.
+        data: { full_name: fullName, username },
       },
     });
 
@@ -92,15 +97,6 @@ export const useAuthStore = create<AuthState>((set) => ({
         return { error: new Error('Este email ya está registrado'), needsVerification: false };
       }
       return { error, needsVerification: false };
-    }
-
-    if (data.user) {
-      await supabase.from('profiles').insert({
-        id: data.user.id,
-        email,
-        full_name: fullName,
-        username,
-      });
     }
 
     return { error: null, needsVerification: true };
@@ -131,6 +127,16 @@ export const useAuthStore = create<AuthState>((set) => ({
   signOut: async () => {
     // Limpieza de cache y estado persistido
     try {
+      // Backup de rutinas antes de cerrar sesión: es el último momento con
+      // credenciales válidas y cubre el caso de storage limpiado entre ventanas
+      // de checkAndBackup. Best-effort: un fallo no debe bloquear el logout.
+      const userId = get().user?.id;
+      if (userId) {
+        await useRoutineStore
+          .getState()
+          .saveToDb(userId)
+          .catch((e) => devError('[GymLog] Backup de rutinas en signOut falló:', e));
+      }
       queryClient.clear();
       useWorkoutStore.getState().clearPersistedState();
       await supabase.auth.signOut();

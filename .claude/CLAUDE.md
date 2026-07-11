@@ -82,7 +82,8 @@ src/
 
 ## Sistema de diseño
 
-- **Tema oscuro único**: base `#080808`, superficie `#111111`, acento lima `#c8ff00`.
+- **Tema oscuro único** (sistema "Stitch"): base `#0a0a0b`, superficie `#141416`,
+  acento menta `#60eca8` (`--interactive-primary`), texto sobre acento `#003822`.
   No hay modo claro; no añadas uno sin que lo pida el usuario.
 - **Tokens**: `src/shared/styles/tokens.css` define las CSS vars (`--bg-*`,
   `--text-*`, `--interactive-*`, `--accent-*`, `--radius-*`, `--shadow-*`,
@@ -94,9 +95,9 @@ src/
   `fill` SVG de forma fiable — por eso son literales TS).
 - **Elevación (3 niveles):** plano = sin sombra; elevado = `shadow-card`;
   flotante (FABs, overlays) = `shadow-lg` / `shadow-fab`.
-- **Tipografía:** DM Sans (display) + Geist Mono (contadores/números). `:root`
-  es 15px. Usa la escala con nombre (`text-sm`, `text-base`, `text-lg`…), no
-  valores arbitrarios `text-[…]`.
+- **Tipografía:** Inter (cuerpo) + Space Grotesk (display y contadores/números,
+  con cifras tabulares). `:root` es 15px. Usa la escala con nombre (`text-sm`,
+  `text-base`, `text-lg`…), no valores arbitrarios `text-[…]`.
 - Estilos inline `style={{}}` solo para valores genuinamente dinámicos
   (porcentajes, colores por índice de chart, props de framer-motion).
 
@@ -135,4 +136,4 @@ src/
 - Entorno: Windows 11 + Ubuntu (dual boot)
 - Despliegue: Vercel (web) + GitHub Actions (`android-build.yml` compila APK, `ci.yml` lint/test)
 - `diary.md` en la raíz: diario de desarrollo con decisiones — consúltalo para contexto histórico.
-- `landing.html` y `tutorial.html` en la raíz son páginas estáticas independientes (landing de descarga del APK y tutorial); no forman parte del bundle Vite.
+- `public/landing.html` y `public/tutorial.html` son páginas estáticas independientes (landing de descarga del APK y tutorial); Vite las copia tal cual a `dist/`, no forman parte del bundle.
