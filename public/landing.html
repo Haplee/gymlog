@@ -4,10 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#0a0a0b" />
+    <!-- Marca JS activo: las animaciones .reveal solo ocultan contenido si hay JS (si no, todo visible) -->
+    <script>document.documentElement.classList.add('js');</script>
 
     <!-- SEO -->
     <title>GymLog — Tu diario de entrenamiento de fuerza y cardio</title>
-    <meta name="description" content="Registra series, pesos y repeticiones, sigue tus récords personales, rachas y estadísticas. App gratis para Android, sin anuncios y con modo offline. Descarga el APK." />
+    <meta name="description" content="Registra series, pesos y repeticiones, sigue tus récords personales, rachas y estadísticas. App gratis para Android e iOS, sin anuncios y con modo offline. Descarga el APK o la IPA." />
     <link rel="canonical" href="https://gymlog.vercel.app/" />
     <meta name="author" content="Francisco Vidal Mateo" />
 
@@ -15,19 +17,19 @@
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="GymLog" />
     <meta property="og:title" content="GymLog — Tu entreno, tu progreso" />
-    <meta property="og:description" content="Registra cada serie, supera tus récords y mantén la racha. App de gimnasio gratis, sin anuncios, offline. Descarga el APK Android." />
-    <meta property="og:image" content="pwa-512x512.webp" />
+    <meta property="og:description" content="Registra cada serie, supera tus récords y mantén la racha. App de gimnasio gratis, sin anuncios, offline. Para Android e iOS." />
+    <meta property="og:image" content="https://gymlog.vercel.app/pwa-512x512.png" />
     <meta property="og:locale" content="es_ES" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="GymLog — Tu entreno, tu progreso" />
-    <meta name="twitter:description" content="App de gimnasio gratis, sin anuncios, offline. Descarga el APK Android." />
-    <meta name="twitter:image" content="pwa-512x512.webp" />
+    <meta name="twitter:description" content="App de gimnasio gratis, sin anuncios, offline. Para Android e iOS." />
+    <meta name="twitter:image" content="https://gymlog.vercel.app/pwa-512x512.png" />
 
     <!-- Icons -->
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-    <link rel="apple-touch-icon" href="apple-touch-icon.webp" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
@@ -209,20 +211,20 @@
       .btn-ghost:focus-visible::after { opacity: 1; }
 
       /* ===== Reveal (transition.style clip-path) ===== */
-      .reveal {
+      /* OJO: no ocultar con clip-path — Chrome aplica el clip-path del propio
+         elemento al calcular la intersección, el IntersectionObserver nunca lo
+         ve entrar (ratio 0 permanente) y la sección queda invisible para siempre. */
+      html.js .reveal {
         opacity: 0;
         transform: translateY(22px);
-        clip-path: inset(0 0 100% 0);
         transition:
           opacity 0.7s var(--ease),
-          transform 0.7s var(--ease),
-          clip-path 0.8s var(--ease);
+          transform 0.7s var(--ease);
         transition-delay: var(--d, 0ms);
       }
-      .reveal.in {
+      html.js .reveal.in {
         opacity: 1;
         transform: none;
-        clip-path: inset(0 0 0 0);
       }
 
       /* ===== Entrada escalonada del hero (rise-in) ===== */
@@ -551,6 +553,32 @@
       .final p { color: var(--text-muted); max-width: 44ch; margin: 0 auto 1.9rem; }
       .final .hero-cta { justify-content: center; }
 
+      /* ===== Galería de pantallas ===== */
+      .shots {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 1.1rem;
+        margin-top: 2.2rem;
+      }
+      .shot { margin: 0; }
+      .shot img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border-radius: var(--radius);
+        border: 1px solid var(--line-strong);
+        background: #111;
+      }
+      .shot figcaption {
+        margin-top: 0.6rem;
+        font-size: 0.85rem;
+        color: var(--text-faint);
+        text-align: center;
+      }
+      @media (max-width: 760px) {
+        .shots { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.9rem; }
+      }
+
       /* ===== Footer ===== */
       footer {
         border-top: 1px solid var(--line);
@@ -775,7 +803,7 @@
               <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h.01" /><path d="M8.5 16.429a5 5 0 0 1 7 0" /><path d="M5 12.859a10 10 0 0 1 5.17-2.69" /><path d="M19 12.859a10 10 0 0 0-2.007-1.523" /><path d="M2 8.82a15 15 0 0 1 4.177-2.643" /><path d="M22 8.82a15 15 0 0 0-11.288-3.764" /><path d="m2 2 20 20" /></svg></div>
               <div>
                 <h3>Offline + instalable</h3>
-                <p>Funciona sin conexión como PWA o app Android nativa. Tus datos, siempre disponibles.</p>
+                <p>Funciona sin conexión como PWA o app nativa para Android e iOS. Tus datos, siempre disponibles.</p>
               </div>
             </article>
           </div>
@@ -810,6 +838,33 @@
               Ver la guía completa paso a paso
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
             </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Pantallas de la app -->
+      <section class="section" id="pantallas">
+        <div class="wrap">
+          <p class="eyebrow reveal">La app por dentro</p>
+          <h2 class="reveal" style="--d: 60ms">Interfaz clara, datos al frente</h2>
+          <p class="sub reveal" style="--d: 120ms">Tema oscuro, números grandes y cero distracciones: entrena, registra y revisa tu progreso.</p>
+          <div class="shots">
+            <figure class="shot reveal" style="--d: 0ms">
+              <img src="screens/workout.png" width="1200" height="2600" loading="lazy" alt="Pantalla de entrenamiento: registro de series de press banca con 80 kg por 8 repeticiones y récord personal marcado" />
+              <figcaption>Registro de series</figcaption>
+            </figure>
+            <figure class="shot reveal" style="--d: 80ms">
+              <img src="screens/stats.png" width="1200" height="2600" loading="lazy" alt="Pantalla de estadísticas: racha de 14 días, volumen semanal, progresión de 1RM y heatmap de actividad" />
+              <figcaption>Estadísticas y rachas</figcaption>
+            </figure>
+            <figure class="shot reveal" style="--d: 160ms">
+              <img src="screens/history.png" width="1200" height="2600" loading="lazy" alt="Historial de entrenamientos con sesiones por fecha, duración, volumen y ejercicios realizados" />
+              <figcaption>Historial completo</figcaption>
+            </figure>
+            <figure class="shot reveal" style="--d: 240ms">
+              <img src="screens/cardio.png" width="1200" height="2600" loading="lazy" alt="Pantalla de cardio con cronómetro en marcha, tipos de actividad y sesiones recientes" />
+              <figcaption>Cardio con cronómetro</figcaption>
+            </figure>
           </div>
         </div>
       </section>
