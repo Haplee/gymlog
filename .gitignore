@@ -49,6 +49,7 @@ scripts/icon-preview.png
 .env*
 
 # AI agent tooling config (per-user, graphify knowledge-graph — no versionar)
+.mcp.json
 .codex/
 .cursor/
 .gemini/

@@ -1,13 +1,16 @@
 name: iOS Build
-# Compila el proyecto iOS SIN FIRMAR en un runner macOS (smoke test): verifica
-# que el bundle web + Capacitor iOS + el plugin de biometría Swift + la config de
-# deep links compilan. NO produce un IPA instalable — distribuir requiere cuenta
-# Apple Developer + firma. Repo público => runner macOS gratuito.
+# Compila el proyecto iOS en un runner macOS y empaqueta un IPA SIN FIRMAR
+# (Release, SDK iphoneos). No vale para App Store ni instala directo: se
+# instala re-firmándolo con herramientas de sideload (AltStore, Sideloadly,
+# Esign) y un Apple ID. Repo público => runner macOS gratuito.
 on:
   workflow_dispatch:
   push:
     branches: [main]
     tags: ['v*']
+
+permissions:
+  contents: write # adjuntar el IPA a la release en push de tag
 
 jobs:
   build:
@@ -43,16 +46,53 @@ jobs:
           gem list -i xcodeproj >/dev/null 2>&1 || sudo gem install xcodeproj --no-document
           ruby ios-custom/add-plugin-to-target.rb ios/App/App.xcodeproj
           bash ios-custom/Info.plist.patch.sh ios/App/App/Info.plist
+      - name: Inject app icon
+        # El appiconset del template trae un único icono universal de 1024px
+        # (AppIcon-512@2x.png); sustituimos el PNG sin depender del nombre.
+        run: |
+          for f in ios/App/App/Assets.xcassets/AppIcon.appiconset/*.png; do
+            cp ios-custom/AppIcon-1024.png "$f"
+          done
       - name: Install CocoaPods
         run: cd ios/App && pod install
-      - name: Build (unsigned, simulator)
+      - name: Build (unsigned, device)
         run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          # Si el Info.plist trae la versión hardcodeada (no $(MARKETING_VERSION)),
+          # parchearla directamente; si usa la variable, el build setting basta.
+          CUR=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" ios/App/App/Info.plist)
+          if [[ "$CUR" != *MARKETING_VERSION* ]]; then
+            /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" ios/App/App/Info.plist
+          fi
           cd ios/App
           xcodebuild \
             -workspace App.xcworkspace \
             -scheme App \
-            -configuration Debug \
-            -sdk iphonesimulator \
-            -destination 'generic/platform=iOS Simulator' \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            MARKETING_VERSION="$VERSION" \
+            CURRENT_PROJECT_VERSION="${{ github.run_number }}" \
             CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
             build
+      - name: Package IPA (unsigned)
+        run: |
+          cd ios/App/build/Build/Products/Release-iphoneos
+          mkdir Payload
+          cp -R App.app Payload/
+          zip -qry "GymLog-unsigned-v${VERSION}.ipa" Payload
+          echo "IPA_PATH=ios/App/build/Build/Products/Release-iphoneos/GymLog-unsigned-v${VERSION}.ipa" >> "$GITHUB_ENV"
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GymLog-ipa-unsigned
+          path: ${{ env.IPA_PATH }}
+      - name: Attach IPA to release (tags)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.IPA_PATH }}
