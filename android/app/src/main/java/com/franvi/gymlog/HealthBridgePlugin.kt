@@ -259,7 +259,8 @@ class HealthBridgePlugin : Plugin() {
         ExerciseSessionRecord.EXERCISE_TYPE_ELLIPTICAL -> "elliptical"
         ExerciseSessionRecord.EXERCISE_TYPE_WALKING,
         ExerciseSessionRecord.EXERCISE_TYPE_HIKING -> "walking"
-        ExerciseSessionRecord.EXERCISE_TYPE_JUMP_ROPE -> "jump_rope"
+        // Health Connect no tiene tipo de SESIÓN para comba: JUMP_ROPE solo
+        // existe como ExerciseSegmentType, así que cae en "other".
         else -> "other"
     }
 
