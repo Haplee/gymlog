@@ -1,35 +1,31 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { m } from 'framer-motion';
 import { useCardioStore, CARDIO_LABELS } from '@features/cardio/stores/cardioStore';
 import { CardioTypeIcon } from '@shared/components/CardioIcons';
 import { impact, notificationHaptic, ImpactStyle, NotificationType } from '@shared/lib/haptics';
 import { formatSeconds } from '@shared/lib/duration';
+import { useVisibilityPausedInterval } from '@shared/hooks/useVisibilityPausedInterval';
 import { Play, Pause, Square } from 'lucide-react';
 
 export function ActiveSessionCard({ userId }: { userId: string | null }) {
   const { t } = useTranslation();
-  const {
-    isActive,
-    isPaused,
-    activeType,
-    pauseSession,
-    resumeSession,
-    stopSession,
-    discardSession,
-    getElapsed,
-  } = useCardioStore();
+  const isActive = useCardioStore((s) => s.isActive);
+  const isPaused = useCardioStore((s) => s.isPaused);
+  const activeType = useCardioStore((s) => s.activeType);
+  const pauseSession = useCardioStore((s) => s.pauseSession);
+  const resumeSession = useCardioStore((s) => s.resumeSession);
+  const stopSession = useCardioStore((s) => s.stopSession);
+  const discardSession = useCardioStore((s) => s.discardSession);
+  const getElapsed = useCardioStore((s) => s.getElapsed);
   const [elapsed, setElapsed] = useState(() => getElapsed());
   const [showFinish, setShowFinish] = useState(false);
   const [distance, setDistance] = useState('');
   const [calories, setCalories] = useState('');
   const [notes, setNotes] = useState('');
 
-  useEffect(() => {
-    if (!isActive || isPaused) return;
-    const id = setInterval(() => setElapsed(getElapsed()), 1000);
-    return () => clearInterval(id);
-  }, [isActive, isPaused, getElapsed]);
+  const tick = useCallback(() => setElapsed(getElapsed()), [getElapsed]);
+  useVisibilityPausedInterval(tick, 1000, isActive && !isPaused);
 
   const handleStop = () => {
     setElapsed(getElapsed());

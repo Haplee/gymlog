@@ -1,6 +1,13 @@
+import { z } from 'zod';
 import { supabase } from '@shared/lib/supabase';
-import type { CreateCustomExerciseInput } from '../types';
-import { CreateCustomExerciseSchema } from '../types';
+
+export const CreateCustomExerciseSchema = z.object({
+  name: z.string().min(1, 'Nombre requerido').max(100),
+  muscle_group: z.string().min(1),
+  equipment: z.string().optional(),
+});
+
+export type CreateCustomExerciseInput = z.infer<typeof CreateCustomExerciseSchema>;
 
 export async function createCustomExercise(
   userId: string,

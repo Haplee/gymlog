@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { XCircle } from 'lucide-react';
 import { m } from 'framer-motion';
+import { useVisibilityPausedInterval } from '@shared/hooks/useVisibilityPausedInterval';
 
 interface WorkoutSessionStatsProps {
   startedAt: string | null;
@@ -23,14 +24,12 @@ export function WorkoutSessionStats({
   const { t } = useTranslation();
   const [elapsed, setElapsed] = useState(0);
 
-  useEffect(() => {
+  const update = useCallback(() => {
     if (!startedAt) return;
-    const update = () =>
-      setElapsed(Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000));
-    update();
-    const id = setInterval(update, 1000);
-    return () => clearInterval(id);
+    setElapsed(Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000));
   }, [startedAt]);
+
+  useVisibilityPausedInterval(update, 1000, !!startedAt);
 
   if (!startedAt) return null;
 

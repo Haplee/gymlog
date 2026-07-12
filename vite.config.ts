@@ -1,9 +1,12 @@
+import { readFileSync } from 'node:fs';
 import { defineConfig, loadEnv, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { aliases } from './vite.aliases';
+
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf-8'));
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
@@ -32,6 +35,7 @@ export default defineConfig(({ mode }) => {
     define: {
       'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(sbUrl),
       'import.meta.env.VITE_SUPABASE_KEY': JSON.stringify(sbKey),
+      __APP_VERSION__: JSON.stringify(pkg.version),
     },
     plugins: [
       react(),
