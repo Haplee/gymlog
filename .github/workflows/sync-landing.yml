@@ -1,0 +1,37 @@
+name: Sync Landing
+# Mantiene GitHub Pages (docs/) como espejo de las páginas estáticas de Vercel
+# (public/). Solo se dispara cuando cambian los originales en public/, y el
+# commit de sincronización solo toca docs/, así que no puede re-dispararse.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'public/landing.html'
+      - 'public/tutorial.html'
+      - 'public/screens/**'
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Copy public pages to docs
+        run: |
+          cp public/landing.html docs/index.html
+          cp public/tutorial.html docs/tutorial.html
+          mkdir -p docs/screens
+          cp public/screens/*.png docs/screens/
+      - name: Commit and push if changed
+        run: |
+          if git diff --quiet -- docs/; then
+            echo "docs/ ya está sincronizado, nada que commitear"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/
+          git commit -m "chore(landing): sincronizar docs/ (GitHub Pages) desde public/"
+          git push
