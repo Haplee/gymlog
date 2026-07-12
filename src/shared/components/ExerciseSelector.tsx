@@ -3,8 +3,8 @@ import { useState, useCallback, useRef, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { m, AnimatePresence } from 'framer-motion';
 import { Search, Plus, X, Loader2, AlertCircle, Trash2, Clock, Pencil, Check } from 'lucide-react';
-import { useExerciseSearch, trackRecentExercise } from '../hooks/useExerciseSearch';
-import { createCustomExercise } from '../api/workoutMutations';
+import { useExerciseSearch, trackRecentExercise } from '@shared/hooks/useExerciseSearch';
+import { createCustomExercise } from '@shared/api/exerciseMutations';
 import { Button } from '@shared/components/ui';
 import { MuscleGroupIcon } from '@shared/components/CardioIcons';
 import { supabase } from '@shared/lib/supabase';
@@ -14,6 +14,7 @@ interface ExerciseSelectorProps {
   userId: string;
   onSelect: (exerciseId: string, isCustom: boolean) => void;
   activeExerciseId?: string | null;
+  excludeIds?: string[];
 }
 
 interface ExerciseOption {
@@ -58,7 +59,12 @@ function suggestMuscleGroup(name: string): string | null {
   return null;
 }
 
-export function ExerciseSelector({ userId, onSelect, activeExerciseId }: ExerciseSelectorProps) {
+export function ExerciseSelector({
+  userId,
+  onSelect,
+  activeExerciseId,
+  excludeIds,
+}: ExerciseSelectorProps) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [isCreating, setIsCreating] = useState(false);
@@ -69,8 +75,25 @@ export function ExerciseSelector({ userId, onSelect, activeExerciseId }: Exercis
   const [editingMuscleValue, setEditingMuscleValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const { query, setQuery, exercises, recentIds, isLoading, isFocused, onFocus, onBlur } =
-    useExerciseSearch({ debounceMs: 250, userId });
+  const {
+    query,
+    setQuery,
+    exercises: searchExercises,
+    recentIds,
+    isLoading,
+    isFocused,
+    onFocus,
+    onBlur,
+  } = useExerciseSearch({ debounceMs: 250, userId });
+
+  const excludeSet = useMemo(() => new Set(excludeIds ?? []), [excludeIds]);
+  const exercises = useMemo(
+    () =>
+      excludeSet.size === 0
+        ? searchExercises
+        : searchExercises.filter((ex) => !excludeSet.has(ex.id)),
+    [searchExercises, excludeSet],
+  );
 
   const createMutation = useMutation({
     mutationFn: (data: { name: string; muscle_group: string; equipment?: string }) =>

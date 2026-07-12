@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRestTimerStore } from '../stores/restTimerStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
 import { impact, ImpactStyle } from '@shared/lib/haptics';
+import { useVisibilityPausedInterval } from '@shared/hooks/useVisibilityPausedInterval';
 import { Plus, Minus, TimerReset } from 'lucide-react';
 import { m, AnimatePresence } from 'framer-motion';
 
@@ -42,29 +43,21 @@ export function RestTimer() {
   const completedRef = useRef(false);
 
   useEffect(() => {
-    if (!isRunning || !endTime) {
-      completedRef.current = false;
-      return;
-    }
-
     completedRef.current = false;
-
-    const tick = () => {
-      const r = remaining();
-      setDisplay(r);
-      if (r <= 0 && !completedRef.current) {
-        completedRef.current = true;
-        stop();
-        void impact(ImpactStyle.Heavy);
-        playCompletionSound();
-      }
-    };
-
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRunning, endTime]);
+
+  const tick = useCallback(() => {
+    const r = remaining();
+    setDisplay(r);
+    if (r <= 0 && !completedRef.current) {
+      completedRef.current = true;
+      stop();
+      void impact(ImpactStyle.Heavy);
+      playCompletionSound();
+    }
+  }, [remaining, stop]);
+
+  useVisibilityPausedInterval(tick, 1000, isRunning && !!endTime);
 
   const shown = !isRunning || !endTime ? 0 : display;
   const mins = Math.floor(shown / 60);

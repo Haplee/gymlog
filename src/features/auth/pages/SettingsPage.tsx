@@ -663,7 +663,7 @@ export function SettingsPage() {
 
         <div className="pt-2 text-center">
           <div className="label-caps text-fg-subtle">
-            {t('settings.version')} — {t('settings.tagline')}
+            {t('settings.version', { version: __APP_VERSION__ })} — {t('settings.tagline')}
           </div>
         </div>
       </div>

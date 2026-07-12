@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { m, AnimatePresence } from 'framer-motion';
+import { useShallow } from 'zustand/react/shallow';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useWorkoutStore } from '@features/workout/stores/workoutStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
@@ -21,7 +22,7 @@ import {
   deleteExercise,
   fetchWorkoutsPaginated,
 } from '@shared/api/queries';
-import { ExerciseSelector } from '@features/workout/components/ExerciseSelector';
+import { ExerciseSelector } from '@shared/components/ExerciseSelector';
 import { RestTimer } from '@features/workout/components/RestTimer';
 import { WorkoutSessionStats } from '@features/workout/components/WorkoutSessionStats';
 import { LastSessionCard } from '@features/workout/components/LastSessionCard';
@@ -49,11 +50,13 @@ export function WorkoutPage() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
+  const activeExerciseId = useWorkoutStore((s) => s.activeExerciseId);
+  const customExerciseName = useWorkoutStore((s) => s.customExerciseName);
+  const sets = useWorkoutStore((s) => s.sets);
+  const startedAt = useWorkoutStore((s) => s.startedAt);
+  const sessionNotes = useWorkoutStore((s) => s.sessionNotes);
+  const sessionRating = useWorkoutStore((s) => s.sessionRating);
   const {
-    activeExerciseId,
-    customExerciseName,
-    sets,
-    startedAt,
     setActiveExercise,
     addSet,
     setSets,
@@ -63,11 +66,23 @@ export function WorkoutPage() {
     saveWorkout,
     repeatWorkout,
     clearPersistedState,
-    sessionNotes,
-    sessionRating,
     setSessionNotes,
     setSessionRating,
-  } = useWorkoutStore();
+  } = useWorkoutStore(
+    useShallow((s) => ({
+      setActiveExercise: s.setActiveExercise,
+      addSet: s.addSet,
+      setSets: s.setSets,
+      updateSet: s.updateSet,
+      removeSet: s.removeSet,
+      removeAllSets: s.removeAllSets,
+      saveWorkout: s.saveWorkout,
+      repeatWorkout: s.repeatWorkout,
+      clearPersistedState: s.clearPersistedState,
+      setSessionNotes: s.setSessionNotes,
+      setSessionRating: s.setSessionRating,
+    })),
+  );
 
   const {
     sound,

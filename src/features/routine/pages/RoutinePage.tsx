@@ -1,25 +1,29 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useShallow } from 'zustand/react/shallow';
 import { toast } from 'sonner';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useRoutineStore, dayLabels } from '@features/routine/stores/routineStore';
 import { Layout } from '@app/components/Layout';
 import type { Routine, DayOfWeek, RoutineExercise } from '@features/routine/stores/routineStore';
 import { fetchExercises } from '@shared/api/queries';
+import type { Exercise } from '@shared/lib/types';
 import { SortableExerciseList } from '@features/routine/components/SortableExerciseList';
-import { Chip, SectionHeader } from '@shared/components/ui';
+import { Chip, SectionHeader, BottomSheet } from '@shared/components/ui';
+import { ExerciseSelector } from '@shared/components/ExerciseSelector';
 
 const DAYS = Object.keys(dayLabels) as DayOfWeek[];
 
 export function RoutinePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user } = useAuthStore();
+  const routines = useRoutineStore((s) => s.routines);
+  const activeRoutineId = useRoutineStore((s) => s.activeRoutineId);
   const {
-    routines,
-    activeRoutineId,
     setActiveRoutine,
     addRoutine,
     cloneRoutine,
@@ -29,7 +33,19 @@ export function RoutinePage() {
     getActiveRoutine,
     getTodayRoutine,
     getDayName,
-  } = useRoutineStore();
+  } = useRoutineStore(
+    useShallow((s) => ({
+      setActiveRoutine: s.setActiveRoutine,
+      addRoutine: s.addRoutine,
+      cloneRoutine: s.cloneRoutine,
+      deleteRoutine: s.deleteRoutine,
+      loadFromDb: s.loadFromDb,
+      checkAndBackup: s.checkAndBackup,
+      getActiveRoutine: s.getActiveRoutine,
+      getTodayRoutine: s.getTodayRoutine,
+      getDayName: s.getDayName,
+    })),
+  );
 
   const { data: exercises = [] } = useQuery({
     queryKey: ['exercises', user?.id],
@@ -41,6 +57,7 @@ export function RoutinePage() {
   const [showCreate, setShowCreate] = useState(false);
   const [newRoutineName, setNewRoutineName] = useState('');
   const [newRoutineDesc, setNewRoutineDesc] = useState('');
+  const [showExercisePicker, setShowExercisePicker] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -112,8 +129,6 @@ export function RoutinePage() {
     }
   };
 
-  const exerciseNames = exercises.map((e) => e.name);
-
   const addExerciseToDay = (day: DayOfWeek, exerciseName: string) => {
     if (!activeRoutine) return;
 
@@ -128,6 +143,14 @@ export function RoutinePage() {
     if (user) {
       useRoutineStore.getState().saveToDb(user.id);
     }
+  };
+
+  const handleExerciseSelected = (exerciseId: string) => {
+    const cached = queryClient.getQueryData<Exercise[]>(['exercises', user?.id]) ?? exercises;
+    const exercise = cached.find((e) => e.id === exerciseId);
+    if (!exercise) return;
+    addExerciseToDay(selectedDay, exercise.name);
+    setShowExercisePicker(false);
   };
 
   const removeExerciseFromDay = (day: DayOfWeek, index: number) => {
@@ -259,23 +282,13 @@ export function RoutinePage() {
             <div className="dotted-separator flex justify-between items-center pb-2 mb-3">
               <div className="label-caps text-fg-subtle">{dayLabels[selectedDay]}</div>
               {activeRoutine?.isCustom && (
-                <select
-                  value=""
-                  onChange={(e) => e.target.value && addExerciseToDay(selectedDay, e.target.value)}
-                  className="text-xs p-1.5 rounded-sm bg-surface-2 text-accent border border-line cursor-pointer"
+                <button
+                  type="button"
+                  onClick={() => setShowExercisePicker(true)}
+                  className="min-h-11 text-xs px-2.5 py-1.5 rounded-sm bg-surface-2 text-accent border border-line"
                 >
-                  <option value="">{t('routine.add_exercise')}</option>
-                  {exerciseNames
-                    .filter(
-                      (name) =>
-                        !activeRoutine.days[selectedDay].exercises.some((e) => e.name === name),
-                    )
-                    .map((name) => (
-                      <option key={name} value={name}>
-                        {name}
-                      </option>
-                    ))}
-                </select>
+                  {t('routine.add_exercise')}
+                </button>
               )}
             </div>
 
@@ -365,6 +378,24 @@ export function RoutinePage() {
             </div>
           </div>
         </div>
+      )}
+
+      {user && activeRoutine && (
+        <BottomSheet
+          open={showExercisePicker}
+          onClose={() => setShowExercisePicker(false)}
+          title={t('routine.add_exercise')}
+        >
+          <ExerciseSelector
+            userId={user.id}
+            onSelect={handleExerciseSelected}
+            excludeIds={exercises
+              .filter((e) =>
+                activeRoutine.days[selectedDay].exercises.some((ex) => ex.name === e.name),
+              )
+              .map((e) => e.id)}
+          />
+        </BottomSheet>
       )}
     </Layout>
   );
