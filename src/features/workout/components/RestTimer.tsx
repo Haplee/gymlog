@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { useRestTimerStore } from '../stores/restTimerStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
 import { impact, ImpactStyle } from '@shared/lib/haptics';
@@ -10,52 +10,15 @@ const PRESETS = [60, 90, 120, 180];
 const RADIUS = 36;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
-function playCompletionSound() {
-  try {
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (!AudioCtx) return;
-    const ctx = new AudioCtx();
-    // Three sharp beeps: 880Hz square wave, loud
-    [0, 200, 400].forEach((delay) => {
-      setTimeout(() => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.frequency.value = 880;
-        osc.type = 'square';
-        gain.gain.setValueAtTime(0.5, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.15);
-      }, delay);
-    });
-  } catch {
-    // ignore
-  }
-}
-
 export function RestTimer() {
   const { endTime, duration, isRunning, start, stop, extend, remaining } = useRestTimerStore();
   const { restAutoStart, setRestAutoStart } = useSettingsStore();
   const [display, setDisplay] = useState(() => remaining());
   const [customSecs, setCustomSecs] = useState<number | null>(null);
-  const completedRef = useRef(false);
 
-  useEffect(() => {
-    completedRef.current = false;
-  }, [isRunning, endTime]);
-
-  const tick = useCallback(() => {
-    const r = remaining();
-    setDisplay(r);
-    if (r <= 0 && !completedRef.current) {
-      completedRef.current = true;
-      stop();
-      void impact(ImpactStyle.Heavy);
-      playCompletionSound();
-    }
-  }, [remaining, stop]);
+  // Solo refresca la cuenta atrás. El fin del descanso (y la alarma) lo gobierna
+  // useRestAlarm en Layout, para que dispare también desde otras pantallas.
+  const tick = useCallback(() => setDisplay(remaining()), [remaining]);
 
   useVisibilityPausedInterval(tick, 1000, isRunning && !!endTime);
 
@@ -162,7 +125,6 @@ export function RestTimer() {
                   strokeDashoffset={strokeOffset}
                   style={{
                     transition: 'stroke-dashoffset 0.35s linear, stroke 0.4s ease',
-                    filter: `drop-shadow(0 0 8px ${accentColor}99)`,
                   }}
                 />
               </svg>

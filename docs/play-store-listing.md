@@ -71,7 +71,7 @@ Everyone (PEGI 3 / Everyone)
 
 ## Privacy policy URL
 
-https://gymlog-haplees-projects.vercel.app/privacy-policy.html
+https://app.gymlog.dpdns.org/privacy-policy.html
 
 ---
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -11,6 +11,8 @@ import type { Routine, DayOfWeek, RoutineExercise } from '@features/routine/stor
 import { fetchExercises } from '@shared/api/queries';
 import type { Exercise } from '@shared/lib/types';
 import { SortableExerciseList } from '@features/routine/components/SortableExerciseList';
+import { RoutineSession } from '@features/routine/components/RoutineSession';
+import { useRoutineSessionStore } from '@features/routine/stores/routineSessionStore';
 import { Chip, SectionHeader, BottomSheet } from '@shared/components/ui';
 import { ExerciseSelector } from '@shared/components/ExerciseSelector';
 
@@ -53,6 +55,11 @@ export function RoutinePage() {
     enabled: !!user?.id,
   });
 
+  const startSession = useRoutineSessionStore((s) => s.start);
+  const sessionStartedAt = useRoutineSessionStore((s) => s.startedAt);
+  const sessionExerciseCount = useRoutineSessionStore((s) => s.exercises.length);
+  const sessionActive = sessionStartedAt !== null && sessionExerciseCount > 0;
+
   const [selectedDay, setSelectedDay] = useState<DayOfWeek>(getDayName());
   const [showCreate, setShowCreate] = useState(false);
   const [newRoutineName, setNewRoutineName] = useState('');
@@ -71,11 +78,17 @@ export function RoutinePage() {
   const activeRoutine = getActiveRoutine();
   const todayRoutine = getTodayRoutine();
 
+  // El guardado remoto fallaba en silencio: la rutina quedaba solo en local y
+  // desaparecía en la siguiente carga. Ahora se avisa al usuario.
+  const persistRoutines = useCallback(async () => {
+    if (!user) return;
+    const ok = await useRoutineStore.getState().saveToDb(user.id);
+    if (!ok) toast.error(t('routine.save_failed'));
+  }, [user, t]);
+
   const handleSelectRoutine = (routineId: string) => {
     setActiveRoutine(routineId);
-    if (user) {
-      useRoutineStore.getState().saveToDb(user.id);
-    }
+    void persistRoutines();
   };
 
   const handleUseAsTemplate = (e: React.MouseEvent, routineId: string) => {
@@ -83,9 +96,7 @@ export function RoutinePage() {
     const newId = cloneRoutine(routineId);
     if (!newId) return;
     setActiveRoutine(newId);
-    if (user) {
-      useRoutineStore.getState().saveToDb(user.id);
-    }
+    void persistRoutines();
     toast.success(t('routine.cloned'));
   };
 
@@ -115,17 +126,13 @@ export function RoutinePage() {
     setNewRoutineDesc('');
     setShowCreate(false);
 
-    if (user) {
-      useRoutineStore.getState().saveToDb(user.id);
-    }
+    void persistRoutines();
   };
 
   const handleDeleteRoutine = (id: string) => {
     if (confirm(t('routine.delete_confirm'))) {
       deleteRoutine(id);
-      if (user) {
-        useRoutineStore.getState().saveToDb(user.id);
-      }
+      void persistRoutines();
     }
   };
 
@@ -140,9 +147,7 @@ export function RoutinePage() {
 
     useRoutineStore.getState().updateRoutine(activeRoutine.id, { days: updatedDays });
 
-    if (user) {
-      useRoutineStore.getState().saveToDb(user.id);
-    }
+    void persistRoutines();
   };
 
   const handleExerciseSelected = (exerciseId: string) => {
@@ -157,13 +162,14 @@ export function RoutinePage() {
     if (!activeRoutine) return;
 
     const updatedDays = { ...activeRoutine.days };
-    updatedDays[day].exercises = updatedDays[day].exercises.filter((_, i) => i !== index);
+    updatedDays[day] = {
+      ...updatedDays[day],
+      exercises: updatedDays[day].exercises.filter((_, i) => i !== index),
+    };
 
     useRoutineStore.getState().updateRoutine(activeRoutine.id, { days: updatedDays });
 
-    if (user) {
-      useRoutineStore.getState().saveToDb(user.id);
-    }
+    void persistRoutines();
   };
 
   const reorderDay = (day: DayOfWeek, next: RoutineExercise[]) => {
@@ -174,16 +180,16 @@ export function RoutinePage() {
 
     useRoutineStore.getState().updateRoutine(activeRoutine.id, { days: updatedDays });
 
-    if (user) {
-      useRoutineStore.getState().saveToDb(user.id);
-    }
+    void persistRoutines();
   };
 
   return (
     <Layout>
       <h1 className="text-headline font-display text-fg mb-4 text-balance">{t('routine.title')}</h1>
 
-      {!activeRoutineId ? (
+      {sessionActive && user ? (
+        <RoutineSession userId={user.id} exercises={exercises} />
+      ) : !activeRoutineId ? (
         <>
           <SectionHeader title={t('routine.select')} />
 
@@ -324,6 +330,18 @@ export function RoutinePage() {
               </div>
             )}
           </div>
+
+          {activeRoutine && activeRoutine.days[selectedDay].exercises.length > 0 && (
+            <button
+              type="button"
+              onClick={() =>
+                startSession(activeRoutine, selectedDay, activeRoutine.days[selectedDay])
+              }
+              className="w-full mt-4 min-h-12 rounded-sm text-sm font-display font-bold uppercase tracking-[0.12em] bg-accent text-accent-fg shadow-btn-accent active:scale-[0.98] transition-transform"
+            >
+              {t('routine.start_session')}
+            </button>
+          )}
 
           {activeRoutine?.isCustom && (
             <button

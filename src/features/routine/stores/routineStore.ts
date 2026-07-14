@@ -44,7 +44,7 @@ interface RoutineStore {
   getTodayRoutine: () => DayRoutine | null;
   getDayName: () => DayOfWeek;
 
-  saveToDb: (userId: string) => Promise<void>;
+  saveToDb: (userId: string) => Promise<boolean>;
   loadFromDb: (userId: string) => Promise<void>;
   checkAndBackup: (userId: string) => Promise<void>;
 }
@@ -449,6 +449,10 @@ export const PREDEFINED_ROUTINES: Routine[] = [
 
 const defaultRoutines: Routine[] = [...PREDEFINED_ROUTINES];
 
+// Guardado en curso: loadFromDb lo espera antes de leer de la BD para no
+// pisar con datos remotos desactualizados una rutina que aún se está subiendo.
+let pendingSave: Promise<boolean> | null = null;
+
 export const useRoutineStore = create<RoutineStore>()(
   persist(
     (set, get) => ({
@@ -523,33 +527,48 @@ export const useRoutineStore = create<RoutineStore>()(
       },
 
       saveToDb: async (userId: string) => {
-        const { routines, activeRoutineId, lastBackup } = get();
+        const doSave = async (): Promise<boolean> => {
+          const { routines, activeRoutineId, lastBackup } = get();
 
-        const customRoutines = routines.filter((r) => r.isCustom);
+          const customRoutines = routines.filter((r) => r.isCustom);
 
-        // La tabla real tiene una sola columna `routine` (jsonb): la usamos como
-        // contenedor de las rutinas custom + estado.
-        const { error } = await supabase.from('user_routines').upsert(
-          {
-            user_id: userId,
-            routine: { routines: customRoutines, activeRoutineId, lastBackup },
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'user_id' },
-        );
+          // La tabla real tiene una sola columna `routine` (jsonb): la usamos como
+          // contenedor de las rutinas custom + estado.
+          const { error } = await supabase.from('user_routines').upsert(
+            {
+              user_id: userId,
+              routine: { routines: customRoutines, activeRoutineId, lastBackup },
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: 'user_id' },
+          );
 
-        if (error) {
-          devError('Error saving routines:', error);
-          return;
+          if (error) {
+            devError('Error saving routines:', error);
+            return false;
+          }
+          // Cada guardado explícito (cambios de rutina, logout) cuenta como
+          // backup: así la ventana de 3 días de checkAndBackup no depende solo
+          // del lastBackup persistido en localStorage.
+          set({ lastBackup: new Date().toISOString() });
+          return true;
+        };
+
+        const save = doSave();
+        pendingSave = save;
+        try {
+          return await save;
+        } finally {
+          if (pendingSave === save) pendingSave = null;
         }
-        // Cada guardado explícito (cambios de rutina, logout) cuenta como
-        // backup: así la ventana de 3 días de checkAndBackup no depende solo
-        // del lastBackup persistido en localStorage.
-        set({ lastBackup: new Date().toISOString() });
       },
 
       loadFromDb: async (userId: string) => {
         set({ loading: true });
+
+        // Si hay un guardado en vuelo, esperar a que termine: leer la BD a
+        // mitad de un upsert devolvería el estado anterior y desharía cambios.
+        if (pendingSave) await pendingSave.catch(() => {});
 
         const { data, error } = await supabase
           .from('user_routines')
@@ -564,18 +583,33 @@ export const useRoutineStore = create<RoutineStore>()(
         } | null;
 
         if (!error && container) {
-          const customRoutines = (container.routines || []) as Routine[];
-          const mergedRoutines = [
-            ...PREDEFINED_ROUTINES,
-            ...customRoutines.filter((cr) => !PREDEFINED_ROUTINES.some((pr) => pr.id === cr.id)),
-          ];
+          const remoteCustom = ((container.routines || []) as Routine[]).filter(
+            (cr) => !PREDEFINED_ROUTINES.some((pr) => pr.id === cr.id),
+          );
+
+          // Merge no destructivo: lo local es la fuente de verdad (la BD es un
+          // backup). Una rutina creada/editada aquí cuyo saveToDb falló no debe
+          // desaparecer al recargar; las remotas que no existen localmente se
+          // restauran (otro dispositivo / reinstalación).
+          const localCustom = get().routines.filter((r) => r.isCustom);
+          const localIds = new Set(localCustom.map((r) => r.id));
+          const remoteOnly = remoteCustom.filter((r) => !localIds.has(r.id));
+          const mergedRoutines = [...PREDEFINED_ROUTINES, ...localCustom, ...remoteOnly];
+
+          const remoteIds = new Set(remoteCustom.map((r) => r.id));
+          const hasUnsyncedLocal = localCustom.some((r) => !remoteIds.has(r.id));
 
           set({
             routines: mergedRoutines,
-            activeRoutineId: container.activeRoutineId ?? null,
-            lastBackup: container.lastBackup ?? null,
+            // Conserva la selección local si existe; la remota solo restaura.
+            activeRoutineId: get().activeRoutineId ?? container.activeRoutineId ?? null,
+            lastBackup: container.lastBackup ?? get().lastBackup ?? null,
             loading: false,
           });
+
+          // Re-sube las rutinas locales que la BD aún no conoce (guardado
+          // previo fallido u offline).
+          if (hasUnsyncedLocal) void get().saveToDb(userId);
         } else {
           set({ loading: false });
         }

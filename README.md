@@ -10,8 +10,8 @@
   <p>PWA + app nativa Android/iOS para el registro y análisis de entrenamientos de <b>fuerza</b> y <b>cardio</b>. Diseñada con enfoque <b>offline-first</b>, autenticación con Google, notificaciones inteligentes y experiencia nativa real con Capacitor 8.</p>
 
   <p>
-    <a href="https://gymlog-haplees-projects.vercel.app"><img src="https://img.shields.io/badge/APP_Vercel-LIVE_DEMO-3ECF8E?style=for-the-badge&logo=vercel&logoColor=white" alt="Live Demo" /></a>
-    <a href="https://Haplee.github.io/gymlog/"><img src="https://img.shields.io/badge/APK_Download-Landing_Page-3ECF8E?style=for-the-badge&logo=android&logoColor=white" alt="APK" /></a>
+    <a href="https://app.gymlog.dpdns.org"><img src="https://img.shields.io/badge/APP_Vercel-LIVE_DEMO-3ECF8E?style=for-the-badge&logo=vercel&logoColor=white" alt="Live Demo" /></a>
+    <a href="https://gymlog.dpdns.org"><img src="https://img.shields.io/badge/APK_Download-Landing_Page-3ECF8E?style=for-the-badge&logo=android&logoColor=white" alt="APK" /></a>
   </p>
 
   <p>
@@ -442,7 +442,7 @@ Código nativo en `ios-custom/`:
 
 ### APK
 
-Último APK en **[GitHub Releases](https://github.com/Haplee/gymlog/releases/latest)** o desde la [Landing Page](https://Haplee.github.io/gymlog/).
+Último APK en **[GitHub Releases](https://github.com/Haplee/gymlog/releases/latest)** o desde la [Landing Page](https://gymlog.dpdns.org).
 
 ---
 

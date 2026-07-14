@@ -10,6 +10,8 @@ import { m, AnimatePresence } from 'framer-motion';
 import { Home, Dumbbell, Footprints, History, Settings, WifiOff, RefreshCw } from 'lucide-react';
 import { useOutboxStore } from '@shared/stores/outboxStore';
 import { useProfile } from '@features/auth/hooks/useProfile';
+import { useRestAlarm } from '@features/workout/hooks/useRestAlarm';
+import { RestAlarmBanner } from '@features/workout/components/RestAlarmBanner';
 
 interface LayoutProps {
   children: ReactNode;
@@ -85,6 +87,9 @@ export function Layout({ children }: LayoutProps) {
     { path: '/settings', Icon: Settings, label: t('settings.title'), id: 'settings', badge: false },
   ];
 
+  // El descanso termina (y suena) aunque el usuario esté en otra pestaña.
+  useRestAlarm();
+
   useEffect(() => {
     if (user?.id) {
       preloadChunk(location.pathname);
@@ -143,6 +148,8 @@ export function Layout({ children }: LayoutProps) {
           )}
         </div>
       </header>
+
+      <RestAlarmBanner />
 
       <AnimatePresence>
         {!isOnline && (

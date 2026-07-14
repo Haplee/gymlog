@@ -1,4 +1,5 @@
 import { generateTips, type Tip } from '@features/stats/utils/tips';
+import { celebrate } from '@shared/lib/celebration';
 import { useMemo, useEffect, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -309,16 +310,7 @@ export function UserStatsPage() {
       fresh.forEach((id) =>
         toast.success(`${t('achievements.unlocked_toast')} ${t(`achievements.${id}`)}`),
       );
-      void import('canvas-confetti')
-        .then((m) =>
-          m.default({
-            particleCount: 80,
-            spread: 60,
-            origin: { y: 0.7 },
-            colors: ['#60eca8', '#ffffff'],
-          }),
-        )
-        .catch(() => {});
+      celebrate();
       localStorage.setItem(SEEN_KEY, JSON.stringify(unlocked));
     }
   }, [achievements, t]);

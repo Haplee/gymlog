@@ -1,6 +1,14 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
+// package.json es la única fuente de verdad de la versión: versionName la copia
+// tal cual y versionCode se deriva (4.1.0 -> 40100), estrictamente creciente
+// como exige Play Store. Así un release toca un solo fichero.
+def packageJson = new groovy.json.JsonSlurper().parse(rootProject.file("../package.json"))
+def appVersionName = packageJson.version
+def (vMajor, vMinor, vPatch) = appVersionName.tokenize('.').collect { it.toInteger() }
+def appVersionCode = vMajor * 10000 + vMinor * 100 + vPatch
+
 def keystorePropertiesFile = rootProject.file("local.properties")
 def keystoreProperties = new Properties()
 // En CI no existe local.properties (gitignored: SDK + claves de firma).
@@ -16,8 +24,8 @@ android {
         applicationId "com.franvi.gymlog"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 410
-        versionName "4.1.0"
+        versionCode appVersionCode
+        versionName appVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'

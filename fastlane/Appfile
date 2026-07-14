@@ -1,0 +1,7 @@
+for_platform :android do
+  package_name('com.franvi.gymlog')
+
+  # Subida a Play Store: pendiente. Cuando se cree la service account de Google
+  # Play, exportar PLAY_STORE_JSON_KEY_PATH y descomentar la línea de abajo.
+  # json_key_file(ENV['PLAY_STORE_JSON_KEY_PATH'])
+end

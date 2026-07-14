@@ -1,0 +1,69 @@
+default_platform(:android)
+
+# Versión única de verdad: package.json. versionName la copia tal cual y
+# versionCode se deriva (4.1.0 -> 40100), que Play exige estrictamente creciente.
+def app_version
+  JSON.parse(File.read('../package.json'))['version']
+end
+
+def version_code
+  major, minor, patch = app_version.split('.').map(&:to_i)
+  major * 10_000 + minor * 100 + patch
+end
+
+# En local la firma sale de android/local.properties (STORE_FILE, STORE_PASSWORD,
+# KEY_ALIAS, KEY_PASSWORD), que build.gradle ya lee. En CI ese fichero no existe,
+# así que se inyecta por propiedades de Gradle desde variables de entorno.
+def signing_properties
+  return {} unless ENV['ANDROID_KEYSTORE_PATH']
+
+  {
+    'android.injected.signing.store.file' => ENV.fetch('ANDROID_KEYSTORE_PATH'),
+    'android.injected.signing.store.password' => ENV.fetch('ANDROID_KEYSTORE_PASSWORD'),
+    'android.injected.signing.key.alias' => ENV.fetch('ANDROID_KEY_ALIAS'),
+    'android.injected.signing.key.password' => ENV.fetch('ANDROID_KEY_PASSWORD')
+  }
+end
+
+platform :android do
+  desc 'Compila la web y sincroniza el proyecto nativo Android'
+  private_lane :sync_web do
+    sh('cd .. && npm run build')
+    sh('cd .. && npx cap sync android')
+  end
+
+  desc 'AAB de release firmado, listo para subir a Play Store (no lo sube)'
+  lane :aab do
+    sync_web
+
+    gradle(
+      project_dir: 'android',
+      task: 'bundle',
+      build_type: 'Release',
+      properties: signing_properties
+    )
+
+    aab = lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH]
+    UI.success("AAB firmado v#{app_version} (versionCode #{version_code}):")
+    UI.success(aab)
+    UI.important('Listo para subir a Play Console. Subida automática: pendiente.')
+
+    # Cuando exista la service account de Google Play, esto es todo lo que hace
+    # falta para publicar en el track interno:
+    # upload_to_play_store(track: 'internal', aab: aab)
+  end
+
+  desc 'APK de release firmado (sideload / descarga directa desde la landing)'
+  lane :apk do
+    sync_web
+
+    gradle(
+      project_dir: 'android',
+      task: 'assemble',
+      build_type: 'Release',
+      properties: signing_properties
+    )
+
+    UI.success("APK firmado v#{app_version} en la raíz del repo: GymLog.apk")
+  end
+end

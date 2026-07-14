@@ -33,6 +33,7 @@ import { Trash2, Plus, StickyNote, Calculator, BookOpen, Trophy, Repeat, Star } 
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { impact, notificationHaptic, ImpactStyle, NotificationType } from '@shared/lib/haptics';
+import { celebrate } from '@shared/lib/celebration';
 import { devError } from '@shared/lib/devtools';
 
 const containerVariants = {
@@ -84,16 +85,37 @@ export function WorkoutPage() {
     })),
   );
 
+  // Selectores finos: suscribirse al store entero re-renderizaba la página en
+  // cada cambio de cualquier ajuste, rutina o tick del temporizador.
   const {
     sound,
     showWarmupSets,
     restAutoStart,
     restDuration: defaultRest,
     restByExercise,
-  } = useSettingsStore();
-  const { getActiveRoutine, getTodayRoutine, checkAndBackup } = useRoutineStore();
+  } = useSettingsStore(
+    useShallow((s) => ({
+      sound: s.sound,
+      showWarmupSets: s.showWarmupSets,
+      restAutoStart: s.restAutoStart,
+      restDuration: s.restDuration,
+      restByExercise: s.restByExercise,
+    })),
+  );
+  const { getActiveRoutine, getTodayRoutine, checkAndBackup } = useRoutineStore(
+    useShallow((s) => ({
+      getActiveRoutine: s.getActiveRoutine,
+      getTodayRoutine: s.getTodayRoutine,
+      checkAndBackup: s.checkAndBackup,
+    })),
+  );
+  // Los getters leen el estado con get(): hay que suscribirse a lo que los hace
+  // cambiar para que la tarjeta de "rutina de hoy" no se quede obsoleta.
+  const routines = useRoutineStore((s) => s.routines);
+  const activeRoutineId = useRoutineStore((s) => s.activeRoutineId);
   const { unit: weightUnit, convert, convertFromDisplay: convertToKg } = useWeight();
-  const { start: startRestTimer, isRunning: restTimerRunning } = useRestTimerStore();
+  const startRestTimer = useRestTimerStore((s) => s.start);
+  const restTimerRunning = useRestTimerStore((s) => s.isRunning);
 
   const [message, setMessage] = useState('');
   const [saving, setSaving] = useState(false);
@@ -178,8 +200,16 @@ export function WorkoutPage() {
     return currentPRs.reduce((best, pr) => ((pr.one_rm ?? 0) > (best.one_rm ?? 0) ? pr : best));
   }, [currentPRs]);
 
-  const activeRoutine = getActiveRoutine();
-  const todayRoutine = getTodayRoutine();
+  const activeRoutine = useMemo(
+    () => getActiveRoutine(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [getActiveRoutine, routines, activeRoutineId],
+  );
+  const todayRoutine = useMemo(
+    () => getTodayRoutine(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [getTodayRoutine, routines, activeRoutineId],
+  );
 
   const sessionVolume = useMemo(
     () =>
@@ -237,16 +267,6 @@ export function WorkoutPage() {
     } catch {
       // ignore audio errors
     }
-  }, []);
-
-  const triggerConfetti = useCallback(async () => {
-    const confettiModule = await import('canvas-confetti');
-    confettiModule.default({
-      particleCount: 150,
-      spread: 70,
-      origin: { y: 0.6 },
-      colors: ['#60eca8', '#ffffff', '#3ecf8e'],
-    });
   }, []);
 
   const checkIsNewPR = useCallback(
@@ -332,7 +352,7 @@ export function WorkoutPage() {
       });
 
       if (max1RM > 0) {
-        triggerConfetti();
+        celebrate();
         void notificationHaptic(NotificationType.Success);
         const exerciseName = selectedExercise?.name || customExerciseName || 'Ejercicio';
         setMessage(`Nuevo PR: ${exerciseName} - ${convert(max1RM).toFixed(1)} ${weightUnit}`);

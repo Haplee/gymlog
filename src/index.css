@@ -413,15 +413,9 @@ input[type='number'] {
   }
 }
 
-@keyframes toggle-pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 8px rgba(96, 236, 168, 0.3);
-  }
-  50% {
-    box-shadow: 0 0 16px rgba(96, 236, 168, 0.6);
-  }
-}
+/* Glow estático: la versión anterior animaba `box-shadow` en bucle infinito, lo
+   que fuerza un repaint por frame para siempre mientras el toggle esté activo.
+   El estado ya se comunica con el color de fondo; el brillo no necesita latir. */
 
 @keyframes button-press {
   0% {
@@ -451,7 +445,7 @@ input[type='number'] {
 }
 
 .toggle-on {
-  animation: toggle-pulse 1.5s ease-in-out infinite;
+  box-shadow: 0 0 12px rgba(96, 236, 168, 0.45);
 }
 
 .fade-in-up {

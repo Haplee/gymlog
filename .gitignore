@@ -12,8 +12,15 @@ dist
 dist-ssr
 *.local
 
-# APKs (artefactos de build / release — no versionar)
+# APKs / AABs (artefactos de build / release — no versionar)
 *.apk
+*.aab
+
+# Fastlane: artefactos de ejecución y gemas locales (el Gemfile.lock SÍ se versiona)
+fastlane/report.xml
+fastlane/README.md
+.bundle/
+vendor/bundle/
 
 # Editor directories and files
 .vscode/*

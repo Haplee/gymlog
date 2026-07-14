@@ -211,6 +211,10 @@ export async function scheduleTimerNotification(endAtMs: number): Promise<void> 
           body: 'Siguiente serie. ¡A por ella! 💪',
           channelId: 'timer',
           extra: { url: '/' },
+          // Persistente: no se va sola ni con un swipe. El usuario tiene que
+          // tocarla (o parar la alarma en la app) — es una alarma, no un aviso.
+          ongoing: true,
+          autoCancel: false,
           schedule: { at: new Date(endAtMs + TIMER_FOREGROUND_GRACE_MS), allowWhileIdle: true },
         },
       ],

@@ -1,0 +1,260 @@
+import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import { supabase } from '@shared/lib/supabase';
+import { devError } from '@shared/lib/devtools';
+import { enqueueWorkout, isNetworkError, type OutboxSet } from '@shared/lib/workoutOutbox';
+import { resolveOrCreateExercise } from '@shared/lib/resolveOrCreateExercise';
+import { useOutboxStore } from '@shared/stores/outboxStore';
+import type { DayOfWeek, DayRoutine, Routine } from './routineStore';
+
+export interface SessionSet {
+  id: string;
+  reps: string;
+  weight: string;
+}
+
+export interface SessionExercise {
+  /** Nombre tal cual figura en la rutina; se resuelve a exercise_id al guardar. */
+  name: string;
+  /** Objetivo de la plantilla, solo informativo en la UI. */
+  targetSets?: number;
+  targetReps?: string;
+  sets: SessionSet[];
+}
+
+export interface RoutineSessionResult {
+  error: Error | null;
+  success: boolean;
+  queued?: boolean;
+  /** Nº de ejercicios con al menos una serie válida que se han registrado. */
+  savedExercises: number;
+}
+
+interface RoutineSessionState {
+  routineId: string | null;
+  routineName: string;
+  dayName: string;
+  day: DayOfWeek | null;
+  startedAt: string | null;
+  exercises: SessionExercise[];
+  saving: boolean;
+
+  isActive: () => boolean;
+  start: (routine: Routine, day: DayOfWeek, dayRoutine: DayRoutine) => void;
+  addSet: (exerciseIndex: number) => void;
+  updateSet: (exerciseIndex: number, setIndex: number, data: Partial<SessionSet>) => void;
+  removeSet: (exerciseIndex: number, setIndex: number) => void;
+  discard: () => void;
+  /**
+   * Guarda la sesión completa. `resolveExerciseId` mapea el nombre de la rutina
+   * al id del catálogo (propio o público); si devuelve null se crea como custom.
+   * `toKg` convierte el peso tecleado (unidad de display) a kg, que es como lo
+   * almacena la BD.
+   */
+  finish: (
+    userId: string,
+    resolveExerciseId: (name: string) => string | null,
+    toKg: (weight: number) => number,
+  ) => Promise<RoutineSessionResult>;
+}
+
+const makeSet = (reps = '', weight = ''): SessionSet => ({
+  id: crypto.randomUUID(),
+  reps,
+  weight,
+});
+
+/** Una serie cuenta si tiene reps > 0 y un peso numérico >= 0 (0 = peso corporal). */
+function isValidSet(s: SessionSet): boolean {
+  const reps = Number(s.reps);
+  const weight = Number(s.weight);
+  if (!s.reps.trim() || !Number.isFinite(reps) || reps <= 0) return false;
+  if (!s.weight.trim() || !Number.isFinite(weight) || weight < 0) return false;
+  return true;
+}
+
+function toOutboxSets(sets: SessionSet[], toKg: (w: number) => number): OutboxSet[] {
+  return sets.filter(isValidSet).map((s, i) => ({
+    set_num: i + 1,
+    reps: Number(s.reps),
+    weight: toKg(Number(s.weight)),
+    is_warmup: false,
+    notes: '',
+    rpe: '',
+    set_type: 'normal',
+  }));
+}
+
+const emptySession = {
+  routineId: null,
+  routineName: '',
+  dayName: '',
+  day: null,
+  startedAt: null,
+  exercises: [] as SessionExercise[],
+  saving: false,
+};
+
+export const useRoutineSessionStore = create<RoutineSessionState>()(
+  persist(
+    (set, get) => ({
+      ...emptySession,
+
+      isActive: () => get().startedAt !== null && get().exercises.length > 0,
+
+      start: (routine, day, dayRoutine) => {
+        set({
+          routineId: routine.id,
+          routineName: routine.name,
+          dayName: dayRoutine.name,
+          day,
+          startedAt: new Date().toISOString(),
+          saving: false,
+          exercises: dayRoutine.exercises.map((ex) => ({
+            name: ex.name,
+            targetSets: ex.sets,
+            targetReps: ex.reps,
+            // Una fila vacía por serie objetivo, para que el usuario solo teclee.
+            sets: Array.from({ length: Math.max(1, ex.sets ?? 1) }, () => makeSet()),
+          })),
+        });
+      },
+
+      addSet: (exerciseIndex) => {
+        const exercises = get().exercises.map((ex, i) => {
+          if (i !== exerciseIndex) return ex;
+          const last = ex.sets.at(-1);
+          return { ...ex, sets: [...ex.sets, makeSet(last?.reps ?? '', last?.weight ?? '')] };
+        });
+        set({ exercises });
+      },
+
+      updateSet: (exerciseIndex, setIndex, data) => {
+        const exercises = get().exercises.map((ex, i) => {
+          if (i !== exerciseIndex) return ex;
+          return {
+            ...ex,
+            sets: ex.sets.map((s, j) => (j === setIndex ? { ...s, ...data } : s)),
+          };
+        });
+        set({ exercises });
+      },
+
+      removeSet: (exerciseIndex, setIndex) => {
+        const exercises = get().exercises.map((ex, i) => {
+          if (i !== exerciseIndex) return ex;
+          return { ...ex, sets: ex.sets.filter((_, j) => j !== setIndex) };
+        });
+        set({ exercises });
+      },
+
+      discard: () => set({ ...emptySession }),
+
+      finish: async (userId, resolveExerciseId, toKg) => {
+        const { exercises, startedAt, saving } = get();
+        if (saving) {
+          return { error: null, success: false, savedExercises: 0 };
+        }
+
+        // Solo se registran los ejercicios que el usuario realmente ha hecho.
+        const done = exercises
+          .map((ex) => ({ name: ex.name, sets: toOutboxSets(ex.sets, toKg) }))
+          .filter((ex) => ex.sets.length > 0);
+
+        if (!done.length) {
+          return {
+            error: new Error('Registra al menos una serie con reps y kg'),
+            success: false,
+            savedExercises: 0,
+          };
+        }
+
+        const started = startedAt ?? new Date().toISOString();
+        const finished = new Date().toISOString();
+
+        set({ saving: true });
+
+        const notes =
+          [get().routineName, get().dayName].filter(Boolean).join(' — ').trim() || undefined;
+
+        // El esquema guarda un `workout` por ejercicio: la sesión de rutina se
+        // escribe como N entrenos que comparten started_at/finished_at, de modo
+        // que el historial (que agrupa por día) los muestre como una sesión.
+        // `pending` es solo lo que aún NO se ha escrito: si la red cae a mitad,
+        // encolar la lista entera duplicaría los ejercicios ya guardados.
+        const queueOffline = async (pending: typeof done, alreadySaved: number) => {
+          for (const ex of pending) {
+            await enqueueWorkout({
+              id: crypto.randomUUID(),
+              userId,
+              exerciseId: resolveExerciseId(ex.name),
+              customExerciseName: ex.name,
+              customMuscleGroup: 'Otro',
+              startedAt: started,
+              finishedAt: finished,
+              sets: ex.sets,
+              notes,
+              createdAt: new Date().toISOString(),
+            });
+          }
+          set({ ...emptySession });
+          void useOutboxStore.getState().refresh();
+          return {
+            error: null,
+            success: true,
+            queued: true,
+            savedExercises: alreadySaved + pending.length,
+          };
+        };
+
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+          return queueOffline(done, 0);
+        }
+
+        let saved = 0;
+        try {
+          for (const ex of done) {
+            const exerciseId =
+              resolveExerciseId(ex.name) ??
+              (await resolveOrCreateExercise(userId, ex.name, 'Otro'));
+
+            const { error } = await supabase.rpc('save_workout_with_sets', {
+              p_user_id: userId,
+              p_exercise_id: exerciseId,
+              p_started_at: started,
+              p_finished_at: finished,
+              p_sets: ex.sets,
+              p_notes: notes,
+              p_rating: undefined,
+            });
+            if (error) throw error;
+            saved += 1;
+          }
+
+          set({ ...emptySession });
+          return { error: null, success: true, savedExercises: saved };
+        } catch (err) {
+          set({ saving: false });
+          if (isNetworkError(err)) {
+            return queueOffline(done.slice(saved), saved);
+          }
+          const message = err instanceof Error ? err.message : 'Error guardando la rutina';
+          devError('[RoutineSession] finish:', message);
+          return { error: new Error(message), success: false, savedExercises: saved };
+        }
+      },
+    }),
+    {
+      name: 'gymlog-routine-session',
+      storage: createJSONStorage(() => localStorage),
+      partialize: (s) => ({
+        routineId: s.routineId,
+        routineName: s.routineName,
+        dayName: s.dayName,
+        day: s.day,
+        startedAt: s.startedAt,
+        exercises: s.exercises,
+      }),
+    },
+  ),
+);
