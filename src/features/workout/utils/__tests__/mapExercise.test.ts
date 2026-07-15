@@ -20,11 +20,11 @@ describe('mapExerciseDbExercise', () => {
     expect(ex.source).toBe('exercisedb');
     expect(ex.name).toBe('upward facing dog');
     expect(ex.mediaUrl).toBe('https://static.exercisedb.dev/media/01qpYSe.gif');
-    // El vocabulario finito se traduce al español mediante diccionario local.
-    expect(ex.equipment).toEqual(['peso corporal']);
-    expect(ex.secondaryMuscles).toEqual(['hombros', 'pecho']);
-    expect(ex.bodyParts).toEqual(['espalda']);
-    expect(ex.targetMuscles).toEqual(['columna']);
+    // El vocabulario se guarda en inglés crudo; se localiza al mostrar.
+    expect(ex.equipment).toEqual(['body weight']);
+    expect(ex.secondaryMuscles).toEqual(['shoulders', 'chest']);
+    expect(ex.bodyParts).toEqual(['back']);
+    expect(ex.targetMuscles).toEqual(['spine']);
   });
 
   it('strips the "Step:N" prefix from instructions', () => {

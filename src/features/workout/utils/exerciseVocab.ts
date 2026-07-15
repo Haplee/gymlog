@@ -115,22 +115,22 @@ export const translateEquipment = (v: string) => lookup(EQUIPMENT, v);
 export const translateMuscle = (v: string) => lookup(MUSCLES, v);
 
 /**
- * Mapea una parte del cuerpo de ExerciseDB (ya traducida al español) al enum de
- * grupos musculares de GymLog. Lo no reconocido cae a 'Otro'.
+ * Mapea una parte del cuerpo de ExerciseDB (en inglés crudo) al enum de grupos
+ * musculares de GymLog. Lo no reconocido cae a 'Otro'.
  */
 const BODYPART_TO_GROUP: Record<string, string> = {
-  pecho: 'Pecho',
-  espalda: 'Espalda',
-  hombros: 'Hombro',
-  piernas: 'Pierna',
-  gemelos: 'Pierna',
-  brazos: 'Brazos',
-  antebrazos: 'Antebrazo',
-  abdomen: 'Core',
+  chest: 'Pecho',
+  back: 'Espalda',
+  shoulders: 'Hombro',
+  'upper legs': 'Pierna',
+  'lower legs': 'Pierna',
+  'upper arms': 'Brazos',
+  'lower arms': 'Antebrazo',
+  waist: 'Core',
   cardio: 'Cardio',
-  cuello: 'Otro',
+  neck: 'Otro',
 };
 
-export function muscleGroupFromBodyPart(bodyPartEs: string): string {
-  return BODYPART_TO_GROUP[bodyPartEs.trim().toLowerCase()] ?? 'Otro';
+export function muscleGroupFromBodyPart(bodyPart: string): string {
+  return BODYPART_TO_GROUP[bodyPart.trim().toLowerCase()] ?? 'Otro';
 }

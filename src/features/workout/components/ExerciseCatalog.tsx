@@ -8,7 +8,12 @@ import { useExerciseCatalog, useExerciseDetail } from '@features/workout/hooks/u
 import { useWorkoutStore } from '@features/workout/stores/workoutStore';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { createCustomExercise } from '@shared/api/exerciseMutations';
-import { muscleGroupFromBodyPart } from '@features/workout/utils/exerciseVocab';
+import {
+  muscleGroupFromBodyPart,
+  translateEquipment,
+  translateMuscle,
+} from '@features/workout/utils/exerciseVocab';
+import { useTranslatedTexts } from '@features/workout/hooks/useTranslatedTexts';
 import type { CatalogExercise } from '@features/workout/utils/mapExercise';
 
 /** Imagen del catálogo con fallback a placeholder si falta o falla la carga. */
@@ -49,13 +54,18 @@ function CatalogMedia({
 }
 
 function CatalogDetail({ id, name }: { id: string; name: string }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const setCustomExerciseName = useWorkoutStore((s) => s.setCustomExerciseName);
   const setActiveExercise = useWorkoutStore((s) => s.setActiveExercise);
   const { data: detail, isLoading } = useExerciseDetail(id);
+
+  const isEs = i18n.language.split('-')[0] === 'es';
+  const loc = (v: string) => (isEs ? translateMuscle(v) : v);
+  const locEquip = (v: string) => (isEs ? translateEquipment(v) : v);
+  const insMap = useTranslatedTexts(detail?.instructions ?? [], i18n.language);
 
   const useInWorkout = () => {
     setActiveExercise(null);
@@ -70,7 +80,7 @@ function CatalogDetail({ id, name }: { id: string; name: string }) {
       const secondaryGroups = [
         ...new Set(detail.bodyParts.slice(1).map(muscleGroupFromBodyPart)),
       ].filter((g) => g !== primary);
-      const isBodyweight = detail.equipment.some((e) => /peso corporal/i.test(e));
+      const isBodyweight = detail.equipment.some((e) => /body\s*weight/i.test(e));
       return createCustomExercise(user.id, {
         name,
         muscle_group: primary,
@@ -96,17 +106,17 @@ function CatalogDetail({ id, name }: { id: string; name: string }) {
           <div className="flex flex-wrap gap-1.5">
             {detail.targetMuscles.map((m) => (
               <span key={m} className="label-caps px-2 py-1 rounded-sm bg-accent/10 text-accent">
-                {t('library.target')}: {m}
+                {t('library.target')}: {loc(m)}
               </span>
             ))}
             {detail.equipment.map((e) => (
               <span key={e} className="label-caps px-2 py-1 rounded-sm bg-surface-2 text-fg-muted">
-                {t('library.equipment')}: {e}
+                {t('library.equipment')}: {locEquip(e)}
               </span>
             ))}
             {detail.secondaryMuscles.length > 0 && (
               <span className="label-caps px-2 py-1 rounded-sm bg-surface-2 text-fg-muted">
-                {t('library.secondary')}: {detail.secondaryMuscles.join(', ')}
+                {t('library.secondary')}: {detail.secondaryMuscles.map(loc).join(', ')}
               </span>
             )}
           </div>
@@ -125,7 +135,7 @@ function CatalogDetail({ id, name }: { id: string; name: string }) {
           {detail.instructions.length > 0 && (
             <ol className="list-decimal pl-5 space-y-1 text-sm leading-relaxed text-fg-muted">
               {detail.instructions.map((step, i) => (
-                <li key={i}>{step}</li>
+                <li key={i}>{insMap[step] ?? step}</li>
               ))}
             </ol>
           )}
@@ -157,10 +167,14 @@ function CatalogDetail({ id, name }: { id: string; name: string }) {
 }
 
 export function ExerciseCatalog() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [search, setSearch] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const { data: results = [], isLoading, isError, refetch } = useExerciseCatalog(search);
+  const nameMap = useTranslatedTexts(
+    results.map((r) => r.name),
+    i18n.language,
+  );
 
   return (
     <div>
@@ -217,7 +231,7 @@ export function ExerciseCatalog() {
                   <CatalogMedia src={ex.mediaUrl} alt="" variant="thumb" />
                   <div className="min-w-0 flex-1">
                     <div className="text-base font-medium text-fg truncate capitalize">
-                      {ex.name}
+                      {nameMap[ex.name] ?? ex.name}
                     </div>
                     <span className="label-caps inline-block mt-0.5 px-1.5 py-0.5 rounded-sm bg-surface-2 text-fg-subtle">
                       {t('library.source_catalog')}
@@ -228,7 +242,7 @@ export function ExerciseCatalog() {
                     style={{ transform: expanded ? 'rotate(90deg)' : 'none' }}
                   />
                 </button>
-                {expanded && <CatalogDetail id={ex.id} name={ex.name} />}
+                {expanded && <CatalogDetail id={ex.id} name={nameMap[ex.name] ?? ex.name} />}
               </div>
             );
           })}
