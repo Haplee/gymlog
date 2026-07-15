@@ -36,6 +36,11 @@ interface WorkoutState extends PersistedWorkout {
   loading: boolean;
   error: string | null;
   customMuscleGroup: string;
+  /** El ejercicio activo es de peso corporal: el kg introducido es lastre. */
+  bodyweightMode: boolean;
+  /** Peso corporal vigente para estimar el volumen en modo peso corporal. */
+  bodyWeightKg: number | null;
+  setBodyweightContext: (mode: boolean, bodyWeightKg: number | null) => void;
   repeatWorkout: (workout: WorkoutWithSets) => void;
   setActiveExercise: (id: string | null) => void;
   setCustomExerciseName: (name: string) => void;
@@ -74,6 +79,9 @@ export const useWorkoutStore = create<WorkoutState>()(
       sessionRating: null,
       loading: false,
       error: null,
+      bodyweightMode: false,
+      bodyWeightKg: null,
+      setBodyweightContext: (mode, bodyWeightKg) => set({ bodyweightMode: mode, bodyWeightKg }),
       repeatWorkout: (workout: WorkoutWithSets) => {
         if (workout.sets.length === 0) return;
         const exerciseId = workout.sets[0].exercise_id;
@@ -135,6 +143,8 @@ export const useWorkoutStore = create<WorkoutState>()(
           sets: setData,
           sessionNotes,
           sessionRating,
+          bodyweightMode,
+          bodyWeightKg,
         } = get();
 
         if (!activeExerciseId && !customExerciseName.trim()) {
@@ -148,6 +158,8 @@ export const useWorkoutStore = create<WorkoutState>()(
           const weight = Number(s.weight);
           if (!Number.isFinite(reps) || reps <= 0) return false;
           if (!Number.isFinite(weight) || weight < 0) return false;
+          // En modo peso corporal el kg introducido es lastre y puede ser 0.
+          if (bodyweightMode) return true;
           // Allow weight=0 only on warmup sets (e.g. bodyweight warmup)
           if (!s.isWarmup && weight === 0) return false;
           return true;
@@ -160,10 +172,17 @@ export const useWorkoutStore = create<WorkoutState>()(
         const notes = sessionNotes.trim() || undefined;
         const rating = sessionRating ?? undefined;
 
+        // En modo peso corporal el kg introducido es lastre; el peso guardado es
+        // (peso corporal vigente + lastre) para que volumen/PRs sean correctos.
+        const effectiveWeight = (s: SetData): number => {
+          const entered = Number(s.weight) || 0;
+          return bodyweightMode ? (bodyWeightKg ?? 0) + entered : Number(s.weight);
+        };
+
         const setsPayload = validSets.map((s, i) => ({
           set_num: i + 1,
           reps: Number(s.reps),
-          weight: Number(s.weight),
+          weight: effectiveWeight(s),
           is_warmup: !!s.isWarmup,
           notes: s.notes?.trim() || '',
           rpe: s.rpe?.trim() || '',

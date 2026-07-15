@@ -7,7 +7,8 @@ import { ArrowLeft, ChevronRight, Search } from 'lucide-react';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { Layout } from '@app/components/Layout';
 import { fetchExerciseLibrary, type LibraryExercise } from '@shared/api/queries';
-import { Chip } from '@shared/components/ui';
+import { Chip, SegmentedControl } from '@shared/components/ui';
+import { ExerciseCatalog } from '@features/workout/components/ExerciseCatalog';
 
 function ExerciseDetail({ ex }: { ex: LibraryExercise }) {
   const { t } = useTranslation();
@@ -54,6 +55,7 @@ export function ExerciseLibraryPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const [tab, setTab] = useState<'own' | 'catalog'>('own');
   const [search, setSearch] = useState('');
   const [muscleFilter, setMuscleFilter] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -104,70 +106,93 @@ export function ExerciseLibraryPage() {
         <h1 className="text-headline font-display text-fg text-balance">{t('library.title')}</h1>
       </m.div>
 
-      <div className="relative mb-3">
-        <Search className="absolute left-1 top-1/2 -translate-y-1/2 w-4 h-4 text-fg-subtle pointer-events-none" />
-        <input
-          type="search"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={t('library.search')}
-          aria-label={t('library.search')}
-          className="w-full bg-transparent border-0 border-b border-line-strong rounded-none text-base pl-7 pr-2 py-2.5 outline-none text-fg placeholder:text-fg-subtle focus:border-accent transition-colors"
+      <div className="mb-4">
+        <SegmentedControl
+          ariaLabel={t('library.title')}
+          value={tab}
+          onChange={setTab}
+          options={[
+            { value: 'own', label: t('library.tab_own') },
+            { value: 'catalog', label: t('library.tab_catalog') },
+          ]}
         />
       </div>
 
-      <div className="flex gap-1.5 mb-4 overflow-x-auto pb-1">
-        <Chip selected={muscleFilter === null} onClick={() => setMuscleFilter(null)}>
-          {t('library.all')}
-        </Chip>
-        {muscleGroups.map((mg) => (
-          <Chip
-            key={mg}
-            selected={muscleFilter === mg}
-            onClick={() => setMuscleFilter(muscleFilter === mg ? null : mg)}
-          >
-            {mg}
-          </Chip>
-        ))}
-      </div>
-
-      {filtered.length === 0 ? (
-        <div className="text-center py-12 text-sm text-fg-subtle">{t('library.empty')}</div>
+      {tab === 'catalog' ? (
+        <ExerciseCatalog />
       ) : (
-        <div className="rounded-lg overflow-hidden bg-surface border border-line">
-          {filtered.map((ex) => {
-            const expanded = expandedId === ex.id;
-            return (
-              <div
-                key={ex.id}
-                className={`border-b border-line last:border-b-0 ${
-                  expanded ? 'border-l-2 border-l-accent' : ''
-                }`}
+        <>
+          <div className="relative mb-3">
+            <Search className="absolute left-1 top-1/2 -translate-y-1/2 w-4 h-4 text-fg-subtle pointer-events-none" />
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t('library.search')}
+              aria-label={t('library.search')}
+              className="w-full bg-transparent border-0 border-b border-line-strong rounded-none text-base pl-7 pr-2 py-2.5 outline-none text-fg placeholder:text-fg-subtle focus:border-accent transition-colors"
+            />
+          </div>
+
+          <div className="flex gap-1.5 mb-4 overflow-x-auto pb-1">
+            <Chip selected={muscleFilter === null} onClick={() => setMuscleFilter(null)}>
+              {t('library.all')}
+            </Chip>
+            {muscleGroups.map((mg) => (
+              <Chip
+                key={mg}
+                selected={muscleFilter === mg}
+                onClick={() => setMuscleFilter(muscleFilter === mg ? null : mg)}
               >
-                <button
-                  type="button"
-                  onClick={() => setExpandedId(expanded ? null : ex.id)}
-                  aria-expanded={expanded}
-                  className="w-full px-3 py-3.5 flex items-center justify-between gap-3 text-left active:bg-hover"
-                >
-                  <div className="min-w-0">
-                    <div className="text-base font-medium text-fg truncate">{ex.name}</div>
-                    {ex.muscle_group && (
-                      <span className="label-caps inline-block mt-1 px-1.5 py-0.5 rounded-sm bg-surface-2 text-fg-subtle">
-                        {ex.muscle_group}
-                      </span>
-                    )}
+                {mg}
+              </Chip>
+            ))}
+          </div>
+
+          {filtered.length === 0 ? (
+            <div className="text-center py-12 text-sm text-fg-subtle">{t('library.empty')}</div>
+          ) : (
+            <div className="rounded-lg overflow-hidden bg-surface border border-line">
+              {filtered.map((ex) => {
+                const expanded = expandedId === ex.id;
+                return (
+                  <div
+                    key={ex.id}
+                    className={`border-b border-line last:border-b-0 ${
+                      expanded ? 'border-l-2 border-l-accent' : ''
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setExpandedId(expanded ? null : ex.id)}
+                      aria-expanded={expanded}
+                      className="w-full px-3 py-3.5 flex items-center justify-between gap-3 text-left active:bg-hover"
+                    >
+                      <div className="min-w-0">
+                        <div className="text-base font-medium text-fg truncate">{ex.name}</div>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          <span className="label-caps inline-block px-1.5 py-0.5 rounded-sm bg-accent/10 text-accent">
+                            {t('library.source_own')}
+                          </span>
+                          {ex.muscle_group && (
+                            <span className="label-caps inline-block px-1.5 py-0.5 rounded-sm bg-surface-2 text-fg-subtle">
+                              {ex.muscle_group}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <ChevronRight
+                        className="w-4 h-4 flex-shrink-0 text-fg-subtle transition-transform"
+                        style={{ transform: expanded ? 'rotate(90deg)' : 'none' }}
+                      />
+                    </button>
+                    {expanded && <ExerciseDetail ex={ex} />}
                   </div>
-                  <ChevronRight
-                    className="w-4 h-4 flex-shrink-0 text-fg-subtle transition-transform"
-                    style={{ transform: expanded ? 'rotate(90deg)' : 'none' }}
-                  />
-                </button>
-                {expanded && <ExerciseDetail ex={ex} />}
-              </div>
-            );
-          })}
-        </div>
+                );
+              })}
+            </div>
+          )}
+        </>
       )}
     </Layout>
   );

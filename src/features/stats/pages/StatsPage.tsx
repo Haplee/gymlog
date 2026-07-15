@@ -58,6 +58,7 @@ import {
   getSuggestedMuscleGroup,
   getDaysSinceLastWorkout,
 } from '../utils/fatigueAnalysis';
+import { useExerciseMusclesMap } from '../hooks/useExerciseMusclesMap';
 import { FatigueAnalysis } from '../components/FatigueAnalysis';
 import { CHART_COLORS } from '../constants';
 import { toast } from 'sonner';
@@ -153,11 +154,15 @@ export function StatsPage() {
   const daysSinceLast = useMemo(() => getDaysSinceLastWorkout(workouts), [workouts]);
   const avgDuration = useMemo(() => calculateAverageSessionDuration(workouts), [workouts]);
   const totalPRs = useMemo(() => calculateAllTimePRsCount(personalRecords), [personalRecords]);
-  const muscleRecovery = useMemo(() => analyzeMuscleRecovery(recentSets), [recentSets]);
+  const musclesMap = useExerciseMusclesMap();
+  const muscleRecovery = useMemo(
+    () => analyzeMuscleRecovery(recentSets, musclesMap),
+    [recentSets, musclesMap],
+  );
   const suggestedGroup = useMemo(() => getSuggestedMuscleGroup(muscleRecovery), [muscleRecovery]);
   const muscleGroupDistribution = useMemo(
-    () => calculateMuscleGroupDistribution(recentSets),
-    [recentSets],
+    () => calculateMuscleGroupDistribution(recentSets, musclesMap),
+    [recentSets, musclesMap],
   );
   const uniqueExercises = useMemo(() => {
     return [...new Set(recentSets.map((s) => s.exercise?.name).filter(Boolean))] as string[];

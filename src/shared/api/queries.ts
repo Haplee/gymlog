@@ -327,6 +327,15 @@ export const addBodyMeasurement = async (
   return data as BodyMeasurement;
 };
 
+/** Guarda (o actualiza) el peso corporal de hoy. Upsert por (user_id, date). */
+export const upsertTodayWeight = async (userId: string, weightKg: number): Promise<void> => {
+  const today = new Date().toISOString().split('T')[0];
+  const { error } = await supabase
+    .from('body_measurements')
+    .upsert({ user_id: userId, date: today, weight_kg: weightKg }, { onConflict: 'user_id,date' });
+  if (error) throw error;
+};
+
 export const deleteBodyMeasurement = async (id: string): Promise<void> => {
   const { error } = await supabase.from('body_measurements').delete().eq('id', id);
   if (error) throw error;

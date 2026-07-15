@@ -1,4 +1,5 @@
 import { ResumeWorkoutBanner } from '@features/workout/components/ResumeWorkoutBanner';
+import { WeeklyWeightPrompt } from '@features/workout/components/WeeklyWeightPrompt';
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -21,7 +22,9 @@ import {
   deleteExerciseNote,
   deleteExercise,
   fetchWorkoutsPaginated,
+  fetchBodyMeasurements,
 } from '@shared/api/queries';
+import { bodyWeightAtDate } from '@features/workout/utils/bodyweight';
 import { ExerciseSelector } from '@shared/components/ExerciseSelector';
 import { RestTimer } from '@features/workout/components/RestTimer';
 import { WorkoutSessionStats } from '@features/workout/components/WorkoutSessionStats';
@@ -69,6 +72,7 @@ export function WorkoutPage() {
     clearPersistedState,
     setSessionNotes,
     setSessionRating,
+    setBodyweightContext,
   } = useWorkoutStore(
     useShallow((s) => ({
       setActiveExercise: s.setActiveExercise,
@@ -82,6 +86,7 @@ export function WorkoutPage() {
       clearPersistedState: s.clearPersistedState,
       setSessionNotes: s.setSessionNotes,
       setSessionRating: s.setSessionRating,
+      setBodyweightContext: s.setBodyweightContext,
     })),
   );
 
@@ -191,6 +196,24 @@ export function WorkoutPage() {
     () => exercises.find((e) => e.id === activeExerciseId),
     [exercises, activeExerciseId],
   );
+
+  // Peso corporal vigente (hoy) para ejercicios de peso corporal.
+  const { data: bodyMeasurements = [] } = useQuery({
+    queryKey: ['bodyMeasurements', user?.id],
+    queryFn: () => fetchBodyMeasurements(user?.id ?? ''),
+    enabled: !!user?.id,
+    staleTime: 1000 * 60 * 30,
+  });
+  const currentBodyWeight = useMemo(
+    () => bodyWeightAtDate(bodyMeasurements, new Date().toISOString().split('T')[0]),
+    [bodyMeasurements],
+  );
+  const isBodyweightExercise = !!selectedExercise?.is_bodyweight;
+
+  // Mantener el store al día con el contexto de peso corporal del ejercicio activo.
+  useEffect(() => {
+    setBodyweightContext(isBodyweightExercise, currentBodyWeight);
+  }, [isBodyweightExercise, currentBodyWeight, setBodyweightContext]);
   const currentPRs = useMemo(
     () => (activeExerciseId ? (prsByExercise[activeExerciseId] ?? []) : []),
     [activeExerciseId, prsByExercise],
@@ -461,6 +484,7 @@ export function WorkoutPage() {
 
   return (
     <Layout>
+      <WeeklyWeightPrompt />
       <AnimatePresence>
         {showResumeBanner && startedAt && (
           <ResumeWorkoutBanner
@@ -702,19 +726,30 @@ export function WorkoutPage() {
             </div>
           </div>
         ) : (
-          <WorkoutSetList
-            sets={sets}
-            showWarmupSets={showWarmupSets}
-            setErrors={setErrors}
-            setSetErrors={setSetErrors}
-            updateSet={updateSet}
-            removeSet={handleRemoveSet}
-            checkIsNewPR={checkIsNewPR}
-            weightUnit={weightUnit}
-            convert={convert}
-            convertToKg={convertToKg}
-            t={t}
-          />
+          <>
+            {isBodyweightExercise && (
+              <div className="mb-2 px-3 py-2 rounded-md bg-surface-2 text-xs text-fg-muted">
+                {currentBodyWeight != null
+                  ? t('workout.bodyweight_hint', {
+                      weight: `${convert(currentBodyWeight).toFixed(1)} ${weightUnit}`,
+                    })
+                  : t('workout.bodyweight_no_weight')}
+              </div>
+            )}
+            <WorkoutSetList
+              sets={sets}
+              showWarmupSets={showWarmupSets}
+              setErrors={setErrors}
+              setSetErrors={setSetErrors}
+              updateSet={updateSet}
+              removeSet={handleRemoveSet}
+              checkIsNewPR={checkIsNewPR}
+              weightUnit={weightUnit}
+              convert={convert}
+              convertToKg={convertToKg}
+              t={t}
+            />
+          </>
         )}
       </m.div>
 

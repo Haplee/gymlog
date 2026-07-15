@@ -24,21 +24,39 @@ export function formatSeconds(s: number): string {
   return `${m}m`;
 }
 
+import { distributeVolume, type WeightedMuscle } from './muscleDistribution';
+
 export function calculateMuscleGroupDistribution(
   sets: {
     weight: number;
     reps: number;
     is_warmup?: boolean | null;
+    exercise_id?: string | null;
     exercise?: { muscle_group?: string | null } | null;
   }[],
+  /**
+   * Opcional: mapa `exercise_id → músculos ponderados`. Si está presente, el
+   * volumen de cada serie se reparte entre esos músculos según su peso. Si falta
+   * (o no cubre el exercise_id), se cae al `muscle_group` único (comportamiento
+   * previo, retrocompatible).
+   */
+  musclesMap?: Record<string, WeightedMuscle[]>,
 ) {
   const distribution: Record<string, number> = {};
   sets
     .filter((s) => !s.is_warmup)
     .forEach((s) => {
-      const muscleGroup = s.exercise?.muscle_group || 'Otro';
       const volume = s.weight * s.reps;
-      distribution[muscleGroup] = (distribution[muscleGroup] || 0) + volume;
+      const muscles = s.exercise_id ? musclesMap?.[s.exercise_id] : undefined;
+      if (muscles && muscles.length > 0) {
+        const shares = distributeVolume(volume, muscles);
+        for (const [name, value] of Object.entries(shares)) {
+          distribution[name] = (distribution[name] || 0) + value;
+        }
+      } else {
+        const muscleGroup = s.exercise?.muscle_group || 'Otro';
+        distribution[muscleGroup] = (distribution[muscleGroup] || 0) + volume;
+      }
     });
   return Object.entries(distribution)
     .map(([name, value]) => ({ name, value }))

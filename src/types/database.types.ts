@@ -124,6 +124,38 @@ export type Database = {
           },
         ];
       };
+      exercise_muscles: {
+        Row: {
+          exercise_id: string;
+          id: string;
+          muscle_group: string;
+          role: string;
+          weight: number;
+        };
+        Insert: {
+          exercise_id: string;
+          id?: string;
+          muscle_group: string;
+          role?: string;
+          weight?: number;
+        };
+        Update: {
+          exercise_id?: string;
+          id?: string;
+          muscle_group?: string;
+          role?: string;
+          weight?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'exercise_muscles_exercise_id_fkey';
+            columns: ['exercise_id'];
+            isOneToOne: false;
+            referencedRelation: 'exercises';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       exercise_notes: {
         Row: {
           created_at: string;
@@ -163,6 +195,7 @@ export type Database = {
           equipment: string | null;
           id: string;
           is_bilateral: boolean | null;
+          is_bodyweight: boolean;
           is_compound: boolean;
           is_public: boolean;
           media_url: string | null;
@@ -178,6 +211,7 @@ export type Database = {
           equipment?: string | null;
           id?: string;
           is_bilateral?: boolean | null;
+          is_bodyweight?: boolean;
           is_compound?: boolean;
           is_public?: boolean;
           media_url?: string | null;
@@ -193,6 +227,7 @@ export type Database = {
           equipment?: string | null;
           id?: string;
           is_bilateral?: boolean | null;
+          is_bodyweight?: boolean;
           is_compound?: boolean;
           is_public?: boolean;
           media_url?: string | null;
@@ -681,6 +716,7 @@ export type Database = {
         Returns: {
           created_at: string;
           id: string;
+          is_bodyweight: boolean;
           muscle_group: string;
           name: string;
           usage_count: number;

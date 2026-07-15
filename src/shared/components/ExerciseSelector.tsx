@@ -4,7 +4,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { m, AnimatePresence } from 'framer-motion';
 import { Search, Plus, X, Loader2, AlertCircle, Trash2, Clock, Pencil, Check } from 'lucide-react';
 import { useExerciseSearch, trackRecentExercise } from '@shared/hooks/useExerciseSearch';
-import { createCustomExercise } from '@shared/api/exerciseMutations';
+import {
+  createCustomExercise,
+  type CreateCustomExerciseInput,
+} from '@shared/api/exerciseMutations';
 import { Button } from '@shared/components/ui';
 import { MuscleGroupIcon } from '@shared/components/CardioIcons';
 import { supabase } from '@shared/lib/supabase';
@@ -70,6 +73,8 @@ export function ExerciseSelector({
   const [isCreating, setIsCreating] = useState(false);
   const [newExerciseName, setNewExerciseName] = useState('');
   const [newExerciseMuscle, setNewExerciseMuscle] = useState('Otro');
+  const [newSecondaries, setNewSecondaries] = useState<Record<string, number>>({});
+  const [newIsBodyweight, setNewIsBodyweight] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editingMuscleId, setEditingMuscleId] = useState<string | null>(null);
   const [editingMuscleValue, setEditingMuscleValue] = useState('');
@@ -96,14 +101,15 @@ export function ExerciseSelector({
   );
 
   const createMutation = useMutation({
-    mutationFn: (data: { name: string; muscle_group: string; equipment?: string }) =>
-      createCustomExercise(userId, data),
+    mutationFn: (data: CreateCustomExerciseInput) => createCustomExercise(userId, data),
     onSuccess: (newExercise) => {
       queryClient.invalidateQueries({ queryKey: ['exercises'] });
       onSelect(newExercise.id, true);
       setIsCreating(false);
       setNewExerciseName('');
       setNewExerciseMuscle('Otro');
+      setNewSecondaries({});
+      setNewIsBodyweight(false);
     },
     onError: (err) => {
       setError(err instanceof Error ? err.message : 'Error creando ejercicio');
@@ -128,6 +134,21 @@ export function ExerciseSelector({
     mutationFn: async ({ id, muscle_group }: { id: string; muscle_group: string }) => {
       const { error } = await supabase.from('exercises').update({ muscle_group }).eq('id', id);
       if (error) throw error;
+      // Mantener coherente el primario ponderado en exercise_muscles.
+      const { data: existing } = await supabase
+        .from('exercise_muscles')
+        .select('muscle_group')
+        .eq('exercise_id', id)
+        .eq('role', 'primary')
+        .maybeSingle();
+      await supabase.from('exercise_muscles').delete().eq('exercise_id', id).eq('role', 'primary');
+      await supabase
+        .from('exercise_muscles')
+        .upsert(
+          { exercise_id: id, muscle_group, role: 'primary', weight: 100 },
+          { onConflict: 'exercise_id,muscle_group' },
+        );
+      void existing;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['exercises'] });
@@ -160,12 +181,37 @@ export function ExerciseSelector({
 
   const handleCreate = useCallback(() => {
     if (!newExerciseName.trim()) {
-      setError('El nombre es requerido');
+      setError(t('workout.name_required'));
       return;
     }
     setError(null);
-    createMutation.mutate({ name: newExerciseName.trim(), muscle_group: newExerciseMuscle });
-  }, [newExerciseName, newExerciseMuscle, createMutation]);
+    const secondaries = Object.entries(newSecondaries)
+      .filter(([mg]) => mg !== newExerciseMuscle)
+      .map(([muscle_group, weight]) => ({ muscle_group, weight }));
+    createMutation.mutate({
+      name: newExerciseName.trim(),
+      muscle_group: newExerciseMuscle,
+      secondaries,
+      is_bodyweight: newIsBodyweight,
+    });
+  }, [newExerciseName, newExerciseMuscle, newSecondaries, newIsBodyweight, createMutation, t]);
+
+  const toggleSecondary = useCallback((mg: string) => {
+    setNewSecondaries((prev) => {
+      const next = { ...prev };
+      if (mg in next) delete next[mg];
+      else next[mg] = 30;
+      return next;
+    });
+  }, []);
+
+  const adjustSecondary = useCallback((mg: string, delta: number) => {
+    setNewSecondaries((prev) => {
+      const current = prev[mg] ?? 30;
+      const value = Math.max(5, Math.min(100, current + delta));
+      return { ...prev, [mg]: value };
+    });
+  }, []);
 
   const handleCancelCreate = useCallback(() => {
     setIsCreating(false);
@@ -533,6 +579,69 @@ export function ExerciseSelector({
                     );
                   })}
                 </div>
+
+                {/* Secundarios ponderados (opcional) */}
+                <div className="mt-3 text-xs font-semibold uppercase tracking-wider text-fg-subtle">
+                  {t('workout.secondary_muscles')}
+                </div>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {MUSCLE_GROUPS.filter((mg) => mg !== newExerciseMuscle).map((mg) => {
+                    const active = mg in newSecondaries;
+                    return (
+                      <div key={mg} className="flex items-center">
+                        <button
+                          type="button"
+                          onClick={() => toggleSecondary(mg)}
+                          aria-pressed={active}
+                          className={`flex items-center gap-1 px-2.5 min-h-9 text-xs rounded-sm border transition-colors ${
+                            active
+                              ? 'bg-accent/15 text-accent border-accent'
+                              : 'bg-surface-2 text-fg-muted border-line'
+                          }`}
+                        >
+                          <MuscleGroupIcon name={mg} className="w-3 h-3" />
+                          {mg}
+                          {active && <span className="tabular-nums">· {newSecondaries[mg]}%</span>}
+                        </button>
+                        {active && (
+                          <span className="flex items-center ml-1">
+                            <button
+                              type="button"
+                              onClick={() => adjustSecondary(mg, -10)}
+                              aria-label={`${mg} -10%`}
+                              className="w-8 h-8 rounded-sm bg-surface-2 text-fg-muted text-sm"
+                            >
+                              −
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => adjustSecondary(mg, 10)}
+                              aria-label={`${mg} +10%`}
+                              className="w-8 h-8 rounded-sm bg-surface-2 text-fg-muted text-sm ml-0.5"
+                            >
+                              +
+                            </button>
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Peso corporal */}
+                <button
+                  type="button"
+                  onClick={() => setNewIsBodyweight((v) => !v)}
+                  aria-pressed={newIsBodyweight}
+                  className={`mt-3 flex items-center gap-2 px-3 min-h-11 w-full rounded-md border text-sm transition-colors ${
+                    newIsBodyweight
+                      ? 'bg-accent/15 text-accent border-accent'
+                      : 'bg-surface-2 text-fg-muted border-line'
+                  }`}
+                >
+                  <Check className={`w-4 h-4 ${newIsBodyweight ? 'opacity-100' : 'opacity-30'}`} />
+                  {t('workout.bodyweight_exercise')}
+                </button>
 
                 {error && (
                   <div className="flex items-center gap-1 mt-2 text-xs text-error">

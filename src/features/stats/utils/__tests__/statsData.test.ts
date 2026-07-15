@@ -64,4 +64,42 @@ describe('calculateMuscleGroupDistribution', () => {
   it('devuelve array vacío si no hay sets', () => {
     expect(calculateMuscleGroupDistribution([])).toEqual([]);
   });
+
+  it('reparte el volumen entre músculos ponderados cuando hay mapa', () => {
+    const sets = [
+      {
+        weight: 100,
+        reps: 1,
+        is_warmup: false,
+        exercise_id: 'x',
+        exercise: { muscle_group: 'Espalda' },
+      },
+    ];
+    const map = {
+      x: [
+        { muscle_group: 'Espalda', role: 'primary' as const, weight: 60 },
+        { muscle_group: 'Glúteo', role: 'secondary' as const, weight: 40 },
+      ],
+    };
+    const result = calculateMuscleGroupDistribution(sets, map);
+    const espalda = result.find((r) => r.name === 'Espalda');
+    const gluteo = result.find((r) => r.name === 'Glúteo');
+    expect(espalda?.value).toBeCloseTo(60);
+    expect(gluteo?.value).toBeCloseTo(40);
+  });
+
+  it('cae al muscle_group único si el mapa no cubre el exercise_id (retrocompatible)', () => {
+    const sets = [
+      {
+        weight: 10,
+        reps: 10,
+        is_warmup: false,
+        exercise_id: 'z',
+        exercise: { muscle_group: 'Pecho' },
+      },
+    ];
+    const result = calculateMuscleGroupDistribution(sets, {});
+    expect(result[0].name).toBe('Pecho');
+    expect(result[0].value).toBe(100);
+  });
 });

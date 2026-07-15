@@ -20,6 +20,8 @@ import {
   isWorkingSet,
 } from '../utils/kpiCalculations';
 import { analyzeMuscleRecovery, getDaysSinceLastWorkout } from '../utils/fatigueAnalysis';
+import { calculateMuscleGroupDistribution } from '../utils/statsData';
+import { useExerciseMusclesMap } from '../hooks/useExerciseMusclesMap';
 import { comparePeriods } from '../utils/periodComparison';
 import { projectNextVolume } from '../utils/volumeProjection';
 import { useTranslation } from 'react-i18next';
@@ -195,20 +197,18 @@ export function UserStatsPage() {
   const daysSinceLast = useMemo(() => getDaysSinceLastWorkout(workouts), [workouts]);
   const avgDuration = useMemo(() => calculateAverageSessionDuration(workouts), [workouts]);
   const totalPRs = useMemo(() => calculateAllTimePRsCount(personalRecords), [personalRecords]);
-  const muscleRecovery = useMemo(() => analyzeMuscleRecovery(recentSets), [recentSets]);
+  const musclesMap = useExerciseMusclesMap();
+  const muscleRecovery = useMemo(
+    () => analyzeMuscleRecovery(recentSets, musclesMap),
+    [recentSets, musclesMap],
+  );
   const periodComparison = useMemo(() => comparePeriods(recentSets, 30), [recentSets]);
 
-  // Muscle group distribution
-  const muscleDistribution = useMemo(() => {
-    const dist: Record<string, number> = {};
-    recentSets.filter(isWorkingSet).forEach((s) => {
-      const mg = s.exercise?.muscle_group || 'Otro';
-      dist[mg] = (dist[mg] || 0) + s.weight * s.reps;
-    });
-    return Object.entries(dist)
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value);
-  }, [recentSets]);
+  // Muscle group distribution (reparto ponderado entre los músculos del ejercicio)
+  const muscleDistribution = useMemo(
+    () => calculateMuscleGroupDistribution(recentSets, musclesMap),
+    [recentSets, musclesMap],
+  );
 
   // Top exercises by volume
   const topExercises = useMemo(() => {

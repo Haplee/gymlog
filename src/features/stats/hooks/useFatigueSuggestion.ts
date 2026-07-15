@@ -5,6 +5,7 @@ import { fetchRecentSets } from '@shared/api/queries';
 import { notify } from '@shared/lib/notifications';
 import { toLocalDateKey } from '@shared/lib/dateKeys';
 import { analyzeMuscleRecovery, getSuggestedMuscleGroup } from '../utils/fatigueAnalysis';
+import { useExerciseMusclesMap } from './useExerciseMusclesMap';
 
 const STORAGE_KEY = 'fatigue_suggestion_date';
 
@@ -22,6 +23,7 @@ export function useFatigueSuggestion() {
     enabled: !!user?.id,
     staleTime: 1000 * 60 * 5,
   });
+  const musclesMap = useExerciseMusclesMap();
 
   useEffect(() => {
     if (!user || recentSets.length === 0) return;
@@ -36,7 +38,7 @@ export function useFatigueSuggestion() {
     });
     if (trainedToday) return;
 
-    const suggested = getSuggestedMuscleGroup(analyzeMuscleRecovery(recentSets));
+    const suggested = getSuggestedMuscleGroup(analyzeMuscleRecovery(recentSets, musclesMap));
     if (!suggested) return;
 
     void notify('Hoy toca entrenar', {
@@ -45,5 +47,5 @@ export function useFatigueSuggestion() {
       url: '/',
     });
     localStorage.setItem(STORAGE_KEY, todayKey);
-  }, [user, recentSets]);
+  }, [user, recentSets, musclesMap]);
 }
