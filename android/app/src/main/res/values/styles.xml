@@ -5,13 +5,21 @@
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
     </style>
-    <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.DayNight.NoActionBar">
+    <!-- NO usar DayNight: el tema de la app lo elige el usuario en Ajustes y vive
+         en JS (settingsStore), no en el modo claro/oscuro del sistema. Con DayNight,
+         `windowBackground` se resolvía a blanco cuando el sistema estaba en claro y
+         esa franja se veía detrás de la barra de estado, con los iconos en blanco
+         encima → ilegible (QA-01). Fijamos el fondo a la base oscura de la app. -->
+    <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
-        <!-- Barra de navegación transparente: la app es edge-to-edge, así el fondo
-             (nav bg-surface) se ve detrás y adapta a tema claro/oscuro. Negro fijo
-             dejaba una franja negra en modo claro. -->
+        <item name="android:windowBackground">@color/appBackground</item>
+        <!-- Barras transparentes: la app es edge-to-edge, así el fondo del propio
+             WebView se ve detrás y adapta a tema claro/oscuro. Un color fijo dejaba
+             una franja que no seguía al tema de la app. -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:enforceStatusBarContrast" tools:targetApi="29">false</item>
         <item name="android:enforceNavigationBarContrast" tools:targetApi="29">false</item>
         <item name="android:background">@null</item>
     </style>

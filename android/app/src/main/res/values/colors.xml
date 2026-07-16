@@ -5,4 +5,7 @@
     <color name="colorAccent">#FF2D55</color>
     <color name="gymlog_green">#60eca8</color>
     <color name="gymlog_blue">#5AC8FA</color>
+    <!-- Base oscura de la app (bg-base en tokens.css). Si cambia, actualiza
+         también index.html, el manifest PWA de vite.config.ts y capacitor.config.ts. -->
+    <color name="appBackground">#0A0A0B</color>
 </resources>
