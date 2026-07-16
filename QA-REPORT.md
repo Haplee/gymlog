@@ -1,9 +1,10 @@
 # QA-REPORT — GymLog (Android, emulador)
 
-> **ESTADO: los 12 hallazgos están corregidos** (2026-07-16). `lint` + `type-check` +
-> `test` (208 tests, 27 ficheros) en verde. Los arreglos de QA-01, QA-04, QA-06, QA-07,
-> QA-08, QA-09 y QA-10 se han **verificado en el emulador** con un APK recompilado.
-> Ver "Estado de los arreglos" al final. **Sin commitear: los commits los haces tú.**
+> **ESTADO: los 12 hallazgos están corregidos y publicados en la v5.0.0** (2026-07-16).
+> `lint` + `type-check` + `test` (208 tests, 27 ficheros) en verde. Los arreglos de QA-01,
+> QA-04, QA-06, QA-07, QA-08, QA-09 y QA-10 se han **verificado en el emulador** con un APK
+> recompilado, y la v5.0.0 firmada se ha instalado y arrancado en un Pixel 9a real.
+> Ver "Estado de los arreglos" al final.
 
 **Fecha:** 2026-07-16 (actualizado tras la 2ª pasada)
 **Build:** `app-debug.apk` compilado desde el working tree (incluye cambios **sin commitear** de notificaciones)
