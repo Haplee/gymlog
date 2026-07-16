@@ -71,7 +71,10 @@ export function Modal({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4"
+          // El overlay no tenía fondo: el diálogo no se leía como modal y los
+          // controles de detrás parecían pulsables (aunque el focus trap ya los
+          // bloqueaba). El oscurecido comunica que el fondo está inactivo.
+          className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4 bg-black/60"
           onClick={(e) => {
             if (e.target === e.currentTarget) onClose();
           }}

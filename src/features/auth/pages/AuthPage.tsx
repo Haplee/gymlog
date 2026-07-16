@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
 import { m, type Variants } from 'framer-motion';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useTranslation } from 'react-i18next';
@@ -8,7 +9,7 @@ import { useSettingsStore } from '@shared/stores/settingsStore';
 import { checkPasswordStrength } from '@shared/lib/passwordStrength';
 import { Download } from 'lucide-react';
 
-const APK_URL = 'https://github.com/Haplee/gymlog/releases/download/v0.5.0/GymLog-v0.5.0.apk';
+const APK_URL = 'https://github.com/Haplee/gymlog/releases/download/v5.0.0/GymLog-v5.0.0.apk';
 
 const inputClass =
   'w-full bg-transparent border-0 border-b border-line-strong rounded-none text-base py-3 px-1 outline-none transition-colors text-fg placeholder:text-fg-subtle focus:border-accent';
@@ -363,7 +364,7 @@ export function AuthPage() {
             <button
               type="button"
               onClick={toggleMode}
-              className="text-sm bg-transparent border-none p-2 transition-colors text-accent hover:text-accent-dim"
+              className="inline-flex items-center justify-center text-sm bg-transparent border-none px-3 min-h-11 transition-colors text-accent hover:text-accent-dim"
             >
               {isSignUp ? t('auth.switch_login') : t('auth.switch_signup')}
             </button>
@@ -384,7 +385,7 @@ export function AuthPage() {
               type="button"
               onClick={() => setLanguage(lng)}
               aria-pressed={language === lng}
-              className={`label-caps px-3 py-2.5 min-h-11 rounded-sm transition-colors ${
+              className={`label-caps px-4 py-2.5 min-w-11 min-h-11 rounded-sm transition-colors ${
                 language === lng ? 'text-accent' : 'text-fg-subtle hover:text-fg-muted'
               }`}
             >
@@ -392,13 +393,16 @@ export function AuthPage() {
             </button>
           ))}
         </div>
-        <a
-          href={APK_URL}
-          className="label-caps inline-flex items-center gap-2 px-3 py-2.5 min-h-11 rounded-sm text-fg-subtle hover:text-fg-muted transition-colors"
-        >
-          <Download className="w-3.5 h-3.5" />
-          {t('auth.download_apk')}
-        </a>
+        {/* En la app nativa ofrecería descargar el APK que ya se está ejecutando. */}
+        {!Capacitor.isNativePlatform() && (
+          <a
+            href={APK_URL}
+            className="label-caps inline-flex items-center gap-2 px-3 py-2.5 min-h-11 rounded-sm text-fg-subtle hover:text-fg-muted transition-colors"
+          >
+            <Download className="w-3.5 h-3.5" />
+            {t('auth.download_apk')}
+          </a>
+        )}
       </m.footer>
     </div>
   );

@@ -30,6 +30,14 @@
 }
 
 @theme {
+  /* ── Escala de espaciado: rejilla de 4px, igual que --space-* de tokens.css.
+     Sin esto Tailwind usa su default de 0.25rem que, con :root a 15px, da
+     3.75px por unidad: `p-4` salía 15px en vez de los 16px que dice el token, y
+     —lo importante— `h-11`/`min-h-11` daban 41.25px, por debajo del mínimo de
+     44px para touch targets que exige CLAUDE.md. En px la escala no depende del
+     tamaño de fuente raíz. ── */
+  --spacing: 4px;
+
   /* ── Fuentes (mismos valores que tokens.css):
      Inter = body · Space Grotesk = display/números ── */
   --font-sans: 'Inter', sans-serif;
