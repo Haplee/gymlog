@@ -1,9 +1,26 @@
 import type { WeightedMuscle } from './muscleDistribution';
 
+/**
+ * Estado de recuperación de un grupo muscular, derivado de los días
+ * transcurridos desde la última vez que se trabajó.
+ *
+ * Los nombres describen **recuperación**, que es lo que se muestra al usuario:
+ * más días sin entrenar ⇒ más recuperado. Antes se llamaban `fresh` /
+ * `needs-attention` (semántica de *recencia*), y la capa de presentación los
+ * traducía al revés: un músculo entrenado hoy salía como "Recuperado".
+ */
+export type RecoveryStatus =
+  /** Entrenado hace ≤2 días: aún acusa el trabajo, no toca repetir. */
+  | 'recovering'
+  /** 3-4 días: casi listo. */
+  | 'partial'
+  /** ≥5 días (o nunca entrenado): recuperado, es el candidato a entrenar. */
+  | 'recovered';
+
 export interface MuscleGroupStatus {
   name: string;
   daysSinceLast: number;
-  status: 'fresh' | 'moderate' | 'needs-attention';
+  status: RecoveryStatus;
 }
 
 interface RecoverySet {
@@ -19,6 +36,15 @@ function musclesForSet(s: RecoverySet, musclesMap?: Record<string, WeightedMuscl
     return [...new Set(weighted.map((m) => m.muscle_group))];
   }
   return [s.exercise?.muscle_group || 'Otro'];
+}
+
+/** Días transcurridos → estado de recuperación. Umbrales en un único sitio. */
+export function recoveryStatusFor(daysSinceLast: number): RecoveryStatus {
+  // -1 = sin datos: nunca entrenado ⇒ recuperado por definición.
+  if (daysSinceLast < 0) return 'recovered';
+  if (daysSinceLast <= 2) return 'recovering';
+  if (daysSinceLast <= 4) return 'partial';
+  return 'recovered';
 }
 
 export function analyzeMuscleRecovery(
@@ -43,29 +69,24 @@ export function analyzeMuscleRecovery(
   }
 
   if (lastByGroup.size === 0) {
-    return [{ name: 'Otro', daysSinceLast: -1, status: 'needs-attention' }];
+    return [{ name: 'Otro', daysSinceLast: -1, status: recoveryStatusFor(-1) }];
   }
 
   const result: MuscleGroupStatus[] = [];
   for (const [mg, ts] of lastByGroup) {
     const daysSince = Math.floor((now.getTime() - ts) / (1000 * 60 * 60 * 24));
-    let status: 'fresh' | 'moderate' | 'needs-attention';
-    if (daysSince <= 2) status = 'fresh';
-    else if (daysSince <= 4) status = 'moderate';
-    else status = 'needs-attention';
-    result.push({ name: mg, daysSinceLast: daysSince, status });
+    result.push({ name: mg, daysSinceLast: daysSince, status: recoveryStatusFor(daysSince) });
   }
 
-  // Fresh muscles first (ascending daysSinceLast), needs-attention last
+  // Recién entrenados primero (menos días), recuperados al final.
   return result.sort((a, b) => a.daysSinceLast - b.daysSinceLast);
 }
 
+/** Primer grupo muscular ya recuperado, si lo hay: el candidato a entrenar hoy. */
 export function getSuggestedMuscleGroup(recoveryData: MuscleGroupStatus[]): string | null {
-  const needsAttention = recoveryData.filter((m) => m.status === 'needs-attention');
-  if (needsAttention.length > 0) {
-    return needsAttention[0].name;
-  }
-  return null;
+  const recovered = recoveryData.filter((m) => m.status === 'recovered');
+  if (recovered.length === 0) return null;
+  return recovered[0].name;
 }
 
 export function getDaysSinceLastWorkout(workouts: { started_at: string | null }[]): number {

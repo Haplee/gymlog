@@ -59,6 +59,7 @@ import {
   getDaysSinceLastWorkout,
 } from '../utils/fatigueAnalysis';
 import { useExerciseMusclesMap } from '../hooks/useExerciseMusclesMap';
+import { useWeight } from '@shared/hooks/useWeight';
 import { FatigueAnalysis } from '../components/FatigueAnalysis';
 import { CHART_COLORS } from '../constants';
 import { toast } from 'sonner';
@@ -155,6 +156,8 @@ export function StatsPage() {
   const avgDuration = useMemo(() => calculateAverageSessionDuration(workouts), [workouts]);
   const totalPRs = useMemo(() => calculateAllTimePRsCount(personalRecords), [personalRecords]);
   const musclesMap = useExerciseMusclesMap();
+  // Volúmenes en la unidad del usuario (kg→t, lb→k lb), no toneladas fijas.
+  const { formatVol, format: formatKg, toDisplay, toKg, unit } = useWeight();
   const muscleRecovery = useMemo(
     () => analyzeMuscleRecovery(recentSets, musclesMap),
     [recentSets, musclesMap],
@@ -218,7 +221,9 @@ export function StatsPage() {
   );
 
   const handleSaveGoal = async () => {
-    const target = parseFloat(goalInput.replace(',', '.'));
+    // El usuario teclea en su unidad; la BD guarda siempre kg.
+    const typed = parseFloat(goalInput.replace(',', '.'));
+    const target = toKg(typed);
     if (!user || !activeExerciseId || !Number.isFinite(target) || target <= 0) return;
     try {
       await upsertExerciseGoal(user.id, activeExerciseId, target);
@@ -388,8 +393,10 @@ export function StatsPage() {
 
   return (
     <Layout>
-      <div className="flex items-center justify-between gap-3 mb-4">
-        <div className="flex items-center gap-3 min-w-0">
+      {/* gap-2: con los botones a 44px (mínimo táctil) y el título a 2rem, el
+          header va justo a 411dp; con gap-3 "Estadísticas" se truncaba. */}
+      <div className="flex items-center justify-between gap-2 mb-4">
+        <div className="flex items-center gap-2 min-w-0">
           <button
             type="button"
             onClick={() => navigate(-1)}
@@ -398,7 +405,9 @@ export function StatsPage() {
           >
             <ArrowLeft className="w-4 h-4 text-fg-muted" />
           </button>
-          <h1 className="text-headline font-display text-fg text-balance truncate">
+          {/* min-w-0 + truncate: el h1 debe poder encogerse dentro del flex o
+              desborda. text-balance no aplica a una sola línea. */}
+          <h1 className="text-headline font-display text-fg truncate min-w-0">
             {t('stats.title')}
           </h1>
         </div>
@@ -431,7 +440,7 @@ export function StatsPage() {
             />
             <KPICard
               title="Volumen semanal"
-              value={`${(weeklyVolume / 1000).toFixed(1)}t`}
+              value={formatVol(weeklyVolume)}
               subtitle="esta semana"
               icon="volume"
               trend={volumeChange}
@@ -459,13 +468,13 @@ export function StatsPage() {
           >
             <KPICard
               title="Volumen total"
-              value={`${(allTimeVolume / 1000).toFixed(1)}t`}
+              value={formatVol(allTimeVolume)}
               subtitle="histórico"
               icon="all-volume"
             />
             <KPICard
               title="Mejor 1RM"
-              value={bestOneRm > 0 ? `${bestOneRm}kg` : '—'}
+              value={bestOneRm > 0 ? formatKg(bestOneRm, 0) : '—'}
               subtitle="estimado"
               icon="best-1rm"
             />
@@ -745,7 +754,7 @@ export function StatsPage() {
             <div className="mt-3 pt-3 flex items-center justify-between text-xs border-t border-line">
               <span className="text-fg-subtle">Total ({PERIOD_LABELS[periodFilter]})</span>
               <span className="font-semibold text-fg">
-                {(weeklyVolumeData.reduce((s, d) => s + d.vol, 0) / 1000).toFixed(1)}t
+                {formatVol(weeklyVolumeData.reduce((s, d) => s + d.vol, 0))}
               </span>
             </div>
           </m.div>
@@ -855,7 +864,7 @@ export function StatsPage() {
                     <div className="pt-2 flex items-center justify-between text-xs border-t border-line">
                       <span className="text-fg-subtle">Mejor registro</span>
                       <span className="font-semibold text-accent">
-                        {progressionData[progressionData.length - 1]?.value.toFixed(1)} kg
+                        {formatKg(progressionData[progressionData.length - 1]?.value ?? 0)}
                       </span>
                     </div>
                   )}
@@ -866,7 +875,7 @@ export function StatsPage() {
                         <span className="text-xs font-semibold text-fg">Objetivo 1RM</span>
                         {activeGoal != null && (
                           <span className="text-2xs font-mono tabular-nums text-fg-subtle">
-                            {currentBest1rm} / {activeGoal} kg
+                            {Math.round(toDisplay(currentBest1rm))} / {formatKg(activeGoal, 0)}
                           </span>
                         )}
                       </div>
@@ -884,7 +893,7 @@ export function StatsPage() {
                             <span className="text-2xs text-fg-subtle">
                               {currentBest1rm >= activeGoal
                                 ? '¡Objetivo alcanzado! 🎉'
-                                : `Faltan ${(activeGoal - currentBest1rm).toFixed(1)} kg`}
+                                : `Faltan ${formatKg(activeGoal - currentBest1rm)}`}
                             </span>
                             <button
                               type="button"
@@ -902,7 +911,7 @@ export function StatsPage() {
                             inputMode="decimal"
                             value={goalInput}
                             onChange={(e) => setGoalInput(e.target.value.replace(/[^\d.,]/g, ''))}
-                            placeholder={`p.ej. ${currentBest1rm + 5} kg`}
+                            placeholder={`p.ej. ${Math.round(toDisplay(currentBest1rm)) + 5} ${unit}`}
                             className="flex-1 rounded-lg text-sm px-3 py-2 outline-none bg-surface-2 border border-line text-fg"
                           />
                           <button
@@ -993,7 +1002,7 @@ export function StatsPage() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <div className="text-xs mb-1.5 text-fg-subtle">Peso (kg)</div>
+              <div className="text-xs mb-1.5 text-fg-subtle">Peso ({unit})</div>
               <input
                 type="number"
                 placeholder="100"
@@ -1022,7 +1031,7 @@ export function StatsPage() {
           <div className="mt-4 text-center">
             <div className="text-xs mb-1 text-fg-subtle">1RM estimado</div>
             <div className="text-3xl font-bold font-mono text-accent tabular-nums">
-              {rmResult ? `${rmResult.toFixed(1)} kg` : '—'}
+              {rmResult ? `${rmResult.toFixed(1)} ${unit}` : '—'}
             </div>
           </div>
         </m.div>

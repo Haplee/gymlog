@@ -1,6 +1,6 @@
 import { m } from 'framer-motion';
 import { CheckCircle2, AlertTriangle, XCircle, TrendingUp, Zap } from 'lucide-react';
-import type { MuscleGroupStatus } from '../utils/fatigueAnalysis';
+import type { MuscleGroupStatus, RecoveryStatus } from '../utils/fatigueAnalysis';
 import { MuscleGroupIcon } from '@shared/components/CardioIcons';
 import { MUSCLE_COLORS } from '@shared/constants/muscleColors';
 
@@ -15,35 +15,30 @@ export function FatigueAnalysis({
   daysSinceLastWorkout,
   suggestedGroup,
 }: FatigueAnalysisProps) {
-  const getStatusConfig = (status: string) => {
+  const getStatusConfig = (status: RecoveryStatus) => {
     switch (status) {
-      case 'fresh':
+      // Recién entrenado: la barra de recuperación está a ~0%, así que el
+      // rótulo tiene que decir lo mismo que la barra.
+      case 'recovering':
+        return {
+          color: 'var(--error)',
+          bgColor: 'rgba(255, 69, 58, 0.1)',
+          icon: XCircle,
+          label: 'En recuperación',
+        };
+      case 'partial':
+        return {
+          color: 'var(--warning)',
+          bgColor: 'rgba(255, 214, 10, 0.1)',
+          icon: AlertTriangle,
+          label: 'Casi listo',
+        };
+      case 'recovered':
         return {
           color: 'var(--success)',
           bgColor: 'rgba(48, 209, 88, 0.1)',
           icon: CheckCircle2,
           label: 'Recuperado',
-        };
-      case 'moderate':
-        return {
-          color: 'var(--warning)',
-          bgColor: 'rgba(255, 214, 10, 0.1)',
-          icon: AlertTriangle,
-          label: 'Moderado',
-        };
-      case 'needs-attention':
-        return {
-          color: 'var(--error)',
-          bgColor: 'rgba(255, 69, 58, 0.1)',
-          icon: XCircle,
-          label: 'Necesita atención',
-        };
-      default:
-        return {
-          color: 'var(--text-tertiary)',
-          bgColor: 'transparent',
-          icon: CheckCircle2,
-          label: 'Desconocido',
         };
     }
   };

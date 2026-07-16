@@ -14,6 +14,7 @@ import {
 } from '@features/routine/stores/routineStore';
 import { useCardioStore, CARDIO_LABELS } from '@features/cardio/stores/cardioStore';
 import { Layout } from '@app/components/Layout';
+import { useWeight } from '@shared/hooks/useWeight';
 import { supabase } from '@shared/lib/supabase';
 import { shareWorkoutImage } from '@shared/lib/shareImage';
 import { formatDuration } from '@shared/lib/duration';
@@ -157,6 +158,7 @@ function EditWorkoutModal({
 
 export function HistoryPage() {
   const navigate = useNavigate();
+  const { formatVol } = useWeight();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
@@ -1197,7 +1199,7 @@ export function HistoryPage() {
                   </span>
                   <div className="flex items-center gap-3">
                     <span className="text-xs font-mono text-fg-subtle">
-                      {group.totalSets} series · {(group.totalVolume / 1000).toFixed(1)}t
+                      {group.totalSets} series · {formatVol(group.totalVolume)}
                     </span>
                     <button
                       type="button"
