@@ -7,6 +7,7 @@ import { devError } from '@shared/lib/devtools';
 import { enqueueWorkout, isNetworkError } from '@shared/lib/workoutOutbox';
 import { resolveOrCreateExercise } from '@shared/lib/resolveOrCreateExercise';
 import { useOutboxStore } from '@shared/stores/outboxStore';
+import { reconcileReminders } from '@shared/lib/reminderReconcile';
 
 const SetDataSchema = z.object({
   id: z.string().default(() => crypto.randomUUID()),
@@ -217,6 +218,8 @@ export const useWorkoutStore = create<WorkoutState>()(
           });
           resetState();
           void useOutboxStore.getState().refresh();
+          // Ya ha entrenado hoy: silencia los recordatorios de hoy al instante.
+          void reconcileReminders(userId, { trainedToday: true });
           return { error: null, success: true, queued: true };
         };
 
@@ -249,6 +252,8 @@ export const useWorkoutStore = create<WorkoutState>()(
           if (rpcError) throw rpcError;
 
           resetState();
+          // Ya ha entrenado hoy: silencia los recordatorios de hoy al instante.
+          void reconcileReminders(userId, { trainedToday: true });
           return { error: null, success: true };
         } catch (err) {
           // Error de red → encolar para reintentar. Otros errores → reportar.

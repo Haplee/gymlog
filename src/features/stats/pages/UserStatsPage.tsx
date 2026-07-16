@@ -22,6 +22,7 @@ import {
 import { analyzeMuscleRecovery, getDaysSinceLastWorkout } from '../utils/fatigueAnalysis';
 import { calculateMuscleGroupDistribution } from '../utils/statsData';
 import { useExerciseMusclesMap } from '../hooks/useExerciseMusclesMap';
+import { useWeight } from '@shared/hooks/useWeight';
 import { comparePeriods } from '../utils/periodComparison';
 import { projectNextVolume } from '../utils/volumeProjection';
 import { useTranslation } from 'react-i18next';
@@ -198,6 +199,8 @@ export function UserStatsPage() {
   const avgDuration = useMemo(() => calculateAverageSessionDuration(workouts), [workouts]);
   const totalPRs = useMemo(() => calculateAllTimePRsCount(personalRecords), [personalRecords]);
   const musclesMap = useExerciseMusclesMap();
+  // Volúmenes en la unidad del usuario (kg→t, lb→k lb), no toneladas fijas.
+  const { formatVol } = useWeight();
   const muscleRecovery = useMemo(
     () => analyzeMuscleRecovery(recentSets, musclesMap),
     [recentSets, musclesMap],
@@ -436,7 +439,7 @@ export function UserStatsPage() {
               delay={0}
             />
             <BigKPI
-              value={`${(totalVolumeAllTime / 1000).toFixed(0)}t`}
+              value={formatVol(totalVolumeAllTime)}
               label="Volumen total"
               icon={BarChart3}
               color="var(--accent-blue)"
@@ -594,7 +597,7 @@ export function UserStatsPage() {
                     {t(`stats.comparison_${key}`)}
                   </div>
                   <div className="font-mono font-bold text-2xl text-fg mt-1 tabular-nums">
-                    {(stats.volume / 1000).toFixed(1)}t
+                    {formatVol(stats.volume)}
                   </div>
                   <div className="text-xs text-fg-subtle">
                     {stats.sessions} {t('stats.comparison_sessions')}
@@ -622,7 +625,7 @@ export function UserStatsPage() {
                 </div>
                 <div className="text-right">
                   <div className="font-mono font-bold text-xl text-accent tabular-nums">
-                    {(volumeProjection.projected / 1000).toFixed(1)}t
+                    {formatVol(volumeProjection.projected)}
                   </div>
                   <div className="text-2xs text-fg-subtle">{t('stats.projection_next')}</div>
                 </div>
@@ -657,20 +660,20 @@ export function UserStatsPage() {
               <div className="space-y-2">
                 {muscleRecovery.slice(0, 6).map(({ name, daysSinceLast, status }) => {
                   const colors = {
-                    fresh: {
+                    recovering: {
+                      dot: 'var(--error)',
+                      label: t('userStats.recovery_recovering'),
+                      bg: 'color-mix(in srgb, var(--error) 10%, transparent)',
+                    },
+                    partial: {
+                      dot: 'var(--warning)',
+                      label: t('userStats.recovery_partial'),
+                      bg: 'color-mix(in srgb, var(--warning) 10%, transparent)',
+                    },
+                    recovered: {
                       dot: 'var(--success)',
                       label: t('userStats.recovery_rested'),
                       bg: 'color-mix(in srgb, var(--success) 10%, transparent)',
-                    },
-                    moderate: {
-                      dot: 'var(--warning)',
-                      label: t('userStats.recovery_moderate'),
-                      bg: 'color-mix(in srgb, var(--warning) 10%, transparent)',
-                    },
-                    'needs-attention': {
-                      dot: 'var(--error)',
-                      label: t('userStats.recovery_needs_work'),
-                      bg: 'color-mix(in srgb, var(--error) 10%, transparent)',
                     },
                   }[status];
                   return (

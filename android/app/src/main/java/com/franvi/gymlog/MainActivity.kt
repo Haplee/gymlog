@@ -67,9 +67,11 @@ class MainActivity : BridgeActivity() {
         }
         ViewCompat.requestApplyInsets(window.decorView)
 
-        // 4. Forzar iconos claros/oscuros según el tema
+        // 4. Iconos claros de arranque, coherentes con el splash oscuro. El valor
+        //    definitivo lo fija settingsStore.applyTheme() vía StatusBar.setStyle()
+        //    en cuanto carga la web, según el tema elegido por el usuario.
         val controller = WindowInsetsControllerCompat(window, window.decorView)
-        controller.isAppearanceLightStatusBars = false 
+        controller.isAppearanceLightStatusBars = false
         controller.isAppearanceLightNavigationBars = false
         
         // 5. Instalar vista de bloqueo si biometría está habilitada

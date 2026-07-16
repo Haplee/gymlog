@@ -2,6 +2,7 @@ import { m } from 'framer-motion';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { SectionLabel } from './SectionLabel';
+import { useWeight } from '@shared/hooks/useWeight';
 
 export interface WeeklyVolumePoint {
   week: string;
@@ -16,6 +17,7 @@ export function WeeklyVolumeChart({
   data: WeeklyVolumePoint[];
   volumeChange: number;
 }) {
+  const { formatVol } = useWeight();
   return (
     <section className="space-y-3">
       <SectionLabel>Evolución del volumen</SectionLabel>
@@ -70,7 +72,7 @@ export function WeeklyVolumeChart({
                 }}
                 formatter={(v) => {
                   const n = Number(v);
-                  return [n > 0 ? `${(n / 1000).toFixed(1)}t` : '0', 'Volumen'];
+                  return [n > 0 ? formatVol(n) : '0', 'Volumen'];
                 }}
               />
               <Area

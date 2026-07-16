@@ -19,14 +19,24 @@ const config: CapacitorConfig = {
       backgroundColor: '#0a0a0b',
       showSpinner: false,
     },
+    // El SystemBars de Capacitor, si el WebView es <140, mete padding-top en el
+    // WebView por el alto de la barra de estado. La franja que deja al descubierto
+    // la pinta el tema nativo, no la web, y por eso no seguía al tema de la app
+    // (QA-01). MainActivity ya hace edge-to-edge y publica --inset-* con los px
+    // reales, así que este manejo sobra y estorba.
+    SystemBars: {
+      insetsHandling: 'disable',
+    },
     StatusBar: {
+      // El color real de la barra lo pinta el propio WebView (edge-to-edge); en
+      // Android 16 `setBackgroundColor` es un no-op de todos modos. El estilo de
+      // los iconos lo fija settingsStore.applyTheme() según el tema de la app.
       style: 'DARK',
-      backgroundColor: '#0a0a0b',
       overlaysWebView: true,
     },
     LocalNotifications: {
       iconColor: '#60eca8',
-      smallIcon: 'icon',
+      smallIcon: 'ic_stat_notify',
     },
     Keyboard: {
       // Encoge el WebView al abrir el teclado para que los inputs del final de

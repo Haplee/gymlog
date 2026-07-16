@@ -1,6 +1,7 @@
 import { m } from 'framer-motion';
 import { CHART_COLORS } from '../../constants';
 import { SectionLabel } from './SectionLabel';
+import { useWeight } from '@shared/hooks/useWeight';
 
 export interface TopExerciseItem {
   name: string;
@@ -10,6 +11,7 @@ export interface TopExerciseItem {
 }
 
 export function TopExercisesList({ data }: { data: TopExerciseItem[] }) {
+  const { formatVol } = useWeight();
   return (
     <section className="space-y-3">
       <SectionLabel>Top ejercicios por volumen</SectionLabel>
@@ -52,7 +54,7 @@ export function TopExercisesList({ data }: { data: TopExerciseItem[] }) {
                 </div>
                 <div className="text-right">
                   <div className="text-sm font-semibold font-mono text-accent">
-                    {(ex.volume / 1000).toFixed(1)}t
+                    {formatVol(ex.volume)}
                   </div>
                   <div className="text-2xs text-fg-subtle">
                     {ex.sets} series · 1RM ~{ex.best1rm.toFixed(0)}kg

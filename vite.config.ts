@@ -42,6 +42,10 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
+        // El registro lo hace main.tsx a mano: en Capacitor los assets ya son
+        // ficheros locales, así que el SW no aporta nada offline y sí servía
+        // JS viejo tras actualizar el APK. En web sigue registrándose igual.
+        injectRegister: null,
         includeAssets: ['favicon.ico', 'apple-touch-icon.webp', 'masked-icon.svg'],
         // Manifest único (antes existía public/manifest.json duplicado que lo eclipsaba)
         manifest: {
@@ -93,19 +97,11 @@ export default defineConfig(({ mode }) => {
                 expiration: { maxEntries: 50, maxAgeSeconds: 60 },
               },
             },
-            {
-              urlPattern: /\.(js|css|png|svg|ico|woff2)$/i,
-              handler: 'CacheFirst',
-              options: {
-                cacheName: 'static-assets',
-                expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 30 },
-              },
-            },
-            {
-              urlPattern: /\.html$/i,
-              handler: 'StaleWhileRevalidate',
-              options: { cacheName: 'html-cache' },
-            },
+            // Nada de runtimeCaching para js/css/html/fuentes: `globPatterns` ya
+            // los precachea con revisión. Había un CacheFirst de 30 días sobre
+            // ellos y un StaleWhileRevalidate del html que ensombrecían el
+            // precache y podían servir un index.html viejo (apuntando a chunks
+            // viejos) tras publicar una versión.
           ],
         },
         devOptions: {

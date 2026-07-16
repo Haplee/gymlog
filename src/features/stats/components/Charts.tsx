@@ -1,5 +1,6 @@
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useWeight } from '@shared/hooks/useWeight';
 import {
   BarChart,
   Bar,
@@ -18,6 +19,7 @@ import {
 import { CHART_COLORS } from '../constants';
 
 export function MuscleGroupChart({ data }: { data: { name: string; value: number }[] }) {
+  const { formatVol } = useWeight();
   if (data.length === 0) return null;
   const total = data.reduce((sum, d) => sum + d.value, 0);
 
@@ -50,7 +52,7 @@ export function MuscleGroupChart({ data }: { data: { name: string; value: number
                 const numVal = typeof value === 'number' ? value : Number(value);
                 return [
                   !isNaN(numVal) && numVal > 0
-                    ? `${(numVal / 1000).toFixed(1)}t (${Math.round((numVal / total) * 100)}%)`
+                    ? `${formatVol(numVal)} (${Math.round((numVal / total) * 100)}%)`
                     : `${value}`,
                   'Volumen',
                 ];
@@ -68,7 +70,7 @@ export function MuscleGroupChart({ data }: { data: { name: string; value: number
                 style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}
               />
               <span className="text-xs truncate flex-1 text-fg-muted">{item.name}</span>
-              <span className="text-xs text-fg-subtle">{(item.value / 1000).toFixed(1)}t</span>
+              <span className="text-xs text-fg-subtle">{formatVol(item.value)}</span>
             </div>
           ))}
         </div>
@@ -88,6 +90,7 @@ export function VolumeChart({
   view: ChartView;
   onViewChange: (v: ChartView) => void;
 }) {
+  const { formatVol } = useWeight();
   const maxVol = Math.max(...data.map((d) => d.vol), 1);
 
   return (
@@ -139,10 +142,7 @@ export function VolumeChart({
                 labelStyle={{ color: 'var(--text-secondary)' }}
                 formatter={(value) => {
                   const numVal = typeof value === 'number' ? value : Number(value);
-                  return [
-                    !isNaN(numVal) && numVal > 0 ? `${(numVal / 1000).toFixed(1)}t` : `${value}`,
-                    'Volumen',
-                  ];
+                  return [!isNaN(numVal) && numVal > 0 ? formatVol(numVal) : `${value}`, 'Volumen'];
                 }}
               />
               <Bar dataKey="vol" fill="url(#volumeGradient)" radius={[5, 5, 0, 0]} />
@@ -172,10 +172,7 @@ export function VolumeChart({
                 labelStyle={{ color: 'var(--text-secondary)' }}
                 formatter={(value) => {
                   const numVal = typeof value === 'number' ? value : Number(value);
-                  return [
-                    !isNaN(numVal) && numVal > 0 ? `${(numVal / 1000).toFixed(1)}t` : `${value}`,
-                    'Volumen',
-                  ];
+                  return [!isNaN(numVal) && numVal > 0 ? formatVol(numVal) : `${value}`, 'Volumen'];
                 }}
               />
               <Area
@@ -202,6 +199,8 @@ export function ExerciseComparisonChart({
   nameA: string;
   nameB: string;
 }) {
+  // `format` ya es el de date-fns en este fichero: alias para el de pesos.
+  const { format: formatKg } = useWeight();
   if (data.length < 2) {
     return (
       <div className="text-center py-8 text-sm text-fg-subtle">
@@ -236,7 +235,7 @@ export function ExerciseComparisonChart({
               formatter={(value, key) => {
                 const numVal = typeof value === 'number' ? value : Number(value);
                 return [
-                  `${!isNaN(numVal) ? numVal.toFixed(1) : value} kg`,
+                  !isNaN(numVal) ? formatKg(numVal) : `${value}`,
                   key === 'a' ? nameA : nameB,
                 ];
               }}
@@ -283,6 +282,8 @@ export function ProgressionChart({
   metric: '1rm' | 'maxWeight' | 'volume';
   exerciseName: string;
 }) {
+  // `format` ya es el de date-fns en este fichero: alias para el de pesos.
+  const { format: formatKg } = useWeight();
   if (data.length < 2) {
     return (
       <div className="text-center py-8 text-sm text-fg-subtle">
@@ -328,7 +329,7 @@ export function ProgressionChart({
             labelFormatter={(v) => format(parseISO(v as string), 'dd MMM', { locale: es })}
             formatter={(value) => {
               const numVal = typeof value === 'number' ? value : Number(value);
-              return [`${!isNaN(numVal) ? numVal.toFixed(1) : value} kg`, metricLabel];
+              return [!isNaN(numVal) ? formatKg(numVal) : `${value}`, metricLabel];
             }}
           />
           <Line

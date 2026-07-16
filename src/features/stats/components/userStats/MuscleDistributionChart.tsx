@@ -3,6 +3,7 @@ import { Target } from 'lucide-react';
 import { Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { CHART_COLORS } from '../../constants';
 import { SectionLabel } from './SectionLabel';
+import { useWeight } from '@shared/hooks/useWeight';
 
 export interface MuscleDistributionItem {
   name: string;
@@ -10,6 +11,7 @@ export interface MuscleDistributionItem {
 }
 
 export function MuscleDistributionChart({ data }: { data: MuscleDistributionItem[] }) {
+  const { formatVol } = useWeight();
   const totalVol = data.reduce((s, m) => s + m.value, 0);
 
   return (
@@ -54,7 +56,7 @@ export function MuscleDistributionChart({ data }: { data: MuscleDistributionItem
                   const n = Number(v);
                   return [
                     totalVol > 0
-                      ? `${(n / 1000).toFixed(1)}t (${Math.round((n / totalVol) * 100)}%)`
+                      ? `${formatVol(n)} (${Math.round((n / totalVol) * 100)}%)`
                       : `${v}`,
                     'Volumen',
                   ];
@@ -79,9 +81,7 @@ export function MuscleDistributionChart({ data }: { data: MuscleDistributionItem
                     <span className="text-sm text-fg-muted">{name}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono text-fg-subtle">
-                      {(value / 1000).toFixed(1)}t
-                    </span>
+                    <span className="text-xs font-mono text-fg-subtle">{formatVol(value)}</span>
                     <span
                       className="text-2xs font-bold px-1.5 py-0.5 rounded-full"
                       style={{

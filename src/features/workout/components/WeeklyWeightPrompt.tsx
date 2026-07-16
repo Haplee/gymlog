@@ -9,6 +9,9 @@ import { daysSinceLastWeight } from '@features/workout/utils/bodyweight';
 
 const DISMISS_KEY = 'gymlog-weight-prompt-dismissed';
 
+/** Límite superior (excluyente) del peso corporal aceptado, en kg. */
+const MAX_WEIGHT_KG = 500;
+
 /** ISO week key (yyyy-Www aprox) para no repetir el prompt dentro de la semana. */
 function currentWeekKey(): string {
   const d = new Date();
@@ -26,6 +29,7 @@ export function WeeklyWeightPrompt() {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
   const [value, setValue] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const [dismissedThisWeek, setDismissedThisWeek] = useState(
     () => localStorage.getItem(DISMISS_KEY) === currentWeekKey(),
   );
@@ -58,7 +62,13 @@ export function WeeklyWeightPrompt() {
 
   const submit = () => {
     const kg = parseFloat(value.replace(',', '.'));
-    if (!Number.isFinite(kg) || kg <= 0 || kg >= 500) return;
+    // Sin mensaje, un valor inválido hacía que "Guardar" no hiciera nada y el
+    // usuario no tenía forma de saber por qué.
+    if (!Number.isFinite(kg) || kg <= 0 || kg >= MAX_WEIGHT_KG) {
+      setError(t('weight_prompt.invalid', { max: MAX_WEIGHT_KG }));
+      return;
+    }
+    setError(null);
     saveMutation.mutate(kg);
   };
 
@@ -79,12 +89,21 @@ export function WeeklyWeightPrompt() {
             <input
               type="number"
               inputMode="decimal"
+              min={0}
+              max={MAX_WEIGHT_KG}
               value={value}
-              onChange={(e) => setValue(e.target.value)}
+              onChange={(e) => {
+                setValue(e.target.value);
+                if (error) setError(null);
+              }}
               onKeyDown={(e) => e.key === 'Enter' && submit()}
               placeholder={t('weight_prompt.placeholder')}
               aria-label={t('weight_prompt.placeholder')}
-              className="w-24 bg-surface-2 border border-line-strong rounded-md px-3 min-h-11 text-base text-fg outline-none focus:border-accent"
+              aria-invalid={!!error}
+              aria-describedby={error ? 'weight-prompt-error' : undefined}
+              className={`w-24 bg-surface-2 border rounded-md px-3 min-h-11 text-base text-fg outline-none ${
+                error ? 'border-error' : 'border-line-strong focus:border-accent'
+              }`}
             />
             <button
               type="button"
@@ -95,6 +114,11 @@ export function WeeklyWeightPrompt() {
               {t('weight_prompt.save')}
             </button>
           </div>
+          {error && (
+            <p id="weight-prompt-error" role="alert" className="text-xs text-error mt-1.5">
+              {error}
+            </p>
+          )}
         </div>
         <button
           type="button"

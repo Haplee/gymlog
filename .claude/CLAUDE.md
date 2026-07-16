@@ -82,9 +82,12 @@ src/
 
 ## Sistema de diseño
 
-- **Tema oscuro único** (sistema "Stitch"): base `#0a0a0b`, superficie `#141416`,
+- **Sistema "Stitch"**, por defecto oscuro: base `#0a0a0b`, superficie `#141416`,
   acento menta `#60eca8` (`--interactive-primary`), texto sobre acento `#003822`.
-  No hay modo claro; no añadas uno sin que lo pida el usuario.
+- **Sí hay modo claro** y está completo: Ajustes → Preferencias → Tema (OSCURO /
+  CLARO), en `settingsStore.theme` + el bloque `:root.light` de `tokens.css`. No lo
+  rompas ni lo elimines: al tocar tokens o estilos, comprueba **los dos temas**.
+  El tema de la app es independiente del modo claro/oscuro del **sistema**.
 - **Tokens**: `src/shared/styles/tokens.css` define las CSS vars (`--bg-*`,
   `--text-*`, `--interactive-*`, `--accent-*`, `--radius-*`, `--shadow-*`,
   `--space-*`). El bloque `@theme inline` de `src/index.css` las mapea a

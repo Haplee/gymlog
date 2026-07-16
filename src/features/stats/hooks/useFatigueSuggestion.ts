@@ -10,8 +10,8 @@ import { useExerciseMusclesMap } from './useExerciseMusclesMap';
 const STORAGE_KEY = 'fatigue_suggestion_date';
 
 /**
- * Aviso "hoy toca X": si hay un grupo muscular sin entrenar hace tiempo
- * (needs-attention) y el usuario no ha entrenado hoy, sugiere entrenarlo.
+ * Aviso "hoy toca X": si hay un grupo muscular ya recuperado (sin entrenar
+ * hace ≥5 días) y el usuario no ha entrenado hoy, sugiere entrenarlo.
  * Como máximo una vez por día natural.
  */
 export function useFatigueSuggestion() {
