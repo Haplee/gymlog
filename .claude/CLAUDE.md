@@ -5,7 +5,11 @@
 
 ---
 
-> **Commits: todos los commits los realiza el usuario, ninguno tú.**
+> **Commits: puedes hacerlos tú**, respetando las convenciones de abajo
+> (conventional commits, nunca directo a `main`, sin saltarte los hooks) y
+> verificando antes con `lint` + `type-check` + `test`.
+> **Push, PR, merge, tag y release: solo cuando el usuario lo pida** — son
+> acciones de cara al exterior y difíciles de deshacer.
 
 ## Descripción del proyecto
 
@@ -45,7 +49,7 @@ npm run build:android    # build + npx cap sync android
 npm run open:android     # abrir Android Studio
 npm run gen:types        # regenerar src/types/database.types.ts desde Supabase
 npm run analyze          # build con visualizador de bundle
-npm run commit           # commitizen (conventional commits) — lo usa el usuario
+npm run commit           # commitizen (conventional commits) — interactivo, para el usuario
 npm run release          # standard-version — lo usa el usuario
 ```
 
@@ -109,7 +113,9 @@ src/
 - **Strings de usuario via i18next** — nada de texto literal en JSX.
 - Stores Zustand por feature, co-locados en `features/<x>/stores/`.
 - Conventional commits (`feat:`, `fix:`, `refactor:`, `style:`, `chore:`, `docs:`).
-- No commits directos a `main`: ramas `feat/`, `fix/`, `docs/`.
+  `npm run commit` (commitizen) es interactivo: un agente usa `git commit -F -` con
+  un heredoc. Explica en el cuerpo **por qué**, no solo qué.
+- No commits directos a `main`: ramas `feat/`, `fix/`, `docs/` (o `release/vX.Y.Z`).
 - husky + lint-staged ejecutan eslint+prettier en cada commit — no los saltes.
 - `eslint-plugin-jsx-a11y` activo: respeta aria-\*, roles y contraste WCAG AA.
 
@@ -128,6 +134,7 @@ src/
 ## Reglas de comportamiento para Claude
 
 - Antes de dar trabajo por terminado: `npm run lint && npm run type-check && npm run test`.
+- Puedes commitear tu propio trabajo, pero **verifica antes de commitear**, no después.
 - No añadas dependencias nuevas sin preguntar.
 - No edites `src/types/database.types.ts` a mano (usa `npm run gen:types`).
 - Cambios de esquema BD → migración en `supabase/migrations/` (idempotente).
