@@ -6,17 +6,19 @@ import { useSettingsStore } from '@shared/stores/settingsStore';
 import { Layout } from '@app/components/Layout';
 import { SectionHeader, SegmentedControl, Toggle } from '@shared/components/ui';
 import { supabase } from '@shared/lib/supabase';
+import { App as CapApp } from '@capacitor/app';
 import {
   requestPermission,
   isNative,
   cancelAllScheduled,
-  syncRoutineReminders,
-  scheduleStreakReminder,
   scheduleWeeklySummaryReminder,
+  canScheduleExactAlarms,
+  requestExactAlarms,
+  hasOsNotificationPermission,
 } from '@shared/lib/notifications';
+import { reconcileReminders } from '@shared/lib/reminderReconcile';
 import { registerPushNotifications, unregisterPushToken } from '@shared/lib/push';
 import { useUpdateProfileCache } from '@features/auth/hooks/useProfile';
-import { getReminderDays } from '@features/routine/hooks/useWorkoutReminder';
 import { toast } from 'sonner';
 import BiometricPlugin from '@shared/lib/biometric';
 import { devError } from '@shared/lib/devtools';
@@ -111,6 +113,8 @@ export function SettingsPage() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  /** `null` = aún sin comprobar; no pintar la fila hasta saberlo. */
+  const [exactAlarmsGranted, setExactAlarmsGranted] = useState<boolean | null>(null);
   const updateProfileCache = useUpdateProfileCache();
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
@@ -127,8 +131,11 @@ export function SettingsPage() {
         .eq('id', user.id)
         .maybeSingle();
       if (data) {
+        // La preferencia guardada no basta: si el SO tiene el permiso denegado
+        // no puede llegar ninguna notificación, así que el toggle mentiría.
+        const osGranted = await hasOsNotificationPermission();
         // setNotificationsEnabled espeja el flag en localStorage internamente
-        setNotificationsEnabled(!!data.notifications_enabled);
+        setNotificationsEnabled(!!data.notifications_enabled && osGranted);
         setAvatarUrl(data.avatar_url);
         setFullName(data.full_name ?? '');
       }
@@ -194,8 +201,7 @@ export function SettingsPage() {
             .upsert({ id: user.id, notifications_enabled: true }, { onConflict: 'id' });
         }
         // Reprogramar todas las alarmas nativas con el permiso ya concedido
-        await syncRoutineReminders(getReminderDays());
-        await scheduleStreakReminder();
+        if (user) await reconcileReminders(user.id);
         await scheduleWeeklySummaryReminder();
         // Registrar token push remoto
         if (user) void registerPushNotifications(user.id);
@@ -215,6 +221,40 @@ export function SettingsPage() {
       await cancelAllScheduled();
       // Y eliminar el token push remoto del dispositivo
       await unregisterPushToken();
+    }
+  };
+
+  // El ajuste solo persiste una preferencia: sin reconciliar, las alarmas ya
+  // programadas seguirían sonando (o no volverían) hasta el siguiente arranque.
+  const handleTrainingRemindersToggle = async (enabled: boolean) => {
+    setTrainingReminders(enabled);
+    if (user) await reconcileReminders(user.id);
+  };
+
+  // El permiso de alarmas exactas se concede fuera de la app (ajustes del
+  // sistema), así que hay que re-comprobarlo al volver, no solo al montar.
+  useEffect(() => {
+    if (!isNative()) return;
+
+    const refresh = () => void canScheduleExactAlarms().then(setExactAlarmsGranted);
+    refresh();
+
+    const handle = CapApp.addListener('appStateChange', ({ isActive }) => {
+      if (isActive) refresh();
+    });
+    return () => {
+      void handle.then((h) => h.remove());
+    };
+  }, []);
+
+  const handleExactAlarmsRequest = async () => {
+    const granted = await requestExactAlarms();
+    setExactAlarmsGranted(granted);
+    if (granted) {
+      // Las alarmas ya programadas se re-registran inexactas: reprogramar para
+      // que pasen a exactas.
+      if (user) await reconcileReminders(user.id);
+      toast.success(t('settings.exact_alarms_on'));
     }
   };
 
@@ -529,7 +569,7 @@ export function SettingsPage() {
               control={
                 <Toggle
                   checked={trainingReminders}
-                  onChange={setTrainingReminders}
+                  onChange={handleTrainingRemindersToggle}
                   ariaLabel={t('settings.training_reminders')}
                 />
               }
@@ -606,6 +646,23 @@ export function SettingsPage() {
               }
               divider={isNative()}
             />
+            {/* Solo si el sistema nos está degradando la alarma a inexacta: si
+                está concedido no hay nada que pedir y la fila sobra. */}
+            {isNative() && exactAlarmsGranted === false && (
+              <SettingRow
+                label={t('settings.exact_alarms')}
+                desc={t('settings.exact_alarms_desc')}
+                control={
+                  <button
+                    type="button"
+                    onClick={() => void handleExactAlarmsRequest()}
+                    className="min-h-11 px-4 rounded-pill bg-accent text-accent-fg text-sm font-semibold"
+                  >
+                    {t('settings.exact_alarms_action')}
+                  </button>
+                }
+              />
+            )}
             {isNative() && (
               <SettingRow
                 label={t('settings.biometric')}

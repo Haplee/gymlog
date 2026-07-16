@@ -1,17 +1,12 @@
 import { useEffect } from 'react';
+import { App as CapApp } from '@capacitor/app';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { checkStreakAtRisk } from '@shared/lib/streakChecker';
 import { checkWeeklySummary } from '@shared/lib/weeklySummary';
-import {
-  isNative,
-  scheduleStreakReminder,
-  cancelStreakReminder,
-  scheduleWeeklySummaryReminder,
-  canNotifyAsync,
-} from '@shared/lib/notifications';
+import { isNative, scheduleWeeklySummaryReminder, canNotifyAsync } from '@shared/lib/notifications';
+import { reconcileReminders } from '@shared/lib/reminderReconcile';
 import { devError, devLog } from '@shared/lib/devtools';
 import { supabase } from '@shared/lib/supabase';
-import { toLocalDateKey } from '@shared/lib/dateKeys';
 import { useSettingsStore } from '@shared/stores/settingsStore';
 import { registerPushNotifications } from '@shared/lib/push';
 
@@ -19,13 +14,13 @@ import { registerPushNotifications } from '@shared/lib/push';
  * Gestión de notificaciones background:
  *
  * 1. Alarmas nativas (funcionan con app cerrada):
- *    - Racha: diaria a las 20:00 — si no entrenó hoy, suena.
+ *    - Racha: diaria a las 20:00 — salta a mañana si ya entrenó hoy.
+ *    - Rutina: semanal a las 18:30 — salta a la semana siguiente si ya entrenó hoy.
  *    - Resumen semanal: lunes 09:00 — texto genérico.
- *    - Rutina: ya se programa en useWorkoutReminder.
  *
- * 2. Checks en foreground (complemento al abrir la app):
- *    - Racha: si ya entrenó hoy → cancela la alarma del día.
- *    - Resumen: si es lunes → muestra notificación con datos reales.
+ * 2. Reconciliación (reconcileReminders): decide "¿toca avisar hoy?" según si el
+ *    usuario ya ha entrenado. Se dispara al abrir la app, al reanudarla
+ *    (appStateChange) y tras guardar un entreno (workoutStore).
  */
 export function useBackgroundNotifications() {
   const userId = useAuthStore((s) => s.user?.id);
@@ -55,7 +50,7 @@ export function useBackgroundNotifications() {
       //    y las notificaciones están activas (canNotifyAsync lee notif_disabled)
       if (!isNative()) return;
       if (!(await canNotifyAsync())) return;
-      await scheduleStreakReminder();
+      await reconcileReminders(userId);
       await scheduleWeeklySummaryReminder();
       // Registro push remoto (refresca el token del dispositivo en cada arranque)
       void registerPushNotifications(userId);
@@ -63,24 +58,15 @@ export function useBackgroundNotifications() {
     })();
   }, [userId]);
 
-  // Check en foreground al abrir: cancelar racha si ya entrenó hoy,
-  // y disparar resumen semanal con datos reales si aplica
+  // Check en foreground al abrir: reconciliar recordatorios (rutina + racha) con
+  // el estado real de entrenamiento y disparar el resumen semanal si aplica.
   useEffect(() => {
     if (!userId) return;
 
     const runForegroundChecks = async () => {
       try {
-        // Si ya entrenó hoy, cancelar la alarma de racha del día
-        if (isNative()) {
-          const trainedToday = await hasTrainedToday(userId);
-          if (trainedToday) {
-            await cancelStreakReminder();
-            devLog('[Background] Racha cancelada: ya entrenó hoy');
-          } else {
-            // Re-programar para que suene esta noche si no había
-            await scheduleStreakReminder();
-          }
-        }
+        // Reconcilia rutina + racha del día según si ya entrenó hoy.
+        await reconcileReminders(userId);
 
         // Resumen semanal con datos reales (solo la primera vez que abre el lunes)
         await checkWeeklySummary(userId);
@@ -94,9 +80,10 @@ export function useBackgroundNotifications() {
           if (now.getHours() >= 20 && !localStorage.getItem(streakKey)) {
             const atRisk = await checkStreakAtRisk(userId);
             if (atRisk) {
-              const { notify } = await import('@shared/lib/notifications');
-              await notify('🔥 Tu racha está en peligro', {
-                body: 'Tantos días seguidos... No lo pierdas hoy.',
+              const { notify, getStreakReminderCopy } = await import('@shared/lib/notifications');
+              const copy = getStreakReminderCopy();
+              await notify(copy.title, {
+                body: copy.body,
                 icon: '/icon-192x192.webp',
                 url: '/',
               });
@@ -110,18 +97,15 @@ export function useBackgroundNotifications() {
     };
 
     void runForegroundChecks();
-  }, [userId]);
-}
 
-/** Comprueba si el usuario ha registrado un workout hoy. */
-async function hasTrainedToday(userId: string): Promise<boolean> {
-  const today = toLocalDateKey(new Date());
-  const startOfDay = `${today}T00:00:00`;
-  const { data } = await supabase
-    .from('workouts')
-    .select('id')
-    .eq('user_id', userId)
-    .gte('started_at', startOfDay)
-    .limit(1);
-  return !!data && data.length > 0;
+    // Reconciliar también cada vez que la app vuelve a primer plano: si el
+    // usuario entrenó con la app en background, al volver se cancela el aviso.
+    if (!isNative()) return;
+    const handle = CapApp.addListener('appStateChange', ({ isActive }) => {
+      if (isActive) void reconcileReminders(userId);
+    });
+    return () => {
+      void handle.then((h) => h.remove());
+    };
+  }, [userId]);
 }

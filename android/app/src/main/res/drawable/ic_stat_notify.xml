@@ -1,0 +1,27 @@
+<!--
+  Icono de notificación (status bar / small icon).
+  DEBE ser una silueta blanca sobre transparente: Android usa solo el canal
+  alfa y lo tinta con `iconColor` (#60eca8). Un icono a color se renderiza como
+  un cuadrado blanco — de ahí el bug anterior (smallIcon apuntaba a un drawable
+  'icon' inexistente). Reproduce el logo: círculo + 3 barras ascendentes.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="4.5"
+        android:pathData="M6.5,24a17.5,17.5 0 1,0 35,0a17.5,17.5 0 1,0 -35,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M16.5,24a2,2 0 0 1 2,2V30a2,2 0 0 1 -4,0V26a2,2 0 0 1 2,-2z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M24,19a2,2 0 0 1 2,2V30a2,2 0 0 1 -4,0V21a2,2 0 0 1 2,-2z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M31.5,14a2,2 0 0 1 2,2V30a2,2 0 0 1 -4,0V16a2,2 0 0 1 2,-2z" />
+</vector>

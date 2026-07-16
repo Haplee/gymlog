@@ -46,6 +46,27 @@ const SUMMARY_HOUR = 9;
 const SUMMARY_MINUTE = 0;
 
 /**
+ * Próxima fecha (>= ahora) para un weekday Capacitor (1=domingo … 7=sábado) a
+ * la hora indicada. Si `skipToday` es true, o si hoy es ese weekday pero la hora
+ * ya pasó, devuelve la ocurrencia de la semana siguiente. Se usa como punto de
+ * inicio de una alarma repetitiva (`at` + `every`) para poder saltar el aviso de
+ * hoy sin destruir la recurrencia semanal.
+ */
+function nextWeekdayDate(weekday: number, hour: number, minute: number, skipToday = false): Date {
+  const now = new Date();
+  const todayWeekday = now.getDay() + 1; // JS getDay 0=domingo → Capacitor 1=domingo
+  const target = new Date(now);
+  target.setHours(hour, minute, 0, 0);
+
+  let deltaDays = (weekday - todayWeekday + 7) % 7;
+  if (deltaDays === 0 && (skipToday || target.getTime() <= now.getTime())) {
+    deltaDays = 7;
+  }
+  target.setDate(target.getDate() + deltaDays);
+  return target;
+}
+
+/**
  * Solo permite navegar a URLs http(s) del propio origen.
  * El extra de una notificación es dato no confiable: sin esta validación
  * un deep link manipulado podría abrir cualquier URL externa.
@@ -132,6 +153,24 @@ export const canNotify = (): boolean => {
   return true;
 };
 
+/**
+ * Permiso real del SO, sin mirar la preferencia del usuario. Sirve para no
+ * pintar un toggle "activado" cuando el sistema no deja que llegue nada.
+ * `canNotifyAsync` es lo que hay que usar para decidir si notificar.
+ */
+export async function hasOsNotificationPermission(): Promise<boolean> {
+  if (!isNative()) {
+    if (!('Notification' in window)) return false;
+    return Notification.permission === 'granted';
+  }
+  try {
+    const status = await LocalNotifications.checkPermissions();
+    return status.display === 'granted';
+  } catch {
+    return false;
+  }
+}
+
 /** Check real de permisos en ambas plataformas. */
 export async function canNotifyAsync(): Promise<boolean> {
   if (isNotificationsDisabled()) return false;
@@ -190,10 +229,49 @@ export async function notify(
   }
 }
 
+/* ── Alarmas exactas (Android 12+) ──────────────────────────────────
+   Sin este permiso, el plugin cae a `setAndAllowWhileIdle`, que el sistema
+   entrega con una ventana de ~46s: medido, el aviso de descanso llegaba ~19s
+   tarde. Con el permiso usa `setExactAndAllowWhileIdle` y llega puntual.
+   (Ver LocalNotificationManager.setExactIfPossible en el plugin.)
+
+   Declaramos SCHEDULE_EXACT_ALARM en el manifest, pero desde Android 14 ya no
+   se autoconcede: hay que mandar al usuario a los ajustes del sistema. */
+
+/** `true` si el sistema nos deja programar alarmas exactas (siempre en <Android 12 y en iOS). */
+export async function canScheduleExactAlarms(): Promise<boolean> {
+  if (!isNative()) return true;
+  try {
+    const { exact_alarm } = await LocalNotifications.checkExactNotificationSetting();
+    return exact_alarm === 'granted';
+  } catch {
+    // iOS / plataformas sin la API: no aplica, no bloquear nada por esto.
+    return true;
+  }
+}
+
+/**
+ * Abre los ajustes del sistema para conceder alarmas exactas. Saca al usuario
+ * de la app, así que solo debe invocarse desde una acción explícita suya.
+ * Devuelve el estado resultante.
+ */
+export async function requestExactAlarms(): Promise<boolean> {
+  if (!isNative()) return true;
+  try {
+    const { exact_alarm } = await LocalNotifications.changeExactNotificationSetting();
+    return exact_alarm === 'granted';
+  } catch (e) {
+    devError('[Notifications] Error pidiendo alarmas exactas:', e);
+    return false;
+  }
+}
+
 /* ── Timer de descanso ──────────────────────────────────────────────
-   Alarma exacta programada al endTime: suena aunque la app esté en
-   background o la pantalla apagada. Se cancela si el usuario para el
-   timer o si la app (en foreground) ya avisó con sonido+haptic. */
+   Alarma programada al endTime: suena aunque la app esté en background o la
+   pantalla apagada. Será exacta solo si el usuario concedió el permiso de
+   alarmas exactas (ver arriba); si no, puede llegar con retraso. Se cancela si
+   el usuario para el timer o si la app (en foreground) ya avisó con
+   sonido+haptic. */
 
 /** +1.5s de margen: en foreground el tick del componente cancela antes de que dispare. */
 const TIMER_FOREGROUND_GRACE_MS = 1500;
@@ -244,7 +322,59 @@ export interface ReminderDay {
   routineName: string;
 }
 
-export async function syncRoutineReminders(days: ReminderDay[]): Promise<void> {
+/* ── Copys de los avisos ────────────────────────────────────────────
+   Pools de mensajes: se elige uno al azar en cada (re)programación para
+   que las notificaciones no sean siempre idénticas. Textos en español
+   fijos a propósito: las alarmas disparan desde background nativo, donde
+   i18next puede no estar cargado. */
+
+interface ReminderCopy {
+  title: string;
+  body: string;
+}
+
+const pick = <T>(arr: readonly T[]): T => arr[Math.floor(Math.random() * arr.length)];
+
+/** Copy del recordatorio de rutina del día. `routineName` es el nombre del día
+    de la rutina activa (p. ej. "Push (Pecho + Hombro + Tríceps)"). */
+export function getRoutineReminderCopy(routineName: string): ReminderCopy {
+  const variants: readonly ((r: string) => ReminderCopy)[] = [
+    (r) => ({ title: 'Hoy toca entrenar', body: `${r} te espera. ¿Empezamos?` }),
+    (r) => ({ title: '💪 A darlo todo', body: `Tienes ${r} pendiente. Sin excusas.` }),
+    (r) => ({ title: '🏋️ Hora de moverse', body: `Toca ${r}. Una hora y a por ello.` }),
+    (r) => ({ title: 'Tu rutina te llama', body: `${r} no se hace sola. ¡Vamos!` }),
+    (r) => ({ title: 'No rompas el ritmo', body: `${r} hoy. Tu yo del futuro lo agradecerá.` }),
+    (r) => ({ title: '🔥 Modo bestia', body: `${r} en el menú de hoy. Dale caña.` }),
+  ];
+  return pick(variants)(routineName);
+}
+
+/** Copy de la alerta de racha en peligro. */
+export function getStreakReminderCopy(): ReminderCopy {
+  const variants: readonly ReminderCopy[] = [
+    { title: '🔥 ¿Hoy no entrenas?', body: 'No pierdas tu racha. Un entrenamiento rápido cuenta.' },
+    { title: '🔥 Tu racha está en juego', body: 'Aún estás a tiempo. Que no se apague hoy.' },
+    { title: '⏳ Quedan horas', body: 'Mantén viva la racha con una sesión corta.' },
+    { title: '🔥 No lo dejes para mañana', body: 'Unos minutos bastan para conservar tu racha.' },
+    { title: '💯 Sigue la cadena', body: 'Cada día suma. No cortes la racha justo hoy.' },
+  ];
+  return pick(variants);
+}
+
+/** Copy del resumen semanal (lunes). */
+export function getWeeklySummaryCopy(): ReminderCopy {
+  const variants: readonly ReminderCopy[] = [
+    { title: '📊 Tu semana en GymLog', body: 'Revisa tu progreso de la semana pasada' },
+    { title: '📈 Nuevo lunes, nuevos retos', body: 'Mira cómo fue tu última semana y planifica' },
+    { title: '📊 Resumen semanal listo', body: 'Volumen, PRs y rachas de los últimos 7 días' },
+  ];
+  return pick(variants);
+}
+
+export async function syncRoutineReminders(
+  days: ReminderDay[],
+  trainedToday = false,
+): Promise<void> {
   if (!isNative()) return;
   try {
     // Cancelar siempre los 7 posibles antes de reprogramar
@@ -256,21 +386,37 @@ export async function syncRoutineReminders(days: ReminderDay[]): Promise<void> {
 
     if (days.length === 0 || !(await canNotifyAsync())) return;
 
+    const todayWeekday = new Date().getDay() + 1;
+
     await LocalNotifications.schedule({
-      notifications: days.map(({ weekday, routineName }) => ({
-        id: NOTIF_IDS.ROUTINE_REMINDER_BASE + weekday,
-        title: 'Hoy toca entrenar',
-        body: `${routineName} te espera. ¿Empezamos?`,
-        channelId: 'reminders',
-        extra: { url: '/' },
-        schedule: {
-          on: { weekday: weekday as Weekday, hour: REMINDER_HOUR, minute: REMINDER_MINUTE },
-          allowWhileIdle: true,
-          repeats: true,
-        },
-      })),
+      notifications: days.map(({ weekday, routineName }) => {
+        // Si ya entrenó hoy, el aviso del día se salta a la semana siguiente:
+        // así no dice "hoy toca entrenar" cuando ya se ha entrenado, pero la
+        // recurrencia semanal se mantiene intacta.
+        const skipToday = trainedToday && weekday === todayWeekday;
+        const at = nextWeekdayDate(weekday, REMINDER_HOUR, REMINDER_MINUTE, skipToday);
+        const copy = getRoutineReminderCopy(routineName);
+        return {
+          id: NOTIF_IDS.ROUTINE_REMINDER_BASE + weekday,
+          title: copy.title,
+          body: copy.body,
+          channelId: 'reminders',
+          extra: { url: '/' },
+          schedule: {
+            at,
+            every: 'week' as const,
+            allowWhileIdle: true,
+            repeats: true,
+          },
+        };
+      }),
     });
-    devLog('[Notifications] Recordatorios sincronizados:', days.length);
+    devLog(
+      '[Notifications] Recordatorios sincronizados:',
+      days.length,
+      'trainedToday:',
+      trainedToday,
+    );
   } catch (e) {
     devError('[Notifications] Error sincronizando recordatorios:', e);
   }
@@ -281,27 +427,30 @@ export async function syncRoutineReminders(days: ReminderDay[]): Promise<void> {
    Dispara aunque la app esté cerrada. Cuando la app se abre y
    detecta que ya entrenó hoy, cancela la del día actual. */
 
-export async function scheduleStreakReminder(): Promise<void> {
+export async function scheduleStreakReminder(trainedToday = false): Promise<void> {
   if (!isNative()) return;
   if (!(await canNotifyAsync())) return;
 
   try {
     await LocalNotifications.cancel({ notifications: [{ id: NOTIF_IDS.STREAK_DAILY }] });
 
-    // Calcular próximo trigger: hoy a las 20:00, o mañana si ya pasó
+    // Calcular próximo trigger: hoy a las 20:00; se salta a mañana si ya pasó la
+    // hora o si ya se ha entrenado hoy (así no avisa "¿hoy no entrenas?" tras
+    // haber entrenado, y la serie diaria sigue viva para los próximos días).
     const now = new Date();
     const trigger = new Date(now);
     trigger.setHours(STREAK_HOUR, STREAK_MINUTE, 0, 0);
-    if (trigger.getTime() <= now.getTime()) {
+    if (trainedToday || trigger.getTime() <= now.getTime()) {
       trigger.setDate(trigger.getDate() + 1);
     }
 
+    const copy = getStreakReminderCopy();
     await LocalNotifications.schedule({
       notifications: [
         {
           id: NOTIF_IDS.STREAK_DAILY,
-          title: '🔥 ¿Hoy no entrenas?',
-          body: 'No pierdas tu racha. Un entrenamiento rápido cuenta.',
+          title: copy.title,
+          body: copy.body,
           channelId: 'reminders',
           extra: { url: '/' },
           schedule: {
@@ -344,13 +493,14 @@ export async function scheduleWeeklySummaryReminder(): Promise<void> {
 
     // Capacitor weekday: 1=domingo, 2=lunes ... 7=sábado
     const MONDAY: Weekday = 2;
+    const copy = getWeeklySummaryCopy();
 
     await LocalNotifications.schedule({
       notifications: [
         {
           id: NOTIF_IDS.WEEKLY_SUMMARY,
-          title: '📊 Tu semana en GymLog',
-          body: 'Revisa tu progreso de la semana pasada',
+          title: copy.title,
+          body: copy.body,
           channelId: 'reminders',
           extra: { url: '/stats' },
           schedule: {
