@@ -8,6 +8,7 @@ import { useExerciseCatalog, useExerciseDetail } from '@features/workout/hooks/u
 import { useWorkoutStore } from '@features/workout/stores/workoutStore';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { createCustomExercise } from '@shared/api/exerciseMutations';
+import { loadTypeFromEquipment } from '@shared/lib/loadType';
 import {
   muscleGroupFromBodyPart,
   translateEquipment,
@@ -80,12 +81,11 @@ function CatalogDetail({ id, name }: { id: string; name: string }) {
       const secondaryGroups = [
         ...new Set(detail.bodyParts.slice(1).map(muscleGroupFromBodyPart)),
       ].filter((g) => g !== primary);
-      const isBodyweight = detail.equipment.some((e) => /body\s*weight/i.test(e));
       return createCustomExercise(user.id, {
         name,
         muscle_group: primary,
         secondaries: secondaryGroups.map((muscle_group) => ({ muscle_group, weight: 30 })),
-        is_bodyweight: isBodyweight,
+        load_type: loadTypeFromEquipment(detail.equipment),
       });
     },
     onSuccess: () => {
