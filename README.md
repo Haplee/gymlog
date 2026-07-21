@@ -73,7 +73,7 @@
 <div align="center">
   <table>
     <tr>
-      <td><img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f3cb-fe0f.svg" width="48" alt="Weightlifter" /></td>
+      <td><img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f3cb.svg" width="48" alt="Weightlifter" /></td>
       <td><img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f3c3.svg" width="48" alt="Runner" /></td>
       <td><img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f4c8.svg" width="48" alt="Chart" /></td>
       <td><img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f4f1.svg" width="48" alt="Mobile" /></td>
