@@ -211,7 +211,9 @@ input[type='range'] {
   will-change: transform, opacity;
 }
 
-/* Respeta la preferencia del sistema: corta animaciones costosas */
+/* Respeta la preferencia del sistema: corta animaciones costosas.
+   Fuente única del reset universal (más abajo hay un bloque específico por
+   clase para las animaciones decorativas). */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -394,19 +396,6 @@ input[type='number'] {
 
 .safe-area-right {
   padding-right: var(--inset-right);
-}
-
-/* Accesibilidad + fluidez: si el usuario pide menos movimiento, anulamos
-   animaciones y transiciones (también reduce jank en dispositivos lentos). */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
 }
 
 @keyframes toggle-on {
