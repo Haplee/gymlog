@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=3ECF8E&height=120&section=header&text=GymLog%20v4.1&fontSize=50&fontColor=ffffff&animation=fadeIn" alt="Header" />
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=3ECF8E&height=120&section=header&text=GymLog%20v5.0&fontSize=50&fontColor=ffffff&animation=fadeIn" alt="Header" />
 
   <img src="./public/gimnasia.svg" alt="GymLog" width="130" />
 
@@ -144,7 +144,7 @@ npm run dev              # http://localhost:5173
 ```bash
 npm run lint             # ESLint
 npm run type-check       # tsc --noEmit
-npm run test             # 153 tests (Vitest)
+npm run test             # 234 tests (Vitest)
 ```
 
 ### 3. Build
@@ -442,11 +442,22 @@ Código nativo en `ios-custom/`:
 
 ### APK
 
-Último APK en **[GitHub Releases](https://github.com/Haplee/gymlog/releases/latest)** o desde la [Landing Page](https://gymlog.dpdns.org).
+Descarga directa de la última APK firmada: **[gymlog.dpdns.org/download/gymlog.apk](https://gymlog.dpdns.org/download/gymlog.apk)** — o desde la [Landing Page](https://gymlog.dpdns.org).
+
+> El CI (`android-build.yml`) compila una APK _debug_ como artefacto; la _release_ firmada con el keystore propio se publica self-hosted en la landing.
 
 ---
 
 ## Changelog
+
+### v5.0
+
+- **Modalidad de carga por ejercicio**: peso corporal / carga externa / asistida, con fix del cálculo de volumen para ejercicios de peso corporal
+- **Outbox offline endurecido**: los errores no-red ya no descartan entrenos en silencio, backoff exponencial real (`nextAttemptAt`) y un fallo de una entrada ya no bloquea el resto de la cola
+- **Auth**: detección correcta de sesión expirada (mensaje claro en vez del genérico)
+- **Infra / dominio propio**: landing y páginas legales self-hosted en `gymlog.dpdns.org` (Nginx + HTTPS Let's Encrypt), **descarga de APK self-hosted** en `/download/gymlog.apk`, y app web en `app.gymlog.dpdns.org` (Vercel)
+- **Landing**: OG image propia (1200×630), sección FAQ, datos estructurados JSON-LD, `robots.txt` + `sitemap.xml`
+- **Calidad**: constante `DEFAULT_MUSCLE_GROUP`, pre-push hook, limpieza de deps/chunks/CI/CSS y migraciones alineadas con el historial remoto — **234 tests**
 
 ### v4.1
 
@@ -495,6 +506,6 @@ Código nativo en `ios-custom/`:
 <a href="https://www.instagram.com/franvidalmateo"><img src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white" /></a>
 
 <br><br>
-<b>GymLog v4.1</b> — <a href="https://github.com/Haplee">Haplee</a>
+<b>GymLog v5.0.1</b> — <a href="https://github.com/Haplee">Haplee</a>
 
 </div>
