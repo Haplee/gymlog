@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { DEFAULT_MUSCLE_GROUP } from '@shared/constants/muscleGroups';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { z } from 'zod';
 import { supabase } from '@shared/lib/supabase';
@@ -73,7 +74,7 @@ export const useWorkoutStore = create<WorkoutState>()(
     (set, get) => ({
       activeExerciseId: null,
       customExerciseName: '',
-      customMuscleGroup: 'Otro',
+      customMuscleGroup: DEFAULT_MUSCLE_GROUP,
       sets: [],
       startedAt: null,
       sessionNotes: '',
@@ -195,7 +196,7 @@ export const useWorkoutStore = create<WorkoutState>()(
             sets: [],
             activeExerciseId: null,
             customExerciseName: '',
-            customMuscleGroup: 'Otro',
+            customMuscleGroup: DEFAULT_MUSCLE_GROUP,
             startedAt: null,
             sessionNotes: '',
             sessionRating: null,
@@ -270,7 +271,7 @@ export const useWorkoutStore = create<WorkoutState>()(
         set({
           activeExerciseId: null,
           customExerciseName: '',
-          customMuscleGroup: 'Otro',
+          customMuscleGroup: DEFAULT_MUSCLE_GROUP,
           sets: [],
           startedAt: null,
           sessionNotes: '',

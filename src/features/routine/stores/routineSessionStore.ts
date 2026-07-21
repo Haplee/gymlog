@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { DEFAULT_MUSCLE_GROUP } from '@shared/constants/muscleGroups';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { supabase } from '@shared/lib/supabase';
 import { devError } from '@shared/lib/devtools';
@@ -189,7 +190,7 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
               userId,
               exerciseId: resolveExerciseId(ex.name),
               customExerciseName: ex.name,
-              customMuscleGroup: 'Otro',
+              customMuscleGroup: DEFAULT_MUSCLE_GROUP,
               startedAt: started,
               finishedAt: finished,
               sets: ex.sets,
@@ -216,7 +217,7 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
           for (const ex of done) {
             const exerciseId =
               resolveExerciseId(ex.name) ??
-              (await resolveOrCreateExercise(userId, ex.name, 'Otro'));
+              (await resolveOrCreateExercise(userId, ex.name, DEFAULT_MUSCLE_GROUP));
 
             const { error } = await supabase.rpc('save_workout_with_sets', {
               p_user_id: userId,

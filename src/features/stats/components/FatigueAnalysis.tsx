@@ -3,6 +3,7 @@ import { CheckCircle2, AlertTriangle, XCircle, TrendingUp, Zap } from 'lucide-re
 import type { MuscleGroupStatus, RecoveryStatus } from '../utils/fatigueAnalysis';
 import { MuscleGroupIcon } from '@shared/components/CardioIcons';
 import { MUSCLE_COLORS } from '@shared/constants/muscleColors';
+import { DEFAULT_MUSCLE_GROUP } from '@shared/constants/muscleGroups';
 
 interface FatigueAnalysisProps {
   muscleGroups: MuscleGroupStatus[];
@@ -170,7 +171,10 @@ export function FatigueAnalysis({
                   className="w-11 h-11 rounded-md flex items-center justify-center flex-shrink-0"
                   style={{ backgroundColor: `${suggColor}28`, color: suggColor }}
                 >
-                  <MuscleGroupIcon name={suggestedGroup ?? 'Otro'} className="w-7 h-7" />
+                  <MuscleGroupIcon
+                    name={suggestedGroup ?? DEFAULT_MUSCLE_GROUP}
+                    className="w-7 h-7"
+                  />
                 </div>
                 <div>
                   <div className="text-base font-semibold" style={{ color: suggColor }}>

@@ -1,4 +1,5 @@
 import type { WeightedMuscle } from './muscleDistribution';
+import { DEFAULT_MUSCLE_GROUP } from '@shared/constants/muscleGroups';
 
 /**
  * Estado de recuperación de un grupo muscular, derivado de los días
@@ -35,7 +36,7 @@ function musclesForSet(s: RecoverySet, musclesMap?: Record<string, WeightedMuscl
   if (weighted && weighted.length > 0) {
     return [...new Set(weighted.map((m) => m.muscle_group))];
   }
-  return [s.exercise?.muscle_group || 'Otro'];
+  return [s.exercise?.muscle_group || DEFAULT_MUSCLE_GROUP];
 }
 
 /** Días transcurridos → estado de recuperación. Umbrales en un único sitio. */
@@ -69,7 +70,7 @@ export function analyzeMuscleRecovery(
   }
 
   if (lastByGroup.size === 0) {
-    return [{ name: 'Otro', daysSinceLast: -1, status: recoveryStatusFor(-1) }];
+    return [{ name: DEFAULT_MUSCLE_GROUP, daysSinceLast: -1, status: recoveryStatusFor(-1) }];
   }
 
   const result: MuscleGroupStatus[] = [];

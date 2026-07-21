@@ -8,6 +8,8 @@
  * tal cual como fallback.
  */
 
+import { DEFAULT_MUSCLE_GROUP } from '@shared/constants/muscleGroups';
+
 const BODY_PARTS: Record<string, string> = {
   neck: 'cuello',
   'lower arms': 'antebrazos',
@@ -128,9 +130,9 @@ const BODYPART_TO_GROUP: Record<string, string> = {
   'lower arms': 'Antebrazo',
   waist: 'Core',
   cardio: 'Cardio',
-  neck: 'Otro',
+  neck: DEFAULT_MUSCLE_GROUP,
 };
 
 export function muscleGroupFromBodyPart(bodyPart: string): string {
-  return BODYPART_TO_GROUP[bodyPart.trim().toLowerCase()] ?? 'Otro';
+  return BODYPART_TO_GROUP[bodyPart.trim().toLowerCase()] ?? DEFAULT_MUSCLE_GROUP;
 }

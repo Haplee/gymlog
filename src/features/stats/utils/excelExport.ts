@@ -3,6 +3,8 @@
 // grupo muscular, filas de ejercicio y columnas por fecha. Cada celda lleva las
 // series como "pesoxreps" separadas por coma para que el import sea sin pérdida.
 
+import { DEFAULT_MUSCLE_GROUP } from '@shared/constants/muscleGroups';
+
 export interface ExcelStrengthSet {
   date: string; // YYYY-MM-DD
   exercise: string;
@@ -103,7 +105,7 @@ export function buildWorkoutGrid(sets: ExcelStrengthSet[]): WorkoutGrid {
   // muscleGroup → exercise → date → sets
   const byGroup = new Map<string, Map<string, Map<string, ExcelStrengthSet[]>>>();
   for (const s of sets) {
-    const group = s.muscleGroup || 'Otro';
+    const group = s.muscleGroup || DEFAULT_MUSCLE_GROUP;
     const byExercise = byGroup.get(group) ?? new Map<string, Map<string, ExcelStrengthSet[]>>();
     const byDate = byExercise.get(s.exercise) ?? new Map<string, ExcelStrengthSet[]>();
     const list = byDate.get(s.date) ?? [];
