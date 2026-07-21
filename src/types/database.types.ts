@@ -198,6 +198,7 @@ export type Database = {
           is_bodyweight: boolean;
           is_compound: boolean;
           is_public: boolean;
+          load_type: string;
           media_url: string | null;
           movement: string | null;
           muscle_detail: string | null;
@@ -214,6 +215,7 @@ export type Database = {
           is_bodyweight?: boolean;
           is_compound?: boolean;
           is_public?: boolean;
+          load_type?: string;
           media_url?: string | null;
           movement?: string | null;
           muscle_detail?: string | null;
@@ -230,6 +232,7 @@ export type Database = {
           is_bodyweight?: boolean;
           is_compound?: boolean;
           is_public?: boolean;
+          load_type?: string;
           media_url?: string | null;
           movement?: string | null;
           muscle_detail?: string | null;
@@ -717,6 +720,7 @@ export type Database = {
           created_at: string;
           id: string;
           is_bodyweight: boolean;
+          load_type: string;
           muscle_group: string;
           name: string;
           usage_count: number;

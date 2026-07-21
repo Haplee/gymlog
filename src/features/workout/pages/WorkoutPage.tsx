@@ -25,7 +25,9 @@ import {
   fetchBodyMeasurements,
 } from '@shared/api/queries';
 import { bodyWeightAtDate } from '@features/workout/utils/bodyweight';
+import { isBodyweightLoad, type LoadType } from '@shared/lib/loadType';
 import { ExerciseSelector } from '@shared/components/ExerciseSelector';
+import { ExerciseLoadType } from '@features/workout/components/ExerciseLoadType';
 import { RestTimer } from '@features/workout/components/RestTimer';
 import { WorkoutSessionStats } from '@features/workout/components/WorkoutSessionStats';
 import { LastSessionCard } from '@features/workout/components/LastSessionCard';
@@ -208,7 +210,7 @@ export function WorkoutPage() {
     () => bodyWeightAtDate(bodyMeasurements, new Date().toISOString().split('T')[0]),
     [bodyMeasurements],
   );
-  const isBodyweightExercise = !!selectedExercise?.is_bodyweight;
+  const isBodyweightExercise = isBodyweightLoad(selectedExercise?.load_type);
 
   // Mantener el store al día con el contexto de peso corporal del ejercicio activo.
   useEffect(() => {
@@ -234,17 +236,24 @@ export function WorkoutPage() {
     [getTodayRoutine, routines, activeRoutineId],
   );
 
+  // En modo peso corporal el kg introducido es lastre; el peso efectivo por rep
+  // es (peso corporal vigente + lastre), igual que lo que se guarda en saveWorkout.
   const sessionVolume = useMemo(
     () =>
       sets.reduce((sum, s) => {
         const r = Number(s.reps) || 0;
-        const w = Number(s.weight) || 0;
+        const entered = Number(s.weight) || 0;
+        const w = isBodyweightExercise ? (currentBodyWeight ?? 0) + entered : entered;
         return sum + r * w;
       }, 0),
-    [sets],
+    [sets, isBodyweightExercise, currentBodyWeight],
   );
 
-  const validSetCount = useMemo(() => sets.filter((s) => s.reps && s.weight).length, [sets]);
+  // En modo peso corporal una serie es válida solo con reps (el lastre es opcional).
+  const validSetCount = useMemo(
+    () => sets.filter((s) => s.reps && (isBodyweightExercise || s.weight)).length,
+    [sets, isBodyweightExercise],
+  );
 
   // Mejor 1RM estimado de la sesión (excluye calentamientos). Pesos en kg.
   const bestEstimate = useMemo(() => {
@@ -685,12 +694,22 @@ export function WorkoutPage() {
           </button>
         </div>
 
+        {selectedExercise && (
+          <ExerciseLoadType
+            exerciseId={selectedExercise.id}
+            exerciseName={selectedExercise.name}
+            loadType={(selectedExercise.load_type as LoadType | undefined) ?? 'external'}
+          />
+        )}
+
         {sets.length > 0 && (
           <div className="flex gap-1.5 mb-1.5 text-2xs font-semibold uppercase text-fg-subtle">
             {showWarmupSets && <div className="w-9 flex-shrink-0" />}
             <div className="w-7 flex-shrink-0" />
             <div className="flex-1 text-center">{t('workout.reps')}</div>
-            <div className="flex-1 text-center">{weightUnit}</div>
+            <div className="flex-1 text-center">
+              {isBodyweightExercise ? `${t('workout.load_label')} (${weightUnit})` : weightUnit}
+            </div>
             <div className="w-9 flex-shrink-0" />
             <div className="w-9 flex-shrink-0" />
           </div>

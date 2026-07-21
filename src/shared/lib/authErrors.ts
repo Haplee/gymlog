@@ -13,6 +13,12 @@ export function getAuthErrorMessage(error: unknown): string {
   if (message.includes('network') || message.includes('fetch')) {
     return 'Sin conexión. Verifica tu internet.';
   }
+  // Antes que el check de credenciales: el mensaje real de Supabase para una
+  // sesión caducada es "Invalid Refresh Token: ...", que contiene "invalid" y
+  // se comería el check de abajo dando "email/contraseña incorrectos".
+  if (message.includes('expired') || message.includes('refresh token')) {
+    return 'Sesión expirada. Inicia sesión de nuevo';
+  }
   if (message.includes('invalid') || message.includes('credentials')) {
     return 'Email o contraseña incorrectos';
   }
@@ -24,9 +30,6 @@ export function getAuthErrorMessage(error: unknown): string {
   }
   if (message.includes('rate limit')) {
     return 'Demasiados intentos. Intenta de nuevo más tarde';
-  }
-  if (message.includes('Expired refresh token')) {
-    return 'Sesión expirada. Inicia sesión de nuevo';
   }
 
   return 'Error de autenticación. Intenta de nuevo';

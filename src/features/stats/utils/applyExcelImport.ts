@@ -2,6 +2,7 @@
 // Las rutinas se devuelven parseadas y las guarda la página vía routineStore.
 
 import { supabase } from '@shared/lib/supabase';
+import { DEFAULT_MUSCLE_GROUP } from '@shared/constants/muscleGroups';
 import { fetchExercises } from '@shared/api/queries';
 import { CARDIO_LABELS, type CardioType } from '@features/cardio/stores/cardioStore';
 import type { ParsedImport } from './excelImport';
@@ -44,7 +45,7 @@ export async function applyExcelImport(
     if (existing) return existing;
     const { data: newEx, error } = await supabase
       .from('exercises')
-      .insert({ name: clean, user_id: userId, muscle_group: 'Otro' })
+      .insert({ name: clean, user_id: userId, muscle_group: DEFAULT_MUSCLE_GROUP })
       .select('id')
       .single();
     if (error || !newEx) return null;

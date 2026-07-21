@@ -1,4 +1,5 @@
 import { ExerciseRow, WorkoutMeta } from '@features/stats/components/HistoryRows';
+import { DEFAULT_MUSCLE_GROUP } from '@shared/constants/muscleGroups';
 import { buildTemplateFromWorkouts } from '@features/stats/utils/historyHelpers';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -318,7 +319,7 @@ export function HistoryPage() {
         return w.sets.map((s) => ({
           date,
           exercise: s.exercise?.name || 'Desconocido',
-          muscleGroup: s.exercise?.muscle_group || 'Otro',
+          muscleGroup: s.exercise?.muscle_group || DEFAULT_MUSCLE_GROUP,
           setNum: s.set_num,
           reps: s.reps,
           weight: s.weight,
@@ -419,19 +420,20 @@ export function HistoryPage() {
           if (existing?.id) return existing.id;
           const { data: newEx, error } = await supabase
             .from('exercises')
-            .insert({ name: clean, user_id: user.id, muscle_group: 'Otro' })
+            .insert({ name: clean, user_id: user.id, muscle_group: DEFAULT_MUSCLE_GROUP })
             .select('id, name')
             .single();
           if (error || !newEx) return null;
           exerciseList.push({
             id: newEx.id,
             name: clean,
-            muscle_group: 'Otro',
+            muscle_group: DEFAULT_MUSCLE_GROUP,
             muscle_detail: null,
             equipment: 'Gimnasio',
             movement: null,
             is_bilateral: true,
             is_bodyweight: false,
+            load_type: 'external',
             is_compound: false,
             is_public: false,
             description: null,
@@ -577,7 +579,7 @@ export function HistoryPage() {
               .insert({
                 name: cleanName,
                 user_id: user.id,
-                muscle_group: 'Otro',
+                muscle_group: DEFAULT_MUSCLE_GROUP,
               })
               .select('id')
               .single();
@@ -587,12 +589,13 @@ export function HistoryPage() {
             exerciseList.push({
               id: newEx.id,
               name: cleanName,
-              muscle_group: 'Otro',
+              muscle_group: DEFAULT_MUSCLE_GROUP,
               muscle_detail: null,
               equipment: 'Gimnasio',
               movement: null,
               is_bilateral: true,
               is_bodyweight: false,
+              load_type: 'external',
               is_compound: false,
               is_public: false,
               description: null,

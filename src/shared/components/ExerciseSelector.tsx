@@ -11,6 +11,7 @@ import {
 import { Button } from '@shared/components/ui';
 import { MuscleGroupIcon } from '@shared/components/CardioIcons';
 import { supabase } from '@shared/lib/supabase';
+import { DEFAULT_MUSCLE_GROUP } from '@shared/constants/muscleGroups';
 import { toast } from 'sonner';
 
 interface ExerciseSelectorProps {
@@ -38,7 +39,7 @@ const MUSCLE_GROUPS = [
   'Antebrazo',
   'Core',
   'Cardio',
-  'Otro',
+  DEFAULT_MUSCLE_GROUP,
 ];
 
 function suggestMuscleGroup(name: string): string | null {
@@ -72,7 +73,7 @@ export function ExerciseSelector({
   const queryClient = useQueryClient();
   const [isCreating, setIsCreating] = useState(false);
   const [newExerciseName, setNewExerciseName] = useState('');
-  const [newExerciseMuscle, setNewExerciseMuscle] = useState('Otro');
+  const [newExerciseMuscle, setNewExerciseMuscle] = useState(DEFAULT_MUSCLE_GROUP);
   const [newSecondaries, setNewSecondaries] = useState<Record<string, number>>({});
   const [newIsBodyweight, setNewIsBodyweight] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -107,7 +108,7 @@ export function ExerciseSelector({
       onSelect(newExercise.id, true);
       setIsCreating(false);
       setNewExerciseName('');
-      setNewExerciseMuscle('Otro');
+      setNewExerciseMuscle(DEFAULT_MUSCLE_GROUP);
       setNewSecondaries({});
       setNewIsBodyweight(false);
     },

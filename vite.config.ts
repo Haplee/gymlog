@@ -26,7 +26,6 @@ export default defineConfig(({ mode }) => {
             // framer-motion sin manualChunk: con LazyMotion, Rollup separa el core (m)
             // de las features (domMax), que cargan async vía motionFeatures.ts
             query: ['@tanstack/react-query'],
-            confetti: ['canvas-confetti'],
             excel: ['exceljs'],
           },
         },

@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "prebuild": "",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "preview": "vite preview",
@@ -31,7 +30,6 @@
     "@capacitor/android": "^8.3.0",
     "@capacitor/app": "^8.0.1",
     "@capacitor/browser": "^8.0.1",
-    "@capacitor/cli": "^8.3.0",
     "@capacitor/core": "^8.3.0",
     "@capacitor/filesystem": "^8.1.2",
     "@capacitor/haptics": "^8.0.2",
@@ -49,7 +47,6 @@
     "@tanstack/react-query": "^5.96.2",
     "@tanstack/react-query-persist-client": "^5.101.0",
     "@vercel/analytics": "^2.0.1",
-    "canvas-confetti": "^1.9.3",
     "date-fns": "^4.1.0",
     "exceljs": "^4.4.0",
     "framer-motion": "^12.38.0",
@@ -70,13 +67,13 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.3.0",
     "@eslint/js": "^9.39.4",
     "@playwright/test": "^1.52.0",
     "@tailwindcss/vite": "^4.2.2",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
-    "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^24.12.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
@@ -112,11 +109,11 @@
   },
   "lint-staged": {
     "*.{ts,tsx}": [
-      "npx eslint --fix",
-      "npx prettier --write"
+      "eslint --fix",
+      "prettier --write"
     ],
     "*.{json,css,md}": [
-      "npx prettier --write"
+      "prettier --write"
     ]
   },
   "overrides": {

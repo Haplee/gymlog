@@ -25,6 +25,7 @@ export function formatSeconds(s: number): string {
 }
 
 import { distributeVolume, type WeightedMuscle } from './muscleDistribution';
+import { DEFAULT_MUSCLE_GROUP } from '@shared/constants/muscleGroups';
 
 export function calculateMuscleGroupDistribution(
   sets: {
@@ -54,7 +55,7 @@ export function calculateMuscleGroupDistribution(
           distribution[name] = (distribution[name] || 0) + value;
         }
       } else {
-        const muscleGroup = s.exercise?.muscle_group || 'Otro';
+        const muscleGroup = s.exercise?.muscle_group || DEFAULT_MUSCLE_GROUP;
         distribution[muscleGroup] = (distribution[muscleGroup] || 0) + volume;
       }
     });

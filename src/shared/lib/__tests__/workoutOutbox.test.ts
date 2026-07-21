@@ -144,26 +144,32 @@ describe('workoutOutbox — persistencia y flush', () => {
     expect(await countPendingWorkouts()).toBe(1); // se conserva
   });
 
-  it('error de validación (no de red): descarta la entrada para no atascar la cola', async () => {
-    const { enqueueWorkout, flushWorkoutOutbox, countPendingWorkouts } = await loadOutbox();
+  it('error de validación (no de red): conserva la entrada, no la borra en silencio', async () => {
+    const { enqueueWorkout, flushWorkoutOutbox, countPendingWorkouts, getPendingWorkouts } =
+      await loadOutbox();
     rpcMock.mockResolvedValue({ error: new Error('violates check constraint') });
 
     await enqueueWorkout(makeEntry());
     const flushed = await flushWorkoutOutbox();
 
     expect(flushed).toBe(0);
-    expect(await countPendingWorkouts()).toBe(0); // descartada
+    // No se pierde el entreno: se conserva y se reintentará con backoff.
+    expect(await countPendingWorkouts()).toBe(1);
+    expect((await getPendingWorkouts())[0].retryCount).toBe(1);
   });
 
-  it('entrada inválida sin ejercicio se descarta sin llamar al RPC', async () => {
-    const { enqueueWorkout, flushWorkoutOutbox, countPendingWorkouts } = await loadOutbox();
+  it('entrada inválida sin ejercicio se conserva como fallida sin llamar al RPC', async () => {
+    const { enqueueWorkout, flushWorkoutOutbox, countPendingWorkouts, getPendingWorkouts } =
+      await loadOutbox();
 
     await enqueueWorkout(makeEntry({ exerciseId: null, customExerciseName: '' }));
     const flushed = await flushWorkoutOutbox();
 
     expect(flushed).toBe(0);
     expect(rpcMock).not.toHaveBeenCalled();
-    expect(await countPendingWorkouts()).toBe(0);
+    // Irrecuperable, pero no se borra: se marca como fallida.
+    expect(await countPendingWorkouts()).toBe(1);
+    expect((await getPendingWorkouts())[0].failed).toBe(true);
   });
 
   it('error de red incrementa retryCount y conserva la entrada', async () => {
@@ -178,14 +184,48 @@ describe('workoutOutbox — persistencia y flush', () => {
     expect(pending[0].retryCount).toBe(1);
   });
 
-  it('descarta entrada tras MAX_RETRIES intentos fallidos', async () => {
-    const { enqueueWorkout, flushWorkoutOutbox, countPendingWorkouts } = await loadOutbox();
+  it('tras MAX_RETRIES la entrada se marca como fallida pero se conserva', async () => {
+    const { enqueueWorkout, flushWorkoutOutbox, countPendingWorkouts, getPendingWorkouts } =
+      await loadOutbox();
     rpcMock.mockResolvedValue({ error: new Error('Failed to fetch') });
 
-    await enqueueWorkout(makeEntry({ id: 'maxed', retryCount: 5 }));
+    // retryCount 4 => este intento es el 5º (== MAX_RETRIES) y agota los reintentos.
+    await enqueueWorkout(makeEntry({ id: 'maxed', retryCount: 4 }));
     const flushed = await flushWorkoutOutbox();
 
     expect(flushed).toBe(0);
-    expect(await countPendingWorkouts()).toBe(0);
+    // No se borra: se conserva marcada como fallida para no perder el entreno.
+    expect(await countPendingWorkouts()).toBe(1);
+    expect((await getPendingWorkouts())[0].failed).toBe(true);
+  });
+
+  it('una entrada fallida no se reintenta y no bloquea a las siguientes', async () => {
+    const { enqueueWorkout, flushWorkoutOutbox, countPendingWorkouts } = await loadOutbox();
+    // La primera ya está marcada fallida; la segunda debe sincronizar igualmente.
+    rpcMock.mockResolvedValue({ error: null });
+
+    await enqueueWorkout(makeEntry({ id: 'ya-fallida', failed: true }));
+    await enqueueWorkout(makeEntry({ id: 'ok' }));
+
+    const flushed = await flushWorkoutOutbox();
+
+    expect(flushed).toBe(1); // solo la buena; la fallida se salta sin llamar al RPC
+    expect(await countPendingWorkouts()).toBe(1); // queda la fallida conservada
+  });
+
+  it('un fallo de red en una entrada no impide procesar las demás (sin break)', async () => {
+    const { enqueueWorkout, flushWorkoutOutbox, countPendingWorkouts } = await loadOutbox();
+    // Primera falla por red, segunda va bien: la segunda debe sincronizarse igual.
+    rpcMock
+      .mockResolvedValueOnce({ error: new Error('Failed to fetch') })
+      .mockResolvedValueOnce({ error: null });
+
+    await enqueueWorkout(makeEntry({ id: 'falla-red' }));
+    await enqueueWorkout(makeEntry({ id: 'sync-ok' }));
+
+    const flushed = await flushWorkoutOutbox();
+
+    expect(flushed).toBe(1); // la segunda sí se sincroniza pese al fallo de la primera
+    expect(await countPendingWorkouts()).toBe(1); // queda la de red, con reintento programado
   });
 });

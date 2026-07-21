@@ -32,6 +32,7 @@ export interface OutboxSet {
 
 const MAX_RETRIES = 5;
 const BASE_DELAY_MS = 2_000;
+const MAX_DELAY_MS = 5 * 60_000; // tope del backoff: 5 min
 
 export interface OutboxWorkout {
   id: string;
@@ -46,6 +47,13 @@ export interface OutboxWorkout {
   rating?: number | null;
   createdAt: string;
   retryCount?: number;
+  /** Epoch ms: no reintentar antes de este momento (backoff exponencial). */
+  nextAttemptAt?: number;
+  /**
+   * Agotó los reintentos o es irrecuperable. Se **conserva** (no se borra, para
+   * no perder el entreno del usuario) pero no se reintenta automáticamente.
+   */
+  failed?: boolean;
 }
 
 /** Heurística: ¿el error parece de red (sin conexión / fetch fallido)? */
@@ -86,28 +94,45 @@ async function removeWorkout(id: string): Promise<void> {
 }
 
 function retryDelay(attempt: number): number {
-  return BASE_DELAY_MS * 2 ** (attempt - 1) + Math.random() * 1_000;
+  const base = Math.min(BASE_DELAY_MS * 2 ** (attempt - 1), MAX_DELAY_MS);
+  return base + Math.random() * 1_000;
+}
+
+/**
+ * Marca una entrada como fallida y la persiste. No la borra: perder el entreno
+ * del usuario en silencio es peor que dejar la cola con un elemento visible que
+ * podrá reintentarse manualmente en el futuro.
+ */
+async function markFailed(w: OutboxWorkout, reason: string): Promise<void> {
+  w.failed = true;
+  w.nextAttemptAt = undefined;
+  await (await getDb()).put(STORE, w);
+  devError(`[workoutOutbox] entrada conservada como fallida (${reason}): ${w.id}`);
 }
 
 /**
  * Intenta enviar todos los entrenos en cola. Devuelve cuántos se sincronizaron.
- * Los que fallan por error de red se conservan con backoff exponencial.
- * Los que exceden MAX_RETRIES se descartan para no atascar la cola.
+ *
+ * - Cada entrada que falla se reintenta con backoff exponencial (`nextAttemptAt`)
+ *   y un fallo en una **no** detiene el procesado de las demás.
+ * - Al agotar MAX_RETRIES la entrada se marca como `failed` y **se conserva**:
+ *   nunca se borra en silencio, ni por error de red ni por error del servidor
+ *   (RLS/validación), para no perder el entreno del usuario.
  */
 export async function flushWorkoutOutbox(): Promise<number> {
   const pending = await getPendingWorkouts();
   if (!pending.length) return 0;
 
+  const now = Date.now();
   let flushed = 0;
-  for (const w of pending) {
-    try {
-      const attempt = (w.retryCount ?? 0) + 1;
-      if (attempt > MAX_RETRIES) {
-        devError(`[workoutOutbox] descartado tras ${MAX_RETRIES} intentos: ${w.id}`);
-        await removeWorkout(w.id);
-        continue;
-      }
 
+  for (const w of pending) {
+    // Fallida: se conserva pero no se reintenta automáticamente.
+    if (w.failed) continue;
+    // Backoff: aún no toca reintentar esta entrada.
+    if (w.nextAttemptAt && w.nextAttemptAt > now) continue;
+
+    try {
       let exerciseId = w.exerciseId;
       if (!exerciseId && w.customExerciseName.trim()) {
         exerciseId = await resolveOrCreateExercise(
@@ -117,7 +142,9 @@ export async function flushWorkoutOutbox(): Promise<number> {
         );
       }
       if (!exerciseId) {
-        await removeWorkout(w.id);
+        // Sin ejercicio ni nombre resoluble: la entrada nunca podrá sincronizar,
+        // pero la conservamos marcada como fallida en vez de borrarla.
+        await markFailed(w, 'sin ejercicio resoluble');
         continue;
       }
 
@@ -135,16 +162,21 @@ export async function flushWorkoutOutbox(): Promise<number> {
       await removeWorkout(w.id);
       flushed += 1;
     } catch (err) {
-      if (isNetworkError(err)) {
-        w.retryCount = (w.retryCount ?? 0) + 1;
-        await (await getDb()).put(STORE, w);
-        devLog(
-          `[workoutOutbox] reintento ${w.retryCount}/${MAX_RETRIES} en ${retryDelay(w.retryCount)}ms: ${w.id}`,
+      const attempt = (w.retryCount ?? 0) + 1;
+      w.retryCount = attempt;
+
+      if (attempt >= MAX_RETRIES) {
+        await markFailed(
+          w,
+          isNetworkError(err) ? `sin conexión tras ${MAX_RETRIES} intentos` : String(err),
         );
-        break;
+      } else {
+        // Programar el siguiente reintento con backoff; el flush actual sigue
+        // con las demás entradas (no cortamos el bucle).
+        w.nextAttemptAt = now + retryDelay(attempt);
+        await (await getDb()).put(STORE, w);
+        devLog(`[workoutOutbox] reintento ${attempt}/${MAX_RETRIES} programado: ${w.id}`);
       }
-      devError('[workoutOutbox] flush entry failed:', err);
-      await removeWorkout(w.id);
     }
   }
   return flushed;
