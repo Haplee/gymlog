@@ -16,16 +16,20 @@
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="GymLog" />
+    <meta property="og:url" content="https://gymlog.dpdns.org/" />
     <meta property="og:title" content="GymLog — Tu entreno, tu progreso" />
     <meta property="og:description" content="Registra cada serie, supera tus récords y mantén la racha. App de gimnasio gratis, sin anuncios, offline. Para Android e iOS." />
-    <meta property="og:image" content="https://app.gymlog.dpdns.org/pwa-512x512.png" />
+    <meta property="og:image" content="https://gymlog.dpdns.org/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="GymLog — Cada serie cuenta. Tu diario de entrenamiento de fuerza y cardio." />
     <meta property="og:locale" content="es_ES" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="GymLog — Tu entreno, tu progreso" />
     <meta name="twitter:description" content="App de gimnasio gratis, sin anuncios, offline. Para Android e iOS." />
-    <meta name="twitter:image" content="https://app.gymlog.dpdns.org/pwa-512x512.png" />
+    <meta name="twitter:image" content="https://gymlog.dpdns.org/og-image.png" />
 
     <!-- Icons -->
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
@@ -451,6 +455,30 @@
       .foot-links a:hover { color: var(--mint); }
       .foot-meta { font-size: 0.8rem; color: var(--text-3); }
 
+      /* ===== FAQ ===== */
+      .faq { display: grid; gap: 0.75rem; margin-top: 2.6rem; max-width: 48rem; }
+      .faq details {
+        border: 1px solid var(--line); border-radius: var(--radius);
+        background: var(--surface); padding: 0 1.3rem;
+        transition: border-color 200ms ease;
+      }
+      .faq details[open] { border-color: var(--line-strong); }
+      .faq summary {
+        cursor: pointer; list-style: none; padding: 1.15rem 0;
+        font-family: var(--font-display); font-weight: 600; font-size: 1.02rem; color: var(--text);
+        display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+        min-height: 44px;
+      }
+      .faq summary::-webkit-details-marker { display: none; }
+      .faq summary::after {
+        content: '+'; color: var(--mint); font-size: 1.5rem; font-weight: 400; line-height: 1;
+        transition: rotate 200ms var(--ease-out); flex-shrink: 0;
+      }
+      .faq details[open] summary::after { rotate: 45deg; }
+      .faq p { padding: 0 0 1.2rem; margin: 0; color: var(--text-2); font-size: 0.95rem; }
+      .faq a { color: var(--mint); text-decoration: none; }
+      .faq a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
       /* ===== Reduced motion ===== */
       @media (prefers-reduced-motion: reduce) {
         html { scroll-behavior: auto; }
@@ -464,6 +492,38 @@
         *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
       }
     </style>
+
+    <!-- Datos estructurados: app + FAQ (rich results) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "GymLog",
+        "operatingSystem": "Android",
+        "applicationCategory": "HealthApplication",
+        "description": "Diario de entrenamiento de fuerza y cardio: series, pesos, repeticiones, récords personales, rachas y estadísticas. Gratis, sin anuncios y con modo offline.",
+        "url": "https://gymlog.dpdns.org/",
+        "downloadUrl": "https://gymlog.dpdns.org/download/gymlog.apk",
+        "softwareVersion": "5.0.1",
+        "inLanguage": "es",
+        "author": { "@type": "Person", "name": "Francisco Vidal Mateo" },
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" }
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          { "@type": "Question", "name": "¿GymLog es gratis de verdad?", "acceptedAnswer": { "@type": "Answer", "text": "Sí, 100% gratis. Sin anuncios, sin suscripciones y sin compras dentro de la app." } },
+          { "@type": "Question", "name": "¿Necesito crear una cuenta?", "acceptedAnswer": { "@type": "Answer", "text": "Puedes empezar a registrar entrenos sin registrarte. Si quieres sincronizar tu historial entre dispositivos, inicia sesión con Google — es opcional." } },
+          { "@type": "Question", "name": "¿Por qué no está en Google Play?", "acceptedAnswer": { "@type": "Answer", "text": "Por ahora se distribuye como APK directo desde la web. La app de iOS está en desarrollo." } },
+          { "@type": "Question", "name": "¿Cómo instalo el APK en Android?", "acceptedAnswer": { "@type": "Answer", "text": "Descarga el archivo, ábrelo y permite la instalación desde orígenes desconocidos para tu navegador si Android lo pide. Hay una guía paso a paso en el tutorial." } },
+          { "@type": "Question", "name": "¿Funciona sin conexión?", "acceptedAnswer": { "@type": "Answer", "text": "Sí. Puedes registrar entrenamientos completamente offline; se sincronizan solos al recuperar conexión." } },
+          { "@type": "Question", "name": "¿Es seguro?", "acceptedAnswer": { "@type": "Answer", "text": "El APK está firmado y se sirve solo desde gymlog.dpdns.org. Además el código es abierto en GitHub." } }
+        ]
+      }
+    </script>
   </head>
   <body>
     <a class="skip-link" href="#main">Saltar al contenido</a>
@@ -490,7 +550,7 @@
           <a href="#features">Características</a>
           <a href="#como-funciona">Cómo funciona</a>
           <a href="#pantallas">Pantallas</a>
-          <a class="nav-cta" href="https://github.com/Haplee/gymlog/releases/download/v5.0.0/GymLog-v5.0.0.apk" download>
+          <a class="nav-cta" href="/download/gymlog.apk" download>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M12 15V3" />
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -518,7 +578,7 @@
               modo offline.
             </p>
             <div class="hero-cta rise-in" style="--d: 320ms">
-              <a class="btn btn-primary" href="https://github.com/Haplee/gymlog/releases/download/v5.0.0/GymLog-v5.0.0.apk" download>
+              <a class="btn btn-primary" href="/download/gymlog.apk" download>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M12 15V3" />
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -533,7 +593,7 @@
                 </svg>
                 iOS — En desarrollo
               </button>
-              <a class="btn btn-ghost" href="https://app.gymlog.dpdns.org/app">
+              <a class="btn btn-ghost" href="https://app.gymlog.dpdns.org/">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <circle cx="12" cy="12" r="10" />
                   <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
@@ -752,6 +812,40 @@
         </div>
       </section>
 
+      <!-- FAQ -->
+      <section class="section" id="faq" style="padding-top: 0">
+        <div class="wrap">
+          <p class="eyebrow reveal">Preguntas frecuentes</p>
+          <h2 class="reveal" style="--d: 60ms">Lo que sueles preguntar</h2>
+          <div class="faq reveal" style="--d: 120ms">
+            <details>
+              <summary>¿GymLog es gratis de verdad?</summary>
+              <p>Sí, 100&nbsp;% gratis. Sin anuncios, sin suscripciones y sin compras dentro de la app.</p>
+            </details>
+            <details>
+              <summary>¿Necesito crear una cuenta?</summary>
+              <p>Puedes empezar a registrar entrenos sin registrarte. Si quieres sincronizar tu historial entre dispositivos, inicia sesión con Google — es opcional.</p>
+            </details>
+            <details>
+              <summary>¿Por qué no está en Google Play?</summary>
+              <p>Por ahora se distribuye como APK directo desde esta web. La app de iOS está en desarrollo. Descargar el APK es rápido y seguro; te explicamos cómo justo abajo.</p>
+            </details>
+            <details>
+              <summary>¿Cómo instalo el APK en Android?</summary>
+              <p>Descarga el archivo, ábrelo y, si Android lo pide, permite la instalación desde «orígenes desconocidos» para tu navegador. Tienes la <a href="tutorial.html">guía paso a paso en el tutorial</a>.</p>
+            </details>
+            <details>
+              <summary>¿Funciona sin conexión?</summary>
+              <p>Sí. Puedes registrar entrenamientos completamente offline; se sincronizan solos en cuanto recuperas conexión.</p>
+            </details>
+            <details>
+              <summary>¿Es seguro?</summary>
+              <p>El APK está firmado y se sirve solo desde <b>gymlog.dpdns.org</b>. Además, el código es abierto: puedes revisarlo en <a href="https://github.com/Haplee/gymlog">GitHub</a>.</p>
+            </details>
+          </div>
+        </div>
+      </section>
+
       <!-- Final CTA -->
       <section class="section" style="padding-top: 0">
         <div class="wrap">
@@ -759,7 +853,7 @@
             <h2>Empieza hoy. Es gratis.</h2>
             <p>Descarga el APK para Android o pruébala al instante en el navegador. La app de iOS está en desarrollo. Sin registro obligatorio.</p>
             <div class="hero-cta">
-              <a class="btn btn-primary" href="https://github.com/Haplee/gymlog/releases/download/v5.0.0/GymLog-v5.0.0.apk" download>
+              <a class="btn btn-primary" href="/download/gymlog.apk" download>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M12 15V3" />
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -774,7 +868,7 @@
                 </svg>
                 iOS — En desarrollo
               </button>
-              <a class="btn btn-ghost" href="https://app.gymlog.dpdns.org/app">Probar online</a>
+              <a class="btn btn-ghost" href="https://app.gymlog.dpdns.org/">Probar online</a>
             </div>
             <p class="ipa-note" style="margin-bottom: 0">La app de iOS está en desarrollo; disponible próximamente.</p>
           </div>
@@ -799,9 +893,9 @@
         <nav class="foot-links" aria-label="Enlaces del pie">
           <a href="tutorial.html">Tutorial</a>
           <a href="https://github.com/Haplee/gymlog">Código (GitHub)</a>
-          <a href="https://github.com/Haplee/gymlog/releases/download/v5.0.0/GymLog-v5.0.0.apk" download>Descargar APK</a>
+          <a href="/download/gymlog.apk" download>Descargar APK</a>
           <span aria-disabled="true" style="opacity:.55">iOS — En desarrollo</span>
-          <a href="https://app.gymlog.dpdns.org/app">Abrir app</a>
+          <a href="https://app.gymlog.dpdns.org/">Abrir app</a>
         </nav>
       </div>
       <div class="wrap foot-meta" style="margin-top: 1.25rem">
