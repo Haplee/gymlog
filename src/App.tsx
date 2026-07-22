@@ -56,6 +56,11 @@ const ExerciseLibraryPage = lazy(() =>
 const WearablesPage = lazy(() =>
   import('@features/wearables/pages/WearablesPage').then((m) => ({ default: m.WearablesPage })),
 );
+const FitBodyShowcasePage = lazy(() =>
+  import('@features/fitbody/pages/FitBodyShowcasePage').then((m) => ({
+    default: m.FitBodyShowcasePage,
+  })),
+);
 
 function Loading() {
   return (
@@ -152,6 +157,14 @@ function AnimatedRoutes() {
         element={
           <ProtectedRoute>
             <WearablesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/fitbody"
+        element={
+          <ProtectedRoute>
+            <FitBodyShowcasePage />
           </ProtectedRoute>
         }
       />

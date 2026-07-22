@@ -223,23 +223,24 @@ export function Layout({ children }: LayoutProps) {
               }}
               className="flex-1 flex flex-col items-center justify-center gap-1 relative transition-opacity active:opacity-60"
             >
-              {isActive && (
-                <m.div
-                  layoutId="activeTabBar"
-                  className="absolute top-0 left-3 right-3 h-0.5 bg-accent"
-                  transition={{ type: 'spring', stiffness: 500, damping: 32 }}
-                />
-              )}
-              <div className="relative">
+              {/* Icono activo dentro de un pill amarillo relleno (estilo FitBody) */}
+              <div className="relative flex items-center justify-center w-12 h-9">
+                {isActive && (
+                  <m.div
+                    layoutId="activeTabPill"
+                    className="absolute inset-0 rounded-pill bg-accent shadow-fab"
+                    transition={{ type: 'spring', stiffness: 500, damping: 32 }}
+                  />
+                )}
                 <Icon
-                  className={`w-5 h-5 transition-colors ${isActive ? 'text-accent' : 'text-fg-subtle'}`}
-                  strokeWidth={isActive ? 2 : 1.5}
+                  className={`relative w-5 h-5 transition-colors ${isActive ? 'text-accent-fg' : 'text-fg-subtle'}`}
+                  strokeWidth={isActive ? 2.5 : 1.5}
                 />
                 {badge && (
                   <m.span
                     initial={{ scale: 0.95, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    className="absolute -top-1 -right-1.5 w-2 h-2 bg-accent shadow-glow pulse-soft"
+                    className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-error shadow-glow pulse-soft"
                   />
                 )}
               </div>

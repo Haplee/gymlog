@@ -1,6 +1,8 @@
 /* ════════════════════════════════════════════════
-   GymLog v2.0 — Stitch "Swiss-Athletic" Design Tokens
-   Paleta menta + estética angular/plana (rediseño Stitch)
+   GymLog v3.0 — "FitBody" Design Tokens (prueba)
+   Paleta amarillo-lima sobre negro + cards muy redondeadas.
+   Reskin inspirado en el kit FitBody (sin morado: acento único
+   amarillo #cbf24c en todos lados, sustituye al menta anterior).
    ════════════════════════════════════════════════ */
 
 :root {
@@ -16,10 +18,10 @@
   --text-tertiary: #869489; /* ≥4.5:1 sobre --bg-base (WCAG AA) */
   --text-inverse: #0a0a0b;
 
-  /* ── Interactivo ─────────────────────────────── */
-  --interactive-primary: #60eca8;
-  --interactive-primary-dim: #3ecf8e; /* primary-container Stitch */
-  --interactive-primary-fg: #003822; /* on-primary M3 */
+  /* ── Interactivo (acento amarillo-lima FitBody) ── */
+  --interactive-primary: #cbf24c;
+  --interactive-primary-dim: #b2d833; /* variante apagada para hover/containers */
+  --interactive-primary-fg: #17200a; /* texto sobre amarillo (alto contraste) */
   --interactive-secondary: #201f20;
   --interactive-hover: #2a2a2b;
 
@@ -43,18 +45,18 @@
   --accent-deep-orange: #f97316;
 
   /* ── Bordes ─────────────────────────────────── */
-  --icon-bg-accent: rgba(96, 236, 168, 0.14);
+  --icon-bg-accent: rgba(203, 242, 76, 0.14);
   --icon-bg-danger: rgba(255, 180, 171, 0.15);
 
   --border-subtle: #232326;
-  --border-default: #3d4a41; /* outline-variant Stitch */
-  --border-accent: rgba(96, 236, 168, 0.25);
+  --border-default: #3d4a41;
+  --border-accent: rgba(203, 242, 76, 0.28);
 
-  /* ── Radios (estética angular Stitch) ────────── */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  /* ── Radios (estética redondeada FitBody) ────── */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
   --radius-pill: 999px;
 
   /* ── Tipografía ──────────────────────────────── */
@@ -93,7 +95,7 @@
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.45);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.55);
-  --glow-accent: 0 0 16px rgba(96, 236, 168, 0.12);
+  --glow-accent: 0 0 16px rgba(203, 242, 76, 0.16);
   --glow-error: 0 0 12px rgba(255, 180, 171, 0.2);
 
   /* ── Transiciones ────────────────────────────── */
@@ -140,9 +142,9 @@
   --text-tertiary: #5c655f; /* ≥4.5:1 sobre superficies claras */
   --text-inverse: #ffffff;
 
-  /* ── Interactivo (inverse-primary M3 de la hoja Stitch) ── */
-  --interactive-primary: #006c45;
-  --interactive-primary-dim: #005434;
+  /* ── Interactivo (amarillo-oliva oscuro: AA sobre blanco) ── */
+  --interactive-primary: #5c6a00;
+  --interactive-primary-dim: #47520a;
   --interactive-primary-fg: #ffffff;
   --interactive-secondary: #e4e9e5;
   --interactive-hover: #d6dcd7;
@@ -152,24 +154,24 @@
   --error: #ba1a1a; /* M3 error light */
 
   /* ── Bordes (algo más marcados para definir cards sobre claro) ─── */
-  --icon-bg-accent: rgba(0, 108, 69, 0.1);
+  --icon-bg-accent: rgba(92, 106, 0, 0.12);
   --icon-bg-danger: rgba(186, 26, 26, 0.1);
   --border-subtle: #e0e4e0;
   --border-default: #c0c9c1;
-  --border-accent: rgba(0, 108, 69, 0.35);
+  --border-accent: rgba(92, 106, 0, 0.35);
 
   /* ── Sombras (más suaves sobre fondo claro) ───── */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
   --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.08);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
-  --glow-accent: 0 0 16px rgba(0, 108, 69, 0.12);
+  --glow-accent: 0 0 16px rgba(92, 106, 0, 0.12);
   --glow-error: 0 0 12px rgba(186, 26, 26, 0.14);
 
   /* Overrides de las sombras definidas en el @theme de index.css (oscuras por
      defecto). En claro deben ser sutiles, sin el inset blanco. */
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-glow: 0 0 14px rgba(0, 108, 69, 0.12);
-  --shadow-btn-accent: 0 1px 4px rgba(0, 108, 69, 0.2);
+  --shadow-glow: 0 0 14px rgba(92, 106, 0, 0.12);
+  --shadow-btn-accent: 0 1px 4px rgba(92, 106, 0, 0.2);
 }
 
 /* Keyframes y clases de animación viven en index.css (fuente única). */
