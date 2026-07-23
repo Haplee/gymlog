@@ -23,6 +23,7 @@ import { toast } from 'sonner';
 import BiometricPlugin from '@shared/lib/biometric';
 import { devError } from '@shared/lib/devtools';
 import {
+  BookOpen,
   Camera,
   Check,
   ChevronRight,
@@ -468,6 +469,17 @@ export function SettingsPage() {
             <span className="flex items-center gap-2 text-sm text-fg">
               <Ruler className="w-4 h-4 text-accent" />
               {t('settings.my_measurements')}
+            </span>
+            <ChevronRight className="w-4 h-4 text-fg-subtle" />
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/guide')}
+            className="w-full mt-2 flex items-center justify-between gap-3 min-h-11 px-3 rounded-sm bg-surface-2 border border-line text-left active:scale-[0.99] transition-transform"
+          >
+            <span className="flex items-center gap-2 text-sm text-fg">
+              <BookOpen className="w-4 h-4 text-accent" />
+              {t('guide.title')}
             </span>
             <ChevronRight className="w-4 h-4 text-fg-subtle" />
           </button>

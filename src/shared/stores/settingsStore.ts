@@ -23,6 +23,8 @@ interface SettingsState {
   restDuration: number;
   restByExercise: boolean;
   wearablesSyncOnOpen: boolean;
+  /** La guía de uso solo se abre sola la primera vez; luego se entra desde Ajustes. */
+  guideSeen: boolean;
   setBiometricEnabled: (enabled: boolean) => void;
   setNotificationsEnabled: (enabled: boolean) => void;
   setTrainingReminders: (enabled: boolean) => void;
@@ -35,6 +37,7 @@ interface SettingsState {
   setRestDuration: (seconds: number) => void;
   setRestByExercise: (enabled: boolean) => void;
   setWearablesSyncOnOpen: (enabled: boolean) => void;
+  setGuideSeen: (seen: boolean) => void;
   applyTheme: () => void;
 }
 
@@ -53,6 +56,7 @@ export const useSettingsStore = create<SettingsState>()(
       restDuration: 90,
       restByExercise: true,
       wearablesSyncOnOpen: true,
+      guideSeen: false,
 
       setBiometricEnabled: (biometricEnabled) => set({ biometricEnabled }),
 
@@ -84,6 +88,7 @@ export const useSettingsStore = create<SettingsState>()(
       setRestDuration: (restDuration) => set({ restDuration }),
       setRestByExercise: (restByExercise) => set({ restByExercise }),
       setWearablesSyncOnOpen: (wearablesSyncOnOpen) => set({ wearablesSyncOnOpen }),
+      setGuideSeen: (guideSeen) => set({ guideSeen }),
 
       applyTheme: () => {
         const { theme } = get();

@@ -56,6 +56,9 @@ const ExerciseLibraryPage = lazy(() =>
 const WearablesPage = lazy(() =>
   import('@features/wearables/pages/WearablesPage').then((m) => ({ default: m.WearablesPage })),
 );
+const GuidePage = lazy(() =>
+  import('@features/guide/pages/GuidePage').then((m) => ({ default: m.GuidePage })),
+);
 const FitBodyShowcasePage = lazy(() =>
   import('@features/fitbody/pages/FitBodyShowcasePage').then((m) => ({
     default: m.FitBodyShowcasePage,
@@ -161,6 +164,14 @@ function AnimatedRoutes() {
         }
       />
       <Route
+        path="/guide"
+        element={
+          <ProtectedRoute>
+            <GuidePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/fitbody"
         element={
           <ProtectedRoute>
@@ -239,6 +250,7 @@ function AppRoutes() {
   const loading = useAuthStore((s) => s.loading);
   const initialized = useAuthStore((s) => s.initialized);
   const { applyTheme } = useSettingsStore();
+  const guideSeen = useSettingsStore((s) => s.guideSeen);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const navigate = useNavigate();
 
@@ -339,6 +351,14 @@ function AppRoutes() {
       checkProfile();
     }
   }, [initialized, user]);
+
+  // Primera vez en este dispositivo: enseñamos la guía de uso antes que nada.
+  // Se marca como vista al pulsar "Entendido" o al entrar en ella desde Ajustes,
+  // así que esto solo dispara una vez y no molesta al usuario habitual.
+  useEffect(() => {
+    if (!initialized || !user || guideSeen || showOnboarding) return;
+    if (window.location.pathname === '/') navigate('/guide', { replace: true });
+  }, [initialized, user, guideSeen, showOnboarding, navigate]);
 
   if (!initialized || loading) return <Loading />;
 

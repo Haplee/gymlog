@@ -114,6 +114,114 @@ export const resources = {
         equipment: '¿De qué equipo dispones?',
         finish: 'Empezar a entrenar',
       },
+      guide: {
+        title: 'Guía de uso',
+        subtitle: 'Lo esencial para entender GymLog en 2 minutos.',
+        quickstart: 'Tu primer entreno en 3 pasos',
+        step1_title: 'Elige un ejercicio',
+        step1_desc:
+          'En la pestaña Entrenar abre el selector y busca el ejercicio. Con «+ Personalizado» creas los tuyos.',
+        step2_title: 'Registra tus series',
+        step2_desc: 'Escribe reps y kg y pulsa «+ Serie». Repite tantas veces como series hagas.',
+        step3_title: 'Guarda la sesión',
+        step3_desc:
+          'Pulsa Guardar: el entreno pasa a tu historial y actualiza récords, volumen y racha.',
+        sections_title: 'Qué hace cada pantalla',
+        tips_title: 'Trucos que conviene saber',
+        open: 'Abrir',
+        finish: 'Entendido, ¡a entrenar!',
+        tips: [
+          'En el historial, desliza un entreno hacia un lado para borrarlo.',
+          'Con «Repetir último entreno» cargas la sesión anterior de una sola vez.',
+          'Puedes entrenar sin conexión: nada se pierde, se sube cuando vuelva la red.',
+          'Todo es reversible: si te equivocas en una serie, edítala o bórrala antes de guardar.',
+        ],
+        workout: {
+          title: 'Entrenar',
+          bullets: [
+            'Selecciona el ejercicio del desplegable, o créalo tú con músculos secundarios y opción de peso corporal.',
+            'Introduce reps y kg, pulsa «+ Serie» y ve sumando. «× Todas» limpia la lista.',
+            'Cada serie admite RPE (esfuerzo percibido) y tipo: normal, drop set, rest-pause o AMRAP.',
+            'Antes de guardar puedes añadir notas de la sesión y una valoración de cómo te has sentido.',
+            'Si sales a medias, al volver la app te ofrece continuar o descartar la sesión.',
+          ],
+        },
+        tools: {
+          title: 'Ayudas dentro de la serie',
+          bullets: [
+            'Calculadora de discos: dile el peso objetivo y te dice qué poner a cada lado de la barra.',
+            'Ves tu 1RM estimado y tus récords por rango de repeticiones en cada ejercicio.',
+            '«Última sesión» muestra lo que hiciste la vez anterior: puedes copiarlo o aplicar la sugerencia de progresión.',
+            'En ejercicios de peso corporal, los kg que escribas cuentan como lastre añadido.',
+          ],
+        },
+        rest: {
+          title: 'Descanso y avisos',
+          bullets: [
+            'El temporizador puede arrancar solo al añadir una serie (Ajustes → Entrenamiento).',
+            'Puedes fijar una duración fija o dejar que sea mayor en los ejercicios compuestos.',
+            'El aviso suena aunque estés en otra pantalla o con la app en segundo plano.',
+            'En Android, activa «alarmas exactas» en Ajustes para que el aviso no llegue tarde.',
+          ],
+        },
+        routines: {
+          title: 'Rutinas',
+          bullets: [
+            'Organiza tu semana asignando ejercicios a cada día.',
+            'Activa los recordatorios de entreno y la app te avisa el día que toca.',
+          ],
+        },
+        cardio: {
+          title: 'Cardio',
+          bullets: [
+            'Cronómetro para carrera, bici, elíptica y demás sesiones de cardio.',
+            'La sesión sigue corriendo aunque cambies de pestaña; lo verás marcado en el icono de Cardio.',
+          ],
+        },
+        history: {
+          title: 'Historial',
+          bullets: [
+            'Todos tus entrenos guardados, con sus series y su volumen.',
+            'Entra en cualquier sesión para revisarla, o deslízala para borrarla.',
+          ],
+        },
+        stats: {
+          title: 'Estadísticas',
+          bullets: [
+            'Volumen por semana y por grupo muscular, récords personales y racha de días.',
+            'Mapa de consistencia y fatiga muscular: qué grupos están recuperados y cuáles no.',
+            'Consejos personalizados según tu objetivo y tus últimas sesiones.',
+          ],
+        },
+        measurements: {
+          title: 'Mis medidas',
+          bullets: [
+            'Registra peso corporal y medidas para seguir su evolución.',
+            'El peso corporal se usa para estimar el volumen en ejercicios de peso corporal.',
+          ],
+        },
+        wearables: {
+          title: 'Wearables',
+          bullets: [
+            'Conecta Health Connect para traer pasos, calorías, pulso y sueño desde tu reloj.',
+            'Solo funciona en la app de Android, no en la versión web.',
+          ],
+        },
+        offline: {
+          title: 'Sin conexión',
+          bullets: [
+            'Si no hay cobertura, el entreno se guarda en el móvil y no se pierde.',
+            'Al recuperar la red se sincroniza solo; verás cuántos entrenos quedan pendientes.',
+          ],
+        },
+        settings: {
+          title: 'Ajustes',
+          bullets: [
+            'Tema oscuro o claro, idioma, unidades (kg/lb) y sonido.',
+            'Notificaciones, descanso automático, series de calentamiento y acceso biométrico.',
+          ],
+        },
+      },
       settings: {
         title: 'Ajustes',
         theme: 'Tema',
@@ -586,6 +694,114 @@ export const resources = {
         days: 'How many days per week?',
         equipment: 'What equipment do you have?',
         finish: 'Start training',
+      },
+      guide: {
+        title: 'How it works',
+        subtitle: 'Everything you need to understand GymLog in 2 minutes.',
+        quickstart: 'Your first workout in 3 steps',
+        step1_title: 'Pick an exercise',
+        step1_desc:
+          'On the Train tab open the picker and find your exercise. Use "+ Custom" to create your own.',
+        step2_title: 'Log your sets',
+        step2_desc: 'Type reps and weight, tap "+ Set" and repeat for every set you do.',
+        step3_title: 'Save the session',
+        step3_desc:
+          'Tap Save: the workout goes to your history and updates records, volume and streak.',
+        sections_title: 'What each screen does',
+        tips_title: 'Good to know',
+        open: 'Open',
+        finish: 'Got it, let me train!',
+        tips: [
+          'In history, swipe a workout sideways to delete it.',
+          '"Repeat last workout" loads your previous session in one tap.',
+          'You can train offline: nothing is lost, it uploads when you are back online.',
+          'Everything is reversible: edit or remove a set before saving if you got it wrong.',
+        ],
+        workout: {
+          title: 'Train',
+          bullets: [
+            'Pick an exercise from the list, or create your own with secondary muscles and a bodyweight option.',
+            'Enter reps and weight, tap "+ Set" and keep adding. "× All" clears the list.',
+            'Every set supports RPE (perceived effort) and a type: normal, drop set, rest-pause or AMRAP.',
+            'Before saving you can add session notes and rate how the workout felt.',
+            'If you leave mid-session, the app offers to resume or discard it when you come back.',
+          ],
+        },
+        tools: {
+          title: 'In-set helpers',
+          bullets: [
+            'Plate calculator: give it a target weight and it tells you what to load on each side.',
+            'See your estimated 1RM and your records per rep range for each exercise.',
+            '"Last session" shows what you did before: copy it or apply the progression suggestion.',
+            'On bodyweight exercises, the weight you type counts as added load.',
+          ],
+        },
+        rest: {
+          title: 'Rest and alerts',
+          bullets: [
+            'The timer can start automatically when you add a set (Settings → Training).',
+            'Set a fixed duration, or let compound lifts get a longer rest.',
+            'The alert fires even if you are on another screen or the app is in the background.',
+            'On Android, enable "exact alarms" in Settings so the alert is not delayed.',
+          ],
+        },
+        routines: {
+          title: 'Routines',
+          bullets: [
+            'Plan your week by assigning exercises to each day.',
+            'Turn on training reminders and the app will ping you on the right day.',
+          ],
+        },
+        cardio: {
+          title: 'Cardio',
+          bullets: [
+            'Timer for running, cycling, elliptical and other cardio sessions.',
+            'The session keeps running if you switch tabs; the Cardio icon shows it is active.',
+          ],
+        },
+        history: {
+          title: 'History',
+          bullets: [
+            'Every saved workout with its sets and volume.',
+            'Open any session to review it, or swipe it away to delete it.',
+          ],
+        },
+        stats: {
+          title: 'Stats',
+          bullets: [
+            'Volume per week and per muscle group, personal records and day streak.',
+            'Consistency heatmap and muscle fatigue: which groups are recovered and which are not.',
+            'Personalized tips based on your goal and your latest sessions.',
+          ],
+        },
+        measurements: {
+          title: 'My measurements',
+          bullets: [
+            'Log bodyweight and measurements to track how they evolve.',
+            'Bodyweight is used to estimate volume on bodyweight exercises.',
+          ],
+        },
+        wearables: {
+          title: 'Wearables',
+          bullets: [
+            'Connect Health Connect to pull steps, calories, heart rate and sleep from your watch.',
+            'Only works in the Android app, not on the web version.',
+          ],
+        },
+        offline: {
+          title: 'Offline',
+          bullets: [
+            'With no signal the workout is stored on your phone and never lost.',
+            'It syncs by itself once you are back online; you will see how many are pending.',
+          ],
+        },
+        settings: {
+          title: 'Settings',
+          bullets: [
+            'Dark or light theme, language, units (kg/lb) and sound.',
+            'Notifications, auto rest timer, warm-up sets and biometric unlock.',
+          ],
+        },
       },
       settings: {
         title: 'Settings',
