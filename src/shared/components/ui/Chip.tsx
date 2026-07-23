@@ -13,9 +13,10 @@ interface ChipProps {
 }
 
 /**
- * Chip angular estilo Stitch. `filter` = píldora angular de filtro
- * (librería, wearables); `day` = cuadrado compacto (selector L-D de rutinas).
- * Activo: borde + texto acento, sin relleno (look Stitch).
+ * Chip estilo FitBody. `filter` = píldora (librería, wearables); `day` =
+ * círculo compacto (selector L-D de rutinas).
+ * En el kit los chips van siempre rellenos: el activo con el acento y el
+ * inactivo con una superficie clara — nunca en contorno.
  */
 const ChipComponent = ({
   children,
@@ -35,10 +36,10 @@ const ChipComponent = ({
       onClick={onClick}
       disabled={disabled}
       aria-pressed={selected}
-      className={`inline-flex label-caps rounded-sm border transition-colors duration-100 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${base} ${
+      className={`inline-flex label-caps rounded-pill transition-colors duration-100 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${base} ${
         selected
-          ? 'border-accent text-accent bg-accent/10'
-          : 'border-line-strong text-fg-subtle hover:text-fg-muted hover:border-line-strong'
+          ? 'bg-accent text-accent-fg font-semibold'
+          : 'bg-surface-2 text-fg-muted hover:text-fg'
       } ${className}`}
     >
       {children}

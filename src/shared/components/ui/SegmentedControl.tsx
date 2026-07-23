@@ -29,7 +29,7 @@ function SegmentedControlComponent<T extends string>({
     <div
       role="radiogroup"
       aria-label={ariaLabel}
-      className={`inline-flex items-center gap-0.5 p-0.5 bg-surface-2 rounded-sm border border-line ${className}`}
+      className={`inline-flex items-center gap-1 p-1 bg-surface-2 rounded-pill ${className}`}
     >
       {options.map((opt) => {
         const isActive = opt.value === value;
@@ -40,8 +40,8 @@ function SegmentedControlComponent<T extends string>({
             role="radio"
             aria-checked={isActive}
             onClick={() => onChange(opt.value)}
-            className={`min-h-9 px-3 rounded-sm label-caps transition-colors duration-100 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
-              isActive ? 'bg-accent text-accent-fg' : 'text-fg-subtle hover:text-fg-muted'
+            className={`min-h-9 px-4 rounded-pill label-caps transition-colors duration-100 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+              isActive ? 'bg-accent text-accent-fg font-semibold' : 'text-fg-subtle hover:text-fg'
             }`}
           >
             {opt.label}

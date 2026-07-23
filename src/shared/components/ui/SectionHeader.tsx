@@ -23,7 +23,9 @@ const SectionHeaderComponent = ({
 }: SectionHeaderProps) => (
   <div className={`flex items-start justify-between gap-3 mb-3 ${className}`}>
     <div className="min-w-0">
-      <h2 className="font-display text-base font-bold text-fg">{title}</h2>
+      {/* En el kit los rótulos de sección ("Activities", "Round 1", "Forums")
+          van siempre en el color de acento, no en el color de texto. */}
+      <h2 className="font-display text-base font-bold text-accent">{title}</h2>
       {subtitle && <p className="text-xs text-fg-subtle mt-0.5">{subtitle}</p>}
     </div>
     {action}

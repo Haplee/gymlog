@@ -52,6 +52,36 @@ const playSound = (freq: number, duration: number, delay: number, ctx: AudioCont
   osc.stop(ctx.currentTime + delay + duration);
 };
 
+/**
+ * Fila de menú del kit FitBody: icono dentro de un círculo de acento, etiqueta
+ * y chevron. Es el patrón de su pantalla de perfil (Profile, Favorite, Help…).
+ */
+function MenuRow({
+  icon,
+  label,
+  onClick,
+}: {
+  icon: ReactNode;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full flex items-center justify-between gap-3 min-h-11 py-2 text-left active:opacity-70"
+    >
+      <span className="flex items-center gap-3 text-sm text-fg">
+        <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-accent text-accent-fg">
+          {icon}
+        </span>
+        {label}
+      </span>
+      <ChevronRight className="w-4 h-4 text-fg-subtle" />
+    </button>
+  );
+}
+
 function SettingRow({
   label,
   desc,
@@ -367,27 +397,29 @@ export function SettingsPage() {
 
       <div className="space-y-6 pb-20">
         {/* Perfil */}
-        <div className="rounded-card p-4 bg-surface border border-line">
-          <div className="flex items-center gap-3">
+        {/* Cabecera de perfil del kit ("Progress Tracking"): banda rellena del
+            acento con el avatar circular y el nombre en grande. */}
+        <div className="rounded-card overflow-hidden bg-surface border border-line">
+          <div className="flex items-center gap-3 bg-accent p-4">
             <button
               type="button"
               onClick={() => avatarInputRef.current?.click()}
               disabled={isUploadingAvatar}
               aria-label={t('settings.change_photo')}
-              className="relative w-14 h-14 flex-shrink-0 rounded-sm active:scale-95 transition-transform disabled:opacity-60"
+              className="relative w-14 h-14 flex-shrink-0 rounded-full active:scale-95 transition-transform disabled:opacity-60"
             >
               {avatarUrl ? (
                 <img
                   src={avatarUrl}
                   alt=""
-                  className="w-14 h-14 rounded-sm object-cover border border-line-accent"
+                  className="w-14 h-14 rounded-full object-cover border-2 border-accent-fg/20"
                 />
               ) : (
-                <span className="w-14 h-14 rounded-sm flex items-center justify-center bg-accent/10 border border-line-accent text-accent font-display font-bold text-lg uppercase">
+                <span className="w-14 h-14 rounded-full flex items-center justify-center bg-accent-fg/15 text-accent-fg font-display font-bold text-lg uppercase">
                   {displayName.slice(0, 1) || '?'}
                 </span>
               )}
-              <span className="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-sm flex items-center justify-center bg-accent text-accent-fg border border-base">
+              <span className="absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full flex items-center justify-center bg-base text-accent">
                 {isUploadingAvatar ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 ) : (
@@ -437,7 +469,7 @@ export function SettingsPage() {
                 </div>
               ) : (
                 <div className="flex items-center min-w-0">
-                  <div className="text-data font-display font-bold text-fg truncate">
+                  <div className="text-data font-display font-bold text-accent-fg truncate">
                     {displayName}
                   </div>
                   <button
@@ -447,42 +479,34 @@ export function SettingsPage() {
                       setIsEditingName(true);
                     }}
                     aria-label={t('settings.edit_name')}
-                    className="w-11 h-11 -my-2 flex-shrink-0 flex items-center justify-center text-fg-subtle active:text-accent"
+                    className="w-11 h-11 -my-2 flex-shrink-0 flex items-center justify-center text-accent-fg/60 active:text-accent-fg"
                   >
                     <Pencil className="w-3.5 h-3.5" />
                   </button>
                 </div>
               )}
-              <div className="text-xs text-fg-subtle truncate">{user?.email}</div>
+              <div className="text-xs text-accent-fg/70 truncate">{user?.email}</div>
             </div>
           </div>
-          {isGoogle && (
-            <span className="label-caps inline-block mt-3 px-2 py-1 rounded-sm bg-surface-2 border border-line text-fg-muted">
-              {t('settings.google_account')}
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={() => navigate('/user-stats')}
-            className="w-full mt-3 flex items-center justify-between gap-3 min-h-11 px-3 rounded-sm bg-surface-2 border border-line text-left active:scale-[0.99] transition-transform"
-          >
-            <span className="flex items-center gap-2 text-sm text-fg">
-              <Ruler className="w-4 h-4 text-accent" />
-              {t('settings.my_measurements')}
-            </span>
-            <ChevronRight className="w-4 h-4 text-fg-subtle" />
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate('/guide')}
-            className="w-full mt-2 flex items-center justify-between gap-3 min-h-11 px-3 rounded-sm bg-surface-2 border border-line text-left active:scale-[0.99] transition-transform"
-          >
-            <span className="flex items-center gap-2 text-sm text-fg">
-              <BookOpen className="w-4 h-4 text-accent" />
-              {t('guide.title')}
-            </span>
-            <ChevronRight className="w-4 h-4 text-fg-subtle" />
-          </button>
+
+          {/* Menú del kit: cada fila con su icono en un círculo de acento. */}
+          <div className="p-4">
+            {isGoogle && (
+              <span className="label-caps inline-block mb-3 px-2.5 py-1 rounded-pill bg-surface-2 text-fg-muted">
+                {t('settings.google_account')}
+              </span>
+            )}
+            <MenuRow
+              icon={<Ruler className="w-4 h-4" />}
+              label={t('settings.my_measurements')}
+              onClick={() => navigate('/user-stats')}
+            />
+            <MenuRow
+              icon={<BookOpen className="w-4 h-4" />}
+              label={t('guide.title')}
+              onClick={() => navigate('/guide')}
+            />
+          </div>
         </div>
 
         {!isNative() && (
@@ -701,8 +725,10 @@ export function SettingsPage() {
               onClick={() => navigate('/wearables')}
               className="w-full flex items-center justify-between gap-3 px-4 py-3.5 text-left active:bg-hover"
             >
-              <span className="flex items-center gap-2.5 min-w-0">
-                <Watch className="w-4 h-4 flex-shrink-0 text-accent" />
+              <span className="flex items-center gap-3 min-w-0">
+                <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-accent text-accent-fg">
+                  <Watch className="w-4 h-4" />
+                </span>
                 <span className="min-w-0">
                   <span className="block text-base text-fg">{t('settings.wearables')}</span>
                   <span className="block text-xs mt-0.5 text-fg-subtle">
