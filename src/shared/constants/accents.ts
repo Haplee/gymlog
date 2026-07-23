@@ -100,6 +100,41 @@ export const ACCENT_PRESETS: AccentPreset[] = [
     dark: { primary: '#cbd5e1', dim: '#aeb9c7', fg: '#161b22', rgb: '203 213 225' },
     light: { primary: '#334155', dim: '#283443', fg: '#ffffff', rgb: '51 65 85' },
   },
+  {
+    id: 'emerald',
+    dark: { primary: '#34d399', dim: '#22b884', fg: '#00291c', rgb: '52 211 153' },
+    light: { primary: '#046c4e', dim: '#03563e', fg: '#ffffff', rgb: '4 108 78' },
+  },
+  {
+    id: 'azure',
+    dark: { primary: '#60a5fa', dim: '#4a8ee0', fg: '#06152e', rgb: '96 165 250' },
+    light: { primary: '#1d4ed8', dim: '#173eab', fg: '#ffffff', rgb: '29 78 216' },
+  },
+  {
+    id: 'lavender',
+    dark: { primary: '#ddd6fe', dim: '#c3bae8', fg: '#1e1338', rgb: '221 214 254' },
+    light: { primary: '#5b21b6', dim: '#491a92', fg: '#ffffff', rgb: '91 33 182' },
+  },
+  {
+    id: 'plum',
+    dark: { primary: '#e0a3d4', dim: '#c78abb', fg: '#2e0d28', rgb: '224 163 212' },
+    light: { primary: '#7a2f6b', dim: '#622555', fg: '#ffffff', rgb: '122 47 107' },
+  },
+  {
+    id: 'terracotta',
+    dark: { primary: '#e08a63', dim: '#c7734e', fg: '#2b1108', rgb: '224 138 99' },
+    light: { primary: '#8f3f1e', dim: '#723218', fg: '#ffffff', rgb: '143 63 30' },
+  },
+  {
+    id: 'sage',
+    dark: { primary: '#b4d3a0', dim: '#9cba88', fg: '#182310', rgb: '180 211 160' },
+    light: { primary: '#4a6b38', dim: '#3b562c', fg: '#ffffff', rgb: '74 107 56' },
+  },
+  {
+    id: 'steel',
+    dark: { primary: '#94a3b8', dim: '#7c8a9e', fg: '#0f1720', rgb: '148 163 184' },
+    light: { primary: '#3f4d5c', dim: '#323d49', fg: '#ffffff', rgb: '63 77 92' },
+  },
 ];
 
 export type AccentId = (typeof ACCENT_PRESETS)[number]['id'];

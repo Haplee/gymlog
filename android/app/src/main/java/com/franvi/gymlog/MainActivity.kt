@@ -25,6 +25,7 @@ class MainActivity : BridgeActivity() {
         registerPlugin(BiometricPlugin::class.java)
         registerPlugin(WidgetBridgePlugin::class.java)
         registerPlugin(HealthBridgePlugin::class.java)
+        registerPlugin(AppIconPlugin::class.java)
         
         super.onCreate(savedInstanceState)
         

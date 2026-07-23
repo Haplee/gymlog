@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- GENERADO por scripts/generate-icon-variants.mjs — no editar a mano. -->
+<resources>
+    <color name="ic_bg_yellow">#ffd93d</color>
+    <color name="ic_bg_lime">#cbf24c</color>
+    <color name="ic_bg_mint">#60eca8</color>
+    <color name="ic_bg_cyan">#38bdf8</color>
+    <color name="ic_bg_blue">#7aa2ff</color>
+    <color name="ic_bg_violet">#c4a3ff</color>
+    <color name="ic_bg_pink">#ff9ec4</color>
+    <color name="ic_bg_orange">#ffab5c</color>
+    <color name="ic_bg_red">#ff8f7a</color>
+    <color name="ic_bg_amber">#fbbf24</color>
+    <color name="ic_bg_green">#4ade80</color>
+    <color name="ic_bg_teal">#2dd4bf</color>
+    <color name="ic_bg_indigo">#a5b4fc</color>
+    <color name="ic_bg_magenta">#f0abfc</color>
+    <color name="ic_bg_rose">#fda4af</color>
+    <color name="ic_bg_sand">#e7d3a1</color>
+    <color name="ic_bg_slate">#cbd5e1</color>
+    <color name="ic_bg_emerald">#34d399</color>
+    <color name="ic_bg_azure">#60a5fa</color>
+    <color name="ic_bg_lavender">#ddd6fe</color>
+    <color name="ic_bg_plum">#e0a3d4</color>
+    <color name="ic_bg_terracotta">#e08a63</color>
+    <color name="ic_bg_sage">#b4d3a0</color>
+    <color name="ic_bg_steel">#94a3b8</color>
+</resources>

@@ -28,6 +28,12 @@ interface SettingsState {
   guideSeen: boolean;
   /** Color de acento elegido por el usuario (Ajustes → Preferencias). */
   accentColor: AccentId;
+  /**
+   * Icono del lanzador. Va aparte del acento a propósito: cambiarlo saca el
+   * icono de la pantalla de inicio, así que no puede ser un efecto colateral
+   * de probar colores.
+   */
+  appIcon: AccentId;
   setBiometricEnabled: (enabled: boolean) => void;
   setNotificationsEnabled: (enabled: boolean) => void;
   setTrainingReminders: (enabled: boolean) => void;
@@ -42,6 +48,7 @@ interface SettingsState {
   setWearablesSyncOnOpen: (enabled: boolean) => void;
   setGuideSeen: (seen: boolean) => void;
   setAccentColor: (accent: AccentId) => void;
+  setAppIcon: (icon: AccentId) => void;
   applyTheme: () => void;
 }
 
@@ -62,6 +69,7 @@ export const useSettingsStore = create<SettingsState>()(
       wearablesSyncOnOpen: true,
       guideSeen: false,
       accentColor: DEFAULT_ACCENT,
+      appIcon: DEFAULT_ACCENT,
 
       setBiometricEnabled: (biometricEnabled) => set({ biometricEnabled }),
 
@@ -99,6 +107,10 @@ export const useSettingsStore = create<SettingsState>()(
         set({ accentColor });
         get().applyTheme();
       },
+
+      // El cambio nativo lo dispara la pantalla de Ajustes, que es quien puede
+      // avisar del efecto en la pantalla de inicio y mostrar el error si falla.
+      setAppIcon: (appIcon) => set({ appIcon }),
 
       applyTheme: () => {
         const { theme, accentColor } = get();

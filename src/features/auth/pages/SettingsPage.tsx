@@ -25,6 +25,7 @@ import { devError } from '@shared/lib/devtools';
 import { Camera, Check, ChevronRight, Download, Loader2, LogOut, Pencil, X } from 'lucide-react';
 import { IconBook, IconRuler, IconWatch } from '@shared/components/icons';
 import { ACCENT_PRESETS, getAccentPreset } from '@shared/constants/accents';
+import { isAppIconSupported, setAppIcon as setAppIconNative } from '@shared/lib/appIcon';
 
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
 const MAX_NAME_LENGTH = 40;
@@ -127,6 +128,8 @@ export function SettingsPage() {
     setRestByExercise,
     accentColor,
     setAccentColor,
+    appIcon,
+    setAppIcon,
   } = useSettingsStore();
   const [biometricSupport, setBiometricSupport] = useState<{ available: boolean; message: string }>(
     { available: false, message: '' },
@@ -138,6 +141,21 @@ export function SettingsPage() {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   /** La paleta de acentos arranca plegada para no alargar la pantalla. */
   const [accentOpen, setAccentOpen] = useState(false);
+  const [iconOpen, setIconOpen] = useState(false);
+
+  const applyAppIcon = useCallback(
+    async (id: string) => {
+      try {
+        await setAppIconNative(id);
+        setAppIcon(id);
+        toast.success(t('settings.app_icon_changed'));
+      } catch (e) {
+        devError('[Settings] setAppIcon:', e);
+        toast.error(t('settings.app_icon_error'));
+      }
+    },
+    [setAppIcon, t],
+  );
   /** `null` = aún sin comprobar; no pintar la fila hasta saberlo. */
   const [exactAlarmsGranted, setExactAlarmsGranted] = useState<boolean | null>(null);
   const updateProfileCache = useUpdateProfileCache();
@@ -614,6 +632,85 @@ export function SettingsPage() {
                 </>
               )}
             </div>
+
+            {/* Icono del lanzador. Solo Android: en web el icono lo congela el
+                manifest al instalar la PWA. Va separado del acento porque
+                cambiarlo reordena la pantalla de inicio del usuario. */}
+            {isAppIconSupported() && (
+              <div className="dotted-separator px-4 py-3.5">
+                <button
+                  type="button"
+                  onClick={() => setIconOpen((v) => !v)}
+                  aria-expanded={iconOpen}
+                  aria-controls="app-icon-swatches"
+                  className="flex w-full items-center gap-3 text-left"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="text-base text-fg">{t('settings.app_icon')}</div>
+                    <div className="text-xs mt-0.5 text-fg-subtle">
+                      {t(`settings.accent_${appIcon}`)}
+                    </div>
+                  </div>
+                  <span
+                    className="h-7 w-7 flex-shrink-0 rounded-full border border-line"
+                    style={{ backgroundColor: getAccentPreset(appIcon).dark.primary }}
+                    aria-hidden="true"
+                  />
+                  <ChevronRight
+                    className={`h-5 w-5 flex-shrink-0 text-fg-subtle transition-transform ${
+                      iconOpen ? 'rotate-90' : ''
+                    }`}
+                    aria-hidden="true"
+                  />
+                </button>
+                {iconOpen && (
+                  <>
+                    <div className="text-xs mt-3 text-fg-subtle">{t('settings.app_icon_desc')}</div>
+                    {appIcon !== accentColor && (
+                      <button
+                        type="button"
+                        onClick={() => void applyAppIcon(accentColor)}
+                        className="mt-2.5 rounded-pill bg-surface-2 px-3 py-2 text-xs text-fg"
+                      >
+                        {t('settings.app_icon_match')}
+                      </button>
+                    )}
+                    <div
+                      id="app-icon-swatches"
+                      role="radiogroup"
+                      aria-label={t('settings.app_icon')}
+                      className="mt-2.5 flex flex-wrap gap-2.5"
+                    >
+                      {ACCENT_PRESETS.map((preset) => {
+                        const isActive = preset.id === appIcon;
+                        return (
+                          <button
+                            key={preset.id}
+                            type="button"
+                            role="radio"
+                            aria-checked={isActive}
+                            aria-label={t(`settings.accent_${preset.id}`)}
+                            onClick={() => void applyAppIcon(preset.id)}
+                            className={`h-11 w-11 rounded-[14px] transition-transform active:scale-95 ${
+                              isActive ? 'ring-2 ring-offset-2 ring-offset-surface ring-fg' : ''
+                            }`}
+                            style={{ backgroundColor: preset.dark.primary }}
+                          >
+                            {isActive && (
+                              <Check
+                                className="mx-auto h-4 w-4"
+                                style={{ color: preset.dark.fg }}
+                                aria-hidden="true"
+                              />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
             <SettingRow
               label={t('settings.weight_unit')}
               control={
