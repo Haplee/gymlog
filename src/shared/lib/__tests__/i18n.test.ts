@@ -1,12 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import { resources } from '../i18n';
 
-type Tree = { [key: string]: string | Tree };
+type Tree = { [key: string]: string | string[] | Tree };
 
+// Las listas (t(..., { returnObjects: true })) son hojas: comparamos la clave y
+// su longitud, no cada índice, para que el fallo señale la lista y no 4 índices.
 function collectKeys(obj: Tree, prefix = ''): string[] {
   return Object.entries(obj).flatMap(([k, v]) => {
     const path = prefix ? `${prefix}.${k}` : k;
-    return typeof v === 'object' && v !== null ? collectKeys(v as Tree, path) : [path];
+    if (Array.isArray(v)) return [`${path}[${v.length}]`];
+    return typeof v === 'object' && v !== null ? collectKeys(v, path) : [path];
   });
 }
 
