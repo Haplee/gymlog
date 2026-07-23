@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Capacitor } from '@capacitor/core';
+import { DEFAULT_ACCENT, getAccentPreset, type AccentId } from '@shared/constants/accents';
 
 export type Theme = 'dark' | 'light';
 
@@ -25,6 +26,8 @@ interface SettingsState {
   wearablesSyncOnOpen: boolean;
   /** La guía de uso solo se abre sola la primera vez; luego se entra desde Ajustes. */
   guideSeen: boolean;
+  /** Color de acento elegido por el usuario (Ajustes → Preferencias). */
+  accentColor: AccentId;
   setBiometricEnabled: (enabled: boolean) => void;
   setNotificationsEnabled: (enabled: boolean) => void;
   setTrainingReminders: (enabled: boolean) => void;
@@ -38,6 +41,7 @@ interface SettingsState {
   setRestByExercise: (enabled: boolean) => void;
   setWearablesSyncOnOpen: (enabled: boolean) => void;
   setGuideSeen: (seen: boolean) => void;
+  setAccentColor: (accent: AccentId) => void;
   applyTheme: () => void;
 }
 
@@ -57,6 +61,7 @@ export const useSettingsStore = create<SettingsState>()(
       restByExercise: true,
       wearablesSyncOnOpen: true,
       guideSeen: false,
+      accentColor: DEFAULT_ACCENT,
 
       setBiometricEnabled: (biometricEnabled) => set({ biometricEnabled }),
 
@@ -90,11 +95,26 @@ export const useSettingsStore = create<SettingsState>()(
       setWearablesSyncOnOpen: (wearablesSyncOnOpen) => set({ wearablesSyncOnOpen }),
       setGuideSeen: (guideSeen) => set({ guideSeen }),
 
+      setAccentColor: (accentColor) => {
+        set({ accentColor });
+        get().applyTheme();
+      },
+
       applyTheme: () => {
-        const { theme } = get();
+        const { theme, accentColor } = get();
         const root = document.documentElement;
         root.classList.remove('light', 'dark');
         root.classList.add(theme);
+
+        // El acento elegido se inyecta como estilo inline en :root, que gana a
+        // los valores de tokens.css en ambos temas. Cada preset trae su pareja
+        // oscuro/claro porque en claro el acento también se usa como texto y
+        // tiene que ser oscuro para cumplir el contraste AA sobre blanco.
+        const accent = getAccentPreset(accentColor)[theme];
+        root.style.setProperty('--interactive-primary', accent.primary);
+        root.style.setProperty('--interactive-primary-dim', accent.dim);
+        root.style.setProperty('--interactive-primary-fg', accent.fg);
+        root.style.setProperty('--accent-rgb', accent.rgb);
 
         // Sincroniza el chrome del navegador/PWA con el tema activo
         const chrome = THEME_CHROME[theme];

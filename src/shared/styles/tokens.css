@@ -19,6 +19,7 @@
   --text-inverse: #0a0a0b;
 
   /* ── Interactivo (acento amarillo-lima FitBody) ── */
+  --accent-rgb: 255 217 61;
   --interactive-primary: #ffd93d;
   --interactive-primary-dim: #e6c02f; /* variante apagada para hover/containers */
   --interactive-primary-fg: #241c00; /* texto sobre amarillo (alto contraste) */
@@ -45,12 +46,12 @@
   --accent-deep-orange: #f97316;
 
   /* ── Bordes ─────────────────────────────────── */
-  --icon-bg-accent: rgba(255, 217, 61, 0.14);
+  --icon-bg-accent: rgb(var(--accent-rgb) / 0.14);
   --icon-bg-danger: rgba(255, 180, 171, 0.15);
 
   --border-subtle: #232326;
   --border-default: #3d4a41;
-  --border-accent: rgba(255, 217, 61, 0.28);
+  --border-accent: rgb(var(--accent-rgb) / 0.28);
 
   /* ── Radios (estética redondeada FitBody) ────── */
   --radius-sm: 8px;
@@ -95,7 +96,7 @@
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.45);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.55);
-  --glow-accent: 0 0 16px rgba(255, 217, 61, 0.16);
+  --glow-accent: 0 0 16px rgb(var(--accent-rgb) / 0.16);
   --glow-error: 0 0 12px rgba(255, 180, 171, 0.2);
 
   /* ── Transiciones ────────────────────────────── */
@@ -143,6 +144,7 @@
   --text-inverse: #ffffff;
 
   /* ── Interactivo (amarillo-oliva oscuro: AA sobre blanco) ── */
+  --accent-rgb: 107 82 0;
   --interactive-primary: #6b5200;
   --interactive-primary-dim: #57420a;
   --interactive-primary-fg: #ffffff;
@@ -154,24 +156,24 @@
   --error: #ba1a1a; /* M3 error light */
 
   /* ── Bordes (algo más marcados para definir cards sobre claro) ─── */
-  --icon-bg-accent: rgba(107, 82, 0, 0.12);
+  --icon-bg-accent: rgb(var(--accent-rgb) / 0.12);
   --icon-bg-danger: rgba(186, 26, 26, 0.1);
   --border-subtle: #e0e4e0;
   --border-default: #c0c9c1;
-  --border-accent: rgba(107, 82, 0, 0.35);
+  --border-accent: rgb(var(--accent-rgb) / 0.35);
 
   /* ── Sombras (más suaves sobre fondo claro) ───── */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
   --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.08);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
-  --glow-accent: 0 0 16px rgba(107, 82, 0, 0.12);
+  --glow-accent: 0 0 16px rgb(var(--accent-rgb) / 0.12);
   --glow-error: 0 0 12px rgba(186, 26, 26, 0.14);
 
   /* Overrides de las sombras definidas en el @theme de index.css (oscuras por
      defecto). En claro deben ser sutiles, sin el inset blanco. */
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-glow: 0 0 14px rgba(107, 82, 0, 0.12);
-  --shadow-btn-accent: 0 1px 4px rgba(107, 82, 0, 0.2);
+  --shadow-glow: 0 0 14px rgb(var(--accent-rgb) / 0.12);
+  --shadow-btn-accent: 0 1px 4px rgb(var(--accent-rgb) / 0.2);
 }
 
 /* Keyframes y clases de animación viven en index.css (fuente única). */
