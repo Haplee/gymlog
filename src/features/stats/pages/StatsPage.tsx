@@ -76,15 +76,9 @@ import {
 import { useTranslation } from 'react-i18next';
 import { devError } from '@shared/lib/devtools';
 
+/** Mismo rótulo que SectionHeader: titular en acento, sin versalitas ni regla. */
 function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex items-center gap-3 px-1">
-      <span className="text-2xs font-bold uppercase tracking-[0.12em] text-fg-subtle">
-        {children}
-      </span>
-      <div className="flex-1 h-px" style={{ backgroundColor: 'var(--border-subtle)' }} />
-    </div>
-  );
+  return <h2 className="font-display text-base font-bold text-accent px-1">{children}</h2>;
 }
 
 export function StatsPage() {
@@ -463,18 +457,26 @@ export function StatsPage() {
             className="grid grid-cols-3 gap-3"
           >
             <KPICard
+              size="sm"
               title="Volumen total"
               value={formatVol(allTimeVolume)}
               subtitle="histórico"
               icon="all-volume"
             />
             <KPICard
+              size="sm"
               title="Mejor 1RM"
               value={bestOneRm > 0 ? formatKg(bestOneRm, 0) : '—'}
               subtitle="estimado"
               icon="best-1rm"
             />
-            <KPICard title="Notas" value={setNotesCount} subtitle="series anotadas" icon="notes" />
+            <KPICard
+              size="sm"
+              title="Notas"
+              value={setNotesCount}
+              subtitle="series anotadas"
+              icon="notes"
+            />
           </m.div>
 
           {/* Racha max + PRs */}
@@ -626,12 +628,14 @@ export function StatsPage() {
               className="grid grid-cols-3 gap-3"
             >
               <KPICard
+                size="sm"
                 title="Tiempo total"
                 value={formatSeconds(cardioStats.totalTimeAll)}
                 subtitle="histórico"
                 icon="cardio-time"
               />
               <KPICard
+                size="sm"
                 title="Distancia total"
                 value={
                   cardioStats.totalDistAll > 0 ? `${cardioStats.totalDistAll.toFixed(1)}km` : '—'
@@ -640,6 +644,7 @@ export function StatsPage() {
                 icon="cardio-dist"
               />
               <KPICard
+                size="sm"
                 title="Duración media"
                 value={cardioStats.avgDur > 0 ? formatSeconds(cardioStats.avgDur) : '—'}
                 subtitle="por sesión"

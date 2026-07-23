@@ -25,7 +25,7 @@ const WEEKDAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
  * relleno del acento. Muestra de un vistazo la constancia del mes.
  */
 export function WorkoutCalendar({ workouts }: WorkoutCalendarProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [month, setMonth] = useState(() => startOfMonth(new Date()));
 
   const trained = useMemo(() => {
@@ -51,7 +51,12 @@ export function WorkoutCalendar({ workouts }: WorkoutCalendarProps) {
   }, [month]);
 
   const todayKey = toLocalDateKey(new Date());
-  const monthLabel = month.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+  // El idioma lo manda la app, no el del dispositivo: con el móvil en inglés
+  // y GymLog en español el mes salía como "July 2026".
+  const monthLabel = month.toLocaleDateString(i18n.language, {
+    month: 'long',
+    year: 'numeric',
+  });
   const trainedThisMonth = days.filter(
     (d) => isSameMonth(d, month) && trained.has(toLocalDateKey(d)),
   ).length;
@@ -68,7 +73,11 @@ export function WorkoutCalendar({ workouts }: WorkoutCalendarProps) {
           <ChevronLeft className="h-4 w-4" />
         </button>
         <div className="text-center">
-          <div className="font-display text-sm font-bold text-fg capitalize">{monthLabel}</div>
+          {/* first-letter, no `capitalize`: en español es "Julio de 2026", y
+              `capitalize` pone mayúscula en cada palabra ("Julio De 2026"). */}
+          <div className="font-display text-sm font-bold text-fg first-letter:uppercase">
+            {monthLabel}
+          </div>
           <div className="text-2xs text-fg-subtle">
             {trainedThisMonth === 1
               ? t('userStats.calendar_trained_one')
@@ -87,10 +96,7 @@ export function WorkoutCalendar({ workouts }: WorkoutCalendarProps) {
 
       <div className="mb-1.5 grid grid-cols-7 gap-1">
         {WEEKDAY_KEYS.map((key) => (
-          <div
-            key={key}
-            className="label-caps rounded-pill bg-accent/12 py-1 text-center text-accent"
-          >
+          <div key={key} className="label-caps py-1 text-center text-fg-subtle">
             {t(`userStats.weekday_${key}`)}
           </div>
         ))}
@@ -105,7 +111,7 @@ export function WorkoutCalendar({ workouts }: WorkoutCalendarProps) {
           return (
             <div
               key={key}
-              className={`flex aspect-square items-center justify-center rounded-full font-display text-xs tabular ${
+              className={`mx-auto flex h-9 w-9 items-center justify-center rounded-full font-display text-xs tabular ${
                 didTrain
                   ? 'bg-accent font-bold text-accent-fg'
                   : inMonth

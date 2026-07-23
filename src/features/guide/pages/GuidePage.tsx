@@ -116,8 +116,9 @@ export function GuidePage() {
                     aria-controls={`guide-panel-${id}`}
                     className="flex min-h-11 w-full items-center gap-3 p-3.5 text-left active:opacity-70"
                   >
-                    <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-pill bg-accent/12">
-                      <Icon className="h-4 w-4 text-accent" />
+                    {/* Mismo círculo relleno que las filas de menú de Ajustes. */}
+                    <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-accent text-accent-fg">
+                      <Icon className="h-4 w-4" />
                     </span>
                     <span className="flex-1 text-sm font-semibold text-fg">
                       {t(`guide.${id}.title`)}
