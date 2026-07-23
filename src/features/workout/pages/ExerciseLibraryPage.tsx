@@ -99,11 +99,11 @@ export function ExerciseLibraryPage() {
           type="button"
           onClick={() => navigate(-1)}
           aria-label={t('common.back')}
-          className="w-11 h-11 rounded-sm flex items-center justify-center bg-surface border border-line hover:bg-surface-2"
+          className="w-11 h-11 rounded-full flex items-center justify-center bg-surface border border-line hover:bg-surface-2"
         >
           <ArrowLeft className="w-4 h-4 text-fg-muted" />
         </button>
-        <h1 className="text-headline font-display text-fg text-balance">{t('library.title')}</h1>
+        {/* El rótulo de la pantalla lo pone la cabecera del Layout. */}
       </m.div>
 
       <div className="mb-4">

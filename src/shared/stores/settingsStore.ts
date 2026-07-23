@@ -4,7 +4,7 @@ import { Capacitor } from '@capacitor/core';
 
 export type Theme = 'dark' | 'light';
 
-/** Color de chrome (status bar / theme-color) por tema; coincide con --bg-base. */
+/** Color de chrome (status bar / theme-color) por tema; coincide con --bg-canvas. */
 const THEME_CHROME: Record<Theme, string> = {
   dark: '#0a0a0b',
   light: '#f3f5f3',

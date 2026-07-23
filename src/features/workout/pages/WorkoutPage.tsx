@@ -565,7 +565,7 @@ export function WorkoutPage() {
               </span>
             ))}
             {todayRoutine.exercises.length > 4 && (
-              <span className="px-1 py-1 text-xs text-accent-fg/70">
+              <span className="px-1 py-1 text-xs text-accent-fg/85">
                 +{todayRoutine.exercises.length - 4}
               </span>
             )}
@@ -751,7 +751,7 @@ export function WorkoutPage() {
 
         {sets.length === 0 ? (
           <div className="flex flex-col items-center justify-center text-center py-10 px-2 gap-4">
-            <div className="w-16 h-16 rounded-card bg-surface-2 border border-line flex items-center justify-center">
+            <div className="w-16 h-16 rounded-full bg-surface-2 flex items-center justify-center">
               <Plus className="w-7 h-7 text-accent" aria-hidden="true" />
             </div>
             <div>
@@ -762,7 +762,7 @@ export function WorkoutPage() {
               <button
                 type="button"
                 onClick={addSet}
-                className="w-full py-3 rounded-sm bg-accent text-accent-fg font-semibold shadow-btn-accent active:scale-[0.98]"
+                className="w-full py-3 rounded-pill bg-accent text-accent-fg font-semibold shadow-btn-accent active:scale-[0.98]"
               >
                 {t('workout.add_set')}
               </button>
@@ -770,7 +770,7 @@ export function WorkoutPage() {
                 <button
                   type="button"
                   onClick={() => repeatWorkout(lastWorkout)}
-                  className="w-full py-3 rounded-sm bg-surface-2 border border-line text-fg-muted flex items-center justify-center gap-1.5 transition-colors active:bg-hover"
+                  className="w-full py-3 rounded-pill bg-surface-2 border border-line text-fg-muted flex items-center justify-center gap-1.5 transition-colors active:bg-hover"
                 >
                   <Repeat className="w-4 h-4" />
                   {t('workout.repeat_last')}
@@ -808,7 +808,7 @@ export function WorkoutPage() {
 
       {/* Barra de acción fija sobre la navegación inferior (solo con series) */}
       {sets.length > 0 && (
-        <div className="-mx-4 mt-3 px-4 pt-3 pb-3 bg-base border-t border-line">
+        <div className="-mx-4 mt-3 px-4 pt-3 pb-3 bg-canvas border-t border-line">
           <div className="mb-3 flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-fg-muted">
@@ -912,7 +912,7 @@ export function WorkoutPage() {
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className={`flex-1 py-3 px-4 rounded-sm text-base font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-none text-accent-fg ${
+              className={`flex-1 py-3 px-4 rounded-pill text-base font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-none text-accent-fg ${
                 saveSuccess ? 'bg-success' : 'bg-accent'
               }`}
             >

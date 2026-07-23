@@ -71,10 +71,8 @@ export function GuidePage() {
             <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-pill bg-accent text-accent-fg">
               <IconBook className="h-5 w-5" />
             </span>
-            <div className="min-w-0">
-              <h1 className="font-display text-lg font-bold text-fg">{t('guide.title')}</h1>
-              <p className="text-sm text-fg-muted">{t('guide.subtitle')}</p>
-            </div>
+            {/* El título ya está en la cabecera; aquí basta la bajada. */}
+            <p className="min-w-0 text-sm text-fg-muted">{t('guide.subtitle')}</p>
           </div>
         </header>
 

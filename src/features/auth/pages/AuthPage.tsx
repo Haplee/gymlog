@@ -134,7 +134,7 @@ export function AuthPage() {
   };
 
   return (
-    <div className="relative flex-1 flex flex-col px-6 bg-base overflow-hidden">
+    <div className="relative flex-1 flex flex-col px-6 bg-canvas overflow-hidden">
       {/* Grid ambiental Stitch */}
       <m.div
         aria-hidden="true"

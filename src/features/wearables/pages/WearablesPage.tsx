@@ -49,8 +49,6 @@ export function WearablesPage() {
   return (
     <Layout>
       <div className="space-y-3 pb-20">
-        <h1 className="text-xl font-bold text-fg px-1">{t('wearables.title')}</h1>
-
         {/* Agregador nativo (Health Connect / HealthKit) — solo en app */}
         {isNative ? (
           <ConnectionCard

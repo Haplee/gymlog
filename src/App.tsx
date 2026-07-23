@@ -67,7 +67,7 @@ const FitBodyShowcasePage = lazy(() =>
 
 function Loading() {
   return (
-    <div className="min-h-dvh bg-base bg-base">
+    <div className="min-h-dvh bg-canvas bg-canvas">
       <PageSkeleton />
     </div>
   );

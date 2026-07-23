@@ -8,7 +8,7 @@
    ════════════════════════════════════════════════ */
 @theme inline {
   /* ── Colores → var(token) ── */
-  --color-base: var(--bg-base);
+  --color-canvas: var(--bg-canvas);
   --color-surface: var(--bg-surface);
   --color-surface-2: var(--bg-surface-2);
   --color-surface-3: var(--bg-surface-3);
@@ -112,7 +112,7 @@
   letter-spacing: 0;
   color-scheme: dark;
   color: var(--text-primary);
-  background: var(--bg-base);
+  background: var(--bg-canvas);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -134,7 +134,8 @@ body {
   margin: 0;
   /* halo menta muy sutil arriba — da profundidad al negro plano */
   background:
-    radial-gradient(120% 50% at 50% 0%, rgba(255, 217, 61, 0.025), transparent 60%), var(--bg-base);
+    radial-gradient(120% 50% at 50% 0%, rgba(255, 217, 61, 0.025), transparent 60%),
+    var(--bg-canvas);
   overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
 }
@@ -234,44 +235,52 @@ input[type='range'] {
   display: none;
 }
 
-h1,
-h2 {
-  font-family: var(--font-display);
-  font-weight: 600;
-  color: var(--text-h);
-}
+/* Estilos base de elemento: DEBEN ir en @layer base. Sin capa, en Tailwind v4
+   ganan a todas las utilidades (el CSS sin capa vence al CSS en capas), así que
+   un <h1 className="text-lg text-accent"> salía a 48px y en color de titular —
+   se veía en la cabecera de cada pantalla y en Mis estadísticas. */
+@layer base {
+  h1,
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    color: var(--text-h);
+  }
 
-h1 {
-  font-size: 48px;
-  letter-spacing: -1px;
-  margin: 32px 0;
-}
+  /* Sin margen de documento: cada pantalla coloca su titular con utilidades
+     (mb-4, space-y-*). El margen heredado dejaba un hueco muerto arriba. */
+  h1 {
+    font-size: 48px;
+    letter-spacing: -1px;
+    margin: 0;
+  }
 
-h2 {
-  font-size: 22px;
-  line-height: 120%;
-  letter-spacing: -0.5px;
-  margin: 0 0 8px;
-}
+  h2 {
+    font-size: 22px;
+    line-height: 120%;
+    letter-spacing: -0.5px;
+    margin: 0;
+  }
 
-p {
-  margin: 0;
-}
+  p {
+    margin: 0;
+  }
 
-code,
-.counter {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums; /* dígitos de ancho fijo — timers sin saltos */
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
+  code,
+  .counter {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums; /* dígitos de ancho fijo — timers sin saltos */
+    display: inline-flex;
+    border-radius: 4px;
+    color: var(--text-h);
+  }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--bg-surface-2);
+  code {
+    font-size: 15px;
+    line-height: 135%;
+    padding: 4px 8px;
+    background: var(--bg-surface-2);
+  }
 }
 
 @keyframes slide-up {
@@ -357,11 +366,16 @@ select {
   touch-action: manipulation;
 }
 
-input:focus,
-select:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(255, 217, 61, 0.25);
-  border-color: var(--border-accent) !important;
+/* Anillo de foco por defecto. Va en @layer base para que un input pueda
+   desactivarlo con utilidades (shadow-none) cuando el foco lo pinta su
+   contenedor — si no, el rectángulo rompe los campos con forma de píldora. */
+@layer base {
+  input:focus,
+  select:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(255, 217, 61, 0.25);
+    border-color: var(--border-accent);
+  }
 }
 
 /* Inputs premium — sin degradado iOS */

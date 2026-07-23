@@ -45,7 +45,7 @@ export function SwipeToDelete({
           if (info.offset.x < -72) onDelete();
           setArmed(false);
         }}
-        className="relative bg-base"
+        className="relative bg-canvas"
       >
         {children}
       </m.div>

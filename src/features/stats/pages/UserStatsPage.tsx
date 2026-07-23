@@ -415,16 +415,12 @@ export function UserStatsPage() {
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="w-11 h-11 rounded-md flex items-center justify-center transition-colors bg-surface border border-line hover:bg-surface-2"
+          className="w-11 h-11 rounded-full flex items-center justify-center transition-colors bg-surface border border-line hover:bg-surface-2"
         >
           <ArrowLeft className="w-4 h-4 text-fg-muted" />
         </button>
-        <div>
-          <h1 className="text-xl font-extrabold text-fg text-balance">
-            {t('userStats.page_title')}
-          </h1>
-          <p className="text-xs text-fg-subtle">{t('userStats.page_subtitle')}</p>
-        </div>
+        {/* El título va en la cabecera del Layout; aquí solo la bajada. */}
+        <p className="text-xs text-fg-subtle">{t('userStats.page_subtitle')}</p>
       </m.div>
 
       <div className="space-y-5">

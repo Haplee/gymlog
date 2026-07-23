@@ -7,7 +7,7 @@
 
 :root {
   /* ── Base ─────────────────────────────────────── */
-  --bg-base: #0a0a0b;
+  --bg-canvas: #0a0a0b;
   --bg-surface: #141416;
   --bg-surface-2: #1c1b1e;
   --bg-surface-3: #2a2a2b;
@@ -15,7 +15,7 @@
   /* ── Texto ───────────────────────────────────── */
   --text-primary: #e5e2e3;
   --text-secondary: #bbcabe;
-  --text-tertiary: #869489; /* ≥4.5:1 sobre --bg-base (WCAG AA) */
+  --text-tertiary: #869489; /* ≥4.5:1 sobre --bg-canvas (WCAG AA) */
   --text-inverse: #0a0a0b;
 
   /* ── Interactivo (acento amarillo-lima FitBody) ── */
@@ -76,8 +76,8 @@
   --space-12: 48px;
 
   /* ── Mapeo backward-compat ───────────────────── */
-  --bg: var(--bg-base);
-  --bg-main: var(--bg-base);
+  --bg: var(--bg-canvas);
+  --bg-main: var(--bg-canvas);
   --bg-card: var(--bg-surface);
   --bg-input: var(--bg-surface-2);
   --text-h: var(--text-primary);
@@ -117,7 +117,7 @@
 
   /* ── Layout ──────────────────────────────────── */
   --header-height: 56px;
-  --bottom-nav-height: 64px;
+  --bottom-nav-height: 56px;
 }
 
 /* ════════════════════════════════════════════════
@@ -131,7 +131,7 @@
   color-scheme: light;
 
   /* ── Base (verde-gris frío, superficies blancas resaltan) ─── */
-  --bg-base: #f3f5f3;
+  --bg-canvas: #f3f5f3;
   --bg-surface: #ffffff;
   --bg-surface-2: #eceeec;
   --bg-surface-3: #dfe3e0;

@@ -47,14 +47,14 @@ export function WorkoutSavedCard({ summary, onDismiss }: WorkoutSavedCardProps) 
             {t('workout.complete_title')}
           </h2>
           {summary.prLabel && (
-            <p className="mt-0.5 text-xs font-medium text-accent-fg/80">{summary.prLabel}</p>
+            <p className="mt-0.5 text-xs font-medium text-accent-fg/85">{summary.prLabel}</p>
           )}
         </div>
         <button
           type="button"
           onClick={onDismiss}
           aria-label={t('common.close')}
-          className="-m-1.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-accent-fg/70 active:text-accent-fg"
+          className="-m-1.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-accent-fg/85 active:text-accent-fg"
         >
           <X className="h-4 w-4" />
         </button>

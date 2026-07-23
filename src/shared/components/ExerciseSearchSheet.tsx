@@ -93,7 +93,7 @@ export function ExerciseSearchSheet({ onClose }: ExerciseSearchSheetProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-base">
+    <div className="fixed inset-0 z-50 flex flex-col bg-canvas">
       <m.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -103,7 +103,8 @@ export function ExerciseSearchSheet({ onClose }: ExerciseSearchSheetProps) {
       >
         {/* Barra de búsqueda: pill de acento, como el resto de la app */}
         <div className="flex items-center gap-2 px-4 py-3">
-          <div className="flex flex-1 items-center gap-2.5 rounded-pill bg-surface-2 px-4">
+          {/* El foco lo pinta el contenedor para que siga la forma de píldora. */}
+          <div className="flex flex-1 items-center gap-2.5 rounded-pill bg-surface-2 px-4 focus-within:ring-2 focus-within:ring-accent/30">
             <IconSearch className="h-4 w-4 flex-shrink-0 text-accent" />
             <input
               ref={inputRef}
@@ -112,7 +113,7 @@ export function ExerciseSearchSheet({ onClose }: ExerciseSearchSheetProps) {
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t('search.placeholder')}
               aria-label={t('search.placeholder')}
-              className="min-h-11 w-full bg-transparent text-base text-fg outline-none placeholder:text-fg-subtle"
+              className="min-h-11 w-full bg-transparent text-base text-fg shadow-none outline-none placeholder:text-fg-subtle focus:shadow-none"
             />
           </div>
           <button

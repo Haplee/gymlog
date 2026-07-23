@@ -847,7 +847,7 @@ export function HistoryPage() {
           <button
             type="button"
             onClick={() => navigate('/stats')}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-card font-semibold text-sm transition-all hover:scale-[1.02] active:scale-[0.98] bg-accent/10 border border-line-accent text-accent"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-pill font-semibold text-sm transition-all hover:scale-[1.02] active:scale-[0.98] bg-accent text-accent-fg"
           >
             <BarChart3 className="w-4 h-4" />
             {t('stats.title')}
@@ -856,7 +856,7 @@ export function HistoryPage() {
           <button
             type="button"
             onClick={() => navigate('/user-stats')}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-card font-semibold text-sm transition-all hover:scale-[1.02] active:scale-[0.98] bg-accent/10 border border-line-accent text-accent"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-pill font-semibold text-sm transition-all hover:scale-[1.02] active:scale-[0.98] bg-surface-2 text-accent"
           >
             <BarChart2 className="w-4 h-4" />
             {t('history.my_stats')}
@@ -1004,7 +1004,7 @@ export function HistoryPage() {
                                   minute: '2-digit',
                                 })}
                               </span>
-                              <span className="text-2xs px-1.5 py-0.5 rounded-sm font-bold bg-accent/10 text-accent border border-line-accent">
+                              <span className="text-2xs px-1.5 py-0.5 rounded-pill font-bold bg-accent text-accent-fg">
                                 Fuerza
                               </span>
                             </div>

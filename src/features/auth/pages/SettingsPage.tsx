@@ -382,8 +382,6 @@ export function SettingsPage() {
 
   return (
     <Layout>
-      <h1 className="text-headline font-display text-fg mb-4">{t('settings.title')}</h1>
-
       <div className="space-y-6 pb-20">
         {/* Perfil */}
         {/* Cabecera de perfil del kit ("Progress Tracking"): banda rellena del
@@ -404,11 +402,11 @@ export function SettingsPage() {
                   className="w-14 h-14 rounded-full object-cover border-2 border-accent-fg/20"
                 />
               ) : (
-                <span className="w-14 h-14 rounded-full flex items-center justify-center bg-accent-fg/15 text-accent-fg font-display font-bold text-lg uppercase">
+                <span className="w-14 h-14 rounded-full flex items-center justify-center bg-accent-fg text-accent font-display font-bold text-lg uppercase">
                   {displayName.slice(0, 1) || '?'}
                 </span>
               )}
-              <span className="absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full flex items-center justify-center bg-base text-accent">
+              <span className="absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full flex items-center justify-center bg-canvas text-accent">
                 {isUploadingAvatar ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 ) : (
@@ -468,13 +466,13 @@ export function SettingsPage() {
                       setIsEditingName(true);
                     }}
                     aria-label={t('settings.edit_name')}
-                    className="w-11 h-11 -my-2 flex-shrink-0 flex items-center justify-center text-accent-fg/60 active:text-accent-fg"
+                    className="w-11 h-11 -my-2 flex-shrink-0 flex items-center justify-center text-accent-fg/75 active:text-accent-fg"
                   >
                     <Pencil className="w-3.5 h-3.5" />
                   </button>
                 </div>
               )}
-              <div className="text-xs text-accent-fg/70 truncate">{user?.email}</div>
+              <div className="text-xs text-accent-fg/85 truncate">{user?.email}</div>
             </div>
           </div>
 

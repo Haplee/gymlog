@@ -64,7 +64,7 @@ export function CardioPage() {
                 onClick={() => handleStart(type)}
                 aria-label={CARDIO_LABELS[type]}
                 title={CARDIO_LABELS[type]}
-                className="flex-shrink-0 w-12 h-12 rounded-sm flex items-center justify-center transition-colors active:scale-95 bg-surface border border-line text-fg-muted hover:text-accent hover:border-line-accent"
+                className="flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center transition-colors active:scale-95 bg-surface-2 text-accent"
               >
                 <CardioTypeIcon type={type} className="w-5 h-5" />
               </button>

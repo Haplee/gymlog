@@ -147,7 +147,7 @@ export function Layout({ children }: LayoutProps) {
   }, [user?.id]);
 
   return (
-    <div className="h-screen h-[100dvh] flex flex-col overflow-hidden bg-base">
+    <div className="h-screen h-[100dvh] flex flex-col overflow-hidden bg-canvas">
       <AnimatePresence>
         {searchOpen && <ExerciseSearchSheet onClose={() => setSearchOpen(false)} />}
       </AnimatePresence>
@@ -155,7 +155,7 @@ export function Layout({ children }: LayoutProps) {
       {/* Cabecera estilo FitBody: título de la pantalla a la izquierda en el
           acento, acciones circulares a la derecha. Sin wordmark centrado. */}
       <header
-        className="px-4 flex-shrink-0 bg-base"
+        className="px-4 flex-shrink-0 bg-canvas"
         style={{ paddingTop: 'var(--inset-top, env(safe-area-inset-top))' }}
       >
         <div
@@ -278,7 +278,7 @@ export function Layout({ children }: LayoutProps) {
                 {isActive && (
                   <m.div
                     layoutId="activeTabPill"
-                    className="absolute inset-0 rounded-full bg-base"
+                    className="absolute inset-0 rounded-full bg-canvas"
                     transition={{ type: 'spring', stiffness: 500, damping: 32 }}
                   />
                 )}

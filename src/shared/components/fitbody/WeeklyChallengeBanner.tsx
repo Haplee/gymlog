@@ -44,7 +44,7 @@ const WeeklyChallengeBannerComponent = ({
       )}
       {/* Degradado para legibilidad del texto sobre la imagen */}
       {imageUrl && (
-        <div className="absolute inset-0 bg-gradient-to-r from-base/90 via-base/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-canvas/90 via-canvas/60 to-transparent" />
       )}
       <div className="relative flex flex-col gap-3 p-5">
         <span className="inline-flex items-center gap-1.5 self-start rounded-pill bg-accent px-3 py-1 label-caps text-accent-fg">
@@ -58,7 +58,7 @@ const WeeklyChallengeBannerComponent = ({
         <button
           type="button"
           onClick={onCta}
-          className="inline-flex h-11 items-center justify-center gap-1.5 self-start rounded-pill bg-accent px-5 font-semibold text-accent-fg shadow-btn-accent transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-base"
+          className="inline-flex h-11 items-center justify-center gap-1.5 self-start rounded-pill bg-accent px-5 font-semibold text-accent-fg shadow-btn-accent transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
         >
           {ctaLabel}
           <ChevronRight className="h-4 w-4" aria-hidden="true" />

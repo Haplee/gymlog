@@ -401,21 +401,17 @@ export function StatsPage() {
             type="button"
             onClick={() => navigate(-1)}
             aria-label={t('common.back')}
-            className="w-11 h-11 flex-shrink-0 rounded-sm flex items-center justify-center bg-surface border border-line hover:bg-surface-2"
+            className="w-11 h-11 flex-shrink-0 rounded-full flex items-center justify-center bg-surface border border-line hover:bg-surface-2"
           >
             <ArrowLeft className="w-4 h-4 text-fg-muted" />
           </button>
-          {/* min-w-0 + truncate: el h1 debe poder encogerse dentro del flex o
-              desborda. text-balance no aplica a una sola línea. */}
-          <h1 className="text-headline font-display text-fg truncate min-w-0">
-            {t('stats.title')}
-          </h1>
+          {/* El rótulo de la pantalla lo pone la cabecera del Layout. */}
         </div>
         <button
           type="button"
           onClick={() => navigate('/user-stats')}
           aria-label={t('settings.my_measurements')}
-          className="w-11 h-11 flex-shrink-0 rounded-sm flex items-center justify-center bg-surface border border-line text-accent hover:bg-surface-2"
+          className="w-11 h-11 flex-shrink-0 rounded-full flex items-center justify-center bg-surface border border-line text-accent hover:bg-surface-2"
         >
           <Ruler className="w-4 h-4" />
         </button>

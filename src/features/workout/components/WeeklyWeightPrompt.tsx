@@ -79,7 +79,7 @@ export function WeeklyWeightPrompt() {
       className="mb-4 rounded-card border border-line bg-surface p-3"
     >
       <div className="flex items-start gap-3">
-        <div className="w-9 h-9 rounded-sm bg-accent/10 flex items-center justify-center flex-shrink-0">
+        <div className="w-9 h-9 rounded-full bg-accent/12 flex items-center justify-center flex-shrink-0">
           <Scale className="w-4 h-4 text-accent" />
         </div>
         <div className="min-w-0 flex-1">
@@ -124,7 +124,7 @@ export function WeeklyWeightPrompt() {
           type="button"
           onClick={dismiss}
           aria-label={t('common.close')}
-          className="w-8 h-8 rounded-sm flex items-center justify-center text-fg-subtle hover:text-fg-muted flex-shrink-0"
+          className="w-8 h-8 rounded-full flex items-center justify-center text-fg-subtle hover:text-fg-muted flex-shrink-0"
         >
           <X className="w-4 h-4" />
         </button>
