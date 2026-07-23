@@ -118,9 +118,9 @@
 
   /* ── Layout ──────────────────────────────────── */
   --header-height: 56px;
-  /* 48px es el mínimo cómodo: la píldora activa mide 44px (touch target mínimo)
-     y deja 2px de aire arriba y abajo. Bajar más recortaría el touch target. */
-  --bottom-nav-height: 48px;
+  /* Entre los 56px originales y los 48px del primer recorte: la píldora activa
+     mide 44px (touch target mínimo) y aquí respira 4px por arriba y por abajo. */
+  --bottom-nav-height: 52px;
 }
 
 /* ════════════════════════════════════════════════

@@ -60,6 +60,46 @@ export const ACCENT_PRESETS: AccentPreset[] = [
     dark: { primary: '#ff8f7a', dim: '#e87562', fg: '#2e0d06', rgb: '255 143 122' },
     light: { primary: '#b3301a', dim: '#8f2615', fg: '#ffffff', rgb: '179 48 26' },
   },
+  {
+    id: 'amber',
+    dark: { primary: '#fbbf24', dim: '#e0a81a', fg: '#2b1c00', rgb: '251 191 36' },
+    light: { primary: '#7a5300', dim: '#614200', fg: '#ffffff', rgb: '122 83 0' },
+  },
+  {
+    id: 'green',
+    dark: { primary: '#4ade80', dim: '#37c46a', fg: '#052e14', rgb: '74 222 128' },
+    light: { primary: '#146c2e', dim: '#0f5624', fg: '#ffffff', rgb: '20 108 46' },
+  },
+  {
+    id: 'teal',
+    dark: { primary: '#2dd4bf', dim: '#1fb8a5', fg: '#00302b', rgb: '45 212 191' },
+    light: { primary: '#00695f', dim: '#00534b', fg: '#ffffff', rgb: '0 105 95' },
+  },
+  {
+    id: 'indigo',
+    dark: { primary: '#a5b4fc', dim: '#8b9be8', fg: '#111436', rgb: '165 180 252' },
+    light: { primary: '#3730a3', dim: '#2c2782', fg: '#ffffff', rgb: '55 48 163' },
+  },
+  {
+    id: 'magenta',
+    dark: { primary: '#f0abfc', dim: '#d992e5', fg: '#2e0a33', rgb: '240 171 252' },
+    light: { primary: '#8b1a96', dim: '#6f1478', fg: '#ffffff', rgb: '139 26 150' },
+  },
+  {
+    id: 'rose',
+    dark: { primary: '#fda4af', dim: '#e68b97', fg: '#330a12', rgb: '253 164 175' },
+    light: { primary: '#a8123a', dim: '#860e2e', fg: '#ffffff', rgb: '168 18 58' },
+  },
+  {
+    id: 'sand',
+    dark: { primary: '#e7d3a1', dim: '#cfba88', fg: '#2a2110', rgb: '231 211 161' },
+    light: { primary: '#645031', dim: '#504027', fg: '#ffffff', rgb: '100 80 49' },
+  },
+  {
+    id: 'slate',
+    dark: { primary: '#cbd5e1', dim: '#aeb9c7', fg: '#161b22', rgb: '203 213 225' },
+    light: { primary: '#334155', dim: '#283443', fg: '#ffffff', rgb: '51 65 85' },
+  },
 ];
 
 export type AccentId = (typeof ACCENT_PRESETS)[number]['id'];

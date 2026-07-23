@@ -8,10 +8,12 @@ import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.DistanceRecord
 import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.HeartRateRecord
+import androidx.health.connect.client.records.Record
 import androidx.health.connect.client.records.RestingHeartRateRecord
 import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
+import androidx.health.connect.client.request.AggregateGroupByPeriodRequest
 import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
@@ -27,7 +29,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
+import java.time.Period
 import java.time.ZoneId
+import kotlin.reflect.KClass
 
 // Puente a Health Connect (Android). Lee pasos, HR, sueño y ejercicios — por aquí
 // entran los datos de Amazfit (vía Zepp), Samsung, Garmin, etc. Devuelve el mismo
@@ -35,6 +39,9 @@ import java.time.ZoneId
 @CapacitorPlugin(name = "HealthBridge")
 class HealthBridgePlugin : Plugin() {
     private val TAG = "HealthBridge"
+
+    /** Tope de registros por tipo al paginar: evita quedarse sin memoria. */
+    private val MAX_RECORDS = 20000
     private val scope = CoroutineScope(Dispatchers.IO)
     private val zone: ZoneId get() = ZoneId.systemDefault()
 
@@ -115,13 +122,15 @@ class HealthBridgePlugin : Plugin() {
         if (startStr == null || endStr == null) {
             call.reject("startDate y endDate son obligatorios"); return
         }
-        val startInstant = LocalDate.parse(startStr).atStartOfDay(zone).toInstant()
-        val endInstant = LocalDate.parse(endStr).plusDays(1).atStartOfDay(zone).toInstant()
+        val startDate = LocalDate.parse(startStr)
+        val endDate = LocalDate.parse(endStr)
+        val startInstant = startDate.atStartOfDay(zone).toInstant()
+        val endInstant = endDate.plusDays(1).atStartOfDay(zone).toInstant()
         val filter = TimeRangeFilter.between(startInstant, endInstant)
 
         scope.launch {
             try {
-                val daily = readDaily(client, filter)
+                val daily = readDaily(client, startDate, endDate)
                 val sleep = readSleep(client, filter)
                 val workouts = readWorkouts(client, filter)
                 val ret = JSObject()
@@ -141,55 +150,100 @@ class HealthBridgePlugin : Plugin() {
     private fun dateKey(instant: Instant): String =
         LocalDate.ofInstant(instant, zone).toString()
 
-    private suspend fun readDaily(client: HealthConnectClient, filter: TimeRangeFilter): JSArray {
-        val steps = HashMap<String, Long>()
-        val distance = HashMap<String, Double>()
-        val calories = HashMap<String, Double>()
-        val resting = HashMap<String, Int>()
-        val hrSamples = HashMap<String, MutableList<Long>>()
+    /**
+     * Lee TODAS las páginas de un tipo de registro.
+     *
+     * readRecords devuelve como mucho pageSize registros (1000 por defecto) y
+     * deja el resto detrás de un pageToken. Sin paginar, con un wearable que
+     * escribe de forma continua, los datos se truncaban en silencio: como el
+     * orden es ascendente por fecha, lo que se perdía eran SIEMPRE los días más
+     * recientes. Medido en un Pixel 9a con Amazfit + Fitbit conectados:
+     * StepsRecord y HeartRateRecord devolvían n=1000 con pageToken != null, y
+     * los pasos de los dos últimos días llegaban a NULL a la base de datos.
+     */
+    private suspend fun <T : Record> readAllPages(
+        client: HealthConnectClient,
+        type: KClass<T>,
+        filter: TimeRangeFilter,
+    ): List<T> {
+        val all = mutableListOf<T>()
+        var token: String? = null
+        do {
+            val resp = client.readRecords(
+                ReadRecordsRequest(type, filter, pageToken = token),
+            )
+            all += resp.records
+            token = resp.pageToken
+            // Cinturón de seguridad: no dar vueltas infinitas si el token no avanza.
+        } while (token != null && all.size < MAX_RECORDS)
+        return all
+    }
 
-        client.readRecords(ReadRecordsRequest(StepsRecord::class, filter)).records.forEach {
-            val k = dateKey(it.startTime); steps[k] = (steps[k] ?: 0) + it.count
-        }
-        client.readRecords(ReadRecordsRequest(DistanceRecord::class, filter)).records.forEach {
-            val k = dateKey(it.startTime); distance[k] = (distance[k] ?: 0.0) + it.distance.inKilometers
-        }
-        client.readRecords(ReadRecordsRequest(TotalCaloriesBurnedRecord::class, filter)).records.forEach {
-            val k = dateKey(it.startTime); calories[k] = (calories[k] ?: 0.0) + it.energy.inKilocalories
-        }
-        client.readRecords(ReadRecordsRequest(RestingHeartRateRecord::class, filter)).records.forEach {
-            resting[dateKey(it.time)] = it.beatsPerMinute.toInt()
-        }
-        client.readRecords(ReadRecordsRequest(HeartRateRecord::class, filter)).records.forEach { rec ->
-            rec.samples.forEach { s ->
-                val k = dateKey(s.time)
-                hrSamples.getOrPut(k) { mutableListOf() }.add(s.beatsPerMinute)
-            }
-        }
-
-        val dates = (steps.keys + distance.keys + calories.keys + resting.keys + hrSamples.keys).toSet()
+    /**
+     * Métricas diarias vía agregación, no sumando registros crudos.
+     *
+     * Dos motivos, ambos medidos en dispositivo:
+     *  1. Sumar los registros crudos duplicaba los datos cuando hay más de una
+     *     fuente escribiendo lo mismo (el teléfono y el reloj cuentan los mismos
+     *     pasos; Fitbit y Amazfit, la misma distancia). Health Connect aplica su
+     *     lista de prioridad de apps al agregar y devuelve un único valor.
+     *  2. La agregación la resuelve Health Connect en su proceso: ni truncado a
+     *     1000 registros ni decenas de miles de muestras de FC en memoria.
+     */
+    private suspend fun readDaily(
+        client: HealthConnectClient,
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): JSArray {
         val arr = JSArray()
-        for (d in dates) {
+        // La agregación por periodo exige un filtro en tiempo LOCAL, no Instant.
+        val localFilter = TimeRangeFilter.between(
+            startDate.atStartOfDay(),
+            endDate.plusDays(1).atStartOfDay(),
+        )
+        val buckets = try {
+            client.aggregateGroupByPeriod(
+                AggregateGroupByPeriodRequest(
+                    metrics = setOf(
+                        StepsRecord.COUNT_TOTAL,
+                        DistanceRecord.DISTANCE_TOTAL,
+                        TotalCaloriesBurnedRecord.ENERGY_TOTAL,
+                        HeartRateRecord.BPM_AVG,
+                        HeartRateRecord.BPM_MAX,
+                        RestingHeartRateRecord.BPM_AVG,
+                    ),
+                    timeRangeFilter = localFilter,
+                    timeRangeSlicer = Period.ofDays(1),
+                ),
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "readDaily aggregate: ${e.message}")
+            return arr
+        }
+
+        for (b in buckets) {
             val o = JSObject()
-            o.put("date", d)
-            steps[d]?.let { o.put("steps", it.toInt()) }
-            distance[d]?.let { o.put("distance_km", it) }
-            calories[d]?.let { o.put("calories", it.toInt()) }
-            resting[d]?.let { o.put("resting_hr", it) }
-            hrSamples[d]?.let { list ->
-                if (list.isNotEmpty()) {
-                    o.put("avg_hr", (list.average()).toInt())
-                    o.put("max_hr", list.max().toInt())
-                }
-            }
-            arr.put(o)
+            o.put("date", b.startTime.toLocalDate().toString())
+            var any = false
+            b.result[StepsRecord.COUNT_TOTAL]?.let { o.put("steps", it.toInt()); any = true }
+            b.result[DistanceRecord.DISTANCE_TOTAL]?.inKilometers
+                ?.let { o.put("distance_km", it); any = true }
+            b.result[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories
+                ?.let { o.put("calories", it.toInt()); any = true }
+            b.result[HeartRateRecord.BPM_AVG]?.let { o.put("avg_hr", it.toInt()); any = true }
+            b.result[HeartRateRecord.BPM_MAX]?.let { o.put("max_hr", it.toInt()); any = true }
+            b.result[RestingHeartRateRecord.BPM_AVG]
+                ?.let { o.put("resting_hr", it.toInt()); any = true }
+            // Días sin ningún dato no se envían: escribirlos pisaría con NULL lo
+            // que ya hubiera en Supabase de una sincronización anterior.
+            if (any) arr.put(o)
         }
         return arr
     }
 
     private suspend fun readSleep(client: HealthConnectClient, filter: TimeRangeFilter): JSArray {
         val arr = JSArray()
-        client.readRecords(ReadRecordsRequest(SleepSessionRecord::class, filter)).records.forEach { rec ->
+        readAllPages(client, SleepSessionRecord::class, filter).forEach { rec ->
             val o = JSObject()
             o.put("date", dateKey(rec.startTime))
             val totalMin = ((rec.endTime.epochSecond - rec.startTime.epochSecond) / 60).toInt()
@@ -216,7 +270,7 @@ class HealthBridgePlugin : Plugin() {
 
     private suspend fun readWorkouts(client: HealthConnectClient, filter: TimeRangeFilter): JSArray {
         val arr = JSArray()
-        client.readRecords(ReadRecordsRequest(ExerciseSessionRecord::class, filter)).records.forEach { rec ->
+        readAllPages(client, ExerciseSessionRecord::class, filter).forEach { rec ->
             val o = JSObject()
             o.put("external_id", "hc:${rec.metadata.id}")
             o.put("type", mapExerciseType(rec.exerciseType))

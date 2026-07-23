@@ -24,7 +24,7 @@ import BiometricPlugin from '@shared/lib/biometric';
 import { devError } from '@shared/lib/devtools';
 import { Camera, Check, ChevronRight, Download, Loader2, LogOut, Pencil, X } from 'lucide-react';
 import { IconBook, IconRuler, IconWatch } from '@shared/components/icons';
-import { ACCENT_PRESETS } from '@shared/constants/accents';
+import { ACCENT_PRESETS, getAccentPreset } from '@shared/constants/accents';
 
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
 const MAX_NAME_LENGTH = 40;
@@ -136,6 +136,8 @@ export function SettingsPage() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  /** La paleta de acentos arranca plegada para no alargar la pantalla. */
+  const [accentOpen, setAccentOpen] = useState(false);
   /** `null` = aún sin comprobar; no pintar la fila hasta saberlo. */
   const [exactAlarmsGranted, setExactAlarmsGranted] = useState<boolean | null>(null);
   const updateProfileCache = useUpdateProfileCache();
@@ -543,43 +545,74 @@ export function SettingsPage() {
               }
             />
 
-            {/* El color de acento va en su propia fila: nueve muestras no caben
-                en el hueco del control de una SettingRow. */}
+            {/* El color de acento va en su propia fila (no en el hueco del control
+                de una SettingRow) y colapsado: con la paleta completa son
+                diecisiete muestras, que abiertas empujaban el resto de ajustes
+                fuera de pantalla. Cerrado enseña solo el color activo. */}
             <div className="dotted-separator px-4 py-3.5">
-              <div className="text-base text-fg">{t('settings.accent')}</div>
-              <div className="text-xs mt-0.5 text-fg-subtle">{t('settings.accent_desc')}</div>
-              <div
-                role="radiogroup"
-                aria-label={t('settings.accent')}
-                className="mt-3 flex flex-wrap gap-2.5"
+              <button
+                type="button"
+                onClick={() => setAccentOpen((v) => !v)}
+                aria-expanded={accentOpen}
+                aria-controls="accent-swatches"
+                className="flex w-full items-center gap-3 text-left"
               >
-                {ACCENT_PRESETS.map((preset) => {
-                  const isActive = preset.id === accentColor;
-                  const swatch = preset[theme].primary;
-                  return (
-                    <button
-                      key={preset.id}
-                      type="button"
-                      role="radio"
-                      aria-checked={isActive}
-                      aria-label={t(`settings.accent_${preset.id}`)}
-                      onClick={() => setAccentColor(preset.id)}
-                      className={`h-11 w-11 rounded-full transition-transform active:scale-95 ${
-                        isActive ? 'ring-2 ring-offset-2 ring-offset-surface ring-fg' : ''
-                      }`}
-                      style={{ backgroundColor: swatch }}
-                    >
-                      {isActive && (
-                        <Check
-                          className="mx-auto h-4 w-4"
-                          style={{ color: preset[theme].fg }}
-                          aria-hidden="true"
-                        />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-base text-fg">{t('settings.accent')}</div>
+                  <div className="text-xs mt-0.5 text-fg-subtle">
+                    {t(`settings.accent_${accentColor}`)}
+                  </div>
+                </div>
+                <span
+                  className="h-7 w-7 flex-shrink-0 rounded-full border border-line"
+                  style={{ backgroundColor: getAccentPreset(accentColor)[theme].primary }}
+                  aria-hidden="true"
+                />
+                <ChevronRight
+                  className={`h-5 w-5 flex-shrink-0 text-fg-subtle transition-transform ${
+                    accentOpen ? 'rotate-90' : ''
+                  }`}
+                  aria-hidden="true"
+                />
+              </button>
+              {accentOpen && (
+                <>
+                  <div className="text-xs mt-3 text-fg-subtle">{t('settings.accent_desc')}</div>
+                  <div
+                    id="accent-swatches"
+                    role="radiogroup"
+                    aria-label={t('settings.accent')}
+                    className="mt-2.5 flex flex-wrap gap-2.5"
+                  >
+                    {ACCENT_PRESETS.map((preset) => {
+                      const isActive = preset.id === accentColor;
+                      const swatch = preset[theme].primary;
+                      return (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          role="radio"
+                          aria-checked={isActive}
+                          aria-label={t(`settings.accent_${preset.id}`)}
+                          onClick={() => setAccentColor(preset.id)}
+                          className={`h-11 w-11 rounded-full transition-transform active:scale-95 ${
+                            isActive ? 'ring-2 ring-offset-2 ring-offset-surface ring-fg' : ''
+                          }`}
+                          style={{ backgroundColor: swatch }}
+                        >
+                          {isActive && (
+                            <Check
+                              className="mx-auto h-4 w-4"
+                              style={{ color: preset[theme].fg }}
+                              aria-hidden="true"
+                            />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
             </div>
             <SettingRow
               label={t('settings.weight_unit')}
