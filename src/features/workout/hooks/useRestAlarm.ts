@@ -1,5 +1,7 @@
 import { useCallback, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useRestTimerStore } from '@features/workout/stores/restTimerStore';
+import { useNotificationsStore } from '@shared/stores/notificationsStore';
 import { useVisibilityPausedInterval } from '@shared/hooks/useVisibilityPausedInterval';
 import { resumeIfRinging } from '@shared/lib/alarm';
 import { impact, ImpactStyle } from '@shared/lib/haptics';
@@ -19,6 +21,7 @@ import { impact, ImpactStyle } from '@shared/lib/haptics';
 const STALE_EXPIRY_MS = 2 * 60 * 1000;
 
 export function useRestAlarm(): void {
+  const { t } = useTranslation();
   const isRunning = useRestTimerStore((s) => s.isRunning);
   const endTime = useRestTimerStore((s) => s.endTime);
   const remaining = useRestTimerStore((s) => s.remaining);
@@ -36,7 +39,11 @@ export function useRestAlarm(): void {
 
     complete();
     void impact(ImpactStyle.Heavy);
-  }, [remaining, complete, stop]);
+    // El fin de descanso no pasa por notify(): la notificación del sistema se
+    // programa por adelantado y el aviso in-app es este banner. Se apunta aquí,
+    // que es el momento en que el usuario realmente recibe el aviso.
+    useNotificationsStore.getState().add(t('workout.rest_over'), '');
+  }, [remaining, complete, stop, t]);
 
   useVisibilityPausedInterval(check, 1000, isRunning && endTime !== null);
 
