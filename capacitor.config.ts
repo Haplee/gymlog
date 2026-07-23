@@ -35,7 +35,7 @@ const config: CapacitorConfig = {
       overlaysWebView: true,
     },
     LocalNotifications: {
-      iconColor: '#cbf24c',
+      iconColor: '#ffd93d',
       smallIcon: 'ic_stat_notify',
     },
     Keyboard: {

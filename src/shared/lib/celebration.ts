@@ -8,8 +8,8 @@
  * entre una animación de ~2 s y un timer que despierta la CPU para siempre.
  */
 
-const ACCENT = '#cbf24c';
-const COLORS = [ACCENT, '#a3e635', '#ffffff', '#e6f9a6', '#8faa1f'];
+const ACCENT = '#ffd93d';
+const COLORS = [ACCENT, '#ffa93d', '#ffffff', '#fff3bf', '#c9a227'];
 
 /** Techo duro: más partículas no se perciben y sí se notan en la batería. */
 const MAX_PARTICLES = 220;

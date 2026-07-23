@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 48 48" role="img" aria-label="GymLog">
-  <rect width="48" height="48" rx="10.5" fill="#60eca8" />
-  <g transform="translate(24 24) scale(0.72) translate(-24 -24)" fill="#003822">
-    <circle cx="24" cy="24" r="17.5" fill="none" stroke="#003822" stroke-width="4.5" />
+  <rect width="48" height="48" rx="10.5" fill="#ffd93d" />
+  <g transform="translate(24 24) scale(0.72) translate(-24 -24)" fill="#241c00">
+    <circle cx="24" cy="24" r="17.5" fill="none" stroke="#241c00" stroke-width="4.5" />
     <rect x="14.5" y="24" width="4" height="8" rx="2" />
     <rect x="22" y="19" width="4" height="13" rx="2" />
     <rect x="29.5" y="14" width="4" height="18" rx="2" />

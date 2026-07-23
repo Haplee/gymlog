@@ -1,24 +1,19 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ComponentType } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Calculator, CloudOff, ChevronDown, ChevronRight, Lightbulb } from 'lucide-react';
 import {
-  BookOpen,
-  Dumbbell,
-  Calculator,
-  Timer,
-  CalendarDays,
-  Footprints,
-  History,
-  BarChart3,
-  Ruler,
-  Watch,
-  CloudOff,
-  Settings,
-  ChevronDown,
-  ChevronRight,
-  Lightbulb,
-  type LucideIcon,
-} from 'lucide-react';
+  IconBook,
+  IconCalendar,
+  IconChart,
+  IconDumbbell,
+  IconGear,
+  IconHistory,
+  IconRuler,
+  IconShoe,
+  IconTimer,
+  IconWatch,
+} from '@shared/components/icons';
 import { Layout } from '@app/components/Layout';
 import { Button, SectionHeader } from '@shared/components/ui';
 import { useSettingsStore } from '@shared/stores/settingsStore';
@@ -26,23 +21,24 @@ import { useSettingsStore } from '@shared/stores/settingsStore';
 interface GuideSection {
   /** Sufijo de la clave i18n: guide.<id>.title / guide.<id>.bullets */
   id: string;
-  Icon: LucideIcon;
+  /** Vale tanto para los iconos propios como para los de lucide que quedan. */
+  Icon: ComponentType<{ className?: string }>;
   /** Ruta a la que lleva el botón "Abrir"; sin ruta, la sección es solo informativa. */
   path?: string;
 }
 
 const SECTIONS: GuideSection[] = [
-  { id: 'workout', Icon: Dumbbell, path: '/' },
-  { id: 'tools', Icon: Calculator },
-  { id: 'rest', Icon: Timer },
-  { id: 'routines', Icon: CalendarDays, path: '/routines' },
-  { id: 'cardio', Icon: Footprints, path: '/cardio' },
-  { id: 'history', Icon: History, path: '/history' },
-  { id: 'stats', Icon: BarChart3, path: '/stats' },
-  { id: 'measurements', Icon: Ruler, path: '/user-stats' },
-  { id: 'wearables', Icon: Watch, path: '/wearables' },
+  { id: 'workout', Icon: IconDumbbell, path: '/' },
+  { id: 'tools', Icon: Calculator, path: undefined },
+  { id: 'rest', Icon: IconTimer },
+  { id: 'routines', Icon: IconCalendar, path: '/routines' },
+  { id: 'cardio', Icon: IconShoe, path: '/cardio' },
+  { id: 'history', Icon: IconHistory, path: '/history' },
+  { id: 'stats', Icon: IconChart, path: '/stats' },
+  { id: 'measurements', Icon: IconRuler, path: '/user-stats' },
+  { id: 'wearables', Icon: IconWatch, path: '/wearables' },
   { id: 'offline', Icon: CloudOff },
-  { id: 'settings', Icon: Settings, path: '/settings' },
+  { id: 'settings', Icon: IconGear, path: '/settings' },
 ];
 
 const STEPS = ['step1', 'step2', 'step3'] as const;
@@ -73,7 +69,7 @@ export function GuidePage() {
         <header className="rounded-card bg-surface border border-line p-4">
           <div className="flex items-center gap-3">
             <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-pill bg-accent text-accent-fg">
-              <BookOpen className="h-5 w-5" />
+              <IconBook className="h-5 w-5" />
             </span>
             <div className="min-w-0">
               <h1 className="font-display text-lg font-bold text-fg">{t('guide.title')}</h1>

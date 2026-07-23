@@ -124,6 +124,12 @@ export const resources = {
         equipment: '¿De qué equipo dispones?',
         finish: 'Empezar a entrenar',
       },
+      search: {
+        placeholder: 'Buscar ejercicio…',
+        empty: 'Ningún ejercicio coincide',
+        train: 'Entrenar',
+        open_library: 'Abrir la biblioteca',
+      },
       guide: {
         title: 'Guía de uso',
         subtitle: 'Lo esencial para entender GymLog en 2 minutos.',
@@ -392,11 +398,9 @@ export const resources = {
         copy: 'Copiar',
         progression_hint: 'Sugerencia',
         apply: 'Aplicar',
-        complete_title: '¡Entreno completado!',
+        complete_title: 'Entreno guardado',
         complete_minutes: '{{count}} min',
         complete_sets: '{{count}} series',
-        complete_see_history: 'Ver en el historial',
-        complete_keep_training: 'Seguir entrenando',
       },
       cardio: {
         no_records: 'Sin registros',
@@ -720,6 +724,12 @@ export const resources = {
         equipment: 'What equipment do you have?',
         finish: 'Start training',
       },
+      search: {
+        placeholder: 'Search exercise…',
+        empty: 'No exercise matches',
+        train: 'Train',
+        open_library: 'Open the library',
+      },
       guide: {
         title: 'How it works',
         subtitle: 'Everything you need to understand GymLog in 2 minutes.',
@@ -988,11 +998,9 @@ export const resources = {
         copy: 'Copy',
         progression_hint: 'Suggestion',
         apply: 'Apply',
-        complete_title: 'Workout complete!',
+        complete_title: 'Workout saved',
         complete_minutes: '{{count}} min',
         complete_sets: '{{count}} sets',
-        complete_see_history: 'See it in history',
-        complete_keep_training: 'Keep training',
       },
       cardio: {
         no_records: 'No records',

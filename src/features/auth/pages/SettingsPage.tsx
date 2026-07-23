@@ -22,19 +22,8 @@ import { useUpdateProfileCache } from '@features/auth/hooks/useProfile';
 import { toast } from 'sonner';
 import BiometricPlugin from '@shared/lib/biometric';
 import { devError } from '@shared/lib/devtools';
-import {
-  BookOpen,
-  Camera,
-  Check,
-  ChevronRight,
-  Download,
-  Loader2,
-  LogOut,
-  Pencil,
-  Ruler,
-  Watch,
-  X,
-} from 'lucide-react';
+import { Camera, Check, ChevronRight, Download, Loader2, LogOut, Pencil, X } from 'lucide-react';
+import { IconBook, IconRuler, IconWatch } from '@shared/components/icons';
 
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
 const MAX_NAME_LENGTH = 40;
@@ -497,12 +486,12 @@ export function SettingsPage() {
               </span>
             )}
             <MenuRow
-              icon={<Ruler className="w-4 h-4" />}
+              icon={<IconRuler className="w-4 h-4" />}
               label={t('settings.my_measurements')}
               onClick={() => navigate('/user-stats')}
             />
             <MenuRow
-              icon={<BookOpen className="w-4 h-4" />}
+              icon={<IconBook className="w-4 h-4" />}
               label={t('guide.title')}
               onClick={() => navigate('/guide')}
             />
@@ -727,7 +716,7 @@ export function SettingsPage() {
             >
               <span className="flex items-center gap-3 min-w-0">
                 <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-accent text-accent-fg">
-                  <Watch className="w-4 h-4" />
+                  <IconWatch className="w-4 h-4" />
                 </span>
                 <span className="min-w-0">
                   <span className="block text-base text-fg">{t('settings.wearables')}</span>

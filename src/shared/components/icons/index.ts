@@ -1,0 +1,19 @@
+export {
+  IconHome,
+  IconDumbbell,
+  IconShoe,
+  IconHistory,
+  IconGear,
+  IconSearch,
+  IconUser,
+  IconTrophy,
+  IconFlame,
+  IconCalendar,
+  IconChart,
+  IconBook,
+  IconRuler,
+  IconWatch,
+  IconCheckBadge,
+  IconTimer,
+} from './GymIcons';
+export type { GymIconProps } from './GymIcons';

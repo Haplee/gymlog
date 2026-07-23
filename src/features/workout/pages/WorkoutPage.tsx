@@ -34,9 +34,9 @@ import { LastSessionCard } from '@features/workout/components/LastSessionCard';
 import { WorkoutSetList } from '@features/workout/components/WorkoutSetList';
 import { PlatesCalculator } from '@features/workout/components/PlatesCalculator';
 import {
-  WorkoutCompleteModal,
+  WorkoutSavedCard,
   type WorkoutSummary,
-} from '@features/workout/components/WorkoutCompleteModal';
+} from '@features/workout/components/WorkoutSavedCard';
 import type { ExerciseNote, PersonalRecord } from '@shared/lib/types';
 import { Trash2, Plus, StickyNote, Calculator, BookOpen, Trophy, Repeat, Star } from 'lucide-react';
 import { z } from 'zod';
@@ -515,16 +515,7 @@ export function WorkoutPage() {
   return (
     <Layout>
       <AnimatePresence>
-        {completed && (
-          <WorkoutCompleteModal
-            summary={completed}
-            onClose={() => setCompleted(null)}
-            onGoHistory={() => {
-              setCompleted(null);
-              navigate('/history');
-            }}
-          />
-        )}
+        {completed && <WorkoutSavedCard summary={completed} onDismiss={() => setCompleted(null)} />}
       </AnimatePresence>
 
       <WeeklyWeightPrompt />

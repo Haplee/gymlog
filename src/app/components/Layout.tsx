@@ -7,21 +7,21 @@ import { useCardioStore } from '@features/cardio/stores/cardioStore';
 import { queryClient } from '@app/queryClient';
 import { fetchWorkoutsAndSets, fetchWorkouts, fetchRecentSets } from '@shared/api/queries';
 import { m, AnimatePresence } from 'framer-motion';
+import { WifiOff, RefreshCw } from 'lucide-react';
 import {
-  Home,
-  Dumbbell,
-  Footprints,
-  History,
-  Settings,
-  WifiOff,
-  RefreshCw,
-  Search,
-  User,
-} from 'lucide-react';
+  IconHome,
+  IconDumbbell,
+  IconShoe,
+  IconHistory,
+  IconGear,
+  IconSearch,
+  IconUser,
+} from '@shared/components/icons';
 import { useOutboxStore } from '@shared/stores/outboxStore';
 import { useProfile } from '@features/auth/hooks/useProfile';
 import { useRestAlarm } from '@features/workout/hooks/useRestAlarm';
 import { RestAlarmBanner } from '@features/workout/components/RestAlarmBanner';
+import { ExerciseSearchSheet } from '@shared/components/ExerciseSearchSheet';
 
 interface LayoutProps {
   children: ReactNode;
@@ -88,13 +88,26 @@ export function Layout({ children }: LayoutProps) {
   const cardioActive = useCardioStore((s) => s.isActive);
   const pendingSync = useOutboxStore((s) => s.pending);
   const trainBadge = !!workoutStartedAt && workoutSets.length > 0;
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const tabs = [
-    { path: '/', Icon: Home, label: t('nav.home'), id: 'home', badge: trainBadge },
-    { path: '/routines', Icon: Dumbbell, label: t('routine.title'), id: 'routines', badge: false },
-    { path: '/cardio', Icon: Footprints, label: 'Cardio', id: 'cardio', badge: cardioActive },
-    { path: '/history', Icon: History, label: t('history.title'), id: 'history', badge: false },
-    { path: '/settings', Icon: Settings, label: t('settings.title'), id: 'settings', badge: false },
+    { path: '/', Icon: IconHome, label: t('nav.home'), id: 'home', badge: trainBadge },
+    {
+      path: '/routines',
+      Icon: IconDumbbell,
+      label: t('routine.title'),
+      id: 'routines',
+      badge: false,
+    },
+    { path: '/cardio', Icon: IconShoe, label: 'Cardio', id: 'cardio', badge: cardioActive },
+    { path: '/history', Icon: IconHistory, label: t('history.title'), id: 'history', badge: false },
+    {
+      path: '/settings',
+      Icon: IconGear,
+      label: t('settings.title'),
+      id: 'settings',
+      badge: false,
+    },
   ];
 
   // El kit rotula la pantalla en la cabecera en vez de usar un logo fijo.
@@ -135,6 +148,10 @@ export function Layout({ children }: LayoutProps) {
 
   return (
     <div className="h-screen h-[100dvh] flex flex-col overflow-hidden bg-base">
+      <AnimatePresence>
+        {searchOpen && <ExerciseSearchSheet onClose={() => setSearchOpen(false)} />}
+      </AnimatePresence>
+
       {/* Cabecera estilo FitBody: título de la pantalla a la izquierda en el
           acento, acciones circulares a la derecha. Sin wordmark centrado. */}
       <header
@@ -148,13 +165,16 @@ export function Layout({ children }: LayoutProps) {
           <h1 className="font-display text-lg font-bold text-accent truncate">{pageTitle}</h1>
           {user && (
             <div className="flex items-center gap-2">
-              <Link
-                to="/exercises"
-                aria-label={t('library.open')}
+              {/* La lupa abre la búsqueda para entrenar, no la biblioteca:
+                  si no, duplicaría el acceso que ya hay en Entrenar. */}
+              <button
+                type="button"
+                onClick={() => setSearchOpen(true)}
+                aria-label={t('search.placeholder')}
                 className="flex h-9 w-9 items-center justify-center rounded-full bg-surface border border-line text-fg-muted active:opacity-70"
               >
-                <Search className="h-4 w-4" />
-              </Link>
+                <IconSearch className="h-4 w-4" />
+              </button>
               <Link
                 to="/settings"
                 aria-label={displayName}
@@ -169,7 +189,7 @@ export function Layout({ children }: LayoutProps) {
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <User className="h-4 w-4" />
+                  <IconUser className="h-4 w-4" />
                 )}
               </Link>
             </div>
@@ -266,7 +286,6 @@ export function Layout({ children }: LayoutProps) {
                   className={`relative h-6 w-6 transition-colors ${
                     isActive ? 'text-accent' : 'text-accent-fg'
                   }`}
-                  strokeWidth={2}
                 />
                 {badge && (
                   <m.span
