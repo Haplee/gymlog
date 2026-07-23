@@ -265,7 +265,7 @@ export function Layout({ children }: LayoutProps) {
       {/* Barra inferior del kit: rellena del color de acento, esquinas superiores
           muy redondeadas e iconos oscuros. El activo va en un círculo oscuro. */}
       <nav
-        className="flex flex-shrink-0 relative z-10 bg-accent rounded-t-[24px]"
+        className="flex flex-shrink-0 relative z-10 bg-accent rounded-t-[20px]"
         style={{
           height:
             'calc(var(--bottom-nav-height) + var(--inset-bottom, env(safe-area-inset-bottom)))',
