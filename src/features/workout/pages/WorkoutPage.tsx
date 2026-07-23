@@ -33,6 +33,10 @@ import { WorkoutSessionStats } from '@features/workout/components/WorkoutSession
 import { LastSessionCard } from '@features/workout/components/LastSessionCard';
 import { WorkoutSetList } from '@features/workout/components/WorkoutSetList';
 import { PlatesCalculator } from '@features/workout/components/PlatesCalculator';
+import {
+  WorkoutCompleteModal,
+  type WorkoutSummary,
+} from '@features/workout/components/WorkoutCompleteModal';
 import type { ExerciseNote, PersonalRecord } from '@shared/lib/types';
 import { Trash2, Plus, StickyNote, Calculator, BookOpen, Trophy, Repeat, Star } from 'lucide-react';
 import { z } from 'zod';
@@ -132,6 +136,7 @@ export function WorkoutPage() {
   const [setErrors, setSetErrors] = useState<Record<number, string>>({});
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
   const [showPlates, setShowPlates] = useState(false);
+  const [completed, setCompleted] = useState<WorkoutSummary | null>(null);
   const [showResumeBanner, setShowResumeBanner] = useState(() => {
     if (startedAt && sets.length > 0) {
       return Date.now() - new Date(startedAt).getTime() < 12 * 60 * 60 * 1000;
@@ -340,6 +345,13 @@ export function WorkoutPage() {
       return;
     }
 
+    // saveWorkout limpia la sesión: hay que quedarse con el resumen antes.
+    const summaryMinutes = startedAt
+      ? Math.max(1, Math.round((Date.now() - new Date(startedAt).getTime()) / 60000))
+      : 0;
+    const summarySets = validSetCount;
+    const summaryVolume = `${convert(sessionVolume).toFixed(0)} ${weightUnit}`;
+
     setSaving(true);
     const result = await saveWorkout(user.id);
     setSaving(false);
@@ -383,12 +395,21 @@ export function WorkoutPage() {
         }
       });
 
+      let prLabel: string | undefined;
       if (max1RM > 0) {
         celebrate();
         void notificationHaptic(NotificationType.Success);
         const exerciseName = selectedExercise?.name || customExerciseName || 'Ejercicio';
-        setMessage(`Nuevo PR: ${exerciseName} - ${convert(max1RM).toFixed(1)} ${weightUnit}`);
+        prLabel = `Nuevo PR: ${exerciseName} - ${convert(max1RM).toFixed(1)} ${weightUnit}`;
+        setMessage(prLabel);
       }
+
+      setCompleted({
+        minutes: summaryMinutes,
+        volume: summaryVolume,
+        sets: summarySets,
+        prLabel,
+      });
 
       setTimeout(() => setMessage(''), 2500);
       setTimeout(() => setSaveSuccess(false), 300);
@@ -493,6 +514,19 @@ export function WorkoutPage() {
 
   return (
     <Layout>
+      <AnimatePresence>
+        {completed && (
+          <WorkoutCompleteModal
+            summary={completed}
+            onClose={() => setCompleted(null)}
+            onGoHistory={() => {
+              setCompleted(null);
+              navigate('/history');
+            }}
+          />
+        )}
+      </AnimatePresence>
+
       <WeeklyWeightPrompt />
       <AnimatePresence>
         {showResumeBanner && startedAt && (

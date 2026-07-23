@@ -48,6 +48,7 @@ import { format, subWeeks, startOfWeek, eachWeekOfInterval, subDays } from 'date
 import { es } from 'date-fns/locale';
 import { calcular1RM } from '@shared/lib/brzycki';
 import { SectionLabel } from '../components/userStats/SectionLabel';
+import { WorkoutCalendar } from '../components/userStats/WorkoutCalendar';
 import { DayFrequencyChart } from '../components/userStats/DayFrequencyChart';
 import { TopExercisesList } from '../components/userStats/TopExercisesList';
 import { BodyMeasurements } from '../components/userStats/BodyMeasurements';
@@ -477,18 +478,32 @@ export function UserStatsPage() {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 + i * 0.04 }}
-                className="rounded-card p-3 text-center bg-surface border border-line shadow-card"
+                className="rounded-card p-3 bg-surface border border-line shadow-card"
               >
-                <div
-                  className="font-mono font-bold text-xl tabular-nums"
-                  style={{ color: item.color }}
-                >
-                  {item.value}
+                {/* Dato con regla vertical a la izquierda, como el "75 Kg /
+                    Weight" de la cabecera Progress Tracking del kit. */}
+                <div className="flex items-stretch gap-2">
+                  <span
+                    aria-hidden="true"
+                    className="w-1 flex-shrink-0 rounded-pill"
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <div className="min-w-0">
+                    <div
+                      className="font-display font-bold text-xl tabular"
+                      style={{ color: item.color }}
+                    >
+                      {item.value}
+                    </div>
+                    <div className="text-2xs mt-0.5 text-fg-subtle">{item.label}</div>
+                  </div>
                 </div>
-                <div className="text-2xs mt-1 text-fg-subtle">{item.label}</div>
               </m.div>
             ))}
           </div>
+
+          <SectionLabel>{t('userStats.calendar_title')}</SectionLabel>
+          <WorkoutCalendar workouts={workouts} />
 
           {cardioTotalMin > 0 && (
             <m.div
