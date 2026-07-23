@@ -56,6 +56,9 @@ const ExerciseLibraryPage = lazy(() =>
 const WearablesPage = lazy(() =>
   import('@features/wearables/pages/WearablesPage').then((m) => ({ default: m.WearablesPage })),
 );
+const NotificationsPage = lazy(() =>
+  import('@features/auth/pages/NotificationsPage').then((m) => ({ default: m.NotificationsPage })),
+);
 const GuidePage = lazy(() =>
   import('@features/guide/pages/GuidePage').then((m) => ({ default: m.GuidePage })),
 );
@@ -160,6 +163,14 @@ function AnimatedRoutes() {
         element={
           <ProtectedRoute>
             <WearablesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/notifications"
+        element={
+          <ProtectedRoute>
+            <NotificationsPage />
           </ProtectedRoute>
         }
       />

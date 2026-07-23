@@ -202,6 +202,38 @@ export const IconCheckBadge = memo(({ className }: GymIconProps) => (
 ));
 IconCheckBadge.displayName = 'IconCheckBadge';
 
+/** Estrella maciza de cinco puntas — favoritos. */
+export const IconStar = memo(({ className }: GymIconProps) => (
+  <svg {...svgProps(className)}>
+    <path d="M12 1.8a1.2 1.2 0 0 1 1.08.67l2.62 5.32 5.87.86a1.2 1.2 0 0 1 .67 2.05l-4.25 4.14 1 5.85a1.2 1.2 0 0 1-1.74 1.26L12 19.2l-5.25 2.75a1.2 1.2 0 0 1-1.74-1.26l1-5.85-4.25-4.14a1.2 1.2 0 0 1 .67-2.05l5.87-.86 2.62-5.32A1.2 1.2 0 0 1 12 1.8z" />
+  </svg>
+));
+IconStar.displayName = 'IconStar';
+
+/** Símbolo de Marte (♂) — paso de sexo del onboarding. */
+export const IconMale = memo(({ className }: GymIconProps) => (
+  <svg {...svgProps(className)}>
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M14.6 1.4a1.3 1.3 0 0 0 0 2.6h3.58l-4.13 4.13a7.9 7.9 0 1 0 1.84 1.84L20.02 5.86v3.58a1.3 1.3 0 1 0 2.6 0V2.7a1.3 1.3 0 0 0-1.3-1.3zM9.5 9.1a5.3 5.3 0 1 1 0 10.6 5.3 5.3 0 0 1 0-10.6z"
+    />
+  </svg>
+));
+IconMale.displayName = 'IconMale';
+
+/** Símbolo de Venus (♀) — paso de sexo del onboarding. */
+export const IconFemale = memo(({ className }: GymIconProps) => (
+  <svg {...svgProps(className)}>
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M12 1.4a7.9 7.9 0 0 0-1.3 15.69v2.31H8.4a1.3 1.3 0 1 0 0 2.6h2.3v1a1.3 1.3 0 1 0 2.6 0v-1h2.3a1.3 1.3 0 1 0 0-2.6h-2.3v-2.31A7.9 7.9 0 0 0 12 1.4zm0 2.6a5.3 5.3 0 1 1 0 10.6A5.3 5.3 0 0 1 12 4z"
+    />
+  </svg>
+));
+IconFemale.displayName = 'IconFemale';
+
 /** Cronómetro con pulsador — descanso entre series. */
 export const IconTimer = memo(({ className }: GymIconProps) => (
   <svg {...svgProps(className)}>

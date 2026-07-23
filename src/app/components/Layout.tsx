@@ -7,7 +7,7 @@ import { useCardioStore } from '@features/cardio/stores/cardioStore';
 import { queryClient } from '@app/queryClient';
 import { fetchWorkoutsAndSets, fetchWorkouts, fetchRecentSets } from '@shared/api/queries';
 import { m, AnimatePresence } from 'framer-motion';
-import { WifiOff, RefreshCw } from 'lucide-react';
+import { WifiOff, RefreshCw, Bell } from 'lucide-react';
 import {
   IconHome,
   IconDumbbell,
@@ -22,6 +22,7 @@ import { useProfile } from '@features/auth/hooks/useProfile';
 import { useRestAlarm } from '@features/workout/hooks/useRestAlarm';
 import { RestAlarmBanner } from '@features/workout/components/RestAlarmBanner';
 import { ExerciseSearchSheet } from '@shared/components/ExerciseSearchSheet';
+import { useNotificationsStore, selectUnreadCount } from '@shared/stores/notificationsStore';
 
 interface LayoutProps {
   children: ReactNode;
@@ -89,6 +90,7 @@ export function Layout({ children }: LayoutProps) {
   const pendingSync = useOutboxStore((s) => s.pending);
   const trainBadge = !!workoutStartedAt && workoutSets.length > 0;
   const [searchOpen, setSearchOpen] = useState(false);
+  const unreadCount = useNotificationsStore(selectUnreadCount);
 
   const tabs = [
     { path: '/', Icon: IconHome, label: t('nav.home'), id: 'home', badge: trainBadge },
@@ -122,6 +124,7 @@ export function Layout({ children }: LayoutProps) {
     '/exercises': t('library.title'),
     '/wearables': t('settings.wearables'),
     '/guide': t('guide.title'),
+    '/notifications': t('notifications.title'),
   };
   const pageTitle = TITLES[location.pathname] ?? 'GYMLOG';
 
@@ -175,6 +178,17 @@ export function Layout({ children }: LayoutProps) {
               >
                 <IconSearch className="h-4 w-4" />
               </button>
+              {/* Campana con punto de no leídas, como la cabecera del kit. */}
+              <Link
+                to="/notifications"
+                aria-label={t('notifications.title')}
+                className="relative flex h-9 w-9 items-center justify-center rounded-full bg-surface border border-line text-fg-muted active:opacity-70"
+              >
+                <Bell className="h-4 w-4" />
+                {unreadCount > 0 && (
+                  <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-accent" />
+                )}
+              </Link>
               <Link
                 to="/settings"
                 aria-label={displayName}

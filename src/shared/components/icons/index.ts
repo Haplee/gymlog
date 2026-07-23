@@ -15,5 +15,8 @@ export {
   IconWatch,
   IconCheckBadge,
   IconTimer,
+  IconStar,
+  IconMale,
+  IconFemale,
 } from './GymIcons';
 export type { GymIconProps } from './GymIcons';

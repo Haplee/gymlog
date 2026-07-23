@@ -1,15 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { m } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useWorkoutStore } from '@features/workout/stores/workoutStore';
-import { fetchExerciseLibrary } from '@shared/api/queries';
+import {
+  fetchExerciseLibrary,
+  fetchFavoriteExerciseIds,
+  toggleFavoriteExercise,
+} from '@shared/api/queries';
 import { MUSCLE_COLORS } from '@shared/constants/muscleColors';
 import { Chip } from '@shared/components/ui';
-import { IconSearch, IconDumbbell, IconBook } from '@shared/components/icons';
+import { IconSearch, IconDumbbell, IconBook, IconStar } from '@shared/components/icons';
 
 interface ExerciseSearchSheetProps {
   onClose: () => void;
@@ -34,7 +38,23 @@ export function ExerciseSearchSheet({ onClose }: ExerciseSearchSheetProps) {
 
   const [query, setQuery] = useState('');
   const [muscle, setMuscle] = useState<string | null>(null);
+  const [onlyFavorites, setOnlyFavorites] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
+
+  const { data: favoriteIds = [] } = useQuery({
+    queryKey: ['exerciseFavorites', user?.id],
+    queryFn: () => fetchFavoriteExerciseIds(user?.id ?? ''),
+    enabled: !!user?.id,
+    staleTime: 1000 * 60 * 5,
+  });
+  const favorites = useMemo(() => new Set(favoriteIds), [favoriteIds]);
+
+  const toggleFavorite = useMutation({
+    mutationFn: ({ id, isFav }: { id: string; isFav: boolean }) =>
+      toggleFavoriteExercise(user?.id ?? '', id, isFav),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['exerciseFavorites', user?.id] }),
+  });
 
   const { data: exercises = [], isLoading } = useQuery({
     queryKey: ['exerciseLibrary', user?.id],
@@ -65,6 +85,7 @@ export function ExerciseSearchSheet({ onClose }: ExerciseSearchSheetProps) {
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
     const matched = exercises.filter((e) => {
+      if (onlyFavorites && !favorites.has(e.id)) return false;
       if (muscle && e.muscle_group !== muscle) return false;
       if (!q) return true;
       return (
@@ -83,7 +104,7 @@ export function ExerciseSearchSheet({ onClose }: ExerciseSearchSheetProps) {
         return aStarts - bStarts || a.name.localeCompare(b.name);
       })
       .slice(0, 40);
-  }, [exercises, query, muscle]);
+  }, [exercises, query, muscle, onlyFavorites, favorites]);
 
   const handlePick = (id: string) => {
     setActiveExercise(id);
@@ -128,6 +149,10 @@ export function ExerciseSearchSheet({ onClose }: ExerciseSearchSheetProps) {
 
         {/* Filtro por grupo muscular */}
         <div className="flex gap-1.5 overflow-x-auto px-4 pb-3">
+          <Chip selected={onlyFavorites} onClick={() => setOnlyFavorites((v) => !v)}>
+            <IconStar className="h-3.5 w-3.5" />
+            {t('search.favorites')}
+          </Chip>
           <Chip selected={muscle === null} onClick={() => setMuscle(null)}>
             {t('library.all')}
           </Chip>
@@ -150,12 +175,13 @@ export function ExerciseSearchSheet({ onClose }: ExerciseSearchSheetProps) {
             <ul className="space-y-2">
               {results.map((ex) => {
                 const color = MUSCLE_COLORS[ex.muscle_group] ?? MUSCLE_COLORS.Otro;
+                const isFav = favorites.has(ex.id);
                 return (
-                  <li key={ex.id}>
+                  <li key={ex.id} className="relative">
                     <button
                       type="button"
                       onClick={() => handlePick(ex.id)}
-                      className="flex w-full items-center gap-3 rounded-card bg-surface p-3 text-left active:opacity-70"
+                      className="flex w-full items-center gap-3 rounded-card bg-surface p-3 pr-14 text-left active:opacity-70"
                     >
                       <span
                         className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full"
@@ -174,6 +200,18 @@ export function ExerciseSearchSheet({ onClose }: ExerciseSearchSheetProps) {
                       <span className="label-caps flex-shrink-0 rounded-pill bg-accent px-2.5 py-1 text-accent-fg">
                         {t('search.train')}
                       </span>
+                    </button>
+                    {/* Fuera del botón de "entrenar": son dos acciones distintas. */}
+                    <button
+                      type="button"
+                      onClick={() => toggleFavorite.mutate({ id: ex.id, isFav })}
+                      aria-pressed={isFav}
+                      aria-label={t('search.favorite_toggle', { name: ex.name })}
+                      className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center active:opacity-70"
+                    >
+                      <IconStar
+                        className={`h-4 w-4 ${isFav ? 'text-accent' : 'text-fg-subtle/40'}`}
+                      />
                     </button>
                   </li>
                 );
