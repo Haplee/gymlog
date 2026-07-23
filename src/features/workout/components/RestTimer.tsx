@@ -47,7 +47,7 @@ export function RestTimer() {
 
   return (
     <div
-      className={`rounded-lg p-4 mt-3 bg-surface border shadow-card transition-shadow duration-300 ${
+      className={`rounded-card p-4 mt-3 bg-surface border shadow-card transition-shadow duration-300 ${
         isRunning ? 'border-line-accent shadow-glow' : 'border-line'
       }`}
     >

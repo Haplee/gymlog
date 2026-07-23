@@ -40,7 +40,7 @@ const ExerciseComparisonChart = lazy(() =>
 );
 
 function ChartFallback() {
-  return <div className="h-56 skeleton rounded-lg" aria-hidden="true" />;
+  return <div className="h-56 skeleton rounded-card" aria-hidden="true" />;
 }
 import {
   calculateCurrentStreak,
@@ -384,8 +384,8 @@ export function StatsPage() {
               <Skeleton key={i} className="h-28 rounded-card" />
             ))}
           </div>
-          <Skeleton className="h-56 rounded-lg" />
-          <Skeleton className="h-40 rounded-lg" />
+          <Skeleton className="h-56 rounded-card" />
+          <Skeleton className="h-40 rounded-card" />
         </div>
       </Layout>
     );
@@ -912,13 +912,13 @@ export function StatsPage() {
                             value={goalInput}
                             onChange={(e) => setGoalInput(e.target.value.replace(/[^\d.,]/g, ''))}
                             placeholder={`p.ej. ${Math.round(toDisplay(currentBest1rm)) + 5} ${unit}`}
-                            className="flex-1 rounded-lg text-sm px-3 py-2 outline-none bg-surface-2 border border-line text-fg"
+                            className="flex-1 rounded-card text-sm px-3 py-2 outline-none bg-surface-2 border border-line text-fg"
                           />
                           <button
                             type="button"
                             onClick={handleSaveGoal}
                             disabled={!goalInput}
-                            className="px-4 rounded-lg text-sm font-semibold bg-accent text-accent-fg disabled:opacity-50"
+                            className="px-4 rounded-card text-sm font-semibold bg-accent text-accent-fg disabled:opacity-50"
                           >
                             Fijar
                           </button>

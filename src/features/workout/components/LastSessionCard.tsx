@@ -36,7 +36,7 @@ export function LastSessionCard({ userId, exerciseId, onCopySets }: LastSessionC
           exit={{ opacity: 0, height: 0, marginTop: 0 }}
           className="overflow-hidden"
         >
-          <div className="p-3 rounded-lg bg-surface-2 border border-line">
+          <div className="p-3 rounded-card bg-surface-2 border border-line">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-1.5">
                 <History className="w-3.5 h-3.5 text-fg-subtle" />
@@ -68,7 +68,7 @@ export function LastSessionCard({ userId, exerciseId, onCopySets }: LastSessionC
               {lastSets.map((s, i) => (
                 <span
                   key={i}
-                  className="text-xs px-2.5 py-1 rounded-lg font-mono font-medium bg-surface border border-line text-fg-muted"
+                  className="text-xs px-2.5 py-1 rounded-card font-mono font-medium bg-surface border border-line text-fg-muted"
                 >
                   {convert(s.weight).toFixed(1).replace(/\.0$/, '')}×{s.reps}
                 </span>

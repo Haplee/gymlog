@@ -44,7 +44,7 @@ export function PlatesCalculator({ open, initialTargetKg, onClose }: PlatesCalcu
         placeholder="100"
         value={target}
         onChange={(e) => setTarget(e.target.value.replace(/[^\d.,]/g, ''))}
-        className="w-full mt-1 mb-3 rounded-lg text-base px-3 py-2.5 outline-none text-center text-fg bg-surface-2 border border-line-strong"
+        className="w-full mt-1 mb-3 rounded-card text-base px-3 py-2.5 outline-none text-center text-fg bg-surface-2 border border-line-strong"
       />
 
       <div className="text-2xs uppercase font-semibold mb-1.5 text-fg-subtle">
@@ -57,7 +57,7 @@ export function PlatesCalculator({ open, initialTargetKg, onClose }: PlatesCalcu
             key={b}
             onClick={() => setBar(b)}
             aria-pressed={bar === b}
-            className="flex-1 min-h-11 rounded-lg text-sm font-medium border"
+            className="flex-1 min-h-11 rounded-card text-sm font-medium border"
             style={{
               backgroundColor: bar === b ? 'var(--interactive-primary)' : 'var(--bg-surface-2)',
               color: bar === b ? 'var(--interactive-primary-fg)' : 'var(--text-secondary)',

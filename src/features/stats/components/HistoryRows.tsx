@@ -46,7 +46,7 @@ export function ExerciseRow({
               e.stopPropagation();
               onDelete(firstSet.id);
             }}
-            className="p-1.5 rounded-lg transition-colors text-fg-subtle hover:bg-error/10 active:bg-error/10"
+            className="p-1.5 rounded-card transition-colors text-fg-subtle hover:bg-error/10 active:bg-error/10"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>

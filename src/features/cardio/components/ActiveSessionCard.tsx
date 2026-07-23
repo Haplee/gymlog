@@ -61,7 +61,7 @@ export function ActiveSessionCard({ userId }: { userId: string | null }) {
     <m.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-lg p-4 mb-4 bg-surface border border-line"
+      className="rounded-card p-4 mb-4 bg-surface border border-line"
     >
       {!showFinish ? (
         <>

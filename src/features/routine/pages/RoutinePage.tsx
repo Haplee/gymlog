@@ -206,7 +206,7 @@ export function RoutinePage() {
                     handleSelectRoutine(routine.id);
                   }
                 }}
-                className="p-4 rounded-lg cursor-pointer transition-all active:scale-[0.99] bg-surface border border-line"
+                className="p-4 rounded-card cursor-pointer transition-all active:scale-[0.99] bg-surface border border-line"
               >
                 {!routine.isCustom && (
                   <span className="label-caps inline-block px-1.5 py-0.5 mb-2 rounded-sm bg-surface-3 text-fg-muted">
@@ -284,7 +284,7 @@ export function RoutinePage() {
             ))}
           </div>
 
-          <div className="rounded-lg p-3 bg-surface border border-line">
+          <div className="rounded-card p-3 bg-surface border border-line">
             <div className="dotted-separator flex justify-between items-center pb-2 mb-3">
               <div className="label-caps text-fg-subtle">{dayLabels[selectedDay]}</div>
               {activeRoutine?.isCustom && (
@@ -357,7 +357,7 @@ export function RoutinePage() {
 
       {showCreate && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-          <div className="rounded-lg p-4 w-full max-w-sm bg-surface border border-line">
+          <div className="rounded-card p-4 w-full max-w-sm bg-surface border border-line">
             <div className="text-data font-display font-bold mb-4 text-fg">
               {t('routine.new_routine')}
             </div>

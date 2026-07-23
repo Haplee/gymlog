@@ -73,7 +73,7 @@ export function WearablesPage() {
             busy={isSyncing}
           />
         ) : (
-          <div className="rounded-lg p-4 bg-surface border border-line-strong text-xs text-fg-subtle">
+          <div className="rounded-card p-4 bg-surface border border-line-strong text-xs text-fg-subtle">
             {t('wearables.health_aggregator')}: {t('wearables.not_available_web')}
           </div>
         )}
@@ -82,13 +82,13 @@ export function WearablesPage() {
         {dailyList?.length || sleepList?.length ? (
           <SleepCard sleep={sleepList?.[0]} daily={dailyList?.[0]} />
         ) : (
-          <div className="rounded-lg p-4 bg-surface border border-line-strong text-xs text-fg-subtle text-center">
+          <div className="rounded-card p-4 bg-surface border border-line-strong text-xs text-fg-subtle text-center">
             {t('wearables.no_data')}
           </div>
         )}
 
         {/* Sincronizar al abrir */}
-        <div className="rounded-lg p-4 scale-in bg-surface border border-line-strong shadow-card">
+        <div className="rounded-card p-4 scale-in bg-surface border border-line-strong shadow-card">
           <div className="flex items-center justify-between">
             <div>
               <div className="text-base text-fg">{t('wearables.sync_on_open')}</div>

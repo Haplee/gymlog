@@ -7,7 +7,17 @@ import { useCardioStore } from '@features/cardio/stores/cardioStore';
 import { queryClient } from '@app/queryClient';
 import { fetchWorkoutsAndSets, fetchWorkouts, fetchRecentSets } from '@shared/api/queries';
 import { m, AnimatePresence } from 'framer-motion';
-import { Home, Dumbbell, Footprints, History, Settings, WifiOff, RefreshCw } from 'lucide-react';
+import {
+  Home,
+  Dumbbell,
+  Footprints,
+  History,
+  Settings,
+  WifiOff,
+  RefreshCw,
+  Search,
+  User,
+} from 'lucide-react';
 import { useOutboxStore } from '@shared/stores/outboxStore';
 import { useProfile } from '@features/auth/hooks/useProfile';
 import { useRestAlarm } from '@features/workout/hooks/useRestAlarm';
@@ -87,6 +97,21 @@ export function Layout({ children }: LayoutProps) {
     { path: '/settings', Icon: Settings, label: t('settings.title'), id: 'settings', badge: false },
   ];
 
+  // El kit rotula la pantalla en la cabecera en vez de usar un logo fijo.
+  const TITLES: Record<string, string> = {
+    '/': t('workout.title'),
+    '/routines': t('routine.title'),
+    '/cardio': 'Cardio',
+    '/history': t('history.title'),
+    '/settings': t('settings.title'),
+    '/stats': t('stats.title'),
+    '/user-stats': t('userStats.page_title'),
+    '/exercises': t('library.title'),
+    '/wearables': t('settings.wearables'),
+    '/guide': t('guide.title'),
+  };
+  const pageTitle = TITLES[location.pathname] ?? 'GYMLOG';
+
   // El descanso termina (y suena) aunque el usuario esté en otra pestaña.
   useRestAlarm();
 
@@ -110,41 +135,44 @@ export function Layout({ children }: LayoutProps) {
 
   return (
     <div className="h-screen h-[100dvh] flex flex-col overflow-hidden bg-base">
+      {/* Cabecera estilo FitBody: título de la pantalla a la izquierda en el
+          acento, acciones circulares a la derecha. Sin wordmark centrado. */}
       <header
-        className="px-4 flex-shrink-0 bg-base border-b border-line"
+        className="px-4 flex-shrink-0 bg-base"
         style={{ paddingTop: 'var(--inset-top, env(safe-area-inset-top))' }}
       >
         <div
-          className="relative flex items-center justify-between"
+          className="flex items-center justify-between gap-3"
           style={{ height: 'var(--header-height)' }}
         >
-          <span
-            className="absolute left-1/2 -translate-x-1/2 font-display font-bold text-base tracking-[0.2em] text-fg select-none"
-            aria-hidden="true"
-          >
-            GYMLOG
-          </span>
-          <span className="w-8" />
+          <h1 className="font-display text-lg font-bold text-accent truncate">{pageTitle}</h1>
           {user && (
-            <Link
-              to="/settings"
-              className="flex items-center gap-2 px-2.5 py-1 rounded-sm bg-surface border border-line"
-            >
-              {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt=""
-                  width={20}
-                  height={20}
-                  className="w-5 h-5 rounded-full object-cover"
-                />
-              ) : (
-                <div className="w-1.5 h-1.5 bg-success" />
-              )}
-              <span className="text-xs font-medium text-fg-muted max-w-[8rem] truncate">
-                {displayName}
-              </span>
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link
+                to="/exercises"
+                aria-label={t('library.open')}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-surface border border-line text-fg-muted active:opacity-70"
+              >
+                <Search className="h-4 w-4" />
+              </Link>
+              <Link
+                to="/settings"
+                aria-label={displayName}
+                className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-accent text-accent-fg active:opacity-70"
+              >
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt=""
+                    width={36}
+                    height={36}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <User className="h-4 w-4" />
+                )}
+              </Link>
+            </div>
           )}
         </div>
       </header>
@@ -200,8 +228,10 @@ export function Layout({ children }: LayoutProps) {
         </m.div>
       </main>
 
+      {/* Barra inferior del kit: rellena del color de acento, esquinas superiores
+          muy redondeadas e iconos oscuros. El activo va en un círculo oscuro. */}
       <nav
-        className="flex flex-shrink-0 relative z-10 bg-surface border-t border-line"
+        className="flex flex-shrink-0 relative z-10 bg-accent rounded-t-[24px]"
         style={{
           height:
             'calc(var(--bottom-nav-height) + var(--inset-bottom, env(safe-area-inset-bottom)))',
@@ -221,34 +251,31 @@ export function Layout({ children }: LayoutProps) {
                   preloadChunk(tab.path);
                 }
               }}
-              className="flex-1 flex flex-col items-center justify-center gap-1 relative transition-opacity active:opacity-60"
+              aria-label={label}
+              className="flex-1 flex items-center justify-center relative transition-opacity active:opacity-60"
             >
-              {/* Icono activo dentro de un pill amarillo relleno (estilo FitBody) */}
-              <div className="relative flex items-center justify-center w-12 h-9">
+              <div className="relative flex h-11 w-11 items-center justify-center">
                 {isActive && (
                   <m.div
                     layoutId="activeTabPill"
-                    className="absolute inset-0 rounded-pill bg-accent shadow-fab"
+                    className="absolute inset-0 rounded-full bg-base"
                     transition={{ type: 'spring', stiffness: 500, damping: 32 }}
                   />
                 )}
                 <Icon
-                  className={`relative w-5 h-5 transition-colors ${isActive ? 'text-accent-fg' : 'text-fg-subtle'}`}
-                  strokeWidth={isActive ? 2.5 : 1.5}
+                  className={`relative h-6 w-6 transition-colors ${
+                    isActive ? 'text-accent' : 'text-accent-fg'
+                  }`}
+                  strokeWidth={2}
                 />
                 {badge && (
                   <m.span
                     initial={{ scale: 0.95, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-error shadow-glow pulse-soft"
+                    className="absolute right-1 top-1 h-2 w-2 rounded-full bg-error"
                   />
                 )}
               </div>
-              <span
-                className={`label-caps transition-colors ${isActive ? 'text-accent' : 'text-fg-subtle'}`}
-              >
-                {label}
-              </span>
             </Link>
           );
         })}

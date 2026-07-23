@@ -131,7 +131,7 @@ function EditWorkoutModal({
               value={row.reps}
               onChange={(e) => update(row.id, 'reps', e.target.value.replace(/[^\d]/g, ''))}
               aria-label={`${t('workout.reps')} ${i + 1}`}
-              className="w-12 rounded-lg text-sm font-mono tabular-nums px-2 py-1.5 text-center outline-none bg-surface-2 border border-line text-fg"
+              className="w-12 rounded-card text-sm font-mono tabular-nums px-2 py-1.5 text-center outline-none bg-surface-2 border border-line text-fg"
             />
             <span className="text-xs text-fg-subtle">×</span>
             <input
@@ -140,7 +140,7 @@ function EditWorkoutModal({
               value={row.weight}
               onChange={(e) => update(row.id, 'weight', e.target.value.replace(/[^\d.,]/g, ''))}
               aria-label={`${t('workout.weight')} ${i + 1}`}
-              className="w-16 rounded-lg text-sm font-mono tabular-nums px-2 py-1.5 text-center outline-none bg-surface-2 border border-line text-fg"
+              className="w-16 rounded-card text-sm font-mono tabular-nums px-2 py-1.5 text-center outline-none bg-surface-2 border border-line text-fg"
             />
           </div>
         ))}
@@ -789,11 +789,11 @@ export function HistoryPage() {
         {/* Replica el layout real: filtros + grupos de tarjetas */}
         <div className="space-y-3">
           <div className="flex gap-2">
-            <div className="skeleton h-10 w-36 rounded-lg" />
-            <div className="skeleton h-10 w-24 rounded-lg" />
+            <div className="skeleton h-10 w-36 rounded-card" />
+            <div className="skeleton h-10 w-24 rounded-card" />
           </div>
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="skeleton h-16 rounded-lg" />
+            <div key={i} className="skeleton h-16 rounded-card" />
           ))}
         </div>
       </Layout>
@@ -847,7 +847,7 @@ export function HistoryPage() {
           <button
             type="button"
             onClick={() => navigate('/stats')}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg font-semibold text-sm transition-all hover:scale-[1.02] active:scale-[0.98] bg-accent/10 border border-line-accent text-accent"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-card font-semibold text-sm transition-all hover:scale-[1.02] active:scale-[0.98] bg-accent/10 border border-line-accent text-accent"
           >
             <BarChart3 className="w-4 h-4" />
             {t('stats.title')}
@@ -856,7 +856,7 @@ export function HistoryPage() {
           <button
             type="button"
             onClick={() => navigate('/user-stats')}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg font-semibold text-sm transition-all hover:scale-[1.02] active:scale-[0.98] bg-accent/10 border border-line-accent text-accent"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-card font-semibold text-sm transition-all hover:scale-[1.02] active:scale-[0.98] bg-accent/10 border border-line-accent text-accent"
           >
             <BarChart2 className="w-4 h-4" />
             {t('history.my_stats')}
@@ -870,12 +870,12 @@ export function HistoryPage() {
                 onChange={(e) => setSearchText(e.target.value)}
                 placeholder={t('history.search_placeholder')}
                 aria-label={t('history.search_placeholder')}
-                className="flex-1 min-w-[10rem] bg-surface border border-line-strong rounded-lg text-fg text-base p-2 outline-none"
+                className="flex-1 min-w-[10rem] bg-surface border border-line-strong rounded-card text-fg text-base p-2 outline-none"
               />
               <select
                 value={filterExercise}
                 onChange={(e) => setFilterExercise(e.target.value)}
-                className="bg-surface border border-line-strong rounded-lg text-fg-muted text-base p-2 cursor-pointer transition-all hover:scale-[1.02]"
+                className="bg-surface border border-line-strong rounded-card text-fg-muted text-base p-2 cursor-pointer transition-all hover:scale-[1.02]"
               >
                 <option value="">{t('history.filter_all')}</option>
                 {exercises.map((ex) => (
@@ -887,18 +887,18 @@ export function HistoryPage() {
               <button
                 type="button"
                 onClick={exportToExcel}
-                className="bg-surface border border-line-strong rounded-lg text-accent text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="bg-surface border border-line-strong rounded-card text-accent text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
                 {t('history.export_btn')}
               </button>
               <button
                 type="button"
                 onClick={exportToJson}
-                className="bg-surface border border-line-strong rounded-lg text-accent text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="bg-surface border border-line-strong rounded-card text-accent text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
                 {t('history.export_json')}
               </button>
-              <label className="bg-surface border border-line-strong rounded-lg text-fg-muted text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]">
+              <label className="bg-surface border border-line-strong rounded-card text-fg-muted text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]">
                 {t('history.import_btn')}
                 <input
                   type="file"
@@ -907,7 +907,7 @@ export function HistoryPage() {
                   className="hidden"
                 />
               </label>
-              <label className="bg-surface border border-line-strong rounded-lg text-fg-muted text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]">
+              <label className="bg-surface border border-line-strong rounded-card text-fg-muted text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]">
                 {t('history.import_json')}
                 <input
                   type="file"
@@ -958,7 +958,7 @@ export function HistoryPage() {
                     item.kind === 'cardio' ? (
                       <div
                         key={item.data.id}
-                        className="rounded-lg p-3.5 flex items-center justify-between bg-surface border border-line shadow-card transition-transform active:scale-[0.99]"
+                        className="rounded-card p-3.5 flex items-center justify-between bg-surface border border-line shadow-card transition-transform active:scale-[0.99]"
                       >
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0 bg-error/10 text-error">
@@ -985,7 +985,7 @@ export function HistoryPage() {
                         <button
                           type="button"
                           onClick={() => void deleteCardioSession(item.data.id, user?.id ?? null)}
-                          className="p-2 rounded-lg ml-2 flex-shrink-0 text-fg-subtle"
+                          className="p-2 rounded-card ml-2 flex-shrink-0 text-fg-subtle"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -993,7 +993,7 @@ export function HistoryPage() {
                     ) : (
                       <div
                         key={item.data.id}
-                        className="rounded-lg overflow-hidden bg-surface border border-line shadow-card"
+                        className="rounded-card overflow-hidden bg-surface border border-line shadow-card"
                       >
                         <div className="px-3 py-2.5">
                           <div className="flex justify-between items-center mb-2">
@@ -1086,7 +1086,7 @@ export function HistoryPage() {
                 key={session.id}
                 onDelete={() => void deleteCardioSession(session.id, user?.id ?? null)}
               >
-                <div className="p-4 flex items-center justify-between bg-surface border border-line rounded-lg">
+                <div className="p-4 flex items-center justify-between bg-surface border border-line rounded-card">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0 bg-surface-2">
                       <span className="text-accent">
@@ -1120,7 +1120,7 @@ export function HistoryPage() {
                   <button
                     type="button"
                     onClick={() => void deleteCardioSession(session.id, user?.id ?? null)}
-                    className="p-2 rounded-lg ml-2 flex-shrink-0 text-fg-subtle"
+                    className="p-2 rounded-card ml-2 flex-shrink-0 text-fg-subtle"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -1130,11 +1130,11 @@ export function HistoryPage() {
           )}
         </div>
       ) : view === 'sets' ? (
-        <div className="rounded-lg overflow-hidden bg-surface border border-line-strong shadow-card">
+        <div className="rounded-card overflow-hidden bg-surface border border-line-strong shadow-card">
           {loadingSets ? (
             <div className="p-3 space-y-2">
               {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="skeleton h-10 rounded-lg" />
+                <div key={i} className="skeleton h-10 rounded-card" />
               ))}
             </div>
           ) : filteredSets.length === 0 ? (
@@ -1193,7 +1193,7 @@ export function HistoryPage() {
             groupedWorkouts.map((group, gi) => (
               <div
                 key={gi}
-                className="rounded-lg overflow-hidden bg-surface border border-line-strong shadow-card"
+                className="rounded-card overflow-hidden bg-surface border border-line-strong shadow-card"
               >
                 {/* Cabecera fecha/volumen */}
                 <div className="px-3 py-2 flex justify-between items-center bg-surface-2 border-b border-line">

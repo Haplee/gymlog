@@ -212,7 +212,7 @@ export function ExerciseCatalog() {
           {search.trim().length >= 2 ? t('library.catalog_empty') : t('library.catalog_hint')}
         </div>
       ) : (
-        <div className="rounded-lg overflow-hidden bg-surface border border-line">
+        <div className="rounded-card overflow-hidden bg-surface border border-line">
           {results.map((ex: CatalogExercise) => {
             const expanded = expandedId === ex.id;
             return (

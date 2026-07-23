@@ -55,7 +55,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
             'w-full text-fg placeholder:text-fg-subtle',
             variant === 'underline'
               ? 'bg-transparent border-0 border-b border-line-strong rounded-none px-1 py-3 text-base'
-              : 'bg-surface-2 border border-line-strong rounded-sm px-4 py-3.5 text-base',
+              : 'bg-surface-2 border border-line-strong rounded-pill px-5 py-3.5 text-base',
             'transition-all duration-150',
             'focus:outline-none focus:border-accent',
             'disabled:opacity-50 disabled:cursor-not-allowed',

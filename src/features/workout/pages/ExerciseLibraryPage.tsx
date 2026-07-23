@@ -152,7 +152,7 @@ export function ExerciseLibraryPage() {
           {filtered.length === 0 ? (
             <div className="text-center py-12 text-sm text-fg-subtle">{t('library.empty')}</div>
           ) : (
-            <div className="rounded-lg overflow-hidden bg-surface border border-line">
+            <div className="rounded-card overflow-hidden bg-surface border border-line">
               {filtered.map((ex) => {
                 const expanded = expandedId === ex.id;
                 return (

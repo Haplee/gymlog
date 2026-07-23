@@ -352,20 +352,20 @@ function AppRoutes() {
     }
   }, [initialized, user]);
 
-  // Primera vez en este dispositivo: enseñamos la guía de uso antes que nada.
-  // Se marca como vista al pulsar "Entendido" o al entrar en ella desde Ajustes,
-  // así que esto solo dispara una vez y no molesta al usuario habitual.
-  useEffect(() => {
-    if (!initialized || !user || guideSeen || showOnboarding) return;
-    if (window.location.pathname === '/') navigate('/guide', { replace: true });
-  }, [initialized, user, guideSeen, showOnboarding, navigate]);
-
   if (!initialized || loading) return <Loading />;
 
   return (
     <Suspense fallback={<Loading />}>
       {showOnboarding && user && (
-        <OnboardingModal user={user} onComplete={() => setShowOnboarding(false)} />
+        <OnboardingModal
+          user={user}
+          onComplete={() => {
+            setShowOnboarding(false);
+            // Solo tras crear el perfil: una cuenta ya existente no ve la guía
+            // al entrar, la tiene en Ajustes cuando le apetezca.
+            if (!guideSeen) navigate('/guide');
+          }}
+        />
       )}
       <AnimatedRoutes />
     </Suspense>

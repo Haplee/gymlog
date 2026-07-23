@@ -367,7 +367,7 @@ export function SettingsPage() {
 
       <div className="space-y-6 pb-20">
         {/* Perfil */}
-        <div className="rounded-lg p-4 bg-surface border border-line">
+        <div className="rounded-card p-4 bg-surface border border-line">
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -499,7 +499,7 @@ export function SettingsPage() {
         {/* Preferencias */}
         <section>
           <SectionHeader title={t('settings.preferences')} />
-          <div className="rounded-lg bg-surface border border-line overflow-hidden">
+          <div className="rounded-card bg-surface border border-line overflow-hidden">
             <SettingRow
               label={t('settings.language')}
               control={
@@ -574,7 +574,7 @@ export function SettingsPage() {
         {/* Entrenamiento */}
         <section>
           <SectionHeader title={t('settings.training')} />
-          <div className="rounded-lg bg-surface border border-line overflow-hidden">
+          <div className="rounded-card bg-surface border border-line overflow-hidden">
             <SettingRow
               label={t('settings.training_reminders')}
               desc={t('settings.training_reminders_desc')}
@@ -645,7 +645,7 @@ export function SettingsPage() {
         {/* Notificaciones */}
         <section>
           <SectionHeader title={t('settings.notifications')} />
-          <div className="rounded-lg bg-surface border border-line overflow-hidden">
+          <div className="rounded-card bg-surface border border-line overflow-hidden">
             <SettingRow
               label={t('settings.notifications')}
               desc={t('settings.notifications_desc')}
@@ -695,7 +695,7 @@ export function SettingsPage() {
         {/* Datos */}
         <section>
           <SectionHeader title={t('settings.data')} />
-          <div className="rounded-lg bg-surface border border-line overflow-hidden">
+          <div className="rounded-card bg-surface border border-line overflow-hidden">
             <button
               type="button"
               onClick={() => navigate('/wearables')}
@@ -718,7 +718,7 @@ export function SettingsPage() {
         {/* Cuenta */}
         <section>
           <SectionHeader title={t('settings.account')} />
-          <div className="rounded-lg bg-surface border border-line overflow-hidden">
+          <div className="rounded-card bg-surface border border-line overflow-hidden">
             <button
               type="button"
               onClick={() => signOut()}

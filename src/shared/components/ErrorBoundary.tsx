@@ -41,7 +41,7 @@ export class ErrorBoundary extends Component<Props, State> {
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="px-4 py-2 rounded-lg bg-accent text-accent-fg font-medium"
+              className="px-4 py-2 rounded-card bg-accent text-accent-fg font-medium"
             >
               Recargar
             </button>

@@ -19,10 +19,12 @@ const variantStyles: Record<Variant, string> = {
   icon: 'bg-transparent text-fg-subtle hover:bg-hover aspect-square',
 };
 
+// El kit FitBody usa botones completamente redondeados (pill) en todas las
+// pantallas; el icon-button se queda circular por la misma regla.
 const sizeStyles: Record<Size, string> = {
-  sm: 'h-9 px-3 text-sm rounded-sm',
-  md: 'h-11 px-5 text-base rounded-sm',
-  lg: 'h-12 px-6 text-base rounded-sm',
+  sm: 'h-9 px-4 text-sm rounded-pill',
+  md: 'h-11 px-6 text-base rounded-pill',
+  lg: 'h-12 px-7 text-base rounded-pill',
 };
 
 const ButtonComponent = ({

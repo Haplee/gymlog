@@ -66,7 +66,7 @@ const MuscleDistributionChart = lazy(() =>
 );
 
 function ChartFallback() {
-  return <div className="h-56 skeleton rounded-lg" aria-hidden="true" />;
+  return <div className="h-56 skeleton rounded-card" aria-hidden="true" />;
 }
 function BigKPI({
   value,
@@ -144,7 +144,7 @@ function TipCard({ tip, index }: { tip: Tip; index: number }) {
       initial={{ opacity: 0, x: -12 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: 0.05 * index, type: 'spring', stiffness: 280, damping: 22 }}
-      className="flex gap-3 p-3.5 rounded-lg"
+      className="flex gap-3 p-3.5 rounded-card"
       style={{ backgroundColor: config.bg, border: `1px solid ${config.border}` }}
     >
       <Icon className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: config.color }} />
@@ -390,14 +390,14 @@ export function UserStatsPage() {
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <div className="skeleton w-11 h-11 rounded-md" />
-            <div className="skeleton h-5 w-40 rounded-lg" />
+            <div className="skeleton h-5 w-40 rounded-card" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="skeleton h-28 rounded-card" />
             ))}
           </div>
-          <div className="skeleton h-56 rounded-lg" />
+          <div className="skeleton h-56 rounded-card" />
         </div>
       </Layout>
     );
@@ -477,7 +477,7 @@ export function UserStatsPage() {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 + i * 0.04 }}
-                className="rounded-lg p-3 text-center bg-surface border border-line shadow-card"
+                className="rounded-card p-3 text-center bg-surface border border-line shadow-card"
               >
                 <div
                   className="font-mono font-bold text-xl tabular-nums"
@@ -495,7 +495,7 @@ export function UserStatsPage() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="rounded-lg p-3.5 flex items-center justify-between bg-surface border border-line"
+              className="rounded-card p-3.5 flex items-center justify-between bg-surface border border-line"
             >
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4" style={{ color: 'var(--accent-sky)' }} />
@@ -533,7 +533,7 @@ export function UserStatsPage() {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.03 * i }}
-                  className={`rounded-lg p-3 flex items-center gap-3 border shadow-card ${
+                  className={`rounded-card p-3 flex items-center gap-3 border shadow-card ${
                     a.unlocked
                       ? 'bg-surface border-line-accent'
                       : 'bg-surface border-line opacity-60'

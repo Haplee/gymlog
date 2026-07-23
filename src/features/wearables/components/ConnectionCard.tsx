@@ -31,7 +31,7 @@ export function ConnectionCard({
   hint,
 }: ConnectionCardProps) {
   return (
-    <div className="rounded-lg p-4 scale-in bg-surface border border-line-strong shadow-card">
+    <div className="rounded-card p-4 scale-in bg-surface border border-line-strong shadow-card">
       <div className="flex items-start gap-3">
         <div className="shrink-0 text-accent mt-0.5">{icon}</div>
         <div className="flex-1 min-w-0">

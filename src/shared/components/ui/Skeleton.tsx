@@ -46,7 +46,7 @@ export const ExerciseListSkeleton = memo(function ExerciseListSkeleton() {
   return (
     <div className="space-y-2 p-4">
       {Array.from({ length: 6 }, (_, i) => (
-        <div key={i} className="skeleton h-12 rounded-lg" style={{ opacity: 1 - i * 0.12 }} />
+        <div key={i} className="skeleton h-12 rounded-card" style={{ opacity: 1 - i * 0.12 }} />
       ))}
     </div>
   );
@@ -74,7 +74,7 @@ export const HistoryListSkeleton = memo(function HistoryListSkeleton() {
   return (
     <div className="space-y-2">
       {Array.from({ length: 5 }, (_, i) => (
-        <div key={i} className="flex items-center gap-3 p-3 rounded-lg skeleton">
+        <div key={i} className="flex items-center gap-3 p-3 rounded-card skeleton">
           <div className="skeleton w-8 h-8 rounded-full" />
           <div className="flex-1 space-y-2">
             <div className="skeleton h-4 w-1/2 rounded-md" />
@@ -91,7 +91,7 @@ export const PageSkeleton = memo(function PageSkeleton() {
     <div className="p-4 space-y-4 min-h-[80vh] flex flex-col">
       <div className="flex flex-col items-center justify-center flex-1 py-10 opacity-40">
         <GymLogLogo size="lg" variant="icon" className="animate-pulse mb-4" />
-        <div className="skeleton h-6 w-32 rounded-lg" />
+        <div className="skeleton h-6 w-32 rounded-card" />
       </div>
       <div className="space-y-4">
         <Skeleton card />

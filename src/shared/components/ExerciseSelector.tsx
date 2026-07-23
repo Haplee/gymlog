@@ -298,7 +298,7 @@ export function ExerciseSelector({
           aria-label="Buscar ejercicio"
           aria-expanded={isFocused}
           aria-controls="exercise-list"
-          className="w-full pl-10 pr-10 py-2.5 rounded-lg text-sm outline-none transition-all bg-surface-2 border border-line-strong text-fg"
+          className="w-full pl-10 pr-10 py-2.5 rounded-card text-sm outline-none transition-all bg-surface-2 border border-line-strong text-fg"
         />
         {query && (
           <button
@@ -322,7 +322,7 @@ export function ExerciseSelector({
             transition={{ duration: 0.15 }}
             id="exercise-list"
             role="listbox"
-            className="absolute z-50 top-full left-0 right-0 mt-1.5 max-h-[26rem] overflow-y-auto rounded-lg"
+            className="absolute z-50 top-full left-0 right-0 mt-1.5 max-h-[26rem] overflow-y-auto rounded-card"
             style={dropdownStyle}
             onMouseDown={(e) => {
               const tag = (e.target as HTMLElement).tagName;

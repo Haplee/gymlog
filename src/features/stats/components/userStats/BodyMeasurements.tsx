@@ -96,7 +96,7 @@ export function BodyMeasurements({ userId }: { userId: string }) {
               placeholder="0"
               value={weightInput}
               onChange={(e) => setWeightInput(e.target.value.replace(/[^\d.,]/g, ''))}
-              className="w-full mt-1 rounded-lg text-base px-3 py-2.5 outline-none text-center text-fg bg-surface-2 border border-line-strong"
+              className="w-full mt-1 rounded-card text-base px-3 py-2.5 outline-none text-center text-fg bg-surface-2 border border-line-strong"
             />
           </div>
           <div className="flex-1">
@@ -109,7 +109,7 @@ export function BodyMeasurements({ userId }: { userId: string }) {
               placeholder="0"
               value={bodyFatInput}
               onChange={(e) => setBodyFatInput(e.target.value.replace(/[^\d.,]/g, ''))}
-              className="w-full mt-1 rounded-lg text-base px-3 py-2.5 outline-none text-center text-fg bg-surface-2 border border-line-strong"
+              className="w-full mt-1 rounded-card text-base px-3 py-2.5 outline-none text-center text-fg bg-surface-2 border border-line-strong"
             />
           </div>
           <button
@@ -117,7 +117,7 @@ export function BodyMeasurements({ userId }: { userId: string }) {
             onClick={handleAdd}
             disabled={addMutation.isPending}
             aria-label={t('measurements.add')}
-            className="self-end w-11 h-11 flex items-center justify-center rounded-lg bg-accent text-accent-fg disabled:opacity-50"
+            className="self-end w-11 h-11 flex items-center justify-center rounded-card bg-accent text-accent-fg disabled:opacity-50"
           >
             <Plus className="w-5 h-5" />
           </button>
@@ -186,7 +186,7 @@ export function BodyMeasurements({ userId }: { userId: string }) {
                     type="button"
                     onClick={() => deleteMutation.mutate(entry.id)}
                     aria-label={t('common.delete')}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg text-fg-subtle"
+                    className="w-8 h-8 flex items-center justify-center rounded-card text-fg-subtle"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>

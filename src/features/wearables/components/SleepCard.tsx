@@ -20,7 +20,7 @@ export function SleepCard({ sleep, daily }: SleepCardProps) {
   const { i18n } = useTranslation();
 
   return (
-    <div className="rounded-lg p-4 scale-in bg-surface border border-line-strong shadow-card">
+    <div className="rounded-card p-4 scale-in bg-surface border border-line-strong shadow-card">
       <div className="grid grid-cols-3 gap-3">
         <Metric
           icon={<Moon size={18} />}

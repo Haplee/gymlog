@@ -73,7 +73,7 @@ export function RoutineSession({ userId, exercises }: Props) {
   };
 
   return (
-    <div className="rounded-lg p-4 bg-surface border border-line-accent shadow-card">
+    <div className="rounded-card p-4 bg-surface border border-line-accent shadow-card">
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="min-w-0">
           <div className="label-caps text-accent">{t('routine.session_in_progress')}</div>
@@ -174,7 +174,7 @@ export function RoutineSession({ userId, exercises }: Props) {
 
       {confirmDiscard && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-          <div className="rounded-lg p-4 w-full max-w-sm bg-surface border border-line">
+          <div className="rounded-card p-4 w-full max-w-sm bg-surface border border-line">
             <div className="text-sm text-fg mb-4">{t('routine.session_discard_confirm')}</div>
             <div className="flex gap-2">
               <button

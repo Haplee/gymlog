@@ -25,14 +25,14 @@ export function ResumeWorkoutBanner({
         <button
           type="button"
           onClick={onContinue}
-          className="flex-1 py-2 rounded-lg bg-accent text-accent-fg text-xs font-bold"
+          className="flex-1 py-2 rounded-card bg-accent text-accent-fg text-xs font-bold"
         >
           {t('workout.continue')}
         </button>
         <button
           type="button"
           onClick={onDiscard}
-          className="flex-1 py-2 rounded-lg border border-line-strong text-fg-muted text-xs font-medium"
+          className="flex-1 py-2 rounded-card border border-line-strong text-fg-muted text-xs font-medium"
         >
           {t('workout.discard')}
         </button>
