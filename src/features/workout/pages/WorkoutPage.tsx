@@ -733,6 +733,7 @@ export function WorkoutPage() {
             exerciseId={selectedExercise.id}
             exerciseName={selectedExercise.name}
             loadType={(selectedExercise.load_type as LoadType | undefined) ?? 'external'}
+            equipment={selectedExercise.equipment}
           />
         )}
 

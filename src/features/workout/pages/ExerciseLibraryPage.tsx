@@ -9,6 +9,7 @@ import { Layout } from '@app/components/Layout';
 import { fetchExerciseLibrary, type LibraryExercise } from '@shared/api/queries';
 import { Chip, SegmentedControl } from '@shared/components/ui';
 import { ExerciseCatalog } from '@features/workout/components/ExerciseCatalog';
+import { EquipmentIcon } from '@shared/components/icons/EquipmentIcons';
 
 function ExerciseDetail({ ex }: { ex: LibraryExercise }) {
   const { t } = useTranslation();
@@ -29,7 +30,8 @@ function ExerciseDetail({ ex }: { ex: LibraryExercise }) {
           </span>
         )}
         {ex.equipment && (
-          <span className="label-caps px-2 py-1 rounded-sm bg-surface-2 text-fg-muted">
+          <span className="label-caps px-2 py-1 rounded-sm bg-surface-2 text-fg-muted inline-flex items-center gap-1">
+            <EquipmentIcon equipment={ex.equipment} className="w-3.5 h-3.5" />
             {t('library.equipment')}: {ex.equipment}
           </span>
         )}

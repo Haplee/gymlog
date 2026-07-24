@@ -148,7 +148,7 @@ export const fetchExercises = async (userId: string | undefined): Promise<Exerci
     devWarn('[fetchExercises] RPC failed, falling back:', error.message);
     const { data: rows, error: fbErr } = await supabase
       .from('exercises')
-      .select('id, name, muscle_group, user_id, created_at')
+      .select('id, name, muscle_group, user_id, created_at, equipment')
       .or(`user_id.eq.${userId},user_id.is.null`)
       .order('name');
     if (fbErr) throw fbErr;

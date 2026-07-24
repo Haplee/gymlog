@@ -1,19 +1,14 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Dumbbell, PersonStanding, Weight } from 'lucide-react';
+import { PersonStanding, Weight } from 'lucide-react';
 import { updateExerciseLoadType } from '@shared/api/exerciseMutations';
 import { LOAD_TYPES, type LoadType } from '@shared/lib/loadType';
 import { impact, ImpactStyle } from '@shared/lib/haptics';
 import { devError } from '@shared/lib/devtools';
+import { EquipmentIcon } from '@shared/components/icons/EquipmentIcons';
 
 const CONFIRMED_KEY = 'gymlog-loadtype-confirmed';
-
-const ICONS: Record<LoadType, typeof Dumbbell> = {
-  external: Dumbbell,
-  bodyweight: PersonStanding,
-  bodyweight_loaded: Weight,
-};
 
 function readConfirmed(): Set<string> {
   try {
@@ -42,10 +37,12 @@ export function ExerciseLoadType({
   exerciseId,
   exerciseName,
   loadType,
+  equipment,
 }: {
   exerciseId: string;
   exerciseName: string;
   loadType: LoadType;
+  equipment?: string | null;
 }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -79,8 +76,8 @@ export function ExerciseLoadType({
       </div>
       <div className="flex gap-1.5" role="group" aria-label={t('workout.load_type_label')}>
         {LOAD_TYPES.map((value) => {
-          const Icon = ICONS[value];
           const active = value === loadType;
+          const BodyweightIcon = value === 'bodyweight' ? PersonStanding : Weight;
           return (
             <button
               key={value}
@@ -93,7 +90,11 @@ export function ExerciseLoadType({
                   : 'bg-surface border-line text-fg-muted'
               }`}
             >
-              <Icon className="w-4 h-4" aria-hidden="true" />
+              {value === 'external' ? (
+                <EquipmentIcon equipment={equipment} className="w-4 h-4" />
+              ) : (
+                <BodyweightIcon className="w-4 h-4" aria-hidden="true" />
+              )}
               {t(`workout.load_type_${value}`)}
             </button>
           );
