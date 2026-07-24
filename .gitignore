@@ -68,3 +68,7 @@ GEMINI.md
 tools/lift-analysis/.venv/
 tools/lift-analysis/out/
 android/manifest-aliases.generated.xml
+
+# Proyecto nativo iOS: se regenera con `npx cap add ios` (local o en CI,
+# ver ios-custom/README.md) — no se versiona, a diferencia de android/.
+ios/
