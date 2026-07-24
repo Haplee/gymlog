@@ -9,6 +9,7 @@ import { Layout } from '@app/components/Layout';
 import { fetchExerciseLibrary, type LibraryExercise } from '@shared/api/queries';
 import { Chip, SegmentedControl } from '@shared/components/ui';
 import { ExerciseCatalog } from '@features/workout/components/ExerciseCatalog';
+import { EquipmentIcon } from '@shared/components/icons/EquipmentIcons';
 
 function ExerciseDetail({ ex }: { ex: LibraryExercise }) {
   const { t } = useTranslation();
@@ -29,7 +30,8 @@ function ExerciseDetail({ ex }: { ex: LibraryExercise }) {
           </span>
         )}
         {ex.equipment && (
-          <span className="label-caps px-2 py-1 rounded-sm bg-surface-2 text-fg-muted">
+          <span className="label-caps px-2 py-1 rounded-sm bg-surface-2 text-fg-muted inline-flex items-center gap-1">
+            <EquipmentIcon equipment={ex.equipment} className="w-3.5 h-3.5" />
             {t('library.equipment')}: {ex.equipment}
           </span>
         )}
@@ -99,11 +101,11 @@ export function ExerciseLibraryPage() {
           type="button"
           onClick={() => navigate(-1)}
           aria-label={t('common.back')}
-          className="w-11 h-11 rounded-sm flex items-center justify-center bg-surface border border-line hover:bg-surface-2"
+          className="w-11 h-11 rounded-full flex items-center justify-center bg-surface border border-line hover:bg-surface-2"
         >
           <ArrowLeft className="w-4 h-4 text-fg-muted" />
         </button>
-        <h1 className="text-headline font-display text-fg text-balance">{t('library.title')}</h1>
+        {/* El rótulo de la pantalla lo pone la cabecera del Layout. */}
       </m.div>
 
       <div className="mb-4">
@@ -152,7 +154,7 @@ export function ExerciseLibraryPage() {
           {filtered.length === 0 ? (
             <div className="text-center py-12 text-sm text-fg-subtle">{t('library.empty')}</div>
           ) : (
-            <div className="rounded-lg overflow-hidden bg-surface border border-line">
+            <div className="rounded-card overflow-hidden bg-surface border border-line">
               {filtered.map((ex) => {
                 const expanded = expandedId === ex.id;
                 return (

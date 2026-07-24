@@ -185,8 +185,6 @@ export function RoutinePage() {
 
   return (
     <Layout>
-      <h1 className="text-headline font-display text-fg mb-4 text-balance">{t('routine.title')}</h1>
-
       {sessionActive && user ? (
         <RoutineSession userId={user.id} exercises={exercises} />
       ) : !activeRoutineId ? (
@@ -206,10 +204,10 @@ export function RoutinePage() {
                     handleSelectRoutine(routine.id);
                   }
                 }}
-                className="p-4 rounded-lg cursor-pointer transition-all active:scale-[0.99] bg-surface border border-line"
+                className="p-4 rounded-card cursor-pointer transition-all active:scale-[0.99] bg-surface border border-line"
               >
                 {!routine.isCustom && (
-                  <span className="label-caps inline-block px-1.5 py-0.5 mb-2 rounded-sm bg-surface-3 text-fg-muted">
+                  <span className="label-caps inline-block px-1.5 py-0.5 mb-2 rounded-pill bg-surface-3 text-fg-muted">
                     {t('routine.predefined')}
                   </span>
                 )}
@@ -222,7 +220,7 @@ export function RoutinePage() {
                     <button
                       type="button"
                       onClick={(e) => handleUseAsTemplate(e, routine.id)}
-                      className="flex-shrink-0 min-h-11 label-caps px-3 py-1.5 rounded-sm bg-transparent text-accent border border-line-accent active:scale-[0.98] transition-transform"
+                      className="flex-shrink-0 min-h-11 label-caps px-3 py-1.5 rounded-pill bg-surface-2 text-accent active:scale-[0.98] transition-transform"
                     >
                       {t('routine.use_template')}
                     </button>
@@ -235,7 +233,7 @@ export function RoutinePage() {
           <button
             type="button"
             onClick={() => setShowCreate(true)}
-            className="w-full mt-5 min-h-12 rounded-sm text-sm font-display font-bold uppercase tracking-[0.12em] bg-accent text-accent-fg shadow-btn-accent active:scale-[0.98] transition-transform"
+            className="w-full mt-5 min-h-12 rounded-pill text-sm font-display font-bold uppercase tracking-[0.12em] bg-accent text-accent-fg shadow-btn-accent active:scale-[0.98] transition-transform"
           >
             {t('routine.create_custom')}
           </button>
@@ -250,7 +248,7 @@ export function RoutinePage() {
             <button
               type="button"
               onClick={() => setActiveRoutine(null)}
-              className="label-caps min-h-11 px-3 py-1.5 rounded-sm bg-surface-2 border border-line text-fg-muted"
+              className="label-caps min-h-11 px-3 py-1.5 rounded-pill bg-surface-2 text-fg-muted"
             >
               {t('routine.change')}
             </button>
@@ -263,7 +261,10 @@ export function RoutinePage() {
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {todayRoutine.exercises.map((ex) => (
-                  <span key={ex.name} className="text-xs px-2 py-1 rounded-sm bg-surface-2 text-fg">
+                  <span
+                    key={ex.name}
+                    className="text-xs px-2 py-1 rounded-pill bg-surface-2 text-fg"
+                  >
                     {ex.name}
                   </span>
                 ))}
@@ -284,14 +285,14 @@ export function RoutinePage() {
             ))}
           </div>
 
-          <div className="rounded-lg p-3 bg-surface border border-line">
+          <div className="rounded-card p-3 bg-surface border border-line">
             <div className="dotted-separator flex justify-between items-center pb-2 mb-3">
               <div className="label-caps text-fg-subtle">{dayLabels[selectedDay]}</div>
               {activeRoutine?.isCustom && (
                 <button
                   type="button"
                   onClick={() => setShowExercisePicker(true)}
-                  className="min-h-11 text-xs px-2.5 py-1.5 rounded-sm bg-surface-2 text-accent border border-line"
+                  className="min-h-11 text-xs px-2.5 py-1.5 rounded-pill bg-surface-2 text-accent"
                 >
                   {t('routine.add_exercise')}
                 </button>
@@ -337,7 +338,7 @@ export function RoutinePage() {
               onClick={() =>
                 startSession(activeRoutine, selectedDay, activeRoutine.days[selectedDay])
               }
-              className="w-full mt-4 min-h-12 rounded-sm text-sm font-display font-bold uppercase tracking-[0.12em] bg-accent text-accent-fg shadow-btn-accent active:scale-[0.98] transition-transform"
+              className="w-full mt-4 min-h-12 rounded-pill text-sm font-display font-bold uppercase tracking-[0.12em] bg-accent text-accent-fg shadow-btn-accent active:scale-[0.98] transition-transform"
             >
               {t('routine.start_session')}
             </button>
@@ -357,7 +358,7 @@ export function RoutinePage() {
 
       {showCreate && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-          <div className="rounded-lg p-4 w-full max-w-sm bg-surface border border-line">
+          <div className="rounded-card p-4 w-full max-w-sm bg-surface border border-line">
             <div className="text-data font-display font-bold mb-4 text-fg">
               {t('routine.new_routine')}
             </div>
@@ -382,7 +383,7 @@ export function RoutinePage() {
               <button
                 type="button"
                 onClick={() => setShowCreate(false)}
-                className="flex-1 min-h-11 rounded-sm text-sm bg-surface-2 text-fg-muted"
+                className="flex-1 min-h-11 rounded-pill text-sm bg-surface-2 text-fg-muted"
               >
                 {t('common.cancel')}
               </button>

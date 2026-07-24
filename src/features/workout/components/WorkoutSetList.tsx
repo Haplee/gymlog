@@ -79,7 +79,7 @@ export function WorkoutSetList({
                   }}
                   aria-pressed={s.isWarmup}
                   aria-label={`Serie ${i + 1}: calentamiento`}
-                  className={`w-9 h-12 flex-shrink-0 rounded-lg text-sm font-bold flex items-center justify-center transition-colors border ${
+                  className={`w-9 h-12 flex-shrink-0 rounded-card text-sm font-bold flex items-center justify-center transition-colors border ${
                     s.isWarmup
                       ? 'bg-warning border-solid border-warning text-fg-inverse'
                       : 'bg-transparent border-dashed border-fg-subtle text-fg-subtle'
@@ -89,7 +89,7 @@ export function WorkoutSetList({
                 </button>
               )}
               <div
-                className={`w-7 h-12 flex-shrink-0 flex items-center justify-center text-base font-mono font-semibold tabular-nums rounded-lg ${
+                className={`w-7 h-12 flex-shrink-0 flex items-center justify-center text-base font-mono font-semibold tabular-nums rounded-card ${
                   isNewPR ? 'bg-accent text-accent-fg' : 'bg-transparent text-fg-subtle'
                 }`}
               >
@@ -200,7 +200,7 @@ export function WorkoutSetList({
               <button
                 type="button"
                 onClick={() => setExpandedNoteIdx(expandedNoteIdx === i ? null : i)}
-                className={`w-9 h-12 flex-shrink-0 flex items-center justify-center bg-transparent border rounded-lg cursor-pointer ${
+                className={`w-9 h-12 flex-shrink-0 flex items-center justify-center bg-transparent border rounded-card cursor-pointer ${
                   s.notes || s.rpe || (s.setType && s.setType !== 'normal')
                     ? 'border-accent text-accent'
                     : 'border-line text-fg-subtle'
@@ -212,7 +212,7 @@ export function WorkoutSetList({
               <button
                 type="button"
                 onClick={() => removeSet(i)}
-                className="w-9 h-12 flex-shrink-0 flex items-center justify-center bg-transparent border rounded-lg cursor-pointer border-line text-fg-subtle"
+                className="w-9 h-12 flex-shrink-0 flex items-center justify-center bg-transparent border rounded-card cursor-pointer border-line text-fg-subtle"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -224,7 +224,7 @@ export function WorkoutSetList({
                   placeholder="Nota de la serie..."
                   value={s.notes ?? ''}
                   onChange={(e) => updateSet(i, { notes: e.target.value.slice(0, 500) })}
-                  className="w-full rounded-lg text-xs px-2 py-1.5 outline-none bg-surface border border-line text-fg"
+                  className="w-full rounded-card text-xs px-2 py-1.5 outline-none bg-surface border border-line text-fg"
                 />
                 <div>
                   <div className="text-2xs uppercase font-semibold mb-1 text-fg-subtle">
@@ -242,7 +242,7 @@ export function WorkoutSetList({
                             updateSet(i, { rpe: active ? '' : value });
                           }}
                           aria-pressed={active}
-                          className={`min-w-11 min-h-9 px-2 rounded-lg text-sm font-medium border ${
+                          className={`min-w-11 min-h-9 px-2 rounded-card text-sm font-medium border ${
                             active
                               ? 'bg-accent border-accent text-accent-fg'
                               : 'bg-surface border-line text-fg-muted'
@@ -270,7 +270,7 @@ export function WorkoutSetList({
                             updateSet(i, { setType: value });
                           }}
                           aria-pressed={active}
-                          className={`min-h-9 px-2.5 rounded-lg text-xs font-medium border ${
+                          className={`min-h-9 px-2.5 rounded-card text-xs font-medium border ${
                             active
                               ? 'bg-accent border-accent text-accent-fg'
                               : 'bg-surface border-line text-fg-muted'

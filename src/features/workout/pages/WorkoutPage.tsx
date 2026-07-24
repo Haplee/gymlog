@@ -33,6 +33,10 @@ import { WorkoutSessionStats } from '@features/workout/components/WorkoutSession
 import { LastSessionCard } from '@features/workout/components/LastSessionCard';
 import { WorkoutSetList } from '@features/workout/components/WorkoutSetList';
 import { PlatesCalculator } from '@features/workout/components/PlatesCalculator';
+import {
+  WorkoutSavedCard,
+  type WorkoutSummary,
+} from '@features/workout/components/WorkoutSavedCard';
 import type { ExerciseNote, PersonalRecord } from '@shared/lib/types';
 import { Trash2, Plus, StickyNote, Calculator, BookOpen, Trophy, Repeat, Star } from 'lucide-react';
 import { z } from 'zod';
@@ -132,6 +136,7 @@ export function WorkoutPage() {
   const [setErrors, setSetErrors] = useState<Record<number, string>>({});
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
   const [showPlates, setShowPlates] = useState(false);
+  const [completed, setCompleted] = useState<WorkoutSummary | null>(null);
   const [showResumeBanner, setShowResumeBanner] = useState(() => {
     if (startedAt && sets.length > 0) {
       return Date.now() - new Date(startedAt).getTime() < 12 * 60 * 60 * 1000;
@@ -340,6 +345,13 @@ export function WorkoutPage() {
       return;
     }
 
+    // saveWorkout limpia la sesión: hay que quedarse con el resumen antes.
+    const summaryMinutes = startedAt
+      ? Math.max(1, Math.round((Date.now() - new Date(startedAt).getTime()) / 60000))
+      : 0;
+    const summarySets = validSetCount;
+    const summaryVolume = `${convert(sessionVolume).toFixed(0)} ${weightUnit}`;
+
     setSaving(true);
     const result = await saveWorkout(user.id);
     setSaving(false);
@@ -383,12 +395,21 @@ export function WorkoutPage() {
         }
       });
 
+      let prLabel: string | undefined;
       if (max1RM > 0) {
         celebrate();
         void notificationHaptic(NotificationType.Success);
         const exerciseName = selectedExercise?.name || customExerciseName || 'Ejercicio';
-        setMessage(`Nuevo PR: ${exerciseName} - ${convert(max1RM).toFixed(1)} ${weightUnit}`);
+        prLabel = `Nuevo PR: ${exerciseName} - ${convert(max1RM).toFixed(1)} ${weightUnit}`;
+        setMessage(prLabel);
       }
+
+      setCompleted({
+        minutes: summaryMinutes,
+        volume: summaryVolume,
+        sets: summarySets,
+        prLabel,
+      });
 
       setTimeout(() => setMessage(''), 2500);
       setTimeout(() => setSaveSuccess(false), 300);
@@ -493,6 +514,10 @@ export function WorkoutPage() {
 
   return (
     <Layout>
+      <AnimatePresence>
+        {completed && <WorkoutSavedCard summary={completed} onDismiss={() => setCompleted(null)} />}
+      </AnimatePresence>
+
       <WeeklyWeightPrompt />
       <AnimatePresence>
         {showResumeBanner && startedAt && (
@@ -520,20 +545,29 @@ export function WorkoutPage() {
           initial="hidden"
           animate="show"
           transition={{ duration: 0.25, ease: 'easeOut' }}
-          className="mb-3 p-3 rounded-lg bg-surface border border-line shadow-card"
+          className="mb-3 rounded-card bg-accent p-4 shadow-fab"
         >
-          <div className="text-sm font-medium mb-1 text-accent">{todayRoutine.name}</div>
-          <div className="flex flex-wrap gap-1.5">
+          {/* Tarjeta destacada del kit ("Training Of The Day"): bloque relleno
+              del acento con etiqueta, título y los ejercicios como chips. */}
+          <span className="label-caps inline-block rounded-pill bg-accent-fg/15 px-2.5 py-1 text-accent-fg">
+            {t('routine.today')}
+          </span>
+          <div className="mt-2 font-display text-lg font-bold text-accent-fg">
+            {todayRoutine.name}
+          </div>
+          <div className="mt-2.5 flex flex-wrap gap-1.5">
             {todayRoutine.exercises.slice(0, 4).map((ex) => (
               <span
                 key={ex.name}
-                className="text-xs px-2 py-1 rounded-sm bg-surface-2 text-fg-muted"
+                className="rounded-pill bg-accent-fg/10 px-2.5 py-1 text-xs font-medium text-accent-fg"
               >
                 {ex.name}
               </span>
             ))}
             {todayRoutine.exercises.length > 4 && (
-              <span className="text-xs text-fg-subtle">+{todayRoutine.exercises.length - 4}</span>
+              <span className="px-1 py-1 text-xs text-accent-fg/85">
+                +{todayRoutine.exercises.length - 4}
+              </span>
             )}
           </div>
         </m.div>
@@ -544,7 +578,7 @@ export function WorkoutPage() {
         initial="hidden"
         animate="show"
         transition={{ duration: 0.25, ease: 'easeOut', delay: 0.05 }}
-        className="rounded-lg p-4 mb-3 bg-surface border border-line-strong shadow-card"
+        className="rounded-card p-4 mb-3 bg-surface border border-line-strong shadow-card"
       >
         {user && (
           <ExerciseSelector
@@ -560,7 +594,7 @@ export function WorkoutPage() {
         <button
           type="button"
           onClick={() => navigate('/exercises')}
-          className="mt-2 w-full py-2 px-2 rounded-lg text-xs flex items-center justify-center gap-1.5 bg-surface-2 border border-line text-fg-muted transition-colors active:bg-hover"
+          className="mt-2 w-full py-2 px-2 rounded-card text-xs flex items-center justify-center gap-1.5 bg-surface-2 border border-line text-fg-muted transition-colors active:bg-hover"
         >
           <BookOpen className="w-3.5 h-3.5" />
           {t('library.open')}
@@ -580,7 +614,7 @@ export function WorkoutPage() {
             <button
               type="button"
               onClick={() => setShowNotes(!showNotes)}
-              className="flex-1 py-2 px-2 rounded-lg text-xs flex items-center justify-center gap-1 bg-surface-2 border border-line text-fg-muted transition-colors active:bg-hover"
+              className="flex-1 py-2 px-2 rounded-card text-xs flex items-center justify-center gap-1 bg-surface-2 border border-line text-fg-muted transition-colors active:bg-hover"
             >
               <StickyNote className="w-3 h-3" />
               {t('workout.notes')} ({exerciseNotes.length})
@@ -589,7 +623,7 @@ export function WorkoutPage() {
               <button
                 type="button"
                 onClick={() => handleDeleteExercise(selectedExercise.id)}
-                className="py-2 px-2 rounded-lg text-xs flex items-center gap-1 bg-surface-2 border border-line text-error transition-colors active:bg-hover"
+                className="py-2 px-2 rounded-card text-xs flex items-center gap-1 bg-surface-2 border border-line text-error transition-colors active:bg-hover"
               >
                 <Trash2 className="w-3 h-3" />
               </button>
@@ -598,7 +632,7 @@ export function WorkoutPage() {
         )}
 
         {showNotes && activeExerciseId && (
-          <div className="mt-3 p-3 rounded-lg bg-surface border border-line-strong">
+          <div className="mt-3 p-3 rounded-card bg-surface border border-line-strong">
             <div className="text-xs font-medium mb-2 text-fg-muted">{t('workout.no_notes')}</div>
             {exerciseNotes.length > 0 && (
               <div className="space-y-2 mb-3 max-h-24 overflow-y-auto">
@@ -625,13 +659,13 @@ export function WorkoutPage() {
                 placeholder={t('workout.new_note')}
                 value={noteText}
                 onChange={(e) => setNoteText(e.target.value)}
-                className="flex-1 rounded-lg text-xs p-2 outline-none bg-surface-2 border border-line text-fg"
+                className="flex-1 rounded-card text-xs p-2 outline-none bg-surface-2 border border-line text-fg"
               />
               <button
                 type="button"
                 onClick={handleSaveNote}
                 disabled={!noteText.trim()}
-                className="p-2 rounded-lg bg-accent text-accent-fg"
+                className="p-2 rounded-card bg-accent text-accent-fg"
               >
                 <Plus className="w-4 h-4" />
               </button>
@@ -645,7 +679,7 @@ export function WorkoutPage() {
         initial="hidden"
         animate="show"
         transition={{ duration: 0.25, ease: 'easeOut', delay: 0.1 }}
-        className={`rounded-lg p-4 bg-surface border border-line-strong shadow-card ${saveSuccess ? 'success-pulse' : ''}`}
+        className={`rounded-card p-4 bg-surface border border-line-strong shadow-card ${saveSuccess ? 'success-pulse' : ''}`}
       >
         <div className="flex items-start justify-between gap-2 mb-3">
           <div className="min-w-0">
@@ -688,7 +722,7 @@ export function WorkoutPage() {
             type="button"
             onClick={() => setShowPlates(true)}
             aria-label={t('workout.plates_calc')}
-            className="flex-shrink-0 min-h-11 px-2.5 flex items-center gap-1.5 rounded-lg text-xs bg-surface-2 border border-line text-fg-muted"
+            className="flex-shrink-0 min-h-11 px-2.5 flex items-center gap-1.5 rounded-card text-xs bg-surface-2 border border-line text-fg-muted"
           >
             <Calculator className="w-4 h-4" />
           </button>
@@ -699,6 +733,7 @@ export function WorkoutPage() {
             exerciseId={selectedExercise.id}
             exerciseName={selectedExercise.name}
             loadType={(selectedExercise.load_type as LoadType | undefined) ?? 'external'}
+            equipment={selectedExercise.equipment}
           />
         )}
 
@@ -717,7 +752,7 @@ export function WorkoutPage() {
 
         {sets.length === 0 ? (
           <div className="flex flex-col items-center justify-center text-center py-10 px-2 gap-4">
-            <div className="w-16 h-16 rounded-lg bg-surface-2 border border-line flex items-center justify-center">
+            <div className="w-16 h-16 rounded-full bg-surface-2 flex items-center justify-center">
               <Plus className="w-7 h-7 text-accent" aria-hidden="true" />
             </div>
             <div>
@@ -728,7 +763,7 @@ export function WorkoutPage() {
               <button
                 type="button"
                 onClick={addSet}
-                className="w-full py-3 rounded-sm bg-accent text-accent-fg font-semibold shadow-btn-accent active:scale-[0.98]"
+                className="w-full py-3 rounded-pill bg-accent text-accent-fg font-semibold shadow-btn-accent active:scale-[0.98]"
               >
                 {t('workout.add_set')}
               </button>
@@ -736,7 +771,7 @@ export function WorkoutPage() {
                 <button
                   type="button"
                   onClick={() => repeatWorkout(lastWorkout)}
-                  className="w-full py-3 rounded-sm bg-surface-2 border border-line text-fg-muted flex items-center justify-center gap-1.5 transition-colors active:bg-hover"
+                  className="w-full py-3 rounded-pill bg-surface-2 border border-line text-fg-muted flex items-center justify-center gap-1.5 transition-colors active:bg-hover"
                 >
                   <Repeat className="w-4 h-4" />
                   {t('workout.repeat_last')}
@@ -774,7 +809,7 @@ export function WorkoutPage() {
 
       {/* Barra de acción fija sobre la navegación inferior (solo con series) */}
       {sets.length > 0 && (
-        <div className="-mx-4 mt-3 px-4 pt-3 pb-3 bg-base border-t border-line">
+        <div className="-mx-4 mt-3 px-4 pt-3 pb-3 bg-canvas border-t border-line">
           <div className="mb-3 flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-fg-muted">
@@ -810,7 +845,7 @@ export function WorkoutPage() {
               placeholder={t('workout.session_notes_placeholder')}
               rows={2}
               aria-label={t('workout.session_notes')}
-              className="w-full resize-none rounded-lg text-sm p-2 outline-none bg-surface-2 border border-line text-fg placeholder:text-fg-subtle"
+              className="w-full resize-none rounded-card text-sm p-2 outline-none bg-surface-2 border border-line text-fg placeholder:text-fg-subtle"
             />
           </div>
           {message && (
@@ -825,7 +860,7 @@ export function WorkoutPage() {
             <button
               type="button"
               onClick={handleAddSet}
-              className="flex-1 py-2 px-3 border border-dashed rounded-lg text-sm font-medium cursor-pointer border-line-strong text-fg-muted"
+              className="flex-1 py-2 px-3 border border-dashed rounded-card text-sm font-medium cursor-pointer border-line-strong text-fg-muted"
             >
               {t('workout.add_set')}
             </button>
@@ -846,14 +881,14 @@ export function WorkoutPage() {
                         removeAllSets();
                         setConfirmDeleteAll(false);
                       }}
-                      className="py-2 px-3 rounded-lg text-sm font-medium bg-error text-white"
+                      className="py-2 px-3 rounded-card text-sm font-medium bg-error text-white"
                     >
                       ✓
                     </button>
                     <button
                       type="button"
                       onClick={() => setConfirmDeleteAll(false)}
-                      className="py-2 px-3 rounded-lg text-sm border border-line-strong text-fg-subtle"
+                      className="py-2 px-3 rounded-card text-sm border border-line-strong text-fg-subtle"
                     >
                       ✕
                     </button>
@@ -865,7 +900,7 @@ export function WorkoutPage() {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     onClick={() => setConfirmDeleteAll(true)}
-                    className="py-2 px-3 border border-dashed rounded-lg text-sm font-medium cursor-pointer border-line-strong text-error"
+                    className="py-2 px-3 border border-dashed rounded-card text-sm font-medium cursor-pointer border-line-strong text-error"
                     title={t('workout.remove_all')}
                   >
                     <Trash2 className="w-4 h-4" />
@@ -878,7 +913,7 @@ export function WorkoutPage() {
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className={`flex-1 py-3 px-4 rounded-sm text-base font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-none text-accent-fg ${
+              className={`flex-1 py-3 px-4 rounded-pill text-base font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-none text-accent-fg ${
                 saveSuccess ? 'bg-success' : 'bg-accent'
               }`}
             >

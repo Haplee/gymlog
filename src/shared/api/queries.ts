@@ -148,7 +148,7 @@ export const fetchExercises = async (userId: string | undefined): Promise<Exerci
     devWarn('[fetchExercises] RPC failed, falling back:', error.message);
     const { data: rows, error: fbErr } = await supabase
       .from('exercises')
-      .select('id, name, muscle_group, user_id, created_at')
+      .select('id, name, muscle_group, user_id, created_at, equipment')
       .or(`user_id.eq.${userId},user_id.is.null`)
       .order('name');
     if (fbErr) throw fbErr;
@@ -283,6 +283,47 @@ export const fetchExerciseLibrary = async (
     throw error;
   }
   return (data as LibraryExercise[]) || [];
+};
+
+/**
+ * IDs de los ejercicios marcados como favoritos.
+ *
+ * Devuelve lista vacía si la tabla aún no existe (migración
+ * 20260723150000_exercise_favorites sin aplicar): así la estrella no rompe la
+ * pantalla en un entorno que todavía no la tiene.
+ */
+export const fetchFavoriteExerciseIds = async (userId: string): Promise<string[]> => {
+  const { data, error } = await supabase
+    .from('exercise_favorites')
+    .select('exercise_id')
+    .eq('user_id', userId);
+  if (error) {
+    devError('Error fetching favorites:', error);
+    return [];
+  }
+  return (data ?? []).map((r) => r.exercise_id as string);
+};
+
+/** Marca o desmarca un favorito. Devuelve el estado resultante. */
+export const toggleFavoriteExercise = async (
+  userId: string,
+  exerciseId: string,
+  isFavorite: boolean,
+): Promise<boolean> => {
+  if (isFavorite) {
+    const { error } = await supabase
+      .from('exercise_favorites')
+      .delete()
+      .eq('user_id', userId)
+      .eq('exercise_id', exerciseId);
+    if (error) throw error;
+    return false;
+  }
+  const { error } = await supabase
+    .from('exercise_favorites')
+    .insert({ user_id: userId, exercise_id: exerciseId });
+  if (error) throw error;
+  return true;
 };
 
 export interface BodyMeasurement {

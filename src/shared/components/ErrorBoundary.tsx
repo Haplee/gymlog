@@ -1,5 +1,6 @@
 import { Component, type ReactNode } from 'react';
 import { toast } from 'sonner';
+import * as Sentry from '@sentry/react';
 
 interface Props {
   children: ReactNode;
@@ -23,6 +24,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('ErrorBoundary caught:', error, errorInfo);
+    Sentry.captureException(error, { extra: { componentStack: errorInfo.componentStack } });
     toast.error('Algo salió mal');
   }
 
@@ -32,7 +34,7 @@ export class ErrorBoundary extends Component<Props, State> {
         return this.props.fallback;
       }
       return (
-        <div className="min-h-screen flex items-center justify-center p-4 bg-base">
+        <div className="min-h-screen flex items-center justify-center p-4 bg-canvas">
           <div className="text-center max-w-sm">
             <h1 className="text-xl font-bold text-error mb-2">Algo salió mal</h1>
             <p className="text-sm text-fg-muted mb-4">
@@ -41,7 +43,7 @@ export class ErrorBoundary extends Component<Props, State> {
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="px-4 py-2 rounded-lg bg-accent text-accent-fg font-medium"
+              className="px-4 py-2 rounded-card bg-accent text-accent-fg font-medium"
             >
               Recargar
             </button>

@@ -20,6 +20,11 @@ interface KPICardProps {
     | 'best-1rm';
   trend?: number;
   isNewPR?: boolean;
+  /**
+   * 'sm' para las rejillas de 3 columnas: a 3 por fila la tarjeta no da para
+   * el tamaño grande y valores como "124 kg" partían en dos líneas y se salían.
+   */
+  size?: 'md' | 'sm';
   accentColor?: string;
 }
 
@@ -154,6 +159,7 @@ export const KPICard = memo(function KPICard({
   trend,
   isNewPR,
   accentColor,
+  size = 'md',
 }: KPICardProps) {
   const def = iconDefs[icon] ?? iconDefs.duration;
   const color = accentColor ?? def.color;
@@ -190,7 +196,9 @@ export const KPICard = memo(function KPICard({
 
         {/* Value */}
         <m.div
-          className="font-mono font-bold leading-none tracking-tight text-3xl text-fg tabular-nums"
+          className={`font-mono font-bold leading-none tracking-tight text-fg tabular-nums whitespace-nowrap ${
+            size === 'sm' ? 'text-xl' : 'text-3xl'
+          }`}
           initial={{ y: 8, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.05 }}

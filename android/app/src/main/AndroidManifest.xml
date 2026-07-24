@@ -25,11 +25,11 @@
             android:windowSoftInputMode="adjustResize"
             android:exported="true">
 
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-            
+            <!-- MainActivity NO es launcher: el icono del lanzador lo aportan los
+                 activity-alias de color (IconAlias_*), con IconAlias_yellow activo
+                 por defecto. Si MainActivity fuera launcher, AppIconPlugin tendría
+                 que apagarla al elegir un color, y apagar el componente que aloja
+                 la activity en primer plano cierra la app (aun con DONT_KILL_APP). -->
 
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -44,6 +44,323 @@
             </intent-filter>
 
         </activity>
+
+        <!-- Iconos de la app por color (GENERADO: scripts/generate-icon-variants.mjs).
+             IconAlias_yellow (el acento por defecto) arranca habilitado y es el
+             launcher; el resto deshabilitados. AppIconPlugin habilita el elegido y
+             apaga los demás. Nunca toca MainActivity, que no es launcher. -->
+        <activity-alias
+            android:name=".IconAlias_yellow"
+            android:targetActivity=".MainActivity"
+            android:icon="@drawable/ic_launcher_variant_yellow"
+            android:roundIcon="@drawable/ic_launcher_variant_yellow"
+            android:label="@string/app_name"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconAlias_lime"
+            android:targetActivity=".MainActivity"
+            android:icon="@drawable/ic_launcher_variant_lime"
+            android:roundIcon="@drawable/ic_launcher_variant_lime"
+            android:label="@string/app_name"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconAlias_mint"
+            android:targetActivity=".MainActivity"
+            android:icon="@drawable/ic_launcher_variant_mint"
+            android:roundIcon="@drawable/ic_launcher_variant_mint"
+            android:label="@string/app_name"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconAlias_cyan"
+            android:targetActivity=".MainActivity"
+            android:icon="@drawable/ic_launcher_variant_cyan"
+            android:roundIcon="@drawable/ic_launcher_variant_cyan"
+            android:label="@string/app_name"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconAlias_blue"
+            android:targetActivity=".MainActivity"
+            android:icon="@drawable/ic_launcher_variant_blue"
+            android:roundIcon="@drawable/ic_launcher_variant_blue"
+            android:label="@string/app_name"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconAlias_violet"
+            android:targetActivity=".MainActivity"
+            android:icon="@drawable/ic_launcher_variant_violet"
+            android:roundIcon="@drawable/ic_launcher_variant_violet"
+            android:label="@string/app_name"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconAlias_pink"
+            android:targetActivity=".MainActivity"
+            android:icon="@drawable/ic_launcher_variant_pink"
+            android:roundIcon="@drawable/ic_launcher_variant_pink"
+            android:label="@string/app_name"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconAlias_orange"
+            android:targetActivity=".MainActivity"
+            android:icon="@drawable/ic_launcher_variant_orange"
+            android:roundIcon="@drawable/ic_launcher_variant_orange"
+            android:label="@string/app_name"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconAlias_red"
+            android:targetActivity=".MainActivity"
+            android:icon="@drawable/ic_launcher_variant_red"
+            android:roundIcon="@drawable/ic_launcher_variant_red"
+            android:label="@string/app_name"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconAlias_amber"
+            android:targetActivity=".MainActivity"
+            android:icon="@drawable/ic_launcher_variant_amber"
+            android:roundIcon="@drawable/ic_launcher_variant_amber"
+            android:label="@string/app_name"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconAlias_green"
+            android:targetActivity=".MainActivity"
+            android:icon="@drawable/ic_launcher_variant_green"
+            android:roundIcon="@drawable/ic_launcher_variant_green"
+            android:label="@string/app_name"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconAlias_teal"
+            android:targetActivity=".MainActivity"
+            android:icon="@drawable/ic_launcher_variant_teal"
+            android:roundIcon="@drawable/ic_launcher_variant_teal"
+            android:label="@string/app_name"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconAlias_indigo"
+            android:targetActivity=".MainActivity"
+            android:icon="@drawable/ic_launcher_variant_indigo"
+            android:roundIcon="@drawable/ic_launcher_variant_indigo"
+            android:label="@string/app_name"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconAlias_magenta"
+            android:targetActivity=".MainActivity"
+            android:icon="@drawable/ic_launcher_variant_magenta"
+            android:roundIcon="@drawable/ic_launcher_variant_magenta"
+            android:label="@string/app_name"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconAlias_rose"
+            android:targetActivity=".MainActivity"
+            android:icon="@drawable/ic_launcher_variant_rose"
+            android:roundIcon="@drawable/ic_launcher_variant_rose"
+            android:label="@string/app_name"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconAlias_sand"
+            android:targetActivity=".MainActivity"
+            android:icon="@drawable/ic_launcher_variant_sand"
+            android:roundIcon="@drawable/ic_launcher_variant_sand"
+            android:label="@string/app_name"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconAlias_slate"
+            android:targetActivity=".MainActivity"
+            android:icon="@drawable/ic_launcher_variant_slate"
+            android:roundIcon="@drawable/ic_launcher_variant_slate"
+            android:label="@string/app_name"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconAlias_emerald"
+            android:targetActivity=".MainActivity"
+            android:icon="@drawable/ic_launcher_variant_emerald"
+            android:roundIcon="@drawable/ic_launcher_variant_emerald"
+            android:label="@string/app_name"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconAlias_azure"
+            android:targetActivity=".MainActivity"
+            android:icon="@drawable/ic_launcher_variant_azure"
+            android:roundIcon="@drawable/ic_launcher_variant_azure"
+            android:label="@string/app_name"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconAlias_lavender"
+            android:targetActivity=".MainActivity"
+            android:icon="@drawable/ic_launcher_variant_lavender"
+            android:roundIcon="@drawable/ic_launcher_variant_lavender"
+            android:label="@string/app_name"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconAlias_plum"
+            android:targetActivity=".MainActivity"
+            android:icon="@drawable/ic_launcher_variant_plum"
+            android:roundIcon="@drawable/ic_launcher_variant_plum"
+            android:label="@string/app_name"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconAlias_terracotta"
+            android:targetActivity=".MainActivity"
+            android:icon="@drawable/ic_launcher_variant_terracotta"
+            android:roundIcon="@drawable/ic_launcher_variant_terracotta"
+            android:label="@string/app_name"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconAlias_sage"
+            android:targetActivity=".MainActivity"
+            android:icon="@drawable/ic_launcher_variant_sage"
+            android:roundIcon="@drawable/ic_launcher_variant_sage"
+            android:label="@string/app_name"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconAlias_steel"
+            android:targetActivity=".MainActivity"
+            android:icon="@drawable/ic_launcher_variant_steel"
+            android:roundIcon="@drawable/ic_launcher_variant_steel"
+            android:label="@string/app_name"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
 
         <!-- Health Connect: justificación de uso de permisos (Android 14+) -->
         <activity-alias

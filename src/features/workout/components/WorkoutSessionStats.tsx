@@ -42,7 +42,7 @@ export function WorkoutSessionStats({
     <m.div
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="mb-3 rounded-lg px-4 py-3.5 bg-surface border border-line shadow-card"
+      className="mb-3 rounded-card px-4 py-3.5 bg-surface border border-line shadow-card"
     >
       {/* Eyebrow + indicador rec + cancelar */}
       <div className="flex items-center justify-between">
@@ -61,7 +61,7 @@ export function WorkoutSessionStats({
             onClick={() => {
               if (window.confirm(t('workout.cancel_confirm'))) onCancel();
             }}
-            className="flex items-center gap-1 min-h-9 px-2 -mr-2 rounded-lg text-error transition-opacity active:opacity-50"
+            className="flex items-center gap-1 min-h-9 px-2 -mr-2 rounded-card text-error transition-opacity active:opacity-50"
             title={t('workout.cancel_session')}
           >
             <XCircle className="w-4 h-4" />

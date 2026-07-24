@@ -37,7 +37,8 @@ export function ExerciseRow({
           <span className="text-base font-medium text-fg">{exercise}</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-2xs px-1.5 py-0.5 rounded-sm font-bold font-mono tabular-nums bg-accent/10 text-accent border border-line-accent">
+          {/* Pill de dato del kit (su "Duration · 25 Mins"): relleno, no contorno. */}
+          <span className="text-2xs px-2.5 py-1 rounded-pill font-bold font-mono tabular-nums bg-accent text-accent-fg">
             {sortedSets.length} {t('history.series_plural')}
           </span>
           <button
@@ -46,7 +47,7 @@ export function ExerciseRow({
               e.stopPropagation();
               onDelete(firstSet.id);
             }}
-            className="p-1.5 rounded-lg transition-colors text-fg-subtle hover:bg-error/10 active:bg-error/10"
+            className="p-1.5 rounded-card transition-colors text-fg-subtle hover:bg-error/10 active:bg-error/10"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>

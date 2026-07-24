@@ -22,6 +22,10 @@ android {
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
         applicationId "com.franvi.gymlog"
+        // Variante de prueba FitBody: sufijo propio para que se instale JUNTO a
+        // la app real (com.franvi.gymlog) sin sobrescribirla. El namespace (paquete
+        // Java) sigue siendo com.franvi.gymlog.
+        applicationIdSuffix ".fitbody"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode appVersionCode
@@ -96,9 +100,9 @@ tasks.configureEach { task ->
             copy {
                 from layout.buildDirectory.file("outputs/apk/release/app-release.apk")
                 into "${rootDir}/.."
-                rename { "GymLog.apk" }
+                rename { "GymLog-FitBody.apk" }
             }
-            logger.lifecycle("APK release copiado a la raíz del repo: GymLog.apk")
+            logger.lifecycle("APK release copiado a la raíz del repo: GymLog-FitBody.apk")
         }
     }
 }

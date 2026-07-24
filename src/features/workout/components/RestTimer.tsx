@@ -47,7 +47,7 @@ export function RestTimer() {
 
   return (
     <div
-      className={`rounded-lg p-4 mt-3 bg-surface border shadow-card transition-shadow duration-300 ${
+      className={`rounded-card p-4 mt-3 bg-surface border shadow-card transition-shadow duration-300 ${
         isRunning ? 'border-line-accent shadow-glow' : 'border-line'
       }`}
     >
@@ -62,7 +62,7 @@ export function RestTimer() {
             setRestAutoStart(!restAutoStart);
             void impact(ImpactStyle.Light);
           }}
-          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-2xs font-bold uppercase tracking-wider transition-colors border ${
+          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-pill text-2xs font-bold uppercase tracking-wider transition-colors border ${
             restAutoStart
               ? 'bg-accent/10 text-accent border-line-accent'
               : 'bg-surface-2 text-fg-subtle border-line'
@@ -165,21 +165,21 @@ export function RestTimer() {
                   void impact(ImpactStyle.Light);
                   extend(30);
                 }}
-                className="px-3 py-2 rounded-sm text-xs font-bold bg-accent/10 text-accent border border-line-accent transition-transform active:scale-95"
+                className="px-3 py-2 rounded-pill text-xs font-bold bg-accent text-accent-fg transition-transform active:scale-95"
               >
                 +30s
               </button>
               <button
                 type="button"
                 onClick={() => handleStart(duration)}
-                className="px-4 py-2 rounded-sm text-xs font-semibold tracking-wide bg-surface-2 border border-line-strong text-fg-muted"
+                className="px-4 py-2 rounded-pill text-xs font-semibold tracking-wide bg-surface-2 text-fg-muted"
               >
                 Reiniciar
               </button>
               <button
                 type="button"
                 onClick={stop}
-                className="px-3 py-2 rounded-sm text-xs text-fg-subtle"
+                className="px-3 py-2 rounded-pill text-xs text-fg-subtle"
               >
                 Cerrar
               </button>
@@ -202,7 +202,7 @@ export function RestTimer() {
                     type="button"
                     key={s}
                     onClick={() => handleStart(s)}
-                    className={`py-2.5 rounded-sm text-sm font-bold transition-all active:scale-95 ${
+                    className={`py-2.5 rounded-pill text-sm font-bold transition-all active:scale-95 ${
                       active
                         ? 'bg-accent text-accent-fg shadow-glow'
                         : 'bg-surface-2 text-fg-muted border border-line'
@@ -218,14 +218,14 @@ export function RestTimer() {
               <button
                 type="button"
                 onClick={() => adjustCustom(-15)}
-                className="w-9 h-9 rounded-sm flex items-center justify-center flex-shrink-0 bg-surface-2 border border-line text-fg-muted"
+                className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-surface-2 text-fg-muted"
               >
                 <Minus className="w-3.5 h-3.5" />
               </button>
               <button
                 type="button"
                 onClick={() => handleStart(selectedDuration)}
-                className={`flex-1 h-9 rounded-sm text-sm font-bold transition-all active:scale-95 ${
+                className={`flex-1 h-9 rounded-pill text-sm font-bold transition-all active:scale-95 ${
                   customSecs
                     ? 'bg-accent text-accent-fg shadow-glow'
                     : 'bg-surface-2 text-fg-subtle border border-dashed border-line-strong'
@@ -236,7 +236,7 @@ export function RestTimer() {
               <button
                 type="button"
                 onClick={() => adjustCustom(15)}
-                className="w-9 h-9 rounded-sm flex items-center justify-center flex-shrink-0 bg-surface-2 border border-line text-fg-muted"
+                className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-surface-2 text-fg-muted"
               >
                 <Plus className="w-3.5 h-3.5" />
               </button>

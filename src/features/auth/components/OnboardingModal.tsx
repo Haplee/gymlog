@@ -2,8 +2,19 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Target, Calendar, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Modal, Button } from '@shared/components/ui';
+import { IconFemale, IconMale, IconRuler, IconUser } from '@shared/components/icons';
 import { supabase } from '@shared/lib/supabase';
 import type { Profile } from '@shared/lib/types';
+import { RulerPicker } from './RulerPicker';
+
+const TOTAL_STEPS = 4;
+
+/** Valores de `profiles.sex`; 'other' cubre a quien prefiere no decirlo. */
+const SEXES = [
+  { value: 'male', Icon: IconMale },
+  { value: 'female', Icon: IconFemale },
+  { value: 'other', Icon: IconUser },
+] as const;
 
 interface OnboardingModalProps {
   user: { id: string };
@@ -18,6 +29,9 @@ export function OnboardingModal({ user, onComplete }: OnboardingModalProps) {
   const [data, setData] = useState<Partial<Profile>>({
     goal: 'volume',
     days_per_week: 3,
+    sex: 'other',
+    height_cm: 170,
+    weight_kg: 70,
   });
 
   const handleFinish = async () => {
@@ -93,6 +107,65 @@ export function OnboardingModal({ user, onComplete }: OnboardingModalProps) {
           </div>
         )}
 
+        {step === 3 && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <IconUser className="w-4 h-4 text-accent" />
+              <span className="block text-sm font-medium">{t('onboarding.sex')}</span>
+            </div>
+            <div
+              role="radiogroup"
+              aria-label={t('onboarding.sex')}
+              className="grid grid-cols-3 gap-2"
+            >
+              {SEXES.map(({ value, Icon }) => {
+                const isActive = data.sex === value;
+                return (
+                  <button
+                    type="button"
+                    key={value}
+                    role="radio"
+                    aria-checked={isActive}
+                    onClick={() => setData({ ...data, sex: value })}
+                    className={`flex flex-col items-center gap-2 rounded-card p-3 transition-colors ${
+                      isActive ? 'bg-accent text-accent-fg' : 'bg-surface-2 text-fg-muted'
+                    }`}
+                  >
+                    <Icon className="h-7 w-7" />
+                    <span className="text-xs font-medium">{t(`onboarding.sex_${value}`)}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {step === 4 && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <IconRuler className="w-4 h-4 text-accent" />
+              <span className="block text-sm font-medium">{t('onboarding.body')}</span>
+            </div>
+            <RulerPicker
+              label={t('onboarding.height')}
+              unit="cm"
+              min={130}
+              max={220}
+              value={data.height_cm ?? 170}
+              onChange={(height_cm) => setData({ ...data, height_cm })}
+            />
+            <RulerPicker
+              label={t('onboarding.weight')}
+              unit="kg"
+              min={35}
+              max={180}
+              value={data.weight_kg ?? 70}
+              onChange={(weight_kg) => setData({ ...data, weight_kg })}
+            />
+            <p className="text-xs text-fg-subtle">{t('onboarding.body_hint')}</p>
+          </div>
+        )}
+
         <div className="flex gap-3 pt-4 border-t border-line">
           {step > 1 ? (
             <Button variant="secondary" onClick={() => setStep(step - 1)} className="flex-1">
@@ -102,7 +175,7 @@ export function OnboardingModal({ user, onComplete }: OnboardingModalProps) {
           ) : (
             <div className="flex-1" />
           )}
-          {step < 2 ? (
+          {step < TOTAL_STEPS ? (
             <Button variant="primary" onClick={() => setStep(step + 1)} className="flex-1">
               {t('common.next')}
               <ChevronRight className="w-4 h-4 ml-1" />

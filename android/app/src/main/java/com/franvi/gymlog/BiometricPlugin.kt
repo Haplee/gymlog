@@ -72,13 +72,16 @@ class BiometricPlugin : Plugin() {
                         ret.put("code", errorCode)
                         // No rechazamos con error fatal para que el frontend pueda manejar el "cancelado"
                         call.resolve(ret)
+                        recoverWebView(unlocked = false)
                     }
 
                     override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                         super.onAuthenticationSucceeded(result)
+                        Log.d(TAG, "onAuthenticationSucceeded")
                         val ret = JSObject()
                         ret.put("success", true)
                         call.resolve(ret)
+                        recoverWebView(unlocked = true)
                     }
 
                     override fun onAuthenticationFailed() {
@@ -89,6 +92,36 @@ class BiometricPlugin : Plugin() {
             } catch (e: Exception) {
                 call.reject("Error al iniciar biometric: ${e.message}")
             }
+        }
+    }
+
+    /**
+     * El BiometricPrompt se dibuja en una ventana propia sobre el WebView
+     * acelerado por hardware. Al cerrarse, este dispositivo deja la superficie
+     * (Surface de chromium) en negro aunque el DOM siga vivo, y ni ocultar el
+     * WebView (INVISIBLE/GONE) ni invalidarlo la repintan. Lo único fiable es un
+     * reload real de la página.
+     *
+     * Para que el reload no vuelva a disparar el bloqueo (bucle infinito), en el
+     * caso de desbloqueo se deja una marca de un solo uso en localStorage que el
+     * arranque lee para no volver a pedir biometría. En caso de cancelar, se
+     * recarga sin marca: la app vuelve a arrancar bloqueada.
+     */
+    private fun recoverWebView(unlocked: Boolean) {
+        val webView = bridge?.webView
+        Log.d(TAG, "recoverWebView(unlocked=$unlocked) webView=${if (webView == null) "NULL" else "ok"}")
+        if (webView == null) return
+        webView.post {
+            if (unlocked) {
+                webView.evaluateJavascript(
+                    "window.localStorage.setItem('applock_unlocked_at', String(Date.now()))",
+                    null,
+                )
+            }
+            webView.postDelayed({
+                Log.d(TAG, "recoverWebView: reload()")
+                webView.reload()
+            }, 60)
         }
     }
 

@@ -7,11 +7,22 @@ import { useCardioStore } from '@features/cardio/stores/cardioStore';
 import { queryClient } from '@app/queryClient';
 import { fetchWorkoutsAndSets, fetchWorkouts, fetchRecentSets } from '@shared/api/queries';
 import { m, AnimatePresence } from 'framer-motion';
-import { Home, Dumbbell, Footprints, History, Settings, WifiOff, RefreshCw } from 'lucide-react';
+import { WifiOff, RefreshCw, Bell } from 'lucide-react';
+import {
+  IconHome,
+  IconDumbbell,
+  IconShoe,
+  IconHistory,
+  IconGear,
+  IconSearch,
+  IconUser,
+} from '@shared/components/icons';
 import { useOutboxStore } from '@shared/stores/outboxStore';
 import { useProfile } from '@features/auth/hooks/useProfile';
 import { useRestAlarm } from '@features/workout/hooks/useRestAlarm';
 import { RestAlarmBanner } from '@features/workout/components/RestAlarmBanner';
+import { ExerciseSearchSheet } from '@shared/components/ExerciseSearchSheet';
+import { useNotificationsStore, selectUnreadCount } from '@shared/stores/notificationsStore';
 
 interface LayoutProps {
   children: ReactNode;
@@ -78,14 +89,44 @@ export function Layout({ children }: LayoutProps) {
   const cardioActive = useCardioStore((s) => s.isActive);
   const pendingSync = useOutboxStore((s) => s.pending);
   const trainBadge = !!workoutStartedAt && workoutSets.length > 0;
+  const [searchOpen, setSearchOpen] = useState(false);
+  const unreadCount = useNotificationsStore(selectUnreadCount);
 
   const tabs = [
-    { path: '/', Icon: Home, label: t('nav.home'), id: 'home', badge: trainBadge },
-    { path: '/routines', Icon: Dumbbell, label: t('routine.title'), id: 'routines', badge: false },
-    { path: '/cardio', Icon: Footprints, label: 'Cardio', id: 'cardio', badge: cardioActive },
-    { path: '/history', Icon: History, label: t('history.title'), id: 'history', badge: false },
-    { path: '/settings', Icon: Settings, label: t('settings.title'), id: 'settings', badge: false },
+    { path: '/', Icon: IconHome, label: t('nav.home'), id: 'home', badge: trainBadge },
+    {
+      path: '/routines',
+      Icon: IconDumbbell,
+      label: t('routine.title'),
+      id: 'routines',
+      badge: false,
+    },
+    { path: '/cardio', Icon: IconShoe, label: 'Cardio', id: 'cardio', badge: cardioActive },
+    { path: '/history', Icon: IconHistory, label: t('history.title'), id: 'history', badge: false },
+    {
+      path: '/settings',
+      Icon: IconGear,
+      label: t('settings.title'),
+      id: 'settings',
+      badge: false,
+    },
   ];
+
+  // El kit rotula la pantalla en la cabecera en vez de usar un logo fijo.
+  const TITLES: Record<string, string> = {
+    '/': t('workout.title'),
+    '/routines': t('routine.title'),
+    '/cardio': 'Cardio',
+    '/history': t('history.title'),
+    '/settings': t('settings.title'),
+    '/stats': t('stats.title'),
+    '/user-stats': t('userStats.page_title'),
+    '/exercises': t('library.title'),
+    '/wearables': t('settings.wearables'),
+    '/guide': t('guide.title'),
+    '/notifications': t('notifications.title'),
+  };
+  const pageTitle = TITLES[location.pathname] ?? 'GYMLOG';
 
   // El descanso termina (y suena) aunque el usuario esté en otra pestaña.
   useRestAlarm();
@@ -109,42 +150,63 @@ export function Layout({ children }: LayoutProps) {
   }, [user?.id]);
 
   return (
-    <div className="h-screen h-[100dvh] flex flex-col overflow-hidden bg-base">
+    <div className="h-screen h-[100dvh] flex flex-col overflow-hidden bg-canvas">
+      <AnimatePresence>
+        {searchOpen && <ExerciseSearchSheet onClose={() => setSearchOpen(false)} />}
+      </AnimatePresence>
+
+      {/* Cabecera estilo FitBody: título de la pantalla a la izquierda en el
+          acento, acciones circulares a la derecha. Sin wordmark centrado. */}
       <header
-        className="px-4 flex-shrink-0 bg-base border-b border-line"
+        className="px-4 flex-shrink-0 bg-canvas"
         style={{ paddingTop: 'var(--inset-top, env(safe-area-inset-top))' }}
       >
         <div
-          className="relative flex items-center justify-between"
+          className="flex items-center justify-between gap-3"
           style={{ height: 'var(--header-height)' }}
         >
-          <span
-            className="absolute left-1/2 -translate-x-1/2 font-display font-bold text-base tracking-[0.2em] text-fg select-none"
-            aria-hidden="true"
-          >
-            GYMLOG
-          </span>
-          <span className="w-8" />
+          <h1 className="font-display text-lg font-bold text-accent truncate">{pageTitle}</h1>
           {user && (
-            <Link
-              to="/settings"
-              className="flex items-center gap-2 px-2.5 py-1 rounded-sm bg-surface border border-line"
-            >
-              {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt=""
-                  width={20}
-                  height={20}
-                  className="w-5 h-5 rounded-full object-cover"
-                />
-              ) : (
-                <div className="w-1.5 h-1.5 bg-success" />
-              )}
-              <span className="text-xs font-medium text-fg-muted max-w-[8rem] truncate">
-                {displayName}
-              </span>
-            </Link>
+            <div className="flex items-center gap-2">
+              {/* La lupa abre la búsqueda para entrenar, no la biblioteca:
+                  si no, duplicaría el acceso que ya hay en Entrenar. */}
+              <button
+                type="button"
+                onClick={() => setSearchOpen(true)}
+                aria-label={t('search.placeholder')}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-surface border border-line text-fg-muted active:opacity-70"
+              >
+                <IconSearch className="h-4 w-4" />
+              </button>
+              {/* Campana con punto de no leídas, como la cabecera del kit. */}
+              <Link
+                to="/notifications"
+                aria-label={t('notifications.title')}
+                className="relative flex h-9 w-9 items-center justify-center rounded-full bg-surface border border-line text-fg-muted active:opacity-70"
+              >
+                <Bell className="h-4 w-4" />
+                {unreadCount > 0 && (
+                  <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-accent" />
+                )}
+              </Link>
+              <Link
+                to="/settings"
+                aria-label={displayName}
+                className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-accent text-accent-fg active:opacity-70"
+              >
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt=""
+                    width={36}
+                    height={36}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <IconUser className="h-4 w-4" />
+                )}
+              </Link>
+            </div>
           )}
         </div>
       </header>
@@ -200,8 +262,10 @@ export function Layout({ children }: LayoutProps) {
         </m.div>
       </main>
 
+      {/* Barra inferior del kit: rellena del color de acento, esquinas superiores
+          muy redondeadas e iconos oscuros. El activo va en un círculo oscuro. */}
       <nav
-        className="flex flex-shrink-0 relative z-10 bg-surface border-t border-line"
+        className="flex flex-shrink-0 relative z-10 bg-accent rounded-t-[20px]"
         style={{
           height:
             'calc(var(--bottom-nav-height) + var(--inset-bottom, env(safe-area-inset-bottom)))',
@@ -221,33 +285,30 @@ export function Layout({ children }: LayoutProps) {
                   preloadChunk(tab.path);
                 }
               }}
-              className="flex-1 flex flex-col items-center justify-center gap-1 relative transition-opacity active:opacity-60"
+              aria-label={label}
+              className="flex-1 flex items-center justify-center relative transition-opacity active:opacity-60"
             >
-              {isActive && (
-                <m.div
-                  layoutId="activeTabBar"
-                  className="absolute top-0 left-3 right-3 h-0.5 bg-accent"
-                  transition={{ type: 'spring', stiffness: 500, damping: 32 }}
-                />
-              )}
-              <div className="relative">
+              <div className="relative flex h-11 w-11 items-center justify-center">
+                {isActive && (
+                  <m.div
+                    layoutId="activeTabPill"
+                    className="absolute inset-0 rounded-full bg-canvas"
+                    transition={{ type: 'spring', stiffness: 500, damping: 32 }}
+                  />
+                )}
                 <Icon
-                  className={`w-5 h-5 transition-colors ${isActive ? 'text-accent' : 'text-fg-subtle'}`}
-                  strokeWidth={isActive ? 2 : 1.5}
+                  className={`relative h-6 w-6 transition-colors ${
+                    isActive ? 'text-accent' : 'text-accent-fg'
+                  }`}
                 />
                 {badge && (
                   <m.span
                     initial={{ scale: 0.95, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    className="absolute -top-1 -right-1.5 w-2 h-2 bg-accent shadow-glow pulse-soft"
+                    className="absolute right-1 top-1 h-2 w-2 rounded-full bg-error"
                   />
                 )}
               </div>
-              <span
-                className={`label-caps transition-colors ${isActive ? 'text-accent' : 'text-fg-subtle'}`}
-              >
-                {label}
-              </span>
             </Link>
           );
         })}

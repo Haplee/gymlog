@@ -2,6 +2,7 @@ import { Capacitor } from '@capacitor/core';
 import { LocalNotifications, type Weekday } from '@capacitor/local-notifications';
 import { toast } from 'sonner';
 import { devError, devLog } from '@shared/lib/devtools';
+import { useNotificationsStore } from '@shared/stores/notificationsStore';
 
 export const isNative = (): boolean => Capacitor.isNativePlatform();
 
@@ -188,6 +189,10 @@ export async function notify(
   options: NotificationOptions & { url?: string; id?: number },
 ): Promise<void> {
   if (!(await canNotifyAsync())) return;
+
+  // Registro local para la pantalla de Notificaciones. Se apunta aquí porque
+  // esta función es el embudo único de los avisos inmediatos.
+  useNotificationsStore.getState().add(title, options.body ?? '');
 
   if (!isNative()) {
     try {

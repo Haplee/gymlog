@@ -8,7 +8,7 @@
    ════════════════════════════════════════════════ */
 @theme inline {
   /* ── Colores → var(token) ── */
-  --color-base: var(--bg-base);
+  --color-canvas: var(--bg-canvas);
   --color-surface: var(--bg-surface);
   --color-surface-2: var(--bg-surface-2);
   --color-surface-3: var(--bg-surface-3);
@@ -82,7 +82,7 @@
 
   /* ── Radios extra (los pasos por defecto no se tocan):
      rounded-card para tarjetas, rounded-pill para chips ── */
-  --radius-card: 12px;
+  --radius-card: 18px;
   --radius-pill: 999px;
 
   /* ── Elevación (estética plana Stitch): plano = sin sombra ·
@@ -92,9 +92,9 @@
   --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.45);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.55);
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-fab: 0 4px 20px rgba(96, 236, 168, 0.18);
-  --shadow-btn-accent: 0 1px 6px rgba(96, 236, 168, 0.15);
-  --shadow-glow: 0 0 16px rgba(96, 236, 168, 0.12);
+  --shadow-fab: 0 4px 20px rgb(var(--accent-rgb) / 0.18);
+  --shadow-btn-accent: 0 1px 6px rgb(var(--accent-rgb) / 0.15);
+  --shadow-glow: 0 0 16px rgb(var(--accent-rgb) / 0.12);
   --shadow-glow-error: 0 0 12px rgba(255, 180, 171, 0.2);
 }
 
@@ -112,7 +112,7 @@
   letter-spacing: 0;
   color-scheme: dark;
   color: var(--text-primary);
-  background: var(--bg-base);
+  background: var(--bg-canvas);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -134,7 +134,8 @@ body {
   margin: 0;
   /* halo menta muy sutil arriba — da profundidad al negro plano */
   background:
-    radial-gradient(120% 50% at 50% 0%, rgba(96, 236, 168, 0.025), transparent 60%), var(--bg-base);
+    radial-gradient(120% 50% at 50% 0%, rgb(var(--accent-rgb) / 0.025), transparent 60%),
+    var(--bg-canvas);
   overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
 }
@@ -234,44 +235,52 @@ input[type='range'] {
   display: none;
 }
 
-h1,
-h2 {
-  font-family: var(--font-display);
-  font-weight: 600;
-  color: var(--text-h);
-}
+/* Estilos base de elemento: DEBEN ir en @layer base. Sin capa, en Tailwind v4
+   ganan a todas las utilidades (el CSS sin capa vence al CSS en capas), así que
+   un <h1 className="text-lg text-accent"> salía a 48px y en color de titular —
+   se veía en la cabecera de cada pantalla y en Mis estadísticas. */
+@layer base {
+  h1,
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    color: var(--text-h);
+  }
 
-h1 {
-  font-size: 48px;
-  letter-spacing: -1px;
-  margin: 32px 0;
-}
+  /* Sin margen de documento: cada pantalla coloca su titular con utilidades
+     (mb-4, space-y-*). El margen heredado dejaba un hueco muerto arriba. */
+  h1 {
+    font-size: 48px;
+    letter-spacing: -1px;
+    margin: 0;
+  }
 
-h2 {
-  font-size: 22px;
-  line-height: 120%;
-  letter-spacing: -0.5px;
-  margin: 0 0 8px;
-}
+  h2 {
+    font-size: 22px;
+    line-height: 120%;
+    letter-spacing: -0.5px;
+    margin: 0;
+  }
 
-p {
-  margin: 0;
-}
+  p {
+    margin: 0;
+  }
 
-code,
-.counter {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums; /* dígitos de ancho fijo — timers sin saltos */
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
+  code,
+  .counter {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums; /* dígitos de ancho fijo — timers sin saltos */
+    display: inline-flex;
+    border-radius: 4px;
+    color: var(--text-h);
+  }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--bg-surface-2);
+  code {
+    font-size: 15px;
+    line-height: 135%;
+    padding: 4px 8px;
+    background: var(--bg-surface-2);
+  }
 }
 
 @keyframes slide-up {
@@ -357,11 +366,16 @@ select {
   touch-action: manipulation;
 }
 
-input:focus,
-select:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(96, 236, 168, 0.25);
-  border-color: var(--border-accent) !important;
+/* Anillo de foco por defecto. Va en @layer base para que un input pueda
+   desactivarlo con utilidades (shadow-none) cuando el foco lo pinta su
+   contenedor — si no, el rectángulo rompe los campos con forma de píldora. */
+@layer base {
+  input:focus,
+  select:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgb(var(--accent-rgb) / 0.25);
+    border-color: var(--border-accent);
+  }
 }
 
 /* Inputs premium — sin degradado iOS */
@@ -442,7 +456,7 @@ input[type='number'] {
 }
 
 .toggle-on {
-  box-shadow: 0 0 12px rgba(96, 236, 168, 0.45);
+  box-shadow: 0 0 12px rgb(var(--accent-rgb) / 0.45);
 }
 
 .fade-in-up {
@@ -501,7 +515,7 @@ input[type='number'] {
 .ripple {
   position: absolute;
   border-radius: 50%;
-  background: rgba(96, 236, 168, 0.3);
+  background: rgb(var(--accent-rgb) / 0.3);
   animation: ripple 0.6s ease-out;
 }
 
@@ -592,13 +606,13 @@ input[type='number'] {
 
 @keyframes input-focus {
   0% {
-    box-shadow: 0 0 0 0 rgba(96, 236, 168, 0);
+    box-shadow: 0 0 0 0 rgb(var(--accent-rgb) / 0);
   }
   50% {
-    box-shadow: 0 0 0 3px rgba(96, 236, 168, 0.2);
+    box-shadow: 0 0 0 3px rgb(var(--accent-rgb) / 0.2);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(96, 236, 168, 0);
+    box-shadow: 0 0 0 0 rgb(var(--accent-rgb) / 0);
   }
 }
 

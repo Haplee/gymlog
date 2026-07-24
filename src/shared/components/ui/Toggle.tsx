@@ -23,7 +23,7 @@ const ToggleComponent = ({ checked, onChange, disabled = false, ariaLabel }: Tog
     className="relative inline-flex items-center justify-center p-2 -m-2 min-w-11 min-h-11 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none group"
   >
     <span
-      className={`relative w-11 h-6 rounded-sm transition-colors duration-150 group-focus-visible:ring-2 group-focus-visible:ring-accent group-focus-visible:ring-offset-2 group-focus-visible:ring-offset-base ${
+      className={`relative w-11 h-6 rounded-sm transition-colors duration-150 group-focus-visible:ring-2 group-focus-visible:ring-accent group-focus-visible:ring-offset-2 group-focus-visible:ring-offset-canvas ${
         checked ? 'bg-accent-dim' : 'bg-surface-3'
       }`}
     >

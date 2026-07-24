@@ -8,8 +8,17 @@
  * entre una animación de ~2 s y un timer que despierta la CPU para siempre.
  */
 
-const ACCENT = '#60eca8';
-const COLORS = [ACCENT, '#3ecf8e', '#ffffff', '#b8f5d8', '#2aa87a'];
+/**
+ * La paleta se lee del tema en cada celebración para que el confeti siga al
+ * color de acento que haya elegido el usuario en Ajustes; los tonos neutros
+ * acompañan a cualquiera de ellos.
+ */
+function paletteFromTheme(): string[] {
+  const styles = getComputedStyle(document.documentElement);
+  const accent = styles.getPropertyValue('--interactive-primary').trim() || '#ffd93d';
+  const dim = styles.getPropertyValue('--interactive-primary-dim').trim() || accent;
+  return [accent, accent, dim, '#ffffff', '#e8e8e8'];
+}
 
 /** Techo duro: más partículas no se perciben y sí se notan en la batería. */
 const MAX_PARTICLES = 220;
@@ -75,7 +84,7 @@ const prefersReducedMotion = (): boolean =>
 const rand = (min: number, max: number): number => min + Math.random() * (max - min);
 const pick = <T>(arr: T[]): T => arr[(Math.random() * arr.length) | 0];
 
-function makeParticle(burst: Burst, isSpark: boolean): Particle {
+function makeParticle(burst: Burst, isSpark: boolean, colors: string[]): Particle {
   const angle = rand(-Math.PI, 0); // hacia arriba, en abanico
   const power = burst.power * rand(0.45, 1);
 
@@ -88,7 +97,7 @@ function makeParticle(burst: Burst, isSpark: boolean): Particle {
       vy: Math.sin(angle) * power * 1.5,
       w: size,
       h: size,
-      color: Math.random() < 0.6 ? '#ffffff' : ACCENT,
+      color: Math.random() < 0.6 ? '#ffffff' : colors[0],
       shape: 'spark',
       spin: 0,
       spinSpeed: 0,
@@ -110,7 +119,7 @@ function makeParticle(burst: Burst, isSpark: boolean): Particle {
     vy: Math.sin(angle) * power,
     w,
     h: w * rand(0.4, 0.7),
-    color: pick(COLORS),
+    color: pick(colors),
     shape: Math.random() < 0.75 ? 'rect' : 'circle',
     spin: rand(0, Math.PI * 2),
     spinSpeed: rand(-0.012, 0.012),
@@ -127,9 +136,10 @@ function spawn(eng: Engine, burst: Burst): void {
   const room = MAX_PARTICLES - eng.particles.length;
   if (room <= 0) return;
   const count = Math.min(burst.count, room);
+  const colors = paletteFromTheme();
   for (let i = 0; i < count; i++) {
     // ~1 de cada 5 es destello.
-    eng.particles.push(makeParticle(burst, i % 5 === 0));
+    eng.particles.push(makeParticle(burst, i % 5 === 0, colors));
   }
 }
 

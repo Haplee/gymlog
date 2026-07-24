@@ -22,18 +22,10 @@ import { useUpdateProfileCache } from '@features/auth/hooks/useProfile';
 import { toast } from 'sonner';
 import BiometricPlugin from '@shared/lib/biometric';
 import { devError } from '@shared/lib/devtools';
-import {
-  Camera,
-  Check,
-  ChevronRight,
-  Download,
-  Loader2,
-  LogOut,
-  Pencil,
-  Ruler,
-  Watch,
-  X,
-} from 'lucide-react';
+import { Camera, Check, ChevronRight, Download, Loader2, LogOut, Pencil, X } from 'lucide-react';
+import { IconBook, IconRuler, IconWatch } from '@shared/components/icons';
+import { ACCENT_PRESETS, getAccentPreset } from '@shared/constants/accents';
+import { isAppIconSupported, setAppIcon as setAppIconNative } from '@shared/lib/appIcon';
 
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
 const MAX_NAME_LENGTH = 40;
@@ -50,6 +42,36 @@ const playSound = (freq: number, duration: number, delay: number, ctx: AudioCont
   osc.start(ctx.currentTime + delay);
   osc.stop(ctx.currentTime + delay + duration);
 };
+
+/**
+ * Fila de menú del kit FitBody: icono dentro de un círculo de acento, etiqueta
+ * y chevron. Es el patrón de su pantalla de perfil (Profile, Favorite, Help…).
+ */
+function MenuRow({
+  icon,
+  label,
+  onClick,
+}: {
+  icon: ReactNode;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full flex items-center justify-between gap-3 min-h-11 py-2 text-left active:opacity-70"
+    >
+      <span className="flex items-center gap-3 text-sm text-fg">
+        <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-accent text-accent-fg">
+          {icon}
+        </span>
+        {label}
+      </span>
+      <ChevronRight className="w-4 h-4 text-fg-subtle" />
+    </button>
+  );
+}
 
 function SettingRow({
   label,
@@ -104,6 +126,10 @@ export function SettingsPage() {
     setRestDuration,
     restByExercise,
     setRestByExercise,
+    accentColor,
+    setAccentColor,
+    appIcon,
+    setAppIcon,
   } = useSettingsStore();
   const [biometricSupport, setBiometricSupport] = useState<{ available: boolean; message: string }>(
     { available: false, message: '' },
@@ -113,6 +139,23 @@ export function SettingsPage() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  /** La paleta de acentos arranca plegada para no alargar la pantalla. */
+  const [accentOpen, setAccentOpen] = useState(false);
+  const [iconOpen, setIconOpen] = useState(false);
+
+  const applyAppIcon = useCallback(
+    async (id: string) => {
+      try {
+        await setAppIconNative(id);
+        setAppIcon(id);
+        toast.success(t('settings.app_icon_changed'));
+      } catch (e) {
+        devError('[Settings] setAppIcon:', e);
+        toast.error(t('settings.app_icon_error'));
+      }
+    },
+    [setAppIcon, t],
+  );
   /** `null` = aún sin comprobar; no pintar la fila hasta saberlo. */
   const [exactAlarmsGranted, setExactAlarmsGranted] = useState<boolean | null>(null);
   const updateProfileCache = useUpdateProfileCache();
@@ -362,31 +405,31 @@ export function SettingsPage() {
 
   return (
     <Layout>
-      <h1 className="text-headline font-display text-fg mb-4">{t('settings.title')}</h1>
-
       <div className="space-y-6 pb-20">
         {/* Perfil */}
-        <div className="rounded-lg p-4 bg-surface border border-line">
-          <div className="flex items-center gap-3">
+        {/* Cabecera de perfil del kit ("Progress Tracking"): banda rellena del
+            acento con el avatar circular y el nombre en grande. */}
+        <div className="rounded-card overflow-hidden bg-surface border border-line">
+          <div className="flex items-center gap-3 bg-accent p-4">
             <button
               type="button"
               onClick={() => avatarInputRef.current?.click()}
               disabled={isUploadingAvatar}
               aria-label={t('settings.change_photo')}
-              className="relative w-14 h-14 flex-shrink-0 rounded-sm active:scale-95 transition-transform disabled:opacity-60"
+              className="relative w-14 h-14 flex-shrink-0 rounded-full active:scale-95 transition-transform disabled:opacity-60"
             >
               {avatarUrl ? (
                 <img
                   src={avatarUrl}
                   alt=""
-                  className="w-14 h-14 rounded-sm object-cover border border-line-accent"
+                  className="w-14 h-14 rounded-full object-cover border-2 border-accent-fg/20"
                 />
               ) : (
-                <span className="w-14 h-14 rounded-sm flex items-center justify-center bg-accent/10 border border-line-accent text-accent font-display font-bold text-lg uppercase">
+                <span className="w-14 h-14 rounded-full flex items-center justify-center bg-accent-fg text-accent font-display font-bold text-lg uppercase">
                   {displayName.slice(0, 1) || '?'}
                 </span>
               )}
-              <span className="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-sm flex items-center justify-center bg-accent text-accent-fg border border-base">
+              <span className="absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full flex items-center justify-center bg-canvas text-accent">
                 {isUploadingAvatar ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 ) : (
@@ -436,7 +479,7 @@ export function SettingsPage() {
                 </div>
               ) : (
                 <div className="flex items-center min-w-0">
-                  <div className="text-data font-display font-bold text-fg truncate">
+                  <div className="text-data font-display font-bold text-accent-fg truncate">
                     {displayName}
                   </div>
                   <button
@@ -446,31 +489,34 @@ export function SettingsPage() {
                       setIsEditingName(true);
                     }}
                     aria-label={t('settings.edit_name')}
-                    className="w-11 h-11 -my-2 flex-shrink-0 flex items-center justify-center text-fg-subtle active:text-accent"
+                    className="w-11 h-11 -my-2 flex-shrink-0 flex items-center justify-center text-accent-fg/75 active:text-accent-fg"
                   >
                     <Pencil className="w-3.5 h-3.5" />
                   </button>
                 </div>
               )}
-              <div className="text-xs text-fg-subtle truncate">{user?.email}</div>
+              <div className="text-xs text-accent-fg/85 truncate">{user?.email}</div>
             </div>
           </div>
-          {isGoogle && (
-            <span className="label-caps inline-block mt-3 px-2 py-1 rounded-sm bg-surface-2 border border-line text-fg-muted">
-              {t('settings.google_account')}
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={() => navigate('/user-stats')}
-            className="w-full mt-3 flex items-center justify-between gap-3 min-h-11 px-3 rounded-sm bg-surface-2 border border-line text-left active:scale-[0.99] transition-transform"
-          >
-            <span className="flex items-center gap-2 text-sm text-fg">
-              <Ruler className="w-4 h-4 text-accent" />
-              {t('settings.my_measurements')}
-            </span>
-            <ChevronRight className="w-4 h-4 text-fg-subtle" />
-          </button>
+
+          {/* Menú del kit: cada fila con su icono en un círculo de acento. */}
+          <div className="p-4">
+            {isGoogle && (
+              <span className="label-caps inline-block mb-3 px-2.5 py-1 rounded-pill bg-surface-2 text-fg-muted">
+                {t('settings.google_account')}
+              </span>
+            )}
+            <MenuRow
+              icon={<IconRuler className="w-4 h-4" />}
+              label={t('settings.my_measurements')}
+              onClick={() => navigate('/user-stats')}
+            />
+            <MenuRow
+              icon={<IconBook className="w-4 h-4" />}
+              label={t('guide.title')}
+              onClick={() => navigate('/guide')}
+            />
+          </div>
         </div>
 
         {!isNative() && (
@@ -487,7 +533,7 @@ export function SettingsPage() {
         {/* Preferencias */}
         <section>
           <SectionHeader title={t('settings.preferences')} />
-          <div className="rounded-lg bg-surface border border-line overflow-hidden">
+          <div className="rounded-card bg-surface border border-line overflow-hidden">
             <SettingRow
               label={t('settings.language')}
               control={
@@ -516,6 +562,155 @@ export function SettingsPage() {
                 />
               }
             />
+
+            {/* El color de acento va en su propia fila (no en el hueco del control
+                de una SettingRow) y colapsado: con la paleta completa son
+                diecisiete muestras, que abiertas empujaban el resto de ajustes
+                fuera de pantalla. Cerrado enseña solo el color activo. */}
+            <div className="dotted-separator px-4 py-3.5">
+              <button
+                type="button"
+                onClick={() => setAccentOpen((v) => !v)}
+                aria-expanded={accentOpen}
+                aria-controls="accent-swatches"
+                className="flex w-full items-center gap-3 text-left"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="text-base text-fg">{t('settings.accent')}</div>
+                  <div className="text-xs mt-0.5 text-fg-subtle">
+                    {t(`settings.accent_${accentColor}`)}
+                  </div>
+                </div>
+                <span
+                  className="h-7 w-7 flex-shrink-0 rounded-full border border-line"
+                  style={{ backgroundColor: getAccentPreset(accentColor)[theme].primary }}
+                  aria-hidden="true"
+                />
+                <ChevronRight
+                  className={`h-5 w-5 flex-shrink-0 text-fg-subtle transition-transform ${
+                    accentOpen ? 'rotate-90' : ''
+                  }`}
+                  aria-hidden="true"
+                />
+              </button>
+              {accentOpen && (
+                <>
+                  <div className="text-xs mt-3 text-fg-subtle">{t('settings.accent_desc')}</div>
+                  <div
+                    id="accent-swatches"
+                    role="radiogroup"
+                    aria-label={t('settings.accent')}
+                    className="mt-2.5 flex flex-wrap gap-2.5"
+                  >
+                    {ACCENT_PRESETS.map((preset) => {
+                      const isActive = preset.id === accentColor;
+                      const swatch = preset[theme].primary;
+                      return (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          role="radio"
+                          aria-checked={isActive}
+                          aria-label={t(`settings.accent_${preset.id}`)}
+                          onClick={() => setAccentColor(preset.id)}
+                          className={`h-11 w-11 rounded-full transition-transform active:scale-95 ${
+                            isActive ? 'ring-2 ring-offset-2 ring-offset-surface ring-fg' : ''
+                          }`}
+                          style={{ backgroundColor: swatch }}
+                        >
+                          {isActive && (
+                            <Check
+                              className="mx-auto h-4 w-4"
+                              style={{ color: preset[theme].fg }}
+                              aria-hidden="true"
+                            />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Icono del lanzador. Solo Android: en web el icono lo congela el
+                manifest al instalar la PWA. Va separado del acento porque
+                cambiarlo reordena la pantalla de inicio del usuario. */}
+            {isAppIconSupported() && (
+              <div className="dotted-separator px-4 py-3.5">
+                <button
+                  type="button"
+                  onClick={() => setIconOpen((v) => !v)}
+                  aria-expanded={iconOpen}
+                  aria-controls="app-icon-swatches"
+                  className="flex w-full items-center gap-3 text-left"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="text-base text-fg">{t('settings.app_icon')}</div>
+                    <div className="text-xs mt-0.5 text-fg-subtle">
+                      {t(`settings.accent_${appIcon}`)}
+                    </div>
+                  </div>
+                  <span
+                    className="h-7 w-7 flex-shrink-0 rounded-full border border-line"
+                    style={{ backgroundColor: getAccentPreset(appIcon).dark.primary }}
+                    aria-hidden="true"
+                  />
+                  <ChevronRight
+                    className={`h-5 w-5 flex-shrink-0 text-fg-subtle transition-transform ${
+                      iconOpen ? 'rotate-90' : ''
+                    }`}
+                    aria-hidden="true"
+                  />
+                </button>
+                {iconOpen && (
+                  <>
+                    <div className="text-xs mt-3 text-fg-subtle">{t('settings.app_icon_desc')}</div>
+                    {appIcon !== accentColor && (
+                      <button
+                        type="button"
+                        onClick={() => void applyAppIcon(accentColor)}
+                        className="mt-2.5 rounded-pill bg-surface-2 px-3 py-2 text-xs text-fg"
+                      >
+                        {t('settings.app_icon_match')}
+                      </button>
+                    )}
+                    <div
+                      id="app-icon-swatches"
+                      role="radiogroup"
+                      aria-label={t('settings.app_icon')}
+                      className="mt-2.5 flex flex-wrap gap-2.5"
+                    >
+                      {ACCENT_PRESETS.map((preset) => {
+                        const isActive = preset.id === appIcon;
+                        return (
+                          <button
+                            key={preset.id}
+                            type="button"
+                            role="radio"
+                            aria-checked={isActive}
+                            aria-label={t(`settings.accent_${preset.id}`)}
+                            onClick={() => void applyAppIcon(preset.id)}
+                            className={`h-11 w-11 rounded-[14px] transition-transform active:scale-95 ${
+                              isActive ? 'ring-2 ring-offset-2 ring-offset-surface ring-fg' : ''
+                            }`}
+                            style={{ backgroundColor: preset.dark.primary }}
+                          >
+                            {isActive && (
+                              <Check
+                                className="mx-auto h-4 w-4"
+                                style={{ color: preset.dark.fg }}
+                                aria-hidden="true"
+                              />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
             <SettingRow
               label={t('settings.weight_unit')}
               control={
@@ -562,7 +757,7 @@ export function SettingsPage() {
         {/* Entrenamiento */}
         <section>
           <SectionHeader title={t('settings.training')} />
-          <div className="rounded-lg bg-surface border border-line overflow-hidden">
+          <div className="rounded-card bg-surface border border-line overflow-hidden">
             <SettingRow
               label={t('settings.training_reminders')}
               desc={t('settings.training_reminders_desc')}
@@ -633,7 +828,7 @@ export function SettingsPage() {
         {/* Notificaciones */}
         <section>
           <SectionHeader title={t('settings.notifications')} />
-          <div className="rounded-lg bg-surface border border-line overflow-hidden">
+          <div className="rounded-card bg-surface border border-line overflow-hidden">
             <SettingRow
               label={t('settings.notifications')}
               desc={t('settings.notifications_desc')}
@@ -683,14 +878,16 @@ export function SettingsPage() {
         {/* Datos */}
         <section>
           <SectionHeader title={t('settings.data')} />
-          <div className="rounded-lg bg-surface border border-line overflow-hidden">
+          <div className="rounded-card bg-surface border border-line overflow-hidden">
             <button
               type="button"
               onClick={() => navigate('/wearables')}
               className="w-full flex items-center justify-between gap-3 px-4 py-3.5 text-left active:bg-hover"
             >
-              <span className="flex items-center gap-2.5 min-w-0">
-                <Watch className="w-4 h-4 flex-shrink-0 text-accent" />
+              <span className="flex items-center gap-3 min-w-0">
+                <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-accent text-accent-fg">
+                  <IconWatch className="w-4 h-4" />
+                </span>
                 <span className="min-w-0">
                   <span className="block text-base text-fg">{t('settings.wearables')}</span>
                   <span className="block text-xs mt-0.5 text-fg-subtle">
@@ -706,7 +903,7 @@ export function SettingsPage() {
         {/* Cuenta */}
         <section>
           <SectionHeader title={t('settings.account')} />
-          <div className="rounded-lg bg-surface border border-line overflow-hidden">
+          <div className="rounded-card bg-surface border border-line overflow-hidden">
             <button
               type="button"
               onClick={() => signOut()}

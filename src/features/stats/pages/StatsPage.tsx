@@ -40,7 +40,7 @@ const ExerciseComparisonChart = lazy(() =>
 );
 
 function ChartFallback() {
-  return <div className="h-56 skeleton rounded-lg" aria-hidden="true" />;
+  return <div className="h-56 skeleton rounded-card" aria-hidden="true" />;
 }
 import {
   calculateCurrentStreak,
@@ -76,15 +76,9 @@ import {
 import { useTranslation } from 'react-i18next';
 import { devError } from '@shared/lib/devtools';
 
+/** Mismo rótulo que SectionHeader: titular en acento, sin versalitas ni regla. */
 function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex items-center gap-3 px-1">
-      <span className="text-2xs font-bold uppercase tracking-[0.12em] text-fg-subtle">
-        {children}
-      </span>
-      <div className="flex-1 h-px" style={{ backgroundColor: 'var(--border-subtle)' }} />
-    </div>
-  );
+  return <h2 className="font-display text-base font-bold text-accent px-1">{children}</h2>;
 }
 
 export function StatsPage() {
@@ -384,8 +378,8 @@ export function StatsPage() {
               <Skeleton key={i} className="h-28 rounded-card" />
             ))}
           </div>
-          <Skeleton className="h-56 rounded-lg" />
-          <Skeleton className="h-40 rounded-lg" />
+          <Skeleton className="h-56 rounded-card" />
+          <Skeleton className="h-40 rounded-card" />
         </div>
       </Layout>
     );
@@ -401,21 +395,17 @@ export function StatsPage() {
             type="button"
             onClick={() => navigate(-1)}
             aria-label={t('common.back')}
-            className="w-11 h-11 flex-shrink-0 rounded-sm flex items-center justify-center bg-surface border border-line hover:bg-surface-2"
+            className="w-11 h-11 flex-shrink-0 rounded-full flex items-center justify-center bg-surface border border-line hover:bg-surface-2"
           >
             <ArrowLeft className="w-4 h-4 text-fg-muted" />
           </button>
-          {/* min-w-0 + truncate: el h1 debe poder encogerse dentro del flex o
-              desborda. text-balance no aplica a una sola línea. */}
-          <h1 className="text-headline font-display text-fg truncate min-w-0">
-            {t('stats.title')}
-          </h1>
+          {/* El rótulo de la pantalla lo pone la cabecera del Layout. */}
         </div>
         <button
           type="button"
           onClick={() => navigate('/user-stats')}
           aria-label={t('settings.my_measurements')}
-          className="w-11 h-11 flex-shrink-0 rounded-sm flex items-center justify-center bg-surface border border-line text-accent hover:bg-surface-2"
+          className="w-11 h-11 flex-shrink-0 rounded-full flex items-center justify-center bg-surface border border-line text-accent hover:bg-surface-2"
         >
           <Ruler className="w-4 h-4" />
         </button>
@@ -467,18 +457,26 @@ export function StatsPage() {
             className="grid grid-cols-3 gap-3"
           >
             <KPICard
+              size="sm"
               title="Volumen total"
               value={formatVol(allTimeVolume)}
               subtitle="histórico"
               icon="all-volume"
             />
             <KPICard
+              size="sm"
               title="Mejor 1RM"
               value={bestOneRm > 0 ? formatKg(bestOneRm, 0) : '—'}
               subtitle="estimado"
               icon="best-1rm"
             />
-            <KPICard title="Notas" value={setNotesCount} subtitle="series anotadas" icon="notes" />
+            <KPICard
+              size="sm"
+              title="Notas"
+              value={setNotesCount}
+              subtitle="series anotadas"
+              icon="notes"
+            />
           </m.div>
 
           {/* Racha max + PRs */}
@@ -630,12 +628,14 @@ export function StatsPage() {
               className="grid grid-cols-3 gap-3"
             >
               <KPICard
+                size="sm"
                 title="Tiempo total"
                 value={formatSeconds(cardioStats.totalTimeAll)}
                 subtitle="histórico"
                 icon="cardio-time"
               />
               <KPICard
+                size="sm"
                 title="Distancia total"
                 value={
                   cardioStats.totalDistAll > 0 ? `${cardioStats.totalDistAll.toFixed(1)}km` : '—'
@@ -644,6 +644,7 @@ export function StatsPage() {
                 icon="cardio-dist"
               />
               <KPICard
+                size="sm"
                 title="Duración media"
                 value={cardioStats.avgDur > 0 ? formatSeconds(cardioStats.avgDur) : '—'}
                 subtitle="por sesión"
@@ -912,13 +913,13 @@ export function StatsPage() {
                             value={goalInput}
                             onChange={(e) => setGoalInput(e.target.value.replace(/[^\d.,]/g, ''))}
                             placeholder={`p.ej. ${Math.round(toDisplay(currentBest1rm)) + 5} ${unit}`}
-                            className="flex-1 rounded-lg text-sm px-3 py-2 outline-none bg-surface-2 border border-line text-fg"
+                            className="flex-1 rounded-card text-sm px-3 py-2 outline-none bg-surface-2 border border-line text-fg"
                           />
                           <button
                             type="button"
                             onClick={handleSaveGoal}
                             disabled={!goalInput}
-                            className="px-4 rounded-lg text-sm font-semibold bg-accent text-accent-fg disabled:opacity-50"
+                            className="px-4 rounded-card text-sm font-semibold bg-accent text-accent-fg disabled:opacity-50"
                           >
                             Fijar
                           </button>

@@ -1,3 +1,14 @@
+import {
+  Activity,
+  Bike,
+  Dumbbell,
+  Footprints,
+  Sailboat,
+  SportShoe,
+  Timer,
+  WavesLadder,
+  type LucideIcon,
+} from 'lucide-react';
 import type { CardioType } from '@features/cardio/stores/cardioStore';
 
 interface IconProps {
@@ -5,170 +16,21 @@ interface IconProps {
 }
 
 /* ────────────────────────────  CARDIO  ────────────────────────────
-   Misma "dinámica" que los iconos de músculos (ver MUSCLE_SVG abajo):
-   duotono — contexto tenue (máquina/suelo/agua) en trazo fino con
-   strokeOpacity 0.3, y el SUJETO activo (figura o pieza clave) resaltado:
-   cabeza/zonas rellenas en currentColor (fillOpacity ~0.55) y miembros en
-   trazo grueso. Da profundidad y unifica el set con los músculos. */
+   Iconos del set profesional lucide-react en vez de SVG a mano: son limpios,
+   consistentes entre sí y reconocibles a tamaño pequeño. Como cada botón lleva
+   además su etiqueta ("Correr", "Remo"…), basta con un glifo semántico claro.
+   Las tres máquinas sin icono propio en lucide (remo, elíptica, comba) usan el
+   más cercano: barca (deporte de agua), pulso de cardio y cronómetro. */
 
-const CARDIO_SVG = {
-  fill: 'none' as const,
-  stroke: 'currentColor' as const,
-  strokeWidth: 1.1,
-  strokeLinecap: 'round' as const,
-  strokeLinejoin: 'round' as const,
-};
-
-// Miembros del sujeto activo: trazo grueso = se lee como "relleno".
-const LIMB = { strokeWidth: 2.2 } as const;
-// Cabeza/zonas rellenas del sujeto.
-const FILL = {
-  fill: 'currentColor' as const,
-  fillOpacity: 0.6,
-  stroke: 'none' as const,
-} as const;
-// Contexto (entorno/máquina): tenue.
-const FAINT = { strokeOpacity: 0.3 } as const;
-
-function TreadmillIcon({ className }: IconProps) {
-  // Corredor resaltado sobre cinta tenue
-  return (
-    <svg viewBox="0 0 24 24" className={className} {...CARDIO_SVG}>
-      {/* cinta + consola (contexto tenue) */}
-      <path d="M3 18.5h11l4 2.5H6.2z" {...FAINT} />
-      <path d="M14 18.5V10" {...FAINT} />
-      <rect x="12.4" y="6.6" width="4" height="3" rx="0.5" {...FAINT} />
-      {/* corredor resaltado */}
-      <circle cx="9" cy="4.3" r="1.7" {...FILL} />
-      <path d="M9 6.3l-0.5 4" {...LIMB} />
-      <path d="M8.8 7.1l2.7 1.5" {...LIMB} />
-      <path d="M8.8 7.1L6.1 8.8" {...LIMB} />
-      <path d="M8.5 10.3l2.4 3.4" {...LIMB} />
-      <path d="M8.5 10.3L5.7 13.3" {...LIMB} />
-    </svg>
-  );
-}
-
-function BikeIcon({ className }: IconProps) {
-  // Bici tenue + ciclista resaltado
-  return (
-    <svg viewBox="0 0 24 24" className={className} {...CARDIO_SVG}>
-      {/* bici (contexto tenue) */}
-      <circle cx="5.5" cy="17.5" r="3.2" {...FAINT} />
-      <circle cx="18.5" cy="17.5" r="3.2" {...FAINT} />
-      <path d="M5.5 17.5l4-6h5M9.5 11.5l4 6" {...FAINT} />
-      <path d="M13.5 7.5h2.5" {...FAINT} />
-      {/* ciclista resaltado */}
-      <circle cx="11.5" cy="4.3" r="1.6" {...FILL} />
-      <path d="M11.5 6l1.5 3.5" {...LIMB} />
-      <path d="M11.6 6.6l2.4-0.1" {...LIMB} />
-      <path d="M13 9.5l-3.5 2" {...LIMB} />
-    </svg>
-  );
-}
-
-function WalkingIcon({ className }: IconProps) {
-  // Figura caminando resaltada sobre suelo tenue
-  return (
-    <svg viewBox="0 0 24 24" className={className} {...CARDIO_SVG}>
-      <path d="M5 21h14" {...FAINT} />
-      <circle cx="12.5" cy="3.6" r="1.7" {...FILL} />
-      <path d="M12.5 5.5l-0.8 5.2" {...LIMB} />
-      <path d="M12.4 6.6l2.7 1.8" {...LIMB} />
-      <path d="M12.1 7L9.4 8.9" {...LIMB} />
-      <path d="M11.7 10.7l1.7 4.7 0 4.2" {...LIMB} />
-      <path d="M11.7 10.7l-2.6 4 -1 4.6" {...LIMB} />
-    </svg>
-  );
-}
-
-function RowingMachineIcon({ className }: IconProps) {
-  // Remero resaltado sobre máquina tenue
-  return (
-    <svg viewBox="0 0 24 24" className={className} {...CARDIO_SVG}>
-      {/* máquina (contexto tenue) */}
-      <circle cx="4.3" cy="14" r="2.4" {...FAINT} />
-      <path d="M6.5 14.5h13" {...FAINT} />
-      <path d="M3 18h2M18 18h2" {...FAINT} />
-      {/* remero resaltado */}
-      <circle cx="14" cy="6.6" r="1.6" {...FILL} />
-      <path d="M14 8.2l-1.5 3.4" {...LIMB} />
-      <path d="M13.6 8.8L6.6 11" {...LIMB} />
-      <path d="M12.5 11.6l-3.5 1.4" {...LIMB} />
-    </svg>
-  );
-}
-
-function SwimmingIcon({ className }: IconProps) {
-  // Nadador resaltado + olas tenues
-  return (
-    <svg viewBox="0 0 24 24" className={className} {...CARDIO_SVG}>
-      {/* olas (contexto tenue) */}
-      <path d="M2 17.5c2-1.5 4-1.5 6 0s4 1.5 6 0 4-1.5 6 0" {...FAINT} />
-      <path d="M2 20.5c2-1.5 4-1.5 6 0s4 1.5 6 0 4-1.5 6 0" {...FAINT} />
-      {/* nadador resaltado */}
-      <circle cx="6.4" cy="8.6" r="1.7" {...FILL} />
-      <path d="M7.6 9.4l4-2 4 .4 3-1.4" {...LIMB} />
-      <path d="M6 10.4l2.2 2.8 3.8-0.8" {...LIMB} />
-    </svg>
-  );
-}
-
-function EllipticalIcon({ className }: IconProps) {
-  // Figura en elíptica resaltada sobre máquina tenue
-  return (
-    <svg viewBox="0 0 24 24" className={className} {...CARDIO_SVG}>
-      {/* máquina (contexto tenue) */}
-      <path d="M3 20.5h18" {...FAINT} />
-      <circle cx="5.5" cy="15" r="1.8" {...FAINT} />
-      <path d="M6.8 13.8l4 2.6M5 16.4l-1.5 3.4" {...FAINT} />
-      {/* figura resaltada */}
-      <circle cx="13" cy="4.4" r="1.7" {...FILL} />
-      <path d="M13 6.1v5.4" {...LIMB} />
-      <path d="M13 7l3 1.5" {...LIMB} />
-      <path d="M13 11.5l-2.5 4.5M13 11.5l3 4" {...LIMB} />
-    </svg>
-  );
-}
-
-function JumpRopeIcon({ className }: IconProps) {
-  // Saltador resaltado + cuerda tenue
-  return (
-    <svg viewBox="0 0 24 24" className={className} {...CARDIO_SVG}>
-      {/* cuerda (contexto tenue) */}
-      <path d="M3.5 12c1-5.5 4-8 8.5-8s7.5 2.5 8.5 8" {...FAINT} />
-      {/* saltador resaltado */}
-      <circle cx="12" cy="5.2" r="1.7" {...FILL} />
-      <path d="M12 7v5.5" {...LIMB} />
-      <path d="M12 8L8.2 10M12 8l3.8 2" {...LIMB} />
-      <path d="M12 12.5l-2 5M12 12.5l2 5" {...LIMB} />
-    </svg>
-  );
-}
-
-function DumbbellIcon({ className }: IconProps) {
-  // Mancuerna duotono (discos rellenos), igual que "Otro" en músculos
-  return (
-    <svg viewBox="0 0 24 24" className={className} {...CARDIO_SVG} strokeWidth={1.5}>
-      <path d="M2 12h2M20 12h2" />
-      <rect x="3.5" y="8" width="3" height="8" rx="0.7" fill="currentColor" fillOpacity="0.55" />
-      <rect x="17.5" y="8" width="3" height="8" rx="0.7" fill="currentColor" fillOpacity="0.55" />
-      <path d="M6.5 12h11" />
-    </svg>
-  );
-}
-
-type IconComponent = React.ComponentType<{ className?: string }>;
-
-const CARDIO_ICONS: Record<CardioType, IconComponent> = {
-  running: TreadmillIcon,
-  cycling: BikeIcon,
-  walking: WalkingIcon,
-  rowing: RowingMachineIcon,
-  swimming: SwimmingIcon,
-  elliptical: EllipticalIcon,
-  jump_rope: JumpRopeIcon,
-  other: DumbbellIcon,
+const CARDIO_ICONS: Record<CardioType, LucideIcon> = {
+  running: SportShoe,
+  cycling: Bike,
+  walking: Footprints,
+  rowing: Sailboat,
+  swimming: WavesLadder,
+  elliptical: Activity,
+  jump_rope: Timer,
+  other: Dumbbell,
 };
 
 export function CardioTypeIcon({
@@ -178,8 +40,8 @@ export function CardioTypeIcon({
   type: CardioType;
   className?: string;
 }) {
-  const Icon = CARDIO_ICONS[type] ?? DumbbellIcon;
-  return <Icon className={className} />;
+  const Icon = CARDIO_ICONS[type] ?? Dumbbell;
+  return <Icon className={className} strokeWidth={1.8} />;
 }
 
 /* ────────────────────────────  MUSCLES  ────────────────────────────

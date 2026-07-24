@@ -48,6 +48,7 @@ import { format, subWeeks, startOfWeek, eachWeekOfInterval, subDays } from 'date
 import { es } from 'date-fns/locale';
 import { calcular1RM } from '@shared/lib/brzycki';
 import { SectionLabel } from '../components/userStats/SectionLabel';
+import { WorkoutCalendar } from '../components/userStats/WorkoutCalendar';
 import { DayFrequencyChart } from '../components/userStats/DayFrequencyChart';
 import { TopExercisesList } from '../components/userStats/TopExercisesList';
 import { BodyMeasurements } from '../components/userStats/BodyMeasurements';
@@ -66,7 +67,7 @@ const MuscleDistributionChart = lazy(() =>
 );
 
 function ChartFallback() {
-  return <div className="h-56 skeleton rounded-lg" aria-hidden="true" />;
+  return <div className="h-56 skeleton rounded-card" aria-hidden="true" />;
 }
 function BigKPI({
   value,
@@ -144,7 +145,7 @@ function TipCard({ tip, index }: { tip: Tip; index: number }) {
       initial={{ opacity: 0, x: -12 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: 0.05 * index, type: 'spring', stiffness: 280, damping: 22 }}
-      className="flex gap-3 p-3.5 rounded-lg"
+      className="flex gap-3 p-3.5 rounded-card"
       style={{ backgroundColor: config.bg, border: `1px solid ${config.border}` }}
     >
       <Icon className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: config.color }} />
@@ -390,14 +391,14 @@ export function UserStatsPage() {
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <div className="skeleton w-11 h-11 rounded-md" />
-            <div className="skeleton h-5 w-40 rounded-lg" />
+            <div className="skeleton h-5 w-40 rounded-card" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="skeleton h-28 rounded-card" />
             ))}
           </div>
-          <div className="skeleton h-56 rounded-lg" />
+          <div className="skeleton h-56 rounded-card" />
         </div>
       </Layout>
     );
@@ -414,16 +415,12 @@ export function UserStatsPage() {
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="w-11 h-11 rounded-md flex items-center justify-center transition-colors bg-surface border border-line hover:bg-surface-2"
+          className="w-11 h-11 rounded-full flex items-center justify-center transition-colors bg-surface border border-line hover:bg-surface-2"
         >
           <ArrowLeft className="w-4 h-4 text-fg-muted" />
         </button>
-        <div>
-          <h1 className="text-xl font-extrabold text-fg text-balance">
-            {t('userStats.page_title')}
-          </h1>
-          <p className="text-xs text-fg-subtle">{t('userStats.page_subtitle')}</p>
-        </div>
+        {/* El título va en la cabecera del Layout; aquí solo la bajada. */}
+        <p className="text-xs text-fg-subtle">{t('userStats.page_subtitle')}</p>
       </m.div>
 
       <div className="space-y-5">
@@ -477,25 +474,39 @@ export function UserStatsPage() {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 + i * 0.04 }}
-                className="rounded-lg p-3 text-center bg-surface border border-line shadow-card"
+                className="rounded-card p-3 bg-surface border border-line shadow-card"
               >
-                <div
-                  className="font-mono font-bold text-xl tabular-nums"
-                  style={{ color: item.color }}
-                >
-                  {item.value}
+                {/* Dato con regla vertical a la izquierda, como el "75 Kg /
+                    Weight" de la cabecera Progress Tracking del kit. */}
+                <div className="flex items-stretch gap-2">
+                  <span
+                    aria-hidden="true"
+                    className="w-1 flex-shrink-0 rounded-pill"
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <div className="min-w-0">
+                    <div
+                      className="font-display font-bold text-xl tabular"
+                      style={{ color: item.color }}
+                    >
+                      {item.value}
+                    </div>
+                    <div className="text-2xs mt-0.5 text-fg-subtle">{item.label}</div>
+                  </div>
                 </div>
-                <div className="text-2xs mt-1 text-fg-subtle">{item.label}</div>
               </m.div>
             ))}
           </div>
+
+          <SectionLabel>{t('userStats.calendar_title')}</SectionLabel>
+          <WorkoutCalendar workouts={workouts} />
 
           {cardioTotalMin > 0 && (
             <m.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="rounded-lg p-3.5 flex items-center justify-between bg-surface border border-line"
+              className="rounded-card p-3.5 flex items-center justify-between bg-surface border border-line"
             >
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4" style={{ color: 'var(--accent-sky)' }} />
@@ -533,7 +544,7 @@ export function UserStatsPage() {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.03 * i }}
-                  className={`rounded-lg p-3 flex items-center gap-3 border shadow-card ${
+                  className={`rounded-card p-3 flex items-center gap-3 border shadow-card ${
                     a.unlocked
                       ? 'bg-surface border-line-accent'
                       : 'bg-surface border-line opacity-60'

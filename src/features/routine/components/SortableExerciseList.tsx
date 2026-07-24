@@ -44,7 +44,7 @@ function SortableRow({ exercise, onRemove }: { exercise: RoutineExercise; onRemo
           {...attributes}
           {...listeners}
           aria-label={`Reordenar ${exercise.name}`}
-          className="w-9 h-9 -ml-1 flex items-center justify-center rounded-lg text-fg-subtle touch-none cursor-grab active:cursor-grabbing"
+          className="w-9 h-9 -ml-1 flex items-center justify-center rounded-card text-fg-subtle touch-none cursor-grab active:cursor-grabbing"
         >
           <GripVertical className="w-4 h-4" />
         </button>
@@ -61,7 +61,7 @@ function SortableRow({ exercise, onRemove }: { exercise: RoutineExercise; onRemo
         type="button"
         onClick={onRemove}
         aria-label={`Eliminar ${exercise.name}`}
-        className="w-9 h-9 flex items-center justify-center rounded-lg text-lg text-fg-subtle"
+        className="w-9 h-9 flex items-center justify-center rounded-card text-lg text-fg-subtle"
       >
         ×
       </button>
