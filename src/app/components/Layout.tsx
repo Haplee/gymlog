@@ -23,6 +23,7 @@ import { useRestAlarm } from '@features/workout/hooks/useRestAlarm';
 import { RestAlarmBanner } from '@features/workout/components/RestAlarmBanner';
 import { ExerciseSearchSheet } from '@shared/components/ExerciseSearchSheet';
 import { useNotificationsStore, selectUnreadCount } from '@shared/stores/notificationsStore';
+import { useWearableSync } from '@features/wearables/hooks/useWearableSync';
 
 interface LayoutProps {
   children: ReactNode;
@@ -91,6 +92,9 @@ export function Layout({ children }: LayoutProps) {
   const trainBadge = !!workoutStartedAt && workoutSets.length > 0;
   const [searchOpen, setSearchOpen] = useState(false);
   const unreadCount = useNotificationsStore(selectUnreadCount);
+  // Sincroniza con Health Connect/HealthKit al abrir la app (Layout envuelve
+  // toda página autenticada), no solo al entrar en Ajustes > Wearables.
+  useWearableSync();
 
   const tabs = [
     { path: '/', Icon: IconHome, label: t('nav.home'), id: 'home', badge: trainBadge },

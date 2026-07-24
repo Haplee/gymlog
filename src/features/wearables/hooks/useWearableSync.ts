@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -15,10 +15,16 @@ import {
 } from '../api/wearablesQueries';
 import type { WearableSyncResult } from '../types';
 
+// Módulo (no ref de componente): el hook se invoca desde Layout, que se
+// remonta en cada cambio de página (cada página envuelve su propio <Layout>).
+// Un ref por-instancia se reiniciaría en cada navegación y dispararía el sync
+// una y otra vez; esta bandera vive mientras dure la sesión de la app.
+let ranOnOpenThisSession = false;
+
 /**
  * Orquesta la sincronización del agregador nativo (Health Connect / HealthKit)
- * si está disponible. Devuelve runSync (manual) y dispara sync al abrir si el
- * usuario lo activó.
+ * si está disponible. Devuelve runSync (manual) y dispara sync al abrir la
+ * app (una vez por sesión, desde Layout) si el usuario lo activó.
  */
 export function useWearableSync() {
   const { t } = useTranslation();
@@ -28,7 +34,6 @@ export function useWearableSync() {
   const queryClient = useQueryClient();
   const { data: connections } = useWearableConnections();
   const { isSyncing, setSyncing, setSynced, setError } = useWearableStore();
-  const ranOnOpen = useRef(false);
 
   const invalidate = useCallback(() => {
     if (!userId) return;
@@ -46,13 +51,14 @@ export function useWearableSync() {
       if (!aggregator) return;
 
       setSyncing(true);
-      const totals: WearableSyncResult = { daily: 0, sleep: 0, workouts: 0 };
+      const totals: WearableSyncResult = { daily: 0, sleep: 0, workouts: 0, skippedStrength: 0 };
       try {
         const r = await syncAggregator(userId, 7);
         totals.daily += r.daily;
         totals.sleep += r.sleep;
         totals.workouts += r.workouts;
-        setSynced();
+        totals.skippedStrength += r.skippedStrength;
+        setSynced(totals.skippedStrength);
         invalidate();
         if (!opts.silent) {
           toast.success(
@@ -62,6 +68,13 @@ export function useWearableSync() {
               workouts: totals.workouts,
             }),
           );
+          // Aviso aparte (no silencioso) de las sesiones de fuerza detectadas
+          // pero no importadas — mezclarlo en sync_ok pasaría desapercibido.
+          if (totals.skippedStrength > 0) {
+            toast.info(
+              t('wearables.strength_not_imported_desc', { count: totals.skippedStrength }),
+            );
+          }
         }
       } catch (e) {
         devError('[Wearables] sync failed:', e);
@@ -72,13 +85,13 @@ export function useWearableSync() {
     [userId, setSyncing, setSynced, setError, invalidate, t],
   );
 
-  // Foreground-on-open: una vez por montaje, si el usuario lo tiene activado.
+  // Foreground-on-open: una vez por sesión de app, si el usuario lo tiene activado.
   useEffect(() => {
-    if (ranOnOpen.current) return;
+    if (ranOnOpenThisSession) return;
     if (!userId || !syncOnOpen) return;
     // Espera a tener el estado de conexiones cargado.
     if (connections === undefined) return;
-    ranOnOpen.current = true;
+    ranOnOpenThisSession = true;
     void runSync({ silent: true });
   }, [userId, syncOnOpen, connections, runSync]);
 

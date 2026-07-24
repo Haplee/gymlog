@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Capacitor } from '@capacitor/core';
-import { HeartPulse } from 'lucide-react';
+import { HeartPulse, Dumbbell } from 'lucide-react';
 import { toast } from 'sonner';
 import { Layout } from '@app/components/Layout';
 import { useAuthStore } from '@features/auth/stores/authStore';
@@ -11,6 +11,7 @@ import { ConnectionCard } from '../components/ConnectionCard';
 import { SleepCard } from '../components/SleepCard';
 import { useWearableDaily, useWearableSleep } from '../hooks/useWearableConnections';
 import { useWearableSync } from '../hooks/useWearableSync';
+import { useWearableStore } from '../stores/wearableStore';
 import { isAggregatorAvailable, requestAggregatorPermission } from '../api/healthAggregator';
 
 export function WearablesPage() {
@@ -23,6 +24,7 @@ export function WearablesPage() {
   const { data: dailyList } = useWearableDaily();
   const { data: sleepList } = useWearableSleep();
   const { runSync, isSyncing } = useWearableSync();
+  const skippedStrength = useWearableStore((s) => s.skippedStrength);
   const [aggregatorAvailable, setAggregatorAvailable] = useState(false);
 
   useEffect(() => {
@@ -75,6 +77,19 @@ export function WearablesPage() {
             {t('wearables.health_aggregator')}: {t('wearables.not_available_web')}
           </div>
         )}
+
+        {/* Sesiones de fuerza detectadas pero no importadas */}
+        {skippedStrength > 0 ? (
+          <div className="rounded-card p-4 bg-surface border border-line-strong flex gap-3">
+            <Dumbbell size={20} className="shrink-0 text-fg-subtle mt-0.5" />
+            <div>
+              <div className="text-sm text-fg">{t('wearables.strength_not_imported_title')}</div>
+              <div className="text-xs text-fg-subtle mt-1">
+                {t('wearables.strength_not_imported_desc', { count: skippedStrength })}
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         {/* Resumen de datos */}
         {dailyList?.length || sleepList?.length ? (

@@ -46,12 +46,12 @@ export async function syncAggregator(userId: string, days = 7): Promise<Wearable
 
   const end = new Date();
   const start = new Date(Date.now() - (days - 1) * 86400000);
-  const { daily, sleep, workouts } = await HealthBridge.readAll({
+  const { daily, sleep, workouts, skippedStrength } = await HealthBridge.readAll({
     startDate: ymd(start),
     endDate: ymd(end),
   });
 
-  const result: WearableSyncResult = { daily: 0, sleep: 0, workouts: 0 };
+  const result: WearableSyncResult = { daily: 0, sleep: 0, workouts: 0, skippedStrength };
 
   if (daily.length) {
     const rows = daily.map((d) => ({ ...d, source }));

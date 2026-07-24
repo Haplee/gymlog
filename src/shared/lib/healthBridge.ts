@@ -41,6 +41,10 @@ export interface HealthReadResult {
   daily: HealthDailyRow[];
   sleep: HealthSleepRow[];
   workouts: HealthWorkoutRow[];
+  /** Sesiones de fuerza detectadas (Health Connect/HealthKit) que NO se
+   * importan: no traen ejercicios/series/pesos, así que no se pueden
+   * reconstruir como entrenamiento de GymLog. */
+  skippedStrength: number;
 }
 
 export interface HealthBridgePlugin {
@@ -57,7 +61,7 @@ const HealthBridge = registerPlugin<HealthBridgePlugin>('HealthBridge', {
   web: () => ({
     isAvailable: async () => ({ available: false }),
     requestAuthorization: async () => ({ granted: false }),
-    readAll: async () => ({ daily: [], sleep: [], workouts: [] }),
+    readAll: async () => ({ daily: [], sleep: [], workouts: [], skippedStrength: 0 }),
   }),
 });
 
