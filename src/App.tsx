@@ -1,7 +1,8 @@
 import { useEffect, useState, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { LazyMotion } from 'framer-motion';
+import { LazyMotion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '@features/auth/stores/authStore';
+import { AppLockGate } from '@features/auth/components/AppLockGate';
 import { useSettingsStore } from '@shared/stores/settingsStore';
 import { PermissionRequests } from '@app/components/PermissionRequests';
 import { PageSkeleton } from '@shared/components/ui';
@@ -262,7 +263,20 @@ function AppRoutes() {
   const initialized = useAuthStore((s) => s.initialized);
   const { applyTheme } = useSettingsStore();
   const guideSeen = useSettingsStore((s) => s.guideSeen);
+  const biometricEnabled = useSettingsStore((s) => s.biometricEnabled);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  // Bloqueo biométrico: solo nativo y solo si el usuario lo activó. Arranca
+  // bloqueado y se re-bloquea al volver del segundo plano (ver efecto abajo).
+  const isNative = Capacitor.isNativePlatform();
+  const [locked, setLocked] = useState(() => {
+    if (!isNative || !useSettingsStore.getState().biometricEnabled) return false;
+    // Tras desbloquear, el plugin nativo recarga el WebView (única forma fiable
+    // de repintar la superficie tras el prompt) y deja esta marca de un solo uso.
+    // Si es reciente, arrancamos desbloqueados para no volver a pedir biometría.
+    const ts = Number(localStorage.getItem('applock_unlocked_at') ?? 0);
+    localStorage.removeItem('applock_unlocked_at');
+    return Date.now() - ts >= 10000;
+  });
   const navigate = useNavigate();
 
   useWorkoutReminder();
@@ -346,6 +360,20 @@ function AppRoutes() {
     }
   }, [initialized]);
 
+  // Re-bloquear al pasar a segundo plano, para que al volver pida biometría.
+  // Listener propio (no comparte con el de appUrlOpen) para no arrastrar su
+  // removeAllListeners; se limpia con su propio handle.
+  useEffect(() => {
+    if (!isNative) return;
+    let handle: { remove: () => void } | undefined;
+    void CapApp.addListener('appStateChange', ({ isActive }) => {
+      if (!isActive && useSettingsStore.getState().biometricEnabled) setLocked(true);
+    }).then((h) => {
+      handle = h;
+    });
+    return () => handle?.remove();
+  }, [isNative]);
+
   useEffect(() => {
     if (initialized && user) {
       const checkProfile = async () => {
@@ -366,20 +394,27 @@ function AppRoutes() {
   if (!initialized || loading) return <Loading />;
 
   return (
-    <Suspense fallback={<Loading />}>
-      {showOnboarding && user && (
-        <OnboardingModal
-          user={user}
-          onComplete={() => {
-            setShowOnboarding(false);
-            // Solo tras crear el perfil: una cuenta ya existente no ve la guía
-            // al entrar, la tiene en Ajustes cuando le apetezca.
-            if (!guideSeen) navigate('/guide');
-          }}
-        />
-      )}
-      <AnimatedRoutes />
-    </Suspense>
+    <>
+      <Suspense fallback={<Loading />}>
+        {showOnboarding && user && (
+          <OnboardingModal
+            user={user}
+            onComplete={() => {
+              setShowOnboarding(false);
+              // Solo tras crear el perfil: una cuenta ya existente no ve la guía
+              // al entrar, la tiene en Ajustes cuando le apetezca.
+              if (!guideSeen) navigate('/guide');
+            }}
+          />
+        )}
+        <AnimatedRoutes />
+      </Suspense>
+      <AnimatePresence>
+        {isNative && biometricEnabled && user && locked && (
+          <AppLockGate key="applock" onUnlock={() => setLocked(false)} />
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 
