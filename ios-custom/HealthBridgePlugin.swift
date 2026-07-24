@@ -9,7 +9,7 @@ import HealthKit
 /// Métodos:
 ///   isAvailable()          -> { available }
 ///   requestPermissions()   -> { granted }
-///   readAll({startDate,endDate}) -> { daily, sleep, workouts }
+///   readAll({startDate,endDate}) -> { daily, sleep, workouts, skippedStrength }
 ///
 /// Requiere capability HealthKit + NSHealthShareUsageDescription en Info.plist.
 @objc(HealthBridgePlugin)
@@ -51,7 +51,7 @@ public class HealthBridgePlugin: CAPPlugin, CAPBridgedPlugin {
 
     @objc func readAll(_ call: CAPPluginCall) {
         guard HKHealthStore.isHealthDataAvailable() else {
-            call.resolve(["daily": [], "sleep": [], "workouts": []]); return
+            call.resolve(["daily": [], "sleep": [], "workouts": [], "skippedStrength": 0]); return
         }
         guard let startStr = call.getString("startDate"),
               let endStr = call.getString("endDate") else {
@@ -193,13 +193,23 @@ public class HealthBridgePlugin: CAPPlugin, CAPBridgedPlugin {
 
         // --- Workouts ---
         var workoutRows: [[String: Any]] = []
+        var skippedStrength = 0
         func collectWorkouts() {
             group.enter()
             let pred = HKQuery.predicateForSamples(withStart: start, end: end)
             let q = HKSampleQuery(sampleType: HKObjectType.workoutType(), predicate: pred, limit: HKObjectQueryNoLimit, sortDescriptors: nil) { _, samples, _ in
                 var rows: [[String: Any]] = []
+                var strengthCount = 0
                 let iso = ISO8601DateFormatter()
                 for w in (samples as? [HKWorkout]) ?? [] {
+                    // Una sesión de fuerza de HealthKit no trae ejercicios/series/
+                    // pesos: no hay forma de reconstruir un entrenamiento real de
+                    // GymLog a partir de ella, así que no se importa como cardio
+                    // "other" (induciría a error). Se cuenta aparte para avisar.
+                    if self.isStrengthType(w.workoutActivityType) {
+                        strengthCount += 1
+                        continue
+                    }
                     var r: [String: Any] = [
                         "external_id": "hk:\(w.uuid.uuidString)",
                         "type": self.mapWorkout(w.workoutActivityType),
@@ -210,7 +220,7 @@ public class HealthBridgePlugin: CAPPlugin, CAPBridgedPlugin {
                     if let kcal = w.totalEnergyBurned?.doubleValue(for: .kilocalorie()) { r["calories"] = Int(kcal) }
                     rows.append(r)
                 }
-                lock.lock(); workoutRows.append(contentsOf: rows); lock.unlock()
+                lock.lock(); workoutRows.append(contentsOf: rows); skippedStrength += strengthCount; lock.unlock()
                 group.leave()
             }
             store.execute(q)
@@ -232,7 +242,15 @@ public class HealthBridgePlugin: CAPPlugin, CAPBridgedPlugin {
                 "daily": dailyArr,
                 "sleep": sleepRows,
                 "workouts": workoutRows,
+                "skippedStrength": skippedStrength,
             ])
+        }
+    }
+
+    private func isStrengthType(_ type: HKWorkoutActivityType) -> Bool {
+        switch type {
+        case .traditionalStrengthTraining, .functionalStrengthTraining: return true
+        default: return false
         }
     }
 

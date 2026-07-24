@@ -47,4 +47,6 @@ export interface WearableSyncResult {
   daily: number;
   sleep: number;
   workouts: number;
+  /** Sesiones de fuerza detectadas en el agregador nativo y no importadas. */
+  skippedStrength: number;
 }

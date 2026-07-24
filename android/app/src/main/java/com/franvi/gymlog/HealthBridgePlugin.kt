@@ -132,11 +132,12 @@ class HealthBridgePlugin : Plugin() {
             try {
                 val daily = readDaily(client, startDate, endDate)
                 val sleep = readSleep(client, filter)
-                val workouts = readWorkouts(client, filter)
+                val (workouts, skippedStrength) = readWorkouts(client, filter)
                 val ret = JSObject()
                 ret.put("daily", daily)
                 ret.put("sleep", sleep)
                 ret.put("workouts", workouts)
+                ret.put("skippedStrength", skippedStrength)
                 call.resolve(ret)
             } catch (e: Exception) {
                 Log.e(TAG, "readAll: ${e.message}")
@@ -268,9 +269,22 @@ class HealthBridgePlugin : Plugin() {
         return arr
     }
 
-    private suspend fun readWorkouts(client: HealthConnectClient, filter: TimeRangeFilter): JSArray {
+    /**
+     * @return el array de sesiones importables (JSArray) y cuántas sesiones de
+     * fuerza (STRENGTH_TRAINING/WEIGHTLIFTING) se descartaron. Una sesión de
+     * fuerza de Health Connect no trae ejercicios/series/pesos — no hay forma
+     * de reconstruir un entrenamiento real de GymLog a partir de ella, así que
+     * NO se importa como cardio "other" (induciría a error). Se cuenta aparte
+     * para poder avisar al usuario en vez de importarla en silencio.
+     */
+    private suspend fun readWorkouts(client: HealthConnectClient, filter: TimeRangeFilter): Pair<JSArray, Int> {
         val arr = JSArray()
+        var skippedStrength = 0
         readAllPages(client, ExerciseSessionRecord::class, filter).forEach { rec ->
+            if (isStrengthType(rec.exerciseType)) {
+                skippedStrength++
+                return@forEach
+            }
             val o = JSObject()
             o.put("external_id", "hc:${rec.metadata.id}")
             o.put("type", mapExerciseType(rec.exerciseType))
@@ -298,7 +312,13 @@ class HealthBridgePlugin : Plugin() {
             }
             arr.put(o)
         }
-        return arr
+        return arr to skippedStrength
+    }
+
+    private fun isStrengthType(type: Int): Boolean = when (type) {
+        ExerciseSessionRecord.EXERCISE_TYPE_STRENGTH_TRAINING,
+        ExerciseSessionRecord.EXERCISE_TYPE_WEIGHTLIFTING -> true
+        else -> false
     }
 
     private fun mapExerciseType(type: Int): String = when (type) {
@@ -323,6 +343,7 @@ class HealthBridgePlugin : Plugin() {
         ret.put("daily", JSArray())
         ret.put("sleep", JSArray())
         ret.put("workouts", JSArray())
+        ret.put("skippedStrength", 0)
         return ret
     }
 }
