@@ -50,7 +50,7 @@
   --icon-bg-danger: rgba(255, 180, 171, 0.15);
 
   --border-subtle: #232326;
-  --border-default: #3d4a41;
+  --border-default: #3a3a40;
   --border-accent: rgb(var(--accent-rgb) / 0.28);
 
   /* ── Radios (estética redondeada FitBody) ────── */
@@ -160,8 +160,8 @@
   /* ── Bordes (algo más marcados para definir cards sobre claro) ─── */
   --icon-bg-accent: rgb(var(--accent-rgb) / 0.12);
   --icon-bg-danger: rgba(186, 26, 26, 0.1);
-  --border-subtle: #e0e4e0;
-  --border-default: #c0c9c1;
+  --border-subtle: #e2e2e5;
+  --border-default: #c6c6cc;
   --border-accent: rgb(var(--accent-rgb) / 0.35);
 
   /* ── Sombras (más suaves sobre fondo claro) ───── */

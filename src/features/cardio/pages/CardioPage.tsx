@@ -56,17 +56,21 @@ export function CardioPage() {
       {!isActive && (
         <m.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mb-5">
           <SectionHeader title={t('cardio.start_session')} />
-          <div className="flex gap-2 overflow-x-auto pb-1">
+          {/* Rejilla en vez de fila con scroll: los 8 tipos se ven de un vistazo
+              sin deslizar, y cada uno lleva su etiqueta para que se reconozca. */}
+          <div className="grid grid-cols-4 gap-2">
             {CARDIO_TYPES.map((type) => (
               <button
                 type="button"
                 key={type}
                 onClick={() => handleStart(type)}
                 aria-label={CARDIO_LABELS[type]}
-                title={CARDIO_LABELS[type]}
-                className="flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center transition-colors active:scale-95 bg-surface-2 text-accent"
+                className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-2xl transition-colors active:scale-95 bg-surface-2 text-accent"
               >
-                <CardioTypeIcon type={type} className="w-5 h-5" />
+                <CardioTypeIcon type={type} className="w-7 h-7" />
+                <span className="text-[11px] font-medium leading-none text-fg-muted">
+                  {CARDIO_LABELS[type]}
+                </span>
               </button>
             ))}
           </div>
