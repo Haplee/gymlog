@@ -25,11 +25,11 @@
             android:windowSoftInputMode="adjustResize"
             android:exported="true">
 
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-            
+            <!-- MainActivity NO es launcher: el icono del lanzador lo aportan los
+                 activity-alias de color (IconAlias_*), con IconAlias_yellow activo
+                 por defecto. Si MainActivity fuera launcher, AppIconPlugin tendría
+                 que apagarla al elegir un color, y apagar el componente que aloja
+                 la activity en primer plano cierra la app (aun con DONT_KILL_APP). -->
 
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -46,15 +46,16 @@
         </activity>
 
         <!-- Iconos de la app por color (GENERADO: scripts/generate-icon-variants.mjs).
-             Todos arrancan deshabilitados; AppIconPlugin habilita uno y apaga el
-             resto. El icono por defecto lo da MainActivity. -->
+             IconAlias_yellow (el acento por defecto) arranca habilitado y es el
+             launcher; el resto deshabilitados. AppIconPlugin habilita el elegido y
+             apaga los demás. Nunca toca MainActivity, que no es launcher. -->
         <activity-alias
             android:name=".IconAlias_yellow"
             android:targetActivity=".MainActivity"
             android:icon="@drawable/ic_launcher_variant_yellow"
             android:roundIcon="@drawable/ic_launcher_variant_yellow"
             android:label="@string/app_name"
-            android:enabled="false"
+            android:enabled="true"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

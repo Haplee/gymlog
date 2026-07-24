@@ -115,6 +115,8 @@ ${colors.join('\n')}
 `,
 );
 
+// IconAlias_yellow (acento por defecto) arranca habilitado: es el launcher real,
+// porque MainActivity no lleva intent-filter LAUNCHER. El resto, deshabilitados.
 const aliases = variants
   .map(
     ({ id }) => `        <activity-alias
@@ -123,7 +125,7 @@ const aliases = variants
             android:icon="@drawable/ic_launcher_variant_${id}"
             android:roundIcon="@drawable/ic_launcher_variant_${id}"
             android:label="@string/app_name"
-            android:enabled="false"
+            android:enabled="${id === 'yellow' ? 'true' : 'false'}"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

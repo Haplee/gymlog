@@ -14,8 +14,10 @@ import com.getcapacitor.annotation.CapacitorPlugin
  *
  * Android no tiene una API para esto: el único camino soportado es declarar un
  * <activity-alias> por variante en el manifest y habilitar el que toque con
- * PackageManager, deshabilitando el resto. El icono por defecto (amarillo) es
- * el de MainActivity, así que ese caso se resuelve apagando todos los alias.
+ * PackageManager, deshabilitando el resto. TODOS los iconos —incluido el
+ * amarillo por defecto— son alias; MainActivity no es launcher. Esto es clave:
+ * apagar el componente que aloja la activity en primer plano cierra la app aun
+ * con DONT_KILL_APP, así que el plugin nunca toca MainActivity, solo alias.
  *
  * Efecto secundario inevitable: el lanzador ve desaparecer un componente y
  * aparecer otro, así que el icono se sale de la pantalla de inicio y reaparece
@@ -59,7 +61,9 @@ class AppIconPlugin : Plugin() {
 
         try {
             // DONT_KILL_APP: sin esto Android mata el proceso al reconfigurar el
-            // componente y la app se cierra en la cara del usuario.
+            // componente y la app se cierra en la cara del usuario. Solo se tocan
+            // alias (nunca MainActivity), así que el componente en primer plano
+            // sobrevive y la app sigue abierta.
             for (other in all) {
                 if (!other.matches(Regex("^[a-z]+$"))) continue
                 val state = if (other == id) {
@@ -73,19 +77,6 @@ class AppIconPlugin : Plugin() {
                     PackageManager.DONT_KILL_APP,
                 )
             }
-
-            // MainActivity lleva el icono por defecto: solo se deja visible si no
-            // hay ninguna variante activa, o el lanzador mostraría dos entradas.
-            val main = component(MainActivity::class.java.name)
-            pm.setComponentEnabledSetting(
-                main,
-                if (all.contains(id)) {
-                    PackageManager.COMPONENT_ENABLED_STATE_DISABLED
-                } else {
-                    PackageManager.COMPONENT_ENABLED_STATE_ENABLED
-                },
-                PackageManager.DONT_KILL_APP,
-            )
 
             val ret = JSObject()
             ret.put("ok", true)
