@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { visualizer } from 'rollup-plugin-visualizer';
+import { sentryVitePlugin } from '@sentry/vite-plugin';
 import { aliases } from './vite.aliases';
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf-8'));
@@ -12,12 +13,16 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const sbUrl = env.VITE_SUPABASE_URL;
   const sbKey = env.VITE_SUPABASE_KEY;
+  const sentryAuthToken = env.SENTRY_AUTH_TOKEN;
 
   return {
     resolve: {
       alias: aliases,
     },
     build: {
+      // Sin auth token no se suben a Sentry, pero generarlos no tiene coste
+      // en runtime (Vite los deja fuera del bundle servido).
+      sourcemap: true,
       rollupOptions: {
         output: {
           manualChunks: {
@@ -116,6 +121,18 @@ export default defineConfig(({ mode }) => {
           open: true,
           gzipSize: true,
           brotliSize: true,
+        }),
+      // Sube source maps a Sentry solo si hay token (no bloquea builds locales/CI sin él).
+      sentryAuthToken &&
+        sentryVitePlugin({
+          org: 'franvi',
+          project: 'capacitor',
+          authToken: sentryAuthToken,
+          sourcemaps: {
+            // Sin esto, los .map quedan en dist/ y Vercel los serviría en
+            // público — cualquiera podría descargar el código fuente sin minificar.
+            filesToDeleteAfterUpload: ['dist/**/*.js.map'],
+          },
         }),
     ].filter(Boolean) as unknown as Plugin[],
   };
