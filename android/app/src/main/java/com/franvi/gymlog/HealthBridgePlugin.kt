@@ -342,6 +342,19 @@ class HealthBridgePlugin : Plugin() {
     ): Pair<JSArray, JSArray> {
         val cardio = JSArray()
         val strength = JSArray()
+        // FC en reposo del periodo: referencia para separar andar de correr
+        // cuando la velocidad media no basta (ver inferTypeFromPace).
+        val restingHr = try {
+            client.aggregate(
+                AggregateRequest(
+                    metrics = setOf(RestingHeartRateRecord.BPM_AVG),
+                    timeRangeFilter = filter,
+                ),
+            )[RestingHeartRateRecord.BPM_AVG]?.toInt()
+        } catch (e: Exception) {
+            Log.w(TAG, "readWorkouts restingHr: ${e.message}")
+            null
+        }
         readAllPages(client, ExerciseSessionRecord::class, filter).forEach { rec ->
             // Traza obligatoria del tipo CRUDO. Sin esto, el `else` del mapeo se
             // come en silencio cualquier int desconocido y desde fuera del
@@ -352,7 +365,8 @@ class HealthBridgePlugin : Plugin() {
                 TAG,
                 "session type=${rec.exerciseType} title=${rec.title} " +
                     "origin=${rec.metadata.dataOrigin.packageName} " +
-                    "${rec.startTime}..${rec.endTime}",
+                    "${rec.startTime}..${rec.endTime} " +
+                    "segments=${rec.segments.map { it.segmentType }}",
             )
             val o = JSObject()
             o.put("external_id", "hc:${rec.metadata.id}")
@@ -369,6 +383,7 @@ class HealthBridgePlugin : Plugin() {
             // que el plugin de HealthKit (iOS). Best-effort: sin datos o sin
             // permiso, la sesión se devuelve igualmente sin esos campos.
             var km: Double? = null
+            var avgHr: Int? = null
             try {
                 val agg = client.aggregate(
                     AggregateRequest(
@@ -394,7 +409,8 @@ class HealthBridgePlugin : Plugin() {
                 // kcal que enseña la app llevan el basal dentro y quedan altas.
                 // Sin esta traza eso solo se puede suponer.
                 Log.w(TAG, "  kcal active=$active total=$total")
-                agg[HeartRateRecord.BPM_AVG]?.let { o.put("avg_hr", it.toInt()) }
+                avgHr = agg[HeartRateRecord.BPM_AVG]?.toInt()
+                avgHr?.let { o.put("avg_hr", it) }
                 agg[HeartRateRecord.BPM_MAX]?.let { o.put("max_hr", it.toInt()) }
             } catch (e: Exception) {
                 Log.w(TAG, "readWorkouts aggregate: ${e.message}")
@@ -409,7 +425,7 @@ class HealthBridgePlugin : Plugin() {
                 o.put("type", "strength")
                 strength.put(o)
             } else {
-                o.put("type", known ?: inferTypeFromPace(km, durationSec))
+                o.put("type", known ?: inferTypeFromPace(km, durationSec, avgHr, restingHr))
                 cardio.put(o)
             }
         }
@@ -459,17 +475,40 @@ class HealthBridgePlugin : Plugin() {
     }
 
     /**
-     * Último recurso para un tipo desconocido que SÍ recorrió distancia: deducir
-     * por velocidad media. Preferible a marcarlo "otro", que no dice nada.
+     * Cuánto ha de superar la FC media al reposo para contar como carrera.
+     *
+     * La velocidad media sola no distingue: medido en dispositivo, un paseo real
+     * (tipo WALKING declarado) y una sesión de cinta iban las dos a 4,7 km/h. Lo
+     * que sí las separa es el pulso — 92 ppm el paseo, 117-131 la cinta, sobre
+     * una FC en reposo de 58. Y en una sesión mixta de correr y andar la media
+     * de velocidad se queda corta justamente porque los tramos andando la tiran
+     * abajo, mientras que el pulso se mantiene alto.
      */
-    private fun inferTypeFromPace(km: Double?, durationSec: Int): String {
+    private val RUNNING_HR_OVER_RESTING = 50
+
+    /**
+     * Último recurso para un tipo desconocido que SÍ recorrió distancia. Fitbit
+     * manda estas sesiones como OTHER_WORKOUT, sin título y sin segmentos, así
+     * que no hay nada declarado que leer: hay que deducirlo.
+     *
+     * La velocidad decide los casos claros; por debajo del umbral de carrera
+     * manda la FC, que es lo único que separa andar de correr en una sesión
+     * mixta. Sin FC se cae a andar, que es lo conservador.
+     */
+    private fun inferTypeFromPace(
+        km: Double?,
+        durationSec: Int,
+        avgHr: Int?,
+        restingHr: Int?,
+    ): String {
         if (km == null || km <= 0 || durationSec <= 0) return "other"
         val kmh = km / (durationSec / 3600.0)
-        return when {
-            kmh >= 15.0 -> "cycling"
-            kmh >= 7.0 -> "running"
-            else -> "walking"
+        if (kmh >= 15.0) return "cycling"
+        if (kmh >= 7.0) return "running"
+        if (avgHr != null && restingHr != null && avgHr - restingHr >= RUNNING_HR_OVER_RESTING) {
+            return "running"
         }
+        return "walking"
     }
 
     private fun emptyResult(): JSObject {
