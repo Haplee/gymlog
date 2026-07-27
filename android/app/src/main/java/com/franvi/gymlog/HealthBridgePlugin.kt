@@ -5,6 +5,7 @@ import androidx.activity.result.ActivityResult
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
+import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
 import androidx.health.connect.client.records.DistanceRecord
 import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.HeartRateRecord
@@ -49,11 +50,22 @@ class HealthBridgePlugin : Plugin() {
         HealthPermission.getReadPermission(StepsRecord::class),
         HealthPermission.getReadPermission(DistanceRecord::class),
         HealthPermission.getReadPermission(TotalCaloriesBurnedRecord::class),
+        HealthPermission.getReadPermission(ActiveCaloriesBurnedRecord::class),
         HealthPermission.getReadPermission(HeartRateRecord::class),
         HealthPermission.getReadPermission(RestingHeartRateRecord::class),
         HealthPermission.getReadPermission(SleepSessionRecord::class),
         HealthPermission.getReadPermission(ExerciseSessionRecord::class),
     )
+
+    /**
+     * Leer datos de OTRAS apps con la nuestra en segundo plano exige este permiso
+     * aparte. Sin él, Health Connect responde SecurityException
+     * (`maybeEnforceOnlyCallingPackageDataRequested`) y la sync queda en nada —
+     * medido en dispositivo: con la pantalla bloqueada, readAll fallaba entero.
+     * Va aparte de `permissions` a propósito: es deseable, no imprescindible. Si
+     * el usuario lo deniega, la sync en primer plano debe seguir funcionando.
+     */
+    private val backgroundPermission = HealthPermission.PERMISSION_READ_HEALTH_DATA_IN_BACKGROUND
 
     private fun clientOrNull(): HealthConnectClient? {
         return if (HealthConnectClient.getSdkStatus(context) == HealthConnectClient.SDK_AVAILABLE) {
@@ -94,13 +106,15 @@ class HealthBridgePlugin : Plugin() {
         scope.launch {
             try {
                 val granted = client.permissionController.getGrantedPermissions()
-                if (granted.containsAll(permissions)) {
+                if (granted.containsAll(permissions + backgroundPermission)) {
                     val ret = JSObject(); ret.put("granted", true); call.resolve(ret)
                     return@launch
                 }
                 // Lanza la pantalla de permisos de Health Connect vía ActivityResult.
+                // Se pide también el de segundo plano; que lo deniegue no bloquea
+                // nada (hasPermissions solo exige los de datos).
                 val contract = PermissionController.createRequestPermissionResultContract()
-                val intent = contract.createIntent(context, permissions)
+                val intent = contract.createIntent(context, permissions + backgroundPermission)
                 activity.runOnUiThread {
                     startActivityForResult(call, intent, "permissionCallback")
                 }
@@ -146,30 +160,46 @@ class HealthBridgePlugin : Plugin() {
         val filter = TimeRangeFilter.between(startInstant, endInstant)
 
         scope.launch {
-            try {
-                val daily = readDaily(client, startDate, endDate)
-                val sleep = readSleep(client, filter)
-                val (workouts, skippedStrength) = readWorkouts(client, filter)
-                // Traza del camino feliz: sin esto es imposible diagnosticar en
-                // campo si "no me llegó el dato" fue lectura vacía, permiso o red.
-                Log.i(
-                    TAG,
-                    "readAll [$startStr..$endStr]: daily=${daily.length()} " +
-                        "sleep=${sleep.length()} workouts=${workouts.length()} " +
-                        "skippedStrength=$skippedStrength",
-                )
-                val ret = JSObject()
-                ret.put("daily", daily)
-                ret.put("sleep", sleep)
-                ret.put("workouts", workouts)
-                ret.put("skippedStrength", skippedStrength)
-                call.resolve(ret)
-            } catch (e: Exception) {
-                Log.e(TAG, "readAll: ${e.message}")
-                call.resolve(emptyResult())
-            }
+            // Cada lectura va aislada. Con un try/catch común, un solo fallo
+            // —típicamente la SecurityException de Health Connect al leer datos
+            // de otras apps en segundo plano— vaciaba TAMBIÉN diarios y entrenos,
+            // y la app lo mostraba como "no hay datos". Medido en dispositivo con
+            // la pantalla bloqueada: readAll entero a cero por el sueño.
+            val errors = JSArray()
+            val daily = section("daily", errors) { readDaily(client, startDate, endDate) }
+                ?: JSArray()
+            val sleep = section("sleep", errors) { readSleep(client, filter) } ?: JSArray()
+            val sessions = section("workouts", errors) { readWorkouts(client, filter) }
+            val workouts = sessions?.first ?: JSArray()
+            val strength = sessions?.second ?: JSArray()
+
+            // Traza del camino feliz: sin esto es imposible diagnosticar en
+            // campo si "no me llegó el dato" fue lectura vacía, permiso o red.
+            Log.i(
+                TAG,
+                "readAll [$startStr..$endStr]: daily=${daily.length()} " +
+                    "sleep=${sleep.length()} workouts=${workouts.length()} " +
+                    "strength=${strength.length()} errors=${errors.length()}",
+            )
+            val ret = JSObject()
+            ret.put("daily", daily)
+            ret.put("sleep", sleep)
+            ret.put("workouts", workouts)
+            ret.put("strengthSessions", strength)
+            ret.put("errors", errors)
+            call.resolve(ret)
         }
     }
+
+    /** Ejecuta una lectura acotando su fallo a esa sección; null si peta. */
+    private suspend fun <T> section(name: String, errors: JSArray, block: suspend () -> T): T? =
+        try {
+            block()
+        } catch (e: Exception) {
+            Log.e(TAG, "readAll/$name: ${e.message}")
+            errors.put("$name: ${e.message}")
+            null
+        }
 
     // ---- Lectura por tipo, agregada por fecha local ------------------------
 
@@ -294,34 +324,54 @@ class HealthBridgePlugin : Plugin() {
     }
 
     /**
-     * @return el array de sesiones importables (JSArray) y cuántas sesiones de
-     * fuerza (STRENGTH_TRAINING/WEIGHTLIFTING) se descartaron. Una sesión de
-     * fuerza de Health Connect no trae ejercicios/series/pesos — no hay forma
-     * de reconstruir un entrenamiento real de GymLog a partir de ella, así que
-     * NO se importa como cardio "other" (induciría a error). Se cuenta aparte
-     * para poder avisar al usuario en vez de importarla en silencio.
+     * Lee las sesiones de ejercicio y las reparte en dos cubos:
+     *  - **cardio**: va a `cardio_sessions` con un tipo de GymLog.
+     *  - **fuerza/gimnasio**: va a `health_sessions`. Una sesión de fuerza de
+     *    Health Connect no trae ejercicios/series/pesos, así que no reconstruye
+     *    un entrenamiento de GymLog; pero su tiempo, kcal y FC sí valen y antes
+     *    se tiraban — o peor, entraban como cardio "otro".
+     *
+     * @return (cardio, fuerza)
      */
-    private suspend fun readWorkouts(client: HealthConnectClient, filter: TimeRangeFilter): Pair<JSArray, Int> {
-        val arr = JSArray()
-        var skippedStrength = 0
+    private suspend fun readWorkouts(
+        client: HealthConnectClient,
+        filter: TimeRangeFilter,
+    ): Pair<JSArray, JSArray> {
+        val cardio = JSArray()
+        val strength = JSArray()
         readAllPages(client, ExerciseSessionRecord::class, filter).forEach { rec ->
-            if (isStrengthType(rec.exerciseType)) {
-                skippedStrength++
-                return@forEach
-            }
+            // Traza obligatoria del tipo CRUDO. Sin esto, el `else` del mapeo se
+            // come en silencio cualquier int desconocido y desde fuera del
+            // dispositivo es imposible saber qué escribió la app de salud — que es
+            // exactamente cómo una sesión de pesas y una de cinta acabaron las dos
+            // como cardio "otro".
+            Log.i(
+                TAG,
+                "session type=${rec.exerciseType} title=${rec.title} " +
+                    "origin=${rec.metadata.dataOrigin.packageName} " +
+                    "${rec.startTime}..${rec.endTime}",
+            )
             val o = JSObject()
             o.put("external_id", "hc:${rec.metadata.id}")
-            o.put("type", mapExerciseType(rec.exerciseType))
             o.put("started_at", rec.startTime.toString())
-            o.put("duration", (rec.endTime.epochSecond - rec.startTime.epochSecond).toInt())
-            // Distancia (km) y calorías (kcal) de la sesión — mismo contrato que
-            // el plugin de HealthKit (iOS). Best-effort: sin datos o sin permiso
-            // de agregación, la sesión se devuelve igualmente sin esos campos.
+            o.put("ended_at", rec.endTime.toString())
+            val durationSec = (rec.endTime.epochSecond - rec.startTime.epochSecond).toInt()
+            o.put("duration", durationSec)
+            // El título que puso la app de origen ("Cinta", "Pesas"…). Es lo que
+            // hace que la sesión se reconozca en el historial en vez de aparecer
+            // como una fila anónima.
+            rec.title?.takeIf { it.isNotBlank() }?.let { o.put("title", it) }
+
+            // Distancia (km), calorías (kcal) y FC de la sesión — mismo contrato
+            // que el plugin de HealthKit (iOS). Best-effort: sin datos o sin
+            // permiso, la sesión se devuelve igualmente sin esos campos.
+            var km: Double? = null
             try {
                 val agg = client.aggregate(
                     AggregateRequest(
                         metrics = setOf(
                             DistanceRecord.DISTANCE_TOTAL,
+                            ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL,
                             TotalCaloriesBurnedRecord.ENERGY_TOTAL,
                             HeartRateRecord.BPM_AVG,
                             HeartRateRecord.BPM_MAX,
@@ -329,30 +379,49 @@ class HealthBridgePlugin : Plugin() {
                         timeRangeFilter = TimeRangeFilter.between(rec.startTime, rec.endTime),
                     ),
                 )
-                agg[DistanceRecord.DISTANCE_TOTAL]?.inKilometers
-                    ?.takeIf { it > 0 }?.let { o.put("distance", it) }
-                agg[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories
-                    ?.takeIf { it > 0 }?.let { o.put("calories", it.toInt()) }
-                // FC de la sesión: el esquema (cardio_sessions.avg_hr/max_hr) y la
-                // RPC ya la soportan; sin esto el cardio importado entraba siempre
-                // con FC a NULL aunque Health Connect tuviera el dato.
+                km = agg[DistanceRecord.DISTANCE_TOTAL]?.inKilometers?.takeIf { it > 0 }
+                km?.let { o.put("distance", it) }
+                // Calorías ACTIVAS, no totales: el total incluye el metabolismo
+                // basal y en una sesión de pesas de ~1h inflaba la cifra (523 kcal
+                // medidos en dispositivo). Se cae al total solo si no hay activas.
+                val active = agg[ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL]?.inKilocalories
+                val total = agg[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories
+                (active ?: total)?.takeIf { it > 0 }?.let { o.put("calories", it.toInt()) }
                 agg[HeartRateRecord.BPM_AVG]?.let { o.put("avg_hr", it.toInt()) }
                 agg[HeartRateRecord.BPM_MAX]?.let { o.put("max_hr", it.toInt()) }
             } catch (e: Exception) {
                 Log.w(TAG, "readWorkouts aggregate: ${e.message}")
             }
-            arr.put(o)
+
+            val known = mapKnownExerciseType(rec.exerciseType)
+            if (isStrengthType(rec.exerciseType) || (known == null && !hasDistance(km))) {
+                // Tipo de fuerza declarado, o tipo desconocido sin distancia: lo
+                // segundo es lo que escribe Google Health para una sesión de
+                // gimnasio (OTHER_WORKOUT). Sin metros recorridos, cardio es lo
+                // único que seguro no es.
+                o.put("type", "strength")
+                strength.put(o)
+            } else {
+                o.put("type", known ?: inferTypeFromPace(km, durationSec))
+                cardio.put(o)
+            }
         }
-        return arr to skippedStrength
+        return cardio to strength
     }
+
+    /** Distancia significativa: 0,01 km es ruido del GPS dentro del gimnasio. */
+    private fun hasDistance(km: Double?): Boolean = km != null && km >= 0.2
 
     private fun isStrengthType(type: Int): Boolean = when (type) {
         ExerciseSessionRecord.EXERCISE_TYPE_STRENGTH_TRAINING,
-        ExerciseSessionRecord.EXERCISE_TYPE_WEIGHTLIFTING -> true
+        ExerciseSessionRecord.EXERCISE_TYPE_WEIGHTLIFTING,
+        ExerciseSessionRecord.EXERCISE_TYPE_CALISTHENICS,
+        ExerciseSessionRecord.EXERCISE_TYPE_GYMNASTICS -> true
         else -> false
     }
 
-    private fun mapExerciseType(type: Int): String = when (type) {
+    /** Tipo de GymLog para un `EXERCISE_TYPE_*` conocido; null si no lo es. */
+    private fun mapKnownExerciseType(type: Int): String? = when (type) {
         ExerciseSessionRecord.EXERCISE_TYPE_RUNNING,
         ExerciseSessionRecord.EXERCISE_TYPE_RUNNING_TREADMILL -> "running"
         ExerciseSessionRecord.EXERCISE_TYPE_BIKING,
@@ -364,9 +433,36 @@ class HealthBridgePlugin : Plugin() {
         ExerciseSessionRecord.EXERCISE_TYPE_ELLIPTICAL -> "elliptical"
         ExerciseSessionRecord.EXERCISE_TYPE_WALKING,
         ExerciseSessionRecord.EXERCISE_TYPE_HIKING -> "walking"
-        // Health Connect no tiene tipo de SESIÓN para comba: JUMP_ROPE solo
-        // existe como ExerciseSegmentType, así que cae en "other".
-        else -> "other"
+        // Cardio reconocible que GymLog no tipifica: se queda en "other", pero
+        // como CARDIO — no debe caer en el respaldo de gimnasio de abajo.
+        // (Health Connect no tiene tipo de SESIÓN para comba: JUMP_ROPE solo
+        // existe como ExerciseSegmentType.)
+        ExerciseSessionRecord.EXERCISE_TYPE_STAIR_CLIMBING,
+        ExerciseSessionRecord.EXERCISE_TYPE_STAIR_CLIMBING_MACHINE,
+        ExerciseSessionRecord.EXERCISE_TYPE_HIGH_INTENSITY_INTERVAL_TRAINING,
+        ExerciseSessionRecord.EXERCISE_TYPE_DANCING,
+        ExerciseSessionRecord.EXERCISE_TYPE_BOXING,
+        ExerciseSessionRecord.EXERCISE_TYPE_MARTIAL_ARTS,
+        ExerciseSessionRecord.EXERCISE_TYPE_SKATING,
+        ExerciseSessionRecord.EXERCISE_TYPE_SKIING,
+        ExerciseSessionRecord.EXERCISE_TYPE_SNOWBOARDING,
+        ExerciseSessionRecord.EXERCISE_TYPE_PADDLING,
+        ExerciseSessionRecord.EXERCISE_TYPE_ROCK_CLIMBING -> "other"
+        else -> null
+    }
+
+    /**
+     * Último recurso para un tipo desconocido que SÍ recorrió distancia: deducir
+     * por velocidad media. Preferible a marcarlo "otro", que no dice nada.
+     */
+    private fun inferTypeFromPace(km: Double?, durationSec: Int): String {
+        if (km == null || km <= 0 || durationSec <= 0) return "other"
+        val kmh = km / (durationSec / 3600.0)
+        return when {
+            kmh >= 15.0 -> "cycling"
+            kmh >= 7.0 -> "running"
+            else -> "walking"
+        }
     }
 
     private fun emptyResult(): JSObject {
@@ -374,7 +470,8 @@ class HealthBridgePlugin : Plugin() {
         ret.put("daily", JSArray())
         ret.put("sleep", JSArray())
         ret.put("workouts", JSArray())
-        ret.put("skippedStrength", 0)
+        ret.put("strengthSessions", JSArray())
+        ret.put("errors", JSArray())
         return ret
     }
 }

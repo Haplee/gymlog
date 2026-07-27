@@ -29,7 +29,10 @@ export interface HealthSleepRow {
 export interface HealthWorkoutRow {
   external_id: string;
   type: string;
+  /** Título que puso la app de origen ("Cinta", "Pesas"…), si lo trae. */
+  title?: string;
   started_at: string; // ISO
+  ended_at?: string; // ISO
   duration: number; // segundos
   distance?: number; // km
   calories?: number;
@@ -41,10 +44,13 @@ export interface HealthReadResult {
   daily: HealthDailyRow[];
   sleep: HealthSleepRow[];
   workouts: HealthWorkoutRow[];
-  /** Sesiones de fuerza detectadas (Health Connect/HealthKit) que NO se
-   * importan: no traen ejercicios/series/pesos, así que no se pueden
-   * reconstruir como entrenamiento de GymLog. */
-  skippedStrength: number;
+  /** Sesiones de gimnasio (fuerza). No traen ejercicios/series/pesos, así que
+   * no reconstruyen un entrenamiento de GymLog, pero su tiempo/kcal/FC sí
+   * valen: van a `health_sessions`, no a cardio. */
+  strengthSessions: HealthWorkoutRow[];
+  /** Lecturas que fallaron, por sección ("sleep: …"). Cada sección va aislada:
+   * un permiso que falte ya no vacía el resto del sync. */
+  errors: string[];
 }
 
 export interface HealthBridgePlugin {
@@ -66,7 +72,13 @@ const HealthBridge = registerPlugin<HealthBridgePlugin>('HealthBridge', {
     isAvailable: async () => ({ available: false }),
     hasPermissions: async () => ({ granted: false }),
     requestAuthorization: async () => ({ granted: false }),
-    readAll: async () => ({ daily: [], sleep: [], workouts: [], skippedStrength: 0 }),
+    readAll: async () => ({
+      daily: [],
+      sleep: [],
+      workouts: [],
+      strengthSessions: [],
+      errors: [],
+    }),
   }),
 });
 

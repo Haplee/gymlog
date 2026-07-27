@@ -7,11 +7,10 @@ interface WearableState {
   isSyncing: boolean;
   lastSyncAt: string | null;
   lastError: string | null;
-  /** Sesiones de fuerza vistas en la última sincronización y no importadas
-   * (no traen ejercicios/series/pesos reconstruibles). */
-  skippedStrength: number;
+  /** Sesiones de gimnasio importadas en la última sincronización. */
+  strength: number;
   setSyncing: (v: boolean) => void;
-  setSynced: (skippedStrength?: number) => void;
+  setSynced: (strength?: number) => void;
   setError: (msg: string | null) => void;
 }
 
@@ -21,21 +20,28 @@ export const useWearableStore = create<WearableState>()(
       isSyncing: false,
       lastSyncAt: null,
       lastError: null,
-      skippedStrength: 0,
+      strength: 0,
       setSyncing: (isSyncing) => set({ isSyncing }),
-      setSynced: (skippedStrength = 0) =>
+      setSynced: (strength = 0) =>
         set({
           isSyncing: false,
           lastSyncAt: new Date().toISOString(),
           lastError: null,
-          skippedStrength,
+          strength,
         }),
       setError: (lastError) => set({ isSyncing: false, lastError }),
     }),
     {
       name: 'gymlog-wearables',
       storage: createJSONStorage(() => localStorage),
-      partialize: (s) => ({ lastSyncAt: s.lastSyncAt, skippedStrength: s.skippedStrength }),
+      // `skippedStrength` (v0) ya no existe: se persistía y quedaría colgado en
+      // localStorage de instalaciones anteriores. La versión fuerza el descarte.
+      version: 1,
+      migrate: (persisted) => {
+        const { lastSyncAt } = (persisted ?? {}) as { lastSyncAt?: string | null };
+        return { lastSyncAt: lastSyncAt ?? null };
+      },
+      partialize: (s) => ({ lastSyncAt: s.lastSyncAt }),
     },
   ),
 );

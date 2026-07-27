@@ -47,6 +47,23 @@ export interface WearableSyncResult {
   daily: number;
   sleep: number;
   workouts: number;
-  /** Sesiones de fuerza detectadas en el agregador nativo y no importadas. */
-  skippedStrength: number;
+  /** Sesiones de gimnasio importadas a `health_sessions`. */
+  strength: number;
+}
+
+export interface HealthSession {
+  id: string;
+  user_id: string;
+  source: WearableProvider;
+  external_id: string;
+  type: 'strength';
+  title: string | null;
+  started_at: string;
+  ended_at: string | null;
+  /** Segundos. */
+  duration: number;
+  calories: number | null;
+  avg_hr: number | null;
+  max_hr: number | null;
+  created_at: string;
 }

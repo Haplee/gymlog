@@ -30,6 +30,7 @@ import { EmptyHistory } from '@shared/components/EmptyStates';
 import { SwipeToDelete } from '@shared/components/SwipeToDelete';
 import { Modal, Button } from '@shared/components/ui';
 import { CardioTypeIcon } from '@shared/components/CardioIcons';
+import { HEALTH_SESSIONS_KEY, fetchHealthSessions } from '@features/wearables/api/wearablesQueries';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
@@ -48,7 +49,16 @@ import {
 } from '@features/stats/utils/excelExport';
 import { parseXlsxFile, DAY_LABELS } from '@features/stats/utils/excelImport';
 import { applyExcelImport } from '@features/stats/utils/applyExcelImport';
-import { Trash2, Repeat, Share2, BarChart2, BarChart3, Pencil, BookmarkPlus } from 'lucide-react';
+import {
+  Trash2,
+  Repeat,
+  Share2,
+  BarChart2,
+  BarChart3,
+  Pencil,
+  BookmarkPlus,
+  HeartPulse,
+} from 'lucide-react';
 import { devError } from '@shared/lib/devtools';
 
 interface GroupedWorkout {
@@ -186,6 +196,15 @@ export function HistoryPage() {
   } = useQuery({
     queryKey: ['workouts', user?.id],
     queryFn: () => fetchWorkouts(user?.id ?? ''),
+    enabled: !!user?.id,
+  });
+
+  // Sesiones de gimnasio del agregador de salud: van en el timeline junto a los
+  // workouts del mismo día (el reloj graba una sesión por visita; los workouts
+  // los registra el usuario aparte, y pueden ser varios dentro de esa ventana).
+  const { data: healthSessions = [] } = useQuery({
+    queryKey: HEALTH_SESSIONS_KEY(user?.id ?? ''),
+    queryFn: () => fetchHealthSessions(user?.id ?? ''),
     enabled: !!user?.id,
   });
 
@@ -749,10 +768,11 @@ export function HistoryPage() {
     e.target.value = '';
   };
 
-  // Timeline unificado: fuerza + cardio mezclados por fecha
+  // Timeline unificado: fuerza + cardio + sesiones de salud mezclados por fecha
   type TimelineItem =
     | { kind: 'workout'; data: WorkoutWithSets; date: Date }
-    | { kind: 'cardio'; data: (typeof cardioSessions)[0]; date: Date };
+    | { kind: 'cardio'; data: (typeof cardioSessions)[0]; date: Date }
+    | { kind: 'health'; data: (typeof healthSessions)[0]; date: Date };
 
   const timelineItems: TimelineItem[] = [
     ...workouts.map((wo): TimelineItem => ({
@@ -764,6 +784,11 @@ export function HistoryPage() {
       kind: 'cardio',
       data: s,
       date: new Date(s.startedAt),
+    })),
+    ...healthSessions.map((s): TimelineItem => ({
+      kind: 'health',
+      data: s,
+      date: new Date(s.started_at),
     })),
   ].sort((a, b) => b.date.getTime() - a.date.getTime());
 
@@ -955,7 +980,39 @@ export function HistoryPage() {
                 </div>
                 <div className="space-y-2">
                   {group.items.map((item) =>
-                    item.kind === 'cardio' ? (
+                    item.kind === 'health' ? (
+                      <div
+                        key={item.data.id}
+                        className="rounded-card p-3.5 flex items-center gap-3 bg-surface border border-line shadow-card"
+                      >
+                        <div className="w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0 bg-accent/10 text-accent">
+                          <HeartPulse className="w-4.5 h-4.5" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-sm font-semibold text-fg">
+                              {item.data.title || t('history.gym_session')}
+                            </span>
+                            <span className="text-2xs px-1.5 py-0.5 rounded-sm font-bold bg-surface-2 text-fg-muted">
+                              {t('cardio.health_source')}
+                            </span>
+                          </div>
+                          <div className="text-xs flex items-center gap-2 mt-0.5 flex-wrap text-fg-muted">
+                            <span className="font-mono tabular-nums font-semibold">
+                              {formatDuration(item.data.duration)}
+                            </span>
+                            {item.data.calories ? <span>· {item.data.calories}kcal</span> : null}
+                            {item.data.avg_hr ? (
+                              <span>
+                                · {item.data.avg_hr}
+                                {item.data.max_hr ? `/${item.data.max_hr}` : ''}{' '}
+                                {t('wearables.bpm')}
+                              </span>
+                            ) : null}
+                          </div>
+                        </div>
+                      </div>
+                    ) : item.kind === 'cardio' ? (
                       <div
                         key={item.data.id}
                         className="rounded-card p-3.5 flex items-center justify-between bg-surface border border-line shadow-card transition-transform active:scale-[0.99]"

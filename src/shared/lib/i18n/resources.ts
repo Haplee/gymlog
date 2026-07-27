@@ -385,9 +385,9 @@ export const resources = {
         not_available_web: 'Solo disponible en la app móvil',
         no_data: 'Sin datos todavía. Sincroniza para empezar.',
         bpm: 'ppm',
-        strength_not_imported_title: 'Entrenos de fuerza no importados',
-        strength_not_imported_desc:
-          'Se detectaron {{count}} sesiones de fuerza en Health Connect/Salud, pero no traen ejercicios ni series/pesos, así que GymLog no puede reconstruirlas como entrenamiento. Regístralas directamente en la app.',
+        strength_imported_title: 'Sesiones de gimnasio',
+        strength_imported_desc:
+          'Se importaron {{count}} sesiones de gimnasio con su tiempo, calorías y frecuencia cardíaca. No traen series ni pesos: esos los registras tú en la app, y aparecen juntos en el historial.',
       },
       workout: {
         title: 'Entrenar',
@@ -630,6 +630,7 @@ export const resources = {
         import_unexpected: 'Error inesperado al importar datos',
         read_file_error: 'Error al leer el archivo desde tu dispositivo',
         cardio_empty: 'Sin sesiones de cardio registradas',
+        gym_session: 'Sesión de gimnasio',
         delete_irreversible: 'Esta acción no se puede deshacer.',
         my_stats: 'Mis estadísticas',
         view_all: 'Todo',
@@ -1051,9 +1052,9 @@ export const resources = {
         not_available_web: 'Only available in the mobile app',
         no_data: 'No data yet. Sync to get started.',
         bpm: 'bpm',
-        strength_not_imported_title: 'Strength workouts not imported',
-        strength_not_imported_desc:
-          "{{count}} strength sessions were found in Health Connect/Health, but they don't include exercises or sets/weights, so GymLog can't rebuild them as a workout. Log them directly in the app instead.",
+        strength_imported_title: 'Gym sessions',
+        strength_imported_desc:
+          "{{count}} gym sessions were imported with their time, calories and heart rate. They don't include sets or weights — you log those in the app, and both show up together in your history.",
       },
       workout: {
         title: 'Train',
@@ -1296,6 +1297,7 @@ export const resources = {
         import_unexpected: 'Unexpected error importing data',
         read_file_error: 'Error reading the file from your device',
         cardio_empty: 'No cardio sessions logged',
+        gym_session: 'Gym session',
         delete_irreversible: 'This action cannot be undone.',
         my_stats: 'My stats',
         view_all: 'All',

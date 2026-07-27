@@ -95,12 +95,16 @@ export async function syncAggregator(userId: string, days = 7): Promise<Wearable
   const end = new Date();
   const start = new Date();
   start.setDate(start.getDate() - (windowDays - 1));
-  const { daily, sleep, workouts, skippedStrength } = await HealthBridge.readAll({
+  const { daily, sleep, workouts, strengthSessions, errors } = await HealthBridge.readAll({
     startDate: ymd(start),
     endDate: ymd(end),
   });
 
-  const result: WearableSyncResult = { daily: 0, sleep: 0, workouts: 0, skippedStrength };
+  // Una sección que falla ya no vacía las demás, pero tampoco puede pasar
+  // desapercibida: sin esto, un permiso revocado se veía como "no hay datos".
+  if (errors?.length) devError('[HealthAggregator] lecturas fallidas:', errors);
+
+  const result: WearableSyncResult = { daily: 0, sleep: 0, workouts: 0, strength: 0 };
 
   if (daily.length) {
     const rows = daily.map((d) => ({ ...d, source }));
@@ -130,6 +134,19 @@ export async function syncAggregator(userId: string, days = 7): Promise<Wearable
     });
     if (error) throw new Error(`import_workouts: ${error.message}`);
     result.workouts = (data as number) ?? rows.length;
+  }
+
+  // Sesiones de gimnasio: tabla propia. No son cardio (ensuciaban las stats
+  // como "otro") ni encajan 1:1 con un workout — el reloj graba una sesión por
+  // visita al gimnasio y puede haber varios workouts dentro de esa ventana.
+  if (strengthSessions.length) {
+    const rows = strengthSessions.map((s) => ({ ...s, source }));
+    const { data, error } = await supabase.rpc('import_health_sessions', {
+      p_user_id: userId,
+      p_rows: rows,
+    });
+    if (error) throw new Error(`import_health_sessions: ${error.message}`);
+    result.strength = (data as number) ?? rows.length;
   }
 
   // Marca/actualiza la conexión del agregador.

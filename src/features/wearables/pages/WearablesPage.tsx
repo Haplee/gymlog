@@ -28,7 +28,7 @@ export function WearablesPage() {
   const { data: dailyList } = useWearableDaily();
   const { data: sleepList } = useWearableSleep();
   const { runSync, isSyncing } = useWearableSync();
-  const skippedStrength = useWearableStore((s) => s.skippedStrength);
+  const strength = useWearableStore((s) => s.strength);
   const [aggregatorAvailable, setAggregatorAvailable] = useState(false);
   const [aggregatorGranted, setAggregatorGranted] = useState(false);
 
@@ -87,14 +87,14 @@ export function WearablesPage() {
           </div>
         )}
 
-        {/* Sesiones de fuerza detectadas pero no importadas */}
-        {skippedStrength > 0 ? (
+        {/* Sesiones de gimnasio importadas del agregador */}
+        {strength > 0 ? (
           <div className="rounded-card p-4 bg-surface border border-line-strong flex gap-3">
             <Dumbbell size={20} className="shrink-0 text-fg-subtle mt-0.5" />
             <div>
-              <div className="text-sm text-fg">{t('wearables.strength_not_imported_title')}</div>
+              <div className="text-sm text-fg">{t('wearables.strength_imported_title')}</div>
               <div className="text-xs text-fg-subtle mt-1">
-                {t('wearables.strength_not_imported_desc', { count: skippedStrength })}
+                {t('wearables.strength_imported_desc', { count: strength })}
               </div>
             </div>
           </div>
