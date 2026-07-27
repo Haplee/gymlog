@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Plantilla de exportación AD-HOC (instalar en dispositivos con UDID registrado).
+  El workflow ios-signed.yml sustituye __TEAM_ID__ y __PROFILE_NAME__ en CI a
+  partir de los secretos / del propio perfil de aprovisionamiento. No edites los
+  placeholders a mano ni pongas aquí valores reales: se rellenan en el runner.
+
+  method: 'ad-hoc' sigue aceptándose en Xcode 15/16 (emite un aviso y sugiere
+  'release-testing'); si Apple lo retira, cambia el valor por 'release-testing'.
+-->
+<plist version="1.0">
+<dict>
+  <key>method</key>
+  <string>ad-hoc</string>
+  <key>teamID</key>
+  <string>__TEAM_ID__</string>
+  <key>signingStyle</key>
+  <string>manual</string>
+  <key>provisioningProfiles</key>
+  <dict>
+    <key>com.franvi.gymlog</key>
+    <string>__PROFILE_NAME__</string>
+  </dict>
+  <key>compileBitcode</key>
+  <false/>
+  <key>stripSwiftSymbols</key>
+  <true/>
+  <key>destination</key>
+  <string>export</string>
+</dict>
+</plist>
