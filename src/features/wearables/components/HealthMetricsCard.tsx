@@ -32,6 +32,11 @@ export function HealthMetricsCard({ daily, sleep, onOpen }: HealthMetricsCardPro
       ? `${daily.avg_hr}${daily.max_hr != null ? ` / ${daily.max_hr}` : ''}`
       : null;
 
+  // El día mostrado no siempre es hoy: de madrugada, el día en curso aún no
+  // tiene pulsaciones y se enseña el último con datos reales. Sin esta etiqueta
+  // el usuario leería el dato de ayer como si fuera de hoy.
+  const dayLabel = daily?.date && !isToday(daily.date) ? formatDayLabel(daily.date) : null;
+
   const tiles = [
     { icon: <Footprints size={18} />, label: t('wearables.steps'), value: num(daily?.steps) },
     {
@@ -55,9 +60,12 @@ export function HealthMetricsCard({ daily, sleep, onOpen }: HealthMetricsCardPro
 
   const inner = (
     <>
-      <div className="mb-3 flex items-center justify-between">
+      <div className="mb-3 flex items-center justify-between gap-2">
         <span className="label-caps text-fg-subtle">{t('wearables.title')}</span>
-        {onOpen && <ChevronRight size={16} className="text-fg-subtle" aria-hidden="true" />}
+        <div className="flex items-center gap-2">
+          {dayLabel && <span className="text-xs text-fg-subtle">{dayLabel}</span>}
+          {onOpen && <ChevronRight size={16} className="text-fg-subtle" aria-hidden="true" />}
+        </div>
       </div>
       <div className="grid grid-cols-3 gap-3">
         {tiles.map((tile) => (
@@ -93,4 +101,18 @@ export function HealthMetricsCard({ daily, sleep, onOpen }: HealthMetricsCardPro
 function fmtMinutesOrNull(min: number | null | undefined): string | null {
   if (!min || min <= 0) return null;
   return fmtMinutes(min);
+}
+
+/** `date` es YYYY-MM-DD en hora local: se compara como string, sin Date. */
+function isToday(date: string): boolean {
+  const now = new Date();
+  const local = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
+    now.getDate(),
+  ).padStart(2, '0')}`;
+  return date === local;
+}
+
+function formatDayLabel(date: string): string {
+  const [y, m, d] = date.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString('es', { day: 'numeric', month: 'short' });
 }

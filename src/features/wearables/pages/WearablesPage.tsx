@@ -9,6 +9,7 @@ import { useAuthStore } from '@features/auth/stores/authStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
 import { ConnectionCard } from '../components/ConnectionCard';
 import { HealthMetricsCard } from '../components/HealthMetricsCard';
+import { pickDaily, pickSleepFor } from '../utils/pickDaily';
 import { useWearableDaily, useWearableSleep } from '../hooks/useWearableConnections';
 import { useWearableSync } from '../hooks/useWearableSync';
 import { useWearableStore } from '../stores/wearableStore';
@@ -27,6 +28,9 @@ export function WearablesPage() {
 
   const { data: dailyList } = useWearableDaily();
   const { data: sleepList } = useWearableSleep();
+  // De madrugada el día en curso aún no tiene pulsaciones: se muestra el último
+  // con datos reales, con su fecha (ver pickDaily).
+  const shownDay = pickDaily(dailyList);
   const { runSync, isSyncing } = useWearableSync();
   const strength = useWearableStore((s) => s.strength);
   const [aggregatorAvailable, setAggregatorAvailable] = useState(false);
@@ -102,7 +106,7 @@ export function WearablesPage() {
 
         {/* Resumen de datos */}
         {dailyList?.length || sleepList?.length ? (
-          <HealthMetricsCard sleep={sleepList?.[0]} daily={dailyList?.[0]} />
+          <HealthMetricsCard daily={shownDay} sleep={pickSleepFor(shownDay, sleepList)} />
         ) : (
           <div className="rounded-card p-4 bg-surface border border-line-strong text-xs text-fg-subtle text-center">
             {t('wearables.no_data')}

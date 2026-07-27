@@ -32,6 +32,7 @@ import { RestTimer } from '@features/workout/components/RestTimer';
 import { WorkoutSessionStats } from '@features/workout/components/WorkoutSessionStats';
 import { LastSessionCard } from '@features/workout/components/LastSessionCard';
 import { HealthMetricsCard } from '@features/wearables/components/HealthMetricsCard';
+import { pickDaily, pickSleepFor } from '@features/wearables/utils/pickDaily';
 import {
   useWearableDaily,
   useWearableSleep,
@@ -181,9 +182,12 @@ export function WorkoutPage() {
   const lastWorkout = lastWorkoutPage?.workouts[0];
 
   // Resumen de salud (wearable) para la tarjeta glanceable del inicio.
-  const { data: wearableDaily } = useWearableDaily(1);
-  const { data: wearableSleep } = useWearableSleep(1);
+  // Varios días, no uno: de madrugada el día en curso no tiene pulsaciones y
+  // hay que caer al último con datos reales (ver pickDaily).
+  const { data: wearableDaily } = useWearableDaily(7);
+  const { data: wearableSleep } = useWearableSleep(7);
   const hasWearableData = Boolean(wearableDaily?.length || wearableSleep?.length);
+  const wearableDay = pickDaily(wearableDaily);
 
   // Ahora hay varios PR por ejercicio (uno por banda de reps). Agrupamos por
   // ejercicio y, para el indicador principal, tomamos el de mayor 1RM estimado.
@@ -940,8 +944,8 @@ export function WorkoutPage() {
       {isIdle && hasWearableData && (
         <div className="mt-3">
           <HealthMetricsCard
-            daily={wearableDaily?.[0]}
-            sleep={wearableSleep?.[0]}
+            daily={wearableDay}
+            sleep={pickSleepFor(wearableDay, wearableSleep)}
             onOpen={() => navigate('/wearables')}
           />
         </div>

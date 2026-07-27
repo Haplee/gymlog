@@ -175,7 +175,10 @@ class HealthBridgePlugin : Plugin() {
 
             // Traza del camino feliz: sin esto es imposible diagnosticar en
             // campo si "no me llegó el dato" fue lectura vacía, permiso o red.
-            Log.i(
+            // Nivel W a propósito: proguard-android-optimize.txt elimina
+            // Log.v/d/i con -assumenosideeffects, así que en la APK de release
+            // —la única que se instala— una traza en Log.i no existe.
+            Log.w(
                 TAG,
                 "readAll [$startStr..$endStr]: daily=${daily.length()} " +
                     "sleep=${sleep.length()} workouts=${workouts.length()} " +
@@ -344,8 +347,8 @@ class HealthBridgePlugin : Plugin() {
             // come en silencio cualquier int desconocido y desde fuera del
             // dispositivo es imposible saber qué escribió la app de salud — que es
             // exactamente cómo una sesión de pesas y una de cinta acabaron las dos
-            // como cardio "otro".
-            Log.i(
+            // como cardio "otro". Nivel W: R8 elimina Log.i en release.
+            Log.w(
                 TAG,
                 "session type=${rec.exerciseType} title=${rec.title} " +
                     "origin=${rec.metadata.dataOrigin.packageName} " +
@@ -387,6 +390,10 @@ class HealthBridgePlugin : Plugin() {
                 val active = agg[ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL]?.inKilocalories
                 val total = agg[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories
                 (active ?: total)?.takeIf { it > 0 }?.let { o.put("calories", it.toInt()) }
+                // Cuál de las dos se usó: si la fuente no escribe activas, las
+                // kcal que enseña la app llevan el basal dentro y quedan altas.
+                // Sin esta traza eso solo se puede suponer.
+                Log.w(TAG, "  kcal active=$active total=$total")
                 agg[HeartRateRecord.BPM_AVG]?.let { o.put("avg_hr", it.toInt()) }
                 agg[HeartRateRecord.BPM_MAX]?.let { o.put("max_hr", it.toInt()) }
             } catch (e: Exception) {
