@@ -8,7 +8,7 @@ import { Layout } from '@app/components/Layout';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
 import { ConnectionCard } from '../components/ConnectionCard';
-import { SleepCard } from '../components/SleepCard';
+import { HealthMetricsCard } from '../components/HealthMetricsCard';
 import { useWearableDaily, useWearableSleep } from '../hooks/useWearableConnections';
 import { useWearableSync } from '../hooks/useWearableSync';
 import { useWearableStore } from '../stores/wearableStore';
@@ -102,7 +102,7 @@ export function WearablesPage() {
 
         {/* Resumen de datos */}
         {dailyList?.length || sleepList?.length ? (
-          <SleepCard sleep={sleepList?.[0]} daily={dailyList?.[0]} />
+          <HealthMetricsCard sleep={sleepList?.[0]} daily={dailyList?.[0]} />
         ) : (
           <div className="rounded-card p-4 bg-surface border border-line-strong text-xs text-fg-subtle text-center">
             {t('wearables.no_data')}

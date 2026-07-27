@@ -31,6 +31,11 @@ import { ExerciseLoadType } from '@features/workout/components/ExerciseLoadType'
 import { RestTimer } from '@features/workout/components/RestTimer';
 import { WorkoutSessionStats } from '@features/workout/components/WorkoutSessionStats';
 import { LastSessionCard } from '@features/workout/components/LastSessionCard';
+import { HealthMetricsCard } from '@features/wearables/components/HealthMetricsCard';
+import {
+  useWearableDaily,
+  useWearableSleep,
+} from '@features/wearables/hooks/useWearableConnections';
 import { WorkoutSetList } from '@features/workout/components/WorkoutSetList';
 import { PlatesCalculator } from '@features/workout/components/PlatesCalculator';
 import {
@@ -174,6 +179,11 @@ export function WorkoutPage() {
     staleTime: 1000 * 60 * 5,
   });
   const lastWorkout = lastWorkoutPage?.workouts[0];
+
+  // Resumen de salud (wearable) para la tarjeta glanceable del inicio.
+  const { data: wearableDaily } = useWearableDaily(1);
+  const { data: wearableSleep } = useWearableSleep(1);
+  const hasWearableData = Boolean(wearableDaily?.length || wearableSleep?.length);
 
   // Ahora hay varios PR por ejercicio (uno por banda de reps). Agrupamos por
   // ejercicio y, para el indicador principal, tomamos el de mayor 1RM estimado.
@@ -924,6 +934,18 @@ export function WorkoutPage() {
       )}
 
       <RestTimer />
+
+      {/* Resumen de salud del wearable (glanceable), debajo del temporizador de
+          descanso. Solo en reposo y si hay datos. Pulsable -> detalle en /wearables. */}
+      {isIdle && hasWearableData && (
+        <div className="mt-3">
+          <HealthMetricsCard
+            daily={wearableDaily?.[0]}
+            sleep={wearableSleep?.[0]}
+            onOpen={() => navigate('/wearables')}
+          />
+        </div>
+      )}
 
       <PlatesCalculator
         key={showPlates ? `plates-${Math.round(bestEstimate?.weightKg ?? 0)}` : 'plates-closed'}

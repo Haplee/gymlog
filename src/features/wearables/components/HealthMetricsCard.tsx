@@ -1,0 +1,96 @@
+import { useTranslation } from 'react-i18next';
+import { Footprints, Route, Flame, HeartPulse, Heart, Moon, ChevronRight } from 'lucide-react';
+import type { WearableDaily, WearableSleep } from '../types';
+
+function fmtMinutes(min: number | null | undefined): string {
+  if (!min || min <= 0) return '—';
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
+
+interface HealthMetricsCardProps {
+  daily?: WearableDaily;
+  sleep?: WearableSleep;
+  /** Si se pasa, la tarjeta es pulsable (p. ej. navegar a /wearables). */
+  onOpen?: () => void;
+}
+
+/**
+ * Resumen glanceable del último día de wearable: expone TODAS las métricas
+ * capturadas (antes solo se veían 3). Cada tile se oculta si no hay dato, así
+ * la rejilla se adapta a lo que el wearable realmente escribe.
+ */
+export function HealthMetricsCard({ daily, sleep, onOpen }: HealthMetricsCardProps) {
+  const { t, i18n } = useTranslation();
+
+  const num = (v: number | null | undefined) =>
+    v != null ? v.toLocaleString(i18n.language) : null;
+
+  const hr =
+    daily?.avg_hr != null
+      ? `${daily.avg_hr}${daily.max_hr != null ? ` / ${daily.max_hr}` : ''}`
+      : null;
+
+  const tiles = [
+    { icon: <Footprints size={18} />, label: t('wearables.steps'), value: num(daily?.steps) },
+    {
+      icon: <Moon size={18} />,
+      label: t('wearables.sleep'),
+      value: fmtMinutesOrNull(sleep?.duration_min),
+    },
+    {
+      icon: <HeartPulse size={18} />,
+      label: t('wearables.resting_hr'),
+      value: daily?.resting_hr != null ? `${daily.resting_hr}` : null,
+    },
+    {
+      icon: <Route size={18} />,
+      label: t('wearables.distance'),
+      value: daily?.distance_km != null ? `${daily.distance_km.toFixed(1)} km` : null,
+    },
+    { icon: <Flame size={18} />, label: t('wearables.calories'), value: num(daily?.calories) },
+    { icon: <Heart size={18} />, label: t('wearables.hr_avg_max'), value: hr },
+  ].filter((tile) => tile.value != null);
+
+  const inner = (
+    <>
+      <div className="mb-3 flex items-center justify-between">
+        <span className="label-caps text-fg-subtle">{t('wearables.title')}</span>
+        {onOpen && <ChevronRight size={16} className="text-fg-subtle" aria-hidden="true" />}
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        {tiles.map((tile) => (
+          <div key={tile.label} className="flex flex-col items-center gap-1 text-center">
+            <div className="text-accent">{tile.icon}</div>
+            <div className="font-mono text-lg text-fg">{tile.value}</div>
+            <div className="text-xs text-fg-subtle">{tile.label}</div>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+
+  if (onOpen) {
+    return (
+      <button
+        type="button"
+        onClick={onOpen}
+        className="w-full rounded-card border border-line-strong bg-surface p-4 text-left shadow-card scale-in transition-colors active:bg-hover"
+      >
+        {inner}
+      </button>
+    );
+  }
+
+  return (
+    <div className="rounded-card border border-line-strong bg-surface p-4 shadow-card scale-in">
+      {inner}
+    </div>
+  );
+}
+
+function fmtMinutesOrNull(min: number | null | undefined): string | null {
+  if (!min || min <= 0) return null;
+  return fmtMinutes(min);
+}
