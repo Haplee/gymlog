@@ -18,6 +18,7 @@ public class HealthBridgePlugin: CAPPlugin, CAPBridgedPlugin {
     public let jsName = "HealthBridge"
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "isAvailable", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "hasPermissions", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "requestAuthorization", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "readAll", returnType: CAPPluginReturnPromise),
     ]
@@ -38,6 +39,19 @@ public class HealthBridgePlugin: CAPPlugin, CAPBridgedPlugin {
 
     @objc func isAvailable(_ call: CAPPluginCall) {
         call.resolve(["available": HKHealthStore.isHealthDataAvailable()])
+    }
+
+    @objc func hasPermissions(_ call: CAPPluginCall) {
+        guard HKHealthStore.isHealthDataAvailable() else {
+            call.resolve(["granted": false]); return
+        }
+        // HealthKit oculta el estado de autorización de LECTURA por privacidad;
+        // getRequestStatusForAuthorization solo dice si volver a pedir mostraría
+        // UI. .unnecessary => el flujo ya se recorrió (concedido o denegado, no
+        // distinguible). Best-effort: lo tratamos como "ya gestionado".
+        store.getRequestStatusForAuthorization(toShare: [], read: readTypes()) { status, _ in
+            call.resolve(["granted": status == .unnecessary])
+        }
     }
 
     @objc func requestAuthorization(_ call: CAPPluginCall) {
@@ -218,6 +232,16 @@ public class HealthBridgePlugin: CAPPlugin, CAPBridgedPlugin {
                     ]
                     if let dist = w.totalDistance?.doubleValue(for: .meter()) { r["distance"] = dist / 1000.0 }
                     if let kcal = w.totalEnergyBurned?.doubleValue(for: .kilocalorie()) { r["calories"] = Int(kcal) }
+                    // FC de la sesión (iOS 16+): paridad con Android; sin esto el
+                    // cardio importado entraba con avg_hr/max_hr a NULL aunque el
+                    // dato existiera. HKWorkout.statistics evita una query extra.
+                    if #available(iOS 16.0, *),
+                       let hrType = HKQuantityType.quantityType(forIdentifier: .heartRate) {
+                        let bpm = HKUnit.count().unitDivided(by: .minute())
+                        let hrStats = w.statistics(for: hrType)
+                        if let avg = hrStats?.averageQuantity() { r["avg_hr"] = Int(avg.doubleValue(for: bpm)) }
+                        if let mx = hrStats?.maximumQuantity() { r["max_hr"] = Int(mx.doubleValue(for: bpm)) }
+                    }
                     rows.append(r)
                 }
                 lock.lock(); workoutRows.append(contentsOf: rows); skippedStrength += strengthCount; lock.unlock()

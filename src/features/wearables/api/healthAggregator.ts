@@ -25,6 +25,16 @@ export async function isAggregatorAvailable(): Promise<boolean> {
   }
 }
 
+/** ¿Están ya concedidos los permisos de lectura? (no lanza la UI de permisos). */
+export async function aggregatorHasPermission(): Promise<boolean> {
+  try {
+    const { granted } = await HealthBridge.hasPermissions();
+    return granted;
+  } catch {
+    return false;
+  }
+}
+
 export async function requestAggregatorPermission(): Promise<boolean> {
   try {
     const { granted } = await HealthBridge.requestAuthorization();
@@ -35,8 +45,29 @@ export async function requestAggregatorPermission(): Promise<boolean> {
   }
 }
 
+// Fecha local YYYY-MM-DD. NO usar toISOString() (devuelve UTC): en zonas con
+// offset positivo, cerca de medianoche local el día UTC va uno por detrás y el
+// plugin nativo —que interpreta estos strings en hora LOCAL— dejaría fuera el
+// día de hoy. Aquí construimos la fecha con los componentes locales del Date.
 function ymd(d: Date): string {
-  return d.toISOString().slice(0, 10);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+// Ventana de lectura. Sin memoria, una ventana fija dejaba huecos permanentes:
+// si el usuario no abría la app en más días que la ventana, esos días no volvían
+// a leerse nunca. Calculamos el rango desde la última sync con un solape (por si
+// el wearable escribe datos con retraso), con un suelo (`days`) y un tope que
+// acota el backfill y el coste por-sesión de readWorkouts.
+const SYNC_OVERLAP_DAYS = 2;
+const SYNC_MAX_DAYS = 30;
+
+function windowDaysFrom(lastSyncAt: string | null | undefined, floorDays: number): number {
+  if (!lastSyncAt) return SYNC_MAX_DAYS; // primer sync: backfill amplio
+  const daysSince = Math.ceil((Date.now() - new Date(lastSyncAt).getTime()) / 86400000);
+  return Math.min(SYNC_MAX_DAYS, Math.max(floorDays, daysSince + SYNC_OVERLAP_DAYS));
 }
 
 /** Lee del agregador nativo y upserta en Supabase. Devuelve el conteo importado. */
@@ -44,8 +75,26 @@ export async function syncAggregator(userId: string, days = 7): Promise<Wearable
   const source = aggregatorSource();
   if (!source) throw new Error('no_aggregator');
 
+  // En Android el estado de permisos es fiable: si faltan, no seguimos (así no
+  // marcamos la conexión como "connected" tras una lectura vacía por falta de
+  // permiso). En iOS HealthKit oculta el estado de lectura, así que no bloqueamos.
+  if (aggregatorSource() === 'health_connect') {
+    const granted = await aggregatorHasPermission();
+    if (!granted) throw new Error('no_permission');
+  }
+
+  // Rango dinámico desde la última sync de esta conexión.
+  const { data: conn } = await supabase
+    .from('wearable_connections')
+    .select('last_sync_at')
+    .eq('user_id', userId)
+    .eq('provider', source)
+    .maybeSingle();
+  const windowDays = windowDaysFrom(conn?.last_sync_at, days);
+
   const end = new Date();
-  const start = new Date(Date.now() - (days - 1) * 86400000);
+  const start = new Date();
+  start.setDate(start.getDate() - (windowDays - 1));
   const { daily, sleep, workouts, skippedStrength } = await HealthBridge.readAll({
     startDate: ymd(start),
     endDate: ymd(end),

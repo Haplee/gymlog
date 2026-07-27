@@ -12,7 +12,11 @@ import { SleepCard } from '../components/SleepCard';
 import { useWearableDaily, useWearableSleep } from '../hooks/useWearableConnections';
 import { useWearableSync } from '../hooks/useWearableSync';
 import { useWearableStore } from '../stores/wearableStore';
-import { isAggregatorAvailable, requestAggregatorPermission } from '../api/healthAggregator';
+import {
+  aggregatorHasPermission,
+  isAggregatorAvailable,
+  requestAggregatorPermission,
+} from '../api/healthAggregator';
 
 export function WearablesPage() {
   const { t } = useTranslation();
@@ -26,6 +30,7 @@ export function WearablesPage() {
   const { runSync, isSyncing } = useWearableSync();
   const skippedStrength = useWearableStore((s) => s.skippedStrength);
   const [aggregatorAvailable, setAggregatorAvailable] = useState(false);
+  const [aggregatorGranted, setAggregatorGranted] = useState(false);
 
   useEffect(() => {
     if (!user) navigate('/login');
@@ -33,6 +38,7 @@ export function WearablesPage() {
 
   useEffect(() => {
     void isAggregatorAvailable().then(setAggregatorAvailable);
+    void aggregatorHasPermission().then(setAggregatorGranted);
   }, []);
 
   const isNative = Capacitor.isNativePlatform();
@@ -41,10 +47,11 @@ export function WearablesPage() {
 
   const handleGrantAggregator = async () => {
     const granted = await requestAggregatorPermission();
+    setAggregatorGranted(granted);
     if (granted) {
       await runSync();
     } else {
-      toast.error(t('wearables.sync_error'));
+      toast.error(t('wearables.permission_needed'));
     }
   };
 
@@ -60,9 +67,11 @@ export function WearablesPage() {
                 ? t('wearables.health_aggregator_desc_ios')
                 : t('wearables.health_aggregator_desc_android')
             }
-            connected={aggregatorAvailable}
+            connected={aggregatorAvailable && aggregatorGranted}
             statusLabel={
-              aggregatorAvailable ? t('wearables.connected') : t('wearables.disconnected')
+              aggregatorAvailable && aggregatorGranted
+                ? t('wearables.connected')
+                : t('wearables.disconnected')
             }
             icon={<HeartPulse size={22} />}
             hint={t('wearables.amazfit_hint', { target: aggregatorTarget })}

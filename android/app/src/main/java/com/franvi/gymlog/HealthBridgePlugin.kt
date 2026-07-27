@@ -69,6 +69,23 @@ class HealthBridgePlugin : Plugin() {
     }
 
     @PluginMethod
+    fun hasPermissions(call: PluginCall) {
+        val client = clientOrNull()
+        if (client == null) {
+            val ret = JSObject(); ret.put("granted", false); call.resolve(ret); return
+        }
+        scope.launch {
+            val granted = try {
+                client.permissionController.getGrantedPermissions().containsAll(permissions)
+            } catch (e: Exception) {
+                Log.e(TAG, "hasPermissions: ${e.message}")
+                false
+            }
+            val ret = JSObject(); ret.put("granted", granted); call.resolve(ret)
+        }
+    }
+
+    @PluginMethod
     fun requestAuthorization(call: PluginCall) {
         val client = clientOrNull()
         if (client == null) {
@@ -133,6 +150,14 @@ class HealthBridgePlugin : Plugin() {
                 val daily = readDaily(client, startDate, endDate)
                 val sleep = readSleep(client, filter)
                 val (workouts, skippedStrength) = readWorkouts(client, filter)
+                // Traza del camino feliz: sin esto es imposible diagnosticar en
+                // campo si "no me llegó el dato" fue lectura vacía, permiso o red.
+                Log.i(
+                    TAG,
+                    "readAll [$startStr..$endStr]: daily=${daily.length()} " +
+                        "sleep=${sleep.length()} workouts=${workouts.length()} " +
+                        "skippedStrength=$skippedStrength",
+                )
                 val ret = JSObject()
                 ret.put("daily", daily)
                 ret.put("sleep", sleep)
@@ -155,12 +180,11 @@ class HealthBridgePlugin : Plugin() {
      * Lee TODAS las páginas de un tipo de registro.
      *
      * readRecords devuelve como mucho pageSize registros (1000 por defecto) y
-     * deja el resto detrás de un pageToken. Sin paginar, con un wearable que
-     * escribe de forma continua, los datos se truncaban en silencio: como el
-     * orden es ascendente por fecha, lo que se perdía eran SIEMPRE los días más
-     * recientes. Medido en un Pixel 9a con Amazfit + Fitbit conectados:
-     * StepsRecord y HeartRateRecord devolvían n=1000 con pageToken != null, y
-     * los pasos de los dos últimos días llegaban a NULL a la base de datos.
+     * deja el resto detrás de un pageToken; sin paginar se truncaría en silencio.
+     * Hoy solo lo usan SleepSessionRecord y ExerciseSessionRecord (bajo volumen);
+     * las métricas de alto volumen (pasos, FC…) van por aggregateGroupByPeriod y
+     * ni siquiera pasan por aquí. El tope MAX_RECORDS es un cinturón de seguridad
+     * frente a un pageToken que no avance, no un límite esperado en la práctica.
      */
     private suspend fun <T : Record> readAllPages(
         client: HealthConnectClient,
@@ -299,6 +323,8 @@ class HealthBridgePlugin : Plugin() {
                         metrics = setOf(
                             DistanceRecord.DISTANCE_TOTAL,
                             TotalCaloriesBurnedRecord.ENERGY_TOTAL,
+                            HeartRateRecord.BPM_AVG,
+                            HeartRateRecord.BPM_MAX,
                         ),
                         timeRangeFilter = TimeRangeFilter.between(rec.startTime, rec.endTime),
                     ),
@@ -307,6 +333,11 @@ class HealthBridgePlugin : Plugin() {
                     ?.takeIf { it > 0 }?.let { o.put("distance", it) }
                 agg[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories
                     ?.takeIf { it > 0 }?.let { o.put("calories", it.toInt()) }
+                // FC de la sesión: el esquema (cardio_sessions.avg_hr/max_hr) y la
+                // RPC ya la soportan; sin esto el cardio importado entraba siempre
+                // con FC a NULL aunque Health Connect tuviera el dato.
+                agg[HeartRateRecord.BPM_AVG]?.let { o.put("avg_hr", it.toInt()) }
+                agg[HeartRateRecord.BPM_MAX]?.let { o.put("max_hr", it.toInt()) }
             } catch (e: Exception) {
                 Log.w(TAG, "readWorkouts aggregate: ${e.message}")
             }

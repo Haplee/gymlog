@@ -50,6 +50,10 @@ export interface HealthReadResult {
 export interface HealthBridgePlugin {
   /** ¿Hay agregador de salud disponible en este dispositivo? */
   isAvailable(): Promise<{ available: boolean }>;
+  /** ¿Están concedidos ya los permisos de lectura? (sin lanzar la UI de permisos).
+   * En Android es fiable; en iOS es best-effort (HealthKit oculta el estado de
+   * lectura por privacidad y solo indica si el flujo de permisos ya se recorrió). */
+  hasPermissions(): Promise<{ granted: boolean }>;
   /** Solicita permisos de lectura (pasos, HR, sueño, ejercicio). */
   requestAuthorization(): Promise<{ granted: boolean }>;
   /** Lee datos en el rango [startDate, endDate] (ISO YYYY-MM-DD). */
@@ -60,6 +64,7 @@ const HealthBridge = registerPlugin<HealthBridgePlugin>('HealthBridge', {
   // Fallback web/PWA: no hay capa nativa, evita UNIMPLEMENTED.
   web: () => ({
     isAvailable: async () => ({ available: false }),
+    hasPermissions: async () => ({ granted: false }),
     requestAuthorization: async () => ({ granted: false }),
     readAll: async () => ({ daily: [], sleep: [], workouts: [], skippedStrength: 0 }),
   }),

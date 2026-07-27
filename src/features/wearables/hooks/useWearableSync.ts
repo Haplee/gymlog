@@ -79,7 +79,10 @@ export function useWearableSync() {
       } catch (e) {
         devError('[Wearables] sync failed:', e);
         setError(String(e));
-        if (!opts.silent) toast.error(t('wearables.sync_error'));
+        if (!opts.silent) {
+          const noPermission = e instanceof Error && e.message === 'no_permission';
+          toast.error(t(noPermission ? 'wearables.permission_needed' : 'wearables.sync_error'));
+        }
       }
     },
     [userId, setSyncing, setSynced, setError, invalidate, t],
