@@ -191,11 +191,6 @@ export const useCardioStore = create<CardioState>()(
             devError('[CardioStore] syncFromRemote failed:', error.message);
             return;
           }
-          // Normaliza timestamps a epoch ms para comparar instantes, no strings:
-          // el cliente genera '...Z' pero Supabase (timestamptz) devuelve '...+00:00',
-          // así que la comparación por string cruda nunca casaba y no deduplicaba.
-          const toEpoch = (iso: string) => new Date(iso).getTime();
-
           const remote: CardioSession[] = (data || []).map((r) => ({
             id: r.id,
             type: r.type as CardioType,
@@ -210,13 +205,21 @@ export const useCardioStore = create<CardioState>()(
             pendingSync: false,
           }));
 
-          // Push pending or unknown local sessions
-          const remoteStartedSet = new Set(remote.map((r) => toEpoch(r.startedAt)));
-          const pending = get().sessions.filter(
-            (s) =>
-              s.pendingSync ||
-              (!remote.some((r) => r.id === s.id) && !remoteStartedSet.has(toEpoch(s.startedAt))),
-          );
+          // Sube SOLO lo que nunca llegó al servidor.
+          //
+          // Antes también se subía cualquier sesión local ausente del remoto, y
+          // eso resucita los borrados: una sesión eliminada en Supabase (o en
+          // otro dispositivo) volvía a insertarse en la siguiente sync, encima
+          // como 'manual' porque el upsert de abajo no manda source ni
+          // external_id. Pasó de verdad con una sesión de gimnasio
+          // reclasificada: reaparecía en el historial como cardio "otro"
+          // duplicado, una y otra vez.
+          //
+          // `pendingSync` distingue los dos casos sin ambigüedad: stopSession lo
+          // pone a false solo cuando Supabase devolvió el id. Una sesión con
+          // false que ya no está en remoto se borró allí, y lo correcto es
+          // dejarla morir — el merge de abajo la quita del estado local.
+          const pending = get().sessions.filter((s) => s.pendingSync === true);
           const stillPending: CardioSession[] = [];
           if (pending.length > 0) {
             const { data: inserted, error: pushErr } = await supabase
