@@ -42,6 +42,10 @@ test-results/
 supabase/test-results/
 graphify-out/
 
+# Estado local del CLI de Supabase (proyecto enlazado). No es secreto, pero es
+# de esta maquina: no tiene nada que hacer en el repo.
+supabase/.temp/
+
 # Build artifacts (local only)
 coverage/
 dev-dist/
