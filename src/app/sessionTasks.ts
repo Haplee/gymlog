@@ -24,7 +24,11 @@ registerSignOutTask({
   phase: 'pre-signout',
   name: 'routine:backup',
   requiresUser: true,
-  run: (userId) => useRoutineStore.getState().saveToDb(userId as string),
+  // `saveToDb` devuelve un boolean de éxito que aquí no se consulta: el
+  // registro ya trata cualquier fallo como best-effort.
+  run: async (userId) => {
+    await useRoutineStore.getState().saveToDb(userId as string);
+  },
 });
 
 /** Borrado local del entrenamiento en curso: no necesita sesión. */

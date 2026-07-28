@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronRight } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 import { SectionHeader, SettingRow, Toggle } from '@shared/components/ui';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useCoachStore } from '../stores/coachStore';
