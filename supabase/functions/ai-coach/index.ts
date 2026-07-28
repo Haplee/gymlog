@@ -44,19 +44,32 @@ function env(name: string): string {
 // eslint-disable-next-line no-console
 const logMetric = (payload: Record<string, unknown>) => console.log(JSON.stringify(payload));
 
+/**
+ * Normaliza un origen para comparar sin sustos: espacios, mayúsculas y barra
+ * final. Un `https://App.GymLog.dpdns.org/` copiado del navegador debe casar
+ * con lo que hay en la variable de entorno.
+ */
+const normalizeOrigin = (o: string) => o.trim().toLowerCase().replace(/\/+$/, '');
+
 /** CORS restringido: nada de '*' en un endpoint que gasta cuota. */
-function corsFor(origin: string | null): Record<string, string> {
+function corsFor(origin: string | null): { headers: Record<string, string>; configured: number } {
   const allowed = (Deno.env.get('AI_COACH_ALLOWED_ORIGINS') ?? '')
     .split(',')
-    .map((s) => s.trim())
+    .map(normalizeOrigin)
     .filter(Boolean);
+
   const headers: Record<string, string> = {
     'Access-Control-Allow-Headers': 'authorization, content-type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     Vary: 'Origin',
   };
-  if (origin && allowed.includes(origin)) headers['Access-Control-Allow-Origin'] = origin;
-  return headers;
+  if (origin && allowed.includes(normalizeOrigin(origin))) {
+    headers['Access-Control-Allow-Origin'] = origin;
+  }
+  // `configured` sirve para diagnosticar sin exponer los valores: si sale 0, la
+  // variable no está puesta; si sale >0 y aun así no casa, es que el origen real
+  // no está en la lista.
+  return { headers, configured: allowed.length };
 }
 
 function json(body: unknown, status: number, cors: Record<string, string>): Response {
@@ -67,10 +80,19 @@ function json(body: unknown, status: number, cors: Record<string, string>): Resp
 }
 
 Deno.serve(async (req) => {
-  const cors = corsFor(req.headers.get('origin'));
+  const origin = req.headers.get('origin');
+  const { headers: cors, configured: originsConfigured } = corsFor(origin);
 
   // 1. Preflight
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
+  if (req.method === 'OPTIONS') {
+    logMetric({
+      fn: 'ai-coach',
+      event: 'preflight',
+      allowed: 'Access-Control-Allow-Origin' in cors,
+      origins_configured: originsConfigured,
+    });
+    return new Response('ok', { headers: cors });
+  }
   if (req.method !== 'POST') return json({ error: 'method_not_allowed' }, 405, cors);
 
   // 2. Kill switch: se apaga sin publicar versión y antes de tocar nada.
