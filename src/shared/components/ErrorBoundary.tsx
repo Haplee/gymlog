@@ -1,6 +1,5 @@
 import { Component, type ReactNode } from 'react';
 import { toast } from 'sonner';
-import * as Sentry from '@sentry/react';
 
 interface Props {
   children: ReactNode;
@@ -24,7 +23,23 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('ErrorBoundary caught:', error, errorInfo);
-    Sentry.captureException(error, { extra: { componentStack: errorInfo.componentStack } });
+
+    // Sentry se carga aquí y no arriba a propósito. Este componente está en el
+    // arranque (App.tsx lo monta sin `lazy`), así que un import estático metía
+    // el SDK entero —unos 120 KB— en el bundle inicial de todo el mundo, y eso
+    // anulaba la carga condicional por VITE_SENTRY_DSN que hace main.tsx.
+    // Capturar un error es raro; arrancar la app es constante.
+    void import('@sentry/react')
+      .then((Sentry) => {
+        Sentry.captureException(error, {
+          extra: { componentStack: errorInfo.componentStack },
+        });
+      })
+      .catch(() => {
+        // Sin red o sin el chunk no hay reporte. No se hace nada más: el
+        // usuario ya está viendo la pantalla de error.
+      });
+
     toast.error('Algo salió mal');
   }
 

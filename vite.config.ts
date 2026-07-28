@@ -40,6 +40,11 @@ export default defineConfig(({ mode }) => {
       'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(sbUrl),
       'import.meta.env.VITE_SUPABASE_KEY': JSON.stringify(sbKey),
       __APP_VERSION__: JSON.stringify(pkg.version),
+      // Poda el código de depuración de Sentry, que es lo que arrastra el
+      // bundle `dev/` de @sentry/browser — y con él la integración Spotlight,
+      // una herramienta de desarrollo que no se referencia desde src/ ni desde
+      // esta config. __SENTRY_TRACING__ se deja como está: el tracing sí se usa.
+      __SENTRY_DEBUG__: JSON.stringify(false),
     },
     plugins: [
       react(),

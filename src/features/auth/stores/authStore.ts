@@ -5,8 +5,7 @@ import { getAuthErrorMessage } from '@shared/lib/authErrors';
 import { Capacitor } from '@capacitor/core';
 import { Browser } from '@capacitor/browser';
 import { queryClient } from '@app/queryClient';
-import { useWorkoutStore } from '@features/workout/stores/workoutStore';
-import { useRoutineStore } from '@features/routine/stores/routineStore';
+import { runSignOutPhase } from '@shared/lib/sessionLifecycle';
 import { devError, devLog, devWarn } from '@shared/lib/devtools';
 
 // Guardamos la subscripción fuera del store para que HMR y StrictMode
@@ -125,20 +124,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signOut: async () => {
-    // Limpieza de cache y estado persistido
+    // Las tareas de cada feature viven en el registro (`shared/lib/
+    // sessionLifecycle`), no aquí: este store no debe conocer a workout ni a
+    // routine. Quién las registra: `src/app/sessionTasks.ts`.
     try {
-      // Backup de rutinas antes de cerrar sesión: es el último momento con
-      // credenciales válidas y cubre el caso de storage limpiado entre ventanas
-      // de checkAndBackup. Best-effort: un fallo no debe bloquear el logout.
-      const userId = get().user?.id;
-      if (userId) {
-        await useRoutineStore
-          .getState()
-          .saveToDb(userId)
-          .catch((e) => devError('[GymLog] Backup de rutinas en signOut falló:', e));
-      }
+      const userId = get().user?.id ?? null;
+
+      // Con la sesión aún viva: es el último momento con credenciales válidas.
+      await runSignOutPhase('pre-signout', userId);
+
       queryClient.clear();
-      useWorkoutStore.getState().clearPersistedState();
+      await runSignOutPhase('cleanup', userId);
+
       await supabase.auth.signOut();
     } catch (err) {
       devError('[GymLog] Error durante signOut:', err);

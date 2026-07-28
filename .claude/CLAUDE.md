@@ -63,6 +63,8 @@ src/
 │   ├── auth/             # AuthPage, AuthCallback, SettingsPage, authStore
 │   ├── cardio/           # CardioPage, cardioStore (timer de sesión)
 │   ├── coach/            # entrenador IA opt-in (api/ components/ pages/ stores/ types/)
+│   ├── fitbody/          # FitBodyShowcasePage: escaparate del reskin (ruta /fitbody)
+│   ├── guide/            # GuidePage: guía de uso en la app (ruta /guide)
 │   ├── routine/          # RoutinePage, routineStore, useWorkoutReminder
 │   ├── stats/            # StatsPage, HistoryPage, UserStatsPage, charts, KPIs, constants.ts
 │   ├── wearables/        # integración wearables (api/ components/ hooks/ pages/ stores/ types/)
@@ -71,7 +73,7 @@ src/
 ├── shared/
 │   ├── api/queries.ts    # queries TanStack compartidas
 │   ├── components/       # EmptyStates, ErrorBoundary, CardioIcons, SwipeToDelete, ui/ (primitivas)
-│   ├── constants/        # muscleColors.ts
+│   ├── constants/        # accents.ts, muscleColors.ts (paletas: hex literal permitido)
 │   ├── hooks/ lib/       # utilidades (cálculos, formatters, validators, i18n)
 │   ├── stores/           # outboxStore, settingsStore
 │   └── styles/tokens.css # design tokens (fuente única de verdad)
@@ -83,7 +85,8 @@ src/
 - Aliases de import: `@` (src), `@app`, `@features`, `@shared` — definidos en
   `tsconfig.app.json` **y** `vite.config.ts`; si añades uno, sincroniza ambos.
 - Rutas: `/` (WorkoutPage), `/routines`, `/stats`, `/history`, `/settings`,
-  `/cardio`, `/user-stats`, `/login`, `/auth/callback`.
+  `/cardio`, `/user-stats`, `/exercises`, `/wearables`, `/notifications`,
+  `/guide`, `/coach`, `/coach/memory`, `/fitbody`, `/login`, `/auth/callback`.
 
 ## Sistema de diseño
 
@@ -98,9 +101,11 @@ src/
   `--space-*`). El bloque `@theme inline` de `src/index.css` las mapea a
   utilidades Tailwind (`bg-surface`, `text-fg-muted`, `border-line`, `bg-accent`,
   `rounded-pill`, `shadow-card`…).
-- **Nunca hardcodees colores hex** en componentes. Excepción: las paletas de
-  charts en `src/features/stats/constants.ts` (Recharts no resuelve `var()` en
-  `fill` SVG de forma fiable — por eso son literales TS).
+- **Nunca hardcodees colores hex** en componentes. La regla aplica a componentes:
+  los ficheros de paleta son la excepción, y viven en dos sitios concretos —
+  `src/features/stats/constants.ts` (Recharts no resuelve `var()` en `fill` SVG
+  de forma fiable) y `src/shared/constants/` (`accents.ts`, `muscleColors.ts`).
+  Si necesitas un color literal nuevo, va a uno de esos ficheros, nunca al JSX.
 - **Elevación (3 niveles):** plano = sin sombra; elevado = `shadow-card`;
   flotante (FABs, overlays) = `shadow-lg` / `shadow-fab`.
 - **Tipografía:** Inter (cuerpo) + Space Grotesk (display y contadores/números,
