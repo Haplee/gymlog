@@ -1,4 +1,6 @@
 import { generateTips, type Tip } from '@features/stats/utils/tips';
+import { useAutoregulation } from '@features/stats/hooks/useAutoregulation';
+import { NextSessionCard } from '@features/stats/components/NextSessionCard';
 import { celebrate } from '@shared/lib/celebration';
 import { useMemo, useEffect, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -186,6 +188,9 @@ export function UserStatsPage() {
 
   const workouts = useMemo(() => data?.workouts ?? [], [data?.workouts]);
   const recentSets = useMemo(() => data?.sets ?? [], [data?.sets]);
+  // Sugerencias de carga a partir del RIR/RPE ya registrado. Local y gratis:
+  // se muestran tenga o no activado el entrenador IA.
+  const nextSessionAdvice = useAutoregulation(recentSets);
 
   const currentStreak = useMemo(() => calculateCurrentStreak(workouts), [workouts]);
   const maxStreak = useMemo(() => calculateMaxStreak(workouts), [workouts]);
@@ -724,6 +729,18 @@ export function UserStatsPage() {
           </section>
         )}
 
+        {/* ── Próxima sesión (motor determinista, sin IA ni red) ── */}
+        {nextSessionAdvice.length > 0 && (
+          <section className="space-y-3">
+            <SectionLabel>{t('coach.next_session')}</SectionLabel>
+            <div className="space-y-2">
+              {nextSessionAdvice.map((advice) => (
+                <NextSessionCard key={advice.exercise} advice={advice} />
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* ── Consejos ── */}
         {tips.length > 0 && (
           <section className="space-y-3">
@@ -737,7 +754,7 @@ export function UserStatsPage() {
               <div className="flex items-center gap-2 mb-4">
                 <Lightbulb className="w-4 h-4 text-warning" />
                 <span className="text-sm font-semibold text-fg">
-                  {tips.length} consejo{tips.length !== 1 ? 's' : ''} basados en tus datos
+                  {t('userStats.tips_count', { count: tips.length })}
                 </span>
               </div>
               <div className="space-y-2.5">

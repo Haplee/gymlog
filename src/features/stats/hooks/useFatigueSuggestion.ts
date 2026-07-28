@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { fetchRecentSets } from '@shared/api/queries';
@@ -16,6 +17,7 @@ const STORAGE_KEY = 'fatigue_suggestion_date';
  */
 export function useFatigueSuggestion() {
   const { user } = useAuthStore();
+  const { t } = useTranslation();
 
   const { data: recentSets = [] } = useQuery({
     queryKey: ['recentSets', user?.id],
@@ -41,11 +43,11 @@ export function useFatigueSuggestion() {
     const suggested = getSuggestedMuscleGroup(analyzeMuscleRecovery(recentSets, musclesMap));
     if (!suggested) return;
 
-    void notify('Hoy toca entrenar', {
-      body: `${suggested} lleva días sin trabajarse. ¿Le damos hoy?`,
+    void notify(t('coach.notify_train_title'), {
+      body: t('coach.notify_train_body', { muscle: suggested }),
       icon: '/icon-192x192.webp',
       url: '/',
     });
     localStorage.setItem(STORAGE_KEY, todayKey);
-  }, [user, recentSets, musclesMap]);
+  }, [user, recentSets, musclesMap, t]);
 }

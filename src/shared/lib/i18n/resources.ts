@@ -88,6 +88,139 @@ export const resources = {
         consistency_msg:
           '¡Llevas mucho tiempo registrando tus entrenos! La consistencia a largo plazo es la clave del éxito.',
       },
+      coach: {
+        notify_train_title: 'Hoy toca entrenar',
+        notify_train_body: '{{muscle}} lleva días sin trabajarse. ¿Le damos hoy?',
+        page_title: 'Entrenador',
+        page_subtitle: 'Análisis de tus datos con IA',
+        generate: 'Analizar mi semana',
+        regenerate: 'Volver a analizar',
+        analyzing: 'Analizando tus datos...',
+        empty_title: 'Sin análisis todavía',
+        empty_desc: 'Pulsa el botón para que el entrenador revise tus últimas semanas.',
+        disclaimer:
+          'El entrenador interpreta tus datos, no te examina. No sustituye a un médico, un fisioterapeuta ni a un entrenador presencial.',
+        needs_professional_title: 'Consulta a un profesional',
+        needs_professional_body:
+          'Por lo que cuentas, esto se sale de lo que puede valorar una app. Que te vea un médico o un fisioterapeuta antes de seguir entrenando esa zona.',
+        insights_title: 'Lo que veo',
+        suggestions_title: 'Qué haría yo',
+        apply: 'Aplicar',
+        dismiss: 'Descartar',
+        applied: 'Aplicada',
+        kind: {
+          load: 'Carga',
+          volume: 'Volumen',
+          frequency: 'Frecuencia',
+          deload: 'Descarga',
+          rest: 'Descanso',
+          exercise_swap: 'Cambio de ejercicio',
+        },
+        error: {
+          unauthorized: 'Tu sesión ha caducado. Vuelve a entrar.',
+          consent_required: 'Activa el entrenador en Ajustes para usarlo.',
+          quota_exceeded: 'Has agotado los análisis de hoy. Vuelve mañana.',
+          coach_disabled: 'El entrenador no está disponible ahora mismo.',
+          provider_unavailable: 'El servicio va saturado. Prueba en unos minutos.',
+          invalid_output: 'La respuesta ha llegado mal. Prueba otra vez.',
+          network: 'Sin conexión. Comprueba tu red.',
+          unknown: 'Algo ha fallado. Prueba otra vez.',
+        },
+        consent: {
+          title: 'Activar el entrenador IA',
+          intro:
+            'El entrenador manda un resumen de tus datos de entrenamiento a un servicio de IA externo para darte consejo personalizado. Está apagado hasta que tú lo enciendas.',
+          data_title: 'Qué sale de tu dispositivo',
+          data_profile: 'Tu objetivo, días por semana y material disponible',
+          data_body: 'Franja de edad, sexo y peso redondeado — nunca tu fecha de nacimiento exacta',
+          data_training: 'Series, pesos y esfuerzo por ejercicio, ya agregados por semanas',
+          data_wearable: 'Si tienes wearable: medias de sueño y pulso en reposo',
+          data_never:
+            'Nunca salen tu nombre, tu correo, tu identificador ni tus entrenamientos uno a uno.',
+          provider_title: 'Quién lo procesa',
+          provider_body:
+            'Un proveedor de IA externo en su nivel gratuito. Eso significa que no hay un acuerdo de tratamiento de datos como el que tendría un servicio de pago, y que podrían usar las peticiones para mejorar sus servicios.',
+          medical_title: 'Lo que no es',
+          medical_body:
+            'No es consejo médico. No diagnostica, no receta dieta ni suplementos, y no sustituye a un profesional.',
+          revoke_title: 'Puedes echarte atrás',
+          revoke_body:
+            'Al desactivarlo se borran de verdad tu memoria del entrenador, tus conversaciones y sus sugerencias.',
+          accept: 'Activar el entrenador',
+          cancel: 'Ahora no',
+        },
+        settings: {
+          section: 'Entrenador IA',
+          toggle: 'Entrenador IA',
+          toggle_desc: 'Consejo personalizado analizando tus datos. Apagado por defecto.',
+          open: 'Abrir entrenador',
+          memory: 'Lo que sabe de ti',
+          memory_desc: 'Revisa y borra lo que el entrenador ha aprendido',
+          purge: 'Borrar los datos del entrenador',
+          purge_confirm:
+            '¿Borrar la memoria, las conversaciones y las sugerencias del entrenador? No se puede deshacer.',
+          purged: 'Datos del entrenador borrados',
+        },
+        memory: {
+          title: 'Lo que sabe de ti',
+          desc: 'Lo que el entrenador ha aprendido en vuestras conversaciones. Bórralo cuando quieras.',
+          empty: 'Todavía no ha aprendido nada de ti.',
+          delete: 'Borrar',
+          category: {
+            injury: 'Lesiones',
+            preference: 'Preferencias',
+            constraint: 'Limitaciones',
+            goal: 'Objetivos',
+          },
+        },
+        next_session: 'Próxima sesión',
+        suggestion_title: 'Sugerencia de carga',
+        // "de 100 kg × 8" → "a 102,5 kg × 8"
+        from_to: '{{from}} kg × {{fromReps}} → {{to}} kg × {{toReps}}',
+        confidence_low: 'Poca evidencia',
+        confidence_medium: 'Evidencia media',
+        confidence_high: 'Buena evidencia',
+        action: {
+          increase: 'Sube la carga',
+          hold: 'Mantén la carga',
+          reduce: 'Baja la carga',
+        },
+        reason: {
+          at_failure:
+            'Llegaste al límite y perdiste repeticiones. Baja un 5% y recupera la técnica antes de volver a subir.',
+          margin_left:
+            'Te sobraron repeticiones en recámara las últimas sesiones. Toca subir carga.',
+          too_hard:
+            'Llevas dos sesiones apurando por encima de tu objetivo. Consolida este peso antes de seguir subiendo.',
+          on_target:
+            'Estás en el punto justo de esfuerzo. Mantén el peso e intenta sumar una repetición.',
+          add_rep:
+            'La carga es demasiado ligera para subir de disco sin pasarte. Progresa sumando repeticiones.',
+          deload:
+            'Volumen al alza tres semanas seguidas, cada vez cuesta más y las sesiones se valoran peor. Toca una semana de descarga.',
+          no_deload: 'No hay señales de que necesites descargar todavía.',
+        },
+        readiness: {
+          ok: 'Tu recuperación acompaña.',
+          low_sleep:
+            'Llevas varios días durmiendo poco ({{minutes}} min de media). Mantén la carga en lugar de subirla.',
+          high_rhr:
+            'Tu frecuencia cardiaca en reposo está por encima de tu media habitual. Mantén la carga hoy.',
+          sleep_and_hr:
+            'Duermes poco y tu pulso en reposo está alto: tu cuerpo aún no se ha recuperado. Mantén la carga.',
+        },
+        stall: {
+          title: '{{exercise}} lleva {{count}} sesiones sin mejorar',
+          cause_fatigue:
+            'Entrenas siempre al límite. El problema no es el estímulo, es la recuperación: baja algo la intensidad o descansa más entre sesiones.',
+          cause_frequency:
+            'Pasan demasiados días entre sesiones. Entrenarlo más a menudo, aunque sea con menos series, suele desatascarlo.',
+          cause_volume:
+            'Estás haciendo muy pocas series. Añade una o dos series por sesión antes de tocar el peso.',
+          cause_unknown:
+            'Prueba a cambiar algo: rango de repeticiones, tempo o una variante del ejercicio.',
+        },
+      },
       userStats: {
         page_title: 'Mis Estadísticas',
         page_subtitle: 'Análisis completo de tu progreso',
@@ -99,6 +232,8 @@ export const resources = {
         days_ago: 'hace {{count}}d',
         no_data_label: 'Sin datos',
         personalized_tips: 'Consejos personalizados',
+        tips_count_one: '{{count}} consejo basado en tus datos',
+        tips_count_other: '{{count}} consejos basados en tus datos',
         empty_title: 'Sin datos todavía',
         empty_desc: 'Registra tus primeros entrenamientos para ver tus estadísticas aquí.',
         calendar_title: 'Registro de entrenos',
@@ -756,6 +891,134 @@ export const resources = {
         consistency_msg:
           "You've been logging your workouts for a long time! Long-term consistency is the key to success.",
       },
+      coach: {
+        notify_train_title: 'Time to train',
+        notify_train_body: "{{muscle}} hasn't been worked in days. Shall we hit it today?",
+        page_title: 'Coach',
+        page_subtitle: 'AI analysis of your data',
+        generate: 'Analyse my week',
+        regenerate: 'Analyse again',
+        analyzing: 'Analysing your data...',
+        empty_title: 'No analysis yet',
+        empty_desc: 'Tap the button and the coach will review your recent weeks.',
+        disclaimer:
+          'The coach interprets your data, it does not examine you. It does not replace a doctor, a physiotherapist or an in-person trainer.',
+        needs_professional_title: 'See a professional',
+        needs_professional_body:
+          'From what you describe, this is beyond what an app can assess. Get it looked at by a doctor or physiotherapist before training that area again.',
+        insights_title: 'What I see',
+        suggestions_title: 'What I would do',
+        apply: 'Apply',
+        dismiss: 'Dismiss',
+        applied: 'Applied',
+        kind: {
+          load: 'Load',
+          volume: 'Volume',
+          frequency: 'Frequency',
+          deload: 'Deload',
+          rest: 'Rest',
+          exercise_swap: 'Exercise swap',
+        },
+        error: {
+          unauthorized: 'Your session expired. Sign in again.',
+          consent_required: 'Turn the coach on in Settings to use it.',
+          quota_exceeded: "You've used up today's analyses. Come back tomorrow.",
+          coach_disabled: 'The coach is unavailable right now.',
+          provider_unavailable: 'The service is busy. Try again in a few minutes.',
+          invalid_output: 'The response came back malformed. Try again.',
+          network: 'No connection. Check your network.',
+          unknown: 'Something went wrong. Try again.',
+        },
+        consent: {
+          title: 'Turn on the AI coach',
+          intro:
+            'The coach sends a summary of your training data to an external AI service to give you personalised advice. It stays off until you turn it on.',
+          data_title: 'What leaves your device',
+          data_profile: 'Your goal, days per week and available equipment',
+          data_body: 'Age band, sex and rounded weight — never your exact date of birth',
+          data_training: 'Sets, weights and effort per exercise, already aggregated by week',
+          data_wearable: 'If you have a wearable: average sleep and resting heart rate',
+          data_never: 'Your name, email, identifier and individual workouts never leave.',
+          provider_title: 'Who processes it',
+          provider_body:
+            'An external AI provider on its free tier. That means there is no data processing agreement like a paid service would have, and they may use requests to improve their services.',
+          medical_title: 'What it is not',
+          medical_body:
+            'It is not medical advice. It does not diagnose, does not prescribe diet or supplements, and does not replace a professional.',
+          revoke_title: 'You can back out',
+          revoke_body:
+            'Turning it off genuinely deletes your coach memory, your conversations and its suggestions.',
+          accept: 'Turn on the coach',
+          cancel: 'Not now',
+        },
+        settings: {
+          section: 'AI coach',
+          toggle: 'AI coach',
+          toggle_desc: 'Personalised advice from your data. Off by default.',
+          open: 'Open coach',
+          memory: 'What it knows about you',
+          memory_desc: 'Review and delete what the coach has learned',
+          purge: 'Delete coach data',
+          purge_confirm:
+            "Delete the coach's memory, conversations and suggestions? This cannot be undone.",
+          purged: 'Coach data deleted',
+        },
+        memory: {
+          title: 'What it knows about you',
+          desc: 'What the coach has learned from your conversations. Delete it whenever you want.',
+          empty: "It hasn't learned anything about you yet.",
+          delete: 'Delete',
+          category: {
+            injury: 'Injuries',
+            preference: 'Preferences',
+            constraint: 'Constraints',
+            goal: 'Goals',
+          },
+        },
+        next_session: 'Next session',
+        suggestion_title: 'Load suggestion',
+        from_to: '{{from}} kg × {{fromReps}} → {{to}} kg × {{toReps}}',
+        confidence_low: 'Little evidence',
+        confidence_medium: 'Some evidence',
+        confidence_high: 'Solid evidence',
+        action: {
+          increase: 'Add load',
+          hold: 'Hold the load',
+          reduce: 'Drop the load',
+        },
+        reason: {
+          at_failure:
+            'You hit the limit and lost reps. Drop 5% and rebuild your technique before adding load again.',
+          margin_left: 'You had reps left in the tank in your last sessions. Time to add load.',
+          too_hard:
+            "You've been pushing past your target for two sessions. Consolidate this weight before adding more.",
+          on_target: "You're at the right effort. Keep the weight and try to add one rep.",
+          add_rep:
+            'The load is too light to add a plate without overshooting. Progress by adding reps.',
+          deload:
+            'Volume up three weeks running, effort climbing and sessions rated worse. Time for a deload week.',
+          no_deload: 'No signs you need a deload yet.',
+        },
+        readiness: {
+          ok: 'Your recovery is on track.',
+          low_sleep:
+            "You've slept little for several days ({{minutes}} min on average). Hold the load instead of adding to it.",
+          high_rhr: 'Your resting heart rate is above your usual average. Hold the load today.',
+          sleep_and_hr:
+            "You're sleeping little and your resting pulse is high: your body hasn't recovered yet. Hold the load.",
+        },
+        stall: {
+          title: '{{exercise}} has not improved in {{count}} sessions',
+          cause_fatigue:
+            "You always train at the limit. The problem isn't stimulus, it's recovery: ease off the intensity or rest more between sessions.",
+          cause_frequency:
+            'Too many days pass between sessions. Training it more often, even with fewer sets, usually unsticks it.',
+          cause_volume:
+            "You're doing very few sets. Add one or two sets per session before touching the weight.",
+          cause_unknown:
+            'Try changing something: rep range, tempo, or a variation of the exercise.',
+        },
+      },
       userStats: {
         page_title: 'My Stats',
         page_subtitle: 'Full analysis of your progress',
@@ -767,6 +1030,8 @@ export const resources = {
         days_ago: '{{count}}d ago',
         no_data_label: 'No data',
         personalized_tips: 'Personalized tips',
+        tips_count_one: '{{count}} tip based on your data',
+        tips_count_other: '{{count}} tips based on your data',
         empty_title: 'No data yet',
         empty_desc: 'Log your first workouts to see your stats here.',
         calendar_title: 'Workout log',
