@@ -72,3 +72,11 @@ android/manifest-aliases.generated.xml
 # Proyecto nativo iOS: se regenera con `npx cap add ios` (local o en CI,
 # ver ios-custom/README.md) — no se versiona, a diferencia de android/.
 ios/
+
+# Notas personales con claves de API en claro. El repo es PÚBLICO: nada de
+# esto puede acabar en un commit. Las claves de verdad van en .env.local
+# (ya cubierto por .env*) o en `supabase secrets set`.
+IAS.md
+openspec/IAS.md
+**/IAS.md
+*.secrets.md
