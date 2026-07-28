@@ -54,6 +54,10 @@ vi.mock('@shared/lib/devtools', () => ({
 }));
 
 import { useAuthStore } from '../authStore';
+// Efecto de importación: registra las tareas de signOut de routine y workout.
+// En la app lo hace `main.tsx`; aquí se replica ese cableado porque authStore
+// ya no conoce a esas features — esa es justo la dependencia que se invirtió.
+import '@app/sessionTasks';
 import { supabase } from '@shared/lib/supabase';
 import { queryClient } from '@app/queryClient';
 

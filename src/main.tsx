@@ -6,6 +6,11 @@ import { devLog, devError } from '@shared/lib/devtools';
 import './index.css';
 import App from './App.tsx';
 import { Providers } from './app/providers.tsx';
+// Efecto de importación: registra las tareas de cierre de sesión de cada
+// feature. Va en el arranque y no dentro de cada store porque las rutas son
+// `lazy()`: una feature que el usuario no hubiera visitado no se habría
+// registrado, y su tarea se saltaría en silencio al cerrar sesión.
+import './app/sessionTasks.ts';
 
 inject();
 

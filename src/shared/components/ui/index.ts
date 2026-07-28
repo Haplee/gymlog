@@ -13,3 +13,4 @@ export { StatNumber } from './StatNumber';
 export { Chip } from './Chip';
 export { FAB } from './FAB';
 export { SectionHeader } from './SectionHeader';
+export { SettingRow } from './SettingRow';

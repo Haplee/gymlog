@@ -40,6 +40,15 @@ const HistoryPage = lazy(() =>
 const SettingsPage = lazy(() =>
   import('@features/auth/pages/SettingsPage').then((m) => ({ default: m.SettingsPage })),
 );
+// La sección del entrenador se inyecta en Ajustes desde aquí: `auth` no debe
+// importar de `coach` —cerraba una dependencia circular— pero esta capa sí
+// puede conocer a las dos. Sigue siendo `lazy` para no arrastrar el store del
+// coach al bundle de entrada.
+const CoachSettingsSection = lazy(() =>
+  import('@features/coach/components/CoachSettingsSection').then((m) => ({
+    default: m.CoachSettingsSection,
+  })),
+);
 const RoutinePage = lazy(() =>
   import('@features/routine/pages/RoutinePage').then((m) => ({ default: m.RoutinePage })),
 );
@@ -137,7 +146,7 @@ function AnimatedRoutes() {
         path="/settings"
         element={
           <ProtectedRoute>
-            <SettingsPage />
+            <SettingsPage coachSection={<CoachSettingsSection />} />
           </ProtectedRoute>
         }
       />
