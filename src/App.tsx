@@ -63,6 +63,12 @@ const NotificationsPage = lazy(() =>
 const GuidePage = lazy(() =>
   import('@features/guide/pages/GuidePage').then((m) => ({ default: m.GuidePage })),
 );
+const CoachPage = lazy(() =>
+  import('@features/coach/pages/CoachPage').then((m) => ({ default: m.CoachPage })),
+);
+const CoachMemoryPage = lazy(() =>
+  import('@features/coach/pages/CoachMemoryPage').then((m) => ({ default: m.CoachMemoryPage })),
+);
 const FitBodyShowcasePage = lazy(() =>
   import('@features/fitbody/pages/FitBodyShowcasePage').then((m) => ({
     default: m.FitBodyShowcasePage,
@@ -180,6 +186,22 @@ function AnimatedRoutes() {
         element={
           <ProtectedRoute>
             <GuidePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/coach"
+        element={
+          <ProtectedRoute>
+            <CoachPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/coach/memory"
+        element={
+          <ProtectedRoute>
+            <CoachMemoryPage />
           </ProtectedRoute>
         }
       />
