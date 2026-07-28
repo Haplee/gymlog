@@ -88,6 +88,57 @@ export const resources = {
         consistency_msg:
           '¡Llevas mucho tiempo registrando tus entrenos! La consistencia a largo plazo es la clave del éxito.',
       },
+      coach: {
+        notify_train_title: 'Hoy toca entrenar',
+        notify_train_body: '{{muscle}} lleva días sin trabajarse. ¿Le damos hoy?',
+        next_session: 'Próxima sesión',
+        suggestion_title: 'Sugerencia de carga',
+        // "de 100 kg × 8" → "a 102,5 kg × 8"
+        from_to: '{{from}} kg × {{fromReps}} → {{to}} kg × {{toReps}}',
+        confidence_low: 'Poca evidencia',
+        confidence_medium: 'Evidencia media',
+        confidence_high: 'Buena evidencia',
+        action: {
+          increase: 'Sube la carga',
+          hold: 'Mantén la carga',
+          reduce: 'Baja la carga',
+        },
+        reason: {
+          at_failure:
+            'Llegaste al límite y perdiste repeticiones. Baja un 5% y recupera la técnica antes de volver a subir.',
+          margin_left:
+            'Te sobraron repeticiones en recámara las últimas sesiones. Toca subir carga.',
+          too_hard:
+            'Llevas dos sesiones apurando por encima de tu objetivo. Consolida este peso antes de seguir subiendo.',
+          on_target:
+            'Estás en el punto justo de esfuerzo. Mantén el peso e intenta sumar una repetición.',
+          add_rep:
+            'La carga es demasiado ligera para subir de disco sin pasarte. Progresa sumando repeticiones.',
+          deload:
+            'Volumen al alza tres semanas seguidas, cada vez cuesta más y las sesiones se valoran peor. Toca una semana de descarga.',
+          no_deload: 'No hay señales de que necesites descargar todavía.',
+        },
+        readiness: {
+          ok: 'Tu recuperación acompaña.',
+          low_sleep:
+            'Llevas varios días durmiendo poco ({{minutes}} min de media). Mantén la carga en lugar de subirla.',
+          high_rhr:
+            'Tu frecuencia cardiaca en reposo está por encima de tu media habitual. Mantén la carga hoy.',
+          sleep_and_hr:
+            'Duermes poco y tu pulso en reposo está alto: tu cuerpo aún no se ha recuperado. Mantén la carga.',
+        },
+        stall: {
+          title: '{{exercise}} lleva {{count}} sesiones sin mejorar',
+          cause_fatigue:
+            'Entrenas siempre al límite. El problema no es el estímulo, es la recuperación: baja algo la intensidad o descansa más entre sesiones.',
+          cause_frequency:
+            'Pasan demasiados días entre sesiones. Entrenarlo más a menudo, aunque sea con menos series, suele desatascarlo.',
+          cause_volume:
+            'Estás haciendo muy pocas series. Añade una o dos series por sesión antes de tocar el peso.',
+          cause_unknown:
+            'Prueba a cambiar algo: rango de repeticiones, tempo o una variante del ejercicio.',
+        },
+      },
       userStats: {
         page_title: 'Mis Estadísticas',
         page_subtitle: 'Análisis completo de tu progreso',
@@ -755,6 +806,53 @@ export const resources = {
         consistency_title: '{{count}} workouts logged',
         consistency_msg:
           "You've been logging your workouts for a long time! Long-term consistency is the key to success.",
+      },
+      coach: {
+        notify_train_title: 'Time to train',
+        notify_train_body: "{{muscle}} hasn't been worked in days. Shall we hit it today?",
+        next_session: 'Next session',
+        suggestion_title: 'Load suggestion',
+        from_to: '{{from}} kg × {{fromReps}} → {{to}} kg × {{toReps}}',
+        confidence_low: 'Little evidence',
+        confidence_medium: 'Some evidence',
+        confidence_high: 'Solid evidence',
+        action: {
+          increase: 'Add load',
+          hold: 'Hold the load',
+          reduce: 'Drop the load',
+        },
+        reason: {
+          at_failure:
+            'You hit the limit and lost reps. Drop 5% and rebuild your technique before adding load again.',
+          margin_left: 'You had reps left in the tank in your last sessions. Time to add load.',
+          too_hard:
+            "You've been pushing past your target for two sessions. Consolidate this weight before adding more.",
+          on_target: "You're at the right effort. Keep the weight and try to add one rep.",
+          add_rep:
+            'The load is too light to add a plate without overshooting. Progress by adding reps.',
+          deload:
+            'Volume up three weeks running, effort climbing and sessions rated worse. Time for a deload week.',
+          no_deload: 'No signs you need a deload yet.',
+        },
+        readiness: {
+          ok: 'Your recovery is on track.',
+          low_sleep:
+            "You've slept little for several days ({{minutes}} min on average). Hold the load instead of adding to it.",
+          high_rhr: 'Your resting heart rate is above your usual average. Hold the load today.',
+          sleep_and_hr:
+            "You're sleeping little and your resting pulse is high: your body hasn't recovered yet. Hold the load.",
+        },
+        stall: {
+          title: '{{exercise}} has not improved in {{count}} sessions',
+          cause_fatigue:
+            "You always train at the limit. The problem isn't stimulus, it's recovery: ease off the intensity or rest more between sessions.",
+          cause_frequency:
+            'Too many days pass between sessions. Training it more often, even with fewer sets, usually unsticks it.',
+          cause_volume:
+            "You're doing very few sets. Add one or two sets per session before touching the weight.",
+          cause_unknown:
+            'Try changing something: rep range, tempo, or a variation of the exercise.',
+        },
       },
       userStats: {
         page_title: 'My Stats',
