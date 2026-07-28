@@ -31,8 +31,8 @@ aritméticos.
 ## Arquitectura
 
 ```
-Cliente (React/Capacitor)                 Supabase                    Anthropic
-─────────────────────────                 ─────────                   ─────────
+Cliente (React/Capacitor)                 Supabase                    Proveedor LLM
+─────────────────────────                 ─────────                   ─────────────
 Capa 0  motor determinista  ─┐
   utils puros, offline       │  (nada sale del dispositivo)
                              │
@@ -42,8 +42,8 @@ Capa 1  consentimiento ──────┼──▶ profiles.ai_coach_enabled
                              │
 Capa 2  useCoach() ──────────┴──▶ Edge Function `ai-coach`  ──────▶ POST /chat/completions
   fetch con JWT del usuario         · verifica JWT (getUser)          proveedor gratuito
-                                    · comprueba consent + kill switch  (NVIDIA NIM por
-                                    · consume cuota (RPC atómica)       defecto)
+                                    · comprueba consent + kill switch  (Groq por defecto,
+                                    · consume cuota (RPC atómica)       intercambiable)
                                     · construye contexto (service_role,
                                       acotado a ese user_id)
                                     · valida salida (Zod) ◀──────────
@@ -52,8 +52,8 @@ Capa 2  useCoach() ──────────┴──▶ Edge Function `ai-
 Capa 3  memoria ─────────────┴──▶ ai_coach_memory  (tool call con esquema estricto)
 ```
 
-**Regla estructural:** el cliente nunca habla con Anthropic. El único camino es la
-Edge Function, y esa función nunca acepta un `user_id` del cuerpo de la petición:
+**Regla estructural:** el cliente nunca habla con el proveedor. El único camino es
+la Edge Function, y esa función nunca acepta un `user_id` del cuerpo de la petición:
 lo deriva siempre del JWT.
 
 ---
