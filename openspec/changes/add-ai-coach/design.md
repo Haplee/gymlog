@@ -196,9 +196,16 @@ cuota de la app **por debajo** del límite del proveedor, nunca al ras.
 
 ### Parámetros de la llamada
 
-- `response_format: { type: "json_schema", json_schema: { strict: true, schema } }`
-  cuando el modelo lo soporta; si el proveedor lo rechaza, se degrada a
-  `{ type: "json_object" }` + instrucción de esquema en el system prompt.
+- Salida estructurada, **con dos dialectos que el adaptador debe conocer**:
+  - Estándar (Groq, Cerebras, Gemini, OpenRouter):
+    `response_format: { type: "json_schema", json_schema: { strict: true, schema } }`.
+  - **NVIDIA NIM**: usa su extensión propia `nvext: { guided_json: schema }`. No es
+    intercambiable con `response_format`, así que el adaptador lleva un flag de
+    dialecto por proveedor.
+  - Degradado común si ninguno se acepta: `{ type: "json_object" }` + el esquema
+    escrito en el system prompt, y validación Zod como red de seguridad.
+- El catálogo real de la cuenta se consulta con `GET /v1/models` sobre el mismo
+  `baseUrl`: es la fuente de verdad, no la documentación pública.
 - `temperature: 0.3` — aquí sí se acepta y conviene: consejo estable, no creativo.
 - `max_tokens: 800`. La respuesta es deliberadamente corta y los free tiers cobran
   en límites de tasa, no en dinero.
