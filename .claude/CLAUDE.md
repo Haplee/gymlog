@@ -62,6 +62,7 @@ src/
 ├── features/
 │   ├── auth/             # AuthPage, AuthCallback, SettingsPage, authStore
 │   ├── cardio/           # CardioPage, cardioStore (timer de sesión)
+│   ├── coach/            # entrenador IA opt-in (api/ components/ pages/ stores/ types/)
 │   ├── routine/          # RoutinePage, routineStore, useWorkoutReminder
 │   ├── stats/            # StatsPage, HistoryPage, UserStatsPage, charts, KPIs, constants.ts
 │   ├── wearables/        # integración wearables (api/ components/ hooks/ pages/ stores/ types/)
@@ -140,6 +141,25 @@ src/
 - Cambios de esquema BD → migración en `supabase/migrations/` (idempotente).
 - No instales nada global sin avisar.
 - `versiones/`, `coverage/`, `dev-dist/` están fuera de git (artefactos locales).
+
+## Entrenador IA — reglas duras
+
+- **La clave del proveedor JAMÁS va al cliente.** Vive solo en `Deno.env` de la
+  Edge Function `ai-coach`. Ningún `VITE_*` la toca.
+- **No copies la autorización de `send-push`** (secreto compartido
+  `x-send-secret`) en endpoints que llame la app: un secreto dentro del APK o
+  del bundle es público. `ai-coach` verifica el JWT y saca el `user_id` del
+  token, nunca del cuerpo de la petición.
+- Apagado por defecto (`profiles.ai_coach_enabled`). El servidor es la fuente de
+  verdad; el store del cliente es un espejo.
+- **El coach propone, el usuario aplica.** Nada modifica rutinas, pesos ni
+  series sin confirmación.
+- `supabase/functions/ai-coach/safety.ts` es post-filtro determinista: no lo
+  debilites apoyándote en que el prompt ya lo dice. Se midió que no basta.
+- La capa 0 (`features/stats/utils/autoregulation.ts`) no manda nada fuera del
+  dispositivo y debe seguir funcionando con el entrenador apagado.
+- **Nunca guardes claves en ficheros del repo** (es público). `.env.local` o
+  `supabase secrets set`.
 
 ## Contexto de desarrollo
 

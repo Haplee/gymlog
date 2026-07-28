@@ -360,3 +360,44 @@ Esta auditoría cumple los requisitos de evaluación técnica: demostración de 
 - Eliminadas aserciones de no-nulo (`!`) en las funciones de `useQuery` para cumplir con las reglas estrictas de TypeScript, sustituyéndolas por comprobaciones seguras.
 - Corregidas las dependencias de los hooks `useMemo` en `UserStatsPage.tsx` para evitar re-renderizados innecesarios y optimizar el rendimiento.
 - Estado: El proyecto compila y pasa el linter correctamente; listo para realizar el commit sin bloqueos de husky.
+
+## [2026-07-28] — Entrenador IA: motor determinista + capa LLM opt-in
+
+Implementado el entrenador de GymLog en cuatro capas. Las decisiones que
+merecen quedar escritas, porque no son obvias:
+
+- **La capa 0 no usa IA y va primero.** El grueso de "ajustar la progresión"
+  se resuelve con el RIR/RPE que ya se guarda por serie: autorregulación
+  determinista, offline, gratis y testeable (`autoregulation.ts`, 48 tests).
+  Además abarata la capa LLM, porque el modelo recibe conclusiones ya
+  calculadas en vez de filas crudas. Con el entrenador IA apagado la app no
+  pierde nada — que era la condición de partida.
+- **`ai-coach` NO copia la autorización de `send-push`.** Allí un secreto
+  compartido vale porque la llama un cron; aquí la llama la app, y un secreto
+  dentro del APK o del bundle de la PWA es un secreto público. Se verifica el
+  JWT y el `user_id` sale siempre del token, jamás del cuerpo.
+- **El coach propone, el usuario aplica.** Las sugerencias nacen `pending`.
+  Nada toca rutinas ni pesos por su cuenta.
+- **Proveedor gratuito, elegido midiendo** (`scripts/coach-eval`). NVIDIA NIM
+  tiene el mejor catálogo (102 modelos) pero su endpoint gratuito tarda 38-90 s
+  y devuelve 503 por congestión; Groq responde en ~700 ms. Además los créditos
+  de NVIDIA son un pozo finito y los de Groq una cuota diaria recurrente. Groq
+  queda de primario, NVIDIA para comparar modelos.
+- **`safety.ts` existe por una medición, no por prudencia genérica.** En el
+  banco de pruebas el modelo dio pauta de carga pese a un dolor de hombro
+  declarado en 1 de cada 6 pasadas. Un 83 % de acierto en seguridad no es
+  aceptable sin red debajo, y esa red no puede depender del prompt.
+- **Minimización como control principal**, no como buena práctica: un free tier
+  no trae acuerdo de tratamiento de datos. Solo salen agregados; la edad va en
+  franja, nunca el año.
+- Descartados: fine-tuning por usuario (coste/beneficio absurdo con decenas de
+  sesiones) e inferencia on-device (cientos de MB y batería, justo lo contrario
+  del requisito de coste mínimo en el dispositivo).
+
+Susto de seguridad: `openspec/IAS.md` tenía cuatro claves de API en claro y no
+estaba en `.gitignore`, con el repo público. Estaba sin trackear y nunca se
+commiteó, así que no hubo exposición, pero un `git add -A` las habría subido.
+Añadido al `.gitignore` y movidas a `.env.local`.
+
+Pendiente y a propósito: aplicar la migración y desplegar la Edge Function son
+acciones de cara al exterior.
