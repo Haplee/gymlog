@@ -155,18 +155,24 @@ chat-completions**, así que la función usa un único adaptador
 (`providers/openaiCompat.ts`) parametrizado por `baseUrl`, `apiKey` y `model`.
 Cambiar de proveedor es cambiar tres variables de entorno, sin tocar código.
 
-| Proveedor                    | Endpoint                                                  | Coste                                                | Notas                                                                                                                   |
-| ---------------------------- | --------------------------------------------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| **NVIDIA NIM** (por defecto) | `https://integrate.api.nvidia.com/v1`                     | Gratis con créditos de la cuenta de build.nvidia.com | El usuario ya tiene clave. Catálogo amplio (Llama 3.3 70B, Nemotron, DeepSeek, Qwen). Tool calling y JSON según modelo. |
-| **Groq**                     | `https://api.groq.com/openai/v1`                          | Free tier con límites por minuto/día                 | Latencia muy baja; buen respaldo.                                                                                       |
-| **Google Gemini**            | `https://generativelanguage.googleapis.com/v1beta/openai` | Free tier amplio en Flash                            | Endpoint compatible con OpenAI.                                                                                         |
-| **Cerebras**                 | `https://api.cerebras.ai/v1`                              | Free tier                                            | Muy rápido, catálogo corto.                                                                                             |
-| **OpenRouter**               | `https://openrouter.ai/api/v1`                            | Modelos con sufijo `:free`                           | Útil para probar varios modelos con una sola clave.                                                                     |
-| **Cloudflare Workers AI**    | `…/v1`                                                    | Cuota diaria gratuita                                | Interesante si algún día se mueve la función a Workers.                                                                 |
+La distinción que importa no es "gratis o no", sino **si la cuota se renueva**:
+
+| Proveedor                       | Endpoint                                                   | Modelo de gratuidad                                                          | Notas                                                                                                                                                                         |
+| ------------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Groq** (primario recomendado) | `https://api.groq.com/openai/v1`                           | **Recurrente**: ~30 req/min, ~14.400 req/día, ~30K tok/min                   | Cuota que se renueva a diario: es lo que necesita una app que vive años. Latencia muy baja. Llama, Qwen, DeepSeek-R1.                                                         |
+| **Cerebras** (respaldo)         | `https://api.cerebras.ai/v1`                               | **Recurrente**: ~1M tok/día y ~14.400 req/día por modelo                     | Contexto limitado a 8K en el free tier — obliga a mantener el prompt corto, cosa que este diseño ya hace.                                                                     |
+| **Google Gemini**               | `https://generativelanguage.googleapis.com/v1beta/openai/` | **Recurrente**: ~500 req/día, RPM bajo                                       | Catálogo Flash/Pro amplio; los 429 llegan pronto si se abusa.                                                                                                                 |
+| **NVIDIA NIM**                  | `https://integrate.api.nvidia.com/v1`                      | **Pozo finito**: 1.000 créditos al alta (hasta 5.000 a petición), 40 req/min | Clave ya disponible y el catálogo más amplio (80+ modelos). Los créditos **no se renuevan solos**: sirve para desarrollar y comparar modelos, no como primario a largo plazo. |
+| **OpenRouter**                  | `https://openrouter.ai/api/v1`                             | Modelos con sufijo `:free`                                                   | Una sola clave para comparar proveedores durante la elección de modelo.                                                                                                       |
+| **Cloudflare Workers AI**       | compatible OpenAI                                          | Cuota diaria gratuita                                                        | Solo interesante si algún día se mueve la función a Workers.                                                                                                                  |
 
 Configuración: `AI_COACH_PROVIDER_URL`, `AI_COACH_API_KEY`, `AI_COACH_MODEL`, y
 opcionalmente `AI_COACH_FALLBACK_*` con la misma terna para un segundo proveedor.
 Si el primario devuelve 429 o 5xx, se reintenta **una vez** con el de respaldo.
+
+Los límites concretos cambian con el tiempo: antes de fijar la cuota de
+`ai_coach_usage` hay que confirmarlos en la consola de la cuenta real, y dejar la
+cuota de la app **por debajo** del límite del proveedor, nunca al ras.
 
 ### Consecuencias de usar niveles gratuitos (asumidas explícitamente)
 
