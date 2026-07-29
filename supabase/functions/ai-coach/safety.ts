@@ -80,15 +80,22 @@ export function applySafety(output: CoachOutput, ctx: SafetyContext): SafetyResu
   });
 
   // 4. Nutrición y farmacología fuera. No se corrige: se borra.
-  const cleanText = (t: string) =>
+  //
+  //    Se quita la FRASE entera, no el término. Borrar solo la coincidencia
+  //    dejaba textos como «Sube a de proteína en polvo al día»: sigue siendo
+  //    consejo de nutrición, y encima roto. Un insight o una sugerencia con
+  //    esto dentro se descartan enteros; el summary, por frases.
+  const dropOffendingSentences = (t: string) =>
     t
-      .replace(OUT_OF_SCOPE, '')
+      .split(/(?<=[.!?])\s+/)
+      .filter((sentence) => !OUT_OF_SCOPE.test(sentence))
+      .join(' ')
       .replace(/\s{2,}/g, ' ')
       .trim();
   let summary = output.summary;
   if (OUT_OF_SCOPE.test(summary)) {
     corrections.push('nutricion_en_summary');
-    summary = cleanText(summary);
+    summary = dropOffendingSentences(summary);
   }
   const insights = output.insights.filter((i) => {
     const bad = OUT_OF_SCOPE.test(i.body) || OUT_OF_SCOPE.test(i.title);
@@ -117,6 +124,9 @@ export function applySafety(output: CoachOutput, ctx: SafetyContext): SafetyResu
         rationale: truncateWords(s.rationale, WORD_LIMITS.suggestionRationale),
       })),
       needs_professional: needsProfessional,
+      // La memoria pasa de largo por aquí: su saneado (longitud, duplicados,
+      // fuera de alcance) vive en memory.ts, que es quien la escribe.
+      remember: output.remember ?? [],
     },
     corrections,
   };

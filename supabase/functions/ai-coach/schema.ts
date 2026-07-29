@@ -12,11 +12,30 @@ export const WORD_LIMITS = {
   suggestionRationale: 30,
 };
 
-/** Para `response_format.json_schema` / `nvext.guided_json`. */
+/** Tope de caracteres de un hecho de memoria. Igual que el CHECK de la tabla. */
+export const MEMORY_FACT_MAX_CHARS = 200;
+
+/** Hechos que el modelo puede pedir recordar en una sola respuesta. */
+export const MEMORY_MAX_PER_RESPONSE = 3;
+
+/** Hechos que un usuario puede acumular. Al llenarse, cae el más flojo. */
+export const MEMORY_MAX_PER_USER = 50;
+
+/**
+ * Para `response_format.json_schema` / `nvext.guided_json`.
+ *
+ * `remember` viaja aquí y no como tool call a propósito. Con estos proveedores
+ * ya cuesta arrancar JSON estructurado (medido: llama-3.3-70b rechaza
+ * `json_schema` con 400 y hay que degradar a `json_object`); encima, mezclar
+ * `tools` con `response_format` obliga a una segunda vuelta al proveedor por
+ * cada mensaje — el doble de latencia y de cuota para escribir una frase.
+ * La propiedad que importaba se conserva intacta: **`user_id` no está en este
+ * esquema**, lo pone el servidor desde el JWT.
+ */
 export const outputJsonSchema = {
   type: 'object',
   additionalProperties: false,
-  required: ['summary', 'insights', 'suggestions', 'needs_professional'],
+  required: ['summary', 'insights', 'suggestions', 'needs_professional', 'remember'],
   properties: {
     summary: { type: 'string' },
     insights: {
@@ -53,6 +72,20 @@ export const outputJsonSchema = {
       },
     },
     needs_professional: { type: 'boolean' },
+    remember: {
+      type: 'array',
+      maxItems: MEMORY_MAX_PER_RESPONSE,
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['category', 'fact', 'confidence'],
+        properties: {
+          category: { type: 'string', enum: ['injury', 'preference', 'constraint', 'goal'] },
+          fact: { type: 'string', maxLength: MEMORY_FACT_MAX_CHARS },
+          confidence: { type: 'string', enum: ['low', 'medium', 'high'] },
+        },
+      },
+    },
   },
 };
 
@@ -79,9 +112,23 @@ export const coachOutputSchema = z.object({
     )
     .max(3),
   needs_professional: z.boolean(),
+  // Opcional con defecto: cuando el proveedor degrada a `json_object` no hay
+  // esquema que obligue, y una respuesta útil sin `remember` no debe caerse.
+  remember: z
+    .array(
+      z.object({
+        category: z.enum(['injury', 'preference', 'constraint', 'goal']),
+        fact: z.string().min(1),
+        confidence: z.enum(['low', 'medium', 'high']),
+      }),
+    )
+    .max(MEMORY_MAX_PER_RESPONSE)
+    .optional()
+    .default([]),
 });
 
 export type CoachOutput = z.infer<typeof coachOutputSchema>;
+export type CoachMemoryFact = CoachOutput['remember'][number];
 
 /** Petición del cliente. `user_id` NO existe aquí a propósito: sale del JWT. */
 export const requestSchema = z.object({

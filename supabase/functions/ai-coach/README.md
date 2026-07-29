@@ -26,6 +26,20 @@ supabase secrets set AI_COACH_ALLOWED_ORIGINS='https://gymlog.vercel.app,capacit
 de `true` devuelve 503 sin tocar la base de datos ni al proveedor, y sin publicar
 una versión de la app.
 
+Opcionales:
+
+```bash
+# Respaldo. Si el primario da 429/5xx/timeout, un único intento contra este.
+# Sin los tres puestos, no hay respaldo y el error sale tal cual.
+supabase secrets set AI_COACH_FALLBACK_PROVIDER_URL='https://integrate.api.nvidia.com/v1'
+supabase secrets set AI_COACH_FALLBACK_API_KEY='...'
+supabase secrets set AI_COACH_FALLBACK_MODEL='meta/llama-3.3-70b-instruct'
+
+# Tope global del mes en tokens, sumando a TODOS los usuarios. 0 o sin poner = sin tope.
+# La cuota diaria protege a un usuario de otro; esto protege la cuenta del proveedor.
+supabase secrets set AI_COACH_MONTHLY_TOKEN_CAP='2000000'
+```
+
 ### Elegir proveedor
 
 El adaptador habla el dialecto OpenAI chat-completions, así que cambiar de
@@ -58,11 +72,29 @@ Orden estricto. Cualquier paso que falle corta sin llegar al proveedor:
 5. Cuerpo validado con Zod → 400.
 6. A partir de aquí `service_role`, siempre filtrando por `userId`.
 7. `profiles.ai_coach_enabled` → 403 si está apagado.
-8. Cuota atómica (`ai_coach_consume_quota`) → 429 si agotada.
-9. Contexto minimizado + memoria del usuario.
-10. Llamada al proveedor.
-11. Zod + post-filtro de seguridad.
-12. Persistir, sumar tokens reales, responder.
+8. Tope global del mes (`ai_coach_month_tokens`) → 503. Va antes de la cuota
+   diaria: si el mes está agotado, el usuario no debe perder además su día.
+9. Cuota atómica (`ai_coach_consume_quota`) → 429 si agotada.
+10. Contexto minimizado + memoria del usuario.
+11. Llamada al proveedor; si falla por congestión, un intento al respaldo.
+12. Zod; si no valida, un único reintento de reparación con el error delante.
+13. Post-filtro de seguridad.
+14. Persistir mensajes, memoria y sugerencias, sumar tokens reales, responder.
+
+## Memoria: por qué no es un tool call
+
+El plan original pedía una herramienta `remember_fact`. Se implementó como un
+campo `remember` del mismo JSON de salida, y la razón es de medición: con estos
+proveedores ya cuesta arrancar salida estructurada (llama-3.3-70b rechaza
+`json_schema` con 400 y hay que degradar a `json_object`), y mezclar `tools` con
+`response_format` obliga a una segunda vuelta al proveedor **en cada mensaje** —
+el doble de latencia y de cuota para escribir una frase.
+
+Lo que se conserva íntegro es la propiedad que importaba: **`user_id` no está en
+el esquema que ve el modelo**. Lo pone el servidor desde el JWT, en
+`memory.ts`, que además trunca a 200 caracteres, descarta duplicados y aplica el
+tope de 50 hechos por usuario (cae el de menor confianza y, a igualdad, el más
+antiguo).
 
 ## Qué sale del dispositivo
 
