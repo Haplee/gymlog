@@ -25,7 +25,13 @@ COMMENT ON FUNCTION public.ai_coach_month_tokens() IS
 
 -- Solo la Edge Function (service_role) la usa. Un usuario no tiene por qué
 -- saber el consumo agregado de los demás.
-REVOKE ALL ON FUNCTION public.ai_coach_month_tokens() FROM public;
+--
+-- OJO con el patrón: `REVOKE ... FROM public` NO basta. `PUBLIC` es el
+-- pseudo-rol, y Supabase concede EXECUTE explícitamente a `anon` y
+-- `authenticated` sobre las funciones nuevas de este esquema. Hay que
+-- nombrarlos. Ver 20260729110000_ai_coach_fix_function_grants.sql.
+REVOKE ALL     ON FUNCTION public.ai_coach_month_tokens() FROM public;
+REVOKE EXECUTE ON FUNCTION public.ai_coach_month_tokens() FROM anon, authenticated;
 
 -- ============================================================
 -- Índice para el agregado mensual
