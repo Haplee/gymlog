@@ -1,5 +1,7 @@
 import { supabase } from '@shared/lib/supabase';
 import { devError, devWarn } from '@shared/lib/devtools';
+import { groupSetsBySession } from './sessionGrouping';
+import type { ExerciseSessionSets } from './sessionGrouping';
 import type {
   WorkoutWithSets,
   WorkoutSetWithDetails,
@@ -253,12 +255,6 @@ export const fetchLastExerciseSets = async (
   }));
 };
 
-/** Una sesión pasada de un ejercicio, con el esfuerzo que se registró. */
-export interface ExerciseSessionSets {
-  started_at: string;
-  sets: { weight: number; reps: number; rir: number | null; rpe: number | null }[];
-}
-
 /**
  * Últimas sesiones de UN ejercicio, para el motor de autorregulación.
  *
@@ -296,43 +292,6 @@ export const fetchExerciseSessions = async (
   if (!sets?.length) return [];
 
   return groupSetsBySession(sets, workouts, sessionLimit);
-};
-
-/**
- * Agrupa series sueltas en sesiones por entreno.
- *
- * Va aparte de la consulta para poder probarla: la parte que se puede
- * equivocar (huecos de fecha, orden, recorte) es esta, no el `select`.
- */
-export const groupSetsBySession = (
-  sets: {
-    workout_id: string;
-    weight: number;
-    reps: number;
-    rir: number | null;
-    rpe: number | null;
-  }[],
-  workouts: { id: string; started_at: string | null }[],
-  sessionLimit: number,
-): ExerciseSessionSets[] => {
-  const startedAt = new Map(workouts.map((w) => [w.id, w.started_at]));
-  const byWorkout = new Map<string, ExerciseSessionSets>();
-
-  for (const s of sets) {
-    // Un entreno sin fecha no se puede ordenar ni medir: fuera. Sin esto, el
-    // motor calcularía huecos entre sesiones con una fecha inventada.
-    const date = startedAt.get(s.workout_id);
-    if (!date) continue;
-    const session = byWorkout.get(s.workout_id);
-    const entry = { weight: s.weight, reps: s.reps, rir: s.rir, rpe: s.rpe };
-    if (session) session.sets.push(entry);
-    else byWorkout.set(s.workout_id, { started_at: date, sets: [entry] });
-  }
-
-  // Más reciente primero, igual que el resto de consultas de historial.
-  return [...byWorkout.values()]
-    .sort((a, b) => b.started_at.localeCompare(a.started_at))
-    .slice(0, sessionLimit);
 };
 
 export interface LibraryExercise {
