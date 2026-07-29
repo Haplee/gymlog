@@ -1,7 +1,7 @@
 import { ResumeWorkoutBanner } from '@features/workout/components/ResumeWorkoutBanner';
 import { WeeklyWeightPrompt } from '@features/workout/components/WeeklyWeightPrompt';
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { m, AnimatePresence } from 'framer-motion';

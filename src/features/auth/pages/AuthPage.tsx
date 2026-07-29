@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { Capacitor } from '@capacitor/core';
 import { m, type Variants } from 'framer-motion';
 import { useAuthStore } from '@features/auth/stores/authStore';
