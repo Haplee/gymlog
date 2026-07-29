@@ -9,6 +9,11 @@ export interface CoachInsight {
 }
 
 export interface CoachSuggestion {
+  /**
+   * Id de la fila en `ai_coach_suggestions`. Puede ser `null` si la inserción
+   * falló: la respuesta se muestra igual, solo que sin poder marcarla.
+   */
+  id: string | null;
   kind: SuggestionKind;
   exercise_name: string | null;
   action: string;
@@ -21,6 +26,13 @@ export interface CoachOutput {
   insights: CoachInsight[];
   suggestions: CoachSuggestion[];
   needs_professional: boolean;
+}
+
+/** Una pregunta del usuario y lo que contestó el entrenador. */
+export interface CoachTurn {
+  id: string;
+  question: string;
+  answer: CoachOutput;
 }
 
 export interface CoachMemoryFact {

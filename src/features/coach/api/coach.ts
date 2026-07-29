@@ -87,6 +87,22 @@ export async function revokeCoachConsent(): Promise<void> {
 }
 
 /* ------------------------------------------------------------------ */
+/* Sugerencias                                                         */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Marca la decisión del usuario sobre una sugerencia.
+ *
+ * «Aplicada» significa que el usuario la aceptó y se le llevó a la pantalla
+ * donde se hace el cambio — no que la app haya tocado nada por su cuenta. El
+ * coach propone; quien edita la rutina es siempre la persona.
+ */
+export async function markSuggestion(id: string, status: 'applied' | 'dismissed'): Promise<void> {
+  const { error } = await supabase.from('ai_coach_suggestions').update({ status }).eq('id', id);
+  if (error) throw error;
+}
+
+/* ------------------------------------------------------------------ */
 /* Memoria                                                             */
 /* ------------------------------------------------------------------ */
 

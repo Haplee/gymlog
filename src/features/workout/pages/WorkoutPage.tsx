@@ -32,6 +32,7 @@ import { RestTimer } from '@features/workout/components/RestTimer';
 import { WorkoutSessionStats } from '@features/workout/components/WorkoutSessionStats';
 import { LastSessionCard } from '@features/workout/components/LastSessionCard';
 import { HealthMetricsCard } from '@features/wearables/components/HealthMetricsCard';
+import { CoachSuggestionBanner } from '@features/coach/components/CoachSuggestionBanner';
 import { pickDaily, pickSleepFor } from '@features/wearables/utils/pickDaily';
 import {
   useWearableDaily,
@@ -531,6 +532,9 @@ export function WorkoutPage() {
       <AnimatePresence>
         {completed && <WorkoutSavedCard summary={completed} onDismiss={() => setCompleted(null)} />}
       </AnimatePresence>
+
+      {/* Solo aparece si se ha llegado aquí desde «Aplicar» en el entrenador. */}
+      <CoachSuggestionBanner />
 
       <WeeklyWeightPrompt />
       <AnimatePresence>

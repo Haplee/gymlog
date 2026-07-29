@@ -108,6 +108,13 @@ export const resources = {
         apply: 'Aplicar',
         dismiss: 'Descartar',
         applied: 'Aplicada',
+        chat_title: 'Pregúntale',
+        chat_empty:
+          'Pregúntale lo que quieras sobre tu entrenamiento. Ve tus datos, así que no hace falta que se los cuentes.',
+        chat_placeholder: 'Escribe tu pregunta...',
+        chat_send: 'Enviar',
+        banner_title: 'Sugerencia del entrenador',
+        banner_dismiss: 'Cerrar la sugerencia',
         kind: {
           load: 'Carga',
           volume: 'Volumen',
@@ -911,6 +918,13 @@ export const resources = {
         apply: 'Apply',
         dismiss: 'Dismiss',
         applied: 'Applied',
+        chat_title: 'Ask the coach',
+        chat_empty:
+          "Ask anything about your training. It can see your data, so there's no need to explain it.",
+        chat_placeholder: 'Type your question...',
+        chat_send: 'Send',
+        banner_title: 'Coach suggestion',
+        banner_dismiss: 'Dismiss suggestion',
         kind: {
           load: 'Load',
           volume: 'Volume',

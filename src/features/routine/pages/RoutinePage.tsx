@@ -14,6 +14,7 @@ import { SortableExerciseList } from '@features/routine/components/SortableExerc
 import { RoutineSession } from '@features/routine/components/RoutineSession';
 import { useRoutineSessionStore } from '@features/routine/stores/routineSessionStore';
 import { Chip, SectionHeader, BottomSheet } from '@shared/components/ui';
+import { CoachSuggestionBanner } from '@features/coach/components/CoachSuggestionBanner';
 import { ExerciseSelector } from '@shared/components/ExerciseSelector';
 
 const DAYS = Object.keys(dayLabels) as DayOfWeek[];
@@ -185,6 +186,9 @@ export function RoutinePage() {
 
   return (
     <Layout>
+      {/* Solo aparece si se ha llegado aquí desde «Aplicar» en el entrenador. */}
+      <CoachSuggestionBanner />
+
       {sessionActive && user ? (
         <RoutineSession userId={user.id} exercises={exercises} />
       ) : !activeRoutineId ? (
