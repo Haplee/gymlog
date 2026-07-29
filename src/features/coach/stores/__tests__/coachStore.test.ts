@@ -4,14 +4,14 @@ import { beforeEach, describe, it, expect, vi } from 'vitest';
 // dispositivo. Lo que se fija aquí es que ese interruptor no se pueda encender
 // por accidente y que apagarlo borre de verdad.
 
-const fetchCoachConsent = vi.fn();
-const grantCoachConsent = vi.fn(async () => {});
+const fetchCoachConsent = vi.fn(async (_userId: string) => false);
+const grantCoachConsent = vi.fn(async (_userId: string) => {});
 const revokeCoachConsent = vi.fn(async () => {});
 
 vi.mock('../../api/coach', () => ({
-  fetchCoachConsent: (...args: unknown[]) => fetchCoachConsent(...args),
-  grantCoachConsent: (...args: unknown[]) => grantCoachConsent(...args),
-  revokeCoachConsent: (...args: unknown[]) => revokeCoachConsent(...args),
+  fetchCoachConsent: (userId: string) => fetchCoachConsent(userId),
+  grantCoachConsent: (userId: string) => grantCoachConsent(userId),
+  revokeCoachConsent: () => revokeCoachConsent(),
 }));
 
 const { useCoachStore } = await import('../coachStore');

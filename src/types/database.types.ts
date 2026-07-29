@@ -8,6 +8,144 @@ export type Database = {
   };
   public: {
     Tables: {
+      ai_coach_audit: {
+        Row: {
+          consent_version: number | null;
+          created_at: string;
+          event: string;
+          id: string;
+          user_id: string;
+        };
+        Insert: {
+          consent_version?: number | null;
+          created_at?: string;
+          event: string;
+          id?: string;
+          user_id: string;
+        };
+        Update: {
+          consent_version?: number | null;
+          created_at?: string;
+          event?: string;
+          id?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      ai_coach_memory: {
+        Row: {
+          category: string;
+          confidence: string;
+          created_at: string;
+          fact: string;
+          id: string;
+          user_id: string;
+        };
+        Insert: {
+          category: string;
+          confidence?: string;
+          created_at?: string;
+          fact: string;
+          id?: string;
+          user_id: string;
+        };
+        Update: {
+          category?: string;
+          confidence?: string;
+          created_at?: string;
+          fact?: string;
+          id?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      ai_coach_messages: {
+        Row: {
+          content: string;
+          created_at: string;
+          id: string;
+          mode: string;
+          role: string;
+          user_id: string;
+        };
+        Insert: {
+          content: string;
+          created_at?: string;
+          id?: string;
+          mode: string;
+          role: string;
+          user_id: string;
+        };
+        Update: {
+          content?: string;
+          created_at?: string;
+          id?: string;
+          mode?: string;
+          role?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      ai_coach_suggestions: {
+        Row: {
+          action: string;
+          confidence: string;
+          created_at: string;
+          exercise_name: string | null;
+          id: string;
+          kind: string;
+          rationale: string;
+          status: string;
+          user_id: string;
+        };
+        Insert: {
+          action: string;
+          confidence: string;
+          created_at?: string;
+          exercise_name?: string | null;
+          id?: string;
+          kind: string;
+          rationale: string;
+          status?: string;
+          user_id: string;
+        };
+        Update: {
+          action?: string;
+          confidence?: string;
+          created_at?: string;
+          exercise_name?: string | null;
+          id?: string;
+          kind?: string;
+          rationale?: string;
+          status?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      ai_coach_usage: {
+        Row: {
+          calls: number;
+          day: string;
+          mode: string;
+          tokens: number;
+          user_id: string;
+        };
+        Insert: {
+          calls?: number;
+          day?: string;
+          mode: string;
+          tokens?: number;
+          user_id: string;
+        };
+        Update: {
+          calls?: number;
+          day?: string;
+          mode?: string;
+          tokens?: number;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       body_measurements: {
         Row: {
           body_fat_pct: number | null;
@@ -268,6 +406,54 @@ export type Database = {
         };
         Relationships: [];
       };
+      health_sessions: {
+        Row: {
+          avg_hr: number | null;
+          calories: number | null;
+          created_at: string;
+          duration: number;
+          ended_at: string | null;
+          external_id: string;
+          id: string;
+          max_hr: number | null;
+          source: string;
+          started_at: string;
+          title: string | null;
+          type: string;
+          user_id: string;
+        };
+        Insert: {
+          avg_hr?: number | null;
+          calories?: number | null;
+          created_at?: string;
+          duration: number;
+          ended_at?: string | null;
+          external_id: string;
+          id?: string;
+          max_hr?: number | null;
+          source: string;
+          started_at: string;
+          title?: string | null;
+          type?: string;
+          user_id: string;
+        };
+        Update: {
+          avg_hr?: number | null;
+          calories?: number | null;
+          created_at?: string;
+          duration?: number;
+          ended_at?: string | null;
+          external_id?: string;
+          id?: string;
+          max_hr?: number | null;
+          source?: string;
+          started_at?: string;
+          title?: string | null;
+          type?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       personal_records: {
         Row: {
           achieved_at: string | null;
@@ -321,6 +507,9 @@ export type Database = {
       };
       profiles: {
         Row: {
+          ai_coach_consent_at: string | null;
+          ai_coach_consent_version: number;
+          ai_coach_enabled: boolean;
           avatar_url: string | null;
           bio: string | null;
           birth_year: number | null;
@@ -340,6 +529,9 @@ export type Database = {
           weight_unit: string | null;
         };
         Insert: {
+          ai_coach_consent_at?: string | null;
+          ai_coach_consent_version?: number;
+          ai_coach_enabled?: boolean;
           avatar_url?: string | null;
           bio?: string | null;
           birth_year?: number | null;
@@ -359,6 +551,9 @@ export type Database = {
           weight_unit?: string | null;
         };
         Update: {
+          ai_coach_consent_at?: string | null;
+          ai_coach_consent_version?: number;
+          ai_coach_enabled?: boolean;
           avatar_url?: string | null;
           bio?: string | null;
           birth_year?: number | null;
@@ -740,10 +935,20 @@ export type Database = {
       };
     };
     Functions: {
+      ai_coach_add_tokens: {
+        Args: { p_mode: string; p_tokens: number; p_user: string };
+        Returns: undefined;
+      };
+      ai_coach_consume_quota: {
+        Args: { p_limit: number; p_mode: string; p_user: string };
+        Returns: boolean;
+      };
+      ai_coach_purge: { Args: never; Returns: undefined };
       get_exercises_with_usage: {
         Args: { p_user_id: string };
         Returns: {
           created_at: string;
+          equipment: string;
           id: string;
           is_bodyweight: boolean;
           load_type: string;
@@ -763,6 +968,10 @@ export type Database = {
       get_workouts_with_sets: {
         Args: { p_cursor?: string; p_limit?: number; p_user_id: string };
         Returns: Json;
+      };
+      import_health_sessions: {
+        Args: { p_rows: Json; p_user_id: string };
+        Returns: number;
       };
       import_wearable_workouts: {
         Args: { p_rows: Json; p_user_id: string };

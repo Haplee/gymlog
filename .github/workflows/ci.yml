@@ -74,6 +74,12 @@ jobs:
           VITE_SUPABASE_KEY: ${{ secrets.VITE_SUPABASE_KEY }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
+      # La clave del proveedor de IA vive solo en los secrets de la Edge
+      # Function. Esto comprueba que sigue siendo verdad en cada build: el
+      # bundle es público y una clave dentro no se puede "despublicar".
+      - name: Comprobar que no hay credenciales en el bundle
+        run: node scripts/check-bundle-secrets.mjs dist
+
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
