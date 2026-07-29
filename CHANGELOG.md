@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.1.0](https://github.com/Haplee/gymlog/compare/v5.0.2...v5.1.0) (2026-07-29)
+
+### Features
+
+- **coach:** banco de pruebas para elegir modelo con datos ([ca81c4e](https://github.com/Haplee/gymlog/commit/ca81c4e2e4b0ec061a45f47cc0e602fe93e96ef3))
+- **coach:** chat y flujo Aplicar sin que el coach toque nada ([d23fe4a](https://github.com/Haplee/gymlog/commit/d23fe4a6eb9864c62f887fda5fbb1be93ed50882))
+- **coach:** memoria escribible, respaldo de proveedor y reparacion de JSON ([f057b6d](https://github.com/Haplee/gymlog/commit/f057b6d1a43a7718329b2067ae3ac65acb6f582e))
+- **coach:** migracion y Edge Function del entrenador IA ([77b2fd2](https://github.com/Haplee/gymlog/commit/77b2fd2798c5a5e66aa3a1f6614adf7cac4f383a))
+- **coach:** motor determinista de autorregulación por RIR/RPE ([6b332be](https://github.com/Haplee/gymlog/commit/6b332beddb43ea0447571d3cf8076f615fa8bdb0))
+- **coach:** motor determinista en pantalla + docs y estado real ([150a907](https://github.com/Haplee/gymlog/commit/150a90768e1712265efb3760d260fa95e19085b1))
+- **coach:** opt-in, pantalla del entrenador y memoria visible ([dfb1233](https://github.com/Haplee/gymlog/commit/dfb1233135316e960b7cde52357707c2391df35b))
+- implement iOS ad-hoc signing workflow and update Android Capacitor configurations ([ac7df6f](https://github.com/Haplee/gymlog/commit/ac7df6f3fc167fef929b507c44f364918023fecf))
+- **wearables:** separar andar de correr por pulso, no solo por ritmo ([3c7b752](https://github.com/Haplee/gymlog/commit/3c7b752843acf5e0467295abbf3221ec2c3ec968))
+- **workout:** sugerencia de carga en la pantalla de entreno + plan al dia ([1958f03](https://github.com/Haplee/gymlog/commit/1958f03a56434c65851751b890ff8d3860fa66c2))
+
+### Bug Fixes
+
+- **cardio:** dejar de resucitar sesiones borradas en el servidor ([b7213a1](https://github.com/Haplee/gymlog/commit/b7213a18cfc1e5813ed89b7fa148b6d3ea71621f))
+- **ci:** type-check no comprobaba nada y gen:types vaciaba el fichero al fallar ([a97c309](https://github.com/Haplee/gymlog/commit/a97c309fe5611e90dfac055244a2201a820af938))
+- **coach:** normalizar el origen en CORS y poder diagnosticar el preflight ([d9bfa90](https://github.com/Haplee/gymlog/commit/d9bfa90e3f5e8fc56cada84549030151ad4b82c4))
+- **db:** alinear el historial de migraciones con produccion ([aa3e11b](https://github.com/Haplee/gymlog/commit/aa3e11b1be7f1eac50d2851a5e9d1e6e2808ee72))
+- **db:** las funciones del coach eran ejecutables por cualquiera ([f4d52ba](https://github.com/Haplee/gymlog/commit/f4d52ba84d8192acd56bbc10a14501fcecf3d71b))
+- **wearables:** FC real en la tarjeta de salud y trazas visibles en release ([b9302dd](https://github.com/Haplee/gymlog/commit/b9302dd73405bfcf199d04bf67ea60025d0e7b1d))
+- **wearables:** sesiones de salud con su tipo real y sin perder el sync ([9e62431](https://github.com/Haplee/gymlog/commit/9e624313090dc93b3dc8af8ab7fd4bb18059a953))
+
 ### [2.9.1](https://github.com/Haplee/gymlog/compare/2.8.4...2.9.1) (2026-06-12)
 
 ### Features
