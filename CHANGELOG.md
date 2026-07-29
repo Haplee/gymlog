@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [5.1.1](https://github.com/Haplee/gymlog/compare/v5.1.0...v5.1.1) (2026-07-29)
+
+### Bug Fixes
+
+- **ui:** la barra inferior flotaba 232px por encima del borde de pantalla ([bf44701](https://github.com/Haplee/gymlog/commit/bf44701667fda121e2742825c327c5e15bff899a))
+
 ## [5.1.0](https://github.com/Haplee/gymlog/compare/v5.0.2...v5.1.0) (2026-07-29)
 
 ### Features
