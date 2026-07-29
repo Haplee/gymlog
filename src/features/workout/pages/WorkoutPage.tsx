@@ -32,6 +32,9 @@ import { RestTimer } from '@features/workout/components/RestTimer';
 import { WorkoutSessionStats } from '@features/workout/components/WorkoutSessionStats';
 import { LastSessionCard } from '@features/workout/components/LastSessionCard';
 import { HealthMetricsCard } from '@features/wearables/components/HealthMetricsCard';
+import { CoachSuggestionBanner } from '@features/coach/components/CoachSuggestionBanner';
+import { NextSessionCard } from '@features/stats/components/NextSessionCard';
+import { useExerciseAdvice } from '@features/stats/hooks/useExerciseAdvice';
 import { pickDaily, pickSleepFor } from '@features/wearables/utils/pickDaily';
 import {
   useWearableDaily,
@@ -230,6 +233,9 @@ export function WorkoutPage() {
     [bodyMeasurements],
   );
   const isBodyweightExercise = isBodyweightLoad(selectedExercise?.load_type);
+
+  // Sugerencia de carga del motor determinista para el ejercicio activo.
+  const exerciseAdvice = useExerciseAdvice(user?.id, activeExerciseId ?? undefined);
 
   // Mantener el store al día con el contexto de peso corporal del ejercicio activo.
   useEffect(() => {
@@ -532,6 +538,9 @@ export function WorkoutPage() {
         {completed && <WorkoutSavedCard summary={completed} onDismiss={() => setCompleted(null)} />}
       </AnimatePresence>
 
+      {/* Solo aparece si se ha llegado aquí desde «Aplicar» en el entrenador. */}
+      <CoachSuggestionBanner />
+
       <WeeklyWeightPrompt />
       <AnimatePresence>
         {showResumeBanner && startedAt && (
@@ -621,6 +630,19 @@ export function WorkoutPage() {
             exerciseId={activeExerciseId}
             onCopySets={handleCopySets}
           />
+        )}
+
+        {/* Autorregulación (motor determinista, sin IA ni red). Va aquí porque
+            es el momento en que se decide qué peso poner en la barra. */}
+        {exerciseAdvice && (
+          <div className="mt-3">
+            <NextSessionCard
+              advice={{
+                ...exerciseAdvice,
+                exercise: selectedExercise?.name ?? customExerciseName ?? '',
+              }}
+            />
+          </div>
         )}
 
         {selectedExercise && (

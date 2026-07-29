@@ -122,19 +122,29 @@ async function callOnce(
   }
 }
 
+export interface ChatOptions {
+  timeoutMs?: number;
+  /**
+   * Saltarse el intento con esquema estricto. Se usa en el reintento de
+   * reparación: si la primera llamada ya tuvo que degradar, volver a probar
+   * `json_schema` es un 400 garantizado y una vuelta perdida.
+   */
+  forceDegrade?: boolean;
+}
+
 export async function chat(
   cfg: ProviderConfig,
   system: string,
   user: string,
   jsonSchema: unknown,
-  timeoutMs = 30_000,
+  { timeoutMs = 30_000, forceDegrade = false }: ChatOptions = {},
 ): Promise<ChatResult> {
-  let result = await callOnce(cfg, system, user, jsonSchema, false, timeoutMs);
+  let result = await callOnce(cfg, system, user, jsonSchema, forceDegrade, timeoutMs);
 
   // Congestión del free tier: un reintento corto antes de rendirse.
   if (!result.ok && (result.status === 429 || result.status === 503)) {
     await sleep(1500);
-    result = await callOnce(cfg, system, user, jsonSchema, false, timeoutMs);
+    result = await callOnce(cfg, system, user, jsonSchema, forceDegrade, timeoutMs);
   }
 
   // El modelo no admite json_schema: se pide JSON a secas. El esquema ya va en
@@ -148,4 +158,34 @@ export async function chat(
   }
 
   return result;
+}
+
+function readProvider(prefix: string): ProviderConfig | null {
+  const baseUrl = Deno.env.get(`${prefix}PROVIDER_URL`);
+  const apiKey = Deno.env.get(`${prefix}API_KEY`);
+  const model = Deno.env.get(`${prefix}MODEL`);
+  if (!baseUrl || !apiKey || !model) return null;
+  return { baseUrl, apiKey, model, dialect: dialectFor(baseUrl) };
+}
+
+/** Proveedor principal. Sin él la función no tiene nada que hacer: revienta. */
+export function requireProvider(): ProviderConfig {
+  const cfg = readProvider('AI_COACH_');
+  if (!cfg) throw new Error('Falta AI_COACH_PROVIDER_URL / AI_COACH_API_KEY / AI_COACH_MODEL');
+  return cfg;
+}
+
+/**
+ * Proveedor de respaldo. `null` si no está configurado: es opcional a
+ * propósito, para no obligar a mantener dos cuentas solo para desplegar.
+ */
+export function optionalFallbackProvider(): ProviderConfig | null {
+  return readProvider('AI_COACH_FALLBACK_');
+}
+
+/** El primario ha fallado por algo que al respaldo puede irle bien. */
+export function shouldFallOver(result: ChatResult): boolean {
+  if (result.ok) return false;
+  if (result.error === 'timeout' || result.error === 'network') return true;
+  return result.status === 429 || (result.status ?? 0) >= 500;
 }

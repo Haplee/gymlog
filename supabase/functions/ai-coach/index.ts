@@ -20,10 +20,17 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { requestSchema, coachOutputSchema, outputJsonSchema, extractJson } from './schema.ts';
-import { SYSTEM_PROMPT, buildUserMessage } from './prompt.ts';
+import { SYSTEM_PROMPT, buildUserMessage, buildRepairMessage } from './prompt.ts';
 import { buildContext } from './context.ts';
 import { applySafety } from './safety.ts';
-import { chat, dialectFor } from './provider.ts';
+import {
+  chat,
+  requireProvider,
+  optionalFallbackProvider,
+  shouldFallOver,
+  type ChatResult,
+} from './provider.ts';
+import { persistFacts, type MemoryClient } from './memory.ts';
 
 /** Cuota diaria por modo. Por debajo del límite del proveedor, nunca al ras. */
 const DAILY_LIMITS: Record<string, number> = { weekly: 2, chat: 20, exercise: 30 };
@@ -70,6 +77,35 @@ function corsFor(origin: string | null): { headers: Record<string, string>; conf
   // variable no está puesta; si sale >0 y aun así no casa, es que el origen real
   // no está en la lista.
   return { headers, configured: allowed.length };
+}
+
+/**
+ * Adaptador de `MemoryClient` sobre Supabase.
+ *
+ * Existe para que la lógica de tope y duplicados de `memory.ts` se pueda probar
+ * sin levantar una base de datos. Cada consulta filtra por `userId` aunque el
+ * cliente sea `service_role`: la RLS aquí no protege, así que protege el filtro.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function memoryClient(admin: any): MemoryClient {
+  return {
+    async listFacts(userId) {
+      const { data } = await admin
+        .from('ai_coach_memory')
+        .select('id, fact, confidence, created_at')
+        .eq('user_id', userId);
+      return data ?? [];
+    },
+    async deleteFacts(userId, ids) {
+      await admin.from('ai_coach_memory').delete().eq('user_id', userId).in('id', ids);
+    },
+    async insertFacts(userId, facts) {
+      // `user_id` va DESPUÉS del spread a propósito: si algún día un campo del
+      // modelo se colara con ese nombre, no podría pisar al del JWT. Zod ya lo
+      // recorta, pero el orden aquí no cuesta nada y no depende de Zod.
+      await admin.from('ai_coach_memory').insert(facts.map((f) => ({ ...f, user_id: userId })));
+    },
+  };
 }
 
 function json(body: unknown, status: number, cors: Record<string, string>): Response {
@@ -132,6 +168,17 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (!profile?.ai_coach_enabled) return json({ error: 'consent_required' }, 403, cors);
 
+    // 7b. Tope global del mes. Va ANTES de la cuota diaria a propósito: si el
+    //     mes está agotado, el usuario no debe perder además su cuota del día.
+    const monthlyCap = Number(Deno.env.get('AI_COACH_MONTHLY_TOKEN_CAP') ?? '0');
+    if (monthlyCap > 0) {
+      const { data: monthTokens } = await admin.rpc('ai_coach_month_tokens');
+      if (Number(monthTokens ?? 0) >= monthlyCap) {
+        logMetric({ fn: 'ai-coach', event: 'monthly_cap', tokens: Number(monthTokens ?? 0) });
+        return json({ error: 'coach_disabled' }, 503, cors);
+      }
+    }
+
     // 8. Cuota atómica, ANTES de gastar. Si fallara la llamada, el usuario ya
     //    ha consumido: es el precio de que un error no dé reintentos infinitos.
     const { data: allowed } = await admin.rpc('ai_coach_consume_quota', {
@@ -154,25 +201,32 @@ Deno.serve(async (req) => {
         .limit(50),
     ]);
 
-    // 10. Proveedor.
-    const providerUrl = env('AI_COACH_PROVIDER_URL');
-    const result = await chat(
-      {
-        baseUrl: providerUrl,
-        apiKey: env('AI_COACH_API_KEY'),
-        model: env('AI_COACH_MODEL'),
-        dialect: dialectFor(providerUrl),
-      },
-      SYSTEM_PROMPT,
-      buildUserMessage({
-        mode,
-        context,
-        memory: memory ?? [],
-        userText: message,
-        exerciseName: exercise_name,
-      }),
-      outputJsonSchema,
-    );
+    // 10. Proveedor. El primario es obligatorio; el respaldo, opcional.
+    const userMessage = buildUserMessage({
+      mode,
+      context,
+      memory: memory ?? [],
+      userText: message,
+      exerciseName: exercise_name,
+    });
+
+    const primary = requireProvider();
+    let activeProvider = primary;
+    let result = await chat(primary, SYSTEM_PROMPT, userMessage, outputJsonSchema);
+    let usedFallback = false;
+
+    // Ante congestión o caída del primario, un único intento contra el
+    // respaldo. Un segundo proveedor caído no justifica un tercer intento.
+    if (shouldFallOver(result)) {
+      const fallback = optionalFallbackProvider();
+      if (fallback) {
+        usedFallback = true;
+        activeProvider = fallback;
+        result = await chat(fallback, SYSTEM_PROMPT, userMessage, outputJsonSchema);
+      }
+    }
+
+    let totalTokens = result.tokens;
 
     // Métricas sí; contenido del prompt o de la respuesta, jamás.
     logMetric({
@@ -183,6 +237,7 @@ Deno.serve(async (req) => {
       latency_ms: result.latencyMs,
       tokens: result.tokens,
       degraded: result.degraded ?? false,
+      fallback: usedFallback,
     });
 
     if (!result.ok) {
@@ -191,8 +246,32 @@ Deno.serve(async (req) => {
     }
 
     // 11. Validación + barreras. El esquema del proveedor es ayuda; esto es la red.
-    const raw = extractJson(result.text ?? '');
-    const parsed = coachOutputSchema.safeParse(raw);
+    let parsed = coachOutputSchema.safeParse(extractJson(result.text ?? ''));
+
+    // Reparación: un único reintento con el error de Zod delante. Si vuelve a
+    // fallar, error controlado y no se persiste nada — una salida a medias es
+    // peor que ninguna.
+    if (!parsed.success) {
+      const repair: ChatResult = await chat(
+        activeProvider,
+        SYSTEM_PROMPT,
+        buildRepairMessage(userMessage, parsed.error.message),
+        outputJsonSchema,
+        // Si la primera vuelta degradó, el modelo no admite json_schema: pedirlo
+        // otra vez es un 400 seguro.
+        { forceDegrade: result.degraded ?? false },
+      );
+      totalTokens += repair.tokens;
+      logMetric({
+        fn: 'ai-coach',
+        event: 'repair',
+        ok: repair.ok,
+        tokens: repair.tokens,
+        latency_ms: repair.latencyMs,
+      });
+      if (repair.ok) parsed = coachOutputSchema.safeParse(extractJson(repair.text ?? ''));
+    }
+
     if (!parsed.success) {
       logMetric({ fn: 'ai-coach', event: 'schema_invalid' });
       return json({ error: 'invalid_output' }, 502, cors);
@@ -206,11 +285,12 @@ Deno.serve(async (req) => {
       logMetric({ fn: 'ai-coach', event: 'safety', corrections });
     }
 
-    // 12. Persistir y responder.
+    // 12. Persistir y responder. Los tokens que se suman incluyen los del
+    //      reintento de reparación: gastados están.
     await admin.rpc('ai_coach_add_tokens', {
       p_user: userId,
       p_mode: mode,
-      p_tokens: result.tokens,
+      p_tokens: totalTokens,
     });
 
     const rows = [];
@@ -218,21 +298,50 @@ Deno.serve(async (req) => {
     rows.push({ user_id: userId, role: 'assistant', mode, content: JSON.stringify(output) });
     await admin.from('ai_coach_messages').insert(rows);
 
-    if (output.suggestions.length > 0) {
-      // Nacen 'pending' por defecto: aplicarlas es cosa del usuario.
-      await admin.from('ai_coach_suggestions').insert(
-        output.suggestions.map((s) => ({
-          user_id: userId,
-          kind: s.kind,
-          exercise_name: s.exercise_name,
-          action: s.action,
-          rationale: s.rationale,
-          confidence: s.confidence,
-        })),
-      );
+    // Memoria: el user_id sale del JWT, nunca del modelo.
+    const memoryResult = await persistFacts(memoryClient(admin), userId, output.remember);
+    if (memoryResult.inserted > 0 || memoryResult.rejected.length > 0) {
+      logMetric({
+        fn: 'ai-coach',
+        event: 'memory',
+        inserted: memoryResult.inserted,
+        evicted: memoryResult.evicted,
+        rejected: memoryResult.rejected,
+      });
     }
 
-    return json(output, 200, cors);
+    // Las sugerencias vuelven con su id para que "Aplicar" pueda marcarlas.
+    let suggestions = output.suggestions.map((s) => ({ ...s, id: null as string | null }));
+    if (output.suggestions.length > 0) {
+      // Nacen 'pending' por defecto: aplicarlas es cosa del usuario.
+      const { data: inserted } = await admin
+        .from('ai_coach_suggestions')
+        .insert(
+          output.suggestions.map((s) => ({
+            user_id: userId,
+            kind: s.kind,
+            exercise_name: s.exercise_name,
+            action: s.action,
+            rationale: s.rationale,
+            confidence: s.confidence,
+          })),
+        )
+        .select('id');
+      suggestions = output.suggestions.map((s, i) => ({ ...s, id: inserted?.[i]?.id ?? null }));
+    }
+
+    // `remember` es asunto del servidor: al cliente le llega la memoria por su
+    // propia pantalla, con RLS, no colgando de la respuesta del modelo.
+    return json(
+      {
+        summary: output.summary,
+        insights: output.insights,
+        needs_professional: output.needs_professional,
+        suggestions,
+      },
+      200,
+      cors,
+    );
   } catch (e) {
     // Nunca se filtra la traza al cliente: podría llevar detalles del proveedor.
     console.error(JSON.stringify({ fn: 'ai-coach', event: 'unhandled', message: String(e) }));
