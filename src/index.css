@@ -119,12 +119,24 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* El shell se mide contra la superficie REAL del WebView, no contra `dvh`.
+   En Android edge-to-edge el WebView ocupa toda la pantalla, pero `100dvh`
+   devuelve el viewport SIN las barras del sistema: medido en un Pixel 9a, la
+   barra inferior acababa 232 px antes del borde y dejaba una franja del color
+   de fondo debajo. Con `height: 100%` encadenado desde `html`, el shell llena
+   la superficie entera y son los `--inset-*` los que colocan el contenido
+   dentro de las barras. En web y PWA no cambia nada: ahí el 100% del documento
+   y el viewport coinciden. */
+html,
+body {
+  height: 100%;
+}
+
 #root {
   width: 100%;
   max-width: 100%;
   margin: 0 auto;
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100%;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;

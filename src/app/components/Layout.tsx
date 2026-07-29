@@ -153,8 +153,12 @@ export function Layout({ children }: LayoutProps) {
     };
   }, [user?.id]);
 
+  // `h-full` y no `h-[100dvh]`: en Android edge-to-edge el WebView ocupa la
+  // pantalla entera, pero dvh devuelve el viewport SIN las barras del sistema y
+  // la barra inferior quedaba flotando 232 px por encima del borde (medido en un
+  // Pixel 9a). Ver el bloque de html/body/#root en index.css.
   return (
-    <div className="h-screen h-[100dvh] flex flex-col overflow-hidden bg-canvas">
+    <div className="h-full flex flex-col overflow-hidden bg-canvas">
       <AnimatePresence>
         {searchOpen && <ExerciseSearchSheet onClose={() => setSearchOpen(false)} />}
       </AnimatePresence>

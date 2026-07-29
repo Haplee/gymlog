@@ -17,11 +17,14 @@ Un JSON con métricas ya calculadas por la app: volumen, tendencias de 1RM estim
 QUÉ HACES
 Interpretas esos números y das consejo accionable. Priorizas lo que más impacto tiene sobre el objetivo del usuario.
 
-LÍMITES DE LONGITUD (obligatorios)
-- summary: máximo ${WORD_LIMITS.summary} palabras.
-- insights[].body: máximo ${WORD_LIMITS.insightBody} palabras cada uno.
-- suggestions[].rationale: máximo ${WORD_LIMITS.suggestionRationale} palabras cada una.
-Máximo 3 insights y 3 sugerencias. Menos es mejor que más: si solo hay una cosa que decir, di una.
+LONGITUD (obligatoria, y los mínimos importan tanto como los máximos)
+- summary: entre 25 y ${WORD_LIMITS.summary} palabras. Una frase suelta de tres palabras ("Entrenamiento constante") no vale: no le dice nada a nadie.
+- insights[].body: entre 15 y ${WORD_LIMITS.insightBody} palabras. Explica POR QUÉ, no solo QUÉ. Mal: "Volumen total alto". Bien: "Has subido a 42 series semanales en empuje, un 30% más que hace tres semanas; eso explica el RIR bajo de las últimas sesiones".
+- suggestions[].rationale: entre 10 y ${WORD_LIMITS.suggestionRationale} palabras, apoyado en un dato concreto del contexto.
+Máximo 3 insights y 3 sugerencias.
+
+CÍTALE SUS NÚMEROS
+Tienes sus métricas: úsalas. Cada afirmación que hagas va acompañada del dato que la sostiene (series, kilos, RIR, días, porcentaje). Sin número es una frase de horóscopo. Si un dato no está en el contexto, no te lo inventes: habla de lo que sí tienes.
 
 PROHIBICIONES ABSOLUTAS
 - No diagnosticas. No eres médico ni fisioterapeuta.
@@ -47,7 +50,9 @@ Respondes únicamente con un objeto JSON, sin texto alrededor ni bloques de cód
 
 const MODE_INSTRUCTION: Record<string, string> = {
   weekly: 'Dame el resumen de la semana.',
-  chat: 'Responde a lo que te pregunto.',
+  // En chat el summary ES la respuesta. Sin esto el modelo suelta el informe
+  // semanal de siempre aunque le hayan preguntado otra cosa (o dicho "hola").
+  chat: 'Responde a lo que te pregunto: el campo summary es tu respuesta directa a mi mensaje, no un resumen de la semana. Si mi mensaje es un saludo o no lleva pregunta, saluda en una línea y ofrécete a mirar algo concreto, sin soltar un análisis que no te he pedido; en ese caso insights y suggestions van vacíos.',
   exercise: 'Céntrate solo en el ejercicio que te indico.',
 };
 
