@@ -1,8 +1,5 @@
-// @vitest-environment jsdom
-// jsdom no por la función, que es pura, sino porque importar `queries.ts`
-// arrastra el cliente de Supabase y este necesita `window.localStorage`.
 import { describe, it, expect } from 'vitest';
-import { groupSetsBySession } from '../queries';
+import { groupSetsBySession } from '../sessionGrouping';
 
 const set = (workout_id: string, weight = 80, reps = 8) => ({
   workout_id,
