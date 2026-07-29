@@ -6,7 +6,7 @@ import {
   type PeriodFilter,
 } from '@features/stats/utils/statsData';
 import { useState, useMemo, useEffect, lazy, Suspense } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useCardioStore, CARDIO_LABELS } from '@features/cardio/stores/cardioStore';

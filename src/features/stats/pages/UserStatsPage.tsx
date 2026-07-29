@@ -3,7 +3,7 @@ import { useAutoregulation } from '@features/stats/hooks/useAutoregulation';
 import { NextSessionCard } from '@features/stats/components/NextSessionCard';
 import { celebrate } from '@shared/lib/celebration';
 import { useMemo, useEffect, lazy, Suspense } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import { m } from 'framer-motion';
 import { useAuthStore } from '@features/auth/stores/authStore';

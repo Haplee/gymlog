@@ -1,5 +1,5 @@
 import { useEffect, useState, type ComponentType } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { Calculator, CloudOff, ChevronDown, ChevronRight, Lightbulb } from 'lucide-react';
 import {
