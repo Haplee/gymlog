@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { createThrottledLocalStorage } from '@shared/lib/throttledStorage';
 import { supabase } from '@shared/lib/supabase';
 import { devError, devWarn } from '@shared/lib/devtools';
 
@@ -280,7 +281,9 @@ export const useCardioStore = create<CardioState>()(
     }),
     {
       name: 'gymlog-cardio',
-      storage: createJSONStorage(() => localStorage),
+      // Agrupado: el payload persistido llega a 100 sesiones, y `syncFromRemote`
+      // lo reescribe entero en cada merge.
+      storage: createJSONStorage(() => createThrottledLocalStorage()),
       partialize: (s) => ({
         isActive: s.isActive,
         isPaused: s.isPaused,

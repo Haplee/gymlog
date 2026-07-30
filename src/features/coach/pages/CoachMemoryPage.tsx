@@ -21,7 +21,7 @@ const CATEGORIES: CoachMemoryFact['category'][] = ['injury', 'constraint', 'pref
 export function CoachMemoryPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
 
   const { data: facts = [] } = useQuery({

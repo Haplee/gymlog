@@ -1,6 +1,6 @@
 import { useEffect, useState, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router';
-import { LazyMotion, AnimatePresence } from 'framer-motion';
+import { LazyMotion, AnimatePresence, MotionConfig } from 'framer-motion';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { AppLockGate } from '@features/auth/components/AppLockGate';
 import { useSettingsStore } from '@shared/stores/settingsStore';
@@ -292,7 +292,9 @@ function AppRoutes() {
   const user = useAuthStore((s) => s.user);
   const loading = useAuthStore((s) => s.loading);
   const initialized = useAuthStore((s) => s.initialized);
-  const { applyTheme } = useSettingsStore();
+  // Selector fino: suscribirse al store entero re-renderizaba TODO el árbol de
+  // rutas en cada cambio de cualquier ajuste (sonido, descanso, unidades…).
+  const applyTheme = useSettingsStore((s) => s.applyTheme);
   const guideSeen = useSettingsStore((s) => s.guideSeen);
   const biometricEnabled = useSettingsStore((s) => s.biometricEnabled);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -452,12 +454,22 @@ function AppRoutes() {
 export default function App() {
   return (
     <ErrorBoundary>
-      <LazyMotion features={loadMotionFeatures}>
-        <BrowserRouter>
-          <PermissionRequests />
-          <AppRoutes />
-        </BrowserRouter>
-      </LazyMotion>
+      {/* `reducedMotion="user"` respeta prefers-reduced-motion en TODAS las
+          animaciones de framer-motion: los dos bloques @media de index.css no
+          las alcanzan porque framer anima estilos inline por JS, no por CSS.
+          Además es el interruptor de ahorro de energía que no existe de otra
+          forma: el modo de batería de Android activa prefers-reduced-motion en
+          el WebView, así que con esto las animaciones se apagan solas. Framer
+          conserva las transiciones de opacidad (que no marean) y descarta las de
+          transform, que son las que cuestan GPU. */}
+      <MotionConfig reducedMotion="user">
+        <LazyMotion features={loadMotionFeatures}>
+          <BrowserRouter>
+            <PermissionRequests />
+            <AppRoutes />
+          </BrowserRouter>
+        </LazyMotion>
+      </MotionConfig>
     </ErrorBoundary>
   );
 }

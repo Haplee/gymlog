@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { m } from 'framer-motion';
 import { ArrowLeft, ChevronRight, Search } from 'lucide-react';
 import { useAuthStore } from '@features/auth/stores/authStore';
@@ -56,7 +57,7 @@ function ExerciseDetail({ ex }: { ex: LibraryExercise }) {
 export function ExerciseLibraryPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
   const [tab, setTab] = useState<'own' | 'catalog'>('own');
   const [search, setSearch] = useState('');
   const [muscleFilter, setMuscleFilter] = useState<string | null>(null);
@@ -89,6 +90,46 @@ export function ExerciseLibraryPage() {
       );
     });
   }, [exercises, search, muscleFilter]);
+
+  // Virtualización de la lista.
+  //
+  // El scroller NO es esta lista, es el <main> del Layout: la página entera
+  // scrollea junta y meter un scroll anidado en móvil se pelea con el gesto del
+  // sistema. Por eso hay que localizar ese ancestro y decirle al virtualizador
+  // cuánto contenido hay por encima de la lista (`scrollMargin`), o calcularía
+  // las posiciones desplazadas.
+  const listRef = useRef<HTMLDivElement>(null);
+  const [scrollEl, setScrollEl] = useState<HTMLElement | null>(null);
+  const [scrollMargin, setScrollMargin] = useState(0);
+  const hasResults = filtered.length > 0;
+
+  useEffect(() => {
+    setScrollEl(listRef.current?.closest('main') ?? null);
+  }, [tab, hasResults]);
+
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    if (!list || !scrollEl) return;
+    // offsetTop no sirve: el offsetParent no tiene por qué ser el <main>.
+    const offset =
+      list.getBoundingClientRect().top - scrollEl.getBoundingClientRect().top + scrollEl.scrollTop;
+    setScrollMargin(offset);
+  }, [scrollEl, tab, hasResults, muscleGroups.length]);
+
+  // El aviso es inherente a la API de TanStack Virtual (devuelve funciones que
+  // el compilador de React no puede memoizar); no hay forma de arreglarlo desde
+  // aquí y silenciarlo puntualmente mantiene el lint limpio.
+  // eslint-disable-next-line react-hooks/incompatible-library
+  const virtualizer = useVirtualizer({
+    count: filtered.length,
+    getScrollElement: () => scrollEl,
+    // Altura de una fila colapsada; las expandidas se miden de verdad con
+    // measureElement, que es lo que permite que la ficha crezca sin descuadrar.
+    estimateSize: () => 72,
+    overscan: 8,
+    scrollMargin,
+    getItemKey: (index) => filtered[index].id,
+  });
 
   return (
     <Layout>
@@ -154,44 +195,62 @@ export function ExerciseLibraryPage() {
           {filtered.length === 0 ? (
             <div className="text-center py-12 text-sm text-fg-subtle">{t('library.empty')}</div>
           ) : (
-            <div className="rounded-card overflow-hidden bg-surface border border-line">
-              {filtered.map((ex) => {
-                const expanded = expandedId === ex.id;
-                return (
-                  <div
-                    key={ex.id}
-                    className={`border-b border-line last:border-b-0 ${
-                      expanded ? 'border-l-2 border-l-accent' : ''
-                    }`}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => setExpandedId(expanded ? null : ex.id)}
-                      aria-expanded={expanded}
-                      className="w-full px-3 py-3.5 flex items-center justify-between gap-3 text-left active:bg-hover"
+            <div
+              ref={listRef}
+              className="rounded-card overflow-hidden bg-surface border border-line"
+            >
+              <div style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
+                {virtualizer.getVirtualItems().map((item) => {
+                  const ex = filtered[item.index];
+                  const expanded = expandedId === ex.id;
+                  // `last:` ya no sirve: la última fila montada no es la última
+                  // de la lista. Se decide por índice.
+                  const isLast = item.index === filtered.length - 1;
+                  return (
+                    <div
+                      key={item.key}
+                      data-index={item.index}
+                      ref={virtualizer.measureElement}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        transform: `translateY(${item.start - scrollMargin}px)`,
+                      }}
+                      className={`${isLast ? '' : 'border-b border-line'} ${
+                        expanded ? 'border-l-2 border-l-accent' : ''
+                      }`}
                     >
-                      <div className="min-w-0">
-                        <div className="text-base font-medium text-fg truncate">{ex.name}</div>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          <span className="label-caps inline-block px-1.5 py-0.5 rounded-sm bg-accent/10 text-accent">
-                            {t('library.source_own')}
-                          </span>
-                          {ex.muscle_group && (
-                            <span className="label-caps inline-block px-1.5 py-0.5 rounded-sm bg-surface-2 text-fg-subtle">
-                              {ex.muscle_group}
+                      <button
+                        type="button"
+                        onClick={() => setExpandedId(expanded ? null : ex.id)}
+                        aria-expanded={expanded}
+                        className="w-full px-3 py-3.5 flex items-center justify-between gap-3 text-left active:bg-hover"
+                      >
+                        <div className="min-w-0">
+                          <div className="text-base font-medium text-fg truncate">{ex.name}</div>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            <span className="label-caps inline-block px-1.5 py-0.5 rounded-sm bg-accent/10 text-accent">
+                              {t('library.source_own')}
                             </span>
-                          )}
+                            {ex.muscle_group && (
+                              <span className="label-caps inline-block px-1.5 py-0.5 rounded-sm bg-surface-2 text-fg-subtle">
+                                {ex.muscle_group}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                      <ChevronRight
-                        className="w-4 h-4 flex-shrink-0 text-fg-subtle transition-transform"
-                        style={{ transform: expanded ? 'rotate(90deg)' : 'none' }}
-                      />
-                    </button>
-                    {expanded && <ExerciseDetail ex={ex} />}
-                  </div>
-                );
-              })}
+                        <ChevronRight
+                          className="w-4 h-4 flex-shrink-0 text-fg-subtle transition-transform"
+                          style={{ transform: expanded ? 'rotate(90deg)' : 'none' }}
+                        />
+                      </button>
+                      {expanded && <ExerciseDetail ex={ex} />}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </>

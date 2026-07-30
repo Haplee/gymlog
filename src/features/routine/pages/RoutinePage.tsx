@@ -23,7 +23,7 @@ export function RoutinePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
   const routines = useRoutineStore((s) => s.routines);
   const activeRoutineId = useRoutineStore((s) => s.activeRoutineId);
   const {

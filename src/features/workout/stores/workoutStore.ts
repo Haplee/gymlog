@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { DEFAULT_MUSCLE_GROUP } from '@shared/constants/muscleGroups';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { createThrottledLocalStorage } from '@shared/lib/throttledStorage';
 import { z } from 'zod';
 import { supabase } from '@shared/lib/supabase';
 import type { WorkoutWithSets } from '@shared/lib/types';
@@ -280,7 +281,9 @@ export const useWorkoutStore = create<WorkoutState>()(
     }),
     {
       name: 'gymlog-workout',
-      storage: createJSONStorage(() => localStorage),
+      // Agrupado: `updateSet` corre por cada tecla en reps/kg y sin esto cada
+      // carácter serializaba y escribía el estado entero en el hilo principal.
+      storage: createJSONStorage(() => createThrottledLocalStorage()),
       partialize: (state) => ({
         activeExerciseId: state.activeExerciseId,
         customExerciseName: state.customExerciseName,

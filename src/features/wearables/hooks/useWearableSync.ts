@@ -33,12 +33,16 @@ const RESYNC_MIN_MS = 15 * 60 * 1000;
  */
 export function useWearableSync() {
   const { t } = useTranslation();
-  const { user } = useAuthStore();
-  const userId = user?.id;
+  const userId = useAuthStore((s) => s.user?.id);
   const syncOnOpen = useSettingsStore((s) => s.wearablesSyncOnOpen);
   const queryClient = useQueryClient();
   const { data: connections } = useWearableConnections();
-  const { isSyncing, setSyncing, setSynced, setError } = useWearableStore();
+  // Selectores finos: este hook se monta en Layout, encima de cada página. Con
+  // el store entero, cualquier cambio suyo re-renderizaba el árbol completo.
+  const isSyncing = useWearableStore((s) => s.isSyncing);
+  const setSyncing = useWearableStore((s) => s.setSyncing);
+  const setSynced = useWearableStore((s) => s.setSynced);
+  const setError = useWearableStore((s) => s.setError);
 
   const invalidate = useCallback(() => {
     if (!userId) return;

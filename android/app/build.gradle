@@ -22,10 +22,6 @@ android {
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
         applicationId "com.franvi.gymlog"
-        // Variante de prueba FitBody: sufijo propio para que se instale JUNTO a
-        // la app real (com.franvi.gymlog) sin sobrescribirla. El namespace (paquete
-        // Java) sigue siendo com.franvi.gymlog.
-        applicationIdSuffix ".fitbody"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode appVersionCode
@@ -51,6 +47,19 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            // Variante de prueba: sufijo propio para que se instale JUNTO a la app
+            // real (com.franvi.gymlog) sin sobrescribirla. El namespace (paquete
+            // Java) sigue siendo com.franvi.gymlog, y el esquema del deep link del
+            // manifest es literal, así que no le afecta.
+            //
+            // Va en `debug` y no en `defaultConfig`: ahí aplicaba TAMBIÉN a
+            // release, así que cada APK de publicación salía como
+            // com.franvi.gymlog.fitbody y no actualizaba a nadie. Había que
+            // quitarlo a mano en cada release y volver a ponerlo. El CI compila
+            // assembleDebug, así que para él nada cambia.
+            applicationIdSuffix ".fitbody"
         }
     }
 
@@ -92,17 +101,21 @@ if (file('google-services.json').exists()) {
     logger.warn("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
 }
 
-// Cada build release deja el APK en la raíz del repo como GymLog.apk, para tener
-// siempre el último a mano en cada versión (Android Studio, gradlew o CI).
+// Cada build release deja el APK en la raíz del repo con la versión en el
+// nombre, que es tal cual se adjunta al release de GitHub.
+//
+// Antes se llamaba GymLog-FitBody.apk: resto del variante de prueba, cuando el
+// sufijo .fitbody estaba en defaultConfig y contaminaba también los release.
 tasks.configureEach { task ->
     if (task.name == "assembleRelease") {
         task.doLast {
+            def apkName = "GymLog-v${appVersionName}.apk"
             copy {
                 from layout.buildDirectory.file("outputs/apk/release/app-release.apk")
                 into "${rootDir}/.."
-                rename { "GymLog-FitBody.apk" }
+                rename { apkName }
             }
-            logger.lifecycle("APK release copiado a la raíz del repo: GymLog-FitBody.apk")
+            logger.lifecycle("APK release copiado a la raíz del repo: ${apkName}")
         }
     }
 }

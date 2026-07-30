@@ -24,6 +24,30 @@ const CYCLE_MS = 1500;
 /** Corte de seguridad: si nadie la para, deja de sonar tras 5 minutos. */
 const MAX_RINGING_MS = 5 * 60 * 1000;
 
+interface ChimeNote {
+  freq: number;
+  /** Desplazamiento desde el inicio del chime, en segundos. */
+  at: number;
+  dur: number;
+  gain: number;
+}
+
+/** Confirmación de entreno guardado: dos notas ascendentes. */
+const SUCCESS_CHIME: readonly ChimeNote[] = [
+  { freq: 660, at: 0, dur: 0.15, gain: 0.5 },
+  { freq: 880, at: 0.12, dur: 0.2, gain: 0.5 },
+];
+
+/** Prueba del toggle de sonido en Ajustes: tres notas, algo más brillante. */
+const SETTINGS_CHIME: readonly ChimeNote[] = [
+  { freq: 1200, at: 0, dur: 0.25, gain: 0.9 },
+  { freq: 1500, at: 0.15, dur: 0.25, gain: 0.9 },
+  { freq: 1800, at: 0.3, dur: 0.35, gain: 0.9 },
+];
+
+/** Margen tras la última nota antes de suspender el contexto. */
+const CHIME_TAIL_MS = 120;
+
 const BEEP_OFFSETS = [0, 0.22, 0.44];
 const BEEP_FREQS = [880, 1046, 1318];
 const BEEP_DURATION = 0.16;
@@ -138,4 +162,56 @@ export function stopAlarm(): void {
 export function resumeIfRinging(): void {
   if (!ringing || !ctx) return;
   if (ctx.state === 'suspended') void ctx.resume().catch(() => {});
+}
+
+/**
+ * Toca una secuencia corta de notas y suspende el contexto al acabar.
+ *
+ * Los chimes viven en este módulo para compartir su `AudioContext` único: antes
+ * cada sitio que necesitaba un pitido creaba uno nuevo y no lo cerraba jamás. El
+ * WebView topa en ~6 contextos simultáneos, así que el sonido acababa muriendo
+ * en silencio, y hasta entonces cada contexto vivo mantenía despierto el
+ * pipeline de audio del dispositivo.
+ */
+function playChime(notes: readonly ChimeNote[]): void {
+  const audio = getContext();
+  if (!audio) return;
+  if (audio.state === 'suspended') void audio.resume();
+
+  const t0 = audio.currentTime;
+
+  for (const note of notes) {
+    const osc = audio.createOscillator();
+    const gain = audio.createGain();
+    osc.connect(gain);
+    gain.connect(audio.destination);
+
+    osc.type = 'square';
+    osc.frequency.value = note.freq;
+
+    const start = t0 + note.at;
+    gain.gain.setValueAtTime(note.gain, start);
+    gain.gain.exponentialRampToValueAtTime(0.01, start + note.dur);
+
+    osc.start(start);
+    osc.stop(start + note.dur);
+  }
+
+  // Un AudioContext en `running` mantiene vivo el reloj de audio: en cuanto el
+  // chime acaba, se suspende (salvo que la alarma lo esté usando).
+  const last = notes[notes.length - 1];
+  const tailMs = last ? (last.at + last.dur) * 1000 + CHIME_TAIL_MS : CHIME_TAIL_MS;
+  window.setTimeout(() => {
+    if (!ringing && ctx && ctx.state === 'running') void ctx.suspend().catch(() => {});
+  }, tailMs);
+}
+
+/** Confirmación de entreno guardado. */
+export function playSuccessChime(): void {
+  playChime(SUCCESS_CHIME);
+}
+
+/** Prueba del sonido al activar el toggle en Ajustes. */
+export function playSettingsChime(): void {
+  playChime(SETTINGS_CHIME);
 }

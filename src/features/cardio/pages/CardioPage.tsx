@@ -30,8 +30,12 @@ const CARDIO_TYPES: CardioType[] = [
 export function CardioPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user } = useAuthStore();
-  const { isActive, startSession, sessions, deleteSession, syncFromRemote } = useCardioStore();
+  const user = useAuthStore((s) => s.user);
+  const isActive = useCardioStore((s) => s.isActive);
+  const sessions = useCardioStore((s) => s.sessions);
+  const startSession = useCardioStore((s) => s.startSession);
+  const deleteSession = useCardioStore((s) => s.deleteSession);
+  const syncFromRemote = useCardioStore((s) => s.syncFromRemote);
 
   useEffect(() => {
     if (!user) navigate('/login');

@@ -22,7 +22,7 @@ import {
 export function WearablesPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
   const syncOnOpen = useSettingsStore((s) => s.wearablesSyncOnOpen);
   const setSyncOnOpen = useSettingsStore((s) => s.setWearablesSyncOnOpen);
 

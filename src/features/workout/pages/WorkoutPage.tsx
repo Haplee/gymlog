@@ -52,6 +52,7 @@ import { z } from 'zod';
 import { toast } from 'sonner';
 import { impact, notificationHaptic, ImpactStyle, NotificationType } from '@shared/lib/haptics';
 import { celebrate } from '@shared/lib/celebration';
+import { playSuccessChime } from '@shared/lib/alarm';
 import { devError } from '@shared/lib/devtools';
 
 const containerVariants = {
@@ -68,7 +69,7 @@ export function WorkoutPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
   const activeExerciseId = useWorkoutStore((s) => s.activeExerciseId);
   const customExerciseName = useWorkoutStore((s) => s.customExerciseName);
   const sets = useWorkoutStore((s) => s.sets);
@@ -294,38 +295,6 @@ export function WorkoutPage() {
     return best;
   }, [sets]);
 
-  const playFeedbackSound = useCallback(() => {
-    try {
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContextClass) return;
-      const ctx = new AudioContextClass();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.frequency.value = 660;
-      osc.type = 'square';
-      gain.gain.setValueAtTime(0.5, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.15);
-      setTimeout(() => {
-        const osc2 = ctx.createOscillator();
-        const gain2 = ctx.createGain();
-        osc2.connect(gain2);
-        gain2.connect(ctx.destination);
-        osc2.frequency.value = 880;
-        osc2.type = 'square';
-        gain2.gain.setValueAtTime(0.5, ctx.currentTime);
-        gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
-        osc2.start(ctx.currentTime);
-        osc2.stop(ctx.currentTime + 0.2);
-      }, 120);
-    } catch {
-      // ignore audio errors
-    }
-  }, []);
-
   const checkIsNewPR = useCallback(
     (weight: string, reps: string): boolean => {
       if (!currentPR) return false;
@@ -392,7 +361,7 @@ export function WorkoutPage() {
       setMessage(t('workout.saved'));
       toast.success(t('workout.saved'));
       void notificationHaptic(NotificationType.Success);
-      if (sound) playFeedbackSound();
+      if (sound) playSuccessChime();
       // refetchType: 'all' refresca también queries inactivas (p.ej. HistoryPage
       // o StatsPage sin montar). Con refetchOnMount:false global, sin esto los
       // datos guardados no aparecerían hasta un refetch manual.
@@ -450,8 +419,6 @@ export function WorkoutPage() {
       startRestTimer(rest);
     }
   };
-
-  const handleRemoveSet = (index: number) => removeSet(index);
 
   const handleCopySets = useCallback(
     (copied: { reps: number; weight: number }[]) => {
@@ -832,12 +799,11 @@ export function WorkoutPage() {
               setErrors={setErrors}
               setSetErrors={setSetErrors}
               updateSet={updateSet}
-              removeSet={handleRemoveSet}
+              removeSet={removeSet}
               checkIsNewPR={checkIsNewPR}
               weightUnit={weightUnit}
               convert={convert}
               convertToKg={convertToKg}
-              t={t}
             />
           </>
         )}

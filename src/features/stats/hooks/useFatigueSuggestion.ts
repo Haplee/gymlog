@@ -16,7 +16,7 @@ const STORAGE_KEY = 'fatigue_suggestion_date';
  * Como máximo una vez por día natural.
  */
 export function useFatigueSuggestion() {
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
   const { t } = useTranslation();
 
   const { data: recentSets = [] } = useQuery({

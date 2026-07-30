@@ -55,9 +55,12 @@ export function useHistoryTransfer({
 }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const { user } = useAuthStore();
-  const { routines, addRoutine, saveToDb: saveRoutinesToDb } = useRoutineStore();
-  const { sessions: cardioSessions, syncFromRemote: syncCardio } = useCardioStore();
+  const user = useAuthStore((s) => s.user);
+  const routines = useRoutineStore((s) => s.routines);
+  const addRoutine = useRoutineStore((s) => s.addRoutine);
+  const saveRoutinesToDb = useRoutineStore((s) => s.saveToDb);
+  const cardioSessions = useCardioStore((s) => s.sessions);
+  const syncCardio = useCardioStore((s) => s.syncFromRemote);
 
   const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 

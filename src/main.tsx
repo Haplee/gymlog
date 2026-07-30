@@ -12,8 +12,6 @@ import { Providers } from './app/providers.tsx';
 // registrado, y su tarea se saltaría en silencio al cerrar sesión.
 import './app/sessionTasks.ts';
 
-inject();
-
 /**
  * Service worker: solo en web.
  *
@@ -43,6 +41,10 @@ if (Capacitor.isNativePlatform()) {
   void import('virtual:pwa-register')
     .then(({ registerSW }) => registerSW({ immediate: true }))
     .catch((e) => devError('[PWA] Error registrando el SW:', e));
+
+  // Analítica — solo en web, igual que Cloudflare: dentro del APK no mide nada
+  // útil y cada beacon despierta la radio del móvil para nada.
+  inject();
 
   // Cloudflare Web Analytics — solo en web, no tiene sentido dentro del APK.
   const cfToken = import.meta.env.VITE_CLOUDFLARE_ANALYTICS_TOKEN;

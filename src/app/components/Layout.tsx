@@ -80,7 +80,7 @@ function useOnlineStatus() {
 }
 
 export function Layout({ children }: LayoutProps) {
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
   const { displayName, avatarUrl } = useProfile();
   const location = useLocation();
   const { t } = useTranslation();
@@ -208,6 +208,7 @@ export function Layout({ children }: LayoutProps) {
                     alt=""
                     width={36}
                     height={36}
+                    decoding="async"
                     className="h-full w-full object-cover"
                   />
                 ) : (

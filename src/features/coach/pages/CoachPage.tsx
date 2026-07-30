@@ -144,7 +144,7 @@ function CoachAnswer({ output }: { output: CoachOutput }) {
 export function CoachPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
   const enabled = useCoachStore((s) => s.enabled);
   const sync = useCoachStore((s) => s.sync);
   const [output, setOutput] = useState<CoachOutput | null>(null);

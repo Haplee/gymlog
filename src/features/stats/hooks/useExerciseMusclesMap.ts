@@ -8,7 +8,7 @@ import { fetchExerciseMusclesMap, type ExerciseMuscle } from '@shared/api/exerci
  * Cacheado (el catálogo de músculos cambia poco).
  */
 export function useExerciseMusclesMap(): Record<string, ExerciseMuscle[]> {
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
   const { data } = useQuery({
     queryKey: ['exerciseMuscles', user?.id],
     queryFn: () => fetchExerciseMusclesMap(user?.id ?? ''),
