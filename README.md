@@ -1,25 +1,25 @@
 <div align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=3ECF8E&height=120&section=header&text=GymLog%20v5.0&fontSize=50&fontColor=ffffff&animation=fadeIn" alt="Header" />
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=ffd93d&height=120&section=header&text=GymLog%20v5.2&fontSize=50&fontColor=0a0a0b&animation=fadeIn" alt="Header" />
 
   <img src="./public/gimnasia.svg" alt="GymLog" width="130" />
 
   <br>
 
-<a href="https://git.io/typing-svg"><img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=20&duration=3000&pause=1000&color=3ECF8E&center=true&vCenter=true&width=600&lines=Hipertrofia+y+Sobrecarga+Progresiva;Cardio+con+Cron%C3%B3metro+en+Vivo;Anal%C3%ADticas+Avanzadas+de+Entrenamiento;Arquitectura+Offline-First+Robusta" alt="Typing SVG" /></a>
+<a href="https://git.io/typing-svg"><img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=20&duration=3000&pause=1000&color=ffd93d&center=true&vCenter=true&width=600&lines=Hipertrofia+y+Sobrecarga+Progresiva;Cardio+con+Cron%C3%B3metro+en+Vivo;Anal%C3%ADticas+Avanzadas+de+Entrenamiento;Entrenador+IA+Opcional+y+Auditable;Arquitectura+Offline-First+Robusta" alt="Typing SVG" /></a>
 
   <p>PWA + app nativa Android/iOS para el registro y análisis de entrenamientos de <b>fuerza</b> y <b>cardio</b>. Diseñada con enfoque <b>offline-first</b>, autenticación con Google, notificaciones inteligentes y experiencia nativa real con Capacitor 8.</p>
 
   <p>
-    <a href="https://app.gymlog.dpdns.org"><img src="https://img.shields.io/badge/APP_Vercel-LIVE_DEMO-3ECF8E?style=for-the-badge&logo=vercel&logoColor=white" alt="Live Demo" /></a>
-    <a href="https://gymlog.dpdns.org"><img src="https://img.shields.io/badge/APK_Download-Landing_Page-3ECF8E?style=for-the-badge&logo=android&logoColor=white" alt="APK" /></a>
+    <a href="https://app.gymlog.dpdns.org"><img src="https://img.shields.io/badge/APP_Vercel-LIVE_DEMO-ffd93d?style=for-the-badge&logo=vercel&logoColor=0a0a0b" alt="Live Demo" /></a>
+    <a href="https://gymlog.dpdns.org/download/gymlog.apk"><img src="https://img.shields.io/badge/APK_Android-DESCARGA_DIRECTA-ffd93d?style=for-the-badge&logo=android&logoColor=0a0a0b" alt="APK" /></a>
   </p>
 
   <p>
     <img src="https://img.shields.io/github/actions/workflow/status/Haplee/gymlog/android-build.yml?style=flat-square&label=Android%20Build&logo=github" />
     <img src="https://img.shields.io/github/actions/workflow/status/Haplee/gymlog/ci.yml?style=flat-square&label=CI&logo=vitest" />
+    <img src="https://img.shields.io/badge/tests-375%20passing-ffd93d?style=flat-square&logo=vitest&logoColor=0a0a0b" />
     <img src="https://img.shields.io/github/last-commit/Haplee/gymlog?style=flat-square&label=Last%20commit&logo=git" />
     <img src="https://img.shields.io/github/repo-size/Haplee/gymlog?style=flat-square&label=Size&logo=files" />
-    <img src="https://img.shields.io/github/stars/Haplee/gymlog?style=flat-square&label=Stars&logo=star" />
     <img src="https://img.shields.io/github/license/Haplee/gymlog?style=flat-square&label=License&logo=opensourceinitiative" />
   </p>
 
@@ -28,11 +28,12 @@
     <img src="https://img.shields.io/badge/TypeScript-5.7-3178C6?style=flat-square&logo=typescript&logoColor=white" />
     <img src="https://img.shields.io/badge/Vite-6.2-646CFF?style=flat-square&logo=vite&logoColor=white" />
     <img src="https://img.shields.io/badge/Tailwind-4.2-38BDF8?style=flat-square&logo=tailwindcss&logoColor=white" />
-    <img src="https://img.shields.io/badge/Capacitor-8.3-646CFF?style=flat-square&logo=capacitor&logoColor=white" />
+    <img src="https://img.shields.io/badge/React_Router-8.3-CA4245?style=flat-square&logo=reactrouter&logoColor=white" />
+    <img src="https://img.shields.io/badge/Capacitor-8.3-119EFF?style=flat-square&logo=capacitor&logoColor=white" />
     <img src="https://img.shields.io/badge/Supabase-DB+Auth-3ECF8E?style=flat-square&logo=supabase&logoColor=white" />
   </p>
 
-  <img src="https://visitor-badge.laobi.icu/badge?page_id=Haplee.gymlog&left_color=black&right_color=%233ECF8E&left_text=Visitantes" alt="Visitors" />
+  <img src="https://visitor-badge.laobi.icu/badge?page_id=Haplee.gymlog&left_color=black&right_color=%23ffd93d&left_text=Visitantes" alt="Visitors" />
 </div>
 
 ---
@@ -42,28 +43,16 @@
 <div align="center">
   <table>
     <tr>
-      <td><img src="./docs/design/stitch_screens/6_Home_Live_Workout_Dark_v2.png" width="180" alt="Workout" /></td>
-      <td><img src="./docs/design/stitch_screens/1_Cardio_Dark_v2.png" width="180" alt="Cardio" /></td>
-      <td><img src="./docs/design/stitch_screens/4_Stats_Dark_v2.png" width="180" alt="Stats" /></td>
-      <td><img src="./docs/design/stitch_screens/2_Routines_Dark_v2.png" width="180" alt="Routine" /></td>
+      <td><img src="./public/screens/workout.png" width="200" alt="Workout" /></td>
+      <td><img src="./public/screens/cardio.png" width="200" alt="Cardio" /></td>
+      <td><img src="./public/screens/stats.png" width="200" alt="Stats" /></td>
+      <td><img src="./public/screens/history.png" width="200" alt="History" /></td>
     </tr>
     <tr>
       <td align="center"><sub>Workout en vivo</sub></td>
       <td align="center"><sub>Cardio</sub></td>
       <td align="center"><sub>Dashboard</sub></td>
-      <td align="center"><sub>Rutinas</sub></td>
-    </tr>
-    <tr>
-      <td><img src="./docs/design/stitch_screens/7_History_Dark_v2.png" width="180" alt="History" /></td>
-      <td><img src="./docs/design/stitch_screens/3_Ajustes_Settings_Dark.png" width="180" alt="Settings" /></td>
-      <td><img src="./docs/design/stitch_screens/8_Body_Measurements_Dark_v2.png" width="180" alt="Body" /></td>
-      <td><img src="./docs/design/stitch_screens/10_Login_Dark_v2.png" width="180" alt="Login" /></td>
-    </tr>
-    <tr>
       <td align="center"><sub>Historial</sub></td>
-      <td align="center"><sub>Ajustes</sub></td>
-      <td align="center"><sub>Mediciones</sub></td>
-      <td align="center"><sub>Login</sub></td>
     </tr>
   </table>
 </div>
@@ -107,6 +96,14 @@
     </td>
   </tr>
   <tr>
+    <td align="center" width="50%"><b>Entrenador IA (opt-in)</b>
+      <p>Apagado por defecto. Sugiere carga y ajustes, pero <b>nunca modifica nada</b>: propone y tú aplicas. La clave del proveedor vive solo en el servidor.</p>
+    </td>
+    <td align="center" width="50%"><b>Autorregulación sin IA</b>
+      <p>Motor determinista por RIR/RPE que calcula la carga siguiente <b>en el dispositivo</b>, sin red y con el entrenador IA apagado.</p>
+    </td>
+  </tr>
+  <tr>
     <td align="center" width="50%"><b>Rutinas Semanales</b>
       <p>Planes predefinidos (PPL, Full Body...) y rutinas personalizadas. Planificación diaria L-D con sugerencia automática de ejercicios del día.</p>
     </td>
@@ -143,8 +140,9 @@ npm run dev              # http://localhost:5173
 
 ```bash
 npm run lint             # ESLint
-npm run type-check       # tsc --noEmit
-npm run test             # 234 tests (Vitest)
+npm run type-check       # tsc -b --force
+npm run test             # 375 tests en 43 ficheros (Vitest)
+npx playwright test      # E2E (e2e/)
 ```
 
 ### 3. Build
@@ -152,7 +150,7 @@ npm run test             # 234 tests (Vitest)
 ```bash
 npm run build            # tsc -b + vite build → dist/
 npm run build:android    # + cap sync android
-npm run apk              # Build + APK firmado
+npm run apk              # build:android + APK firmado
 ```
 
 ### 4. Env
@@ -160,10 +158,13 @@ npm run apk              # Build + APK firmado
 ```bash
 VITE_SUPABASE_URL=<url>
 VITE_SUPABASE_KEY=<anon-key>
-VITE_SENTRY_DSN=<dsn>    # opcional
+VITE_SENTRY_DSN=<dsn>                     # opcional
+VITE_CLOUDFLARE_ANALYTICS_TOKEN=<token>   # opcional, solo web
 ```
 
 Crear `.env.local`. Sin Supabase → pantalla negra.
+
+> La clave del proveedor de IA **no es una variable `VITE_*`**: viviría en el cliente y por tanto sería pública. Va en los secretos de la Edge Function (`supabase secrets set`), como se detalla en la sección del entrenador IA.
 
 ---
 
@@ -177,26 +178,47 @@ Crear `.env.local`. Sin Supabase → pantalla negra.
 
 ## Stack Tecnológico
 
-| Capa               | Tecnología               | Función                                                                         |
-| :----------------- | :----------------------- | :------------------------------------------------------------------------------ |
-| **Mobile Runtime** | Capacitor 8              | Puente nativo: haptics, biometría, notificaciones, deep links, share            |
-| **Frontend**       | React 19, TypeScript 5.7 | UI reactiva con lazy loading y transiciones animadas (Framer Motion)            |
-| **Estilos**        | Tailwind CSS 4           | Sistema de diseño con design tokens y responsive                                |
-| **Data Flow**      | TanStack Query v5        | Estado del servidor, caché, invalidación y sincronización con Supabase          |
-| **Global Store**   | Zustand 5                | Estado local persistido: workout activo, rutinas, cardio, ajustes               |
-| **Gráficos**       | Recharts 3               | Volumen semanal, distribución muscular, progresión por ejercicio                |
-| **Validación**     | Zod 3                    | Validación de series (reps/peso) con mensajes tipados                           |
-| **i18n**           | i18next + react-i18next  | Multiidioma ES/EN con detección automática y persistencia                       |
-| **Backend**        | Supabase                 | PostgreSQL, Auth (Google OAuth), RLS, tipos auto-generados                      |
-| **PWA**            | vite-plugin-pwa          | Service worker, instalable, offline-first, prompt de actualización in-app       |
-| **Persistencia**   | TanStack Persist + idb   | Caché de queries en IndexedDB para arranque sin red                             |
-| **Drag & Drop**    | dnd-kit                  | Reordenar ejercicios de rutina por arrastre                                     |
-| **Errores**        | Sentry                   | Captura y reporte de errores en producción                                      |
-| **Wearables**      | HealthBridge (nativo)    | Plugin Capacitor propio — Health Connect + HealthKit                            |
-| **Excel**          | exceljs                  | Export/import .xlsx de fuerza, cardio y rutinas (carga diferida)                |
-| **Testing**        | Vitest + Playwright      | Tests unitarios colocalizados + E2E mobile-first                                |
-| **CI/CD**          | GitHub Actions           | Lint/tests (`ci.yml`), APK Android (`android-build.yml`), iOS (`ios-build.yml`) |
-| **Bundler**        | Vite 6                   | Dev server HMR + build optimizado con chunk splitting                           |
+| Capa               | Tecnología                 | Función                                                                        |
+| :----------------- | :------------------------- | :----------------------------------------------------------------------------- |
+| **Mobile Runtime** | Capacitor 8.3              | Puente nativo: haptics, biometría, notificaciones, deep links, share           |
+| **Frontend**       | React 19.2, TypeScript 5.7 | UI reactiva con lazy loading y transiciones animadas                           |
+| **Routing**        | React Router 8             | Rutas con `lazy()` y tabla de rutas cubierta por tests                         |
+| **Estilos**        | Tailwind CSS 4.2           | CSS-first vía `@tailwindcss/vite`: **no hay `tailwind.config.js`**             |
+| **Animaciones**    | Framer Motion 12           | `LazyMotion` + `MotionConfig reducedMotion="user"` (respeta ahorro de energía) |
+| **Data Flow**      | TanStack Query 5           | Estado del servidor, caché, invalidación y sincronización con Supabase         |
+| **Global Store**   | Zustand 5                  | Estado local persistido: workout activo, rutinas, cardio, ajustes              |
+| **Gráficos**       | Recharts 3                 | Volumen semanal, distribución muscular, progresión por ejercicio               |
+| **Virtualización** | TanStack Virtual 3         | Biblioteca de ejercicios sin montar la lista entera                            |
+| **Validación**     | Zod 3                      | Validación de series (reps/peso) con mensajes tipados                          |
+| **i18n**           | i18next 24 + react-i18next | Multiidioma ES/EN con detección automática y persistencia                      |
+| **Backend**        | Supabase                   | PostgreSQL, Auth (Google OAuth), RLS, RPC, tipos auto-generados                |
+| **Edge Functions** | Deno (Supabase)            | `ai-coach` (entrenador IA) y `send-push` (notificaciones remotas)              |
+| **PWA**            | vite-plugin-pwa            | Service worker, instalable, offline-first, prompt de actualización in-app      |
+| **Persistencia**   | TanStack Persist + idb     | Caché de queries en IndexedDB, con escrituras agrupadas (`PersistGate`)        |
+| **Drag & Drop**    | dnd-kit                    | Reordenar ejercicios de rutina por arrastre                                    |
+| **Errores**        | Sentry (@sentry/capacitor) | Captura de errores de webview **y** crashes nativos                            |
+| **Wearables**      | HealthBridge (nativo)      | Plugin Capacitor propio — Health Connect + HealthKit                           |
+| **Excel**          | exceljs                    | Export/import .xlsx de fuerza, cardio y rutinas (carga diferida)               |
+| **Testing**        | Vitest 4 + Playwright      | Tests unitarios colocalizados + E2E mobile-first                               |
+| **CI/CD**          | GitHub Actions             | 6 workflows: CI, APK, iOS (smoke y firmado), landing, diagnóstico              |
+| **Bundler**        | Vite 6                     | Dev server HMR + build optimizado con chunk splitting                          |
+
+---
+
+## Sistema de Diseño
+
+Reskin **FitBody** (julio 2026). Antes era el sistema «Stitch» de acento menta; las capturas y documentos que se vean en verde son de esa etapa.
+
+| Token             | Valor                                                               |
+| :---------------- | :------------------------------------------------------------------ |
+| Acento            | `#ffd93d` (amarillo lima) sobre texto oscuro                        |
+| Base / superficie | `#0a0a0b` / `#141416`                                               |
+| Tipografía        | **Inter** (cuerpo) + **Space Grotesk** (display y cifras tabulares) |
+| Elevación         | 3 niveles: plano · `shadow-card` · `shadow-lg`/`shadow-fab`         |
+
+- **Hay modo claro y está completo**: Ajustes → Preferencias → Tema (OSCURO / CLARO). Vive en `settingsStore.theme` + el bloque `:root.light` de `tokens.css`, y es independiente del tema del sistema.
+- **Acentos configurables**: la paleta de acentos alternativos está en `@shared/constants/accents.ts`.
+- La fuente única de los tokens es `src/shared/styles/tokens.css`; `src/index.css` los mapea a utilidades Tailwind con `@theme inline`. **Nunca se hardcodean colores hex en componentes** — las excepciones son los ficheros de paleta (`features/stats/constants.ts`, porque Recharts no resuelve `var()` en `fill` SVG de forma fiable, y `@shared/constants/`).
 
 ---
 
@@ -205,17 +227,31 @@ Crear `.env.local`. Sin Supabase → pantalla negra.
 ### 🏋️ Workout — Registro en Vivo
 
 - **Selector de ejercicios** con buscador, filtros por grupo muscular y equipamiento
-- **Ejercicios personalizados**: crea los tuyos propios además del catálogo predefinido
+- **Ejercicios personalizados** y **favoritos** además del catálogo predefinido
 - **Series**: peso × reps con validación en tiempo real (Zod)
+- **Tipos de serie**: normal, dropset, rest-pause, AMRAP, y RPE por serie
 - **Series de calentamiento**: toggle para marcar warmup sets (no cuentan en volumen)
+- **Modalidad de carga**: peso corporal / carga externa / asistida, con el volumen calculado en consecuencia
 - **Detección automática de PRs**: calcula 1RM con Brzycki → confetti + vibración
-- **Temporizador de descanso**: cronómetro configurable con alarma sonora + notificación nativa
-- **Auto-inicio de descanso**: el timer arranca solo al añadir una serie (configurable)
-- **Referencia de última sesión**: muestra las series anteriores del mismo ejercicio
-- **Notas por ejercicio**: CRUD de notas técnicas asociadas a cada ejercicio
+- **PRs por banda de reps**: no solo el 1RM global
+- **Temporizador de descanso**: cronómetro configurable con alarma en bucle + notificación nativa
+- **Auto-inicio de descanso**: arranca al añadir serie; los compuestos descansan ≈2× (configurable)
+- **Referencia de última sesión** con opción de copiar las series
+- **Calculadora de discos** a partir del peso objetivo
+- **Notas por ejercicio** y notas + valoración de la sesión
 - **Persistencia de sesión**: retoma el entrenamiento hasta 12h después si cierras la app
-- **Compartir entrenamiento**: resumen vía Web Share API o clipboard
 - **Rutina del día**: muestra automáticamente los ejercicios programados
+
+### 🤖 Entrenador IA — opt-in y auditable
+
+Es la parte con más reglas duras del proyecto, a propósito:
+
+- **Apagado por defecto** (`profiles.ai_coach_enabled`). El servidor es la fuente de verdad; el store del cliente es un espejo.
+- **El coach propone, tú aplicas**: nada modifica rutinas, pesos ni series sin confirmación explícita.
+- **La clave del proveedor nunca llega al cliente**: vive solo en `Deno.env` de la Edge Function `ai-coach`, que verifica el JWT y saca el `user_id` del token, nunca del cuerpo de la petición.
+- **Post-filtro determinista** (`supabase/functions/ai-coach/safety.ts`): se midió que no basta con pedírselo al modelo en el prompt.
+- **Memoria visible y editable** en `/coach/memory`, con cuota y auditoría en BD (`ai_coach_usage`, `ai_coach_audit`).
+- **Capa 0 sin IA** (`features/stats/utils/autoregulation.ts`): motor determinista de autorregulación por RIR/RPE que no manda nada fuera del dispositivo y sigue funcionando con el entrenador apagado.
 
 ### 🏃 Cardio — Cronómetro en Vivo
 
@@ -224,18 +260,18 @@ Crear `.env.local`. Sin Supabase → pantalla negra.
 - **Datos opcionales**: distancia (km), calorías y notas
 - **Estadísticas semanales**: sesiones, tiempo total y distancia
 - **Historial** con eliminación individual
-- **Sincronización** bidireccional con Supabase
+- **Sincronización** bidireccional con Supabase (sin resucitar lo borrado en otro dispositivo)
 
 ### 📊 Estadísticas — Dashboard Analítico
 
 - **KPIs**: racha actual/máxima, volumen semanal (tendencia %), frecuencia (30d), duración media
 - **KPIs secundarios**: volumen total, mejor 1RM, PRs totales, notas de series
 - **Volumen semanal**: gráfico por período (4sem / 3mes / 6mes / 1año), vista bar o area
-- **Distribución muscular**: gráfico de volumen por grupo muscular
+- **Distribución muscular**: volumen por grupo muscular
 - **Progresión por ejercicio**: evolución temporal por métrica (1RM / peso máx / volumen)
 - **Análisis de fatiga**: recuperación por grupo muscular + sugerencia de qué entrenar
 - **Sección cardio**: KPIs + breakdown por tipo de actividad con barras animadas
-- **Calculadora 1RM**: repetición máxima estimada (Brzycki)
+- **Calculadora 1RM** (Brzycki) y **mediciones corporales** en `/user-stats`
 
 ### 📗 Historial — Export / Import
 
@@ -257,27 +293,27 @@ Crear `.env.local`. Sin Supabase → pantalla negra.
 
 - **Health Connect (Android) / HealthKit (iOS)**: plugin Capacitor propio HealthBridge
 - **Datos**: pasos, distancia, calorías, FC (media/máx/reposo), sueño por fases, workouts
-- **Sync al abrir** configurable + botón manual en `/wearables`
+- **Sync al abrir** configurable, resync al volver a primer plano (estrangulado a 15 min) y botón manual en `/wearables`
+- **Solo en la app nativa**: la lectura de salud no existe en el navegador
 
 ### 🔐 Autenticación y Seguridad
 
 - **Google OAuth** vía Supabase Auth
 - **Deep Links**: `com.franvi.gymlog://auth/callback`
 - **Onboarding**: objetivo de entrenamiento y días/semana al primer login
-- **Acceso biométrico**: huella / Face ID (plugin Capacitor custom)
+- **Acceso biométrico**: huella / Face ID (plugin Capacitor propio)
 - **Row Level Security** en todas las tablas
+- **Guardia de secretos en el bundle**: `npm run check:secrets` inspecciona `dist/`
 
 ### ⚙️ Ajustes
 
+- **Tema**: oscuro / claro · **Color de acento** configurable · **Icono de app** (Android)
 - **Idioma**: ES/EN con persistencia
 - **Unidad de peso**: kg / lb con conversión automática
-- **Sonido**: feedback on/off
-- **Notificaciones push**: nativas + web (Service Worker)
-- **Recordatorios**: aviso si 2+ días sin entrenar
-- **Calentamiento**: toggle global warmup sets
-- **Auto-descanso**: timer automático al añadir serie
-- **Biometría**: activar/desactivar
-- **Descarga APK**: botón directo en web
+- **Sonido**: feedback on/off · **Notificaciones** push nativas + web
+- **Recordatorios** de entrenamiento y aviso de racha en riesgo
+- **Calentamiento**, **auto-descanso** y **descanso por ejercicio**
+- **Biometría**, **entrenador IA** y **descarga de APK** (en web)
 
 ---
 
@@ -287,9 +323,11 @@ Crear `.env.local`. Sin Supabase → pantalla negra.
 | :-------------------- | :-------------------------- | :------------------------------ |
 | **Resumen semanal**   | Lunes 9:00                  | "X sesiones · Y kg · Z récords" |
 | **Racha en riesgo**   | Racha ≥3d y hoy sin entreno | Aviso para no perder la racha   |
-| **Alarma descanso**   | Timer termina               | Notificación + sonido           |
+| **Alarma descanso**   | Timer termina               | Notificación + sonido en bucle  |
 | **Recordatorio**      | 2+ días sin entrenar        | Motivación                      |
 | **Actualización PWA** | Nueva versión               | Toast "Actualizar"              |
+
+Los recordatorios se **reconcilian** al abrir la app, al volver de segundo plano y tras guardar un entreno: si ya entrenaste hoy, el aviso del día se cancela solo.
 
 ---
 
@@ -301,55 +339,35 @@ Organización vertical en **feature slices**. Cada dominio es autocontenido. Lo 
 src/
 ├── app/                      # Wiring global
 │   ├── components/           #   Layout, PermissionRequests
-│   ├── providers.tsx         #   App providers (QueryClient, Toaster)
+│   ├── providers.tsx         #   QueryClientProvider + PersistGate + Toaster
+│   ├── persistGate.tsx       #   Restore + guardado agrupado de la caché
 │   ├── queryClient.ts        #   TanStack Query config
-│   └── queryPersister.ts     #   IDB persister
+│   ├── queryPersister.ts     #   Persister IndexedDB
+│   └── sessionTasks.ts       #   Registro de tareas de cierre de sesión
 ├── features/                 # Dominios autocontenidos
-│   ├── auth/                 # Google OAuth, onboarding, settings, biometría
-│   │   ├── components/       #   OnboardingModal
-│   │   ├── hooks/            #   useProfile
-│   │   ├── pages/            #   AuthPage, AuthCallback, SettingsPage
-│   │   └── stores/           #   authStore
+│   ├── auth/                 # Google OAuth, onboarding, ajustes, biometría
 │   ├── cardio/               # Cronómetro, historial, estadísticas
-│   │   ├── components/       #   ActiveSessionCard, WeeklyStats, SessionHistoryItem
-│   │   ├── pages/            #   CardioPage
-│   │   └── stores/           #   cardioStore
+│   ├── coach/                # Entrenador IA opt-in (api/ components/ pages/ stores/ utils/)
+│   ├── fitbody/              # Escaparate del reskin (ruta /fitbody)
+│   ├── guide/                # Guía de uso en la app (ruta /guide)
 │   ├── routine/              # Rutinas semanales
-│   │   ├── components/       #   SortableExerciseList
-│   │   ├── hooks/            #   useWorkoutReminder
-│   │   ├── pages/            #   RoutinePage
-│   │   └── stores/           #   routineStore
-│   ├── stats/                # Dashboard analítico
-│   │   ├── components/       #   Charts, KPICards, HistoryRows, FatigueAnalysis, userStats/
-│   │   ├── hooks/            #   useFatigueSuggestion
-│   │   ├── pages/            #   StatsPage, HistoryPage, UserStatsPage
-│   │   └── utils/            #   kpiCalculations, statsData, tips, historyHelpers, ...tests/
+│   ├── stats/                # Dashboard, historial, mediciones, autorregulación
 │   ├── wearables/            # Health Connect / HealthKit
-│   │   ├── api/              #   healthAggregator, wearablesQueries
-│   │   ├── components/       #   ConnectionCard, SleepCard, WearablesSummary
-│   │   ├── hooks/            #   useWearableConnections, useWearableSync
-│   │   ├── pages/            #   WearablesPage
-│   │   ├── stores/           #   wearableStore
-│   │   └── types/
 │   └── workout/              # Registro de fuerza
-│       ├── api/              #   workoutMutations
-│       ├── components/       #   ExerciseSelector, RestTimer, WorkoutSetList, PlatesCalculator...
-│       ├── hooks/            #   useExerciseSearch
-│       ├── pages/            #   WorkoutPage, ExerciseLibraryPage
-│       ├── stores/           #   workoutStore, restTimerStore
-│       └── types/
-├── shared/                   # Infraestructura compartida
-│   ├── api/                  #   queries.ts
-│   ├── components/           #   ErrorBoundary, EmptyStates, SwipeToDelete, icons, ui/
-│   │   └── ui/               #   Button, Input, Modal, Skeleton, Badge, BottomSheet...
-│   ├── constants/            #   muscleColors
-│   ├── hooks/                #   useWeight, useWakeLock, useRateLimit, useBackgroundNotifications
-│   ├── lib/                  #   brzycki, supabase, i18n, duration, formatDate, haptics...
-│   ├── stores/               #   settingsStore, outboxStore
-│   └── styles/               #   tokens.css
-├── types/                    # database.types.ts (auto-generado por Supabase)
+│       └── cada feature: pages/ components/ stores/ hooks/ (y api/, utils/, types/)
+├── shared/
+│   ├── api/                  #   queries.ts, exerciseMutations
+│   ├── components/           #   ErrorBoundary, EmptyStates, SwipeToDelete, fitbody/, icons/, ui/
+│   ├── constants/            #   accents, muscleColors, muscleGroups, links
+│   ├── hooks/                #   useWeight, useVisibilityPausedInterval, useRateLimit...
+│   ├── lib/                  #   brzycki, supabase, i18n, alarm, celebration, throttledStorage...
+│   ├── stores/               #   settingsStore, outboxStore, notificationsStore
+│   └── styles/tokens.css     #   Design tokens (fuente única)
+├── types/                    # database.types.ts (auto-generado — nunca editar a mano)
 └── assets/                   # hero.png
 ```
+
+**17 rutas**, todas con `lazy()`: `/` · `/routines` · `/stats` · `/history` · `/settings` · `/cardio` · `/user-stats` · `/exercises` · `/wearables` · `/notifications` · `/guide` · `/coach` · `/coach/memory` · `/fitbody` · `/login` · `/auth/callback` · `*`
 
 ### Aliases
 
@@ -366,9 +384,10 @@ Definidos en `vite.aliases.ts` y sincronizados en `tsconfig.app.json`.
 
 - **i18n**: todo string visible por `useTranslation()` / `t()` — nunca literales
 - **Tipos**: `import type` obligatorio, `any` prohibido (ESLint)
-- **Barrel files**: solo donde existen (`@shared/components/ui`, `@features/workout/types/`)
+- **Stores**: uno por feature, colocalizado, y **siempre con selector** (`useX((s) => s.campo)`) — suscribirse al store entero re-renderiza de más
 - **Lazy loading**: todas las páginas con `lazy()` en `App.tsx`
 - **Tests**: Vitest, `__tests__/` colocalizado, `*.test.ts*`, mock con path alias
+- **Móvil**: mobile-first, touch targets ≥44px, probar a ~390px y no tocar las utilidades de safe-area sin verificar en Android
 
 ---
 
@@ -378,43 +397,58 @@ PostgreSQL (Supabase) con Row Level Security:
 
 | Tabla                  | Descripción                                            |
 | :--------------------- | :----------------------------------------------------- |
-| `profiles`             | Perfil: nombre, avatar, objetivo, días/semana          |
-| `exercises`            | Catálogo: grupo muscular, equipamiento, bilateral      |
+| `profiles`             | Perfil: nombre, avatar, objetivo, días/semana, flags   |
+| `exercises`            | Catálogo: grupo muscular, equipamiento, modalidad      |
+| `exercise_muscles`     | Músculos secundarios con peso por ejercicio            |
+| `exercise_favorites`   | Ejercicios marcados como favoritos                     |
 | `workouts`             | Sesiones: timestamps, volumen, duración, notas, rating |
-| `workout_sets`         | Series: peso, reps, RPE, warmup                        |
-| `workout_exercises`    | Relación workout↔exercise                              |
+| `workout_sets`         | Series: peso, reps, RPE, warmup, tipo de serie         |
 | `personal_records`     | PRs: peso, reps, 1RM, rep band                         |
 | `exercise_notes`       | Notas técnicas por ejercicio                           |
-| `user_routines`        | Rutinas semanales (JSON)                               |
-| `cardio_sessions`      | Cardio: tipo, duración, distancia, calorías            |
-| `body_measurements`    | Mediciones: peso, % grasa, masa muscular               |
 | `exercise_goals`       | Objetivos de 1RM                                       |
+| `user_routines`        | Rutinas semanales (JSON)                               |
 | `routine_templates`    | Plantillas predefinidas                                |
+| `cardio_sessions`      | Cardio: tipo, duración, distancia, calorías, FC        |
+| `body_measurements`    | Mediciones: peso, % grasa, masa muscular               |
 | `push_tokens`          | Tokens FCM                                             |
 | `wearable_connections` | Conexiones por proveedor                               |
 | `wearable_daily`       | Métricas diarias: pasos, calorías, FC                  |
 | `wearable_sleep`       | Sueño por fases                                        |
+| `health_sessions`      | Sesiones importadas del agregador de salud             |
+| `ai_coach_messages`    | Conversación del entrenador                            |
+| `ai_coach_memory`      | Memoria persistente, visible y editable                |
+| `ai_coach_suggestions` | Sugerencias pendientes de aplicar                      |
+| `ai_coach_usage`       | Cuota por usuario                                      |
+| `ai_coach_audit`       | Auditoría de llamadas                                  |
+
+Vistas y RPC: `save_workout_with_sets`, `get_workouts_with_sets`, `get_exercises_with_usage`, `get_volume_by_muscle_group`, `v_weekly_volume_by_muscle`, `v_last_trained_by_muscle`, `v_daily_volume`, `pr_rep_band`, `import_health_sessions`, `upsert_wearable_daily` / `_sleep`, `ai_coach_consume_quota` / `_add_tokens` / `_purge`.
+
+> Los cambios de esquema van en `supabase/migrations/` y deben ser **idempotentes**. `src/types/database.types.ts` se regenera con `npm run gen:types` — nunca se edita a mano.
 
 ---
 
 ## CI/CD
 
-| Workflow            | Disparo             | Acción                                    |
-| :------------------ | :------------------ | :---------------------------------------- |
-| `ci.yml`            | push / PR (main)    | lint + type-check + test (Vitest) + build |
-| `android-build.yml` | push main / tags v* | build web + cap sync + APK firmado        |
-| `ios-build.yml`     | manual / push       | smoke test iOS (macOS runner)             |
-| `react-doctor.yml`  | manual              | diagnóstico React                         |
+| Workflow            | Disparo             | Acción                                           |
+| :------------------ | :------------------ | :----------------------------------------------- |
+| `ci.yml`            | push / PR (main)    | lint + type-check + test (Vitest) + build        |
+| `android-build.yml` | push main / tags v* | build web + cap sync + APK **debug** (artefacto) |
+| `ios-build.yml`     | manual / push       | smoke test iOS (macOS runner)                    |
+| `ios-signed.yml`    | manual / tags       | IPA con firma ad-hoc                             |
+| `sync-landing.yml`  | push main           | espeja `public/` en `docs/`                      |
+| `react-doctor.yml`  | manual              | diagnóstico React                                |
 
 ### Utilidades
 
 ```bash
 npm run gen:types       # regenerar tipos Supabase
 npm run analyze         # bundle visualizer
-npm run coverage        # tests con cobertura V8
+npm run test:coverage   # tests con cobertura V8
+npm run check:secrets   # buscar secretos filtrados en dist/
+npm run icons           # generar iconos PWA/Android
 npm run commit          # commit convencional (Commitizen)
 npm run release         # release + CHANGELOG (standard-version)
-npm run icons           # generar iconos PWA/Android
+npm run doctor          # react-doctor
 ```
 
 ---
@@ -422,12 +456,23 @@ npm run icons           # generar iconos PWA/Android
 ## Experiencia Nativa (Capacitor 8)
 
 - **Haptic Feedback**: vibraciones al completar series, guardar y batir PRs
-- **Acceso Biométrico**: Face ID (iOS) / huella (Android) — plugin BiometricPlugin propio
+- **Acceso Biométrico**: Face ID (iOS) / huella (Android) — plugin propio
 - **True Full-Screen**: edge-to-edge con WindowInsets
-- **Notificaciones**: locales + push remotas (FCM)
+- **Notificaciones**: locales + push remotas (FCM vía Edge Function `send-push`)
 - **Deep Links**: `com.franvi.gymlog://workout/new`, `com.franvi.gymlog://history`
+- **Widget Android**: racha + último entreno
 - **Compartir**: resumen vía Web Share API
 - **Iconos Adaptativos**: Android 14+, splash screen
+
+### Rendimiento en el WebView
+
+La app nativa corre en un WebView, así que el coste de CPU, memoria y batería se nota. Decisiones que **no hay que romper**:
+
+- Las escrituras a IndexedDB (`app/persistGate.tsx`) y a `localStorage` (`shared/lib/throttledStorage.ts`) van **agrupadas**, con volcado al pasar a segundo plano.
+- `alarm.ts` es el **único dueño del `AudioContext`** de la app. No crear contextos nuevos: el WebView topa en ~6 y el sonido enmudece.
+- Los intervalos van por `useVisibilityPausedInterval`, que se pausa con `visibilitychange` **y** con el `appStateChange` de Capacitor.
+- Los stores se leen **con selector**. Una suscripción al store entero por encima de una página repinta el árbol completo.
+- `MotionConfig reducedMotion="user"` apaga las animaciones con el ahorro de energía de Android activo.
 
 ### iOS
 
@@ -444,60 +489,59 @@ Código nativo en `ios-custom/`:
 
 Descarga directa de la última APK firmada: **[gymlog.dpdns.org/download/gymlog.apk](https://gymlog.dpdns.org/download/gymlog.apk)** — o desde la [Landing Page](https://gymlog.dpdns.org).
 
-> El CI (`android-build.yml`) compila una APK _debug_ como artefacto; la _release_ firmada con el keystore propio se publica self-hosted en la landing.
+> El CI compila una APK **debug** como artefacto (se instala junto a la app real con el sufijo `.fitbody`). La **release** firmada con el keystore propio se compila con `npm run apk` y se publica en el release de GitHub y en la landing self-hosted. Al mantenerse la misma firma, la actualización conserva los datos.
 
 ---
 
 ## Changelog
 
+El registro completo y automático está en **[CHANGELOG.md](./CHANGELOG.md)**. Resumen de lo reciente:
+
+### v5.2 — Rendimiento en el WebView
+
+- **Escrituras a disco agrupadas**: la caché de queries se dehidrataba y escribía entera en cada evento interno (decenas de veces al guardar un entreno), y `zustand/persist` escribía el estado completo de forma síncrona **en cada tecla** de reps/kg
+- **Fuga de `AudioContext` corregida**: se creaba uno nuevo por entreno guardado y por pulsación del toggle de sonido, sin cerrarlo nunca; el sonido moría a partir del sexto
+- **Menos renders**: selectores finos donde había suscripciones al store entero por encima de cada página, y filas de series memoizadas
+- **Batería**: los temporizadores se pausan de verdad en segundo plano en Android (`appStateChange`), las animaciones respetan el ahorro de energía y la analítica ya no corre dentro del APK
+- **Biblioteca de ejercicios virtualizada** y enlaces de descarga unificados (apuntaban a releases fijos ya obsoletos)
+- **Fix de build**: el `applicationIdSuffix` de la variante de prueba contaminaba también los APK de release, que salían con el identificador equivocado y no se ofrecían como actualización
+
+### v5.1 — Entrenador IA
+
+- Entrenador IA opt-in: Edge Function, chat, flujo «Aplicar» sin que el coach toque nada, memoria escribible y post-filtro de seguridad determinista
+- Motor determinista de autorregulación por RIR/RPE, con sugerencia de carga en la pantalla de entreno
+- Wearables: separación de andar y correr por pulso, FC real en la tarjeta de salud
+- Cardio: dejar de resucitar sesiones borradas en el servidor
+
 ### v5.0
 
-- **Modalidad de carga por ejercicio**: peso corporal / carga externa / asistida, con fix del cálculo de volumen para ejercicios de peso corporal
-- **Outbox offline endurecido**: los errores no-red ya no descartan entrenos en silencio, backoff exponencial real (`nextAttemptAt`) y un fallo de una entrada ya no bloquea el resto de la cola
-- **Auth**: detección correcta de sesión expirada (mensaje claro en vez del genérico)
-- **Infra / dominio propio**: landing y páginas legales self-hosted en `gymlog.dpdns.org` (Nginx + HTTPS Let's Encrypt), **descarga de APK self-hosted** en `/download/gymlog.apk`, y app web en `app.gymlog.dpdns.org` (Vercel)
-- **Landing**: OG image propia (1200×630), sección FAQ, datos estructurados JSON-LD, `robots.txt` + `sitemap.xml`
-- **Calidad**: constante `DEFAULT_MUSCLE_GROUP`, pre-push hook, limpieza de deps/chunks/CI/CSS y migraciones alineadas con el historial remoto — **234 tests**
+- Modalidad de carga por ejercicio (peso corporal / externa / asistida) con el volumen corregido
+- Outbox offline endurecido: backoff exponencial real y sin descartes silenciosos
+- Infra: landing y páginas legales self-hosted en `gymlog.dpdns.org`, app web en `app.gymlog.dpdns.org`
 
-### v4.1
+### v3.1 → v4.1
 
-- Refactor por features: splits de componentes >800 líneas (CardioPage, UserStatsPage, HistoryPage, StatsPage, WorkoutPage)
-- Cardio: componentes extraídos (ActiveSessionCard, WeeklyStats, SessionHistoryItem)
-- 153 tests, estructura `__tests__/` colocalizada
-- AGENTS.md canónico con reglas de arquitectura
-
-### v3.1 → v4.0
-
-- Overhaul visual Stitch (Swiss-Athletic): tema oscuro único, design tokens, DM Sans + Geist Mono
+- Refactor por feature slices, splits de componentes >800 líneas
 - Export/Import Excel (.xlsx) round-trip verificado
 - Offline-first: outbox IndexedDB con reintentos
 - Wearables: Health Connect / HealthKit (plugin HealthBridge)
-- Avatares en Supabase Storage, CI iOS
-
-### v3.0
-
-- Notificaciones push remotas (FCM)
-- Biblioteca de ejercicios, calculadora de discos
-- Medidas corporales, objetivos 1RM
-- Reordenar ejercicios (dnd-kit)
-- Persistencia de queries (IndexedDB)
-- Errores con Sentry
+- Notificaciones push remotas (FCM), biblioteca de ejercicios, calculadora de discos, mediciones corporales, dnd-kit, Sentry
 
 ---
 
 <div align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=3ECF8E&height=100&section=footer" alt="Footer" />
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=ffd93d&height=100&section=footer" alt="Footer" />
 </div>
 
 ## Autoría
 
 <div align="center">
 
-  <img src="https://github-readme-stats.vercel.app/api?username=Haplee&show_icons=true&theme=radical&hide_border=true&bg_color=0D1117&icon_color=3ECF8E&text_color=FFFFFF&title_color=3ECF8E" alt="Stats" />
+  <img src="https://github-readme-stats.vercel.app/api?username=Haplee&show_icons=true&theme=radical&hide_border=true&bg_color=0D1117&icon_color=ffd93d&text_color=FFFFFF&title_color=ffd93d" alt="Stats" />
 
   <br>
 
-  <img src="https://github-readme-streak-stats.herokuapp.com/?user=Haplee&theme=radical&hide_border=true&background=0D1117&ring=3ECF8E&fire=3ECF8E&currStreakNum=FFFFFF" alt="Streak" />
+  <img src="https://github-readme-streak-stats.herokuapp.com/?user=Haplee&theme=radical&hide_border=true&background=0D1117&ring=ffd93d&fire=ffd93d&currStreakNum=FFFFFF" alt="Streak" />
 
 <br><br>
 
@@ -506,6 +550,6 @@ Descarga directa de la última APK firmada: **[gymlog.dpdns.org/download/gymlog.
 <a href="https://www.instagram.com/franvidalmateo"><img src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white" /></a>
 
 <br><br>
-<b>GymLog v5.0.1</b> — <a href="https://github.com/Haplee">Haplee</a>
+<b>GymLog v5.2.0</b> — <a href="https://github.com/Haplee">Francisco Vidal Mateo</a>
 
 </div>
