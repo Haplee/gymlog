@@ -58,7 +58,7 @@ function CatalogDetail({ id, name }: { id: string; name: string }) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
   const setCustomExerciseName = useWorkoutStore((s) => s.setCustomExerciseName);
   const setActiveExercise = useWorkoutStore((s) => s.setActiveExercise);
   const { data: detail, isLoading } = useExerciseDetail(id);

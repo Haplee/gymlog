@@ -25,23 +25,12 @@ import { devError } from '@shared/lib/devtools';
 import { Camera, Check, ChevronRight, Download, Loader2, LogOut, Pencil, X } from 'lucide-react';
 import { IconBook, IconRuler, IconWatch } from '@shared/components/icons';
 import { ACCENT_PRESETS, getAccentPreset } from '@shared/constants/accents';
+import { APK_DOWNLOAD_URL } from '@shared/constants/links';
+import { playSettingsChime } from '@shared/lib/alarm';
 import { isAppIconSupported, setAppIcon as setAppIconNative } from '@shared/lib/appIcon';
 
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
 const MAX_NAME_LENGTH = 40;
-
-const playSound = (freq: number, duration: number, delay: number, ctx: AudioContext) => {
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.frequency.value = freq;
-  osc.type = 'square';
-  gain.gain.setValueAtTime(0.9, ctx.currentTime + delay);
-  gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + delay + duration);
-  osc.start(ctx.currentTime + delay);
-  osc.stop(ctx.currentTime + delay + duration);
-};
 
 /**
  * Fila de menú del kit FitBody: icono dentro de un círculo de acento, etiqueta
@@ -76,7 +65,8 @@ function MenuRow({
 export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user, signOut } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
+  const signOut = useAuthStore((s) => s.signOut);
   const {
     sound,
     setSound,
@@ -184,17 +174,12 @@ export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
     checkBio();
   }, [user, navigate, biometricEnabled, setBiometricEnabled, setNotificationsEnabled]);
 
+  // Reutiliza el AudioContext único de `alarm.ts`. Antes creaba uno nuevo en
+  // cada pulsación del toggle de sonido y no lo cerraba: el WebView topa en ~6
+  // contextos y, hasta llegar ahí, cada uno mantenía despierto el pipeline de
+  // audio. Mismo fallo que había en WorkoutPage al guardar un entreno.
   const playFeedbackSound = useCallback(() => {
-    try {
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContextClass) return;
-      const ctx = new AudioContextClass();
-      playSound(1200, 0.25, 0, ctx);
-      playSound(1500, 0.25, 0.15, ctx);
-      playSound(1800, 0.35, 0.3, ctx);
-    } catch (e) {
-      devError('[Sound] Error:', e);
-    }
+    playSettingsChime();
   }, []);
 
   const handlePushToggle = async () => {
@@ -397,6 +382,9 @@ export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
                 <img
                   src={avatarUrl}
                   alt=""
+                  width={56}
+                  height={56}
+                  decoding="async"
                   className="w-14 h-14 rounded-full object-cover border-2 border-accent-fg/20"
                 />
               ) : (
@@ -496,7 +484,7 @@ export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
 
         {!isNative() && (
           <a
-            href="https://github.com/Haplee/gymlog/releases/download/v0.5.0/GymLog-v0.5.0.apk"
+            href={APK_DOWNLOAD_URL}
             download
             className="flex items-center justify-center gap-2 rounded-sm p-3.5 border text-center bg-surface border-line-accent text-accent transition-transform active:scale-[0.99]"
           >

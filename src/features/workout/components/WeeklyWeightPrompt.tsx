@@ -26,7 +26,7 @@ function currentWeekKey(): string {
  */
 export function WeeklyWeightPrompt() {
   const { t } = useTranslation();
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
   const [value, setValue] = useState('');
   const [error, setError] = useState<string | null>(null);

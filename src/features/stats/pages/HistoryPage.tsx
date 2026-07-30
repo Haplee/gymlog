@@ -149,14 +149,13 @@ export function HistoryPage() {
   const { formatVol } = useWeight();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const { user } = useAuthStore();
-  const { repeatWorkout } = useWorkoutStore();
-  const { addRoutine, saveToDb: saveRoutinesToDb } = useRoutineStore();
-  const {
-    sessions: cardioSessions,
-    deleteSession: deleteCardioSession,
-    syncFromRemote: syncCardio,
-  } = useCardioStore();
+  const user = useAuthStore((s) => s.user);
+  const repeatWorkout = useWorkoutStore((s) => s.repeatWorkout);
+  const addRoutine = useRoutineStore((s) => s.addRoutine);
+  const saveRoutinesToDb = useRoutineStore((s) => s.saveToDb);
+  const cardioSessions = useCardioStore((s) => s.sessions);
+  const deleteCardioSession = useCardioStore((s) => s.deleteSession);
+  const syncCardio = useCardioStore((s) => s.syncFromRemote);
   const [view, setView] = useState<'all' | 'sets' | 'workouts' | 'cardio'>('all');
   const [filterExercise, setFilterExercise] = useState('');
   const [searchText, setSearchText] = useState('');

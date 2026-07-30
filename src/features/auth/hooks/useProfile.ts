@@ -17,7 +17,7 @@ export const profileQueryKey = (userId: string) => ['profile', userId] as const;
  * al navegar entre pestañas.
  */
 export function useProfile() {
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
   const userId = user?.id;
 
   const query = useQuery({

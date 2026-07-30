@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { useRestTimerStore } from '../stores/restTimerStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
 import { impact, ImpactStyle } from '@shared/lib/haptics';
@@ -11,8 +12,22 @@ const RADIUS = 36;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 export function RestTimer() {
-  const { endTime, duration, isRunning, start, stop, extend, remaining } = useRestTimerStore();
-  const { restAutoStart, setRestAutoStart } = useSettingsStore();
+  // Selectores finos: este componente ya se re-renderiza cada segundo por su
+  // propio tick, así que no debe hacerlo además por cualquier cambio ajeno de
+  // los dos stores (p. ej. cada tecla en las series o cualquier otro ajuste).
+  const { endTime, duration, isRunning, start, stop, extend, remaining } = useRestTimerStore(
+    useShallow((s) => ({
+      endTime: s.endTime,
+      duration: s.duration,
+      isRunning: s.isRunning,
+      start: s.start,
+      stop: s.stop,
+      extend: s.extend,
+      remaining: s.remaining,
+    })),
+  );
+  const restAutoStart = useSettingsStore((s) => s.restAutoStart);
+  const setRestAutoStart = useSettingsStore((s) => s.setRestAutoStart);
   const [display, setDisplay] = useState(() => remaining());
   const [customSecs, setCustomSecs] = useState<number | null>(null);
 

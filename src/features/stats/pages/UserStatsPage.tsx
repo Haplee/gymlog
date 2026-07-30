@@ -162,8 +162,9 @@ function TipCard({ tip, index }: { tip: Tip; index: number }) {
 export function UserStatsPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { user } = useAuthStore();
-  const { sessions: cardioSessions, syncFromRemote: syncCardio } = useCardioStore();
+  const user = useAuthStore((s) => s.user);
+  const cardioSessions = useCardioStore((s) => s.sessions);
+  const syncCardio = useCardioStore((s) => s.syncFromRemote);
 
   useEffect(() => {
     if (user?.id) void syncCardio(user.id);

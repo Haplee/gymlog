@@ -6,7 +6,7 @@ import { notify, getRoutineReminderCopy } from '@shared/lib/notifications';
 import { reconcileReminders, hasTrainedToday } from '@shared/lib/reminderReconcile';
 
 export function useWorkoutReminder() {
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
   const getTodayRoutine = useRoutineStore((s) => s.getTodayRoutine);
   const routines = useRoutineStore((s) => s.routines);
   const activeRoutineId = useRoutineStore((s) => s.activeRoutineId);

@@ -8,8 +8,7 @@ import { useRateLimit } from '@shared/hooks/useRateLimit';
 import { useSettingsStore } from '@shared/stores/settingsStore';
 import { checkPasswordStrength } from '@shared/lib/passwordStrength';
 import { Download } from 'lucide-react';
-
-const APK_URL = 'https://github.com/Haplee/gymlog/releases/download/v5.0.0/GymLog-v5.0.0.apk';
+import { APK_DOWNLOAD_URL } from '@shared/constants/links';
 
 const inputClass =
   'w-full bg-transparent border-0 border-b border-line-strong rounded-none text-base py-3 px-1 outline-none transition-colors text-fg placeholder:text-fg-subtle focus:border-accent';
@@ -39,7 +38,9 @@ export function AuthPage() {
   const [isRevealing, setIsRevealing] = useState(false);
   const [animKey, setAnimKey] = useState(0);
   const { t } = useTranslation();
-  const { signIn, signUp, signInWithGoogle } = useAuthStore();
+  const signIn = useAuthStore((s) => s.signIn);
+  const signUp = useAuthStore((s) => s.signUp);
+  const signInWithGoogle = useAuthStore((s) => s.signInWithGoogle);
   const language = useSettingsStore((s) => s.language);
   const setLanguage = useSettingsStore((s) => s.setLanguage);
   const [error, setError] = useState('');
@@ -396,7 +397,7 @@ export function AuthPage() {
         {/* En la app nativa ofrecería descargar el APK que ya se está ejecutando. */}
         {!Capacitor.isNativePlatform() && (
           <a
-            href={APK_URL}
+            href={APK_DOWNLOAD_URL}
             className="label-caps inline-flex items-center gap-2 px-3 py-2.5 min-h-11 rounded-sm text-fg-subtle hover:text-fg-muted transition-colors"
           >
             <Download className="w-3.5 h-3.5" />

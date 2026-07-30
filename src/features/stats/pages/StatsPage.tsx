@@ -84,8 +84,9 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 export function StatsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user } = useAuthStore();
-  const { sessions: cardioSessions, syncFromRemote: syncCardio } = useCardioStore();
+  const user = useAuthStore((s) => s.user);
+  const cardioSessions = useCardioStore((s) => s.sessions);
+  const syncCardio = useCardioStore((s) => s.syncFromRemote);
 
   useEffect(() => {
     if (user?.id) void syncCardio(user.id);

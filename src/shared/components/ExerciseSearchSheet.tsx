@@ -31,7 +31,7 @@ interface ExerciseSearchSheetProps {
 export function ExerciseSearchSheet({ onClose }: ExerciseSearchSheetProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
   const setActiveExercise = useWorkoutStore((s) => s.setActiveExercise);
   const addSet = useWorkoutStore((s) => s.addSet);
   const sets = useWorkoutStore((s) => s.sets);
