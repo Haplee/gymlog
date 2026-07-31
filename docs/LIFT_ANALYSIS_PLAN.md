@@ -216,12 +216,35 @@ Instalar con:
 
 ## 8. ESTADO ACTUAL (para retomar)
 
-| Estado | Elemento                                                                       |
-| ------ | ------------------------------------------------------------------------------ |
-| ✅     | Python 3.12.10 instalado en `%LOCALAPPDATA%\Programs\Python\Python312`         |
-| ✅     | venv creado: `tools/lift-analysis/.venv` (vacío)                               |
-| ⬜     | `requirements.txt`, `analyze_lift.py`, `README.md`                             |
-| ⬜     | `.gitignore` entries: `tools/lift-analysis/.venv/`, `tools/lift-analysis/out/` |
-| ⬜     | Vídeos de prueba (vista lateral, cámara fija)                                  |
+| Estado | Elemento                                                                     |
+| ------ | ---------------------------------------------------------------------------- |
+| ✅     | Python 3.12.10 instalado en `%LOCALAPPDATA%\Programs\Python\Python312`       |
+| ✅     | venv creado: `tools/lift-analysis/.venv`                                     |
+| ✅     | `requirements.txt`, `analyze_lift.py`, `README.md`                           |
+| ✅     | `test_segmentation.py` — 17 comprobaciones del núcleo, sin vídeo ni modelo   |
+| ✅     | `.gitignore`: `.venv/`, `out/` y los pesos `*.pt`                            |
+| ✅     | Migración `lift_analyses` con RLS (fase 3, tabla creada y vacía)             |
+| ⬜     | **Instalar ultralytics + supervision** (solo están numpy y scipy en el venv) |
+| ⬜     | Vídeos de prueba (vista lateral, cámara fija) y primera ejecución real       |
 
-Para retomar: _"implementa la fase 1 del plan de docs/LIFT_ANALYSIS_PLAN.md"_.
+### Qué cambió respecto al esqueleto de la sección 4
+
+Al implementarlo salieron dos cosas que el esqueleto no contemplaba, ambas
+detectadas por las pruebas:
+
+1. **La última repetición se perdía.** `find_peaks` no reconoce un extremo que
+   caiga en el primer o el último fotograma, y terminar la serie y quedarse
+   quieto con la barra arriba antes de parar de grabar es lo normal.
+   `fix_boundary_extrema` recupera ese extremo cuando la barra está parada, y
+   avisa —sin contarla— cuando el vídeo pilla el movimiento a medias, porque esa
+   repetición estaría incompleta y su ROM sería falso.
+2. **La pausa previa inflaba la duración.** En un peso muerto se está quieto
+   sobre la barra antes de tirar. Contando desde el primer fotograma, la
+   duración incluía la espera y la velocidad media salía hundida. Ahora la
+   repetición empieza donde la barra empieza a moverse.
+
+Además, la velocidad media se calcula como recorrido entre tiempo y no
+promediando el gradiente: promediar la velocidad instantánea cuenta también las
+correcciones y da un número más alto que la velocidad real de la barra.
+
+Para retomar: instalar el resto de dependencias y pasarle un vídeo real.
