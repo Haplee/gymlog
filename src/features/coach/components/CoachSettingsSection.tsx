@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { Brain, Sparkles } from 'lucide-react';
+import { Bot, Brain, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { NavRow, SectionHeader, SettingRow, Toggle } from '@shared/components/ui';
 import { useAuthStore } from '@features/auth/stores/authStore';
@@ -79,6 +79,7 @@ export function CoachSettingsSection() {
           <SettingRow
             label={t('coach.settings.toggle')}
             desc={t('coach.settings.toggle_desc')}
+            icon={<Bot className="w-4 h-4" />}
             control={
               <Toggle
                 checked={coachEnabled}
