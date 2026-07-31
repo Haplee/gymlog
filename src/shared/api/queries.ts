@@ -304,6 +304,8 @@ export interface LibraryExercise {
   description: string | null;
   media_url: string | null;
   is_compound: boolean | null;
+  /** Modalidad de carga: 'external' | 'bodyweight' | 'bodyweight_loaded'. */
+  load_type: string | null;
 }
 
 export const fetchExerciseLibrary = async (
@@ -312,7 +314,7 @@ export const fetchExerciseLibrary = async (
   let query = supabase
     .from('exercises')
     .select(
-      'id, name, muscle_group, muscle_detail, equipment, movement, description, media_url, is_compound',
+      'id, name, muscle_group, muscle_detail, equipment, movement, description, media_url, is_compound, load_type',
     )
     .order('name');
   if (userId) {

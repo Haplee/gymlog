@@ -11,6 +11,7 @@ import { fetchExerciseLibrary, type LibraryExercise } from '@shared/api/queries'
 import { Chip, SegmentedControl } from '@shared/components/ui';
 import { ExerciseCatalog } from '@features/workout/components/ExerciseCatalog';
 import { EquipmentIcon } from '@shared/components/icons/EquipmentIcons';
+import { LoadTypeBadge } from '@shared/components/LoadTypeBadge';
 
 function ExerciseDetail({ ex }: { ex: LibraryExercise }) {
   const { t } = useTranslation();
@@ -25,6 +26,7 @@ function ExerciseDetail({ ex }: { ex: LibraryExercise }) {
         />
       )}
       <div className="flex flex-wrap gap-1.5">
+        <LoadTypeBadge loadType={ex.load_type} className="px-2 py-1" />
         {ex.muscle_detail && (
           <span className="label-caps px-2 py-1 rounded-sm bg-surface-2 text-fg-muted">
             {t('library.muscle')}: {ex.muscle_detail}
@@ -239,6 +241,7 @@ export function ExerciseLibraryPage() {
                                 {ex.muscle_group}
                               </span>
                             )}
+                            <LoadTypeBadge loadType={ex.load_type} />
                           </div>
                         </div>
                         <ChevronRight

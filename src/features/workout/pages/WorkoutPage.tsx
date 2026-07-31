@@ -6,6 +6,8 @@ import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { m, AnimatePresence } from 'framer-motion';
 import { useShallow } from 'zustand/react/shallow';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useWorkoutStore } from '@features/workout/stores/workoutStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
@@ -26,13 +28,16 @@ import {
 } from '@shared/api/queries';
 import { bodyWeightAtDate } from '@features/workout/utils/bodyweight';
 import { isBodyweightLoad, type LoadType } from '@shared/lib/loadType';
-import { ExerciseSelector } from '@shared/components/ExerciseSelector';
+import { ExercisePicker } from '@features/workout/components/ExercisePicker';
 import { ExerciseLoadType } from '@features/workout/components/ExerciseLoadType';
 import { RestTimer } from '@features/workout/components/RestTimer';
 import { WorkoutSessionStats } from '@features/workout/components/WorkoutSessionStats';
+import { SessionRatingSheet } from '@features/workout/components/SessionRatingSheet';
+import { WorkoutActionBar } from '@features/workout/components/WorkoutActionBar';
 import { LastSessionCard } from '@features/workout/components/LastSessionCard';
 import { HealthMetricsCard } from '@features/wearables/components/HealthMetricsCard';
 import { CoachSuggestionBanner } from '@features/coach/components/CoachSuggestionBanner';
+import { CoachHomeCard } from '@features/coach/components/CoachHomeCard';
 import { NextSessionCard } from '@features/stats/components/NextSessionCard';
 import { useExerciseAdvice } from '@features/stats/hooks/useExerciseAdvice';
 import { pickDaily, pickSleepFor } from '@features/wearables/utils/pickDaily';
@@ -47,7 +52,7 @@ import {
   type WorkoutSummary,
 } from '@features/workout/components/WorkoutSavedCard';
 import type { ExerciseNote, PersonalRecord } from '@shared/lib/types';
-import { Trash2, Plus, StickyNote, Calculator, BookOpen, Trophy, Repeat, Star } from 'lucide-react';
+import { Plus, Calculator, Trophy, Repeat } from 'lucide-react';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { impact, notificationHaptic, ImpactStyle, NotificationType } from '@shared/lib/haptics';
@@ -141,10 +146,8 @@ export function WorkoutPage() {
   const [message, setMessage] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [showNotes, setShowNotes] = useState(false);
-  const [noteText, setNoteText] = useState('');
   const [setErrors, setSetErrors] = useState<Record<number, string>>({});
-  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
+  const [showRating, setShowRating] = useState(false);
   const [showPlates, setShowPlates] = useState(false);
   const [completed, setCompleted] = useState<WorkoutSummary | null>(null);
   const [showResumeBanner, setShowResumeBanner] = useState(() => {
@@ -261,6 +264,9 @@ export function WorkoutPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [getTodayRoutine, routines, activeRoutineId],
   );
+
+  // Día de la semana para el titular «Rutina · Lunes».
+  const weekdayName = useMemo(() => format(new Date(), 'EEEE', { locale: es }), []);
 
   // En modo peso corporal el kg introducido es lastre; el peso efectivo por rep
   // es (peso corporal vigente + lastre), igual que lo que se guarda en saveWorkout.
@@ -439,38 +445,39 @@ export function WorkoutPage() {
     [setSets],
   );
 
-  const handleSaveNote = useCallback(async () => {
-    if (!user || !activeExerciseId || !noteText.trim()) return;
-    const text = noteText.trim();
-    setNoteText('');
-    const tempId = `temp-${Date.now()}`;
-    queryClient.setQueryData(
-      ['exerciseNotes', user.id, activeExerciseId],
-      (old: ExerciseNote[] = []) => [
-        {
-          id: tempId,
-          note: text,
-          exercise_id: activeExerciseId,
-          user_id: user.id,
-          created_at: new Date().toISOString(),
-        } as ExerciseNote,
-        ...old,
-      ],
-    );
-    try {
-      const saved = await saveExerciseNote(user.id, activeExerciseId, text);
+  const handleSaveNote = useCallback(
+    async (text: string) => {
+      if (!user || !activeExerciseId || !text) return;
+      const tempId = `temp-${Date.now()}`;
       queryClient.setQueryData(
         ['exerciseNotes', user.id, activeExerciseId],
-        (old: ExerciseNote[] = []) => [saved, ...old.filter((n) => n.id !== tempId)],
+        (old: ExerciseNote[] = []) => [
+          {
+            id: tempId,
+            note: text,
+            exercise_id: activeExerciseId,
+            user_id: user.id,
+            created_at: new Date().toISOString(),
+          } as ExerciseNote,
+          ...old,
+        ],
       );
-    } catch {
-      queryClient.setQueryData(
-        ['exerciseNotes', user.id, activeExerciseId],
-        (old: ExerciseNote[] = []) => old.filter((n) => n.id !== tempId),
-      );
-      toast.error(t('workout.note_save_error'));
-    }
-  }, [user, activeExerciseId, noteText, queryClient, t]);
+      try {
+        const saved = await saveExerciseNote(user.id, activeExerciseId, text);
+        queryClient.setQueryData(
+          ['exerciseNotes', user.id, activeExerciseId],
+          (old: ExerciseNote[] = []) => [saved, ...old.filter((n) => n.id !== tempId)],
+        );
+      } catch {
+        queryClient.setQueryData(
+          ['exerciseNotes', user.id, activeExerciseId],
+          (old: ExerciseNote[] = []) => old.filter((n) => n.id !== tempId),
+        );
+        toast.error(t('workout.note_save_error'));
+      }
+    },
+    [user, activeExerciseId, queryClient, t],
+  );
 
   const handleDeleteNote = useCallback(
     async (noteId: string) => {
@@ -508,7 +515,10 @@ export function WorkoutPage() {
       {/* Solo aparece si se ha llegado aquí desde «Aplicar» en el entrenador. */}
       <CoachSuggestionBanner />
 
-      <WeeklyWeightPrompt />
+      {/* Con sesión en marcha la pantalla es para entrenar: el recordatorio
+          semanal de peso puede esperar a que se guarde. La tarjeta de salud del
+          wearable ya era solo-reposo por el mismo motivo. */}
+      {isIdle && <WeeklyWeightPrompt />}
       <AnimatePresence>
         {showResumeBanner && startedAt && (
           <ResumeWorkoutBanner
@@ -535,202 +545,82 @@ export function WorkoutPage() {
           initial="hidden"
           animate="show"
           transition={{ duration: 0.25, ease: 'easeOut' }}
-          className="mb-3 rounded-card bg-accent p-4 shadow-fab"
+          className="mb-4"
         >
-          {/* Tarjeta destacada del kit ("Training Of The Day"): bloque relleno
-              del acento con etiqueta, título y los ejercicios como chips. */}
-          <span className="label-caps inline-block rounded-pill bg-accent-fg/15 px-2.5 py-1 text-accent-fg">
-            {t('routine.today')}
-          </span>
-          <div className="mt-2 font-display text-lg font-bold text-accent-fg">
-            {todayRoutine.name}
-          </div>
-          <div className="mt-2.5 flex flex-wrap gap-1.5">
-            {todayRoutine.exercises.slice(0, 4).map((ex) => (
-              <span
-                key={ex.name}
-                className="rounded-pill bg-accent-fg/10 px-2.5 py-1 text-xs font-medium text-accent-fg"
-              >
-                {ex.name}
-              </span>
-            ))}
-            {todayRoutine.exercises.length > 4 && (
-              <span className="px-1 py-1 text-xs text-accent-fg/85">
-                +{todayRoutine.exercises.length - 4}
-              </span>
-            )}
-          </div>
+          {/* Titular de la referencia visual: «Rutina · Día», texto plano sobre
+              el lienzo. Ya no es la tarjeta rellena del acento. Los ejercicios
+              del día siguen debajo como chips apagados: no salen en la maqueta,
+              pero son el atajo para saber qué toca hoy. */}
+          <h1 className="font-display text-2xl font-bold tracking-tight text-fg">
+            {todayRoutine.name} · <span className="capitalize">{weekdayName}</span>
+          </h1>
+          {/* Los chips solo en reposo: con la sesión en marcha ya sabes qué
+              toca y el sitio es para los campos de KG/REPS. */}
+          {isIdle && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {todayRoutine.exercises.slice(0, 4).map((ex) => (
+                <span
+                  key={ex.name}
+                  className="rounded-pill bg-surface-2 px-2.5 py-1 text-xs font-medium text-fg-muted"
+                >
+                  {ex.name}
+                </span>
+              ))}
+              {todayRoutine.exercises.length > 4 && (
+                <span className="px-1 py-1 text-xs text-fg-subtle">
+                  +{todayRoutine.exercises.length - 4}
+                </span>
+              )}
+            </div>
+          )}
         </m.div>
+      )}
+
+      {user && (
+        <ExercisePicker
+          userId={user.id}
+          activeExerciseId={activeExerciseId}
+          exerciseName={selectedExercise?.name || customExerciseName || ''}
+          canDelete={!!selectedExercise?.user_id}
+          notes={exerciseNotes}
+          onSelect={(id) => {
+            setActiveExercise(id);
+            if (!sets.length) addSet();
+          }}
+          onDeleteExercise={() => selectedExercise && handleDeleteExercise(selectedExercise.id)}
+          onSaveNote={handleSaveNote}
+          onDeleteNote={handleDeleteNote}
+        >
+          {activeExerciseId && (
+            <LastSessionCard
+              userId={user.id}
+              exerciseId={activeExerciseId}
+              onCopySets={handleCopySets}
+            />
+          )}
+
+          {/* Autorregulación (motor determinista, sin IA ni red). Va aquí porque
+              es el momento en que se decide qué peso poner en la barra. */}
+          {exerciseAdvice && (
+            <div className="mt-3">
+              <NextSessionCard
+                advice={{
+                  ...exerciseAdvice,
+                  exercise: selectedExercise?.name ?? customExerciseName ?? '',
+                }}
+              />
+            </div>
+          )}
+        </ExercisePicker>
       )}
 
       <m.div
         variants={containerVariants}
         initial="hidden"
         animate="show"
-        transition={{ duration: 0.25, ease: 'easeOut', delay: 0.05 }}
-        className="rounded-card p-4 mb-3 bg-surface border border-line-strong shadow-card"
-      >
-        {user && (
-          <ExerciseSelector
-            userId={user.id}
-            onSelect={(id) => {
-              setActiveExercise(id);
-              if (!sets.length) addSet();
-            }}
-            activeExerciseId={activeExerciseId}
-          />
-        )}
-
-        <button
-          type="button"
-          onClick={() => navigate('/exercises')}
-          className="mt-2 w-full py-2 px-2 rounded-card text-xs flex items-center justify-center gap-1.5 bg-surface-2 border border-line text-fg-muted transition-colors active:bg-hover"
-        >
-          <BookOpen className="w-3.5 h-3.5" />
-          {t('library.open')}
-        </button>
-
-        {/* Last Session Reference */}
-        {user && activeExerciseId && (
-          <LastSessionCard
-            userId={user.id}
-            exerciseId={activeExerciseId}
-            onCopySets={handleCopySets}
-          />
-        )}
-
-        {/* Autorregulación (motor determinista, sin IA ni red). Va aquí porque
-            es el momento en que se decide qué peso poner en la barra. */}
-        {exerciseAdvice && (
-          <div className="mt-3">
-            <NextSessionCard
-              advice={{
-                ...exerciseAdvice,
-                exercise: selectedExercise?.name ?? customExerciseName ?? '',
-              }}
-            />
-          </div>
-        )}
-
-        {selectedExercise && (
-          <div className="flex gap-2 mt-3">
-            <button
-              type="button"
-              onClick={() => setShowNotes(!showNotes)}
-              className="flex-1 py-2 px-2 rounded-card text-xs flex items-center justify-center gap-1 bg-surface-2 border border-line text-fg-muted transition-colors active:bg-hover"
-            >
-              <StickyNote className="w-3 h-3" />
-              {t('workout.notes')} ({exerciseNotes.length})
-            </button>
-            {selectedExercise.user_id && (
-              <button
-                type="button"
-                onClick={() => handleDeleteExercise(selectedExercise.id)}
-                className="py-2 px-2 rounded-card text-xs flex items-center gap-1 bg-surface-2 border border-line text-error transition-colors active:bg-hover"
-              >
-                <Trash2 className="w-3 h-3" />
-              </button>
-            )}
-          </div>
-        )}
-
-        {showNotes && activeExerciseId && (
-          <div className="mt-3 p-3 rounded-card bg-surface border border-line-strong">
-            <div className="text-xs font-medium mb-2 text-fg-muted">{t('workout.no_notes')}</div>
-            {exerciseNotes.length > 0 && (
-              <div className="space-y-2 mb-3 max-h-24 overflow-y-auto">
-                {exerciseNotes.map((note) => (
-                  <div
-                    key={note.id}
-                    className="flex items-start justify-between p-2 rounded bg-surface-2"
-                  >
-                    <div className="text-xs text-fg">{note.note}</div>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteNote(note.id)}
-                      className="text-xs ml-2 text-error"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder={t('workout.new_note')}
-                value={noteText}
-                onChange={(e) => setNoteText(e.target.value)}
-                className="flex-1 rounded-card text-xs p-2 outline-none bg-surface-2 border border-line text-fg"
-              />
-              <button
-                type="button"
-                onClick={handleSaveNote}
-                disabled={!noteText.trim()}
-                className="p-2 rounded-card bg-accent text-accent-fg"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        )}
-      </m.div>
-
-      <m.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="show"
         transition={{ duration: 0.25, ease: 'easeOut', delay: 0.1 }}
-        className={`rounded-card p-4 bg-surface border border-line-strong shadow-card ${saveSuccess ? 'success-pulse' : ''}`}
+        className={saveSuccess ? 'success-pulse' : ''}
       >
-        <div className="flex items-start justify-between gap-2 mb-3">
-          <div className="min-w-0">
-            <div className="text-lg font-semibold leading-tight text-fg truncate">
-              {selectedExercise?.name ?? customExerciseName ?? t('workout.sets')}
-            </div>
-            {(currentPR || bestEstimate) && (
-              <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
-                {currentPR && (
-                  <span className="inline-flex items-center gap-1 text-xs font-medium text-accent">
-                    <Trophy className="w-3.5 h-3.5" aria-hidden="true" />
-                    {t('workout.recent_pr')} {convert(Number(currentPR.weight)).toFixed(1)}{' '}
-                    {weightUnit} × {currentPR.reps}
-                  </span>
-                )}
-                {bestEstimate && (
-                  <span className="font-mono tabular-nums text-xs text-fg-muted">
-                    {t('workout.e1rm')} {convert(bestEstimate.e1rm).toFixed(1)} {weightUnit}
-                  </span>
-                )}
-              </div>
-            )}
-            {currentPRs.length > 1 && (
-              <div className="mt-1.5 flex flex-wrap gap-1">
-                {currentPRs.map((pr) => (
-                  <span
-                    key={pr.rep_band}
-                    className="text-2xs font-mono tabular-nums px-1.5 py-0.5 rounded-sm bg-surface-2 border border-line text-fg-muted"
-                    title={t('workout.pr_by_band')}
-                  >
-                    {pr.rep_band === 15 ? '15+' : pr.rep_band}r ·{' '}
-                    {convert(Number(pr.weight)).toFixed(0)}
-                    {weightUnit}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={() => setShowPlates(true)}
-            aria-label={t('workout.plates_calc')}
-            className="flex-shrink-0 min-h-11 px-2.5 flex items-center gap-1.5 rounded-card text-xs bg-surface-2 border border-line text-fg-muted"
-          >
-            <Calculator className="w-4 h-4" />
-          </button>
-        </div>
-
         {selectedExercise && (
           <ExerciseLoadType
             exerciseId={selectedExercise.id}
@@ -738,19 +628,6 @@ export function WorkoutPage() {
             loadType={(selectedExercise.load_type as LoadType | undefined) ?? 'external'}
             equipment={selectedExercise.equipment}
           />
-        )}
-
-        {sets.length > 0 && (
-          <div className="flex gap-1.5 mb-1.5 text-2xs font-semibold uppercase text-fg-subtle">
-            {showWarmupSets && <div className="w-9 flex-shrink-0" />}
-            <div className="w-7 flex-shrink-0" />
-            <div className="flex-1 text-center">{t('workout.reps')}</div>
-            <div className="flex-1 text-center">
-              {isBodyweightExercise ? `${t('workout.load_label')} (${weightUnit})` : weightUnit}
-            </div>
-            <div className="w-9 flex-shrink-0" />
-            <div className="w-9 flex-shrink-0" />
-          </div>
         )}
 
         {sets.length === 0 ? (
@@ -795,137 +672,103 @@ export function WorkoutPage() {
             )}
             <WorkoutSetList
               sets={sets}
+              // `||` y no `??`: sin ejercicio elegido `customExerciseName` es
+              // cadena vacía, y con `??` el titular desaparecía y «SERIE n» se
+              // quedaba solo a la izquierda (visto en el emulador).
+              exerciseName={selectedExercise?.name || customExerciseName || t('workout.sets')}
               showWarmupSets={showWarmupSets}
               setErrors={setErrors}
               setSetErrors={setSetErrors}
               updateSet={updateSet}
               removeSet={removeSet}
+              onCommitSet={handleAddSet}
               checkIsNewPR={checkIsNewPR}
               weightUnit={weightUnit}
               convert={convert}
               convertToKg={convertToKg}
             />
+
+            {/* Chips de la maqueta: calculadora de discos, 1RM estimado y notas
+                del ejercicio. Sustituyen a la cabecera con el récord suelto: la
+                misma información, pero pulsable y en su sitio. */}
+            <div className="mt-5 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setShowPlates(true)}
+                className="label-caps flex min-h-11 items-center gap-2 rounded-sm bg-surface-2 px-3 text-fg-muted transition-colors active:bg-hover"
+              >
+                <Calculator className="h-4 w-4 text-accent" />
+                {t('workout.plates_calc_short')}
+              </button>
+              {bestEstimate && (
+                <span className="label-caps flex min-h-11 items-center gap-2 rounded-sm bg-surface-2 px-3 text-fg-muted">
+                  <Trophy className="h-4 w-4 text-accent" aria-hidden="true" />
+                  {t('workout.e1rm')} {convert(bestEstimate.e1rm).toFixed(1)} {weightUnit}
+                </span>
+              )}
+            </div>
+
+            {/* Récords por banda de reps: no salen en la maqueta pero son datos
+                reales, así que se quedan debajo, en tono apagado. */}
+            {(currentPR || currentPRs.length > 1) && (
+              <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
+                {currentPR && (
+                  <span className="label-caps text-accent">
+                    {t('workout.recent_pr')} {convert(Number(currentPR.weight)).toFixed(1)}{' '}
+                    {weightUnit} × {currentPR.reps}
+                  </span>
+                )}
+                {currentPRs.length > 1 &&
+                  currentPRs.map((pr) => (
+                    <span
+                      key={pr.rep_band}
+                      className="label-caps tabular text-fg-subtle"
+                      title={t('workout.pr_by_band')}
+                    >
+                      {pr.rep_band === 15 ? '15+' : pr.rep_band}r ·{' '}
+                      {convert(Number(pr.weight)).toFixed(0)}
+                      {weightUnit}
+                    </span>
+                  ))}
+              </div>
+            )}
           </>
         )}
       </m.div>
 
-      {/* Barra de acción fija sobre la navegación inferior (solo con series) */}
       {sets.length > 0 && (
-        <div className="-mx-4 mt-3 px-4 pt-3 pb-3 bg-canvas border-t border-line">
-          <div className="mb-3 flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-fg-muted">
-                {t('workout.session_rating')}
-              </span>
-              <div className="flex items-center gap-1">
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    aria-label={`${t('workout.session_rating')} ${n}`}
-                    aria-pressed={sessionRating === n}
-                    onClick={() => {
-                      void impact(ImpactStyle.Light);
-                      setSessionRating(sessionRating === n ? null : n);
-                    }}
-                    className="min-h-11 min-w-9 flex items-center justify-center"
-                  >
-                    <Star
-                      className={`w-5 h-5 transition-colors ${
-                        sessionRating && n <= sessionRating
-                          ? 'fill-accent text-accent'
-                          : 'text-fg-subtle'
-                      }`}
-                    />
-                  </button>
-                ))}
-              </div>
-            </div>
-            <textarea
-              value={sessionNotes}
-              onChange={(e) => setSessionNotes(e.target.value)}
-              placeholder={t('workout.session_notes_placeholder')}
-              rows={2}
-              aria-label={t('workout.session_notes')}
-              className="w-full resize-none rounded-card text-sm p-2 outline-none bg-surface-2 border border-line text-fg placeholder:text-fg-subtle"
-            />
-          </div>
-          {message && (
-            <div
-              className="mb-2 text-center text-sm"
-              style={{ color: message.startsWith('✓') ? 'var(--success)' : 'var(--error)' }}
-            >
-              {message}
-            </div>
-          )}
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={handleAddSet}
-              className="flex-1 py-2 px-3 border border-dashed rounded-card text-sm font-medium cursor-pointer border-line-strong text-fg-muted"
-            >
-              {t('workout.add_set')}
-            </button>
-
-            {sets.length > 1 && (
-              <AnimatePresence mode="wait">
-                {confirmDeleteAll ? (
-                  <m.div
-                    key="confirm"
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    className="flex gap-1"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => {
-                        removeAllSets();
-                        setConfirmDeleteAll(false);
-                      }}
-                      className="py-2 px-3 rounded-card text-sm font-medium bg-error text-white"
-                    >
-                      ✓
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setConfirmDeleteAll(false)}
-                      className="py-2 px-3 rounded-card text-sm border border-line-strong text-fg-subtle"
-                    >
-                      ✕
-                    </button>
-                  </m.div>
-                ) : (
-                  <m.button
-                    key="delete-all"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    onClick={() => setConfirmDeleteAll(true)}
-                    className="py-2 px-3 border border-dashed rounded-card text-sm font-medium cursor-pointer border-line-strong text-error"
-                    title={t('workout.remove_all')}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </m.button>
-                )}
-              </AnimatePresence>
-            )}
-
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={saving}
-              className={`flex-1 py-3 px-4 rounded-pill text-base font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-none text-accent-fg ${
-                saveSuccess ? 'bg-success' : 'bg-accent'
-              }`}
-            >
-              {saving ? t('workout.saving') : saveSuccess ? '✓' : t('workout.save_workout')}
-            </button>
-          </div>
-        </div>
+        <WorkoutActionBar
+          message={message}
+          saving={saving}
+          saveSuccess={saveSuccess}
+          canRemoveAll={sets.length > 1}
+          hasRating={sessionRating !== null}
+          hasNotes={!!sessionNotes}
+          onAddSet={handleAddSet}
+          onRemoveAll={removeAllSets}
+          onOpenRating={() => setShowRating(true)}
+          onSave={handleSave}
+        />
       )}
 
+      <AnimatePresence>
+        {showRating && (
+          <SessionRatingSheet
+            rating={sessionRating}
+            notes={sessionNotes}
+            onRate={setSessionRating}
+            onNotes={setSessionNotes}
+            onClose={() => setShowRating(false)}
+          />
+        )}
+      </AnimatePresence>
+
       <RestTimer />
+
+      {/* Atajo al entrenador IA, solo en reposo: con la sesión en marcha la
+          pantalla es para anotar series, no para irse a otra pantalla. Se
+          esconde solo si el entrenador está apagado. */}
+      {isIdle && <CoachHomeCard />}
 
       {/* Resumen de salud del wearable (glanceable), debajo del temporizador de
           descanso. Solo en reposo y si hay datos. Pulsable -> detalle en /wearables. */}

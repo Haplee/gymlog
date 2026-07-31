@@ -68,6 +68,12 @@
   --text-display-huge--line-height: 0.9;
   --text-display-huge--letter-spacing: -0.04em;
   --text-display-huge--font-weight: 700;
+  /* Paso intermedio para los campos gigantes de KG/REPS: display-huge se come
+     el ancho de la pantalla y headline se queda corto. */
+  --text-display: 2.75rem;
+  --text-display--line-height: 1;
+  --text-display--letter-spacing: -0.03em;
+  --text-display--font-weight: 700;
   --text-headline: 2rem;
   --text-headline--line-height: 1.125;
   --text-headline--letter-spacing: -0.02em;

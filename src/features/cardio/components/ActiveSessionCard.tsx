@@ -8,6 +8,42 @@ import { formatSeconds } from '@shared/lib/duration';
 import { useVisibilityPausedInterval } from '@shared/hooks/useVisibilityPausedInterval';
 import { Play, Pause, Square } from 'lucide-react';
 
+/**
+ * Cronómetro gigante con décimas, aislado en su propio componente: el tick de
+ * 100 ms solo repinta este nodo de texto, no la pantalla entera. Se detiene
+ * en segundo plano vía useVisibilityPausedInterval (batería), y al volver
+ * recalcula desde startedAt, así que no se desincroniza.
+ */
+function RunningClock({ isPaused }: { isPaused: boolean }) {
+  const getElapsedMs = useCardioStore((s) => s.getElapsedMs);
+  const [tickedMs, setTickedMs] = useState(() => getElapsedMs());
+
+  const tick = useCallback(() => setTickedMs(getElapsedMs()), [getElapsedMs]);
+  useVisibilityPausedInterval(tick, 100, !isPaused);
+
+  // En pausa el intervalo se retira sin un último tick, y el estado se quedaría
+  // hasta 100 ms por detrás. Leer el store aquí es seguro porque mientras
+  // isPaused el valor está congelado por construcción (pausedAt - startedAt).
+  const ms = isPaused ? getElapsedMs() : tickedMs;
+
+  const totalSeconds = Math.floor(ms / 1000);
+  // Pasada una hora el formato ya es h:mm:ss y las décimas sobran (y no caben).
+  const showTenths = totalSeconds < 3600;
+
+  return (
+    <div
+      className={`mt-1 text-display-huge font-display tabular text-fg ${
+        isPaused ? '' : 'timer-pulse'
+      }`}
+    >
+      {formatSeconds(totalSeconds)}
+      {showTenths && (
+        <span className="text-headline text-accent">.{Math.floor((ms % 1000) / 100)}</span>
+      )}
+    </div>
+  );
+}
+
 export function ActiveSessionCard({ userId }: { userId: string | null }) {
   const { t } = useTranslation();
   const isActive = useCardioStore((s) => s.isActive);
@@ -23,9 +59,6 @@ export function ActiveSessionCard({ userId }: { userId: string | null }) {
   const [distance, setDistance] = useState('');
   const [calories, setCalories] = useState('');
   const [notes, setNotes] = useState('');
-
-  const tick = useCallback(() => setElapsed(getElapsed()), [getElapsed]);
-  useVisibilityPausedInterval(tick, 1000, isActive && !isPaused);
 
   const handleStop = () => {
     setElapsed(getElapsed());
@@ -61,37 +94,23 @@ export function ActiveSessionCard({ userId }: { userId: string | null }) {
     <m.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-card p-4 mb-4 bg-surface border border-line"
+      className={showFinish ? 'rounded-card p-4 mb-5 bg-surface border border-line' : 'mb-5'}
     >
       {!showFinish ? (
         <>
-          <div className="mb-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span
-                  className={`w-2 h-2 bg-accent ${isPaused ? '' : 'pulse-soft'}`}
-                  aria-hidden="true"
-                />
-                <span className="label-caps text-accent">
-                  {label} · {isPaused ? t('cardio.paused') : t('cardio.recording')}
-                </span>
-              </div>
-              {activeType && (
-                <span className="text-accent">
-                  <CardioTypeIcon type={activeType} className="w-5 h-5" />
-                </span>
-              )}
-            </div>
-            <div
-              className={`mt-2 text-display-huge font-display tabular text-fg ${
-                isPaused ? '' : 'timer-pulse'
-              }`}
-            >
-              {formatSeconds(elapsed)}
-            </div>
+          <div className="flex items-center gap-2">
+            <span
+              className={`h-2 w-2 rounded-full bg-accent ${isPaused ? '' : 'pulse-soft'}`}
+              aria-hidden="true"
+            />
+            <span className="label-caps text-accent">
+              {isPaused ? t('cardio.paused') : t('cardio.recording')}
+            </span>
           </div>
 
-          <div className="flex gap-2">
+          <RunningClock isPaused={isPaused} />
+
+          <div className="flex gap-3 mt-4">
             <button
               type="button"
               onClick={() => {

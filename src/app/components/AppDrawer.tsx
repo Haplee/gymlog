@@ -2,14 +2,14 @@ import { useEffect, useRef } from 'react';
 import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { m } from 'framer-motion';
-import { Bell } from 'lucide-react';
+import { Bell, X } from 'lucide-react';
 import {
   IconSearch,
   IconHistory,
   IconBook,
+  IconDumbbell,
   IconRuler,
   IconWatch,
-  IconGear,
   IconStar,
 } from '@shared/components/icons';
 
@@ -22,8 +22,10 @@ import {
  * aquí, junto a las rutas que nunca tuvieron entrada propia en la barra inferior
  * (biblioteca, medidas, wearables, guía, entrenador).
  *
- * Es decir: la hamburguesa del mockup no es decorativa. Es el desagüe de todo lo
- * que el rediseño desplaza.
+ * **Nada de lo que hay aquí está en la barra inferior ni en la cabecera.** Un
+ * cajón que repite los destinos que ya tienes a un dedo de distancia solo añade
+ * ruido: Ajustes se abre desde su pestaña y desde el icono de usuario, así que
+ * no se repite aquí.
  */
 interface AppDrawerProps {
   onClose: () => void;
@@ -47,21 +49,36 @@ export function AppDrawer({ onClose, onOpenSearch, unreadCount }: AppDrawerProps
     return () => document.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  const links = [
-    { to: '/history', Icon: IconHistory, label: t('history.title') },
-    { to: '/exercises', Icon: IconBook, label: t('library.title') },
-    { to: '/user-stats', Icon: IconRuler, label: t('userStats.page_title') },
-    { to: '/coach', Icon: IconStar, label: t('coach.page_title') },
-    { to: '/wearables', Icon: IconWatch, label: t('settings.wearables') },
-    { to: '/guide', Icon: IconBook, label: t('guide.title') },
-    { to: '/settings', Icon: IconGear, label: t('settings.title') },
-  ];
+  // Agrupado por intención: primero lo que se consulta durante el entreno,
+  // después lo que se abre de vez en cuando.
+  const groups: { title: string; links: { to: string; Icon: typeof IconBook; label: string }[] }[] =
+    [
+      {
+        title: t('nav.group_training'),
+        links: [
+          { to: '/history', Icon: IconHistory, label: t('history.title') },
+          { to: '/exercises', Icon: IconDumbbell, label: t('library.title') },
+          { to: '/user-stats', Icon: IconRuler, label: t('settings.my_measurements') },
+        ],
+      },
+      {
+        title: t('nav.group_more'),
+        links: [
+          { to: '/coach', Icon: IconStar, label: t('coach.page_title') },
+          { to: '/wearables', Icon: IconWatch, label: t('settings.wearables') },
+          { to: '/guide', Icon: IconBook, label: t('guide.title') },
+        ],
+      },
+    ];
 
   const rowClass =
-    'flex min-h-11 items-center gap-3 rounded-card px-3 py-2.5 text-left text-sm text-fg transition-colors active:bg-hover';
+    'flex min-h-12 items-center gap-3 rounded-card px-3 text-left text-sm text-fg transition-colors active:bg-hover';
 
   return (
     <>
+      {/* Velo neutro, no `bg-canvas/70`: teñir con el color del lienzo aclaraba
+          toda la pantalla en tema claro y parecía que la app cambiaba de color
+          al abrir el menú. Un negro translúcido oscurece igual en ambos temas. */}
       <m.div
         key="drawer-backdrop"
         initial={{ opacity: 0 }}
@@ -69,7 +86,7 @@ export function AppDrawer({ onClose, onOpenSearch, unreadCount }: AppDrawerProps
         exit={{ opacity: 0 }}
         transition={{ duration: 0.16 }}
         onClick={onClose}
-        className="fixed inset-0 z-[200] bg-canvas/70"
+        className="fixed inset-0 z-[200] bg-black/50"
         aria-hidden="true"
       />
       <m.div
@@ -83,6 +100,15 @@ export function AppDrawer({ onClose, onOpenSearch, unreadCount }: AppDrawerProps
         animate={{ x: 0 }}
         exit={{ x: '-100%' }}
         transition={{ type: 'spring', stiffness: 420, damping: 36 }}
+        // Se cierra arrastrando hacia la izquierda, que es el gesto que espera
+        // cualquiera que haya abierto un cajón antes.
+        drag="x"
+        dragDirectionLock
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={{ left: 0.6, right: 0 }}
+        onDragEnd={(_, info) => {
+          if (info.offset.x < -60 || info.velocity.x < -400) onClose();
+        }}
         className="fixed left-0 top-0 z-[201] flex h-full w-[80%] max-w-xs flex-col overflow-y-auto border-r border-line bg-surface outline-none"
         style={{
           paddingTop: 'var(--inset-top, env(safe-area-inset-top))',
@@ -90,10 +116,21 @@ export function AppDrawer({ onClose, onOpenSearch, unreadCount }: AppDrawerProps
           paddingLeft: 'var(--inset-left, env(safe-area-inset-left))',
         }}
       >
-        <div className="flex items-center px-4" style={{ minHeight: 'var(--header-height)' }}>
+        <div
+          className="flex items-center justify-between pl-4 pr-2"
+          style={{ minHeight: 'var(--header-height)' }}
+        >
           <span className="font-display text-lg font-bold tracking-tight text-fg">
             GYM<span className="text-accent">LOG</span>
           </span>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={t('nav.menu_close')}
+            className="flex h-11 w-11 items-center justify-center text-fg-subtle active:opacity-60"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
 
         <nav className="flex flex-col gap-0.5 px-2 pb-4">
@@ -112,11 +149,16 @@ export function AppDrawer({ onClose, onOpenSearch, unreadCount }: AppDrawerProps
             )}
           </Link>
 
-          {links.map(({ to, Icon, label }) => (
-            <Link key={to} to={to} onClick={onClose} className={rowClass}>
-              <Icon className="h-5 w-5 shrink-0 text-fg-subtle" />
-              {label}
-            </Link>
+          {groups.map(({ title, links }) => (
+            <div key={title} className="mt-4">
+              <div className="label-caps px-3 pb-1 text-fg-subtle">{title}</div>
+              {links.map(({ to, Icon, label }) => (
+                <Link key={to} to={to} onClick={onClose} className={rowClass}>
+                  <Icon className="h-5 w-5 shrink-0 text-fg-subtle" />
+                  {label}
+                </Link>
+              ))}
+            </div>
           ))}
         </nav>
       </m.div>

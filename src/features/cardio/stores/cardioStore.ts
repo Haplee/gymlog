@@ -7,6 +7,22 @@ import { devError, devWarn } from '@shared/lib/devtools';
 export type CardioType =
   'running' | 'cycling' | 'rowing' | 'swimming' | 'elliptical' | 'walking' | 'jump_rope' | 'other';
 
+/**
+ * Etiquetas cortas para la fila de tipos: con los nombres largos, «BICICLETA»,
+ * «CAMINATA» y «NATACIÓN» se tocaban entre sí bajo baldosas de 56 px (visto en
+ * el emulador). El nombre completo se sigue usando en el historial.
+ */
+export const CARDIO_SHORT_LABELS: Record<CardioType, string> = {
+  running: 'Correr',
+  cycling: 'Bici',
+  rowing: 'Remo',
+  swimming: 'Nadar',
+  elliptical: 'Elípt.',
+  walking: 'Andar',
+  jump_rope: 'Cuerda',
+  other: 'Otro',
+};
+
 export const CARDIO_LABELS: Record<CardioType, string> = {
   running: 'Correr',
   cycling: 'Bicicleta',
@@ -57,6 +73,8 @@ interface CardioState {
   deleteSession: (id: string, userId?: string | null) => Promise<void>;
   syncFromRemote: (userId: string) => Promise<void>;
   getElapsed: () => number;
+  /** Igual que getElapsed pero en ms, para el cronómetro con décimas. */
+  getElapsedMs: () => number;
 }
 
 // Evita pushes duplicados si syncFromRemote se invoca concurrentemente
@@ -268,14 +286,18 @@ export const useCardioStore = create<CardioState>()(
         }
       },
 
-      getElapsed: () => {
+      getElapsed: () => Math.floor(get().getElapsedMs() / 1000),
+
+      // `pausedDuration` se guarda en segundos enteros (ver resumeSession), de
+      // ahí el * 1000 al restarlo de un total en milisegundos.
+      getElapsedMs: () => {
         const { startedAt, pausedAt, pausedDuration, isPaused } = get();
         if (!startedAt) return 0;
-        const total = Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000);
+        const total = Date.now() - new Date(startedAt).getTime();
         const paused =
           isPaused && pausedAt
-            ? pausedDuration + Math.floor((Date.now() - new Date(pausedAt).getTime()) / 1000)
-            : pausedDuration;
+            ? pausedDuration * 1000 + (Date.now() - new Date(pausedAt).getTime())
+            : pausedDuration * 1000;
         return Math.max(0, total - paused);
       },
     }),

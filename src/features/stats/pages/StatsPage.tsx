@@ -1,6 +1,5 @@
 import {
   calculateMuscleGroupDistribution,
-  formatSeconds,
   PERIOD_LABELS,
   PERIOD_WEEKS,
   type PeriodFilter,
@@ -11,7 +10,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useCardioStore, CARDIO_LABELS } from '@features/cardio/stores/cardioStore';
 import { Layout } from '@app/components/Layout';
-import { subWeeks, startOfWeek, eachWeekOfInterval, subDays } from 'date-fns';
+import { subWeeks, startOfWeek, eachWeekOfInterval, subDays, format } from 'date-fns';
+import { es } from 'date-fns/locale';
 import {
   fetchWorkoutsAndSets,
   fetchPersonalRecords,
@@ -22,7 +22,10 @@ import {
 import { calcular1RM } from '@shared/lib/brzycki';
 import { Skeleton } from '@shared/components/ui';
 import { KPICard } from '../components/KPICards';
-import { CardioTypeIcon } from '@shared/components/CardioIcons';
+import { CardioStatsSection } from '../components/CardioStatsSection';
+import { OneRmCalculator } from '../components/OneRmCalculator';
+import { ExerciseComparison } from '../components/ExerciseComparison';
+import { ProgressionSection } from '../components/ProgressionSection';
 import type { ChartView } from '../components/Charts';
 
 // recharts es pesado: cargarlo bajo demanda saca ~100kb del chunk inicial de la página
@@ -32,12 +35,6 @@ const MuscleGroupChart = lazy(() =>
 const VolumeChart = lazy(() =>
   import('../components/Charts').then((mod) => ({ default: mod.VolumeChart })),
 );
-const ProgressionChart = lazy(() =>
-  import('../components/Charts').then((mod) => ({ default: mod.ProgressionChart })),
-);
-const ExerciseComparisonChart = lazy(() =>
-  import('../components/Charts').then((mod) => ({ default: mod.ExerciseComparisonChart })),
-);
 
 function ChartFallback() {
   return <div className="h-56 skeleton rounded-card" aria-hidden="true" />;
@@ -46,6 +43,7 @@ import {
   calculateCurrentStreak,
   calculateMaxStreak,
   calculateWeeklyVolume,
+  calculateDailyVolumeThisWeek,
   calculatePreviousWeekVolume,
   calculateSessionCountLast30Days,
   calculateVolumeChangePercent,
@@ -61,20 +59,14 @@ import {
 import { useExerciseMusclesMap } from '../hooks/useExerciseMusclesMap';
 import { useWeight } from '@shared/hooks/useWeight';
 import { FatigueAnalysis } from '../components/FatigueAnalysis';
-import { CHART_COLORS } from '../constants';
 import { toast } from 'sonner';
 import { m } from 'framer-motion';
-import {
-  TrendingUp,
-  Target,
-  Calculator,
-  ChevronDown,
-  AlertTriangle,
-  ArrowLeft,
-  Ruler,
-} from 'lucide-react';
+import { TrendingUp, Target, AlertTriangle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { devError } from '@shared/lib/devtools';
+
+/** Iniciales de lunes a domingo para la tira de volumen semanal. */
+const WEEKDAY_INITIALS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'] as const;
 
 /** Mismo rótulo que SectionHeader: titular en acento, sin versalitas ni regla. */
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -92,14 +84,25 @@ export function StatsPage() {
     if (user?.id) void syncCardio(user.id);
   }, [user?.id, syncCardio]);
 
+  // Rango de la semana en curso, como el «12–18 JUL 2026» de la maqueta.
+  const weekRangeLabel = useMemo(() => {
+    const now = new Date();
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - (now.getDay() === 0 ? 6 : now.getDay() - 1));
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    const sameMonth = monday.getMonth() === sunday.getMonth();
+    const left = sameMonth
+      ? format(monday, 'd', { locale: es })
+      : format(monday, 'd MMM', { locale: es });
+    return `${left}–${format(sunday, 'd MMM yyyy', { locale: es })}`;
+  }, []);
+
   const [selectedExercise, setSelectedExercise] = useState<string>('');
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('4semanas');
   const [metricFilter, setMetricFilter] = useState<'1rm' | 'maxWeight' | 'volume'>('1rm');
   const [chartView, setChartView] = useState<ChartView>('bar');
   const [showProgression, setShowProgression] = useState(true);
-  const [rmWeight, setRmWeight] = useState('');
-  const [rmReps, setRmReps] = useState('');
-  const [rmResult, setRmResult] = useState<number | null>(null);
   const [goalInput, setGoalInput] = useState('');
   const [compareA, setCompareA] = useState('');
   const [compareB, setCompareB] = useState('');
@@ -131,9 +134,9 @@ export function StatsPage() {
   useEffect(() => {
     if (error) {
       devError('Error fetching stats data:', error);
-      toast.error('Error al cargar las estadísticas');
+      toast.error(t('stats.load_error'));
     }
-  }, [error]);
+  }, [error, t]);
 
   const workouts = useMemo(() => data?.workouts ?? [], [data?.workouts]);
   const recentSets = useMemo(() => data?.sets ?? [], [data?.sets]);
@@ -141,6 +144,12 @@ export function StatsPage() {
   const currentStreak = useMemo(() => calculateCurrentStreak(workouts), [workouts]);
   const maxStreak = useMemo(() => calculateMaxStreak(workouts), [workouts]);
   const weeklyVolume = useMemo(() => calculateWeeklyVolume(recentSets), [recentSets]);
+  const dailyVolume = useMemo(() => calculateDailyVolumeThisWeek(recentSets), [recentSets]);
+  const maxDailyVolume = useMemo(() => Math.max(...dailyVolume, 1), [dailyVolume]);
+  const todayIndex = useMemo(() => {
+    const d = new Date().getDay();
+    return d === 0 ? 6 : d - 1;
+  }, []);
   const prevWeekVolume = useMemo(() => calculatePreviousWeekVolume(recentSets), [recentSets]);
   const volumeChange = useMemo(
     () => calculateVolumeChangePercent(weeklyVolume, prevWeekVolume),
@@ -152,7 +161,7 @@ export function StatsPage() {
   const totalPRs = useMemo(() => calculateAllTimePRsCount(personalRecords), [personalRecords]);
   const musclesMap = useExerciseMusclesMap();
   // Volúmenes en la unidad del usuario (kg→t, lb→k lb), no toneladas fijas.
-  const { formatVol, format: formatKg, toDisplay, toKg, unit } = useWeight();
+  const { formatVol, format: formatKg, toKg } = useWeight();
   const muscleRecovery = useMemo(
     () => analyzeMuscleRecovery(recentSets, musclesMap),
     [recentSets, musclesMap],
@@ -226,7 +235,7 @@ export function StatsPage() {
       await refetchGoals();
       toast.success('Objetivo guardado');
     } catch {
-      toast.error('No se pudo guardar el objetivo');
+      toast.error(t('stats.goal_save_error'));
     }
   };
 
@@ -236,7 +245,7 @@ export function StatsPage() {
       await deleteExerciseGoal(user.id, activeExerciseId);
       await refetchGoals();
     } catch {
-      toast.error('No se pudo quitar el objetivo');
+      toast.error(t('stats.goal_remove_error'));
     }
   };
 
@@ -354,20 +363,12 @@ export function StatsPage() {
       .slice(0, 4);
   }, [cardioSessions]);
 
-  const calcRM = (weight: string, reps: string) => {
-    const w = parseFloat(weight);
-    const r = parseInt(reps);
-    if (w && r) setRmResult(calcular1RM(w, r));
-    else setRmResult(null);
-  };
-
   if (!user) {
     navigate('/login');
     return null;
   }
 
   const periodButtons: PeriodFilter[] = ['4semanas', '3meses', '6meses', '1año'];
-  const metricButtons: ('1rm' | 'maxWeight' | 'volume')[] = ['1rm', 'maxWeight', 'volume'];
 
   if (isLoading) {
     return (
@@ -388,64 +389,103 @@ export function StatsPage() {
 
   return (
     <Layout>
-      {/* gap-2: con los botones a 44px (mínimo táctil) y el título a 2rem, el
-          header va justo a 411dp; con gap-3 "Estadísticas" se truncaba. */}
-      <div className="flex items-center justify-between gap-2 mb-4">
-        <div className="flex items-center gap-2 min-w-0">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            aria-label={t('common.back')}
-            className="w-11 h-11 flex-shrink-0 rounded-full flex items-center justify-center bg-surface border border-line hover:bg-surface-2"
-          >
-            <ArrowLeft className="w-4 h-4 text-fg-muted" />
-          </button>
-          {/* El rótulo de la pantalla lo pone la cabecera del Layout. */}
+      {/* Cabecera de la referencia visual (`public/screens/stats.png`): titular
+          RENDIMIENTO, rango de la semana y los dos números protagonistas.
+          Ya no hay botón de volver —/stats es una pestaña, no una subpantalla—
+          y las medidas se abren desde el cajón. */}
+      <header className="mb-5">
+        <h1 className="font-display text-3xl font-bold uppercase tracking-tight text-fg">
+          {t('stats.performance')}
+        </h1>
+        <div className="label-caps mt-1 text-fg-subtle">{weekRangeLabel}</div>
+
+        <div className="mt-5 flex items-end justify-between gap-4 dotted-separator pb-5">
+          <div>
+            <div className="label-caps text-fg-subtle">{t('stats.streak_short')}</div>
+            <div className="text-display-huge font-display tabular leading-none text-fg">
+              {currentStreak}
+              <span className="text-accent">d</span>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="label-caps text-fg-subtle">{t('stats.volume_short')}</div>
+            <div className="text-display-huge font-display tabular leading-none text-fg">
+              {formatVol(weeklyVolume)}
+            </div>
+          </div>
         </div>
-        <button
-          type="button"
-          onClick={() => navigate('/user-stats')}
-          aria-label={t('settings.my_measurements')}
-          className="w-11 h-11 flex-shrink-0 rounded-full flex items-center justify-center bg-surface border border-line text-accent hover:bg-surface-2"
-        >
-          <Ruler className="w-4 h-4" />
-        </button>
-      </div>
+      </header>
+
+      {/* Tira «VOL. SEMANAL»: una barra por día de la semana en curso, hoy en el
+          acento. Es lo que dibuja la maqueta; los gráficos con filtros de
+          periodo siguen más abajo.
+
+          Sin volumen esta semana no se dibuja: la caja de 112 px se quedaba
+          vacía y parecía un fallo de render (visto en el emulador). */}
+      {weeklyVolume > 0 && (
+        <section className="mb-6">
+          <div className="flex items-baseline justify-between gap-3">
+            <span className="label-caps text-fg-subtle">{t('stats.weekly_volume_short')}</span>
+            <span className="tabular text-base text-fg">{formatKg(weeklyVolume, 0)}</span>
+          </div>
+          <div className="mt-3 flex items-end gap-2">
+            {dailyVolume.map((vol, i) => (
+              <div key={i} className="flex flex-1 flex-col items-center gap-2">
+                <span className="label-caps h-3 text-accent">
+                  {i === todayIndex ? t('common.today') : ''}
+                </span>
+                <div className="flex h-28 w-full items-end">
+                  <div
+                    className={`w-full rounded-sm ${i === todayIndex ? 'bg-accent' : 'bg-surface-2'}`}
+                    // Proporcional al día más cargado, con un mínimo visible para
+                    // que un día flojo no desaparezca del todo.
+                    style={{
+                      height: `${vol > 0 ? Math.max(8, (vol / maxDailyVolume) * 100) : 4}%`,
+                    }}
+                    aria-hidden="true"
+                  />
+                </div>
+                <span
+                  className={`label-caps ${i === todayIndex ? 'text-accent' : 'text-fg-subtle'}`}
+                >
+                  {WEEKDAY_INITIALS[i]}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <div className="space-y-5">
         {/* ── Entrenamiento ── */}
         <section className="space-y-3">
-          <SectionLabel>Entrenamiento</SectionLabel>
+          <SectionLabel>{t('stats.section_training')}</SectionLabel>
 
           <m.div
             className="grid grid-cols-2 gap-3"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
           >
+            {/* Racha y volumen semanal ya son los dos números gigantes de la
+                portada: repetirlos aquí como tarjetas sobraba. La variación
+                respecto a la semana pasada, que solo estaba en esa tarjeta, se
+                conserva junto a la frecuencia. */}
             <KPICard
-              title="Racha actual"
-              value={currentStreak}
-              subtitle="días seguidos"
-              icon="flame"
-              isNewPR={currentStreak >= 7}
-            />
-            <KPICard
-              title="Volumen semanal"
-              value={formatVol(weeklyVolume)}
-              subtitle="esta semana"
+              title={t('stats.kpi_vs_last_week')}
+              value={`${volumeChange > 0 ? '+' : ''}${volumeChange}%`}
+              subtitle={t('stats.kpi_volume')}
               icon="volume"
-              trend={volumeChange}
             />
             <KPICard
-              title="Frecuencia"
+              title={t('stats.kpi_frequency')}
               value={sessionCount}
-              subtitle="sesiones (30 días)"
+              subtitle={t('stats.kpi_sessions_30d')}
               icon="frequency"
             />
             <KPICard
-              title="Duración media"
+              title={t('stats.kpi_avg_duration')}
               value={`${avgDuration}m`}
-              subtitle="por sesión"
+              subtitle={t('stats.kpi_per_session')}
               icon="duration"
             />
           </m.div>
@@ -459,23 +499,23 @@ export function StatsPage() {
           >
             <KPICard
               size="sm"
-              title="Volumen total"
+              title={t('stats.kpi_total_volume')}
               value={formatVol(allTimeVolume)}
-              subtitle="histórico"
+              subtitle={t('stats.kpi_all_time')}
               icon="all-volume"
             />
             <KPICard
               size="sm"
-              title="Mejor 1RM"
+              title={t('stats.kpi_best_1rm')}
               value={bestOneRm > 0 ? formatKg(bestOneRm, 0) : '—'}
-              subtitle="estimado"
+              subtitle={t('stats.kpi_estimated')}
               icon="best-1rm"
             />
             <KPICard
               size="sm"
-              title="Notas"
+              title={t('stats.kpi_notes')}
               value={setNotesCount}
-              subtitle="series anotadas"
+              subtitle={t('stats.kpi_noted_sets')}
               icon="notes"
             />
           </m.div>
@@ -495,7 +535,7 @@ export function StatsPage() {
               <div className="pl-2">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-2xs font-semibold uppercase tracking-[0.08em] text-fg-subtle">
-                    Racha máxima
+                    {t('stats.max_streak')}
                   </span>
                   <svg
                     viewBox="0 0 24 24"
@@ -582,141 +622,15 @@ export function StatsPage() {
           )}
         </section>
 
-        {/* ── Cardio ── */}
-        {cardioStats.totalSessions > 0 && (
-          <section className="space-y-3">
-            <SectionLabel>Cardio</SectionLabel>
-
-            <m.div
-              className="grid grid-cols-2 gap-3"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.12 }}
-            >
-              <KPICard
-                title="Sesiones semana"
-                value={cardioStats.sessionsThisWeek}
-                subtitle="esta semana"
-                icon="cardio-sessions"
-              />
-              <KPICard
-                title="Tiempo cardio"
-                value={formatSeconds(cardioStats.totalTimeWeek)}
-                subtitle="esta semana"
-                icon="cardio-time"
-              />
-              {cardioStats.totalDistWeek > 0 && (
-                <KPICard
-                  title="Distancia"
-                  value={`${cardioStats.totalDistWeek.toFixed(1)}km`}
-                  subtitle="esta semana"
-                  icon="cardio-dist"
-                />
-              )}
-              <KPICard
-                title="Total sesiones"
-                value={cardioStats.totalSessions}
-                subtitle="historial"
-                icon="cardio-sessions"
-                accentColor="#38bdf8"
-              />
-            </m.div>
-
-            <m.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.14 }}
-              className="grid grid-cols-3 gap-3"
-            >
-              <KPICard
-                size="sm"
-                title="Tiempo total"
-                value={formatSeconds(cardioStats.totalTimeAll)}
-                subtitle="histórico"
-                icon="cardio-time"
-              />
-              <KPICard
-                size="sm"
-                title="Distancia total"
-                value={
-                  cardioStats.totalDistAll > 0 ? `${cardioStats.totalDistAll.toFixed(1)}km` : '—'
-                }
-                subtitle="histórico"
-                icon="cardio-dist"
-              />
-              <KPICard
-                size="sm"
-                title="Duración media"
-                value={cardioStats.avgDur > 0 ? formatSeconds(cardioStats.avgDur) : '—'}
-                subtitle="por sesión"
-                icon="duration"
-              />
-            </m.div>
-
-            {/* Cardio type breakdown */}
-            {cardioTypeBreakdown.length > 0 && (
-              <m.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.16 }}
-                className="rounded-card p-4 bg-surface"
-              >
-                <div className="flex items-center gap-2 mb-3">
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="var(--interactive-primary)"
-                    strokeWidth={1.5}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M2 13c2-2.5 4-2.5 6 0 2 2.5 4 2.5 6 0 2-2.5 4-2.5 6 0" />
-                    <path d="M2 17.5c2-2.5 4-2.5 6 0 2 2.5 4 2.5 6 0 2-2.5 4-2.5 6 0" />
-                  </svg>
-                  <span className="text-sm font-medium text-fg-muted">Actividades cardio</span>
-                </div>
-                <div className="space-y-2.5">
-                  {cardioTypeBreakdown.map(({ type, duration, label }, i) => {
-                    const maxDur = cardioTypeBreakdown[0].duration;
-                    const pct = Math.round((duration / maxDur) * 100);
-                    return (
-                      <div key={type}>
-                        <div className="flex items-center justify-between mb-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-fg-subtle">
-                              <CardioTypeIcon
-                                type={type as Parameters<typeof CardioTypeIcon>[0]['type']}
-                                className="w-3.5 h-3.5"
-                              />
-                            </span>
-                            <span className="text-sm text-fg-muted">{label}</span>
-                          </div>
-                          <span className="text-xs font-mono font-medium text-fg">
-                            {formatSeconds(duration)}
-                          </span>
-                        </div>
-                        <div className="h-1 rounded-full overflow-hidden bg-surface-2">
-                          <m.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${pct}%` }}
-                            transition={{ delay: 0.2 + i * 0.05, duration: 0.5 }}
-                            className="h-full rounded-full"
-                            style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </m.div>
-            )}
-          </section>
-        )}
+        <CardioStatsSection
+          stats={cardioStats}
+          breakdown={cardioTypeBreakdown}
+          Label={SectionLabel}
+        />
 
         {/* ── Volumen semanal ── */}
         <section className="space-y-3">
-          <SectionLabel>Análisis</SectionLabel>
+          <SectionLabel>{t('stats.section_analysis')}</SectionLabel>
 
           <m.div
             initial={{ opacity: 0, y: 10 }}
@@ -727,7 +641,9 @@ export function StatsPage() {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-accent" />
-                <span className="text-sm font-medium text-fg-muted">Volumen semanal</span>
+                <span className="text-sm font-medium text-fg-muted">
+                  {t('stats.weekly_volume')}
+                </span>
               </div>
               <div className="flex gap-1">
                 {periodButtons.map((p) => (
@@ -771,7 +687,9 @@ export function StatsPage() {
             >
               <div className="flex items-center gap-2 mb-3">
                 <Target className="w-4 h-4 text-accent" />
-                <span className="text-sm font-medium text-fg-muted">Distribución muscular</span>
+                <span className="text-sm font-medium text-fg-muted">
+                  {t('stats.muscle_distribution')}
+                </span>
               </div>
               <Suspense fallback={<ChartFallback />}>
                 <MuscleGroupChart data={muscleGroupDistribution} />
@@ -779,209 +697,33 @@ export function StatsPage() {
             </m.div>
           )}
 
-          {/* Progresión por ejercicio */}
-          {uniqueExercises.length > 0 && (
-            <m.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.26 }}
-              className="rounded-card p-4 bg-surface"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="var(--interactive-primary)"
-                    strokeWidth={1.5}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M6 4v6a6 6 0 0 0 12 0V4" />
-                    <line x1="4" y1="20" x2="20" y2="20" />
-                  </svg>
-                  <span className="text-sm font-semibold text-fg">Progresión</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowProgression(!showProgression)}
-                  className="flex items-center gap-1 text-xs text-fg-subtle"
-                >
-                  <span>{showProgression ? 'Ocultar' : 'Mostrar'}</span>
-                  <ChevronDown
-                    className="w-4 h-4 transition-transform"
-                    style={{ transform: showProgression ? 'rotate(180deg)' : 'none' }}
-                  />
-                </button>
-              </div>
+          <ProgressionSection
+            exercises={uniqueExercises}
+            selectedExercise={selectedExercise}
+            onSelectExercise={setSelectedExercise}
+            activeExerciseName={activeExercise}
+            activeExerciseId={activeExerciseId}
+            metric={metricFilter}
+            onMetric={setMetricFilter}
+            expanded={showProgression}
+            onToggle={() => setShowProgression(!showProgression)}
+            data={progressionData}
+            goal={activeGoal}
+            currentBest1rm={currentBest1rm}
+            goalInput={goalInput}
+            onGoalInput={setGoalInput}
+            onSaveGoal={handleSaveGoal}
+            onClearGoal={handleClearGoal}
+          />
 
-              {showProgression && (
-                <div className="space-y-3">
-                  <select
-                    value={selectedExercise}
-                    onChange={(e) => setSelectedExercise(e.target.value)}
-                    className="w-full rounded-md text-sm p-3 bg-surface-2 border border-line-strong text-fg"
-                  >
-                    {uniqueExercises.map((ex) => (
-                      <option key={ex} value={ex}>
-                        {ex}
-                      </option>
-                    ))}
-                  </select>
-
-                  <div className="flex gap-1">
-                    {metricButtons.map((m) => (
-                      <button
-                        type="button"
-                        key={m}
-                        onClick={() => setMetricFilter(m)}
-                        className="flex-1 text-xs py-2 rounded-md transition-colors font-medium"
-                        style={
-                          metricFilter === m
-                            ? {
-                                backgroundColor: 'var(--interactive-primary)',
-                                color: 'var(--interactive-primary-fg)',
-                              }
-                            : {
-                                backgroundColor: 'var(--bg-surface-2)',
-                                color: 'var(--text-tertiary)',
-                              }
-                        }
-                      >
-                        {m === '1rm' ? '1RM' : m === 'maxWeight' ? 'Peso máx' : 'Volumen'}
-                      </button>
-                    ))}
-                  </div>
-
-                  <Suspense fallback={<ChartFallback />}>
-                    <ProgressionChart
-                      data={progressionData}
-                      metric={metricFilter}
-                      exerciseName={activeExercise}
-                    />
-                  </Suspense>
-
-                  {progressionData.length >= 2 && (
-                    <div className="pt-2 flex items-center justify-between text-xs border-t border-line">
-                      <span className="text-fg-subtle">Mejor registro</span>
-                      <span className="font-semibold text-accent">
-                        {formatKg(progressionData[progressionData.length - 1]?.value ?? 0)}
-                      </span>
-                    </div>
-                  )}
-
-                  {activeExerciseId && (
-                    <div className="pt-3 border-t border-line">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-semibold text-fg">Objetivo 1RM</span>
-                        {activeGoal != null && (
-                          <span className="text-2xs font-mono tabular-nums text-fg-subtle">
-                            {Math.round(toDisplay(currentBest1rm))} / {formatKg(activeGoal, 0)}
-                          </span>
-                        )}
-                      </div>
-                      {activeGoal != null ? (
-                        <>
-                          <div className="h-2 rounded-full bg-surface-2 overflow-hidden">
-                            <div
-                              className="h-full bg-accent rounded-full"
-                              style={{
-                                width: `${Math.min(100, Math.round((currentBest1rm / activeGoal) * 100))}%`,
-                              }}
-                            />
-                          </div>
-                          <div className="flex items-center justify-between mt-2">
-                            <span className="text-2xs text-fg-subtle">
-                              {currentBest1rm >= activeGoal
-                                ? '¡Objetivo alcanzado! 🎉'
-                                : `Faltan ${formatKg(activeGoal - currentBest1rm)}`}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={handleClearGoal}
-                              className="text-2xs text-fg-subtle underline"
-                            >
-                              Quitar
-                            </button>
-                          </div>
-                        </>
-                      ) : (
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            inputMode="decimal"
-                            value={goalInput}
-                            onChange={(e) => setGoalInput(e.target.value.replace(/[^\d.,]/g, ''))}
-                            placeholder={`p.ej. ${Math.round(toDisplay(currentBest1rm)) + 5} ${unit}`}
-                            className="flex-1 rounded-card text-sm px-3 py-2 outline-none bg-surface-2 border border-line text-fg"
-                          />
-                          <button
-                            type="button"
-                            onClick={handleSaveGoal}
-                            disabled={!goalInput}
-                            className="px-4 rounded-card text-sm font-semibold bg-accent text-accent-fg disabled:opacity-50"
-                          >
-                            Fijar
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-            </m.div>
-          )}
-
-          {/* Comparador de ejercicios */}
-          {uniqueExercises.length >= 2 && (
-            <m.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="rounded-card p-4 bg-surface"
-            >
-              <div className="flex items-center gap-2 mb-3">
-                <TrendingUp className="w-4 h-4 text-accent" />
-                <span className="text-sm font-semibold text-fg">Comparar ejercicios</span>
-              </div>
-              <div className="grid grid-cols-2 gap-2 mb-3">
-                <select
-                  value={cmpA}
-                  onChange={(e) => setCompareA(e.target.value)}
-                  aria-label="Ejercicio A"
-                  className="w-full rounded-md text-sm p-2.5 bg-surface-2 border border-line-strong text-fg"
-                >
-                  {uniqueExercises.map((ex) => (
-                    <option key={ex} value={ex}>
-                      {ex}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={cmpB}
-                  onChange={(e) => setCompareB(e.target.value)}
-                  aria-label="Ejercicio B"
-                  className="w-full rounded-md text-sm p-2.5 bg-surface-2 border border-line-strong text-fg"
-                >
-                  {uniqueExercises.map((ex) => (
-                    <option key={ex} value={ex}>
-                      {ex}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {cmpA === cmpB ? (
-                <div className="text-center py-8 text-sm text-fg-subtle">
-                  Elige dos ejercicios distintos.
-                </div>
-              ) : (
-                <Suspense fallback={<ChartFallback />}>
-                  <ExerciseComparisonChart data={comparisonData} nameA={cmpA} nameB={cmpB} />
-                </Suspense>
-              )}
-            </m.div>
-          )}
+          <ExerciseComparison
+            exercises={uniqueExercises}
+            a={cmpA}
+            b={cmpB}
+            onChangeA={setCompareA}
+            onChangeB={setCompareB}
+            data={comparisonData}
+          />
         </section>
 
         {/* ── Recuperación ── */}
@@ -991,52 +733,7 @@ export function StatsPage() {
           suggestedGroup={suggestedGroup}
         />
 
-        {/* ── Calculadora 1RM ── */}
-        <m.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="rounded-card p-4 bg-surface"
-        >
-          <div className="flex items-center gap-2 mb-4">
-            <Calculator className="w-4 h-4 text-accent" />
-            <span className="text-base font-semibold text-fg">Calculadora 1RM</span>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <div className="text-xs mb-1.5 text-fg-subtle">Peso ({unit})</div>
-              <input
-                type="number"
-                placeholder="100"
-                value={rmWeight}
-                onChange={(e) => {
-                  setRmWeight(e.target.value);
-                  calcRM(e.target.value, rmReps);
-                }}
-                className="w-full rounded-md text-base p-3 outline-none bg-surface-2 border border-line-strong text-fg"
-              />
-            </div>
-            <div>
-              <div className="text-xs mb-1.5 text-fg-subtle">Reps</div>
-              <input
-                type="number"
-                placeholder="10"
-                value={rmReps}
-                onChange={(e) => {
-                  setRmReps(e.target.value);
-                  calcRM(rmWeight, e.target.value);
-                }}
-                className="w-full rounded-md text-base p-3 outline-none bg-surface-2 border border-line-strong text-fg"
-              />
-            </div>
-          </div>
-          <div className="mt-4 text-center">
-            <div className="text-xs mb-1 text-fg-subtle">1RM estimado</div>
-            <div className="text-3xl font-bold font-mono text-accent tabular-nums">
-              {rmResult ? `${rmResult.toFixed(1)} ${unit}` : '—'}
-            </div>
-          </div>
-        </m.div>
+        <OneRmCalculator />
       </div>
     </Layout>
   );

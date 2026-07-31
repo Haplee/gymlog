@@ -78,6 +78,29 @@ export function calculateWeeklyVolume(sets: VolumeSet[]): number {
     .reduce((sum, s) => sum + s.weight * s.reps, 0);
 }
 
+/**
+ * Volumen día a día de la semana en curso, de lunes a domingo (7 posiciones,
+ * 0 donde no se entrenó). Es lo que dibuja la tira «VOL. SEMANAL».
+ */
+export function calculateDailyVolumeThisWeek(sets: VolumeSet[]): number[] {
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  const weekStart = new Date(now);
+  weekStart.setDate(now.getDate() - diffToMonday);
+  weekStart.setHours(0, 0, 0, 0);
+
+  const days = new Array<number>(7).fill(0);
+  sets.filter(isWorkingSet).forEach((s) => {
+    if (!s.workout?.started_at) return;
+    const at = new Date(s.workout.started_at);
+    if (at < weekStart) return;
+    const idx = Math.floor((at.getTime() - weekStart.getTime()) / 86_400_000);
+    if (idx >= 0 && idx < 7) days[idx] += s.weight * s.reps;
+  });
+  return days;
+}
+
 export function calculatePreviousWeekVolume(sets: VolumeSet[]): number {
   const now = new Date();
   const dayOfWeek = now.getDay();

@@ -155,7 +155,8 @@ describe('WorkoutSetList', () => {
     expect(updater({ 0: 'Inválido', 1: 'Otro' })).toEqual({ 1: 'Otro' });
   });
 
-  it('el error de una fila no se pinta en las demás', () => {
+  it('solo pinta el error de la serie que se está editando', async () => {
+    const user = userEvent.setup();
     setup({
       sets: [
         { id: 'a', reps: '', weight: '' },
@@ -164,12 +165,17 @@ describe('WorkoutSetList', () => {
       setErrors: { 0: 'Inválido' },
     });
 
-    expect(screen.getAllByText('Inválido')).toHaveLength(1);
-    expect(repsInput(1)).toHaveClass('border-error');
+    // Se abre la última serie, que no tiene error.
+    expect(screen.queryByText('Inválido')).not.toBeInTheDocument();
     expect(repsInput(2)).not.toHaveClass('border-error');
+
+    // Al volver a la primera, sí.
+    await user.click(screen.getByRole('button', { name: 'workout.edit_set 1' }));
+    expect(screen.getByText('Inválido')).toBeInTheDocument();
+    expect(repsInput(1)).toHaveClass('border-error');
   });
 
-  it('borra la serie por su índice', async () => {
+  it('borra la serie que se está editando por su índice', async () => {
     const user = userEvent.setup();
     const { removeSet } = setup({
       sets: [
@@ -182,7 +188,7 @@ describe('WorkoutSetList', () => {
     expect(removeSet).toHaveBeenCalledWith(1);
   });
 
-  it('cada fila mantiene su propio texto a medio escribir', async () => {
+  it('al cambiar de serie descarta el texto a medio escribir', async () => {
     const user = userEvent.setup();
     setup({
       sets: [
@@ -191,11 +197,26 @@ describe('WorkoutSetList', () => {
       ],
     });
 
-    await user.clear(weightInput('kg', 1));
-    await user.type(weightInput('kg', 1), '82,5');
+    // Con dos series se edita la última (índice 1, etiquetas «… 2»).
+    await user.clear(weightInput('kg', 2));
+    await user.type(weightInput('kg', 2), '82,5');
+    expect(weightInput('kg', 2)).toHaveValue('82,5');
 
-    expect(weightInput('kg', 1)).toHaveValue('82,5');
-    // La segunda fila sigue mostrando su valor derivado, no el de la primera.
-    expect(weightInput('kg', 2)).toHaveValue('110');
+    // Al pasar a la primera se muestra su valor derivado del store, no el texto
+    // que se estaba escribiendo en la otra.
+    await user.click(screen.getByRole('button', { name: 'workout.edit_set 1' }));
+    expect(weightInput('kg', 1)).toHaveValue('100');
+  });
+
+  it('la serie ya anotada se resume en una línea', () => {
+    setup({
+      sets: [
+        { id: 'a', reps: '12', weight: '60' },
+        { id: 'b', reps: '8', weight: '80' },
+      ],
+    });
+
+    const row = screen.getByRole('button', { name: 'workout.edit_set 1' });
+    expect(row).toHaveTextContent('60 kg × 12');
   });
 });

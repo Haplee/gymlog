@@ -10,6 +10,8 @@ export {
   IconFlame,
   IconCalendar,
   IconChart,
+  IconPulse,
+  IconMenu,
   IconBook,
   IconRuler,
   IconWatch,

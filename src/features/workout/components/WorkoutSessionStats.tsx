@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { XCircle } from 'lucide-react';
 import { m } from 'framer-motion';
 import { useVisibilityPausedInterval } from '@shared/hooks/useVisibilityPausedInterval';
 
@@ -12,8 +11,18 @@ interface WorkoutSessionStatsProps {
 }
 
 /**
- * Scoreboard de la sesión activa: el cronómetro (Space Grotesk) es el héroe; volumen
- * y series lo acompañan como marcador. Un punto "rec" indica sesión en curso.
+ * Franja de sesión activa de la referencia visual (`public/screens/workout.png`):
+ * punto + cronómetro a la izquierda, acción en píldora perfilada a la derecha.
+ * Sin tarjeta: el rediseño la quiere plana sobre el lienzo.
+ *
+ * La píldora de la maqueta pone "REANUDAR", pero aquí la acción real de la
+ * sesión en curso es cancelarla: se copia la forma, no la etiqueta, porque
+ * rotular de otro modo un botón destructivo sería engañar. Por lo mismo va en
+ * el color de error y no en el acento.
+ *
+ * Volumen y series no salen en la maqueta y se conservan igualmente (son datos
+ * reales de la sesión), en una línea de versalitas apagadas que no compite con
+ * el cronómetro.
  */
 export function WorkoutSessionStats({
   startedAt,
@@ -39,61 +48,43 @@ export function WorkoutSessionStats({
     totalVolume >= 1000 ? `${(totalVolume / 1000).toFixed(1)}t` : `${totalVolume}kg`;
 
   return (
-    <m.div
-      initial={{ opacity: 0, y: -8 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="mb-3 rounded-card px-4 py-3.5 bg-surface border border-line shadow-card"
-    >
-      {/* Eyebrow + indicador rec + cancelar */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+    <m.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="mb-4">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
           <span
             className="w-2 h-2 rounded-full bg-accent shadow-glow pulse-soft"
             aria-hidden="true"
           />
-          <span className="text-2xs font-semibold uppercase tracking-[0.14em] text-fg-subtle">
-            {t('workout.active_session')}
+          <span className="font-display font-bold tabular text-2xl leading-none text-fg">
+            {String(mins).padStart(2, '0')}:{String(secs).padStart(2, '0')}
           </span>
         </div>
+
         {onCancel && (
+          // El área táctil llega a 44 px aunque la píldora se vea más baja,
+          // como en la maqueta.
           <button
             type="button"
             onClick={() => {
               if (window.confirm(t('workout.cancel_confirm'))) onCancel();
             }}
-            className="flex items-center gap-1 min-h-9 px-2 -mr-2 rounded-card text-error transition-opacity active:opacity-50"
             title={t('workout.cancel_session')}
+            className="-my-2 flex min-h-11 items-center transition-opacity active:opacity-60"
           >
-            <XCircle className="w-4 h-4" />
-            <span className="text-2xs font-semibold uppercase">{t('common.cancel')}</span>
+            <span className="label-caps rounded-pill border border-error px-4 py-2 text-error">
+              {t('common.cancel')}
+            </span>
           </button>
         )}
       </div>
 
-      {/* Héroe: cronómetro mono */}
-      <div className="mt-1.5 font-mono font-bold tabular-nums leading-none tracking-tight text-fg text-[2.75rem]">
-        {String(mins).padStart(2, '0')}
-        <span className="text-fg-subtle">:</span>
-        {String(secs).padStart(2, '0')}
-      </div>
-
-      {/* Marcador: volumen · series */}
-      <div className="mt-2.5 flex items-center gap-5">
-        <div className="flex items-baseline gap-1.5">
-          <span className="font-mono font-bold tabular-nums text-base text-fg">
-            {volumeDisplay}
-          </span>
-          <span className="text-2xs uppercase tracking-wide text-fg-subtle">
-            {t('workout.volume')}
-          </span>
-        </div>
-        <span className="w-px h-3.5 bg-line" aria-hidden="true" />
-        <div className="flex items-baseline gap-1.5">
-          <span className="font-mono font-bold tabular-nums text-base text-fg">{totalSets}</span>
-          <span className="text-2xs uppercase tracking-wide text-fg-subtle">
-            {t('workout.sets')}
-          </span>
-        </div>
+      <div className="mt-2 flex items-center gap-4 label-caps text-fg-subtle">
+        <span>
+          {t('workout.volume')} <span className="tabular text-fg-muted">{volumeDisplay}</span>
+        </span>
+        <span>
+          {t('workout.sets')} <span className="tabular text-fg-muted">{totalSets}</span>
+        </span>
       </div>
     </m.div>
   );
