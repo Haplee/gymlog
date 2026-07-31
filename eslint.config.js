@@ -16,6 +16,9 @@ export default defineConfig([
     'android/app/build',
     'android/app/src/main/assets',
     'graphify-out',
+    // Entorno de Python del analizador de vídeo: algunas librerías (matplotlib)
+    // traen JS propio dentro, y ESLint entraba a lintarlo.
+    'tools/**/.venv',
   ]),
   {
     files: ['**/*.{ts,tsx}'],
