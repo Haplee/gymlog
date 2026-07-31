@@ -104,10 +104,31 @@ def main() -> int:
     # Se tapan las muñecas medio segundo en mitad del movimiento.
     for i in range(60, 75):
         posiciones[i] = None
-    xs, ys_rellenos = fill_gaps(posiciones)
+    xs, ys_rellenos, _ = fill_gaps(posiciones)
     ok &= check(not np.isnan(ys_rellenos).any(), 'los huecos se rellenan sin dejar NaN')
     detectadas, _ = contar(ys_rellenos)
     ok &= check(detectadas == 3, f'3 reps con un hueco de 0,5 s -> cuenta {detectadas}')
+
+    # --- Los extremos sin deteccion se recortan, no se rellenan -------------
+    # El fallo que aparecio con el video real: la deteccion moria 5 s antes del
+    # final, justo con la barra abajo, y rellenar con el ultimo valor creaba una
+    # meseta que dejaba la ultima repeticion sin prominencia por la derecha.
+    base = serie_de_reps(3)
+    con_cola: list[tuple[float, float] | None] = [(100.0, float(v)) for v in base]
+    cola = int(FPS * 5)
+    con_cola += [None] * cola
+    _, ys_recortado, offset = fill_gaps(con_cola)
+    ok &= check(
+        len(ys_recortado) == len(base) and offset == 0,
+        f'la cola sin deteccion se recorta ({len(ys_recortado)} de {len(con_cola)} muestras)',
+    )
+
+    # Y con huecos por delante, el offset dice donde empiezan los datos.
+    cabeza = int(FPS * 2)
+    con_cabeza: list[tuple[float, float] | None] = [None] * cabeza
+    con_cabeza += [(100.0, float(v)) for v in base]
+    _, _, offset2 = fill_gaps(con_cabeza)
+    ok &= check(offset2 == cabeza, f'el offset apunta al primer fotograma con datos ({offset2})')
 
     # --- Metricas ---------------------------------------------------------
     ys = serie_de_reps(4, rom_px=300.0)

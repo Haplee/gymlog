@@ -81,12 +81,37 @@ Lo que tocan YOLO y OpenCV no está cubierto: para eso hace falta un vídeo real
 - **La cámara no puede moverse.** Un travelling desplaza la trayectoria entera.
 - **Va lento en CPU:** entre 5 y 15 fotogramas por segundo. Un vídeo de 30
   segundos tarda de uno a tres minutos, y el doble si además se renderiza.
+- **Lo que hagas DESPUÉS de la última repetición contamina la medida.** Es la
+  limitación más seria, vista en un vídeo real: al terminar la serie sigues
+  moviéndote para enracar la barra, y el punto más alto que encuentra el
+  algoritmo cae dentro de ese gesto, no en el bloqueo de la repetición. El
+  resultado es una duración inflada y una velocidad media hundida — en la prueba
+  midió 3,5 s y 0,18 m/s donde lo real rondaba 2 s y 0,3 m/s. El recorrido no se
+  ve afectado y sale bien. Mientras no haya una detección del final de la serie,
+  fíate del ROM y de la velocidad de pico más que de la media.
 - **Una pausa EN MEDIO de la serie se cuela en la medida.** La pausa de antes de
   la primera repetición sí se descuenta, pero si paras arriba entre
   repeticiones, ese tiempo se reparte en la duración. Afecta sobre todo a
   sentadillas con parada y a press con pausa.
 - **No corrige la técnica.** Mide un movimiento; interpretarlo es cosa tuya o de
   quien te entrene.
+
+## Probado con vídeo real
+
+Sentadilla con barra, móvil en vertical (474×850), 58 fps, 35 segundos, vista
+lateral y cuerpo entero.
+
+| Qué                        | Resultado                                           |
+| -------------------------- | --------------------------------------------------- |
+| Muñecas detectadas         | 1661 de 2038 fotogramas (82 %)                      |
+| Repeticiones               | 1, que es lo que había                              |
+| Recorrido de la barra      | 0,62 m, calibrado con `--plate-px 140`              |
+| Duración y velocidad media | infladas por el gesto de enracar (ver limitaciones) |
+| Tiempo de proceso          | ~2 min de análisis + ~2 min de render, en CPU       |
+
+Que detectase el 82 % pese a llevar la barra a la espalda —con una muñeca medio
+tapada casi todo el rato— es la respuesta a la duda de si el truco de las
+muñecas aguantaba un caso real. Aguanta.
 
 ## Estado
 

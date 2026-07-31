@@ -97,13 +97,24 @@ def bar_positions(model: YOLO, video_path: str) -> list[tuple[float, float] | No
     return positions
 
 
-def fill_gaps(positions: list[tuple[float, float] | None]) -> tuple[np.ndarray, np.ndarray]:
-    """Rellena los fotogramas sin detección interpolando entre los vecinos.
+def fill_gaps(
+    positions: list[tuple[float, float] | None],
+) -> tuple[np.ndarray, np.ndarray, int]:
+    """Interpola los huecos interiores y RECORTA los extremos sin detección.
 
-    Sin esto el resto del análisis no arranca: el suavizado y `find_peaks` no
-    admiten huecos, y en un vídeo real siempre hay fotogramas donde la muñeca se
-    tapa. Los huecos del principio y del final se rellenan con el primer y el
-    último valor bueno, porque ahí no hay nada entre lo que interpolar.
+    Los huecos de en medio se interpolan: el suavizado y `find_peaks` no admiten
+    NaN, y en cualquier vídeo real hay fotogramas donde la muñeca se tapa.
+
+    Los extremos son otra cosa y hay que recortarlos, no rellenarlos. Rellenar
+    repitiendo el último valor bueno inventa una meseta plana con la altura que
+    tuviera la barra en ese instante. Medido en un vídeo real de sentadilla:
+    la detección moría a falta de 5 segundos, justo con la barra abajo, y esos
+    5 segundos de meseta falsa dejaban la última repetición sin prominencia por
+    la derecha — `find_peaks` no la veía y el conteo salía a la mitad.
+
+    Devuelve (xs, ys, offset), donde `offset` es el fotograma del vídeo en el
+    que empiezan los datos, para poder volver a mapear las repeticiones sobre el
+    vídeo original.
     """
     n = len(positions)
     xs = np.full(n, np.nan)
@@ -119,10 +130,14 @@ def fill_gaps(positions: list[tuple[float, float] | None]) -> tuple[np.ndarray, 
             'Comprueba que se ve a la persona entera y de lado.'
         )
 
-    idx = np.arange(n)
+    primero = int(np.argmax(known))
+    ultimo = int(len(known) - 1 - np.argmax(known[::-1]))
+    xs, ys, known = xs[primero : ultimo + 1], ys[primero : ultimo + 1], known[primero : ultimo + 1]
+
+    idx = np.arange(len(ys))
     xs = np.interp(idx, idx[known], xs[known])
     ys = np.interp(idx, idx[known], ys[known])
-    return xs, ys
+    return xs, ys, primero
 
 
 def smooth(ys: np.ndarray) -> np.ndarray:
@@ -299,6 +314,7 @@ def render(
     reps: list[Rep],
     unidad: str,
     destino: Path,
+    offset: int = 0,
 ) -> None:
     """Segunda pasada: vuelve a recorrer el vídeo dibujando encima.
 
@@ -320,9 +336,12 @@ def render(
                 frame = edge_annotator.annotate(scene=frame, key_points=keypoints)
                 frame = vertex_annotator.annotate(scene=frame, key_points=keypoints)
 
-            # Trayectoria recorrida hasta este fotograma.
-            if i > 1:
-                estela = np.stack([xs[: i + 1], ys[: i + 1]], axis=1).astype(np.int32)
+            # Trayectoria recorrida hasta este fotograma. `xs`/`ys` empiezan en
+            # `offset` (los extremos sin detección se recortaron), así que hay
+            # que restarlo o la estela se dibujaría adelantada.
+            j = i - offset
+            if 1 < j < len(xs):
+                estela = np.stack([xs[: j + 1], ys[: j + 1]], axis=1).astype(np.int32)
                 cv2.polylines(frame, [estela], False, (0, 217, 255), 2)
 
             rep_actual = sum(1 for f in finales if f <= i)
@@ -398,10 +417,20 @@ def main() -> int:
         return 2
     print(f'Muñecas detectadas en {detectados}/{len(posiciones)} fotogramas.')
 
-    xs, ys = fill_gaps(posiciones)
+    xs, ys, offset = fill_gaps(posiciones)
+    if offset or len(ys) < len(posiciones):
+        recortado = (len(posiciones) - len(ys)) / fps
+        print(f'Recortados {recortado:.1f} s sin detección al principio o al final.')
+
     y_suave, bottoms, tops = segment_reps(ys, fps, args.min_prominence)
     bottoms, tops, avisos = fix_boundary_extrema(y_suave, bottoms, tops, fps)
     reps = rep_metrics(y_suave, bottoms, tops, fps, escala)
+
+    # Los índices vuelven a ser del vídeo, no del tramo recortado: el marcador
+    # del render y el JSON tienen que referirse a lo que se ve en pantalla.
+    for r in reps:
+        r.start_frame += offset
+        r.end_frame += offset
 
     for aviso in avisos:
         print(f'\nAviso: {aviso}')
@@ -452,7 +481,11 @@ def main() -> int:
     if not args.no_video:
         video_path = destino / f'{video.stem}_annotated.mp4'
         print('Renderizando vídeo anotado (segunda pasada)...')
-        render(model, str(video), info, xs, ys, reps, unidad, video_path)
+        # Se dibuja la trayectoria suavizada, no la cruda: la detección de la
+        # muñeca tiembla unos píxeles por fotograma y en bruto sale un garabato
+        # del que no se lee nada. Suavizada se ve la línea que hace la barra,
+        # que es justo lo que se mira en un bar path.
+        render(model, str(video), info, smooth(xs), y_suave, reps, unidad, video_path, offset)
         print(f'Vídeo:     {video_path}')
 
     return 0
