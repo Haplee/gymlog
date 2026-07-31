@@ -163,13 +163,16 @@ body {
    números tabulares y labels uppercase.
    ════════════════════════════════════════════════ */
 
-/* Separador punteado 4px — background-image en vez de border-image
-   (border-image + repeating-linear-gradient renderiza mal en WebView Android) */
-.dotted-separator {
-  background-image: linear-gradient(to right, var(--border-subtle) 33%, transparent 0%);
+/* Separador de línea fina.
+   Sigue siendo background-image y no `border-bottom` a propósito: así el
+   separador no entra en el modelo de caja y añadirlo o quitarlo no mueve nada
+   de sitio. Antes era punteado (4px al 33%); el punteado se leía sucio sobre
+   las superficies oscuras y no marcaba de verdad la separación. */
+.hairline-separator {
+  background-image: linear-gradient(to right, var(--border-subtle), var(--border-subtle));
   background-position: bottom left;
-  background-size: 4px 1px;
-  background-repeat: repeat-x;
+  background-size: 100% 1px;
+  background-repeat: no-repeat;
   padding-bottom: 1px;
 }
 

@@ -32,7 +32,7 @@ export function NavRow({
       type="button"
       onClick={onClick}
       className={`w-full flex items-center justify-between gap-3 px-4 py-3.5 text-left active:bg-hover ${
-        divider ? 'dotted-separator' : ''
+        divider ? 'hairline-separator' : ''
       }`}
     >
       <span className="flex items-center gap-3 min-w-0">

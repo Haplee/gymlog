@@ -399,7 +399,7 @@ export function StatsPage() {
         </h1>
         <div className="label-caps mt-1 text-fg-subtle">{weekRangeLabel}</div>
 
-        <div className="mt-5 flex items-end justify-between gap-4 dotted-separator pb-5">
+        <div className="mt-5 flex items-end justify-between gap-4 hairline-separator pb-5">
           <div>
             <div className="label-caps text-fg-subtle">{t('stats.streak_short')}</div>
             <div className="text-display-huge font-display tabular leading-none text-fg">

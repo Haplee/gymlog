@@ -2,6 +2,7 @@
 export { Button } from './Button';
 export { Input } from './Input';
 export { Modal } from './Modal';
+export { ConfirmDialog } from './ConfirmDialog';
 export { Skeleton, PageSkeleton } from './Skeleton';
 export { Badge } from './Badge';
 export { BottomSheet } from './BottomSheet';

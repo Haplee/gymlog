@@ -33,6 +33,8 @@ export const resources = {
         menu_close: 'Cerrar menú',
         group_training: 'Entrenamiento',
         group_more: 'Más',
+        streak_days_one: '{{count}} día de racha. Ver estadísticas',
+        streak_days_other: '{{count}} días de racha. Ver estadísticas',
       },
       empty: {
         workout_title: 'Empieza a entrenar',
@@ -563,6 +565,14 @@ export const resources = {
         start_cta: 'Empezar a entrenar',
         cancel_session: 'Cancelar entrenamiento',
         cancel_confirm: '¿Cancelar y eliminar la sesión de entrenamiento actual?',
+        // El título pregunta y el cuerpo dice qué se pierde: con el diálogo del
+        // sistema todo iba en una sola línea y no quedaba claro que se borra.
+        cancel_confirm_title: '¿Descartar este entrenamiento?',
+        cancel_confirm_body_one: 'Se borrará la serie que llevas registrada. No se puede deshacer.',
+        cancel_confirm_body_other:
+          'Se borrarán las {{count}} series que llevas registradas. No se puede deshacer.',
+        cancel_confirm_accept: 'Descartar',
+        cancel_confirm_keep: 'Seguir entrenando',
         reps: 'Reps',
         weight: 'Kg',
         add_set: '+ Serie',
@@ -924,6 +934,8 @@ export const resources = {
         menu_close: 'Close menu',
         group_training: 'Training',
         group_more: 'More',
+        streak_days_one: '{{count}} day streak. View stats',
+        streak_days_other: '{{count}} day streak. View stats',
       },
       empty: {
         workout_title: 'Start training',
@@ -1446,6 +1458,12 @@ export const resources = {
         start_cta: 'Start training',
         cancel_session: 'Cancel workout',
         cancel_confirm: 'Cancel and delete the current workout session?',
+        cancel_confirm_title: 'Discard this workout?',
+        cancel_confirm_body_one: 'The set you logged will be deleted. This cannot be undone.',
+        cancel_confirm_body_other:
+          'The {{count}} sets you logged will be deleted. This cannot be undone.',
+        cancel_confirm_accept: 'Discard',
+        cancel_confirm_keep: 'Keep training',
         reps: 'Reps',
         weight: 'Kg',
         add_set: '+ Set',

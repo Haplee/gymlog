@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { PersonStanding, Weight } from 'lucide-react';
 import { updateExerciseLoadType } from '@shared/api/exerciseMutations';
 import { LOAD_TYPES, type LoadType } from '@shared/lib/loadType';
 import { impact, ImpactStyle } from '@shared/lib/haptics';
 import { devError } from '@shared/lib/devtools';
-import { EquipmentIcon } from '@shared/components/icons/EquipmentIcons';
+import { EquipmentIcon, IconKettlebell } from '@shared/components/icons/EquipmentIcons';
+import { IconUser } from '@shared/components/icons';
 
 const CONFIRMED_KEY = 'gymlog-loadtype-confirmed';
 
@@ -74,28 +74,34 @@ export function ExerciseLoadType({
           ? t('workout.load_type_prompt', { name: exerciseName })
           : t('workout.load_type_label')}
       </div>
+      {/* Los iconos salen del set propio de la app y no de lucide: `PersonStanding`
+          y `Weight` tenían otro grosor de trazo y otra caja, y al lado del icono
+          de material (que sí es del set) se veía como un pegote de otra librería.
+          Las etiquetas van a dos líneas si hace falta —«Peso corporal» no cabe
+          en un tercio de pantalla— en vez de recortarse. */}
       <div className="flex gap-1.5" role="group" aria-label={t('workout.load_type_label')}>
         {LOAD_TYPES.map((value) => {
           const active = value === loadType;
-          const BodyweightIcon = value === 'bodyweight' ? PersonStanding : Weight;
           return (
             <button
               key={value}
               type="button"
               onClick={() => choose(value)}
               aria-pressed={active}
-              className={`flex-1 min-h-11 px-1.5 rounded-md text-xs font-medium border flex flex-col items-center justify-center gap-0.5 ${
+              className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-md border px-1.5 py-2 text-2xs font-medium leading-tight text-center min-h-11 ${
                 active
                   ? 'bg-accent border-accent text-accent-fg'
                   : 'bg-surface border-line text-fg-muted'
               }`}
             >
               {value === 'external' ? (
-                <EquipmentIcon equipment={equipment} className="w-4 h-4" />
+                <EquipmentIcon equipment={equipment} className="h-4 w-4 flex-shrink-0" />
+              ) : value === 'bodyweight' ? (
+                <IconUser className="h-4 w-4 flex-shrink-0" />
               ) : (
-                <BodyweightIcon className="w-4 h-4" aria-hidden="true" />
+                <IconKettlebell className="h-4 w-4 flex-shrink-0" />
               )}
-              {t(`workout.load_type_${value}`)}
+              <span className="w-full">{t(`workout.load_type_${value}`)}</span>
             </button>
           );
         })}

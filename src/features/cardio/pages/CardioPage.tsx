@@ -57,16 +57,16 @@ export function CardioPage() {
     <Layout>
       <WeeklyStats sessions={sessions} />
 
-      {/* Fila con scroll horizontal: entran ~5 tipos a la vista y los 8 siguen
-          accesibles deslizando. Se mantiene visible durante la sesión para que
-          el tipo activo quede señalado; los demás se desactivan (cambiar de
-          tipo a mitad de sesión no es una función que exista). */}
-      <m.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-6 -mx-4 px-4 overflow-x-auto"
-      >
-        <div className="flex gap-4 w-max">
+      {/* Rejilla de 4×2 en vez de fila con scroll horizontal.
+          El carrusel dejaba tres tipos fuera de pantalla y, peor, cortaba el
+          quinto por la mitad: parecía un fallo de maqueta más que una invitación
+          a deslizar, y nada indicaba que hubiera más. Los ocho tipos entran
+          justos en dos filas, así que se ven todos de una vez.
+          Se mantiene visible durante la sesión para que el tipo activo quede
+          señalado; los demás se desactivan (cambiar de tipo a mitad de sesión no
+          es una función que exista). */}
+      <m.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+        <div className="grid grid-cols-4 gap-x-2 gap-y-4">
           {CARDIO_TYPES.map((type) => {
             const selected = isActive && activeType === type;
             return (
@@ -77,7 +77,7 @@ export function CardioPage() {
                 disabled={isActive && !selected}
                 aria-label={CARDIO_LABELS[type]}
                 aria-pressed={selected}
-                className="flex flex-col items-center gap-2 disabled:opacity-40 transition-transform active:scale-95"
+                className="flex min-w-0 flex-col items-center gap-2 disabled:opacity-40 transition-transform active:scale-95"
               >
                 <span
                   className={`flex h-14 w-14 items-center justify-center rounded-md border transition-colors ${
@@ -88,7 +88,11 @@ export function CardioPage() {
                 >
                   <CardioTypeIcon type={type} className="w-7 h-7" />
                 </span>
-                <span className={`label-caps ${selected ? 'text-accent' : 'text-fg-subtle'}`}>
+                <span
+                  className={`label-caps w-full text-center leading-tight ${
+                    selected ? 'text-accent' : 'text-fg-subtle'
+                  }`}
+                >
                   {CARDIO_SHORT_LABELS[type]}
                 </span>
               </button>

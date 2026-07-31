@@ -32,6 +32,11 @@ interface RoutineStore {
   activeRoutineId: string | null;
   lastBackup: string | null;
   loading: boolean;
+  /**
+   * Si ya se ha leído la BD en esta sesión. No se persiste a propósito: cada
+   * arranque tiene que volver a leer antes de poder escribir (ver `saveToDb`).
+   */
+  hydrated: boolean;
 
   setRoutines: (routines: Routine[]) => void;
   addRoutine: (routine: Routine) => void;
@@ -721,6 +726,7 @@ export const useRoutineStore = create<RoutineStore>()(
       activeRoutineId: null,
       lastBackup: null,
       loading: false,
+      hydrated: false,
 
       setRoutines: (routines) => set({ routines }),
 
@@ -788,6 +794,17 @@ export const useRoutineStore = create<RoutineStore>()(
       },
 
       saveToDb: async (userId: string) => {
+        // Nunca escribir sin haber leído antes.
+        //
+        // El respaldo se dispara desde sitios que no cargan rutinas: la pantalla
+        // de inicio (`checkAndBackup`) y el cierre de sesión (`sessionTasks`).
+        // En un dispositivo recién instalado el estado local son solo las
+        // plantillas, así que ese primer respaldo subía una lista vacía y
+        // borraba las rutinas que el usuario tenía guardadas en la nube.
+        // Leer primero deja que `loadFromDb` restaure lo remoto y que el
+        // guardado suba la mezcla, no el estado en blanco.
+        if (!get().hydrated) await get().loadFromDb(userId);
+
         const doSave = async (): Promise<boolean> => {
           const { routines, activeRoutineId, lastBackup } = get();
 
@@ -860,19 +877,25 @@ export const useRoutineStore = create<RoutineStore>()(
           const remoteIds = new Set(remoteCustom.map((r) => r.id));
           const hasUnsyncedLocal = localCustom.some((r) => !remoteIds.has(r.id));
 
+          // `hydrated` se marca aquí, antes del re-subido de abajo: si no, ese
+          // `saveToDb` volvería a entrar en `loadFromDb` y se llamarían en bucle.
           set({
             routines: mergedRoutines,
             // Conserva la selección local si existe; la remota solo restaura.
             activeRoutineId: get().activeRoutineId ?? container.activeRoutineId ?? null,
             lastBackup: container.lastBackup ?? get().lastBackup ?? null,
             loading: false,
+            hydrated: true,
           });
 
           // Re-sube las rutinas locales que la BD aún no conoce (guardado
           // previo fallido u offline).
           if (hasUnsyncedLocal) void get().saveToDb(userId);
         } else {
-          set({ loading: false });
+          // Sin fila todavía (usuario nuevo) también cuenta como leído: no hay
+          // nada remoto que se pueda pisar. Solo un error de red deja
+          // `hydrated` en false para que el siguiente respaldo reintente.
+          set({ loading: false, hydrated: !error ? true : get().hydrated });
         }
       },
 

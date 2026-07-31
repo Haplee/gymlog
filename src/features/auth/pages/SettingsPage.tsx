@@ -506,7 +506,7 @@ export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
                   ))}
                 </div>
 
-                <div className="dotted-separator mt-4" />
+                <div className="hairline-separator mt-4" />
                 <div className="pt-3.5 flex items-center justify-between gap-3">
                   <div>
                     <div className="text-base text-fg">{t('settings.rest_by_exercise')}</div>

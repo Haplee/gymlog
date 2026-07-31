@@ -32,7 +32,7 @@ export function SessionHistoryItem({
           centro y el dato duro a la derecha. Es el mismo esqueleto que el resto
           de listas de la app; sin el icono esta era la única cuyas filas
           empezaban con el texto pegado al borde. */}
-      <div className="dotted-separator flex items-center gap-3 py-3">
+      <div className="hairline-separator flex items-center gap-3 py-3">
         <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-surface-2 text-fg-muted">
           <CardioTypeIcon type={session.type} className="w-4 h-4" />
         </span>

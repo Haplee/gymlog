@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { m } from 'framer-motion';
 import { useVisibilityPausedInterval } from '@shared/hooks/useVisibilityPausedInterval';
+import { ConfirmDialog } from '@shared/components/ui';
 
 interface WorkoutSessionStatsProps {
   startedAt: string | null;
@@ -32,6 +33,7 @@ export function WorkoutSessionStats({
 }: WorkoutSessionStatsProps) {
   const { t } = useTranslation();
   const [elapsed, setElapsed] = useState(0);
+  const [confirmCancel, setConfirmCancel] = useState(false);
 
   const update = useCallback(() => {
     if (!startedAt) return;
@@ -65,9 +67,7 @@ export function WorkoutSessionStats({
           // como en la maqueta.
           <button
             type="button"
-            onClick={() => {
-              if (window.confirm(t('workout.cancel_confirm'))) onCancel();
-            }}
+            onClick={() => setConfirmCancel(true)}
             title={t('workout.cancel_session')}
             className="-my-2 flex min-h-11 items-center transition-opacity active:opacity-60"
           >
@@ -86,6 +86,19 @@ export function WorkoutSessionStats({
           {t('workout.sets')} <span className="tabular text-fg-muted">{totalSets}</span>
         </span>
       </div>
+
+      <ConfirmDialog
+        open={confirmCancel}
+        title={t('workout.cancel_confirm_title')}
+        description={t('workout.cancel_confirm_body', { count: totalSets })}
+        confirmLabel={t('workout.cancel_confirm_accept')}
+        cancelLabel={t('workout.cancel_confirm_keep')}
+        onConfirm={() => {
+          setConfirmCancel(false);
+          onCancel?.();
+        }}
+        onCancel={() => setConfirmCancel(false)}
+      />
     </m.div>
   );
 }

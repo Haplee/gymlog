@@ -62,7 +62,7 @@ const LoggedSetRow = memo(function LoggedSetRow({
       type="button"
       onClick={() => onSelect(i)}
       aria-label={`${label} ${i + 1}`}
-      className={`w-full dotted-separator flex min-h-11 items-center gap-3 py-3 text-left transition-opacity active:opacity-60 ${
+      className={`w-full hairline-separator flex min-h-11 items-center gap-3 py-3 text-left transition-opacity active:opacity-60 ${
         isPR ? 'border-l-2 border-l-accent pl-3' : ''
       }`}
     >

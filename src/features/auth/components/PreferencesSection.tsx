@@ -115,7 +115,7 @@ export function PreferencesSection() {
             de una SettingRow) y colapsado: con la paleta completa son
             diecisiete muestras, que abiertas empujaban el resto de ajustes
             fuera de pantalla. Cerrado enseña solo el color activo. */}
-        <div className="dotted-separator px-4 py-3.5">
+        <div className="hairline-separator px-4 py-3.5">
           <button
             type="button"
             onClick={() => setAccentOpen((v) => !v)}
@@ -185,7 +185,7 @@ export function PreferencesSection() {
             manifest al instalar la PWA. Va separado del acento porque
             cambiarlo reordena la pantalla de inicio del usuario. */}
         {isAppIconSupported() && (
-          <div className="dotted-separator px-4 py-3.5">
+          <div className="hairline-separator px-4 py-3.5">
             <button
               type="button"
               onClick={() => setIconOpen((v) => !v)}

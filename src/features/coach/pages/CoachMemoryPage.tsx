@@ -66,7 +66,7 @@ export function CoachMemoryPage() {
                 {items.map((fact) => (
                   <li
                     key={fact.id}
-                    className="flex items-center justify-between gap-3 px-4 py-3 dotted-separator"
+                    className="flex items-center justify-between gap-3 px-4 py-3 hairline-separator"
                   >
                     <span className="min-w-0 text-sm text-fg">{fact.fact}</span>
                     <button

@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router';
+import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useWorkoutStore } from '@features/workout/stores/workoutStore';
@@ -15,11 +16,11 @@ import {
   IconChart,
   IconGear,
   IconMenu,
-  IconUser,
+  IconFlame,
 } from '@shared/components/icons';
+import { calculateCurrentStreak } from '@features/stats/utils/kpiCalculations';
 import { AppDrawer } from '@app/components/AppDrawer';
 import { useOutboxStore } from '@shared/stores/outboxStore';
-import { useProfile } from '@features/auth/hooks/useProfile';
 import { useRestAlarm } from '@features/workout/hooks/useRestAlarm';
 import { RestAlarmBanner } from '@features/workout/components/RestAlarmBanner';
 import { ExerciseSearchSheet } from '@shared/components/ExerciseSearchSheet';
@@ -82,7 +83,6 @@ function useOnlineStatus() {
 
 export function Layout({ children }: LayoutProps) {
   const user = useAuthStore((s) => s.user);
-  const { displayName } = useProfile();
   const location = useLocation();
   const { t } = useTranslation();
   const isOnline = useOnlineStatus();
@@ -97,6 +97,17 @@ export function Layout({ children }: LayoutProps) {
   // Sincroniza con Health Connect/HealthKit al abrir la app (Layout envuelve
   // toda página autenticada), no solo al entrar en Ajustes > Wearables.
   useWearableSync();
+
+  // Racha para la cabecera. Comparte clave con la caché que ya alimenta
+  // Historial (y que `prefetchPageData` precalienta), así que no añade una
+  // petición propia salvo que nadie haya pedido los entrenos todavía.
+  const { data: streakWorkouts = [] } = useQuery({
+    queryKey: ['workouts', user?.id],
+    queryFn: () => fetchWorkouts(user?.id ?? ''),
+    enabled: !!user?.id,
+    staleTime: 1000 * 60 * 5,
+  });
+  const streak = calculateCurrentStreak(streakWorkouts);
 
   // Las cinco pestañas de la referencia visual (`public/screens/*.png`).
   // Historial ya no tiene pestaña propia: STATS ocupa su sitio y el acceso a
@@ -181,13 +192,20 @@ export function Layout({ children }: LayoutProps) {
             GYM<span className="text-accent">LOG</span>
           </span>
 
-          {user ? (
+          {/* Racha en vez del acceso a Ajustes: el engranaje ya vive en la barra
+              inferior, así que ese hueco puede llevar el dato que la app quiere
+              que mires. Sin racha viva no se enseña un cero desmotivador; se
+              deja el sitio reservado para que el wordmark no se descentre. */}
+          {user && streak > 0 ? (
             <Link
-              to="/settings"
-              aria-label={displayName}
-              className="flex h-11 w-11 items-center justify-center text-fg active:opacity-60"
+              to="/stats"
+              aria-label={t('nav.streak_days', { count: streak })}
+              className="flex h-11 min-w-11 items-center justify-center gap-1 px-2 text-fg active:opacity-60"
             >
-              <IconUser className="h-6 w-6" />
+              <IconFlame className="h-4 w-4 text-accent" />
+              <span className="font-display text-base font-bold tabular leading-none">
+                {streak}
+              </span>
             </Link>
           ) : (
             <span className="h-11 w-11" />

@@ -20,24 +20,28 @@ export function WeeklyStats({ sessions }: { sessions: CardioSession[] }) {
 
   return (
     <m.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mb-5">
-      <div className="grid grid-cols-3 gap-0 dotted-separator pb-4">
-        <div className="flex flex-col gap-1">
-          <span className="label-caps text-fg-subtle">{t('cardio.sessions')}</span>
-          <span className="text-data font-display font-bold text-fg tabular">
+      {/* `gap-0` juntaba las tres columnas hasta tocarse: a 390 px cada una son
+          ~120 px y las etiquetas en mayúsculas con tracking ancho se comían el
+          hueco de la vecina. Con separación y `min-w-0` cada celda se queda en
+          lo suyo, y las cifras no parten a mitad de número. */}
+      <div className="grid grid-cols-3 gap-3 hairline-separator pb-4">
+        <div className="flex min-w-0 flex-col gap-1">
+          <span className="label-caps truncate text-fg-subtle">{t('cardio.sessions')}</span>
+          <span className="text-data font-display font-bold text-fg tabular whitespace-nowrap">
             {weekSessions.length}
           </span>
         </div>
-        <div className="flex flex-col gap-1 items-center">
-          <span className="label-caps text-fg-subtle">{t('cardio.time')}</span>
-          <span className="text-data font-display font-bold text-fg tabular">
+        <div className="flex min-w-0 flex-col items-center gap-1">
+          <span className="label-caps truncate text-fg-subtle">{t('cardio.time')}</span>
+          <span className="text-data font-display font-bold text-fg tabular whitespace-nowrap">
             {formatDuration(totalTime)}
           </span>
         </div>
-        <div className="flex flex-col gap-1 items-end">
+        <div className="flex min-w-0 flex-col items-end gap-1">
           {totalDist > 0 ? (
             <>
-              <span className="label-caps text-fg-subtle">{t('cardio.distance')}</span>
-              <span className="text-data font-display font-bold text-fg tabular">
+              <span className="label-caps truncate text-fg-subtle">{t('cardio.distance')}</span>
+              <span className="text-data font-display font-bold text-fg tabular whitespace-nowrap">
                 {totalDist.toLocaleString(undefined, {
                   minimumFractionDigits: 1,
                   maximumFractionDigits: 1,
@@ -47,13 +51,17 @@ export function WeeklyStats({ sessions }: { sessions: CardioSession[] }) {
             </>
           ) : totalCals > 0 ? (
             <>
-              <span className="label-caps text-fg-subtle">kcal</span>
-              <span className="text-data font-display font-bold text-fg tabular">{totalCals}</span>
+              <span className="label-caps truncate text-fg-subtle">kcal</span>
+              <span className="text-data font-display font-bold text-fg tabular whitespace-nowrap">
+                {totalCals}
+              </span>
             </>
           ) : (
             <>
-              <span className="label-caps text-fg-subtle">km</span>
-              <span className="text-data font-display font-bold text-fg tabular">—</span>
+              <span className="label-caps truncate text-fg-subtle">km</span>
+              <span className="text-data font-display font-bold text-fg tabular whitespace-nowrap">
+                —
+              </span>
             </>
           )}
         </div>

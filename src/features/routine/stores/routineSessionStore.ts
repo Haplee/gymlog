@@ -65,6 +65,23 @@ const makeSet = (reps = '', weight = ''): SessionSet => ({
   weight,
 });
 
+/**
+ * Repeticiones objetivo de la plantilla como valor inicial de la fila.
+ *
+ * La rutina ya dice cuántas repeticiones toca, así que empezar con las filas
+ * en blanco obligaba a teclear lo mismo una vez por serie: en un 4×5 son cuatro
+ * cincos a mano antes de poder registrar nada.
+ *
+ * Se coge el primer número del texto porque el campo es libre y admite desde
+ * «5» hasta «8-10», «10 por pierna» o «30-45s». En un rango se propone el
+ * extremo bajo: es el valor que el usuario baja o sube, pero nunca uno que no
+ * haya hecho. Si no hay número (por ejemplo «al fallo») se deja vacío.
+ */
+function targetRepsValue(reps?: string): string {
+  const match = reps?.trim().match(/^\d+/);
+  return match ? match[0] : '';
+}
+
 /** Una serie cuenta si tiene reps > 0 y un peso numérico >= 0 (0 = peso corporal). */
 function isValidSet(s: SessionSet): boolean {
   const reps = Number(s.reps);
@@ -115,8 +132,11 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
             name: ex.name,
             targetSets: ex.sets,
             targetReps: ex.reps,
-            // Una fila vacía por serie objetivo, para que el usuario solo teclee.
-            sets: Array.from({ length: Math.max(1, ex.sets ?? 1) }, () => makeSet()),
+            // Una fila por serie objetivo, ya con las repeticiones puestas: así
+            // registrar la rutina tal cual sale es solo escribir los pesos.
+            sets: Array.from({ length: Math.max(1, ex.sets ?? 1) }, () =>
+              makeSet(targetRepsValue(ex.reps)),
+            ),
           })),
         });
       },

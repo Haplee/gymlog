@@ -161,7 +161,7 @@ export function AuthPage() {
           <p className="label-caps text-accent mt-2">{t('auth.subtitle')}</p>
         </m.div>
 
-        <m.div variants={sweep} className="dotted-separator my-6 origin-left" />
+        <m.div variants={sweep} className="hairline-separator my-6 origin-left" />
 
         <m.form
           variants={stagger}
@@ -308,9 +308,9 @@ export function AuthPage() {
           </m.button>
 
           <m.div variants={rise} className="relative flex items-center py-0.5">
-            <div className="flex-grow dotted-separator" />
+            <div className="flex-grow hairline-separator" />
             <span className="mx-4 label-caps text-fg-subtle">o</span>
-            <div className="flex-grow dotted-separator" />
+            <div className="flex-grow hairline-separator" />
           </m.div>
 
           <m.button

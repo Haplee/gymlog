@@ -290,7 +290,7 @@ export function RoutinePage() {
           </div>
 
           <div className="rounded-card p-3 bg-surface border border-line">
-            <div className="dotted-separator flex justify-between items-center pb-2 mb-3">
+            <div className="hairline-separator flex justify-between items-center pb-2 mb-3">
               <div className="label-caps text-fg-subtle">{dayLabels[selectedDay]}</div>
               {activeRoutine?.isCustom && (
                 <button
@@ -320,7 +320,7 @@ export function RoutinePage() {
                     key={i}
                     className={`flex items-center justify-between px-1 py-3.5 ${
                       i < activeRoutine.days[selectedDay].exercises.length - 1
-                        ? 'dotted-separator'
+                        ? 'hairline-separator'
                         : ''
                     }`}
                   >
