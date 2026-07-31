@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=ffd93d&height=120&section=header&text=GymLog%20v5.3&fontSize=50&fontColor=0a0a0b&animation=fadeIn" alt="Header" />
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=ffd93d&height=120&section=header&text=GymLog%20v5.4&fontSize=50&fontColor=0a0a0b&animation=fadeIn" alt="Header" />
 
   <img src="./public/gimnasia.svg" alt="GymLog" width="130" />
 
@@ -506,7 +506,7 @@ Descarga directa de la última APK firmada: **[gymlog.dpdns.org/download/gymlog.
 
 El registro completo y automático está en **[CHANGELOG.md](./CHANGELOG.md)**. Resumen de lo reciente:
 
-### v5.3 — Rutinas que no se pierden
+### v5.4 — Rutinas que no se pierden
 
 - **El respaldo de rutinas se borraba solo**: se subía el estado local a la nube sin haberla leído antes, así que el primer respaldo de un dispositivo recién instalado pisaba con una lista vacía lo que hubiera guardado. Ahora leer es requisito para escribir
 - **Realizar una rutina** ya no empieza con las filas en blanco: las repeticiones vienen puestas desde la plantilla, así que registrar un 4×5 tal cual sale es solo escribir los pesos
@@ -567,6 +567,6 @@ El registro completo y automático está en **[CHANGELOG.md](./CHANGELOG.md)**. 
 <a href="https://www.instagram.com/franvidalmateo"><img src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white" /></a>
 
 <br><br>
-<b>GymLog v5.3.0</b> — <a href="https://github.com/Haplee">Francisco Vidal Mateo</a>
+<b>GymLog v5.4.0</b> — <a href="https://github.com/Haplee">Francisco Vidal Mateo</a>
 
 </div>
