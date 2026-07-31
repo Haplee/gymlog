@@ -2,6 +2,66 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.3.0](https://github.com/Haplee/gymlog/compare/v5.2.0...v5.3.0) (2026-07-31)
+
+Rediseño de Entrenar, Cardio y Stats para que la app coincida con las capturas
+del README: prometían una interfaz que no existía.
+
+### Features
+
+- **ui:** cabecera con hamburguesa y wordmark centrado, y barra inferior plana con rótulos
+- **ui:** cajón de navegación (`AppDrawer`) con búsqueda, notificaciones, historial, biblioteca, medidas, entrenador, wearables y guía
+- **workout:** editor de serie a tamaño grande (KG/REPS con subrayado y botón de confirmar) y series anotadas como filas de una línea
+- **workout:** el selector de ejercicio se pliega a una línea cuando ya hay uno elegido
+- **workout:** temporizador de descanso como píldora flotante con barra de progreso
+- **cardio:** tipos en fila con scroll, visibles durante la sesión, y cronómetro con décimas
+- **stats:** portada RENDIMIENTO con racha, volumen y tira de volumen diario de la semana
+- **stats:** pestaña propia en la barra inferior, en el sitio que ocupaba Historial
+- **workout:** distintivo del tipo de carga (externa / peso corporal / lastre) en la biblioteca
+- **coach:** acceso al entrenador desde Inicio, solo con el entrenador encendido
+- **routine:** plantilla «Balonmano + Fuerza», cuatro días construidos sobre el histórico real (ver `docs/RUTINA_BALONMANO_FUERZA.md`)
+- **tools:** analizador de vídeo `tools/lift-analysis` — trayectoria de barra, conteo de repeticiones y velocidad (VBT), en fase de prototipo local
+
+### Bug Fixes
+
+- **workout:** el titular desaparecía sin ejercicio elegido y «SERIE n» se quedaba solo a la izquierda
+- **workout:** la valoración de sesión ocupaba la pantalla en todos los entrenos; ahora se abre a petición
+- **cardio:** los rótulos largos de tipo se tocaban entre sí bajo las baldosas de 56 px
+- **stats:** la tira de volumen semanal dejaba un hueco de 112 px cuando no había datos
+- **stats:** racha y volumen salían dos veces, en la portada y como tarjetas
+- **ui:** el velo del menú teñía el fondo con el color del lienzo y en tema claro parecía que la app se decoloraba
+- **routine:** las plantillas nuevas no llegaban a quien ya tenía la app instalada — el almacenamiento local sustituía la lista del código por la del día de la instalación
+- **settings:** las filas de la sección de IA no llevaban icono y arrancaban a distinta altura que las de su alrededor
+- **cardio:** las sesiones del historial eran las únicas filas de la app sin icono a la izquierda
+
+### Refactors
+
+- ninguna página pasa ya de las 800 líneas: se extraen `ExercisePicker`, `WorkoutActionBar`, `CardioStatsSection`, `ProgressionSection`, `ExerciseComparison`, `OneRmCalculator`, `EditWorkoutModal`, `HistoryFilters` y `PreferencesSection`
+- **i18n:** los literales que quedaban en JSX de `RestTimer` y `StatsPage` pasan a i18next
+
+### Tests
+
+- **e2e:** flujo con sesión iniciada (barra, cajón, anotar y guardar una serie), que se salta sin `E2E_EMAIL`/`E2E_PASSWORD`
+
+## [5.2.0](https://github.com/Haplee/gymlog/compare/v5.1.1...v5.2.0) (2026-07-30)
+
+### Features
+
+- **deps:** subir a react-router 8 y cubrir la tabla de rutas entera ([76a8ed2](https://github.com/Haplee/gymlog/commit/76a8ed2))
+
+### Bug Fixes
+
+- **android:** el APK de release ya no sale con el sufijo .fitbody ([9d0e243](https://github.com/Haplee/gymlog/commit/9d0e243))
+- **ci:** la suite se caía sin variables de entorno y el historial de migraciones no cuadraba ([77bd0e9](https://github.com/Haplee/gymlog/commit/77bd0e9))
+
+### Performance
+
+- reducir CPU, memoria y batería en el WebView ([c223889](https://github.com/Haplee/gymlog/commit/c223889))
+
+### Chores
+
+- cerrar tres vulnerabilidades altas: postcss, fast-uri y sharp ([74ceacf](https://github.com/Haplee/gymlog/commit/74ceacf))
+
 ### [5.1.1](https://github.com/Haplee/gymlog/compare/v5.1.0...v5.1.1) (2026-07-29)
 
 ### Bug Fixes

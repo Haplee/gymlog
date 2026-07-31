@@ -1,6 +1,6 @@
 # Plan — Igualar la app a las capturas del README
 
-> STATUS: EN CURSO
+> STATUS: FASES 1-5 IMPLEMENTADAS (falta verificación en dispositivo Android)
 > Objetivo: que Workout, Cardio y Stats se vean como `public/screens/*.png`, sin
 > perder funcionalidad. Motivo: las capturas del README prometen una interfaz que
 > la app no tiene, y eso engaña a quien la descarga.
@@ -96,6 +96,22 @@ rejilla de puntos · MAPA DE ACTIVIDAD en cuadrícula.
 
 `npm run lint && npm run type-check && npm run test` + revisión en los **dos
 temas** a ~390 px. Pendiente: verificación en dispositivo Android.
+
+## Desviaciones respecto al mockup (decididas, no olvidos)
+
+1. **Píldora REANUDAR** (workout): en la maqueta pone REANUDAR, pero la acción
+   real de una sesión en curso es cancelarla. Se copia la forma, no la etiqueta,
+   y va en color de error: rotular de otro modo un botón destructivo engaña más
+   que una palabra distinta. La app no tiene pausa de entrenamiento (regla C).
+2. **Volumen y series** siguen visibles bajo el cronómetro de sesión, y los
+   récords por banda bajo los chips: son datos reales (regla B).
+3. **Ejercicios de la rutina de hoy** siguen como chips bajo el titular
+   «Rutina · Día», en tono apagado.
+4. **8 tipos de cardio** en fila con scroll horizontal; la maqueta enseña 5.
+5. **Iconos rellenos** en la barra inferior salvo `IconPulse` (una onda no
+   existe como silueta). Pendiente de decisión del usuario.
+6. **KPIs y gráficos existentes de Stats** se mantienen debajo de la portada
+   nueva; la maqueta solo dibuja la parte de arriba.
 
 ## Riesgos
 
