@@ -583,6 +583,129 @@ export const PREDEFINED_ROUTINES: Routine[] = [
       sunday: { name: 'Descanso', exercises: [] },
     },
   },
+  {
+    id: 'franvi',
+    name: 'Rutina de FranVi',
+    description:
+      'Cinco días pensados para un pivote: fuerza en los básicos, un día entero de bisagra de cadera y olímpicos programados a 2 repeticiones. Deja el fin de semana libre para partido.',
+    isCustom: false,
+    createdAt: new Date().toISOString(),
+    days: {
+      // El día de bisagra va suelto a mitad de semana en vez de repartido como
+      // accesorio. Es el patrón que sostiene el bloqueo y el contacto del
+      // pivote, y como accesorio al final de una sesión nunca recibe carga real.
+      monday: {
+        name: 'Inferior — Fuerza',
+        exercises: [
+          {
+            name: 'Sentadilla',
+            sets: 4,
+            reps: '5',
+            notes: 'Empieza al 72% y sube un 2,5% por semana. Deja 2 repeticiones en recámara.',
+          },
+          {
+            name: 'Sentadilla búlgara',
+            sets: 3,
+            reps: '8 por pierna',
+            notes: 'Una pierna cada vez: el balonmano se juega a una pierna.',
+          },
+          {
+            name: 'Gemelos de pie',
+            sets: 4,
+            reps: '12',
+            notes: 'El tobillo aguanta cada frenada y cada apoyo del salto.',
+          },
+          {
+            name: 'Press Pallof',
+            sets: 3,
+            reps: '12 por lado',
+            notes: 'Antirrotación: el core sujeta el lanzamiento, no lo genera.',
+          },
+        ],
+      },
+      tuesday: {
+        name: 'Superior — Empuje y hombro sano',
+        exercises: [
+          { name: 'Press banca', sets: 4, reps: '5', notes: 'Misma progresión que la sentadilla.' },
+          { name: 'Press militar', sets: 4, reps: '6' },
+          {
+            name: 'Fondos en paralelas',
+            sets: 3,
+            reps: '8',
+            notes: 'Con lastre cuando salgan limpias. Para si el hombro avisa.',
+          },
+          {
+            name: 'Rotación externa con goma',
+            sets: 3,
+            reps: '15 por brazo',
+            notes: 'Manguito rotador. Poco peso, control total.',
+          },
+        ],
+      },
+      wednesday: {
+        name: 'Bisagra — Cadena posterior',
+        exercises: [
+          {
+            name: 'Peso muerto',
+            sets: 4,
+            reps: '5',
+            notes:
+              'Deja 3 repeticiones en recámara. Si vienes de no entrenar el patrón, las dos primeras semanas haz peso muerto rumano ligero y céntrate en la técnica.',
+          },
+          { name: 'Hip thrust', sets: 3, reps: '10' },
+          { name: 'Curl femoral tumbado', sets: 3, reps: '12' },
+          { name: 'Rueda abdominal', sets: 3, reps: '8' },
+        ],
+      },
+      thursday: {
+        name: 'Tirón + hombro',
+        exercises: [
+          { name: 'Dominadas', sets: 5, reps: '5', notes: 'Con lastre cuando salgan limpias.' },
+          { name: 'Remo con barra', sets: 4, reps: '6' },
+          {
+            name: 'Face pull',
+            sets: 3,
+            reps: '15',
+            notes: 'Innegociable: el hombro que lanza necesita el trabajo de detrás.',
+          },
+          {
+            name: 'Curl bíceps',
+            sets: 3,
+            reps: '10',
+            notes: 'Único día de bíceps de la semana. Más no aporta ni fuerza ni lanzamiento.',
+          },
+        ],
+      },
+      friday: {
+        name: 'Potencia y salto',
+        exercises: [
+          {
+            name: 'Power Clean',
+            sets: 5,
+            reps: '2',
+            notes:
+              'Máximo 3 repeticiones por serie. Por encima de ahí deja de entrenar potencia: la barra se frena y solo queda el riesgo.',
+          },
+          {
+            name: 'Lanzamiento de balón medicinal',
+            sets: 4,
+            reps: '5 sobre cabeza + 5 por lado',
+            notes: 'Pies plantados, máxima intención.',
+          },
+          {
+            name: 'Salto al cajón',
+            sets: 4,
+            reps: '5',
+            notes:
+              'Baja andando. Si la rodilla molesta con el impacto, empieza solo con aterrizajes desde 20 cm aguantando 2 segundos.',
+          },
+          { name: 'Leñador en polea', sets: 3, reps: '10 por lado' },
+        ],
+      },
+      saturday: { name: 'Partido o descanso', exercises: [] },
+      sunday: { name: 'Descanso', exercises: [] },
+    },
+  },
 ];
 
 const defaultRoutines: Routine[] = [...PREDEFINED_ROUTINES];
