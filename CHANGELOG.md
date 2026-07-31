@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.4.0](https://github.com/Haplee/gymlog/compare/v5.3.0...v5.4.0) (2026-07-31)
+
+### Features
+
+- **routine:** añadir la plantilla "Rutina de FranVi" ([9b9c036](https://github.com/Haplee/gymlog/commit/9b9c0364526af05f2f6ba250f11f5f7d3a8d3848))
+
+### Bug Fixes
+
+- **deps:** cerrar las 4 vulnerabilidades sin degradar exceljs ([54224df](https://github.com/Haplee/gymlog/commit/54224df0924cdbd12c31425cf9476cd10a7f14e2))
+- **rutinas,ui:** evitar el borrado del respaldo y pulir varias pantallas ([974680c](https://github.com/Haplee/gymlog/commit/974680c8c637cc2f62fb126230decb50d8fb1afd))
+- **vercel:** que el enlace de descarga de la APK deje de servir HTML ([d735f1d](https://github.com/Haplee/gymlog/commit/d735f1d835ecacb8fcf2b2c72a50e50a2e1ca0a0))
+
 ## [5.3.0](https://github.com/Haplee/gymlog/compare/v5.2.0...v5.3.0) (2026-07-31)
 
 Rediseño de Entrenar, Cardio y Stats para que la app coincida con las capturas
