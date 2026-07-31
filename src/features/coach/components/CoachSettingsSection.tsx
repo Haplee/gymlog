@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { ChevronRight } from 'lucide-react';
+import { Brain, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
-import { SectionHeader, SettingRow, Toggle } from '@shared/components/ui';
+import { NavRow, SectionHeader, SettingRow, Toggle } from '@shared/components/ui';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useCoachStore } from '../stores/coachStore';
 import { CoachConsentModal } from './CoachConsentModal';
@@ -90,27 +90,19 @@ export function CoachSettingsSection() {
           />
           {coachEnabled && (
             <>
-              <button
-                type="button"
+              <NavRow
+                icon={<Sparkles className="w-4 h-4" />}
+                label={t('coach.settings.open')}
+                desc={t('coach.page_subtitle')}
                 onClick={() => navigate('/coach')}
-                className="w-full flex items-center justify-between gap-3 px-4 py-3.5 text-left active:bg-hover dotted-separator"
-              >
-                <span className="text-base text-fg">{t('coach.settings.open')}</span>
-                <ChevronRight className="w-4 h-4 flex-shrink-0 text-fg-subtle" />
-              </button>
-              <button
-                type="button"
+                divider
+              />
+              <NavRow
+                icon={<Brain className="w-4 h-4" />}
+                label={t('coach.settings.memory')}
+                desc={t('coach.settings.memory_desc')}
                 onClick={() => navigate('/coach/memory')}
-                className="w-full flex items-center justify-between gap-3 px-4 py-3.5 text-left active:bg-hover"
-              >
-                <span className="min-w-0">
-                  <span className="block text-base text-fg">{t('coach.settings.memory')}</span>
-                  <span className="block text-xs mt-0.5 text-fg-subtle">
-                    {t('coach.settings.memory_desc')}
-                  </span>
-                </span>
-                <ChevronRight className="w-4 h-4 flex-shrink-0 text-fg-subtle" />
-              </button>
+              />
             </>
           )}
         </div>
