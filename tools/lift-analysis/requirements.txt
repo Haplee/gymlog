@@ -1,0 +1,5 @@
+# Fase 1 del análisis de vídeo (ver docs/LIFT_ANALYSIS_PLAN.md).
+# opencv-python, numpy y torch llegan arrastradas por ultralytics/supervision.
+ultralytics>=8.3
+supervision>=0.25
+scipy>=1.14

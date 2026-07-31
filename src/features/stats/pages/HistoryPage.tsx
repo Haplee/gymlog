@@ -1,10 +1,11 @@
 import { ExerciseRow, WorkoutMeta } from '@features/stats/components/HistoryRows';
+import { EditWorkoutModal } from '@features/stats/components/EditWorkoutModal';
+import { HistoryFilters } from '@features/stats/components/HistoryFilters';
 import { buildTemplateFromWorkouts } from '@features/stats/utils/historyHelpers';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { m } from 'framer-motion';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useWorkoutStore } from '@features/workout/stores/workoutStore';
 import { useRoutineStore } from '@features/routine/stores/routineStore';
@@ -26,122 +27,13 @@ import { HEALTH_SESSIONS_KEY, fetchHealthSessions } from '@features/wearables/ap
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useHistoryTransfer } from '@features/stats/hooks/useHistoryTransfer';
-import {
-  Trash2,
-  Repeat,
-  Share2,
-  BarChart2,
-  BarChart3,
-  Pencil,
-  BookmarkPlus,
-  HeartPulse,
-} from 'lucide-react';
-import { devError } from '@shared/lib/devtools';
+import { Trash2, Repeat, Share2, Pencil, BookmarkPlus, HeartPulse } from 'lucide-react';
 
 interface GroupedWorkout {
   date: string;
   workouts: WorkoutWithSets[];
   totalSets: number;
   totalVolume: number;
-}
-
-interface EditRow {
-  id: string;
-  exercise: string;
-  reps: string;
-  weight: string;
-}
-
-function EditWorkoutModal({
-  workout,
-  onClose,
-  onSaved,
-}: {
-  workout: WorkoutWithSets;
-  onClose: () => void;
-  onSaved: () => void;
-}) {
-  const { t } = useTranslation();
-  const [rows, setRows] = useState<EditRow[]>(() =>
-    [...workout.sets]
-      .sort((a, b) => a.set_num - b.set_num)
-      .map((s) => ({
-        id: s.id,
-        exercise: s.exercise?.name ?? '',
-        reps: String(s.reps),
-        weight: String(s.weight),
-      })),
-  );
-  const [saving, setSaving] = useState(false);
-
-  const update = (id: string, field: 'reps' | 'weight', val: string) =>
-    setRows((r) => r.map((x) => (x.id === id ? { ...x, [field]: val } : x)));
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      for (const row of rows) {
-        const reps = parseInt(row.reps, 10);
-        const weight = parseFloat(row.weight.replace(',', '.'));
-        if (!Number.isFinite(reps) || reps <= 0 || !Number.isFinite(weight) || weight < 0) continue;
-        const { error } = await supabase
-          .from('workout_sets')
-          .update({ reps, weight })
-          .eq('id', row.id);
-        if (error) throw error;
-      }
-      toast.success(t('history.edit_saved'));
-      onSaved();
-    } catch (err) {
-      devError('Error editing workout', err);
-      toast.error(t('history.edit_error'));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <Modal
-      open
-      onClose={onClose}
-      title={t('history.edit_title')}
-      icon={<Pencil className="w-5 h-5 text-accent" />}
-    >
-      <div className="space-y-2 max-h-[50vh] overflow-y-auto mb-4">
-        {rows.map((row, i) => (
-          <div key={row.id} className="flex items-center gap-2">
-            <span className="w-5 text-xs font-mono tabular-nums text-fg-subtle">{i + 1}</span>
-            <span className="flex-1 text-sm text-fg truncate">{row.exercise}</span>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={row.reps}
-              onChange={(e) => update(row.id, 'reps', e.target.value.replace(/[^\d]/g, ''))}
-              aria-label={`${t('workout.reps')} ${i + 1}`}
-              className="w-12 rounded-card text-sm font-mono tabular-nums px-2 py-1.5 text-center outline-none bg-surface-2 border border-line text-fg"
-            />
-            <span className="text-xs text-fg-subtle">×</span>
-            <input
-              type="text"
-              inputMode="decimal"
-              value={row.weight}
-              onChange={(e) => update(row.id, 'weight', e.target.value.replace(/[^\d.,]/g, ''))}
-              aria-label={`${t('workout.weight')} ${i + 1}`}
-              className="w-16 rounded-card text-sm font-mono tabular-nums px-2 py-1.5 text-center outline-none bg-surface-2 border border-line text-fg"
-            />
-          </div>
-        ))}
-      </div>
-      <div className="flex gap-3">
-        <Button variant="secondary" onClick={onClose} className="flex-1">
-          {t('common.cancel')}
-        </Button>
-        <Button variant="primary" onClick={handleSave} disabled={saving} className="flex-1">
-          {t('common.save')}
-        </Button>
-      </div>
-    </Modal>
-  );
 }
 
 export function HistoryPage() {
@@ -347,124 +239,21 @@ export function HistoryPage() {
 
   return (
     <Layout>
-      {/* Barra de filtros: scrollea con el contenido (no fija) */}
-      <div className="mb-3 space-y-2">
-        {/* Segmented control de vista — píldora deslizante */}
-        <div
-          role="tablist"
-          aria-label="Vista del historial"
-          className="flex p-1 rounded-sm bg-surface border border-line"
-        >
-          {(
-            [
-              { id: 'all', label: t('history.view_all') },
-              { id: 'workouts', label: t('history.workouts_view') },
-              { id: 'sets', label: t('history.sets_view') },
-              { id: 'cardio', label: 'Cardio' },
-            ] as const
-          ).map((v) => {
-            const active = view === v.id;
-            return (
-              <button
-                key={v.id}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                onClick={() => setView(v.id)}
-                className={`relative flex-1 py-2.5 text-xs font-semibold rounded-sm transition-colors ${
-                  active ? 'text-accent-fg' : 'text-fg-muted active:text-fg'
-                }`}
-              >
-                {active && (
-                  <m.div
-                    layoutId="historyViewPill"
-                    className="absolute inset-0 rounded-sm bg-accent shadow-btn-accent"
-                    transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                  />
-                )}
-                <span className="relative">{v.label}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="flex gap-2 flex-wrap">
-          <button
-            type="button"
-            onClick={() => navigate('/stats')}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-pill font-semibold text-sm transition-all hover:scale-[1.02] active:scale-[0.98] bg-accent text-accent-fg"
-          >
-            <BarChart3 className="w-4 h-4" />
-            {t('stats.title')}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => navigate('/user-stats')}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-pill font-semibold text-sm transition-all hover:scale-[1.02] active:scale-[0.98] bg-surface-2 text-accent"
-          >
-            <BarChart2 className="w-4 h-4" />
-            {t('history.my_stats')}
-          </button>
-
-          {view === 'sets' && (
-            <>
-              <input
-                type="search"
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                placeholder={t('history.search_placeholder')}
-                aria-label={t('history.search_placeholder')}
-                className="flex-1 min-w-[10rem] bg-surface border border-line-strong rounded-card text-fg text-base p-2 outline-none"
-              />
-              <select
-                value={filterExercise}
-                onChange={(e) => setFilterExercise(e.target.value)}
-                className="bg-surface border border-line-strong rounded-card text-fg-muted text-base p-2 cursor-pointer transition-all hover:scale-[1.02]"
-              >
-                <option value="">{t('history.filter_all')}</option>
-                {exercises.map((ex) => (
-                  <option key={ex} value={ex}>
-                    {ex}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={exportToExcel}
-                className="bg-surface border border-line-strong rounded-card text-accent text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
-              >
-                {t('history.export_btn')}
-              </button>
-              <button
-                type="button"
-                onClick={exportToJson}
-                className="bg-surface border border-line-strong rounded-card text-accent text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
-              >
-                {t('history.export_json')}
-              </button>
-              <label className="bg-surface border border-line-strong rounded-card text-fg-muted text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]">
-                {t('history.import_btn')}
-                <input
-                  type="file"
-                  accept=".csv,.txt,.xlsx"
-                  onChange={importFromCsv}
-                  className="hidden"
-                />
-              </label>
-              <label className="bg-surface border border-line-strong rounded-card text-fg-muted text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]">
-                {t('history.import_json')}
-                <input
-                  type="file"
-                  accept=".json,application/json"
-                  onChange={importFromJson}
-                  className="hidden"
-                />
-              </label>
-            </>
-          )}
-        </div>
-      </div>
+      <HistoryFilters
+        view={view}
+        onView={setView}
+        searchText={searchText}
+        onSearchText={setSearchText}
+        filterExercise={filterExercise}
+        onFilterExercise={setFilterExercise}
+        exercises={exercises}
+        onOpenStats={() => navigate('/stats')}
+        onOpenUserStats={() => navigate('/user-stats')}
+        exportToExcel={exportToExcel}
+        exportToJson={exportToJson}
+        importFromCsv={importFromCsv}
+        importFromJson={importFromJson}
+      />
 
       {view === 'all' ? (
         <div className="space-y-4">

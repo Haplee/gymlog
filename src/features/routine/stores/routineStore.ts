@@ -445,6 +445,144 @@ export const PREDEFINED_ROUTINES: Routine[] = [
       sunday: { name: 'Descanso', exercises: [] },
     },
   },
+  {
+    id: 'balonmano-fuerza',
+    name: 'Balonmano + Fuerza',
+    description:
+      'Cuatro días (L-M-J-V) que compaginan fuerza en los básicos con potencia de lanzamiento, salto y cambio de dirección. Deja el fin de semana libre para partido.',
+    isCustom: false,
+    createdAt: new Date().toISOString(),
+    days: {
+      // Lunes y jueves reparten el tren inferior en dominante de rodilla y
+      // dominante de cadera. Así el peso muerto y la sentadilla pesada no caen
+      // el mismo día y cada uno llega descansado.
+      monday: {
+        name: 'Inferior — Fuerza (rodilla)',
+        exercises: [
+          {
+            name: 'Power Clean',
+            sets: 5,
+            reps: '3',
+            notes: 'Lo primero del día, en fresco. Velocidad, no fallo: para si la barra se frena.',
+          },
+          { name: 'Sentadilla', sets: 4, reps: '5', notes: 'Deja 2 repeticiones en recámara.' },
+          {
+            name: 'Zancada caminando',
+            sets: 3,
+            reps: '10 por pierna',
+            notes: 'Una pierna cada vez: el balonmano se juega a una pierna.',
+          },
+          {
+            name: 'Gemelos de pie',
+            sets: 4,
+            reps: '12',
+            notes: 'El tobillo aguanta cada frenada y cada apoyo del salto.',
+          },
+          {
+            name: 'Plancha lateral',
+            sets: 3,
+            reps: '30-45s por lado',
+            notes: 'Antirrotación: el core sujeta el lanzamiento, no lo genera.',
+          },
+        ],
+      },
+      tuesday: {
+        name: 'Superior — Fuerza y hombro sano',
+        exercises: [
+          {
+            name: 'Press banca',
+            sets: 4,
+            reps: '5',
+            notes: 'Progresión de carga semana a semana.',
+          },
+          {
+            name: 'Dominadas',
+            sets: 4,
+            reps: '6',
+            notes: 'Con lastre cuando salgan limpias.',
+          },
+          { name: 'Remo con barra', sets: 4, reps: '8' },
+          { name: 'Press militar', sets: 3, reps: '8' },
+          {
+            name: 'Face pull',
+            sets: 3,
+            reps: '15',
+            notes: 'Innegociable: el hombro que lanza necesita el trabajo de detrás.',
+          },
+          {
+            name: 'Rotación externa con goma',
+            sets: 3,
+            reps: '15 por brazo',
+            notes: 'Manguito rotador. Poco peso, control total.',
+          },
+        ],
+      },
+      wednesday: { name: 'Descanso', exercises: [] },
+      thursday: {
+        name: 'Potencia — Salto y cadera',
+        exercises: [
+          {
+            name: 'Power Snatch',
+            sets: 5,
+            reps: '2',
+            notes: 'Carga ligera y rápida. Es un día de velocidad, no de récords.',
+          },
+          {
+            name: 'Salto al cajón',
+            sets: 4,
+            reps: '4',
+            notes: 'Baja andando, no saltando: el impacto no aporta nada aquí.',
+          },
+          {
+            name: 'Saltos skater',
+            sets: 3,
+            reps: '6 por lado',
+            notes: 'Aterriza y aguanta un segundo. Aquí se entrena la rodilla que frena.',
+          },
+          {
+            name: 'Peso muerto',
+            sets: 4,
+            reps: '5',
+            notes: 'La cadena posterior es el motor del salto y del sprint.',
+          },
+          {
+            name: 'Peso muerto rumano a una pierna',
+            sets: 3,
+            reps: '8 por pierna',
+            notes: 'Isquios y equilibrio. Baja despacio.',
+          },
+        ],
+      },
+      friday: {
+        name: 'Superior — Volumen y lanzamiento',
+        exercises: [
+          {
+            name: 'Press banca inclinado',
+            sets: 4,
+            reps: '8',
+            notes: 'Sube rápido: el gesto se parece al lanzamiento.',
+          },
+          { name: 'Jalón al pecho', sets: 4, reps: '10' },
+          {
+            name: 'Lanzamiento de balón medicinal',
+            sets: 4,
+            reps: '6 por lado',
+            notes: 'De rotación, con los pies plantados. Tan fuerte como puedas.',
+          },
+          { name: 'Curl bíceps', sets: 3, reps: '12' },
+          { name: 'Extensión tríceps', sets: 3, reps: '12' },
+          {
+            name: 'Oblicuos',
+            sets: 3,
+            reps: '15 por lado',
+            notes: 'Rotación con carga, controlando la vuelta.',
+          },
+        ],
+      },
+      saturday: { name: 'Partido o descanso', exercises: [] },
+      sunday: { name: 'Descanso', exercises: [] },
+    },
+  },
 ];
 
 const defaultRoutines: Routine[] = [...PREDEFINED_ROUTINES];
@@ -640,6 +778,41 @@ export const useRoutineStore = create<RoutineStore>()(
         activeRoutineId: state.activeRoutineId,
         lastBackup: state.lastBackup,
       }),
+      /**
+       * Las plantillas se vuelven a inyectar en cada arranque en vez de salir
+       * del almacenamiento.
+       *
+       * Por defecto, `persist` sustituye el estado inicial por el guardado, y
+       * el guardado incluye la lista de plantillas tal y como estaba el día que
+       * se instaló la app. Resultado: una plantilla nueva solo la veía quien
+       * instalase de cero, y quien ya usaba GymLog no la recibía nunca.
+       *
+       * Del disco solo se conservan las rutinas propias. Es seguro porque las
+       * plantillas no se pueden editar (editar clona) ni borrar (el botón solo
+       * sale en las propias), así que aquí no se pisa nada del usuario.
+       */
+      merge: (persisted, current) => {
+        const saved = (persisted ?? {}) as Partial<RoutineStore>;
+        const custom = (saved.routines ?? []).filter((r) => r.isCustom);
+        return {
+          ...current,
+          ...saved,
+          routines: [...PREDEFINED_ROUTINES, ...custom],
+        };
+      },
+      /**
+       * Las plantillas se vuelven a inyectar en cada arranque en vez de salir
+       * del almacenamiento.
+       *
+       * Por defecto, `persist` sustituye el estado inicial por el guardado, y
+       * el guardado incluye la lista de plantillas tal y como estaba el día que
+       * se instaló la app. Resultado: una plantilla nueva solo la veía quien
+       * instalase de cero, y quien ya usaba GymLog no la recibía nunca.
+       *
+       * Del disco solo se conservan las rutinas propias. Es seguro porque las
+       * plantillas no se pueden editar (editar clona) ni borrar (el botón solo
+       * sale en las propias), así que aquí no se pisa nada del usuario.
+       */
     },
   ),
 );

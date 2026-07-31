@@ -42,50 +42,6 @@ const SkeletonComponent = ({ className = '', lines, card }: SkeletonProps) => {
 
 export const Skeleton = memo(SkeletonComponent);
 
-export const ExerciseListSkeleton = memo(function ExerciseListSkeleton() {
-  return (
-    <div className="space-y-2 p-4">
-      {Array.from({ length: 6 }, (_, i) => (
-        <div key={i} className="skeleton h-12 rounded-card" style={{ opacity: 1 - i * 0.12 }} />
-      ))}
-    </div>
-  );
-});
-
-export const ChartSkeleton = memo(function ChartSkeleton() {
-  const heights = [45, 70, 55, 85, 40, 65, 50];
-  return (
-    <div className="space-y-3 p-4">
-      <div className="flex items-end gap-1 h-32">
-        {heights.map((h, i) => (
-          <div key={i} className="flex-1 skeleton rounded-t-xl" style={{ height: `${h}%` }} />
-        ))}
-      </div>
-      <div className="skeleton h-3 w-full rounded-md" />
-    </div>
-  );
-});
-
-export const KPICardSkeleton = memo(function KPICardSkeleton() {
-  return <div className="skeleton h-24 rounded-card" />;
-});
-
-export const HistoryListSkeleton = memo(function HistoryListSkeleton() {
-  return (
-    <div className="space-y-2">
-      {Array.from({ length: 5 }, (_, i) => (
-        <div key={i} className="flex items-center gap-3 p-3 rounded-card skeleton">
-          <div className="skeleton w-8 h-8 rounded-full" />
-          <div className="flex-1 space-y-2">
-            <div className="skeleton h-4 w-1/2 rounded-md" />
-            <div className="skeleton h-3 w-1/3 rounded-md" />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-});
-
 export const PageSkeleton = memo(function PageSkeleton() {
   return (
     <div className="p-4 space-y-4 min-h-[80vh] flex flex-col">

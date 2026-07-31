@@ -38,7 +38,11 @@ export function WeeklyStats({ sessions }: { sessions: CardioSession[] }) {
             <>
               <span className="label-caps text-fg-subtle">{t('cardio.distance')}</span>
               <span className="text-data font-display font-bold text-fg tabular">
-                {totalDist.toFixed(1)}km
+                {totalDist.toLocaleString(undefined, {
+                  minimumFractionDigits: 1,
+                  maximumFractionDigits: 1,
+                })}{' '}
+                km
               </span>
             </>
           ) : totalCals > 0 ? (

@@ -7,6 +7,7 @@ import { Layout } from '@app/components/Layout';
 import {
   useCardioStore,
   CARDIO_LABELS,
+  CARDIO_SHORT_LABELS,
   type CardioType,
 } from '@features/cardio/stores/cardioStore';
 import { CardioTypeIcon } from '@shared/components/CardioIcons';
@@ -32,6 +33,7 @@ export function CardioPage() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const isActive = useCardioStore((s) => s.isActive);
+  const activeType = useCardioStore((s) => s.activeType);
   const sessions = useCardioStore((s) => s.sessions);
   const startSession = useCardioStore((s) => s.startSession);
   const deleteSession = useCardioStore((s) => s.deleteSession);
@@ -55,31 +57,47 @@ export function CardioPage() {
     <Layout>
       <WeeklyStats sessions={sessions} />
 
-      <ActiveSessionCard userId={user?.id ?? null} />
-
-      {!isActive && (
-        <m.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mb-5">
-          <SectionHeader title={t('cardio.start_session')} />
-          {/* Rejilla en vez de fila con scroll: los 8 tipos se ven de un vistazo
-              sin deslizar, y cada uno lleva su etiqueta para que se reconozca. */}
-          <div className="grid grid-cols-4 gap-2">
-            {CARDIO_TYPES.map((type) => (
+      {/* Fila con scroll horizontal: entran ~5 tipos a la vista y los 8 siguen
+          accesibles deslizando. Se mantiene visible durante la sesión para que
+          el tipo activo quede señalado; los demás se desactivan (cambiar de
+          tipo a mitad de sesión no es una función que exista). */}
+      <m.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-6 -mx-4 px-4 overflow-x-auto"
+      >
+        <div className="flex gap-4 w-max">
+          {CARDIO_TYPES.map((type) => {
+            const selected = isActive && activeType === type;
+            return (
               <button
                 type="button"
                 key={type}
                 onClick={() => handleStart(type)}
+                disabled={isActive && !selected}
                 aria-label={CARDIO_LABELS[type]}
-                className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-2xl transition-colors active:scale-95 bg-surface-2 text-accent"
+                aria-pressed={selected}
+                className="flex flex-col items-center gap-2 disabled:opacity-40 transition-transform active:scale-95"
               >
-                <CardioTypeIcon type={type} className="w-7 h-7" />
-                <span className="text-[11px] font-medium leading-none text-fg-muted">
-                  {CARDIO_LABELS[type]}
+                <span
+                  className={`flex h-14 w-14 items-center justify-center rounded-md border transition-colors ${
+                    selected
+                      ? 'border-accent bg-transparent text-accent'
+                      : 'border-transparent bg-surface-2 text-fg-muted'
+                  }`}
+                >
+                  <CardioTypeIcon type={type} className="w-7 h-7" />
+                </span>
+                <span className={`label-caps ${selected ? 'text-accent' : 'text-fg-subtle'}`}>
+                  {CARDIO_SHORT_LABELS[type]}
                 </span>
               </button>
-            ))}
-          </div>
-        </m.div>
-      )}
+            );
+          })}
+        </div>
+      </m.div>
+
+      <ActiveSessionCard userId={user?.id ?? null} />
 
       {sessions.length > 0 && (
         <m.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>

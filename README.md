@@ -141,8 +141,17 @@ npm run dev              # http://localhost:5173
 ```bash
 npm run lint             # ESLint
 npm run type-check       # tsc -b --force
-npm run test             # 375 tests en 43 ficheros (Vitest)
+npm run test             # 376 tests en 43 ficheros (Vitest)
 npx playwright test      # E2E (e2e/)
+```
+
+El flujo E2E **con sesión iniciada** (`e2e/workout-session.spec.ts`) se salta si no
+encuentra credenciales, para que CI siga en verde sin secretos. Para ejecutarlo,
+pon en `.env.local` una cuenta **desechable** (el test escribe un entreno real):
+
+```bash
+E2E_EMAIL=cuenta-de-pruebas@ejemplo.com
+E2E_PASSWORD=...
 ```
 
 ### 3. Build

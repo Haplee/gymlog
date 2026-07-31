@@ -1,17 +1,17 @@
 import { useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/react/shallow';
 import { useRestTimerStore } from '../stores/restTimerStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
 import { impact, ImpactStyle } from '@shared/lib/haptics';
 import { useVisibilityPausedInterval } from '@shared/hooks/useVisibilityPausedInterval';
-import { Plus, Minus, TimerReset } from 'lucide-react';
+import { Plus, Minus, TimerReset, AlarmClock } from 'lucide-react';
 import { m, AnimatePresence } from 'framer-motion';
 
 const PRESETS = [60, 90, 120, 180];
-const RADIUS = 36;
-const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 export function RestTimer() {
+  const { t } = useTranslation();
   // Selectores finos: este componente ya se re-renderiza cada segundo por su
   // propio tick, así que no debe hacerlo además por cualquier cambio ajeno de
   // los dos stores (p. ej. cada tecla en las series o cualquier otro ajuste).
@@ -30,6 +30,7 @@ export function RestTimer() {
   const setRestAutoStart = useSettingsStore((s) => s.setRestAutoStart);
   const [display, setDisplay] = useState(() => remaining());
   const [customSecs, setCustomSecs] = useState<number | null>(null);
+  const [expanded, setExpanded] = useState(false);
 
   // Solo refresca la cuenta atrás. El fin del descanso (y la alarma) lo gobierna
   // useRestAlarm en Layout, para que dispare también desde otras pantallas.
@@ -41,11 +42,8 @@ export function RestTimer() {
   const mins = Math.floor(shown / 60);
   const secs = shown % 60;
   const pct = duration > 0 ? Math.max(0, shown / duration) : 0;
-  const strokeOffset = CIRCUMFERENCE * (1 - pct);
   const urgent = shown <= 10 && shown > 0;
   const selectedDuration = customSecs ?? duration;
-
-  const accentColor = urgent ? 'var(--error)' : 'var(--interactive-primary)';
 
   const handleStart = useCallback(
     (s: number) => {
@@ -60,16 +58,95 @@ export function RestTimer() {
     setCustomSecs(Math.max(10, (customSecs ?? duration) + delta));
   };
 
+  // Descanso en marcha: píldora flotante sobre la barra inferior, como en
+  // `public/screens/workout.png`. Se pulsa para desplegar los controles (+30s,
+  // reiniciar, cerrar) que antes vivían bajo el círculo de 200 px.
+  if (isRunning && endTime) {
+    return (
+      <m.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="fixed right-4 z-40 w-[13.5rem] rounded-card border border-line bg-surface p-3 shadow-lg"
+        style={{
+          bottom:
+            'calc(var(--bottom-nav-height) + var(--inset-bottom, env(safe-area-inset-bottom)) + 0.75rem)',
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={expanded}
+          aria-label={t('workout.rest_remaining')}
+          className="flex w-full items-center justify-between gap-3"
+        >
+          <AlarmClock className={`h-5 w-5 ${urgent ? 'text-error' : 'text-accent'}`} />
+          <span
+            className={`font-display font-bold tabular text-xl leading-none ${
+              urgent ? 'text-error' : 'text-fg'
+            }`}
+          >
+            {String(mins).padStart(2, '0')}:{String(secs).padStart(2, '0')}
+          </span>
+        </button>
+
+        <div className="mt-2.5 h-1 w-full overflow-hidden rounded-pill bg-surface-3">
+          <div
+            className={`h-full rounded-pill transition-[width] duration-300 ease-linear ${
+              urgent ? 'bg-error' : 'bg-accent'
+            }`}
+            style={{ width: `${pct * 100}%` }}
+          />
+        </div>
+
+        <AnimatePresence>
+          {expanded && (
+            <m.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="mt-2.5 flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    void impact(ImpactStyle.Light);
+                    extend(30);
+                  }}
+                  className="min-h-11 flex-1 rounded-pill bg-accent px-2 text-xs font-bold text-accent-fg active:scale-95"
+                >
+                  +30s
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleStart(duration)}
+                  aria-label={t('workout.rest_restart')}
+                  className="flex h-11 w-11 items-center justify-center rounded-pill bg-surface-2 text-fg-muted"
+                >
+                  <TimerReset className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={stop}
+                  aria-label={t('common.close')}
+                  className="flex h-11 w-11 items-center justify-center rounded-pill text-fg-subtle"
+                >
+                  ✕
+                </button>
+              </div>
+            </m.div>
+          )}
+        </AnimatePresence>
+      </m.div>
+    );
+  }
+
   return (
-    <div
-      className={`rounded-card p-4 mt-3 bg-surface border shadow-card transition-shadow duration-300 ${
-        isRunning ? 'border-line-accent shadow-glow' : 'border-line'
-      }`}
-    >
+    <div className="rounded-card p-4 mt-3 bg-surface border border-line shadow-card">
       <div className="flex items-center justify-between mb-4">
         <div className="text-xs font-semibold uppercase flex items-center gap-1.5 tracking-widest text-fg-subtle">
           <TimerReset className="w-3.5 h-3.5" />
-          Descanso
+          {t('workout.rest')}
         </div>
         <button
           type="button"
@@ -83,182 +160,65 @@ export function RestTimer() {
               : 'bg-surface-2 text-fg-subtle border-line'
           }`}
           aria-pressed={restAutoStart}
-          title={restAutoStart ? 'Auto activado' : 'Auto desactivado'}
+          title={t(restAutoStart ? 'workout.rest_auto_on' : 'workout.rest_auto_off')}
         >
           <span
             className={`w-1.5 h-1.5 rounded-full ${restAutoStart ? 'bg-accent' : 'bg-fg-subtle'}`}
           />
-          Auto {restAutoStart ? 'on' : 'off'}
+          {t(restAutoStart ? 'workout.rest_auto_on' : 'workout.rest_auto_off')}
         </button>
       </div>
 
-      <AnimatePresence mode="wait">
-        {isRunning ? (
-          <m.div
-            key="running"
-            initial={{ opacity: 0, scale: 0.92 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.92 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 24 }}
-            className="flex flex-col items-center gap-4"
-          >
-            {/* Circle timer — wrapper 200×200, radio reducido para espacio interior */}
-            <div
-              className="relative flex items-center justify-center"
-              style={{ width: 200, height: 200 }}
-            >
-              <svg
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  width: '100%',
-                  height: '100%',
-                  transform: 'rotate(-90deg)',
-                  overflow: 'visible',
-                }}
-                viewBox="0 0 100 100"
-              >
-                {/* Anillo de fondo tenue */}
-                <circle
-                  cx="50"
-                  cy="50"
-                  r={RADIUS}
-                  fill="none"
-                  stroke="var(--bg-surface-3)"
-                  strokeWidth="4"
-                />
-                {/* Arco de progreso */}
-                <circle
-                  cx="50"
-                  cy="50"
-                  r={RADIUS}
-                  fill="none"
-                  stroke={accentColor}
-                  strokeWidth="4"
-                  strokeLinecap="round"
-                  strokeDasharray={CIRCUMFERENCE}
-                  strokeDashoffset={strokeOffset}
-                  style={{
-                    transition: 'stroke-dashoffset 0.35s linear, stroke 0.4s ease',
-                  }}
-                />
-              </svg>
-
-              {/* Centro — completamente separado del SVG, apilado encima */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
-                <m.span
-                  key={urgent ? 'urgent' : 'normal'}
-                  initial={{ scale: 1.06 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-                  className="font-mono font-bold tabular-nums leading-none"
-                  style={{
-                    fontSize: '1.875rem',
-                    color: urgent ? 'var(--error)' : 'var(--text-primary)',
-                    letterSpacing: '-0.04em',
-                  }}
-                >
-                  {String(mins).padStart(2, '0')}:{String(secs).padStart(2, '0')}
-                </m.span>
-                <span
-                  className="text-[0.5rem] font-bold uppercase tracking-[0.22em]"
-                  style={{
-                    color: urgent ? 'var(--error)' : 'var(--text-tertiary)',
-                    opacity: 0.7,
-                  }}
-                >
-                  restante
-                </span>
-              </div>
-            </div>
-
-            {/* Controls */}
-            <div className="flex items-center gap-2 w-full justify-center">
+      <div className="space-y-3">
+        {/* Presets — siempre en segundos */}
+        <div className="grid grid-cols-4 gap-1.5">
+          {PRESETS.map((s) => {
+            const active = s === selectedDuration && !customSecs;
+            return (
               <button
                 type="button"
-                onClick={() => {
-                  void impact(ImpactStyle.Light);
-                  extend(30);
-                }}
-                className="px-3 py-2 rounded-pill text-xs font-bold bg-accent text-accent-fg transition-transform active:scale-95"
-              >
-                +30s
-              </button>
-              <button
-                type="button"
-                onClick={() => handleStart(duration)}
-                className="px-4 py-2 rounded-pill text-xs font-semibold tracking-wide bg-surface-2 text-fg-muted"
-              >
-                Reiniciar
-              </button>
-              <button
-                type="button"
-                onClick={stop}
-                className="px-3 py-2 rounded-pill text-xs text-fg-subtle"
-              >
-                Cerrar
-              </button>
-            </div>
-          </m.div>
-        ) : (
-          <m.div
-            key="idle"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="space-y-3"
-          >
-            {/* Presets — siempre en segundos */}
-            <div className="grid grid-cols-4 gap-1.5">
-              {PRESETS.map((s) => {
-                const active = s === selectedDuration && !customSecs;
-                return (
-                  <button
-                    type="button"
-                    key={s}
-                    onClick={() => handleStart(s)}
-                    className={`py-2.5 rounded-pill text-sm font-bold transition-all active:scale-95 ${
-                      active
-                        ? 'bg-accent text-accent-fg shadow-glow'
-                        : 'bg-surface-2 text-fg-muted border border-line'
-                    }`}
-                  >
-                    {`${s}s`}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => adjustCustom(-15)}
-                className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-surface-2 text-fg-muted"
-              >
-                <Minus className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => handleStart(selectedDuration)}
-                className={`flex-1 h-9 rounded-pill text-sm font-bold transition-all active:scale-95 ${
-                  customSecs
+                key={s}
+                onClick={() => handleStart(s)}
+                className={`py-2.5 rounded-pill text-sm font-bold transition-all active:scale-95 ${
+                  active
                     ? 'bg-accent text-accent-fg shadow-glow'
-                    : 'bg-surface-2 text-fg-subtle border border-dashed border-line-strong'
+                    : 'bg-surface-2 text-fg-muted border border-line'
                 }`}
               >
-                {`${selectedDuration}s`}
+                {`${s}s`}
               </button>
-              <button
-                type="button"
-                onClick={() => adjustCustom(15)}
-                className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-surface-2 text-fg-muted"
-              >
-                <Plus className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </m.div>
-        )}
-      </AnimatePresence>
+            );
+          })}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => adjustCustom(-15)}
+            className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-surface-2 text-fg-muted"
+          >
+            <Minus className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => handleStart(selectedDuration)}
+            className={`flex-1 h-9 rounded-pill text-sm font-bold transition-all active:scale-95 ${
+              customSecs
+                ? 'bg-accent text-accent-fg shadow-glow'
+                : 'bg-surface-2 text-fg-subtle border border-dashed border-line-strong'
+            }`}
+          >
+            {`${selectedDuration}s`}
+          </button>
+          <button
+            type="button"
+            onClick={() => adjustCustom(15)}
+            className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-surface-2 text-fg-muted"
+          >
+            <Plus className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

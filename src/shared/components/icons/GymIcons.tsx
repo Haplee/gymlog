@@ -151,6 +151,41 @@ export const IconChart = memo(({ className }: GymIconProps) => (
 ));
 IconChart.displayName = 'IconChart';
 
+/**
+ * Onda de pulso — el icono de cardio en la barra inferior.
+ *
+ * Única excepción al criterio de silueta rellena del set: una línea de
+ * electrocardiograma no existe como mancha, solo como trazo. Se compensa con un
+ * grosor alto (2.4) para que aguante los 20 px de la barra.
+ */
+export const IconPulse = memo(({ className }: GymIconProps) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.4"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    aria-hidden
+    focusable={false}
+  >
+    <path d="M2 12h3.6l2.2-6.4 3.4 12.8 2.6-8 1.8 4.2h6.4" />
+  </svg>
+));
+IconPulse.displayName = 'IconPulse';
+
+/** Tres barras — el menú de la cabecera. */
+export const IconMenu = memo(({ className }: GymIconProps) => (
+  <svg {...svgProps(className)}>
+    <rect x="3" y="5.4" width="18" height="2.5" rx="1.25" />
+    <rect x="3" y="10.75" width="18" height="2.5" rx="1.25" />
+    <rect x="3" y="16.1" width="18" height="2.5" rx="1.25" />
+  </svg>
+));
+IconMenu.displayName = 'IconMenu';
+
 /** Libro abierto de dos hojas — la guía. */
 export const IconBook = memo(({ className }: GymIconProps) => (
   <svg {...svgProps(className)}>

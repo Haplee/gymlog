@@ -71,6 +71,10 @@ GEMINI.md
 # Analisis de levantamientos (docs/LIFT_ANALYSIS_PLAN.md) — entorno y salidas locales
 tools/lift-analysis/.venv/
 tools/lift-analysis/out/
+# Pesos del modelo: los descarga solo Ultralytics en la primera ejecución.
+tools/lift-analysis/*.pt
+__pycache__/
+*.pyc
 android/manifest-aliases.generated.xml
 
 # Proyecto nativo iOS: se regenera con `npx cap add ios` (local o en CI,
@@ -84,3 +88,6 @@ IAS.md
 openspec/IAS.md
 **/IAS.md
 *.secrets.md
+
+# Credenciales de la cuenta de prueba local (nunca al repo publico)
+supabase/usuario_prueba.txt
