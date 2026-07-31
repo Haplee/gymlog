@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=ffd93d&height=120&section=header&text=GymLog%20v5.2&fontSize=50&fontColor=0a0a0b&animation=fadeIn" alt="Header" />
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=ffd93d&height=120&section=header&text=GymLog%20v5.3&fontSize=50&fontColor=0a0a0b&animation=fadeIn" alt="Header" />
 
   <img src="./public/gimnasia.svg" alt="GymLog" width="130" />
 
@@ -17,7 +17,7 @@
   <p>
     <img src="https://img.shields.io/github/actions/workflow/status/Haplee/gymlog/android-build.yml?style=flat-square&label=Android%20Build&logo=github" />
     <img src="https://img.shields.io/github/actions/workflow/status/Haplee/gymlog/ci.yml?style=flat-square&label=CI&logo=vitest" />
-    <img src="https://img.shields.io/badge/tests-375%20passing-ffd93d?style=flat-square&logo=vitest&logoColor=0a0a0b" />
+    <img src="https://img.shields.io/badge/tests-381%20passing-ffd93d?style=flat-square&logo=vitest&logoColor=0a0a0b" />
     <img src="https://img.shields.io/github/last-commit/Haplee/gymlog?style=flat-square&label=Last%20commit&logo=git" />
     <img src="https://img.shields.io/github/repo-size/Haplee/gymlog?style=flat-square&label=Size&logo=files" />
     <img src="https://img.shields.io/github/license/Haplee/gymlog?style=flat-square&label=License&logo=opensourceinitiative" />
@@ -506,6 +506,14 @@ Descarga directa de la última APK firmada: **[gymlog.dpdns.org/download/gymlog.
 
 El registro completo y automático está en **[CHANGELOG.md](./CHANGELOG.md)**. Resumen de lo reciente:
 
+### v5.3 — Rutinas que no se pierden
+
+- **El respaldo de rutinas se borraba solo**: se subía el estado local a la nube sin haberla leído antes, así que el primer respaldo de un dispositivo recién instalado pisaba con una lista vacía lo que hubiera guardado. Ahora leer es requisito para escribir
+- **Realizar una rutina** ya no empieza con las filas en blanco: las repeticiones vienen puestas desde la plantilla, así que registrar un 4×5 tal cual sale es solo escribir los pesos
+- **Racha en la cabecera** en lugar del acceso a Ajustes, que ya vivía en la barra inferior
+- **Plantilla «Rutina de FranVi»**: cinco días para un pivote de balonmano, con día propio de bisagra de cadera y olímpicos a 2 repeticiones
+- **Pulido visual**: separador de línea fina en vez de punteado, los ocho tipos de cardio en rejilla sin recortar ninguno, diálogo de confirmación propio al descartar un entreno (antes salía el del sistema) e iconos del set propio en el selector de modalidad de carga
+
 ### v5.2 — Rendimiento en el WebView
 
 - **Escrituras a disco agrupadas**: la caché de queries se dehidrataba y escribía entera en cada evento interno (decenas de veces al guardar un entreno), y `zustand/persist` escribía el estado completo de forma síncrona **en cada tecla** de reps/kg
@@ -559,6 +567,6 @@ El registro completo y automático está en **[CHANGELOG.md](./CHANGELOG.md)**. 
 <a href="https://www.instagram.com/franvidalmateo"><img src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white" /></a>
 
 <br><br>
-<b>GymLog v5.2.0</b> — <a href="https://github.com/Haplee">Francisco Vidal Mateo</a>
+<b>GymLog v5.3.0</b> — <a href="https://github.com/Haplee">Francisco Vidal Mateo</a>
 
 </div>
