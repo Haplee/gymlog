@@ -567,6 +567,6 @@ El registro completo y automático está en **[CHANGELOG.md](./CHANGELOG.md)**. 
 <a href="https://www.instagram.com/franvidalmateo"><img src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white" /></a>
 
 <br><br>
-<b>GymLog v5.4.0</b> — <a href="https://github.com/Haplee">Francisco Vidal Mateo</a>
+<b>GymLog v5.6.0</b> — <a href="https://github.com/Haplee">Francisco Vidal Mateo</a>
 
 </div>

@@ -609,6 +609,13 @@ export const PREDEFINED_ROUTINES: Routine[] = [
             notes: 'Empieza al 72% y sube un 2,5% por semana. Deja 2 repeticiones en recámara.',
           },
           {
+            name: 'Sentadilla Parcial',
+            sets: 3,
+            reps: '3',
+            notes:
+              '90-100%+ del 1RM. Solo el cuarto superior del recorrido. Sobrecarga el SNC con cargas que no puedes manejar en completa.',
+          },
+          {
             name: 'Sentadilla búlgara',
             sets: 3,
             reps: '8 por pierna',
@@ -865,17 +872,17 @@ export const useRoutineStore = create<RoutineStore>()(
             (cr) => !PREDEFINED_ROUTINES.some((pr) => pr.id === cr.id),
           );
 
-          // Merge no destructivo: lo local es la fuente de verdad (la BD es un
-          // backup). Una rutina creada/editada aquí cuyo saveToDb falló no debe
-          // desaparecer al recargar; las remotas que no existen localmente se
-          // restauran (otro dispositivo / reinstalación).
+          // Merge con la BD como fuente de verdad para rutinas existentes:
+          // - Las rutinas remotas sobreescriben las locales cuando coincide el id
+          //   (permite editar desde otro dispositivo o desde herramientas externas).
+          // - Las rutinas locales que aún no están en la BD se conservan para no
+          //   perder cambios pendientes de subir (offline / saveToDb fallido).
           const localCustom = get().routines.filter((r) => r.isCustom);
-          const localIds = new Set(localCustom.map((r) => r.id));
-          const remoteOnly = remoteCustom.filter((r) => !localIds.has(r.id));
-          const mergedRoutines = [...PREDEFINED_ROUTINES, ...localCustom, ...remoteOnly];
-
           const remoteIds = new Set(remoteCustom.map((r) => r.id));
-          const hasUnsyncedLocal = localCustom.some((r) => !remoteIds.has(r.id));
+          const localOnlyCustom = localCustom.filter((r) => !remoteIds.has(r.id));
+          const mergedRoutines = [...PREDEFINED_ROUTINES, ...remoteCustom, ...localOnlyCustom];
+
+          const hasUnsyncedLocal = localOnlyCustom.length > 0;
 
           // `hydrated` se marca aquí, antes del re-subido de abajo: si no, ese
           // `saveToDb` volvería a entrar en `loadFromDb` y se llamarían en bucle.
