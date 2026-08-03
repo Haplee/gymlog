@@ -19,6 +19,12 @@ interface ExerciseSelectorProps {
   onSelect: (exerciseId: string, isCustom: boolean) => void;
   activeExerciseId?: string | null;
   excludeIds?: string[];
+  /**
+   * Muestra la lista de ejercicios sin esperar a que el input de búsqueda tenga
+   * el foco. Lo usa el picker de rutinas (dentro de un BottomSheet): allí el
+   * dropdown cerrado por defecto hacía que la hoja pareciera vacía.
+   */
+  defaultOpen?: boolean;
 }
 
 interface ExerciseOption {
@@ -68,6 +74,7 @@ export function ExerciseSelector({
   onSelect,
   activeExerciseId,
   excludeIds,
+  defaultOpen = false,
 }: ExerciseSelectorProps) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -278,6 +285,8 @@ export function ExerciseSelector({
     top: 0,
   };
 
+  const isOpen = isFocused || editingMuscleId !== null || isCreating || defaultOpen;
+
   return (
     <div className="relative">
       {/* Search input */}
@@ -314,7 +323,7 @@ export function ExerciseSelector({
 
       {/* Dropdown */}
       <AnimatePresence>
-        {(isFocused || editingMuscleId !== null || isCreating) && (
+        {isOpen && (
           <m.div
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
@@ -322,7 +331,11 @@ export function ExerciseSelector({
             transition={{ duration: 0.15 }}
             id="exercise-list"
             role="listbox"
-            className="absolute z-50 top-full left-0 right-0 mt-1.5 max-h-[26rem] overflow-y-auto rounded-card"
+            className={
+              defaultOpen
+                ? 'relative z-50 mt-1.5 max-h-[calc(100dvh-8rem)] overflow-y-auto rounded-card'
+                : 'absolute z-50 top-full left-0 right-0 mt-1.5 max-h-[60rem] overflow-y-auto rounded-card'
+            }
             style={dropdownStyle}
             onMouseDown={(e) => {
               const tag = (e.target as HTMLElement).tagName;
@@ -676,7 +689,7 @@ export function ExerciseSelector({
       </AnimatePresence>
 
       {/* Backdrop to close dropdown */}
-      {(isFocused || editingMuscleId !== null || isCreating) && (
+      {isOpen && !defaultOpen && (
         <div
           className="fixed inset-0 z-40"
           aria-hidden="true"

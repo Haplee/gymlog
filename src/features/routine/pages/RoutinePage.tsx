@@ -137,16 +137,37 @@ export function RoutinePage() {
     }
   };
 
-  const addExerciseToDay = (day: DayOfWeek, exerciseName: string) => {
-    if (!activeRoutine) return;
+  // Las plantillas no se pueden guardar en la nube tal cual: editar una la
+  // convierte automáticamente en rutina propia para que el cambio no se pierda
+  // al reiniciar la app.
+  const ensureEditableRoutine = useCallback((): string | null => {
+    const store = useRoutineStore.getState();
+    const routine = store.getActiveRoutine();
+    if (!routine) return null;
+    if (routine.isCustom) return routine.id;
 
-    const updatedDays = { ...activeRoutine.days };
+    const newId = store.cloneRoutine(routine.id);
+    if (!newId) return null;
+    store.setActiveRoutine(newId);
+    toast.success(t('routine.cloned'));
+    void persistRoutines();
+    return newId;
+  }, [t, persistRoutines]);
+
+  const addExerciseToDay = (day: DayOfWeek, exerciseName: string) => {
+    const editableId = ensureEditableRoutine();
+    if (!editableId) return;
+
+    const routine = useRoutineStore.getState().routines.find((r) => r.id === editableId);
+    if (!routine) return;
+
+    const updatedDays = { ...routine.days };
     updatedDays[day] = {
       ...updatedDays[day],
       exercises: [...updatedDays[day].exercises, { name: exerciseName, sets: 3, reps: '10-12' }],
     };
 
-    useRoutineStore.getState().updateRoutine(activeRoutine.id, { days: updatedDays });
+    useRoutineStore.getState().updateRoutine(editableId, { days: updatedDays });
 
     void persistRoutines();
   };
@@ -160,26 +181,34 @@ export function RoutinePage() {
   };
 
   const removeExerciseFromDay = (day: DayOfWeek, index: number) => {
-    if (!activeRoutine) return;
+    const editableId = ensureEditableRoutine();
+    if (!editableId) return;
 
-    const updatedDays = { ...activeRoutine.days };
+    const routine = useRoutineStore.getState().routines.find((r) => r.id === editableId);
+    if (!routine) return;
+
+    const updatedDays = { ...routine.days };
     updatedDays[day] = {
       ...updatedDays[day],
       exercises: updatedDays[day].exercises.filter((_, i) => i !== index),
     };
 
-    useRoutineStore.getState().updateRoutine(activeRoutine.id, { days: updatedDays });
+    useRoutineStore.getState().updateRoutine(editableId, { days: updatedDays });
 
     void persistRoutines();
   };
 
   const reorderDay = (day: DayOfWeek, next: RoutineExercise[]) => {
-    if (!activeRoutine) return;
+    const editableId = ensureEditableRoutine();
+    if (!editableId) return;
 
-    const updatedDays = { ...activeRoutine.days };
+    const routine = useRoutineStore.getState().routines.find((r) => r.id === editableId);
+    if (!routine) return;
+
+    const updatedDays = { ...routine.days };
     updatedDays[day] = { ...updatedDays[day], exercises: next };
 
-    useRoutineStore.getState().updateRoutine(activeRoutine.id, { days: updatedDays });
+    useRoutineStore.getState().updateRoutine(editableId, { days: updatedDays });
 
     void persistRoutines();
   };
@@ -292,7 +321,7 @@ export function RoutinePage() {
           <div className="rounded-card p-3 bg-surface border border-line">
             <div className="hairline-separator flex justify-between items-center pb-2 mb-3">
               <div className="label-caps text-fg-subtle">{dayLabels[selectedDay]}</div>
-              {activeRoutine?.isCustom && (
+              {activeRoutine && (
                 <button
                   type="button"
                   onClick={() => setShowExercisePicker(true)}
@@ -307,33 +336,13 @@ export function RoutinePage() {
               <div className="text-center py-6 text-xs text-fg-subtle">
                 {activeRoutine?.isCustom ? t('routine.empty_custom_day') : t('routine.rest_day')}
               </div>
-            ) : activeRoutine?.isCustom ? (
+            ) : activeRoutine ? (
               <SortableExerciseList
                 exercises={activeRoutine.days[selectedDay].exercises}
                 onReorder={(next) => reorderDay(selectedDay, next)}
                 onRemove={(i) => removeExerciseFromDay(selectedDay, i)}
               />
-            ) : (
-              <div>
-                {activeRoutine?.days[selectedDay].exercises.map((ex, i) => (
-                  <div
-                    key={i}
-                    className={`flex items-center justify-between px-1 py-3.5 ${
-                      i < activeRoutine.days[selectedDay].exercises.length - 1
-                        ? 'hairline-separator'
-                        : ''
-                    }`}
-                  >
-                    <div className="text-base font-medium text-fg">{ex.name}</div>
-                    {ex.sets && (
-                      <div className="font-display font-bold text-sm tabular text-fg-muted">
-                        {ex.sets} × {ex.reps}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+            ) : null}
           </div>
 
           {activeRoutine && activeRoutine.days[selectedDay].exercises.length > 0 && (
@@ -408,10 +417,12 @@ export function RoutinePage() {
           open={showExercisePicker}
           onClose={() => setShowExercisePicker(false)}
           title={t('routine.add_exercise')}
+          maxHeightVh={95}
         >
           <ExerciseSelector
             userId={user.id}
             onSelect={handleExerciseSelected}
+            defaultOpen
             excludeIds={exercises
               .filter((e) =>
                 activeRoutine.days[selectedDay].exercises.some((ex) => ex.name === e.name),
