@@ -1,7 +1,11 @@
 // @vitest-environment jsdom
 // El store arrastra el cliente de Supabase, que toca `window.localStorage` al
-// importarse; sin DOM el módulo ni siquiera carga.
-import { describe, it, expect, beforeEach } from 'vitest';
+// importarse; sin DOM el módulo ni siquiera carga. En CI no hay variables de
+// entorno, así que `createClient('', '')` reventaría al importar: se sustituye
+// el cliente real por uno vacío, igual que en los tests hermanos.
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+vi.mock('@shared/lib/supabase', () => ({ supabase: { from: vi.fn() } }));
 import {
   useRoutineStore,
   PREDEFINED_ROUTINES,
