@@ -1,21 +1,34 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useShallow } from 'zustand/react/shallow';
 import { toast } from 'sonner';
-import { Plus, Trash2 } from 'lucide-react';
 import { useRoutineSessionStore } from '@features/routine/stores/routineSessionStore';
 import { useWeight } from '@shared/hooks/useWeight';
 import { impact, notificationHaptic, ImpactStyle, NotificationType } from '@shared/lib/haptics';
 import { celebrate } from '@shared/lib/celebration';
+import { fetchExerciseLibrary } from '@shared/api/queries';
+import { weightToInput } from '@shared/lib/weight';
 import type { Exercise } from '@shared/lib/types';
+import type { ExerciseAdvice } from '@features/stats/hooks/useAutoregulation';
+import { SessionExerciseCard } from './SessionExerciseCard';
 
 interface Props {
   userId: string;
   /** Catálogo cacheado (propios + públicos) para mapear nombre → exercise_id. */
   exercises: Exercise[];
 }
+
+// Nombre normalizado: minúsculas y sin acentos. Las rutinas predefinidas usan
+// «bíceps», «tríceps», etc.; el catálogo guarda el nombre tal cual lo creó el
+// usuario. Sin esta normalización un acento distinto rompería el emparejado.
+const normalizeName = (name: string) =>
+  name
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
 
 export function RoutineSession({ userId, exercises }: Props) {
   const { t } = useTranslation();
@@ -27,28 +40,68 @@ export function RoutineSession({ userId, exercises }: Props) {
   const dayName = useRoutineSessionStore((s) => s.dayName);
   const sessionExercises = useRoutineSessionStore((s) => s.exercises);
   const saving = useRoutineSessionStore((s) => s.saving);
-  const { addSet, updateSet, removeSet, discard, finish } = useRoutineSessionStore(
+  const { discard, setExercises, finish } = useRoutineSessionStore(
     useShallow((s) => ({
-      addSet: s.addSet,
-      updateSet: s.updateSet,
-      removeSet: s.removeSet,
       discard: s.discard,
+      setExercises: s.setExercises,
       finish: s.finish,
     })),
   );
 
   const [confirmDiscard, setConfirmDiscard] = useState(false);
 
+  // Recomendación de cada ejercicio, reportada por su tarjeta: al pulsar
+  // «Completar» se rellena el peso en todas las series sin que el usuario
+  // teclee nada. El ref evita que el flujo dependa del estado de React.
+  const adviceByName = useRef(new Map<string, ExerciseAdvice>());
+  const registerAdvice = useCallback((name: string, advice: ExerciseAdvice | null) => {
+    if (advice) adviceByName.current.set(normalizeName(name), advice);
+    else adviceByName.current.delete(normalizeName(name));
+  }, []);
+
+  // Fichas de la biblioteca (propios + públicos): aportan la descripción de la
+  // forma/ejecución por ejercicio. Reutiliza la caché de la pantalla Biblioteca.
+  const { data: library = [] } = useQuery({
+    queryKey: ['exerciseLibrary', userId],
+    queryFn: () => fetchExerciseLibrary(userId),
+    staleTime: 1000 * 60 * 5,
+  });
+
   // Mapeo por nombre normalizado: la rutina guarda nombres, la BD necesita ids.
   const resolveExerciseId = useCallback(
     (name: string): string | null => {
-      const key = name.trim().toLowerCase();
-      return exercises.find((e) => e.name.trim().toLowerCase() === key)?.id ?? null;
+      return exercises.find((e) => normalizeName(e.name) === normalizeName(name))?.id ?? null;
     },
     [exercises],
   );
 
+  const catalogByName = useMemo(
+    () => new Map(exercises.map((e) => [normalizeName(e.name), e])),
+    [exercises],
+  );
+  const libraryByName = useMemo(
+    () => new Map(library.map((e) => [normalizeName(e.name), e])),
+    [library],
+  );
+
   const handleFinish = async () => {
+    // Autocompletado: se rellena el peso recomendado en todas las series de los
+    // ejercicios que tienen recomendación. Los que no la tienen (sin historial)
+    // se muestran informativos pero se quedan fuera del registro.
+    const withWeights = sessionExercises.map((ex) => {
+      const advice = adviceByName.current.get(normalizeName(ex.name));
+      if (!advice) return ex;
+      const weight = weightToInput(advice.suggestion.weight, weightUnit);
+      return { ...ex, sets: ex.sets.map((s) => ({ ...s, weight })) };
+    });
+
+    if (withWeights.every((ex) => ex.sets.every((s) => !s.weight.trim()))) {
+      void notificationHaptic(NotificationType.Error);
+      toast.error(t('routine.session_no_advice'));
+      return;
+    }
+
+    setExercises(withWeights);
     const result = await finish(userId, resolveExerciseId, toKg);
 
     if (result.error) {
@@ -83,91 +136,34 @@ export function RoutineSession({ userId, exercises }: Props) {
         <button
           type="button"
           onClick={() => setConfirmDiscard(true)}
-          className="flex-shrink-0 min-h-11 label-caps px-3 py-1.5 rounded-sm bg-surface-2 border border-line text-fg-subtle"
+          className="flex-shrink-0 min-h-11 label-caps px-3 py-1.5 rounded-pill bg-surface-2 border border-line text-fg-subtle"
         >
           {t('routine.session_discard')}
         </button>
       </div>
 
-      <div className="space-y-4">
-        {sessionExercises.map((ex, exIndex) => (
-          <div key={ex.name} className="rounded-md p-3 bg-surface-2 border border-line">
-            <div className="flex items-baseline justify-between gap-2 mb-2">
-              <div className="text-base font-medium text-fg truncate">{ex.name}</div>
-              {ex.targetSets && (
-                <div className="text-2xs text-fg-subtle flex-shrink-0">
-                  {t('routine.session_target')} {ex.targetSets} × {ex.targetReps}
-                </div>
-              )}
-            </div>
-
-            <div className="flex gap-1.5 mb-1 text-2xs font-semibold uppercase text-fg-subtle">
-              <div className="w-6 flex-shrink-0" />
-              <div className="flex-1 text-center">{t('workout.reps')}</div>
-              <div className="flex-1 text-center">{weightUnit}</div>
-              <div className="w-9 flex-shrink-0" />
-            </div>
-
-            <div className="space-y-1.5">
-              {ex.sets.map((s, setIndex) => (
-                <div key={s.id} className="flex items-center gap-1.5">
-                  <div className="w-6 flex-shrink-0 text-xs font-mono tabular-nums text-fg-subtle text-center">
-                    {setIndex + 1}
-                  </div>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={s.reps}
-                    onChange={(e) =>
-                      updateSet(exIndex, setIndex, { reps: e.target.value.replace(/[^\d]/g, '') })
-                    }
-                    aria-label={`${ex.name} — ${t('workout.reps')} ${setIndex + 1}`}
-                    className="flex-1 min-h-11 rounded-sm text-sm font-mono tabular-nums px-2 text-center outline-none bg-surface border border-line text-fg focus:border-accent"
-                  />
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={s.weight}
-                    onChange={(e) =>
-                      updateSet(exIndex, setIndex, {
-                        weight: e.target.value.replace(/[^\d.,]/g, '').replace(',', '.'),
-                      })
-                    }
-                    aria-label={`${ex.name} — ${weightUnit} ${setIndex + 1}`}
-                    className="flex-1 min-h-11 rounded-sm text-sm font-mono tabular-nums px-2 text-center outline-none bg-surface border border-line text-fg focus:border-accent"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeSet(exIndex, setIndex)}
-                    aria-label={`${t('routine.session_remove_set')} ${setIndex + 1}`}
-                    className="w-9 min-h-11 flex-shrink-0 flex items-center justify-center text-fg-subtle"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                void impact(ImpactStyle.Light);
-                addSet(exIndex);
-              }}
-              className="mt-2 w-full min-h-11 rounded-sm text-xs border border-dashed border-line-strong text-fg-muted flex items-center justify-center gap-1"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              {t('routine.session_add_set')}
-            </button>
-          </div>
+      <div className="space-y-3">
+        {sessionExercises.map((ex) => (
+          <SessionExerciseCard
+            key={ex.name}
+            userId={userId}
+            exercise={ex}
+            catalog={catalogByName.get(normalizeName(ex.name))}
+            libraryExercise={libraryByName.get(normalizeName(ex.name))}
+            weightUnit={weightUnit}
+            onAdvice={registerAdvice}
+          />
         ))}
       </div>
 
       <button
         type="button"
-        onClick={handleFinish}
+        onClick={() => {
+          void impact(ImpactStyle.Light);
+          handleFinish();
+        }}
         disabled={saving}
-        className="mt-4 w-full min-h-12 rounded-sm text-sm font-display font-bold uppercase tracking-[0.12em] bg-accent text-accent-fg shadow-btn-accent active:scale-[0.98] transition-transform disabled:opacity-50"
+        className="mt-4 w-full min-h-12 rounded-pill text-sm font-display font-bold uppercase tracking-[0.12em] bg-accent text-accent-fg shadow-btn-accent active:scale-[0.98] transition-transform disabled:opacity-50"
       >
         {saving ? t('routine.session_saving') : t('routine.session_finish')}
       </button>
@@ -180,7 +176,7 @@ export function RoutineSession({ userId, exercises }: Props) {
               <button
                 type="button"
                 onClick={() => setConfirmDiscard(false)}
-                className="flex-1 min-h-11 rounded-sm text-sm bg-surface-2 text-fg-muted"
+                className="flex-1 min-h-11 rounded-pill text-sm bg-surface-2 text-fg-muted"
               >
                 {t('common.cancel')}
               </button>
@@ -190,7 +186,7 @@ export function RoutineSession({ userId, exercises }: Props) {
                   discard();
                   setConfirmDiscard(false);
                 }}
-                className="flex-1 min-h-11 rounded-sm text-sm font-semibold bg-error text-white"
+                className="flex-1 min-h-11 rounded-pill text-sm font-semibold bg-error text-white"
               >
                 {t('routine.session_discard')}
               </button>

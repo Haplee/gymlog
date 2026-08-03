@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { m } from 'framer-motion';
 import { Check, StickyNote, X } from 'lucide-react';
 import { impact, ImpactStyle } from '@shared/lib/haptics';
+import { formatWeightInput } from '@shared/lib/weight';
 
 type SetType = 'normal' | 'dropset' | 'rest_pause' | 'amrap';
 
@@ -28,7 +29,7 @@ const SET_TYPE_BADGE: Record<Exclude<SetType, 'normal'>, string> = {
 const displayWeight = (weight: string, convert: (kg: number) => number) => {
   const n = Number(weight);
   if (!weight || Number.isNaN(n)) return '';
-  return convert(n).toFixed(1).replace(/\.0$/, '');
+  return formatWeightInput(convert(n));
 };
 
 interface LoggedSetRowProps {

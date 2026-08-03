@@ -90,8 +90,10 @@ src/
 
 ## Sistema de diseño
 
-- **Sistema "Stitch"**, por defecto oscuro: base `#0a0a0b`, superficie `#141416`,
-  acento menta `#60eca8` (`--interactive-primary`), texto sobre acento `#003822`.
+- **Sistema "FitBody"**, por defecto oscuro: base `#0a0a0b`, superficie `#141416`,
+  acento amarillo lima `#ffd93d` (`--interactive-primary`), texto sobre acento
+  `#241c00`. Sustituyó al sistema anterior «Stitch» de acento menta `#60eca8`
+  (los documentos que lo mencionen en verde son de esa etapa).
 - **Sí hay modo claro** y está completo: Ajustes → Preferencias → Tema (OSCURO /
   CLARO), en `settingsStore.theme` + el bloque `:root.light` de `tokens.css`. No lo
   rompas ni lo elimines: al tocar tokens o estilos, comprueba **los dos temas**.

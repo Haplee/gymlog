@@ -33,13 +33,6 @@ function resolveLoadType(input: { load_type?: LoadType; is_bodyweight?: boolean 
 
 export type CreateCustomExerciseInput = z.input<typeof CreateCustomExerciseSchema>;
 
-/** Fila de músculo ponderado leída de la BD. */
-export interface ExerciseMuscle {
-  muscle_group: string;
-  role: 'primary' | 'secondary';
-  weight: number;
-}
-
 /** Reemplaza los músculos ponderados de un ejercicio (primario + secundarios). */
 async function syncExerciseMuscles(
   exerciseId: string,
@@ -135,37 +128,4 @@ export async function updateExerciseLoadType(
     .update({ load_type: loadType, is_bodyweight: loadType !== 'external' })
     .eq('id', exerciseId);
   if (error) throw error;
-}
-
-/** Lee los músculos ponderados de un ejercicio (primario primero). */
-export async function fetchExerciseMuscles(exerciseId: string): Promise<ExerciseMuscle[]> {
-  const { data, error } = await supabase
-    .from('exercise_muscles')
-    .select('muscle_group, role, weight')
-    .eq('exercise_id', exerciseId);
-  if (error) throw error;
-  const rows = (data ?? []) as ExerciseMuscle[];
-  return rows.toSorted((a, b) => (a.role === 'primary' ? -1 : b.role === 'primary' ? 1 : 0));
-}
-
-/**
- * Mapa masivo `exercise_id → músculos ponderados` para todos los ejercicios
- * visibles (propios + públicos; RLS lo garantiza). Una sola consulta, sin N+1.
- */
-export async function fetchExerciseMusclesMap(
-  _userId: string,
-): Promise<Record<string, ExerciseMuscle[]>> {
-  const { data, error } = await supabase
-    .from('exercise_muscles')
-    .select('exercise_id, muscle_group, role, weight');
-  if (error) throw error;
-  const map: Record<string, ExerciseMuscle[]> = {};
-  for (const row of (data ?? []) as (ExerciseMuscle & { exercise_id: string })[]) {
-    (map[row.exercise_id] ??= []).push({
-      muscle_group: row.muscle_group,
-      role: row.role,
-      weight: row.weight,
-    });
-  }
-  return map;
 }

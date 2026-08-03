@@ -23,7 +23,7 @@ import { AppDrawer } from '@app/components/AppDrawer';
 import { useOutboxStore } from '@shared/stores/outboxStore';
 import { useRestAlarm } from '@features/workout/hooks/useRestAlarm';
 import { RestAlarmBanner } from '@features/workout/components/RestAlarmBanner';
-import { ExerciseSearchSheet } from '@shared/components/ExerciseSearchSheet';
+import { ExerciseSearchSheet } from '@features/workout/components/ExerciseSearchSheet';
 import { useNotificationsStore, selectUnreadCount } from '@shared/stores/notificationsStore';
 import { useWearableSync } from '@features/wearables/hooks/useWearableSync';
 

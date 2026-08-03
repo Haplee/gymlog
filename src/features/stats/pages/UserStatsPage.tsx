@@ -1,4 +1,4 @@
-import { generateTips, type Tip } from '@features/stats/utils/tips';
+import { generateTips } from '@features/stats/utils/tips';
 import { useAutoregulation } from '@features/stats/hooks/useAutoregulation';
 import { NextSessionCard } from '@features/stats/components/NextSessionCard';
 import { celebrate } from '@shared/lib/celebration';
@@ -31,8 +31,6 @@ import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft,
   Lightbulb,
-  AlertTriangle,
-  CheckCircle2,
   Trophy,
   Activity,
   Clock,
@@ -50,6 +48,9 @@ import { format, subWeeks, startOfWeek, eachWeekOfInterval, subDays } from 'date
 import { es } from 'date-fns/locale';
 import { calcular1RM } from '@shared/lib/brzycki';
 import { SectionLabel } from '../components/userStats/SectionLabel';
+import { BigKPI } from '../components/userStats/BigKPI';
+import { TipCard } from '../components/userStats/TipCard';
+import { MuscleRecovery } from '../components/userStats/MuscleRecovery';
 import { WorkoutCalendar } from '../components/userStats/WorkoutCalendar';
 import { DayFrequencyChart } from '../components/userStats/DayFrequencyChart';
 import { TopExercisesList } from '../components/userStats/TopExercisesList';
@@ -70,93 +71,6 @@ const MuscleDistributionChart = lazy(() =>
 
 function ChartFallback() {
   return <div className="h-56 skeleton rounded-card" aria-hidden="true" />;
-}
-function BigKPI({
-  value,
-  label,
-  icon: Icon,
-  color = 'var(--interactive-primary)',
-  delay = 0,
-}: {
-  value: string | number;
-  label: string;
-  icon: React.ElementType;
-  color?: string;
-  delay?: number;
-}) {
-  return (
-    <m.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay, type: 'spring', stiffness: 300, damping: 24 }}
-      className="relative overflow-hidden rounded-card p-4 flex flex-col gap-2 bg-surface border border-line shadow-card"
-    >
-      {/* Tinte del color del KPI en el borde superior */}
-      <div
-        aria-hidden="true"
-        className="absolute inset-x-0 top-0 h-14 pointer-events-none"
-        style={{
-          background: `linear-gradient(to bottom, color-mix(in srgb, ${color} 8%, transparent), transparent)`,
-        }}
-      />
-      <div
-        className="relative w-8 h-8 rounded-md flex items-center justify-center"
-        style={{ backgroundColor: `color-mix(in srgb, ${color} 12%, transparent)` }}
-      >
-        <Icon className="w-4 h-4" style={{ color }} />
-      </div>
-      <div className="relative font-mono font-bold text-2xl leading-none text-fg tabular-nums">
-        {value}
-      </div>
-      <div className="relative text-xs text-fg-subtle">{label}</div>
-    </m.div>
-  );
-}
-
-function TipCard({ tip, index }: { tip: Tip; index: number }) {
-  const config = {
-    warning: {
-      icon: AlertTriangle,
-      color: 'var(--warning)',
-      bg: 'color-mix(in srgb, var(--warning) 8%, transparent)',
-      border: 'color-mix(in srgb, var(--warning) 20%, transparent)',
-    },
-    success: {
-      icon: CheckCircle2,
-      color: 'var(--success)',
-      bg: 'color-mix(in srgb, var(--success) 8%, transparent)',
-      border: 'color-mix(in srgb, var(--success) 20%, transparent)',
-    },
-    info: {
-      icon: Lightbulb,
-      color: 'var(--interactive-primary)',
-      bg: 'color-mix(in srgb, var(--interactive-primary) 8%, transparent)',
-      border: 'color-mix(in srgb, var(--interactive-primary) 15%, transparent)',
-    },
-    danger: {
-      icon: AlertTriangle,
-      color: 'var(--error)',
-      bg: 'color-mix(in srgb, var(--error) 8%, transparent)',
-      border: 'color-mix(in srgb, var(--error) 20%, transparent)',
-    },
-  }[tip.type];
-  const Icon = config.icon;
-
-  return (
-    <m.div
-      initial={{ opacity: 0, x: -12 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: 0.05 * index, type: 'spring', stiffness: 280, damping: 22 }}
-      className="flex gap-3 p-3.5 rounded-card"
-      style={{ backgroundColor: config.bg, border: `1px solid ${config.border}` }}
-    >
-      <Icon className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: config.color }} />
-      <div>
-        <div className="text-sm font-semibold mb-0.5 text-fg">{tip.title}</div>
-        <div className="text-xs leading-relaxed text-fg-muted">{tip.message}</div>
-      </div>
-    </m.div>
-  );
 }
 
 export function UserStatsPage() {
@@ -436,28 +350,33 @@ export function UserStatsPage() {
           <div className="grid grid-cols-2 gap-3">
             <BigKPI
               value={workouts.length}
-              label="Entrenamientos totales"
+              label={t('userStats.total_workouts')}
               icon={Activity}
               color="var(--interactive-primary)"
               delay={0}
             />
             <BigKPI
               value={formatVol(totalVolumeAllTime)}
-              label="Volumen total"
+              label={t('userStats.total_volume')}
               icon={BarChart3}
               color="var(--accent-blue)"
               delay={0.05}
             />
             <BigKPI
               value={totalPRs}
-              label="Records personales"
+              label={t('userStats.total_prs')}
               icon={Trophy}
               color="var(--accent-amber)"
               delay={0.1}
             />
             <BigKPI
               value={currentStreak}
-              label={`días de racha${maxStreak > currentStreak ? ` (máx. ${maxStreak})` : ''}`}
+              label={
+                t('userStats.streak_days', { count: currentStreak }) +
+                (maxStreak > currentStreak
+                  ? t('userStats.streak_max_suffix', { max: maxStreak })
+                  : '')
+              }
               icon={Flame}
               color="var(--error)"
               delay={0.15}
@@ -467,11 +386,19 @@ export function UserStatsPage() {
           {/* Secondary row */}
           <div className="grid grid-cols-3 gap-2">
             {[
-              { value: sessionCount30d, label: 'sesiones/30d', color: 'var(--accent-green)' },
-              { value: `${avgDuration}m`, label: 'duración media', color: 'var(--accent-violet)' },
+              {
+                value: sessionCount30d,
+                label: t('userStats.sessions_30d'),
+                color: 'var(--accent-green)',
+              },
+              {
+                value: `${avgDuration}m`,
+                label: t('userStats.avg_duration'),
+                color: 'var(--accent-violet)',
+              },
               {
                 value: uniqueExercisesCount,
-                label: 'ejercicios distintos',
+                label: t('userStats.distinct_exercises'),
                 color: 'var(--accent-sky)',
               },
             ].map((item, i) => (
@@ -629,7 +556,7 @@ export function UserStatsPage() {
               }}
             >
               {periodComparison.volumeChangePct >= 0 ? '+' : ''}
-              {periodComparison.volumeChangePct}% volumen
+              {t('userStats.volume_pct', { pct: periodComparison.volumeChangePct })}
             </div>
 
             {volumeProjection && (
@@ -665,70 +592,7 @@ export function UserStatsPage() {
         {topExercises.length > 0 && <TopExercisesList data={topExercises} />}
 
         {/* ── Estado muscular ── */}
-        {muscleRecovery.length > 0 && (
-          <section className="space-y-3">
-            <SectionLabel>Estado de recuperación</SectionLabel>
-            <m.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25 }}
-              className="rounded-card p-4 bg-surface border border-line shadow-card"
-            >
-              <div className="space-y-2">
-                {muscleRecovery.slice(0, 6).map(({ name, daysSinceLast, status }) => {
-                  const colors = {
-                    recovering: {
-                      dot: 'var(--error)',
-                      label: t('userStats.recovery_recovering'),
-                      bg: 'color-mix(in srgb, var(--error) 10%, transparent)',
-                    },
-                    partial: {
-                      dot: 'var(--warning)',
-                      label: t('userStats.recovery_partial'),
-                      bg: 'color-mix(in srgb, var(--warning) 10%, transparent)',
-                    },
-                    recovered: {
-                      dot: 'var(--success)',
-                      label: t('userStats.recovery_rested'),
-                      bg: 'color-mix(in srgb, var(--success) 10%, transparent)',
-                    },
-                  }[status];
-                  return (
-                    <div
-                      key={name}
-                      className="flex items-center justify-between p-2.5 rounded-md"
-                      style={{ backgroundColor: colors.bg }}
-                    >
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-2 h-2 rounded-full"
-                          style={{ backgroundColor: colors.dot }}
-                        />
-                        <span className="text-sm font-medium text-fg">{name}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-fg-subtle">
-                          {daysSinceLast >= 0
-                            ? t('userStats.days_ago', { count: daysSinceLast })
-                            : t('userStats.no_data_label')}
-                        </span>
-                        <span
-                          className="text-2xs font-semibold px-1.5 py-0.5 rounded-full"
-                          style={{
-                            backgroundColor: `color-mix(in srgb, ${colors.dot} 13%, transparent)`,
-                            color: colors.dot,
-                          }}
-                        >
-                          {colors.label}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </m.div>
-          </section>
-        )}
+        <MuscleRecovery muscleRecovery={muscleRecovery} />
 
         {/* ── Próxima sesión (motor determinista, sin IA ni red) ── */}
         {nextSessionAdvice.length > 0 && (

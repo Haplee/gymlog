@@ -1,5 +1,6 @@
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
 import { useWeight } from '@shared/hooks/useWeight';
 import {
   BarChart,
@@ -201,10 +202,11 @@ export function ExerciseComparisonChart({
 }) {
   // `format` ya es el de date-fns en este fichero: alias para el de pesos.
   const { format: formatKg } = useWeight();
+  const { t } = useTranslation();
   if (data.length < 2) {
     return (
       <div className="text-center py-8 text-sm text-fg-subtle">
-        <p>Necesitas al menos 2 sesiones en común para comparar.</p>
+        <p>{t('stats.compare_needs_2')}</p>
       </div>
     );
   }
@@ -284,6 +286,7 @@ export function ProgressionChart({
 }) {
   // `format` ya es el de date-fns en este fichero: alias para el de pesos.
   const { format: formatKg } = useWeight();
+  const { t } = useTranslation();
   if (data.length < 2) {
     return (
       <div className="text-center py-8 text-sm text-fg-subtle">
@@ -299,7 +302,7 @@ export function ProgressionChart({
           <path d="M6 4v6a6 6 0 0 0 12 0V4" />
           <line x1="4" y1="20" x2="20" y2="20" />
         </svg>
-        <p>Necesitas al menos 2 sesiones de {exerciseName}</p>
+        <p>{t('stats.chart_needs_2_sessions', { exercise: exerciseName })}</p>
       </div>
     );
   }

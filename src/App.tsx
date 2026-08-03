@@ -17,6 +17,7 @@ import { fetchWorkouts } from '@shared/api/queries';
 import { calculateCurrentStreak } from '@features/stats/utils/kpiCalculations';
 import { useWorkoutReminder } from '@features/routine/hooks/useWorkoutReminder';
 import { useFatigueSuggestion } from '@features/stats/hooks/useFatigueSuggestion';
+import { getRoutineReminderDays } from '@features/routine/lib/routineReminders';
 import { useBackgroundNotifications } from '@shared/hooks/useBackgroundNotifications';
 import { Capacitor } from '@capacitor/core';
 import { devLog, devError } from '@shared/lib/devtools';
@@ -314,7 +315,7 @@ function AppRoutes() {
 
   useWorkoutReminder();
   useFatigueSuggestion();
-  useBackgroundNotifications();
+  useBackgroundNotifications(user?.id ?? null, getRoutineReminderDays);
   useWorkoutOutboxSync();
   useWidgetSync();
 

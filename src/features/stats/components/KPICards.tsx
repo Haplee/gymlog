@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { m } from 'framer-motion';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 
@@ -161,6 +162,7 @@ export const KPICard = memo(function KPICard({
   accentColor,
   size = 'md',
 }: KPICardProps) {
+  const { t } = useTranslation();
   const def = iconDefs[icon] ?? iconDefs.duration;
   const color = accentColor ?? def.color;
 
@@ -237,7 +239,7 @@ export const KPICard = memo(function KPICard({
                 color: 'var(--success)',
               }}
             >
-              Nuevo
+              {t('stats.new_badge')}
             </m.span>
           )}
         </div>

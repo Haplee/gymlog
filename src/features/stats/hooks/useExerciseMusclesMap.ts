@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@features/auth/stores/authStore';
-import { fetchExerciseMusclesMap, type ExerciseMuscle } from '@shared/api/exerciseMutations';
+import { fetchExerciseMusclesMap } from '@shared/api/queries';
+import type { ExerciseMuscle } from '@shared/lib/types';
 
 /**
  * Mapa `exercise_id → músculos ponderados`, compartido por las pantallas de

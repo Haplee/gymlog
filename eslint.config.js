@@ -5,6 +5,7 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 import tseslint from 'typescript-eslint';
 import { defineConfig, globalIgnores } from 'eslint/config';
 import jsxA11y from 'eslint-plugin-jsx-a11y';
+import i18nextPlugin from 'eslint-plugin-i18next';
 
 export default defineConfig([
   globalIgnores([
@@ -54,6 +55,15 @@ export default defineConfig([
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
+    },
+  },
+  {
+    files: ['src/features/stats/**/*.{ts,tsx}'],
+    plugins: {
+      i18next: i18nextPlugin,
+    },
+    rules: {
+      'i18next/no-literal-string': 'error',
     },
   },
 ]);

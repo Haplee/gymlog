@@ -90,6 +90,7 @@ function CatalogDetail({ id, name }: { id: string; name: string }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['exercises'] });
+      queryClient.invalidateQueries({ queryKey: ['exerciseLibrary'] });
       toast.success(t('library.saved_as_own'));
     },
     onError: () => toast.error(t('library.save_error')),

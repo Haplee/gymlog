@@ -1,9 +1,13 @@
 import { useEffect } from 'react';
 import { App as CapApp } from '@capacitor/app';
-import { useAuthStore } from '@features/auth/stores/authStore';
 import { checkStreakAtRisk } from '@shared/lib/streakChecker';
 import { checkWeeklySummary } from '@shared/lib/weeklySummary';
-import { isNative, scheduleWeeklySummaryReminder, canNotifyAsync } from '@shared/lib/notifications';
+import {
+  isNative,
+  scheduleWeeklySummaryReminder,
+  canNotifyAsync,
+  type ReminderDay,
+} from '@shared/lib/notifications';
 import { reconcileReminders } from '@shared/lib/reminderReconcile';
 import { devError, devLog } from '@shared/lib/devtools';
 import { supabase } from '@shared/lib/supabase';
@@ -22,8 +26,13 @@ import { registerPushNotifications } from '@shared/lib/push';
  *    usuario ya ha entrenado. Se dispara al abrir la app, al reanudarla
  *    (appStateChange) y tras guardar un entreno (workoutStore).
  */
-export function useBackgroundNotifications() {
-  const userId = useAuthStore((s) => s.user?.id);
+export function useBackgroundNotifications(
+  userId: string | null,
+  getRoutineDays: () => ReminderDay[],
+) {
+  // La identidad del usuario y los días de la rutina activa los pasa el
+  // llamador (AppRoutes): el hook vive en @shared y no debe depender de
+  // stores de features.
 
   // Al arrancar (o al cambiar de usuario): sincronizar el flag de notificaciones
   // con la DB y reprogramar las alarmas nativas si procede. Sin esto, tras
@@ -50,13 +59,13 @@ export function useBackgroundNotifications() {
       //    y las notificaciones están activas (canNotifyAsync lee notif_disabled)
       if (!isNative()) return;
       if (!(await canNotifyAsync())) return;
-      await reconcileReminders(userId);
+      await reconcileReminders(userId, getRoutineDays());
       await scheduleWeeklySummaryReminder();
       // Registro push remoto (refresca el token del dispositivo en cada arranque)
       void registerPushNotifications(userId);
       devLog('[Background] Alarmas nativas programadas');
     })();
-  }, [userId]);
+  }, [userId, getRoutineDays]);
 
   // Check en foreground al abrir: reconciliar recordatorios (rutina + racha) con
   // el estado real de entrenamiento y disparar el resumen semanal si aplica.
@@ -66,7 +75,7 @@ export function useBackgroundNotifications() {
     const runForegroundChecks = async () => {
       try {
         // Reconcilia rutina + racha del día según si ya entrenó hoy.
-        await reconcileReminders(userId);
+        await reconcileReminders(userId, getRoutineDays());
 
         // Resumen semanal con datos reales (solo la primera vez que abre el lunes)
         await checkWeeklySummary(userId);
@@ -102,10 +111,10 @@ export function useBackgroundNotifications() {
     // usuario entrenó con la app en background, al volver se cancela el aviso.
     if (!isNative()) return;
     const handle = CapApp.addListener('appStateChange', ({ isActive }) => {
-      if (isActive) void reconcileReminders(userId);
+      if (isActive) void reconcileReminders(userId, getRoutineDays());
     });
     return () => {
       void handle.then((h) => h.remove());
     };
-  }, [userId]);
+  }, [userId, getRoutineDays]);
 }

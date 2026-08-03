@@ -1,7 +1,9 @@
 import { Component, type ReactNode } from 'react';
+import { withTranslation } from 'react-i18next';
+import type { WithTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
-interface Props {
+interface Props extends WithTranslation {
   children: ReactNode;
   fallback?: ReactNode;
 }
@@ -11,7 +13,7 @@ interface State {
   error: Error | null;
 }
 
-export class ErrorBoundary extends Component<Props, State> {
+class ErrorBoundaryBase extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = { hasError: false, error: null };
@@ -40,10 +42,11 @@ export class ErrorBoundary extends Component<Props, State> {
         // usuario ya está viendo la pantalla de error.
       });
 
-    toast.error('Algo salió mal');
+    toast.error(this.props.t('common.error_toast'));
   }
 
   render() {
+    const { t } = this.props;
     if (this.state.hasError) {
       if (this.props.fallback) {
         return this.props.fallback;
@@ -51,16 +54,14 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="min-h-screen flex items-center justify-center p-4 bg-canvas">
           <div className="text-center max-w-sm">
-            <h1 className="text-xl font-bold text-error mb-2">Algo salió mal</h1>
-            <p className="text-sm text-fg-muted mb-4">
-              Lo sentimos, ha ocurrido un error inesperado.
-            </p>
+            <h1 className="text-xl font-bold text-error mb-2">{t('common.error_title')}</h1>
+            <p className="text-sm text-fg-muted mb-4">{t('common.error_description')}</p>
             <button
               type="button"
               onClick={() => window.location.reload()}
               className="px-4 py-2 rounded-card bg-accent text-accent-fg font-medium"
             >
-              Recargar
+              {t('common.reload')}
             </button>
           </div>
         </div>
@@ -70,3 +71,5 @@ export class ErrorBoundary extends Component<Props, State> {
     return this.props.children;
   }
 }
+
+export const ErrorBoundary = withTranslation()(ErrorBoundaryBase);

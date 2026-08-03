@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useRoutineStore } from '@features/routine/stores/routineStore';
+import { getRoutineReminderDays } from '@features/routine/lib/routineReminders';
 import { notify, getRoutineReminderCopy } from '@shared/lib/notifications';
 import { reconcileReminders, hasTrainedToday } from '@shared/lib/reminderReconcile';
 
@@ -23,7 +24,7 @@ export function useWorkoutReminder() {
   // salta el aviso de hoy si el usuario ya ha entrenado.
   useEffect(() => {
     if (!user) return;
-    void reconcileReminders(user.id);
+    void reconcileReminders(user.id, getRoutineReminderDays());
   }, [user, routines, activeRoutineId]);
 
   // Aviso inmediato al abrir la app si hoy toca rutina y aún no ha entrenado.

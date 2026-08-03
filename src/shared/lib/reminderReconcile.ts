@@ -9,35 +9,7 @@ import {
   type ReminderDay,
 } from '@shared/lib/notifications';
 import { useSettingsStore } from '@shared/stores/settingsStore';
-import {
-  useRoutineStore,
-  type DayOfWeek,
-  type DayRoutine,
-} from '@features/routine/stores/routineStore';
 import { devError } from '@shared/lib/devtools';
-
-/** JS DayOfWeek → weekday Capacitor (1=domingo … 7=sábado) */
-const DAY_TO_WEEKDAY: Record<DayOfWeek, number> = {
-  sunday: 1,
-  monday: 2,
-  tuesday: 3,
-  wednesday: 4,
-  thursday: 5,
-  friday: 6,
-  saturday: 7,
-};
-
-/** Días con rutina (ejercicios > 0) de la rutina activa, en formato recordatorio. */
-export function getReminderDays(): ReminderDay[] {
-  const active = useRoutineStore.getState().getActiveRoutine();
-  if (!active) return [];
-  return (Object.entries(active.days) as [DayOfWeek, DayRoutine][])
-    .filter(([, day]) => day.exercises.length > 0)
-    .map(([day, dayRoutine]) => ({
-      weekday: DAY_TO_WEEKDAY[day],
-      routineName: dayRoutine.name,
-    }));
-}
 
 /** Comprueba si el usuario ha registrado un workout hoy (fecha local). */
 export async function hasTrainedToday(userId: string): Promise<boolean> {
@@ -68,9 +40,12 @@ export async function hasTrainedToday(userId: string): Promise<boolean> {
  *
  * @param opts.trainedToday  fuerza el valor sin consultar la BD (p. ej. tras
  *                           guardar un entreno sabemos que ya se entrenó hoy).
+ * @param routineDays        días de la rutina activa (los calcula el feature
+ *                           routine; ver `getRoutineReminderDays`).
  */
 export async function reconcileReminders(
   userId: string,
+  routineDays: ReminderDay[],
   opts?: { trainedToday?: boolean },
 ): Promise<void> {
   if (!userId) return;
@@ -87,7 +62,7 @@ export async function reconcileReminders(
     }
 
     const trainedToday = opts?.trainedToday ?? (await hasTrainedToday(userId));
-    await syncRoutineReminders(getReminderDays(), trainedToday);
+    await syncRoutineReminders(routineDays, trainedToday);
     await scheduleStreakReminder(trainedToday);
   } catch (e) {
     devError('[Reminders] Error reconciliando recordatorios:', e);

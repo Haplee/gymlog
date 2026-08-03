@@ -1,4 +1,5 @@
 import { m } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { Target } from 'lucide-react';
 import { Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { CHART_COLORS } from '../../constants';
@@ -12,11 +13,12 @@ export interface MuscleDistributionItem {
 
 export function MuscleDistributionChart({ data }: { data: MuscleDistributionItem[] }) {
   const { formatVol } = useWeight();
+  const { t } = useTranslation();
   const totalVol = data.reduce((s, m) => s + m.value, 0);
 
   return (
     <section className="space-y-3">
-      <SectionLabel>Balance muscular</SectionLabel>
+      <SectionLabel>{t('userStats.muscle_balance_title')}</SectionLabel>
       <m.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -25,7 +27,9 @@ export function MuscleDistributionChart({ data }: { data: MuscleDistributionItem
       >
         <div className="flex items-center gap-2 mb-4">
           <Target className="w-4 h-4 text-accent" />
-          <span className="text-sm font-medium text-fg-muted">Distribución por grupo muscular</span>
+          <span className="text-sm font-medium text-fg-muted">
+            {t('userStats.muscle_distribution_label')}
+          </span>
         </div>
 
         {/* Pie chart */}

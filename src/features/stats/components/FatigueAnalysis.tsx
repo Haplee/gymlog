@@ -1,4 +1,5 @@
 import { m } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { CheckCircle2, AlertTriangle, XCircle, TrendingUp, Zap } from 'lucide-react';
 import type { MuscleGroupStatus, RecoveryStatus } from '../utils/fatigueAnalysis';
 import { MuscleGroupIcon } from '@shared/components/CardioIcons';
@@ -16,6 +17,7 @@ export function FatigueAnalysis({
   daysSinceLastWorkout,
   suggestedGroup,
 }: FatigueAnalysisProps) {
+  const { t } = useTranslation();
   const getStatusConfig = (status: RecoveryStatus) => {
     switch (status) {
       // Recién entrenado: la barra de recuperación está a ~0%, así que el
@@ -25,21 +27,21 @@ export function FatigueAnalysis({
           color: 'var(--error)',
           bgColor: 'rgba(255, 69, 58, 0.1)',
           icon: XCircle,
-          label: 'En recuperación',
+          label: t('userStats.recovery_recovering'),
         };
       case 'partial':
         return {
           color: 'var(--warning)',
           bgColor: 'rgba(255, 214, 10, 0.1)',
           icon: AlertTriangle,
-          label: 'Casi listo',
+          label: t('userStats.recovery_partial'),
         };
       case 'recovered':
         return {
           color: 'var(--success)',
           bgColor: 'rgba(48, 209, 88, 0.1)',
           icon: CheckCircle2,
-          label: 'Recuperado',
+          label: t('userStats.recovery_rested'),
         };
     }
   };
@@ -59,14 +61,16 @@ export function FatigueAnalysis({
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Zap className="w-5 h-5 text-accent" />
-          <div className="text-base font-semibold text-fg">Recuperación</div>
+          <div className="text-base font-semibold text-fg">
+            {t('userStats.recovery_card_title')}
+          </div>
         </div>
         <div className="text-xs text-fg-subtle">
           {daysSinceLastWorkout === 0
-            ? 'Hoy'
+            ? t('common.today')
             : daysSinceLastWorkout === 1
-              ? 'Ayer'
-              : `Hace ${daysSinceLastWorkout} días`}
+              ? t('common.yesterday')
+              : t('userStats.days_since_full', { count: daysSinceLastWorkout })}
         </div>
       </div>
 
@@ -79,7 +83,8 @@ export function FatigueAnalysis({
         >
           <AlertTriangle className="w-5 h-5 text-warning" />
           <div className="text-sm text-warning">
-            <span className="font-semibold">{daysSinceLastWorkout} días</span> sin entrenar
+            <span className="font-semibold">{daysSinceLastWorkout}</span>{' '}
+            {t('userStats.days_without_training')}
           </div>
         </m.div>
       )}
@@ -135,9 +140,9 @@ export function FatigueAnalysis({
                     {mg.daysSinceLast === -1
                       ? '—'
                       : mg.daysSinceLast === 0
-                        ? 'Hoy'
+                        ? t('common.today')
                         : mg.daysSinceLast === 1
-                          ? 'Ayer'
+                          ? t('common.yesterday')
                           : `${mg.daysSinceLast}d`}
                   </span>
                 </div>
@@ -157,7 +162,7 @@ export function FatigueAnalysis({
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp className="w-4 h-4 text-accent" />
             <div className="text-xs font-medium text-fg-subtle uppercase tracking-wide">
-              Sugerencia para hoy
+              {t('userStats.suggestion_today')}
             </div>
           </div>
           {(() => {
@@ -178,9 +183,9 @@ export function FatigueAnalysis({
                 </div>
                 <div>
                   <div className="text-base font-semibold" style={{ color: suggColor }}>
-                    Entrenar {suggestedGroup}
+                    {t('userStats.train_muscle', { muscle: suggestedGroup })}
                   </div>
-                  <div className="text-xs text-fg-muted">Grupo muscular recuperado</div>
+                  <div className="text-xs text-fg-muted">{t('userStats.muscle_recovered')}</div>
                 </div>
               </div>
             );

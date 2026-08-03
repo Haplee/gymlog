@@ -36,3 +36,10 @@ export interface SetFormData {
   is_warmup?: boolean;
   notes?: string;
 }
+
+/** Fila de músculo ponderado leída de la BD. */
+export interface ExerciseMuscle {
+  muscle_group: string;
+  role: 'primary' | 'secondary';
+  weight: number;
+}

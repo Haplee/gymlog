@@ -50,7 +50,10 @@ export function ExerciseLoadType({
 
   const mutation = useMutation({
     mutationFn: (next: LoadType) => updateExerciseLoadType(exerciseId, next),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['exercises'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['exercises'] });
+      queryClient.invalidateQueries({ queryKey: ['exerciseLibrary'] });
+    },
     onError: (e) => devError('[ExerciseLoadType] update failed:', e),
   });
 

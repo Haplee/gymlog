@@ -35,12 +35,15 @@ export function parseWeightInput(value: string, currentUnit: 'kg' | 'lb'): numbe
   return currentUnit === 'lb' ? lbToKg(num) : num;
 }
 
-export function getWeightUnitLabel(unit: 'kg' | 'lb'): string {
-  return unit;
+/** Valor (ya en la unidad del usuario) como texto editable, sin el «.0» sobrante. */
+export function formatWeightInput(value: number): string {
+  if (typeof value !== 'number' || Number.isNaN(value)) return '';
+  return value % 1 === 0 ? String(value) : value.toFixed(1).replace(/\.0$/, '');
 }
 
-export function getVolumeUnitLabel(unit: 'kg' | 'lb'): string {
-  return unit === 'kg' ? 't' : 'k lb';
+/** Peso en la unidad del usuario como texto editable, sin el «.0» sobrante. */
+export function weightToInput(weightInKg: number, unit: 'kg' | 'lb'): string {
+  return formatWeightInput(unit === 'lb' ? kgToLb(weightInKg) : weightInKg);
 }
 
 export function formatVolume(volumeInKg: number, unit: 'kg' | 'lb', decimals = 1): string {

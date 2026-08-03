@@ -1,4 +1,5 @@
 import { m } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { CHART_COLORS } from '../../constants';
 import { SectionLabel } from './SectionLabel';
 import { useWeight } from '@shared/hooks/useWeight';
@@ -12,9 +13,10 @@ export interface TopExerciseItem {
 
 export function TopExercisesList({ data }: { data: TopExerciseItem[] }) {
   const { formatVol } = useWeight();
+  const { t } = useTranslation();
   return (
     <section className="space-y-3">
-      <SectionLabel>Top ejercicios por volumen</SectionLabel>
+      <SectionLabel>{t('userStats.top_exercises_title')}</SectionLabel>
       <m.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -57,7 +59,11 @@ export function TopExercisesList({ data }: { data: TopExerciseItem[] }) {
                     {formatVol(ex.volume)}
                   </div>
                   <div className="text-2xs text-fg-subtle">
-                    {ex.sets} series · 1RM ~{ex.best1rm.toFixed(0)}kg
+                    {t('stats.top_ex_1rm', {
+                      count: ex.sets,
+                      value: ex.best1rm.toFixed(0),
+                      unit: t('stats.kg_unit'),
+                    })}
                   </div>
                 </div>
               </div>

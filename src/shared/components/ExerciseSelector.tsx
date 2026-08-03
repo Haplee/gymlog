@@ -2,17 +2,18 @@ import { useTranslation } from 'react-i18next';
 import { useState, useCallback, useRef, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { m, AnimatePresence } from 'framer-motion';
-import { Search, Plus, X, Loader2, AlertCircle, Trash2, Clock, Pencil, Check } from 'lucide-react';
+import { Search, Plus, X, Loader2, Clock } from 'lucide-react';
 import { useExerciseSearch, trackRecentExercise } from '@shared/hooks/useExerciseSearch';
 import {
   createCustomExercise,
   type CreateCustomExerciseInput,
 } from '@shared/api/exerciseMutations';
-import { Button } from '@shared/components/ui';
 import { MuscleGroupIcon } from '@shared/components/CardioIcons';
 import { supabase } from '@shared/lib/supabase';
 import { DEFAULT_MUSCLE_GROUP } from '@shared/constants/muscleGroups';
 import { toast } from 'sonner';
+import { ExerciseRow, type ExerciseOption } from './exerciseSelector/ExerciseRow';
+import { CreateExerciseForm } from './exerciseSelector/CreateExerciseForm';
 
 interface ExerciseSelectorProps {
   userId: string;
@@ -25,48 +26,6 @@ interface ExerciseSelectorProps {
    * dropdown cerrado por defecto hacía que la hoja pareciera vacía.
    */
   defaultOpen?: boolean;
-}
-
-interface ExerciseOption {
-  id: string;
-  name: string;
-  muscle_group: string;
-  user_id: string | null;
-}
-
-const MUSCLE_GROUPS = [
-  'Pecho',
-  'Espalda',
-  'Hombro',
-  'Pierna',
-  'Glúteo',
-  'Bíceps',
-  'Tríceps',
-  'Antebrazo',
-  'Core',
-  'Cardio',
-  DEFAULT_MUSCLE_GROUP,
-];
-
-function suggestMuscleGroup(name: string): string | null {
-  const n = name.toLowerCase();
-  if (!n.trim()) return null;
-  if (/antebrazo/.test(n)) return 'Antebrazo';
-  if (/bíceps|biceps|curl|martillo/.test(n)) return 'Bíceps';
-  if (/tríceps|triceps|press francés|fondos/.test(n)) return 'Tríceps';
-  if (/pecho|press banca|aperturas|fly/.test(n)) return 'Pecho';
-  if (/espalda|dominada|remo|jalón|jalon|pull/.test(n)) return 'Espalda';
-  if (/hombro|militar|lateral|pájaro|pajaro/.test(n)) return 'Hombro';
-  if (/glúteo|gluteo|hip thrust|puente/.test(n)) return 'Glúteo';
-  if (
-    /pierna|cuádriceps|cuadriceps|sentadilla|squat|peso muerto|femoral|isquio|gemelo|pantorrilla|lunge|zancada/.test(
-      n,
-    )
-  )
-    return 'Pierna';
-  if (/abdomen|core|plancha|crunch|abdominal/.test(n)) return 'Core';
-  if (/correr|bici|cardio|elíptica|eliptica/.test(n)) return 'Cardio';
-  return null;
 }
 
 export function ExerciseSelector({
@@ -112,6 +71,7 @@ export function ExerciseSelector({
     mutationFn: (data: CreateCustomExerciseInput) => createCustomExercise(userId, data),
     onSuccess: (newExercise) => {
       queryClient.invalidateQueries({ queryKey: ['exercises'] });
+      queryClient.invalidateQueries({ queryKey: ['exerciseLibrary'] });
       onSelect(newExercise.id, true);
       setIsCreating(false);
       setNewExerciseName('');
@@ -131,6 +91,7 @@ export function ExerciseSelector({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['exercises'] });
+      queryClient.invalidateQueries({ queryKey: ['exerciseLibrary'] });
       toast.success('Ejercicio eliminado');
     },
     onError: () => {
@@ -160,6 +121,7 @@ export function ExerciseSelector({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['exercises'] });
+      queryClient.invalidateQueries({ queryKey: ['exerciseLibrary'] });
       setEditingMuscleId(null);
       toast.success('Grupo muscular actualizado');
     },
@@ -303,8 +265,8 @@ export function ExerciseSelector({
           onFocus={onFocus}
           onBlur={onBlur}
           onKeyDown={handleKeyDown}
-          placeholder="Buscar ejercicio..."
-          aria-label="Buscar ejercicio"
+          placeholder={t('search.placeholder')}
+          aria-label={t('search.placeholder')}
           aria-expanded={isFocused}
           aria-controls="exercise-list"
           className="w-full pl-10 pr-10 py-2.5 rounded-card text-sm outline-none transition-all bg-surface-2 border border-line-strong text-fg"
@@ -314,7 +276,7 @@ export function ExerciseSelector({
             type="button"
             onClick={() => setQuery('')}
             className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded-full"
-            aria-label="Limpiar búsqueda"
+            aria-label={t('search.clear')}
           >
             <X className="w-4 h-4 text-fg-subtle" />
           </button>
@@ -398,137 +360,35 @@ export function ExerciseSelector({
 
                     {/* Exercise rows */}
                     {exs.map((ex) => (
-                      <div
+                      <ExerciseRow
                         key={ex.id}
-                        className="flex flex-col"
-                        style={
-                          activeExerciseId === ex.id
-                            ? { backgroundColor: 'var(--interactive-hover)' }
-                            : {}
+                        exercise={ex}
+                        userId={userId}
+                        isActive={activeExerciseId === ex.id}
+                        isEditing={editingMuscleId === ex.id}
+                        editingValue={editingMuscleValue}
+                        deletePending={deleteMutation.isPending}
+                        updatePending={updateMuscleMutation.isPending}
+                        onSelect={() => handleSelect(ex)}
+                        onToggleEdit={() => {
+                          if (editingMuscleId === ex.id) {
+                            setEditingMuscleId(null);
+                            // Devolver el foco al input para que el dropdown siga visible
+                            requestAnimationFrame(() => inputRef.current?.focus());
+                          } else {
+                            setEditingMuscleId(ex.id);
+                            setEditingMuscleValue(ex.muscle_group);
+                          }
+                        }}
+                        onSetEditingValue={setEditingMuscleValue}
+                        onDelete={(e) => handleDeleteExercise(e, ex.id)}
+                        onSave={() =>
+                          updateMuscleMutation.mutate({
+                            id: ex.id,
+                            muscle_group: editingMuscleValue,
+                          })
                         }
-                      >
-                        <div className="flex items-center">
-                          <button
-                            type="button"
-                            onClick={() => handleSelect(ex)}
-                            className="flex-1 px-3 py-3 text-left flex items-center justify-between transition-colors text-fg hover:bg-hover active:bg-hover"
-                            role="option"
-                            aria-selected={activeExerciseId === ex.id}
-                          >
-                            <span className="text-base font-medium">{ex.name}</span>
-                            {ex.user_id === userId && (
-                              <span
-                                className="text-[0.5625rem] px-1.5 py-0.5 rounded-sm font-medium ml-2 flex-shrink-0"
-                                style={{
-                                  backgroundColor: 'rgba(200,255,0,0.1)',
-                                  color: 'var(--interactive-primary)',
-                                }}
-                              >
-                                {t('workout.custom_badge')}
-                              </span>
-                            )}
-                          </button>
-                          {/* Editar grupo muscular (solo ejercicios propios) */}
-                          {ex.user_id === userId && (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (editingMuscleId === ex.id) {
-                                  setEditingMuscleId(null);
-                                  // Devolver el foco al input para que el dropdown siga visible
-                                  requestAnimationFrame(() => inputRef.current?.focus());
-                                } else {
-                                  setEditingMuscleId(ex.id);
-                                  setEditingMuscleValue(ex.muscle_group);
-                                }
-                              }}
-                              className="px-2 py-2 transition-colors"
-                              style={{
-                                color:
-                                  editingMuscleId === ex.id
-                                    ? 'var(--interactive-primary)'
-                                    : 'var(--text-tertiary)',
-                              }}
-                              aria-label={`Editar grupo muscular de ${ex.name}`}
-                              title={`Editar grupo muscular de ${ex.name}`}
-                            >
-                              <Pencil className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                          {ex.user_id === userId && (
-                            <button
-                              type="button"
-                              onClick={(e) => handleDeleteExercise(e, ex.id)}
-                              disabled={deleteMutation.isPending}
-                              className="px-2 py-2 transition-colors text-fg-subtle"
-                              aria-label={`Eliminar ejercicio ${ex.name}`}
-                              title={`Eliminar ejercicio ${ex.name}`}
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                        </div>
-                        {/* Inline muscle group editor */}
-                        {editingMuscleId === ex.id && (
-                          <div
-                            className="px-3 pb-3 pt-1"
-                            onMouseDown={(e) => e.preventDefault()}
-                            onTouchStart={(e) => e.stopPropagation()}
-                          >
-                            <div className="flex flex-wrap gap-1.5 mb-2">
-                              {MUSCLE_GROUPS.map((mg) => {
-                                const active = editingMuscleValue === mg;
-                                return (
-                                  <button
-                                    type="button"
-                                    key={mg}
-                                    onClick={() => setEditingMuscleValue(mg)}
-                                    className="flex items-center gap-1 px-2.5 py-1 text-xs rounded-sm transition-colors border"
-                                    style={{
-                                      backgroundColor: active
-                                        ? 'var(--interactive-primary)'
-                                        : 'var(--bg-surface-2)',
-                                      color: active ? '#000' : 'var(--text-secondary)',
-                                      borderColor: active
-                                        ? 'var(--interactive-primary)'
-                                        : 'var(--border-subtle)',
-                                      fontWeight: active ? 'bold' : 'normal',
-                                    }}
-                                  >
-                                    <MuscleGroupIcon name={mg} className="w-3 h-3" />
-                                    {mg}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                updateMuscleMutation.mutate({
-                                  id: ex.id,
-                                  muscle_group: editingMuscleValue,
-                                })
-                              }
-                              disabled={updateMuscleMutation.isPending}
-                              className="w-full flex items-center justify-center py-2 rounded-md text-sm font-semibold transition-transform active:scale-[0.98]"
-                              style={{
-                                backgroundColor: 'var(--interactive-primary)',
-                                color: '#000',
-                              }}
-                            >
-                              {updateMuscleMutation.isPending ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              ) : (
-                                <>
-                                  <Check className="w-4 h-4 mr-2" />
-                                  Guardar grupo muscular
-                                </>
-                              )}
-                            </button>
-                          </div>
-                        )}
-                      </div>
+                      />
                     ))}
                   </div>
                 ))}
@@ -550,139 +410,21 @@ export function ExerciseSelector({
             )}
 
             {isCreating && (
-              <div className="p-3 border-t border-line">
-                <div className="text-xs font-semibold uppercase tracking-wider mb-2 text-fg-subtle">
-                  {t('workout.new_exercise')}
-                </div>
-                <input
-                  type="text"
-                  value={newExerciseName}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setNewExerciseName(v);
-                    const suggested = suggestMuscleGroup(v);
-                    if (suggested) setNewExerciseMuscle(suggested);
-                  }}
-                  placeholder={t('workout.exercise_name_placeholder')}
-                  className="w-full px-3 py-2 rounded-md text-sm outline-none bg-surface-2 border border-line-strong text-fg"
-                  autoFocus
-                />
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {MUSCLE_GROUPS.map((mg) => {
-                    const active = newExerciseMuscle === mg;
-                    return (
-                      <button
-                        key={mg}
-                        type="button"
-                        onClick={() => setNewExerciseMuscle(mg)}
-                        className="flex items-center gap-1 px-2.5 py-1 text-xs rounded-sm transition-colors border"
-                        style={{
-                          backgroundColor: active
-                            ? 'var(--interactive-primary)'
-                            : 'var(--bg-surface-2)',
-                          color: active ? '#000' : 'var(--text-secondary)',
-                          borderColor: active
-                            ? 'var(--interactive-primary)'
-                            : 'var(--border-subtle)',
-                          fontWeight: active ? 'bold' : 'normal',
-                        }}
-                      >
-                        <MuscleGroupIcon name={mg} className="w-3 h-3" />
-                        {mg}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Secundarios ponderados (opcional) */}
-                <div className="mt-3 text-xs font-semibold uppercase tracking-wider text-fg-subtle">
-                  {t('workout.secondary_muscles')}
-                </div>
-                <div className="mt-1.5 flex flex-wrap gap-1.5">
-                  {MUSCLE_GROUPS.filter((mg) => mg !== newExerciseMuscle).map((mg) => {
-                    const active = mg in newSecondaries;
-                    return (
-                      <div key={mg} className="flex items-center">
-                        <button
-                          type="button"
-                          onClick={() => toggleSecondary(mg)}
-                          aria-pressed={active}
-                          className={`flex items-center gap-1 px-2.5 min-h-9 text-xs rounded-sm border transition-colors ${
-                            active
-                              ? 'bg-accent/15 text-accent border-accent'
-                              : 'bg-surface-2 text-fg-muted border-line'
-                          }`}
-                        >
-                          <MuscleGroupIcon name={mg} className="w-3 h-3" />
-                          {mg}
-                          {active && <span className="tabular-nums">· {newSecondaries[mg]}%</span>}
-                        </button>
-                        {active && (
-                          <span className="flex items-center ml-1">
-                            <button
-                              type="button"
-                              onClick={() => adjustSecondary(mg, -10)}
-                              aria-label={`${mg} -10%`}
-                              className="w-8 h-8 rounded-sm bg-surface-2 text-fg-muted text-sm"
-                            >
-                              −
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => adjustSecondary(mg, 10)}
-                              aria-label={`${mg} +10%`}
-                              className="w-8 h-8 rounded-sm bg-surface-2 text-fg-muted text-sm ml-0.5"
-                            >
-                              +
-                            </button>
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Peso corporal */}
-                <button
-                  type="button"
-                  onClick={() => setNewIsBodyweight((v) => !v)}
-                  aria-pressed={newIsBodyweight}
-                  className={`mt-3 flex items-center gap-2 px-3 min-h-11 w-full rounded-md border text-sm transition-colors ${
-                    newIsBodyweight
-                      ? 'bg-accent/15 text-accent border-accent'
-                      : 'bg-surface-2 text-fg-muted border-line'
-                  }`}
-                >
-                  <Check className={`w-4 h-4 ${newIsBodyweight ? 'opacity-100' : 'opacity-30'}`} />
-                  {t('workout.bodyweight_exercise')}
-                </button>
-
-                {error && (
-                  <div className="flex items-center gap-1 mt-2 text-xs text-error">
-                    <AlertCircle className="w-3 h-3" />
-                    {error}
-                  </div>
-                )}
-
-                <div className="flex gap-2 mt-3">
-                  <Button variant="ghost" size="sm" onClick={handleCancelCreate} className="flex-1">
-                    {t('common.cancel')}
-                  </Button>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={handleCreate}
-                    disabled={createMutation.isPending || !newExerciseName.trim()}
-                    className="flex-1"
-                  >
-                    {createMutation.isPending ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      t('common.create')
-                    )}
-                  </Button>
-                </div>
-              </div>
+              <CreateExerciseForm
+                name={newExerciseName}
+                onNameChange={setNewExerciseName}
+                muscle={newExerciseMuscle}
+                onMuscleChange={setNewExerciseMuscle}
+                secondaries={newSecondaries}
+                onToggleSecondary={toggleSecondary}
+                onAdjustSecondary={adjustSecondary}
+                isBodyweight={newIsBodyweight}
+                onToggleBodyweight={() => setNewIsBodyweight((v) => !v)}
+                error={error}
+                isPending={createMutation.isPending}
+                onCancel={handleCancelCreate}
+                onCreate={handleCreate}
+              />
             )}
           </m.div>
         )}

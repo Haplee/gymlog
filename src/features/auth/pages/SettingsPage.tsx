@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, type ChangeEvent, type ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
+import { useShallow } from 'zustand/react/shallow';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
 import { Layout } from '@app/components/Layout';
@@ -18,6 +19,7 @@ import {
   hasOsNotificationPermission,
 } from '@shared/lib/notifications';
 import { reconcileReminders } from '@shared/lib/reminderReconcile';
+import { getRoutineReminderDays } from '@features/routine/lib/routineReminders';
 import { registerPushNotifications, unregisterPushToken } from '@shared/lib/push';
 import { useUpdateProfileCache } from '@features/auth/hooks/useProfile';
 import { toast } from 'sonner';
@@ -78,7 +80,22 @@ export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
     setRestDuration,
     restByExercise,
     setRestByExercise,
-  } = useSettingsStore();
+  } = useSettingsStore(
+    useShallow((s) => ({
+      biometricEnabled: s.biometricEnabled,
+      setBiometricEnabled: s.setBiometricEnabled,
+      notificationsEnabled: s.notificationsEnabled,
+      setNotificationsEnabled: s.setNotificationsEnabled,
+      trainingReminders: s.trainingReminders,
+      setTrainingReminders: s.setTrainingReminders,
+      restAutoStart: s.restAutoStart,
+      setRestAutoStart: s.setRestAutoStart,
+      restDuration: s.restDuration,
+      setRestDuration: s.setRestDuration,
+      restByExercise: s.restByExercise,
+      setRestByExercise: s.setRestByExercise,
+    })),
+  );
 
   const [biometricSupport, setBiometricSupport] = useState<{ available: boolean; message: string }>(
     { available: false, message: '' },
@@ -163,7 +180,7 @@ export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
             .upsert({ id: user.id, notifications_enabled: true }, { onConflict: 'id' });
         }
         // Reprogramar todas las alarmas nativas con el permiso ya concedido
-        if (user) await reconcileReminders(user.id);
+        if (user) await reconcileReminders(user.id, getRoutineReminderDays());
         await scheduleWeeklySummaryReminder();
         // Registrar token push remoto
         if (user) void registerPushNotifications(user.id);
@@ -190,7 +207,7 @@ export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
   // programadas seguirían sonando (o no volverían) hasta el siguiente arranque.
   const handleTrainingRemindersToggle = async (enabled: boolean) => {
     setTrainingReminders(enabled);
-    if (user) await reconcileReminders(user.id);
+    if (user) await reconcileReminders(user.id, getRoutineReminderDays());
   };
 
   // El permiso de alarmas exactas se concede fuera de la app (ajustes del
@@ -215,7 +232,7 @@ export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
     if (granted) {
       // Las alarmas ya programadas se re-registran inexactas: reprogramar para
       // que pasen a exactas.
-      if (user) await reconcileReminders(user.id);
+      if (user) await reconcileReminders(user.id, getRoutineReminderDays());
       toast.success(t('settings.exact_alarms_on'));
     }
   };

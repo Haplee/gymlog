@@ -4,6 +4,7 @@ import {
   detectStall,
   suggestDeload,
   applyReadiness,
+  suggestFromLastSession,
   effectiveRir,
   MAX_INCREASE_RATIO,
   type AutoRegSession,
@@ -208,6 +209,72 @@ describe('suggestNextLoad', () => {
       session(daysAgo(3), { weight: 100, reps: 8, rir: 2 }),
     ]);
     expect(nn(four).confidence).toBe('high');
+  });
+});
+
+describe('suggestFromLastSession', () => {
+  it('sugiere aunque no haya esfuerzo registrado (una sola sesión)', () => {
+    const s = suggestFromLastSession([session(daysAgo(3), { weight: 80, reps: 8 })]);
+    expect(nn(s).action).toBe('hold');
+    expect(nn(s).weight).toBe(80);
+    expect(nn(s).reps).toBe(9);
+    expect(nn(s).reasonKey).toBe('coach.reason.no_effort_reps');
+    expect(nn(s).confidence).toBe('low');
+  });
+
+  it('usa la sesión más reciente aunque lleguen desordenadas', () => {
+    const s = suggestFromLastSession([
+      session(daysAgo(7), { weight: 70, reps: 8 }),
+      session(daysAgo(3), { weight: 90, reps: 8 }),
+    ]);
+    expect(nn(s).baseWeight).toBe(90);
+  });
+
+  it('sube un escalón al alcanzar el techo del rango por defecto (12)', () => {
+    const s = suggestFromLastSession([session(daysAgo(3), { weight: 80, reps: 12 })]);
+    expect(nn(s).action).toBe('increase');
+    expect(nn(s).weight).toBe(82.5);
+    expect(nn(s).reps).toBe(8);
+    expect(nn(s).reasonKey).toBe('coach.reason.no_effort_increase');
+  });
+
+  it('respeta un rango de reps distinto', () => {
+    const s = suggestFromLastSession([session(daysAgo(3), { weight: 80, reps: 6 })], {
+      repMin: 4,
+      repMax: 6,
+    });
+    expect(nn(s).action).toBe('increase');
+    expect(nn(s).reps).toBe(4);
+  });
+
+  it('en peso corporal nunca sube carga: suma una repetición al llegar al techo', () => {
+    const s = suggestFromLastSession([session(daysAgo(3), { weight: 75, reps: 12 })], {
+      bodyweight: true,
+    });
+    expect(nn(s).action).toBe('hold');
+    expect(nn(s).weight).toBe(75);
+    expect(nn(s).reps).toBe(13);
+    expect(nn(s).reasonKey).toBe('coach.reason.no_effort_reps');
+  });
+
+  it('ignora las series de calentamiento', () => {
+    const s = suggestFromLastSession([
+      {
+        date: daysAgo(3),
+        sets: [
+          { weight: 40, reps: 15, is_warmup: true },
+          { weight: 100, reps: 8 },
+        ],
+      },
+    ]);
+    expect(nn(s).baseWeight).toBe(100);
+  });
+
+  it('devuelve null sin series de trabajo', () => {
+    expect(suggestFromLastSession([])).toBeNull();
+    expect(
+      suggestFromLastSession([{ date: daysAgo(3), sets: [{ weight: 0, reps: 0 }] }]),
+    ).toBeNull();
   });
 });
 

@@ -1,4 +1,5 @@
 import { m } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { Zap } from 'lucide-react';
 import { SectionLabel } from './SectionLabel';
 
@@ -15,9 +16,10 @@ export function DayFrequencyChart({
   data: DayFrequencyItem[];
   bestDay: string | null;
 }) {
+  const { t } = useTranslation();
   return (
     <section className="space-y-3">
-      <SectionLabel>Consistencia por día</SectionLabel>
+      <SectionLabel>{t('userStats.day_frequency_title')}</SectionLabel>
       <m.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -28,7 +30,7 @@ export function DayFrequencyChart({
           <div className="flex items-center gap-2 mb-4">
             <Zap className="w-4 h-4" style={{ color: '#fbbf24' }} />
             <span className="text-sm font-medium text-fg-muted">
-              Tu día favorito: <span className="font-bold text-fg">{bestDay}</span>
+              {t('userStats.favorite_day')} <span className="font-bold text-fg">{bestDay}</span>
             </span>
           </div>
         )}

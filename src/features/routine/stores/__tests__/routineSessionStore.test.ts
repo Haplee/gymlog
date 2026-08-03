@@ -89,6 +89,32 @@ describe('useRoutineSessionStore', () => {
     expect(exercises[1].sets).toHaveLength(1);
   });
 
+  it('setExercises reemplaza la lista y permite rellenar pesos antes de finish', async () => {
+    useRoutineSessionStore.getState().start(routine, 'monday', dayRoutine);
+
+    // El flujo de autocompletado rellena el peso recomendado en todas las series.
+    const { exercises } = useRoutineSessionStore.getState();
+    const prefilled = exercises.map((ex) => ({
+      ...ex,
+      sets: ex.sets.map((s) => ({ ...s, weight: '60' })),
+    }));
+    useRoutineSessionStore.getState().setExercises(prefilled);
+
+    const result = await useRoutineSessionStore
+      .getState()
+      .finish('user-1', () => 'catalog-id', identity);
+
+    expect(result.success).toBe(true);
+    expect(result.savedExercises).toBe(2);
+    expect(mockRpc).toHaveBeenCalledTimes(2);
+    expect(mockRpc.mock.calls[0][1]).toMatchObject({
+      p_sets: [
+        { set_num: 1, reps: 8, weight: 60 },
+        { set_num: 2, reps: 8, weight: 60 },
+      ],
+    });
+  });
+
   it('finish guarda un workout por ejercicio realizado y limpia la sesión', async () => {
     useRoutineSessionStore.getState().start(routine, 'monday', dayRoutine);
     fillExercise(0, '10', '60');

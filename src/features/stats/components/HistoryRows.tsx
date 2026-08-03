@@ -81,7 +81,7 @@ export function ExerciseRow({
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="font-mono tabular-nums font-semibold text-sm text-accent">
-                    {s.weight} kg
+                    {s.weight} {t('stats.kg_unit')}
                   </span>
                   <button
                     type="button"

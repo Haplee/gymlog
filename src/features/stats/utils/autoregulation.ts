@@ -12,6 +12,7 @@
  */
 
 import { calcular1RM } from '@shared/lib/brzycki';
+import { suggestProgression } from '@shared/lib/progression';
 
 /** RIR objetivo por defecto: dejar ~2 repeticiones en recámara. */
 export const DEFAULT_TARGET_RIR = 2;
@@ -236,6 +237,52 @@ export function suggestNextLoad(
 
   // 4. En rango: misma carga, una repetición más.
   return mk(baseWeight, baseReps + 1, 'hold', 'coach.reason.on_target');
+}
+
+/**
+ * Fallback de doble progresión cuando la última sesión no registra esfuerzo.
+ *
+ * `suggestNextLoad` se niega a decidir sin RIR/RPE: es su contrato. Pero la
+ * mayoría de usuarios registra solo peso y reps, y con historial basta para
+ * una sugerencia segura: se repite el peso de la mejor serie y se intenta
+ * sumar una repetición; si ya se alcanzó el techo del rango, se sube un
+ * escalón. En peso corporal nunca se sube carga: se progresa por repeticiones.
+ */
+export function suggestFromLastSession(
+  sessions: AutoRegSession[],
+  opts: { repMin?: number; repMax?: number; bodyweight?: boolean } = {},
+): LoadSuggestion | null {
+  const usable = usableSessions(sessions);
+  if (usable.length === 0) return null;
+
+  const last = usable[usable.length - 1];
+  const working = last.sets.filter(isWorkingSet);
+  if (working.length === 0) return null;
+
+  const top = topSet(last);
+  if (!top) return null;
+
+  const prog = suggestProgression(
+    working.map((s) => ({ weight: s.weight, reps: s.reps })),
+    { repMin: opts.repMin, repMax: opts.repMax },
+  );
+  if (!prog) return null;
+
+  const increase = prog.action === 'increase-weight' && !opts.bodyweight;
+  const weight = increase ? prog.weight : top.weight;
+  // En peso corporal, alcanzar el techo no se premia reseteando las reps a la
+  // baja: se sigue sumando una repetición, que es la única progresión segura.
+  const reps = increase ? prog.reps : prog.action === 'increase-weight' ? top.reps + 1 : prog.reps;
+
+  return {
+    weight,
+    baseWeight: top.weight,
+    reps,
+    action: increase ? 'increase' : 'hold',
+    deltaPct: top.weight > 0 ? Math.round(((weight - top.weight) / top.weight) * 1000) / 10 : 0,
+    reasonKey: increase ? 'coach.reason.no_effort_increase' : 'coach.reason.no_effort_reps',
+    confidence: 'low',
+  };
 }
 
 /**

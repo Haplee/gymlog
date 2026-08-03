@@ -310,7 +310,9 @@ export function HistoryPage() {
                             <span className="font-mono tabular-nums font-semibold">
                               {formatDuration(item.data.duration)}
                             </span>
-                            {item.data.calories ? <span>· {item.data.calories}kcal</span> : null}
+                            {item.data.calories ? (
+                              <span>· {t('stats.kcal_suffix', { value: item.data.calories })}</span>
+                            ) : null}
                             {item.data.avg_hr ? (
                               <span>
                                 · {item.data.avg_hr}
@@ -336,15 +338,21 @@ export function HistoryPage() {
                                 {CARDIO_LABELS[item.data.type]}
                               </span>
                               <span className="text-2xs px-1.5 py-0.5 rounded-sm font-bold bg-error/10 text-error">
-                                Cardio
+                                {t('stats.cardio_badge')}
                               </span>
                             </div>
                             <div className="text-xs flex items-center gap-2 mt-0.5 text-fg-muted">
                               <span className="font-mono tabular-nums font-semibold">
                                 {formatDuration(item.data.duration)}
                               </span>
-                              {item.data.distance && <span>· {item.data.distance}km</span>}
-                              {item.data.calories && <span>· {item.data.calories}kcal</span>}
+                              {item.data.distance && (
+                                <span>· {t('stats.km_suffix', { value: item.data.distance })}</span>
+                              )}
+                              {item.data.calories && (
+                                <span>
+                                  · {t('stats.kcal_suffix', { value: item.data.calories })}
+                                </span>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -371,7 +379,7 @@ export function HistoryPage() {
                                 })}
                               </span>
                               <span className="text-2xs px-1.5 py-0.5 rounded-pill font-bold bg-accent text-accent-fg">
-                                Fuerza
+                                {t('stats.strength_badge')}
                               </span>
                             </div>
                             <div className="flex gap-3">
@@ -475,8 +483,12 @@ export function HistoryPage() {
                             locale: es,
                           })}
                         </span>
-                        {session.distance && <span>· {session.distance}km</span>}
-                        {session.calories && <span>· {session.calories}kcal</span>}
+                        {session.distance && (
+                          <span>· {t('stats.km_suffix', { value: session.distance })}</span>
+                        )}
+                        {session.calories && (
+                          <span>· {t('stats.kcal_suffix', { value: session.calories })}</span>
+                        )}
                       </div>
                       {session.notes && (
                         <div className="text-xs italic mt-0.5 text-fg-subtle">{session.notes}</div>
@@ -568,7 +580,8 @@ export function HistoryPage() {
                   </span>
                   <div className="flex items-center gap-3">
                     <span className="text-xs font-mono text-fg-subtle">
-                      {group.totalSets} series · {formatVol(group.totalVolume)}
+                      {t('stats.series_count', { count: group.totalSets })} ·{' '}
+                      {formatVol(group.totalVolume)}
                     </span>
                     <button
                       type="button"

@@ -45,6 +45,12 @@ interface RoutineSessionState {
   addSet: (exerciseIndex: number) => void;
   updateSet: (exerciseIndex: number, setIndex: number, data: Partial<SessionSet>) => void;
   removeSet: (exerciseIndex: number, setIndex: number) => void;
+  /**
+   * Reemplaza la lista de ejercicios. La usa la sesión de rutina en su modo
+   * de autocompletado para rellenar el peso recomendado en cada serie antes
+   * de `finish`, sin que el usuario tenga que teclear nada.
+   */
+  setExercises: (exercises: SessionExercise[]) => void;
   discard: () => void;
   /**
    * Guarda la sesión completa. `resolveExerciseId` mapea el nombre de la rutina
@@ -168,6 +174,8 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
         });
         set({ exercises });
       },
+
+      setExercises: (exercises) => set({ exercises }),
 
       discard: () => set({ ...emptySession }),
 

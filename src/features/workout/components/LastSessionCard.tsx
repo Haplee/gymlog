@@ -7,6 +7,7 @@ import { m, AnimatePresence } from 'framer-motion';
 import { fetchLastExerciseSets } from '@shared/api/queries';
 import { suggestProgression } from '@shared/lib/progression';
 import { useWeight } from '@shared/hooks/useWeight';
+import { formatWeightInput } from '@shared/lib/weight';
 
 interface LastSessionCardProps {
   userId: string;
@@ -70,7 +71,7 @@ export function LastSessionCard({ userId, exerciseId, onCopySets }: LastSessionC
                   key={i}
                   className="text-xs px-2.5 py-1 rounded-card font-mono font-medium bg-surface border border-line text-fg-muted"
                 >
-                  {convert(s.weight).toFixed(1).replace(/\.0$/, '')}×{s.reps}
+                  {formatWeightInput(convert(s.weight))}×{s.reps}
                 </span>
               ))}
             </div>
@@ -81,8 +82,7 @@ export function LastSessionCard({ userId, exerciseId, onCopySets }: LastSessionC
                   <TrendingUp className="w-3.5 h-3.5" />
                   <span className="font-medium">{t('workout.progression_hint')}:</span>
                   <span className="font-mono">
-                    {convert(suggestion.weight).toFixed(1).replace(/\.0$/, '')} {unit} ×{' '}
-                    {suggestion.reps}
+                    {formatWeightInput(convert(suggestion.weight))} {unit} × {suggestion.reps}
                   </span>
                 </div>
                 <button

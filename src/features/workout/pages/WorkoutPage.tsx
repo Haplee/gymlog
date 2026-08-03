@@ -46,13 +46,15 @@ import {
   useWearableSleep,
 } from '@features/wearables/hooks/useWearableConnections';
 import { WorkoutSetList } from '@features/workout/components/WorkoutSetList';
+import { RoutineDayHeader } from '@features/workout/components/RoutineDayHeader';
+import { EmptyWorkoutState } from '@features/workout/components/EmptyWorkoutState';
 import { PlatesCalculator } from '@features/workout/components/PlatesCalculator';
 import {
   WorkoutSavedCard,
   type WorkoutSummary,
 } from '@features/workout/components/WorkoutSavedCard';
 import type { ExerciseNote, PersonalRecord } from '@shared/lib/types';
-import { Plus, Calculator, Trophy, Repeat } from 'lucide-react';
+import { Calculator, Trophy } from 'lucide-react';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { impact, notificationHaptic, ImpactStyle, NotificationType } from '@shared/lib/haptics';
@@ -239,7 +241,9 @@ export function WorkoutPage() {
   const isBodyweightExercise = isBodyweightLoad(selectedExercise?.load_type);
 
   // Sugerencia de carga del motor determinista para el ejercicio activo.
-  const exerciseAdvice = useExerciseAdvice(user?.id, activeExerciseId ?? undefined);
+  const exerciseAdvice = useExerciseAdvice(user?.id, activeExerciseId ?? undefined, {
+    bodyweight: isBodyweightExercise,
+  });
 
   // Mantener el store al día con el contexto de peso corporal del ejercicio activo.
   useEffect(() => {
@@ -498,6 +502,7 @@ export function WorkoutPage() {
       try {
         await deleteExercise(exId);
         queryClient.invalidateQueries({ queryKey: ['exercises'] });
+        queryClient.invalidateQueries({ queryKey: ['exerciseLibrary'] });
         setActiveExercise(null);
       } catch (err) {
         devError('Error deleting exercise:', err);
@@ -540,40 +545,13 @@ export function WorkoutPage() {
       />
 
       {activeRoutine && todayRoutine && todayRoutine.exercises.length > 0 && (
-        <m.div
+        <RoutineDayHeader
+          name={todayRoutine.name}
+          weekdayName={weekdayName}
+          isIdle={isIdle}
+          exercises={todayRoutine.exercises}
           variants={containerVariants}
-          initial="hidden"
-          animate="show"
-          transition={{ duration: 0.25, ease: 'easeOut' }}
-          className="mb-4"
-        >
-          {/* Titular de la referencia visual: «Rutina · Día», texto plano sobre
-              el lienzo. Ya no es la tarjeta rellena del acento. Los ejercicios
-              del día siguen debajo como chips apagados: no salen en la maqueta,
-              pero son el atajo para saber qué toca hoy. */}
-          <h1 className="font-display text-2xl font-bold tracking-tight text-fg">
-            {todayRoutine.name} · <span className="capitalize">{weekdayName}</span>
-          </h1>
-          {/* Los chips solo en reposo: con la sesión en marcha ya sabes qué
-              toca y el sitio es para los campos de KG/REPS. */}
-          {isIdle && (
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {todayRoutine.exercises.slice(0, 4).map((ex) => (
-                <span
-                  key={ex.name}
-                  className="rounded-pill bg-surface-2 px-2.5 py-1 text-xs font-medium text-fg-muted"
-                >
-                  {ex.name}
-                </span>
-              ))}
-              {todayRoutine.exercises.length > 4 && (
-                <span className="px-1 py-1 text-xs text-fg-subtle">
-                  +{todayRoutine.exercises.length - 4}
-                </span>
-              )}
-            </div>
-          )}
-        </m.div>
+        />
       )}
 
       {user && (
@@ -631,34 +609,13 @@ export function WorkoutPage() {
         )}
 
         {sets.length === 0 ? (
-          <div className="flex flex-col items-center justify-center text-center py-10 px-2 gap-4">
-            <div className="w-16 h-16 rounded-full bg-surface-2 flex items-center justify-center">
-              <Plus className="w-7 h-7 text-accent" aria-hidden="true" />
-            </div>
-            <div>
-              <div className="text-base font-semibold text-fg">{t('workout.empty_sets')}</div>
-              <div className="text-sm text-fg-subtle mt-1">{t('workout.empty_hint')}</div>
-            </div>
-            <div className="flex flex-col items-stretch gap-2 w-full max-w-[16rem]">
-              <button
-                type="button"
-                onClick={addSet}
-                className="w-full py-3 rounded-pill bg-accent text-accent-fg font-semibold shadow-btn-accent active:scale-[0.98]"
-              >
-                {t('workout.add_set')}
-              </button>
-              {lastWorkout && lastWorkout.sets.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => repeatWorkout(lastWorkout)}
-                  className="w-full py-3 rounded-pill bg-surface-2 border border-line text-fg-muted flex items-center justify-center gap-1.5 transition-colors active:bg-hover"
-                >
-                  <Repeat className="w-4 h-4" />
-                  {t('workout.repeat_last')}
-                </button>
-              )}
-            </div>
-          </div>
+          <EmptyWorkoutState
+            onAddSet={addSet}
+            lastWorkout={lastWorkout}
+            onRepeatLast={() => {
+              if (lastWorkout) repeatWorkout(lastWorkout);
+            }}
+          />
         ) : (
           <>
             {isBodyweightExercise && (
