@@ -47,11 +47,14 @@ foreach ($f in $PrivateFiles) {
         $tShared = (Get-Item $shared).LastWriteTime
         if ($tShared -gt $tLocal) { Copy-Item $shared $local -Force; Log "shared -> local : $f" }
         elseif ($tLocal -gt $tShared) { Copy-Item $local $shared -Force; Log "local -> shared : $f" }
-      } else { Copy-Item $local $shared -Force; Log "local -> shared (nuevo): $f" }
-    } elseif (Test-Path $shared -PathType Leaf) {
+      }
+      else { Copy-Item $local $shared -Force; Log "local -> shared (nuevo): $f" }
+    }
+    elseif (Test-Path $shared -PathType Leaf) {
       Copy-Item $shared $local -Force; Log "shared -> local (nuevo): $f"
     }
-  } catch { Log "WARN: $f -> $($_.Exception.Message)" }
+  }
+  catch { Log "WARN: $f -> $($_.Exception.Message)" }
 }
 
 # 2) Git: commit → pull --rebase → push.
@@ -73,7 +76,8 @@ try {
   $null = git push 2>&1
   if ($LASTEXITCODE -ne 0) { Log 'ERROR: push fallo (¿red/credenciales?) -> git push a mano'; exit 1 }
   Log 'OK: repo sincronizado'
-} catch {
+}
+catch {
   Log "ERROR: $($_.Exception.Message)"
   exit 1
 }
