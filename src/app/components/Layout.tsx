@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useWorkoutStore } from '@features/workout/stores/workoutStore';
-import { useCardioStore } from '@features/cardio/stores/cardioStore';
 import { queryClient } from '@app/queryClient';
 import { fetchWorkoutsAndSets, fetchWorkouts, fetchRecentSets } from '@shared/api/queries';
 import { m, AnimatePresence } from 'framer-motion';
@@ -12,11 +11,11 @@ import { WifiOff, RefreshCw } from 'lucide-react';
 import {
   IconHome,
   IconDumbbell,
-  IconPulse,
   IconChart,
   IconGear,
   IconMenu,
   IconFlame,
+  IconHistory,
 } from '@shared/components/icons';
 import { calculateCurrentStreak } from '@features/stats/utils/kpiCalculations';
 import { AppDrawer } from '@app/components/AppDrawer';
@@ -88,7 +87,6 @@ export function Layout({ children }: LayoutProps) {
   const isOnline = useOnlineStatus();
   const workoutSets = useWorkoutStore((s) => s.sets);
   const workoutStartedAt = useWorkoutStore((s) => s.startedAt);
-  const cardioActive = useCardioStore((s) => s.isActive);
   const pendingSync = useOutboxStore((s) => s.pending);
   const trainBadge = !!workoutStartedAt && workoutSets.length > 0;
   const [searchOpen, setSearchOpen] = useState(false);
@@ -109,13 +107,13 @@ export function Layout({ children }: LayoutProps) {
   });
   const streak = calculateCurrentStreak(streakWorkouts);
 
-  // Las cinco pestañas de la referencia visual (`public/screens/*.png`).
-  // Historial ya no tiene pestaña propia: STATS ocupa su sitio y el acceso a
-  // `/history` vive en el cajón, junto al resto de lo que desplaza el rediseño.
+  // Cinco pestañas, el máximo que marca Material Design 3 para la barra inferior.
+  // Historial sube a la barra —es el destino que más se consulta tras entrenar—
+  // y Cardio pasa al cajón, donde ya convive el resto de destinos secundarios.
   const tabs = [
     { path: '/', Icon: IconHome, label: t('nav.home'), badge: trainBadge },
     { path: '/routines', Icon: IconDumbbell, label: t('nav.routines'), badge: false },
-    { path: '/cardio', Icon: IconPulse, label: t('nav.cardio'), badge: cardioActive },
+    { path: '/history', Icon: IconHistory, label: t('history.title'), badge: false },
     { path: '/stats', Icon: IconChart, label: t('nav.stats'), badge: false },
     { path: '/settings', Icon: IconGear, label: t('nav.settings'), badge: false },
   ];

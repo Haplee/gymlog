@@ -2,10 +2,9 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { History, CopyCheck, TrendingUp } from 'lucide-react';
+import { History, CopyCheck } from 'lucide-react';
 import { m, AnimatePresence } from 'framer-motion';
 import { fetchLastExerciseSets } from '@shared/api/queries';
-import { suggestProgression } from '@shared/lib/progression';
 import { useWeight } from '@shared/hooks/useWeight';
 import { formatWeightInput } from '@shared/lib/weight';
 
@@ -17,15 +16,13 @@ interface LastSessionCardProps {
 
 export function LastSessionCard({ userId, exerciseId, onCopySets }: LastSessionCardProps) {
   const { t } = useTranslation();
-  const { unit, convert } = useWeight();
+  const { convert } = useWeight();
   const { data: lastSets = [] } = useQuery({
     queryKey: ['lastExerciseSets', userId, exerciseId],
     queryFn: () => fetchLastExerciseSets(userId, exerciseId),
     staleTime: 1000 * 60 * 5,
     enabled: !!userId && !!exerciseId,
   });
-
-  const suggestion = suggestProgression(lastSets.map((s) => ({ reps: s.reps, weight: s.weight })));
 
   return (
     <AnimatePresence>
@@ -75,32 +72,6 @@ export function LastSessionCard({ userId, exerciseId, onCopySets }: LastSessionC
                 </span>
               ))}
             </div>
-
-            {suggestion && (
-              <div className="flex items-center justify-between mt-2 pt-2 border-t border-line">
-                <div className="flex items-center gap-1.5 text-xs text-accent">
-                  <TrendingUp className="w-3.5 h-3.5" />
-                  <span className="font-medium">{t('workout.progression_hint')}:</span>
-                  <span className="font-mono">
-                    {formatWeightInput(convert(suggestion.weight))} {unit} × {suggestion.reps}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() =>
-                    onCopySets(
-                      Array.from({ length: lastSets.length || 1 }, () => ({
-                        reps: suggestion.reps,
-                        weight: suggestion.weight,
-                      })),
-                    )
-                  }
-                  className="text-xs px-2 py-1 rounded-sm font-medium bg-surface border border-line-accent text-accent transition-transform active:scale-95"
-                >
-                  {t('workout.apply')}
-                </button>
-              </div>
-            )}
           </div>
         </m.div>
       )}

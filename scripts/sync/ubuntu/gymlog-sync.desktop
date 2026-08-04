@@ -1,0 +1,10 @@
+# GymLog sync — alternativa a systemd para entornos con escritorio GNOME.
+# Copiar a ~/.config/autostart/ y ajustar la ruta de Exec si tu usuario difiere.
+[Desktop Entry]
+Type=Application
+Name=GymLog sync
+Comment=Sincroniza el repo (git) y ficheros privados al iniciar sesión
+Exec=/home/franc/proyectos/gymlog/scripts/sync/sync-git.sh
+Terminal=false
+X-GNOME-Autostart-enabled=true
+NoDisplay=true

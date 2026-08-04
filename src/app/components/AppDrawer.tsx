@@ -3,14 +3,15 @@ import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { m } from 'framer-motion';
 import { Bell, X } from 'lucide-react';
+import { useCardioStore } from '@features/cardio/stores/cardioStore';
 import {
   IconSearch,
-  IconHistory,
   IconBook,
   IconDumbbell,
   IconRuler,
   IconWatch,
   IconStar,
+  IconPulse,
 } from '@shared/components/icons';
 
 /**
@@ -37,6 +38,9 @@ interface AppDrawerProps {
 export function AppDrawer({ onClose, onOpenSearch, unreadCount }: AppDrawerProps) {
   const { t } = useTranslation();
   const panelRef = useRef<HTMLDivElement>(null);
+  // Sesión de cardio en marcha: el cajón mantiene el punto que antes llevaba su
+  // pestaña en la barra inferior.
+  const cardioActive = useCardioStore((s) => s.isActive);
 
   // Escape cierra, y el foco entra en el panel para que el lector de pantalla no
   // siga leyendo la página de debajo.
@@ -51,16 +55,18 @@ export function AppDrawer({ onClose, onOpenSearch, unreadCount }: AppDrawerProps
 
   // Agrupado por intención: primero lo que se consulta durante el entreno,
   // después lo que se abre de vez en cuando.
-  const groups: { title: string; links: { to: string; Icon: typeof IconBook; label: string }[] }[] =
-    [
-      {
-        title: t('nav.group_training'),
-        links: [
-          { to: '/history', Icon: IconHistory, label: t('history.title') },
-          { to: '/exercises', Icon: IconDumbbell, label: t('library.title') },
-          { to: '/user-stats', Icon: IconRuler, label: t('settings.my_measurements') },
-        ],
-      },
+  const groups: {
+    title: string;
+    links: { to: string; Icon: typeof IconBook; label: string; badge?: boolean }[];
+  }[] = [
+    {
+      title: t('nav.group_training'),
+      links: [
+        { to: '/cardio', Icon: IconPulse, label: t('nav.cardio'), badge: cardioActive },
+        { to: '/exercises', Icon: IconDumbbell, label: t('library.title') },
+        { to: '/user-stats', Icon: IconRuler, label: t('settings.my_measurements') },
+      ],
+    },
       {
         title: t('nav.group_more'),
         links: [
@@ -152,9 +158,14 @@ export function AppDrawer({ onClose, onOpenSearch, unreadCount }: AppDrawerProps
           {groups.map(({ title, links }) => (
             <div key={title} className="mt-4">
               <div className="label-caps px-3 pb-1 text-fg-subtle">{title}</div>
-              {links.map(({ to, Icon, label }) => (
+              {links.map(({ to, Icon, label, badge }) => (
                 <Link key={to} to={to} onClick={onClose} className={rowClass}>
-                  <Icon className="h-5 w-5 shrink-0 text-fg-subtle" />
+                  <span className="relative">
+                    <Icon className="h-5 w-5 shrink-0 text-fg-subtle" />
+                    {badge && (
+                      <span className="absolute -right-1 -top-0.5 h-2 w-2 rounded-full bg-error" />
+                    )}
+                  </span>
                   {label}
                 </Link>
               ))}

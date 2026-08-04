@@ -1,4 +1,4 @@
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { m } from 'framer-motion';
 import { Check, StickyNote, X } from 'lucide-react';
@@ -139,6 +139,9 @@ export function WorkoutSetList({
   const [pickedIndex, setPickedIndex] = useState<number | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [localWeight, setLocalWeight] = useState<string | null>(null);
+  // Tras confirmar una serie, la siguiente hereda el peso/reps y el foco vuelve
+  // al campo de peso para ajustar sin un toque extra (patrón de Hevy/Strong).
+  const weightRef = useRef<HTMLInputElement>(null);
 
   const onSelect = useCallback((index: number) => {
     setPickedIndex(index);
@@ -195,6 +198,7 @@ export function WorkoutSetList({
           </label>
           <input
             id="active-set-weight"
+            ref={weightRef}
             type="text"
             inputMode="decimal"
             aria-label={`${weightUnit} ${activeIndex + 1}`}
@@ -260,6 +264,9 @@ export function WorkoutSetList({
               setPickedIndex(null);
               setLocalWeight(null);
               onCommitSet();
+              // La serie nueva se monta con el valor heredado; devolver el foco
+              // al peso permite corregirlo sin salir del flujo.
+              requestAnimationFrame(() => weightRef.current?.focus());
             }}
             aria-label={t('workout.add_set')}
             className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-md bg-accent text-accent-fg transition-transform active:scale-95"

@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { TrendingUp, TrendingDown, Minus, AlertTriangle } from 'lucide-react';
 import type { ExerciseAdvice } from '../hooks/useAutoregulation';
+import type { LoadSuggestion } from '../utils/autoregulation';
 
 const ACTION_ICON = {
   increase: TrendingUp,
@@ -13,7 +14,14 @@ const ACTION_ICON = {
  *
  * Sale del motor determinista: no necesita el entrenador IA ni conexión.
  */
-export function NextSessionCard({ advice }: { advice: ExerciseAdvice }) {
+export function NextSessionCard({
+  advice,
+  onApply,
+}: {
+  advice: ExerciseAdvice;
+  /** Cuando se pasa, la tarjeta ofrece «Aplicar» para precargar el peso. */
+  onApply?: (suggestion: LoadSuggestion) => void;
+}) {
   const { t } = useTranslation();
   const { exercise, suggestion, stall } = advice;
   const Icon = ACTION_ICON[suggestion.action];
@@ -52,6 +60,16 @@ export function NextSessionCard({ advice }: { advice: ExerciseAdvice }) {
           <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0 text-warning" aria-hidden="true" />
           <span>{t(`coach.stall.cause_${stall.causeKey}`)}</span>
         </p>
+      )}
+
+      {onApply && (
+        <button
+          type="button"
+          onClick={() => onApply(suggestion)}
+          className="mt-3 w-full min-h-11 rounded-sm bg-accent px-3 text-sm font-semibold text-accent-fg transition-transform active:scale-[0.98]"
+        >
+          {t('workout.apply')}
+        </button>
       )}
     </article>
   );

@@ -1,6 +1,15 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { m } from 'framer-motion';
-import { BarChart2, BarChart3 } from 'lucide-react';
+import {
+  BarChart2,
+  BarChart3,
+  Download,
+  Upload,
+  FileSpreadsheet,
+  FileJson,
+} from 'lucide-react';
+import { Modal } from '@shared/components/ui';
 
 export type HistoryView = 'all' | 'workouts' | 'sets' | 'cardio';
 
@@ -25,6 +34,9 @@ interface HistoryFiltersProps {
  *
  * Extraída de `HistoryPage` por tamaño (CLAUDE.md fija 800 líneas). Scrollea con
  * el contenido a propósito: fijarla se comió media pantalla en móvil.
+ *
+ * Exportar e importar se resumen en dos acciones que abren un diálogo con el
+ * formato; cuatro botones atómicos en la barra ocultaban el alcance de cada uno.
  */
 export function HistoryFilters({
   view,
@@ -42,6 +54,12 @@ export function HistoryFilters({
   importFromJson,
 }: HistoryFiltersProps) {
   const { t } = useTranslation();
+  const [exportOpen, setExportOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+
+  const optionClass =
+    'flex min-h-12 items-center gap-2 rounded-card border border-line bg-surface px-3 text-left text-sm font-medium text-fg transition-colors active:bg-hover';
+  const optionIconClass = 'h-4 w-4 flex-shrink-0 text-accent';
 
   return (
     <div className="mb-3 space-y-2">
@@ -127,39 +145,91 @@ export function HistoryFilters({
             </select>
             <button
               type="button"
-              onClick={exportToExcel}
-              className="bg-surface border border-line-strong rounded-card text-accent text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
+              onClick={() => setExportOpen(true)}
+              className="flex items-center gap-1.5 bg-surface border border-line-strong rounded-card text-accent text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
+              <Download className="w-4 h-4" />
               {t('history.export_btn')}
             </button>
             <button
               type="button"
-              onClick={exportToJson}
-              className="bg-surface border border-line-strong rounded-card text-accent text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
+              onClick={() => setImportOpen(true)}
+              className="flex items-center gap-1.5 bg-surface border border-line-strong rounded-card text-fg-muted text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
-              {t('history.export_json')}
-            </button>
-            <label className="bg-surface border border-line-strong rounded-card text-fg-muted text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]">
+              <Upload className="w-4 h-4" />
               {t('history.import_btn')}
-              <input
-                type="file"
-                accept=".csv,.txt,.xlsx"
-                onChange={importFromCsv}
-                className="hidden"
-              />
-            </label>
-            <label className="bg-surface border border-line-strong rounded-card text-fg-muted text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]">
-              {t('history.import_json')}
-              <input
-                type="file"
-                accept=".json,application/json"
-                onChange={importFromJson}
-                className="hidden"
-              />
-            </label>
+            </button>
           </>
         )}
       </div>
+
+      <Modal
+        open={exportOpen}
+        onClose={() => setExportOpen(false)}
+        title={t('history.export_title')}
+        icon={<Download className="w-5 h-5" />}
+      >
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setExportOpen(false);
+              exportToExcel();
+            }}
+            className={optionClass}
+          >
+            <FileSpreadsheet className={optionIconClass} />
+            {t('history.format_excel')}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setExportOpen(false);
+              exportToJson();
+            }}
+            className={optionClass}
+          >
+            <FileJson className={optionIconClass} />
+            {t('history.format_json')}
+          </button>
+        </div>
+      </Modal>
+
+      <Modal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        title={t('history.import_title')}
+        icon={<Upload className="w-5 h-5" />}
+      >
+        <div className="flex flex-col gap-2">
+          <label className={`${optionClass} cursor-pointer`}>
+            <FileSpreadsheet className={optionIconClass} />
+            {t('history.format_spreadsheet')}
+            <input
+              type="file"
+              accept=".csv,.txt,.xlsx"
+              onChange={(e) => {
+                importFromCsv(e);
+                setImportOpen(false);
+              }}
+              className="hidden"
+            />
+          </label>
+          <label className={`${optionClass} cursor-pointer`}>
+            <FileJson className={optionIconClass} />
+            {t('history.format_json')}
+            <input
+              type="file"
+              accept=".json,application/json"
+              onChange={(e) => {
+                importFromJson(e);
+                setImportOpen(false);
+              }}
+              className="hidden"
+            />
+          </label>
+        </div>
+      </Modal>
     </div>
   );
 }

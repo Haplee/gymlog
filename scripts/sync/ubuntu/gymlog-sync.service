@@ -1,0 +1,21 @@
+# GymLog sync — unit de systemd de usuario (corre al iniciar sesión).
+# Instalar:
+#   mkdir -p ~/.config/systemd/user
+#   cp scripts/sync/ubuntu/gymlog-sync.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now gymlog-sync.service
+#
+# Ajusta ExecStart si tu repo vive en otra ruta (GYMLOG_REPO).
+
+[Unit]
+Description=GymLog repo sync (git + ficheros privados)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/proyectos/gymlog/scripts/sync/sync-git.sh
+TimeoutStartSec=600
+
+[Install]
+WantedBy=default.target

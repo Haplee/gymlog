@@ -40,6 +40,7 @@ import { CoachSuggestionBanner } from '@features/coach/components/CoachSuggestio
 import { CoachHomeCard } from '@features/coach/components/CoachHomeCard';
 import { NextSessionCard } from '@features/stats/components/NextSessionCard';
 import { useExerciseAdvice } from '@features/stats/hooks/useExerciseAdvice';
+import type { LoadSuggestion } from '@features/stats/utils/autoregulation';
 import { pickDaily, pickSleepFor } from '@features/wearables/utils/pickDaily';
 import {
   useWearableDaily,
@@ -449,6 +450,24 @@ export function WorkoutPage() {
     [setSets],
   );
 
+  // «Aplicar» de la tarjeta de sugerencia: rellena la serie en curso con el peso
+  // y reps recomendados (en kg, como guarda el store). Cada serie nueva hereda
+  // el valor de la anterior, así que basta con tocar la última.
+  const handleApplyAdvice = useCallback(
+    (suggestion: LoadSuggestion) => {
+      const weight = String(suggestion.weight);
+      const reps = String(suggestion.reps);
+      if (sets.length === 0) {
+        addSet();
+        updateSet(0, { weight, reps });
+      } else {
+        updateSet(sets.length - 1, { weight, reps });
+      }
+      void impact(ImpactStyle.Light);
+    },
+    [sets.length, addSet, updateSet],
+  );
+
   const handleSaveNote = useCallback(
     async (text: string) => {
       if (!user || !activeExerciseId || !text) return;
@@ -586,6 +605,7 @@ export function WorkoutPage() {
                   ...exerciseAdvice,
                   exercise: selectedExercise?.name ?? customExerciseName ?? '',
                 }}
+                onApply={handleApplyAdvice}
               />
             </div>
           )}
