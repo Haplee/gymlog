@@ -15,6 +15,7 @@ interface SetData {
   notes?: string;
   rpe?: string;
   setType?: SetType;
+  completed?: boolean;
 }
 
 const RPE_OPTIONS = ['6', '7', '8', '9', '10'] as const;
@@ -67,8 +68,9 @@ const LoggedSetRow = memo(function LoggedSetRow({
         isPR ? 'border-l-2 border-l-accent pl-3' : ''
       }`}
     >
-      <span className={`tabular text-base ${isPR ? 'text-accent' : 'text-fg-subtle'}`}>
+      <span className={`flex items-center gap-1.5 tabular text-base ${isPR ? 'text-accent' : 'text-fg-subtle'}`}>
         {i + 1}
+        {s.completed && <Check className="h-3.5 w-3.5 text-success" strokeWidth={3} />}
       </span>
 
       {s.isWarmup && (
@@ -117,8 +119,13 @@ interface WorkoutSetListProps {
  * línea. No se pierde nada respecto a la rejilla anterior: cualquier fila se
  * pulsa para volver a editarla arriba, y RPE, tipo de serie, nota y borrado
  * siguen ahí, plegados tras el botón de nota.
+ *
+ * Memoizado: cada tecla en KG/REPS llama a `updateSet`, el padre re-renderiza y
+ * la fila activa es la única que debe cambiar. Con `memo`, los re-renders del
+ * padre por causas ajenas (query de consejo, timer, foco) no reconstruyen el
+ * editor ni el bucle de filas; cada `LoggedSetRow` ya está memoizada de suyo.
  */
-export function WorkoutSetList({
+export const WorkoutSetList = memo(function WorkoutSetList({
   sets,
   exerciseName,
   showWarmupSets,
@@ -172,6 +179,16 @@ export function WorkoutSetList({
   );
 
   const shownWeight = localWeight ?? displayWeight(active.weight, convert);
+
+  // Recordatorio efímero del valor de la serie anterior: solo aparece cuando la
+  // fila activa está vacía (recién abierta o tras borrar lo heredado).
+  const prev = activeIndex > 0 ? sets[activeIndex - 1] : null;
+  const previousHint =
+    prev && prev.reps && prev.weight && !active.reps && !active.weight
+      ? `${t('workout.previous_set')}: ${displayWeight(prev.weight, convert)} ${weightUnit} × ${
+          prev.reps
+        }`
+      : null;
 
   const inputClass = `w-full bg-transparent border-b pb-1 text-display font-display tabular text-fg outline-none transition-colors focus:border-accent ${
     error ? 'border-error' : 'border-line'
@@ -261,6 +278,9 @@ export function WorkoutSetList({
             type="button"
             onClick={() => {
               void impact(ImpactStyle.Medium);
+              // El ✓ significa «serie hecha»: se marca como completada y, si
+              // aplica, arranca el descanso (lo decide onCommitSet).
+              updateSet(activeIndex, { completed: true });
               setPickedIndex(null);
               setLocalWeight(null);
               onCommitSet();
@@ -268,7 +288,7 @@ export function WorkoutSetList({
               // al peso permite corregirlo sin salir del flujo.
               requestAnimationFrame(() => weightRef.current?.focus());
             }}
-            aria-label={t('workout.add_set')}
+            aria-label={t('workout.complete_set')}
             className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-md bg-accent text-accent-fg transition-transform active:scale-95"
           >
             <Check className="h-7 w-7" strokeWidth={3} />
@@ -277,6 +297,7 @@ export function WorkoutSetList({
       </div>
 
       {error && <div className="mt-2 text-xs text-error">{error}</div>}
+      {previousHint && <div className="mt-1.5 text-xs text-fg-muted">{previousHint}</div>}
 
       {/* Controles de la serie activa que la maqueta no dibuja pero existen:
           calentamiento, nota/RPE/tipo y borrar. */}
@@ -406,4 +427,4 @@ export function WorkoutSetList({
       </m.div>
     </div>
   );
-}
+});

@@ -22,6 +22,9 @@ const SetDataSchema = z.object({
   rpe: z.string().max(2).optional().default(''),
   // Tipo de serie avanzado. 'normal' por defecto.
   setType: z.enum(['normal', 'dropset', 'rest_pause', 'amrap']).optional().default('normal'),
+  // Marcar con ✓. Solo importa durante la sesión: al guardar decide qué series
+  // se incluyen si el usuario elige «solo completadas». No se persiste en BD.
+  completed: z.boolean().optional().default(false),
 });
 
 type SetData = z.infer<typeof SetDataSchema>;
@@ -57,6 +60,7 @@ interface WorkoutState extends PersistedWorkout {
   removeAllSets: () => void;
   saveWorkout: (
     userId: string,
+    opts?: { onlyCompleted?: boolean },
   ) => Promise<{ error: Error | null; success: boolean; queued?: boolean }>;
   clearPersistedState: () => void;
 }
@@ -69,6 +73,7 @@ const makeSet = (reps = '', weight = '', isWarmup = false, notes = '', rpe = '')
   notes,
   rpe,
   setType: 'normal',
+  completed: false,
 });
 
 export const useWorkoutStore = create<WorkoutState>()(
@@ -139,7 +144,7 @@ export const useWorkoutStore = create<WorkoutState>()(
         set({ sets: [] });
       },
 
-      saveWorkout: async (userId: string) => {
+      saveWorkout: async (userId: string, opts?: { onlyCompleted?: boolean }) => {
         const {
           activeExerciseId,
           customExerciseName,
@@ -155,19 +160,21 @@ export const useWorkoutStore = create<WorkoutState>()(
           return { error: new Error('Selecciona un ejercicio'), success: false };
         }
 
-        const validSets = setData.filter((s) => {
-          const result = SetDataSchema.safeParse(s);
-          if (!result.success) return false;
-          const reps = Number(s.reps);
-          const weight = Number(s.weight);
-          if (!Number.isFinite(reps) || reps <= 0) return false;
-          if (!Number.isFinite(weight) || weight < 0) return false;
-          // En modo peso corporal el kg introducido es lastre y puede ser 0.
-          if (bodyweightMode) return true;
-          // Allow weight=0 only on warmup sets (e.g. bodyweight warmup)
-          if (!s.isWarmup && weight === 0) return false;
-          return true;
-        });
+        const validSets = setData
+          .filter((s) => {
+            const result = SetDataSchema.safeParse(s);
+            if (!result.success) return false;
+            const reps = Number(s.reps);
+            const weight = Number(s.weight);
+            if (!Number.isFinite(reps) || reps <= 0) return false;
+            if (!Number.isFinite(weight) || weight < 0) return false;
+            // En modo peso corporal el kg introducido es lastre y puede ser 0.
+            if (bodyweightMode) return true;
+            // Allow weight=0 only on warmup sets (e.g. bodyweight warmup)
+            if (!s.isWarmup && weight === 0) return false;
+            return true;
+          })
+          .filter((s) => (opts?.onlyCompleted ? s.completed : true));
         if (!validSets.length)
           return { error: new Error('Añade reps y kg válidas'), success: false };
 

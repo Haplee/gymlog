@@ -163,7 +163,7 @@ export function ExerciseSearchSheet({ onClose }: ExerciseSearchSheetProps) {
           ))}
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-6">
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-[calc(var(--inset-bottom,env(safe-area-inset-bottom))+1.5rem)]">
           {isLoading ? (
             <p className="py-8 text-center text-sm text-fg-subtle">{t('common.loading')}</p>
           ) : results.length === 0 ? (

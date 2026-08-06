@@ -1,6 +1,8 @@
 import { generateTips } from '@features/stats/utils/tips';
 import { useAutoregulation } from '@features/stats/hooks/useAutoregulation';
+import { buildDeloadInput, suggestDeload } from '../utils/autoregulation';
 import { NextSessionCard } from '@features/stats/components/NextSessionCard';
+import { DeloadCard } from '../components/userStats/DeloadCard';
 import { celebrate } from '@shared/lib/celebration';
 import { useMemo, useEffect, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router';
@@ -106,6 +108,13 @@ export function UserStatsPage() {
   // Sugerencias de carga a partir del RIR/RPE ya registrado. Local y gratis:
   // se muestran tenga o no activado el entrenador IA.
   const nextSessionAdvice = useAutoregulation(recentSets);
+
+  // Semana de descarga: volumen y RIR agregados por semana ISO (productor puro)
+  // y la regla del motor determinista. null si aún no hay 3 semanas de datos.
+  const deloadSuggestion = useMemo(() => {
+    const input = buildDeloadInput(workouts);
+    return input ? suggestDeload(input) : null;
+  }, [workouts]);
 
   const currentStreak = useMemo(() => calculateCurrentStreak(workouts), [workouts]);
   const maxStreak = useMemo(() => calculateMaxStreak(workouts), [workouts]);
@@ -593,6 +602,14 @@ export function UserStatsPage() {
 
         {/* ── Estado muscular ── */}
         <MuscleRecovery muscleRecovery={muscleRecovery} />
+
+        {/* ── Descarga (motor determinista, sin IA ni red) ── */}
+        {deloadSuggestion && (
+          <section className="space-y-3">
+            <SectionLabel>{t('coach.kind.deload')}</SectionLabel>
+            <DeloadCard suggestion={deloadSuggestion} />
+          </section>
+        )}
 
         {/* ── Próxima sesión (motor determinista, sin IA ni red) ── */}
         {nextSessionAdvice.length > 0 && (

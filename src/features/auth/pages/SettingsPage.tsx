@@ -80,6 +80,8 @@ export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
     setRestDuration,
     restByExercise,
     setRestByExercise,
+    autoFillWeights,
+    setAutoFillWeights,
   } = useSettingsStore(
     useShallow((s) => ({
       biometricEnabled: s.biometricEnabled,
@@ -94,6 +96,8 @@ export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
       setRestDuration: s.setRestDuration,
       restByExercise: s.restByExercise,
       setRestByExercise: s.setRestByExercise,
+      autoFillWeights: s.autoFillWeights,
+      setAutoFillWeights: s.setAutoFillWeights,
     })),
   );
 
@@ -494,6 +498,18 @@ export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
                   checked={restAutoStart}
                   onChange={setRestAutoStart}
                   ariaLabel={t('settings.rest_autostart')}
+                />
+              }
+              divider={restAutoStart}
+            />
+            <SettingRow
+              label={t('settings.auto_fill_weights')}
+              desc={t('settings.auto_fill_weights_desc')}
+              control={
+                <Toggle
+                  checked={autoFillWeights}
+                  onChange={setAutoFillWeights}
+                  ariaLabel={t('settings.auto_fill_weights')}
                 />
               }
               divider={restAutoStart}

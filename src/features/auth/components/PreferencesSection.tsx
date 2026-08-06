@@ -27,6 +27,7 @@ export function PreferencesSection() {
     setLanguage,
     theme,
     setTheme,
+    systemDark,
     unitSystem,
     setUnitSystem,
     showWarmupSets,
@@ -43,6 +44,7 @@ export function PreferencesSection() {
       setLanguage: s.setLanguage,
       theme: s.theme,
       setTheme: s.setTheme,
+      systemDark: s.systemDark,
       unitSystem: s.unitSystem,
       setUnitSystem: s.setUnitSystem,
       showWarmupSets: s.showWarmupSets,
@@ -53,6 +55,9 @@ export function PreferencesSection() {
       setAppIcon: s.setAppIcon,
     })),
   );
+
+  /** El tema efectivo (resolve 'system') decide qué variante de acento pintar. */
+  const effectiveTheme = theme === 'system' ? (systemDark ? 'dark' : 'light') : theme;
 
   /** La paleta de acentos arranca plegada para no alargar la pantalla. */
   const [accentOpen, setAccentOpen] = useState(false);
@@ -101,6 +106,7 @@ export function PreferencesSection() {
           control={
             <SegmentedControl
               options={[
+                { value: 'system', label: t('settings.theme_system') },
                 { value: 'dark', label: t('settings.theme_dark') },
                 { value: 'light', label: t('settings.theme_light') },
               ]}
@@ -131,7 +137,7 @@ export function PreferencesSection() {
             </div>
             <span
               className="h-7 w-7 flex-shrink-0 rounded-full border border-line"
-              style={{ backgroundColor: getAccentPreset(accentColor)[theme].primary }}
+              style={{ backgroundColor: getAccentPreset(accentColor)[effectiveTheme].primary }}
               aria-hidden="true"
             />
             <ChevronRight
@@ -150,10 +156,10 @@ export function PreferencesSection() {
                 aria-label={t('settings.accent')}
                 className="mt-2.5 flex flex-wrap gap-2.5"
               >
-                {ACCENT_PRESETS.map((preset) => {
-                  const isActive = preset.id === accentColor;
-                  const swatch = preset[theme].primary;
-                  return (
+                  {ACCENT_PRESETS.map((preset) => {
+                    const isActive = preset.id === accentColor;
+                    const swatch = preset[effectiveTheme].primary;
+                    return (
                     <button
                       key={preset.id}
                       type="button"
@@ -169,7 +175,7 @@ export function PreferencesSection() {
                       {isActive && (
                         <Check
                           className="mx-auto h-4 w-4"
-                          style={{ color: preset[theme].fg }}
+                          style={{ color: preset[effectiveTheme].fg }}
                           aria-hidden="true"
                         />
                       )}

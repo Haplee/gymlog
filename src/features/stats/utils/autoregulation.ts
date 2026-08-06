@@ -13,6 +13,7 @@
 
 import { calcular1RM } from '@shared/lib/brzycki';
 import { suggestProgression } from '@shared/lib/progression';
+import { format, startOfWeek } from 'date-fns';
 
 /** RIR objetivo por defecto: dejar ~2 repeticiones en recámara. */
 export const DEFAULT_TARGET_RIR = 2;
@@ -64,6 +65,11 @@ export interface AutoRegOptions {
   targetRir?: number;
   /** Escalón mínimo de carga en kg. */
   stepKg?: number;
+  /** Suelo y techo del rango de reps objetivo, p. ej. [8, 12] de «8-12». */
+  repMin?: number;
+  repMax?: number;
+  /** En peso corporal no se sugiere subir carga: solo repeticiones. */
+  bodyweight?: boolean;
 }
 
 /* ------------------------------------------------------------------ */
@@ -167,6 +173,8 @@ export function suggestNextLoad(
 ): LoadSuggestion | null {
   const targetRir = opts.targetRir ?? DEFAULT_TARGET_RIR;
   const step = opts.stepKg ?? DEFAULT_LOAD_STEP_KG;
+  const repMin = opts.repMin;
+  const repMax = opts.repMax;
 
   const usable = usableSessions(sessions);
   if (usable.length < 2) return null;
@@ -227,7 +235,12 @@ export function suggestNextLoad(
     if (target <= baseWeight || target > cap) {
       return mk(baseWeight, baseReps + 1, 'hold', 'coach.reason.add_rep');
     }
-    return mk(target, baseReps, 'increase', 'coach.reason.margin_left');
+    // Subir carga en el techo del rango se premia restando reps: se vuelve al
+    // suelo y se trabaja el mismo esquema de progresión (doble progresión).
+    const reps = repMax !== undefined && baseReps >= repMax && !opts.bodyweight
+      ? repMin ?? baseReps
+      : baseReps;
+    return mk(target, reps, 'increase', 'coach.reason.margin_left');
   }
 
   // 3. Se apura por debajo del objetivo dos sesiones seguidas ⇒ consolidar.
@@ -235,7 +248,22 @@ export function suggestNextLoad(
     return mk(baseWeight, baseReps, 'hold', 'coach.reason.too_hard');
   }
 
-  // 4. En rango: misma carga, una repetición más.
+  // 4. En rango: misma carga, una repetición más. Si ya se está en el techo del
+  //    rango de reps objetivo, la única progresión segura es subir un escalón y
+  //    volver al suelo (doble progresión). En peso corporal no se puede subir
+  //    carga, así que se suma una repetición aunque se pase del techo.
+  if (repMax !== undefined && baseReps >= repMax) {
+    if (opts.bodyweight) {
+      return mk(baseWeight, baseReps + 1, 'hold', 'coach.reason.on_target');
+    }
+    const target = roundToStep(baseWeight + step, step);
+    // El escalón no cabe bajo el tope del 10% (cargas muy ligeras): se
+    // progresa por repeticiones igual que en el caso de margen.
+    if (target > baseWeight * (1 + MAX_INCREASE_RATIO)) {
+      return mk(baseWeight, baseReps + 1, 'hold', 'coach.reason.on_target');
+    }
+    return mk(target, repMin ?? baseReps, 'increase', 'coach.reason.ceiling');
+  }
   return mk(baseWeight, baseReps + 1, 'hold', 'coach.reason.on_target');
 }
 
@@ -395,8 +423,11 @@ function probableCause(usable: AutoRegSession[]): StallCause {
 export interface DeloadInput {
   /** Volumen semanal, de la semana más antigua a la más reciente. */
   weeklyVolumes: number[];
-  /** RIR medio por semana, mismo orden que `weeklyVolumes`. */
-  weeklyRir: number[];
+  /**
+   * RIR medio por semana, mismo orden que `weeklyVolumes`.
+   * `null` = esa semana ninguna serie registró esfuerzo (RIR/RPE).
+   */
+  weeklyRir: (number | null)[];
   /** Valoraciones de sesión recientes (1–5). Opcional. */
   sessionRatings?: number[];
 }
@@ -425,8 +456,10 @@ export function suggestDeload(input: DeloadInput): DeloadSuggestion | null {
     else break;
   }
 
-  const rirs = weeklyRir.slice(-3);
-  const rirFalling = rirs[rirs.length - 1] < rirs[0];
+  // La caída del RIR se juzga solo con las semanas que tienen esfuerzo
+  // registrado: con menos de dos no se puede confirmar que cada vez cueste más.
+  const rirValues = weeklyRir.slice(-3).filter((v): v is number => v !== null);
+  const rirFalling = rirValues.length >= 2 && rirValues[rirValues.length - 1] < rirValues[0];
 
   const ratingsLow =
     sessionRatings && sessionRatings.length > 0
@@ -439,5 +472,91 @@ export function suggestDeload(input: DeloadInput): DeloadSuggestion | null {
     recommended,
     risingWeeks,
     reasonKey: recommended ? 'coach.reason.deload' : 'coach.reason.no_deload',
+  };
+}
+
+/* ------------------------------------------------------------------ */
+/* Productores semanales para el deload                                */
+/* ------------------------------------------------------------------ */
+
+/** Una semana de entrenamiento resumida para el análisis de descarga. */
+export interface WeeklyDeloadSample {
+  /** Fecha ISO (YYYY-MM-DD) del lunes que abre la semana. */
+  weekStart: string;
+  /** Volumen total de las series de trabajo (Σ peso × reps). */
+  volume: number;
+  /** RIR medio de la semana, o `null` si ninguna serie registró esfuerzo. */
+  rir: number | null;
+}
+
+/** Entreno tal y como lo consume el productor de deload. */
+export interface DeloadWorkout {
+  started_at: string | null;
+  /** Valoración de la sesión (1–5), opcional. */
+  rating?: number | null;
+  sets: AutoRegSet[];
+}
+
+/**
+ * Agrupa entrenos en semanas ISO (lunes a domingo) y resume volumen y RIR de
+ * cada una. Ordenado de la semana más antigua a la más reciente. Las semanas
+ * sin series de trabajo no entran; una semana con esfuerzo parcial reporta el
+ * RIR medio solo de las series que sí lo registran.
+ */
+export function buildWeeklyDeloadSamples(workouts: DeloadWorkout[]): WeeklyDeloadSample[] {
+  const weeks = new Map<string, { volume: number; rirs: number[] }>();
+  for (const w of workouts) {
+    if (!w.started_at) continue;
+    const date = new Date(w.started_at);
+    if (Number.isNaN(date.getTime())) continue;
+    const weekStart = format(startOfWeek(date, { weekStartsOn: 1 }), 'yyyy-MM-dd');
+    let bucket = weeks.get(weekStart);
+    if (!bucket) {
+      bucket = { volume: 0, rirs: [] };
+      weeks.set(weekStart, bucket);
+    }
+    for (const s of w.sets) {
+      if (!isWorkingSet(s)) continue;
+      bucket.volume += s.weight * s.reps;
+      const rir = effectiveRir(s);
+      if (rir !== null) bucket.rirs.push(rir);
+    }
+  }
+  return [...weeks.entries()]
+    .filter(([, b]) => b.volume > 0)
+    .map(([weekStart, bucket]) => ({
+      weekStart,
+      volume: bucket.volume,
+      rir:
+        bucket.rirs.length > 0
+          ? bucket.rirs.reduce((a, b) => a + b, 0) / bucket.rirs.length
+          : null,
+    }))
+    .sort((a, b) => a.weekStart.localeCompare(b.weekStart));
+}
+
+/**
+ * Últimas valoraciones de sesión registradas (1–5), de la más reciente a la
+ * más antigua.
+ */
+export function collectRecentSessionRatings(workouts: DeloadWorkout[], limit = 5): number[] {
+  return workouts
+    .filter((w): w is DeloadWorkout & { rating: number } => typeof w.rating === 'number')
+    .sort((a, b) => String(b.started_at ?? '').localeCompare(String(a.started_at ?? '')))
+    .slice(0, limit)
+    .map((w) => w.rating);
+}
+
+/**
+ * Productor de `DeloadInput` desde los entrenos cargados: volumen y RIR por
+ * semana más las valoraciones recientes. Devuelve `null` si no hay datos.
+ */
+export function buildDeloadInput(workouts: DeloadWorkout[]): DeloadInput | null {
+  const samples = buildWeeklyDeloadSamples(workouts);
+  if (samples.length === 0) return null;
+  return {
+    weeklyVolumes: samples.map((s) => s.volume),
+    weeklyRir: samples.map((s) => s.rir),
+    sessionRatings: collectRecentSessionRatings(workouts),
   };
 }

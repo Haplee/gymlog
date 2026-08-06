@@ -15,13 +15,16 @@ import { useOutboxStore } from '@shared/stores/outboxStore';
 import { updateWidget } from '@shared/lib/widget';
 import { fetchWorkouts } from '@shared/api/queries';
 import { calculateCurrentStreak } from '@features/stats/utils/kpiCalculations';
+import { getAccentPreset } from '@shared/constants/accents';
 import { useWorkoutReminder } from '@features/routine/hooks/useWorkoutReminder';
 import { useFatigueSuggestion } from '@features/stats/hooks/useFatigueSuggestion';
 import { getRoutineReminderDays } from '@features/routine/lib/routineReminders';
 import { useBackgroundNotifications } from '@shared/hooks/useBackgroundNotifications';
 import { Capacitor } from '@capacitor/core';
+import { initPredictiveBack, syncBackState } from '@shared/lib/backHandler';
 import { devLog, devError } from '@shared/lib/devtools';
 import { ErrorBoundary } from '@shared/components/ErrorBoundary';
+import { track } from '@vercel/analytics';
 
 const loadMotionFeatures = () => import('@shared/lib/motionFeatures').then((mod) => mod.default);
 
@@ -91,6 +94,23 @@ function Loading() {
       <PageSkeleton />
     </div>
   );
+}
+
+/**
+ * Telemetría de navegación (P2).
+ *
+ * Solo web y solo producción, igual que el resto de la analítica del arranque
+ * (main.tsx): dentro del APK cada beacon despierta la radio del móvil sin medir
+ * nada útil. Envía un evento `page_view` con la ruta para poder reconstruir qué
+ * pantallas se usan y dónde se abandona el flujo. Sin PII: la ruta, y nada más.
+ */
+function usePageTracking() {
+  const location = useLocation();
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) return;
+    if (import.meta.env.DEV) return;
+    track('page_view', { path: location.pathname });
+  }, [location.pathname]);
 }
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -260,6 +280,7 @@ function useWorkoutOutboxSync() {
 /** Mantiene el widget Android (racha + último entreno) al día. No-op en web/iOS. */
 function useWidgetSync() {
   const user = useAuthStore((s) => s.user);
+  const accentColor = useSettingsStore((s) => s.accentColor);
   useEffect(() => {
     if (!user?.id || !Capacitor.isNativePlatform()) return;
     let cancelled = false;
@@ -272,7 +293,14 @@ function useWidgetSync() {
         const names = last
           ? [...new Set(last.sets.flatMap((s) => (s.exercise?.name ? [s.exercise.name] : [])))]
           : [];
-        await updateWidget(streak, names.slice(0, 2).join(', '));
+        // El widget vive sobre fondo oscuro: usamos el preset oscuro del acento.
+        const preset = getAccentPreset(accentColor).dark;
+        await updateWidget(
+          streak,
+          names.slice(0, 2).join(', '),
+          preset.primary,
+          preset.fg,
+        );
       } catch {
         /* ignore */
       }
@@ -286,7 +314,7 @@ function useWidgetSync() {
       cancelled = true;
       document.removeEventListener('visibilitychange', onVis);
     };
-  }, [user?.id]);
+  }, [user?.id, accentColor]);
 }
 
 function AppRoutes() {
@@ -312,7 +340,9 @@ function AppRoutes() {
     return Date.now() - ts >= 10000;
   });
   const navigate = useNavigate();
+  const location = useLocation();
 
+  usePageTracking();
   useWorkoutReminder();
   useFatigueSuggestion();
   useBackgroundNotifications(user?.id ?? null, getRoutineReminderDays);
@@ -322,7 +352,25 @@ function AppRoutes() {
   // Inicializar tema al arrancar
   useEffect(() => {
     applyTheme();
+    // Si el usuario eligió «Sistema», sincroniza el modo claro/oscuro del
+    // sistema (valor inicial + cambios en caliente). Idempotente por sesión.
+    if (useSettingsStore.getState().theme === 'system') {
+      useSettingsStore.getState().initSystemThemeSync();
+    }
   }, [applyTheme]);
+
+  // Predictive back (Android): el atrás cierra overlays, retrocede en el router
+  // o, en la raíz, deja que el sistema anime la salida y cierre la app.
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    const dispose = initPredictiveBack();
+    return dispose;
+  }, []);
+
+  // Cada navegación re-sincroniza el handler nativo con el historial real.
+  useEffect(() => {
+    syncBackState();
+  }, [location.key]);
 
   // Manejar Deep Links (OAuth Google, etc)
   useEffect(() => {

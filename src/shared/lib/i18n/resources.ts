@@ -206,6 +206,11 @@ export const resources = {
         suggestion_title: 'Sugerencia de carga',
         // "de 100 kg × 8" → "a 102,5 kg × 8"
         from_to: '{{from}} kg × {{fromReps}} → {{to}} kg × {{toReps}}',
+        last_label: 'Última',
+        next_label: 'Recomendado',
+        delta_increase: '+{{deltaKg}} {{unit}} (+{{deltaPct}}%)',
+        delta_reduce: '−{{deltaKg}} {{unit}} (−{{deltaPct}}%)',
+        delta_hold: '±0 {{unit}}',
         confidence_low: 'Poca evidencia',
         confidence_medium: 'Evidencia media',
         confidence_high: 'Buena evidencia',
@@ -225,6 +230,8 @@ export const resources = {
             'Estás en el punto justo de esfuerzo. Mantén el peso e intenta sumar una repetición.',
           add_rep:
             'La carga es demasiado ligera para subir de disco sin pasarte. Progresa sumando repeticiones.',
+          ceiling:
+            'Alcanzaste el techo de tu rango de repeticiones. Sube un escalón de carga y vuelve a trabajar desde el suelo del rango.',
           no_effort_reps:
             'Sin esfuerzo registrado (RIR/RPE), sigo tu última sesión: mismo peso y una repetición más.',
           no_effort_increase:
@@ -456,6 +463,7 @@ export const resources = {
       settings: {
         title: 'Ajustes',
         theme: 'Tema',
+        theme_system: 'Sistema',
         theme_dark: 'Oscuro',
         accent: 'Color de acento',
         accent_desc: 'Se aplica a botones, iconos y resaltados',
@@ -508,6 +516,8 @@ export const resources = {
         rest_duration_desc: 'Tiempo del temporizador automático',
         rest_by_exercise: 'Descanso según ejercicio',
         rest_by_exercise_desc: 'Más descanso en ejercicios compuestos (≈2×)',
+        auto_fill_weights: 'Auto-rellenar pesos',
+        auto_fill_weights_desc: 'Precargar el peso de la última sesión al empezar una rutina',
         wearables: 'Dispositivos / Wearables',
         wearables_desc: 'Conecta Amazfit, Garmin y más',
         preferences: 'Preferencias',
@@ -609,6 +619,13 @@ export const resources = {
         reps: 'Reps',
         weight: 'Kg',
         add_set: '+ Serie',
+        complete_set: 'Completar serie',
+        previous_set: 'Anterior',
+        save_pending_title: 'Guardar entrenamiento',
+        save_pending_body:
+          'Tienes {{pending}} series sin marcar y {{completed}} completadas. ¿Guardar todas o solo las completadas?',
+        save_all: 'Guardar todas',
+        save_completed_only: 'Solo completadas',
         set_n: 'Serie {{n}}',
         edit_set: 'Editar serie',
         warmup: 'Calent.',
@@ -906,6 +923,14 @@ export const resources = {
         import_success: 'Importados: {{count}}',
         import_excel_success:
           'Excel importado: {{sets}} series, {{cardio}} cardio, {{routines}} rutinas',
+        import_confirm_title: 'Confirmar importación',
+        import_confirm: 'Importar',
+        import_confirm_workouts: 'Se importarán {{workouts}} entrenos y {{sets}} series.',
+        import_confirm_excel:
+          'El archivo contiene {{sets}} series, {{cardio}} sesiones de cardio y {{routines}} rutinas.',
+        import_confirm_duplicates:
+          'Se saltarán {{count}} series que ya existen en tu historial.',
+        import_duplicates_skipped: '({{count}} duplicadas saltadas)',
         series_plural: 'series',
         search_placeholder: 'Buscar ejercicio o nota…',
         export_json: 'Exportar JSON',
@@ -1179,6 +1204,11 @@ export const resources = {
         next_session: 'Next session',
         suggestion_title: 'Load suggestion',
         from_to: '{{from}} kg × {{fromReps}} → {{to}} kg × {{toReps}}',
+        last_label: 'Last',
+        next_label: 'Recommended',
+        delta_increase: '+{{deltaKg}} {{unit}} (+{{deltaPct}}%)',
+        delta_reduce: '−{{deltaKg}} {{unit}} (−{{deltaPct}}%)',
+        delta_hold: '±0 {{unit}}',
         confidence_low: 'Little evidence',
         confidence_medium: 'Some evidence',
         confidence_high: 'Solid evidence',
@@ -1196,6 +1226,8 @@ export const resources = {
           on_target: "You're at the right effort. Keep the weight and try to add one rep.",
           add_rep:
             'The load is too light to add a plate without overshooting. Progress by adding reps.',
+          ceiling:
+            "You hit the top of your rep range. Add one load step and work your way back up from the bottom.",
           no_effort_reps:
             'No effort recorded (RIR/RPE), so I follow your last session: same weight, one more rep.',
           no_effort_increase:
@@ -1425,6 +1457,7 @@ export const resources = {
       settings: {
         title: 'Settings',
         theme: 'Theme',
+        theme_system: 'System',
         theme_dark: 'Dark',
         accent: 'Accent colour',
         accent_desc: 'Applied to buttons, icons and highlights',
@@ -1477,6 +1510,8 @@ export const resources = {
         rest_duration_desc: 'Auto timer length',
         rest_by_exercise: 'Rest by exercise',
         rest_by_exercise_desc: 'Longer rest on compound lifts (≈2×)',
+        auto_fill_weights: 'Auto-fill weights',
+        auto_fill_weights_desc: 'Preload last session weight when starting a routine',
         wearables: 'Devices / Wearables',
         wearables_desc: 'Connect Amazfit, Garmin and more',
         preferences: 'Preferences',
@@ -1576,6 +1611,13 @@ export const resources = {
         reps: 'Reps',
         weight: 'Kg',
         add_set: '+ Set',
+        complete_set: 'Complete set',
+        previous_set: 'Previous',
+        save_pending_title: 'Save workout',
+        save_pending_body:
+          'You have {{pending}} unchecked sets and {{completed}} completed. Save them all or only the completed ones?',
+        save_all: 'Save all',
+        save_completed_only: 'Completed only',
         set_n: 'Set {{n}}',
         edit_set: 'Edit set',
         warmup: 'Warm-up',
@@ -1874,6 +1916,13 @@ export const resources = {
         import_success: 'Imported: {{count}}',
         import_excel_success:
           'Excel imported: {{sets}} sets, {{cardio}} cardio, {{routines}} routines',
+        import_confirm_title: 'Confirm import',
+        import_confirm: 'Import',
+        import_confirm_workouts: '{{workouts}} workouts and {{sets}} sets will be imported.',
+        import_confirm_excel:
+          'The file contains {{sets}} sets, {{cardio}} cardio sessions and {{routines}} routines.',
+        import_confirm_duplicates: '{{count}} sets already in your history will be skipped.',
+        import_duplicates_skipped: '({{count}} duplicates skipped)',
         series_plural: 'sets',
         search_placeholder: 'Search exercise or note…',
         export_json: 'Export JSON',

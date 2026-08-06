@@ -16,6 +16,8 @@ import { calcular1RM } from '@shared/lib/brzycki';
 import { useRoutineStore } from '@features/routine/stores/routineStore';
 import { useRestTimerStore } from '@features/workout/stores/restTimerStore';
 import { Layout } from '@app/components/Layout';
+import { ConfirmDialog } from '@shared/components/ui/ConfirmDialog';
+import { registerBackAction } from '@shared/lib/backHandler';
 import {
   fetchExercises,
   fetchPersonalRecords,
@@ -40,6 +42,7 @@ import { CoachSuggestionBanner } from '@features/coach/components/CoachSuggestio
 import { CoachHomeCard } from '@features/coach/components/CoachHomeCard';
 import { NextSessionCard } from '@features/stats/components/NextSessionCard';
 import { useExerciseAdvice } from '@features/stats/hooks/useExerciseAdvice';
+import { useProgressionStore } from '@features/routine/stores/progressionStore';
 import type { LoadSuggestion } from '@features/stats/utils/autoregulation';
 import { pickDaily, pickSleepFor } from '@features/wearables/utils/pickDaily';
 import {
@@ -152,6 +155,10 @@ export function WorkoutPage() {
   const [setErrors, setSetErrors] = useState<Record<number, string>>({});
   const [showRating, setShowRating] = useState(false);
   const [showPlates, setShowPlates] = useState(false);
+  const [saveDialog, setSaveDialog] = useState<{
+    completedCount: number;
+    pendingCount: number;
+  } | null>(null);
   const [completed, setCompleted] = useState<WorkoutSummary | null>(null);
   const [showResumeBanner, setShowResumeBanner] = useState(() => {
     if (startedAt && sets.length > 0) {
@@ -159,6 +166,17 @@ export function WorkoutPage() {
     }
     return false;
   });
+
+  // El gesto de atrás (Android) cierra las hojas antes de intentar navegar.
+  useEffect(() => {
+    if (!showRating) return;
+    return registerBackAction('workout-rating', () => setShowRating(false));
+  }, [showRating]);
+
+  useEffect(() => {
+    if (!showPlates) return;
+    return registerBackAction('workout-plates', () => setShowPlates(false));
+  }, [showPlates]);
 
   const { data: exercises = [] } = useQuery({
     queryKey: ['exercises', user?.id],
@@ -316,8 +334,9 @@ export function WorkoutPage() {
     [currentPR],
   );
 
-  const handleSave = async () => {
+  const handleSave = async (opts: { onlyCompleted?: boolean } = {}) => {
     if (!user || saving) return;
+    const onlyCompleted = opts.onlyCompleted ?? false;
     setMessage('');
     setSetErrors({});
 
@@ -325,6 +344,7 @@ export function WorkoutPage() {
     let hasValid = false;
 
     sets.forEach((s, i) => {
+      if (onlyCompleted && !s.completed) return;
       if ((s.reps === '' || s.reps === '0') && (s.weight === '' || s.weight === '0')) return;
       const validation = setSchema.safeParse(s);
       if (!validation.success) {
@@ -345,22 +365,62 @@ export function WorkoutPage() {
       return;
     }
 
+    // Hay series completadas y series con datos sin marcar: preguntar antes de
+    // guardar, porque «solo completadas» descartaría lo no marcado. Si no hay
+    // ninguna completada se guarda todo como siempre (cero pérdida de datos).
+    if (!onlyCompleted) {
+      const completedCount = sets.filter((s) => s.completed).length;
+      const pendingCount = sets.filter(
+        (s) => !s.completed && s.reps && (isBodyweightExercise || s.weight),
+      ).length;
+      if (completedCount > 0 && pendingCount > 0) {
+        setSaveDialog({ completedCount, pendingCount });
+        return;
+      }
+    }
+
     // saveWorkout limpia la sesión: hay que quedarse con el resumen antes.
     const summaryMinutes = startedAt
       ? Math.max(1, Math.round((Date.now() - new Date(startedAt).getTime()) / 60000))
       : 0;
-    const summarySets = validSetCount;
+    const summarySets = onlyCompleted
+      ? sets.filter((s) => s.completed && s.reps && (isBodyweightExercise || s.weight)).length
+      : validSetCount;
     const summaryVolume = `${convert(sessionVolume).toFixed(0)} ${weightUnit}`;
 
     setSaving(true);
-    const result = await saveWorkout(user.id);
+    const result = await saveWorkout(user.id, { onlyCompleted });
     setSaving(false);
+
+    // Progresión automática: con la sesión guardada (o encolada), avanza el
+    // ciclo del ejercicio con su mejor serie. El peso del store está en kg.
+    const recordProgression = () => {
+      const name = selectedExercise?.name || customExerciseName.trim();
+      if (!name) return;
+      const valid = sets
+        .map((s, i) => {
+          const reps = Number(s.reps);
+          const weight = Number(s.weight);
+          const include = (onlyCompleted ? s.completed : true) && !newErrors[i];
+          return { reps, weight, include };
+        })
+        .filter((s) => s.include && Number.isFinite(s.reps) && s.reps > 0);
+      if (valid.length === 0) return;
+      const top = valid.reduce((a, b) =>
+        b.weight > a.weight || (b.weight === a.weight && b.reps > a.reps) ? b : a,
+      );
+      useProgressionStore.getState().recordSession(name, top, {
+        bodyweight: isBodyweightExercise,
+      });
+      void useProgressionStore.getState().saveToDb(user.id);
+    };
 
     if (result.error) {
       setMessage(result.error.message);
       toast.error(result.error.message);
     } else if (result.queued) {
       // Guardado offline: se sincronizará al volver la conexión.
+      recordProgression();
       setSaveSuccess(true);
       setMessage(t('workout.saved_offline'));
       toast.success(t('workout.saved_offline'));
@@ -373,6 +433,7 @@ export function WorkoutPage() {
       toast.success(t('workout.saved'));
       void notificationHaptic(NotificationType.Success);
       if (sound) playSuccessChime();
+      recordProgression();
       // refetchType: 'all' refresca también queries inactivas (p.ej. HistoryPage
       // o StatsPage sin montar). Con refetchOnMount:false global, sin esto los
       // datos guardados no aparecerían hasta un refetch manual.
@@ -389,6 +450,7 @@ export function WorkoutPage() {
 
       let max1RM = 0;
       sets.forEach((s, i) => {
+        if (onlyCompleted && !s.completed) return;
         if (!newErrors[i] && s.weight && s.reps && checkIsNewPR(s.weight, s.reps)) {
           const e1rm = Math.round(calcular1RM(Number(s.weight), Number(s.reps)));
           if (e1rm > max1RM) max1RM = e1rm;
@@ -416,7 +478,7 @@ export function WorkoutPage() {
     }
   };
 
-  const handleAddSet = () => {
+  const handleAddSet = useCallback(() => {
     void impact(ImpactStyle.Light);
     const lastSet = sets.at(-1);
     const lastHasData = lastSet && lastSet.reps && lastSet.weight;
@@ -429,7 +491,16 @@ export function WorkoutPage() {
           : defaultRest;
       startRestTimer(rest);
     }
-  };
+  }, [
+    sets,
+    addSet,
+    restAutoStart,
+    restTimerRunning,
+    defaultRest,
+    restByExercise,
+    selectedExercise,
+    startRestTimer,
+  ]);
 
   const handleCopySets = useCallback(
     (copied: { reps: number; weight: number }[]) => {
@@ -443,6 +514,7 @@ export function WorkoutPage() {
           isWarmup: false,
           rpe: '',
           setType: 'normal' as const,
+          completed: false,
         })),
       );
       void impact(ImpactStyle.Light);
@@ -764,6 +836,29 @@ export function WorkoutPage() {
         open={showPlates}
         initialTargetKg={bestEstimate?.weightKg}
         onClose={() => setShowPlates(false)}
+      />
+
+      <ConfirmDialog
+        open={!!saveDialog}
+        title={t('workout.save_pending_title')}
+        description={
+          saveDialog &&
+          t('workout.save_pending_body', {
+            completed: saveDialog.completedCount,
+            pending: saveDialog.pendingCount,
+          })
+        }
+        confirmLabel={t('workout.save_all')}
+        cancelLabel={t('workout.save_completed_only')}
+        variant="default"
+        onConfirm={() => {
+          setSaveDialog(null);
+          void handleSave({ onlyCompleted: false });
+        }}
+        onCancel={() => {
+          setSaveDialog(null);
+          void handleSave({ onlyCompleted: true });
+        }}
       />
     </Layout>
   );

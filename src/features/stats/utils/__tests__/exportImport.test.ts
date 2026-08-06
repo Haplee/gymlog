@@ -6,6 +6,9 @@ import {
   isHeaderLine,
   buildExportCsv,
   buildExportJson,
+  makeDedupKey,
+  buildExistingDedupKeys,
+  estimateDedupSkips,
 } from '../exportImport';
 
 describe('tokenizeCsvLine', () => {
@@ -121,5 +124,76 @@ describe('buildExportJson', () => {
     expect(parsed.exported_at).toBe('2026-06-20T12:00:00.000Z');
     expect(parsed.workouts[0].sets.map((s: { set_num: number }) => s.set_num)).toEqual([1, 2]);
     expect(parsed.workouts[0].sets[0].exercise).toBe('Press');
+  });
+});
+
+describe('makeDedupKey', () => {
+  it('normaliza ejercicio a minúsculas y une fecha + set_num', () => {
+    expect(makeDedupKey('2026-06-20', 'Press Banca', 2)).toBe('2026-06-20|press banca|2');
+    expect(makeDedupKey('2026-06-20', '  PRESS BANCA ', 2)).toBe('2026-06-20|press banca|2');
+  });
+});
+
+describe('buildExistingDedupKeys', () => {
+  it('construye claves desde workouts ya cargados', () => {
+    const keys = buildExistingDedupKeys([
+      {
+        started_at: '2026-06-20T10:00:00Z',
+        sets: [
+          { set_num: 1, exercise: { name: 'Press' } },
+          { set_num: 2, exercise: { name: 'SENTADILLA' } },
+        ],
+      },
+    ]);
+    expect(keys.size).toBe(2);
+    expect(keys.has('2026-06-20|press|1')).toBe(true);
+    expect(keys.has('2026-06-20|sentadilla|2')).toBe(true);
+  });
+
+  it('ignora workouts sin fecha y sets sin ejercicio', () => {
+    const keys = buildExistingDedupKeys([
+      { started_at: null, sets: [{ set_num: 1, exercise: { name: 'Press' } }] },
+      { started_at: '2026-06-20T10:00:00Z', sets: [{ set_num: 1, exercise: null }] },
+    ]);
+    expect(keys.size).toBe(0);
+  });
+});
+
+describe('estimateDedupSkips', () => {
+  it('cuenta coincidencias exactas (fecha, ejercicio, set_num)', () => {
+    const existing = new Set(['2026-06-20|press|1']);
+    const skips = estimateDedupSkips(
+      [
+        { date: '2026-06-20', exercise: 'Press', setNum: 1 },
+        { date: '2026-06-20', exercise: 'Press', setNum: 2 },
+        { date: '2026-06-21', exercise: 'Press', setNum: 1 },
+      ],
+      existing,
+    );
+    expect(skips).toBe(1);
+  });
+
+  it('asigna set_num por contador cuando no viene explícito (Excel/CSV)', () => {
+    const existing = new Set(['2026-06-20|press|1']);
+    const skips = estimateDedupSkips(
+      [
+        { date: '2026-06-20', exercise: 'Press' },
+        { date: '2026-06-20', exercise: 'Press' },
+      ],
+      existing,
+    );
+    // Fila 1 → set_num 1 (duplicada), fila 2 → set_num 2 (nueva).
+    expect(skips).toBe(1);
+  });
+
+  it('no cuenta duplicados intra-import como nuevos', () => {
+    const skips = estimateDedupSkips(
+      [
+        { date: '2026-06-20', exercise: 'Press', setNum: 1 },
+        { date: '2026-06-20', exercise: 'Press', setNum: 1 },
+      ],
+      new Set(),
+    );
+    expect(skips).toBe(1);
   });
 });

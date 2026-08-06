@@ -2,6 +2,8 @@ import { useTranslation } from 'react-i18next';
 import { TrendingUp, TrendingDown, Minus, AlertTriangle } from 'lucide-react';
 import type { ExerciseAdvice } from '../hooks/useAutoregulation';
 import type { LoadSuggestion } from '../utils/autoregulation';
+import { useWeight } from '@shared/hooks/useWeight';
+import { formatWeightInput } from '@shared/lib/weight';
 
 const ACTION_ICON = {
   increase: TrendingUp,
@@ -23,6 +25,7 @@ export function NextSessionCard({
   onApply?: (suggestion: LoadSuggestion) => void;
 }) {
   const { t } = useTranslation();
+  const { unit: weightUnit, convert } = useWeight();
   const { exercise, suggestion, stall } = advice;
   const Icon = ACTION_ICON[suggestion.action];
 
@@ -31,6 +34,26 @@ export function NextSessionCard({
       ? 'text-accent'
       : suggestion.action === 'reduce'
         ? 'text-warning'
+        : 'text-fg-muted';
+
+  const weightDisplay = (kg: number) => `${formatWeightInput(convert(kg))} ${weightUnit}`;
+
+  // El delta de carga va coloreado por acción: verde para subir, rojo para
+  // bajar, neutro cuando se mantiene.
+  const deltaKg = convert(suggestion.weight) - convert(suggestion.baseWeight);
+  const deltaLabel =
+    suggestion.action === 'hold'
+      ? t('coach.delta_hold', { unit: weightUnit })
+      : t(suggestion.action === 'increase' ? 'coach.delta_increase' : 'coach.delta_reduce', {
+          deltaKg: formatWeightInput(Math.abs(deltaKg)),
+          unit: weightUnit,
+          deltaPct: Math.abs(suggestion.deltaPct).toFixed(1),
+        });
+  const deltaTone =
+    suggestion.action === 'increase'
+      ? 'text-success'
+      : suggestion.action === 'reduce'
+        ? 'text-error'
         : 'text-fg-muted';
 
   return (
@@ -43,15 +66,18 @@ export function NextSessionCard({
             {t(`coach.action.${suggestion.action}`)}
           </p>
         </div>
-        <span className="flex-shrink-0 font-display text-base font-bold tabular text-fg">
-          {t('coach.from_to', {
-            from: suggestion.baseWeight,
-            fromReps: suggestion.reps,
-            to: suggestion.weight,
-            toReps: suggestion.reps,
-          })}
-        </span>
       </header>
+
+      {/* De dónde se viene y a dónde se va, con el delta de carga. */}
+      <div className="mt-3 flex flex-wrap items-center gap-1.5">
+        <span className="label-caps rounded-sm bg-surface-2 px-2 py-1 text-fg-muted">
+          {t('coach.last_label')} · {weightDisplay(suggestion.baseWeight)} × {suggestion.reps}
+        </span>
+        <span className="label-caps rounded-sm bg-accent/15 px-2 py-1 text-accent">
+          {t('coach.next_label')} · {weightDisplay(suggestion.weight)} × {suggestion.reps}
+        </span>
+        <span className={`label-caps tabular ${deltaTone}`}>{deltaLabel}</span>
+      </div>
 
       <p className="mt-2 text-xs text-fg-muted">{t(suggestion.reasonKey)}</p>
 

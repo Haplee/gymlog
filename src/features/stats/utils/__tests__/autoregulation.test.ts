@@ -6,6 +6,9 @@ import {
   applyReadiness,
   suggestFromLastSession,
   effectiveRir,
+  buildWeeklyDeloadSamples,
+  collectRecentSessionRatings,
+  buildDeloadInput,
   MAX_INCREASE_RATIO,
   type AutoRegSession,
   type AutoRegSet,
@@ -122,6 +125,79 @@ describe('suggestNextLoad', () => {
     expect(nn(s).action).toBe('hold');
     expect(nn(s).weight).toBe(100);
     expect(nn(s).reps).toBe(9);
+    expect(nn(s).reasonKey).toBe('coach.reason.on_target');
+  });
+
+  it('sube un escalón al alcanzar el techo del rango con esfuerzo registrado', () => {
+    const s = suggestNextLoad(
+      [
+        session(daysAgo(7), { weight: 80, reps: 12, rir: 2 }),
+        session(daysAgo(3), { weight: 80, reps: 12, rir: 2 }),
+      ],
+      { repMin: 8, repMax: 12 },
+    );
+    expect(nn(s).action).toBe('increase');
+    expect(nn(s).weight).toBe(82.5);
+    expect(nn(s).reps).toBe(8);
+    expect(nn(s).reasonKey).toBe('coach.reason.ceiling');
+  });
+
+  it('en el techo del rango y sin subida de margen no se inventa más reps de las debidas', () => {
+    // 12 reps, techo 12 y RIR en objetivo: el siguiente paso no es 13 reps.
+    const s = suggestNextLoad(
+      [
+        session(daysAgo(7), { weight: 80, reps: 12, rir: 2 }),
+        session(daysAgo(3), { weight: 80, reps: 12, rir: 2 }),
+      ],
+      { repMin: 8, repMax: 12 },
+    );
+    expect(nn(s).reps).toBeLessThanOrEqual(12);
+  });
+
+  it('en peso corporal con esfuerzo no sube carga al llegar al techo', () => {
+    const s = suggestNextLoad(
+      [
+        session(daysAgo(7), { weight: 75, reps: 12, rir: 2 }),
+        session(daysAgo(3), { weight: 75, reps: 12, rir: 2 }),
+      ],
+      { repMin: 8, repMax: 12, bodyweight: true },
+    );
+    expect(nn(s).action).toBe('hold');
+    expect(nn(s).weight).toBe(75);
+    expect(nn(s).reps).toBe(13);
+  });
+
+  it('al subir por margen en el techo del rango vuelve al suelo de reps', () => {
+    const s = suggestNextLoad(
+      [
+        session(daysAgo(7), { weight: 80, reps: 12, rir: 4 }),
+        session(daysAgo(3), { weight: 80, reps: 12, rir: 4 }),
+      ],
+      { repMin: 8, repMax: 12 },
+    );
+    expect(nn(s).action).toBe('increase');
+    expect(nn(s).reps).toBe(8);
+  });
+
+  it('si el escalón supera el tope del 10% en el techo, progresa por reps', () => {
+    const s = suggestNextLoad(
+      [
+        session(daysAgo(7), { weight: 10, reps: 12, rir: 2 }),
+        session(daysAgo(3), { weight: 10, reps: 12, rir: 2 }),
+      ],
+      { repMin: 8, repMax: 12 },
+    );
+    expect(nn(s).action).toBe('hold');
+    expect(nn(s).reps).toBe(13);
+  });
+
+  it('ignora el techo del rango si no se indica', () => {
+    const s = suggestNextLoad([
+      session(daysAgo(7), { weight: 80, reps: 12, rir: 2 }),
+      session(daysAgo(3), { weight: 80, reps: 12, rir: 2 }),
+    ]);
+    expect(nn(s).action).toBe('hold');
+    expect(nn(s).reps).toBe(13);
     expect(nn(s).reasonKey).toBe('coach.reason.on_target');
   });
 
@@ -440,5 +516,90 @@ describe('suggestDeload', () => {
 
   it('devuelve null sin tres semanas de datos', () => {
     expect(suggestDeload({ weeklyVolumes: [10_000, 12_000], weeklyRir: [3, 2] })).toBeNull();
+  });
+
+  it('con semanas sin esfuerzo registrado no confirma la caída del RIR', () => {
+    const r = suggestDeload({
+      weeklyVolumes: [10_000, 12_000, 14_000, 16_000],
+      weeklyRir: [null, 2, null],
+    });
+    expect(nn(r).recommended).toBe(false);
+  });
+
+  it('sí confirma la caída del RIR si hay suficientes valores no nulos', () => {
+    const r = suggestDeload({
+      weeklyVolumes: [10_000, 12_000, 14_000, 16_000],
+      weeklyRir: [null, 3, 1],
+    });
+    expect(nn(r).recommended).toBe(true);
+  });
+});
+
+describe('buildWeeklyDeloadSamples', () => {
+  const wo = (
+    started_at: string | null,
+    sets: AutoRegSet[],
+    rating?: number | null,
+  ) => ({ started_at, rating, sets });
+
+  it('agrupa por semana ISO (lunes) y suma el volumen de series de trabajo', () => {
+    const samples = buildWeeklyDeloadSamples([
+      wo('2026-06-16T10:00:00Z', [{ weight: 100, reps: 8, rir: 2 }]),
+      wo('2026-06-24T10:00:00Z', [
+        { weight: 80, reps: 10, rir: 3 },
+        { weight: 90, reps: 8, rpe: 8 }, // rir derivado → 2
+        { weight: 50, reps: 10, is_warmup: true }, // excluida
+      ]),
+    ]);
+    expect(samples).toHaveLength(2);
+    expect(samples[0]).toEqual({ weekStart: '2026-06-15', volume: 800, rir: 2 });
+    expect(samples[1]).toEqual({ weekStart: '2026-06-22', volume: 1520, rir: 2.5 });
+  });
+
+  it('reporta rir null cuando ninguna serie registra esfuerzo', () => {
+    const samples = buildWeeklyDeloadSamples([
+      wo('2026-06-16T10:00:00Z', [{ weight: 100, reps: 8 }]),
+    ]);
+    expect(samples).toHaveLength(1);
+    expect(samples[0].rir).toBeNull();
+    expect(samples[0].volume).toBe(800);
+  });
+
+  it('ignora entrenos sin fecha y semanas solo con calentamiento', () => {
+    const samples = buildWeeklyDeloadSamples([
+      wo(null, [{ weight: 100, reps: 8 }]),
+      wo('2026-06-16T10:00:00Z', [{ weight: 100, reps: 8, is_warmup: true }]),
+    ]);
+    expect(samples).toHaveLength(0);
+  });
+});
+
+describe('collectRecentSessionRatings', () => {
+  it('toma las valoraciones recientes (1–5) de más nueva a más antigua', () => {
+    const ratings = collectRecentSessionRatings([
+      { started_at: '2026-06-20T10:00:00Z', rating: 2, sets: [] },
+      { started_at: '2026-06-26T10:00:00Z', rating: null, sets: [] },
+      { started_at: '2026-06-24T10:00:00Z', rating: 5, sets: [] },
+      { started_at: null, rating: 3, sets: [] },
+    ]);
+    expect(ratings).toEqual([5, 2, 3]);
+  });
+});
+
+describe('buildDeloadInput', () => {
+  it('produce volumen y RIR por semana más las valoraciones', () => {
+    const input = nn(
+      buildDeloadInput([
+        { started_at: '2026-06-16T10:00:00Z', rating: 2, sets: [{ weight: 100, reps: 8, rir: 2 }] },
+        { started_at: '2026-06-24T10:00:00Z', rating: 5, sets: [{ weight: 80, reps: 10, rir: 3 }] },
+      ]),
+    );
+    expect(input.weeklyVolumes).toEqual([800, 800]);
+    expect(input.weeklyRir).toEqual([2, 3]);
+    expect(input.sessionRatings).toEqual([5, 2]);
+  });
+
+  it('devuelve null sin datos', () => {
+    expect(buildDeloadInput([])).toBeNull();
   });
 });

@@ -61,7 +61,11 @@ export function useExerciseAdvice(
     const autoRegSessions = sessions.map((s) => ({ date: s.started_at, sets: s.sets }));
 
     const raw =
-      suggestNextLoad(autoRegSessions) ??
+      suggestNextLoad(autoRegSessions, {
+        repMin: opts.repMin,
+        repMax: opts.repMax,
+        bodyweight: opts.bodyweight,
+      }) ??
       suggestFromLastSession(autoRegSessions, {
         repMin: opts.repMin,
         repMax: opts.repMax,

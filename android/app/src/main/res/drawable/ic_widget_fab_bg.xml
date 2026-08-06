@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="40dp"
+    android:height="40dp"
+    android:viewportWidth="40"
+    android:viewportHeight="40">
+    <!-- Círculo del FAB de acción rápida. El color de relleno lo reemplaza
+         StreakWidgetProvider con el acento del usuario (setColorFilter). -->
+    <path
+        android:fillColor="#FFD93D"
+        android:pathData="M20,0a20,20 0 1,0 0,40a20,20 0 1,0 0,-40z" />
+</vector>

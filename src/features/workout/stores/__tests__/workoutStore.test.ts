@@ -67,13 +67,13 @@ describe('useWorkoutStore', () => {
     expect(state.startedAt).toBeNull();
   });
 
-  it('debería añadir una serie con valores por defecto', () => {
-    const { addSet } = useWorkoutStore.getState();
-    addSet();
-    const state = useWorkoutStore.getState();
-    expect(state.sets).toHaveLength(1);
-    expect(state.sets[0]).toMatchObject({ reps: '', weight: '', isWarmup: false });
-  });
+    it('debería añadir una serie con valores por defecto', () => {
+      const { addSet } = useWorkoutStore.getState();
+      addSet();
+      const state = useWorkoutStore.getState();
+      expect(state.sets).toHaveLength(1);
+      expect(state.sets[0]).toMatchObject({ reps: '', weight: '', isWarmup: false, completed: false });
+    });
 
   it('debería añadir una serie copiando la anterior', () => {
     const store = useWorkoutStore.getState();
@@ -272,6 +272,41 @@ describe('useWorkoutStore', () => {
       const state = useWorkoutStore.getState();
       expect(state.sessionNotes).toBe('');
       expect(state.sessionRating).toBeNull();
+    });
+
+    it('debería marcar una serie como completada', () => {
+      const store = useWorkoutStore.getState();
+      store.updateSet(0, { completed: true });
+      expect(useWorkoutStore.getState().sets[0].completed).toBe(true);
+    });
+
+    it('debería guardar solo las series completadas con onlyCompleted', async () => {
+      const store = useWorkoutStore.getState();
+      store.setActiveExercise('ex-1');
+      store.updateSet(0, { reps: '10', weight: '100' });
+      store.updateSet(0, { completed: true });
+      store.addSet();
+      store.updateSet(1, { reps: '8', weight: '90' });
+
+      const result = await store.saveWorkout('user-1', { onlyCompleted: true });
+
+      expect(result.error).toBeNull();
+      expect(result.success).toBe(true);
+      const pSets = mockRpc.mock.calls[0][1].p_sets as { set_num: number }[];
+      expect(pSets).toHaveLength(1);
+      expect(pSets[0]).toMatchObject({ set_num: 1, reps: 10, weight: 100 });
+    });
+
+    it('debería rechazar onlyCompleted sin series completadas', async () => {
+      const store = useWorkoutStore.getState();
+      store.setActiveExercise('ex-1');
+      store.updateSet(0, { reps: '10', weight: '100' });
+
+      const result = await store.saveWorkout('user-1', { onlyCompleted: true });
+
+      expect(result.success).toBe(false);
+      expect(result.error?.message).toBe('Añade reps y kg válidas');
+      expect(mockRpc).not.toHaveBeenCalled();
     });
   });
 });

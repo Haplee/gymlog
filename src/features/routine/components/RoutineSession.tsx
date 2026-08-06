@@ -5,11 +5,14 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useShallow } from 'zustand/react/shallow';
 import { toast } from 'sonner';
 import { useRoutineSessionStore } from '@features/routine/stores/routineSessionStore';
+import { useProgressionStore } from '@features/routine/stores/progressionStore';
 import { useWeight } from '@shared/hooks/useWeight';
 import { impact, notificationHaptic, ImpactStyle, NotificationType } from '@shared/lib/haptics';
 import { celebrate } from '@shared/lib/celebration';
 import { fetchExerciseLibrary } from '@shared/api/queries';
 import { weightToInput } from '@shared/lib/weight';
+import { normalizeExerciseName, parseRepRange } from '@shared/lib/progressionCycle';
+import { isBodyweightLoad } from '@shared/lib/loadType';
 import type { Exercise } from '@shared/lib/types';
 import type { ExerciseAdvice } from '@features/stats/hooks/useAutoregulation';
 import { SessionExerciseCard } from './SessionExerciseCard';
@@ -23,12 +26,7 @@ interface Props {
 // Nombre normalizado: minúsculas y sin acentos. Las rutinas predefinidas usan
 // «bíceps», «tríceps», etc.; el catálogo guarda el nombre tal cual lo creó el
 // usuario. Sin esta normalización un acento distinto rompería el emparejado.
-const normalizeName = (name: string) =>
-  name
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
+const normalizeName = normalizeExerciseName;
 
 export function RoutineSession({ userId, exercises }: Props) {
   const { t } = useTranslation();
@@ -110,6 +108,27 @@ export function RoutineSession({ userId, exercises }: Props) {
       return;
     }
     if (!result.success) return;
+
+    // Progresión automática: con la sesión ya guardada, avanza el ciclo de cada
+    // ejercicio con su mejor serie. El store lo persiste y sincroniza solo.
+    const progression = useProgressionStore.getState();
+    for (const ex of withWeights) {
+      const valid = ex.sets
+        .map((s) => ({ reps: Number(s.reps), weight: toKg(Number(s.weight)) }))
+        .filter((s) => Number.isFinite(s.weight) && Number.isFinite(s.reps) && s.reps > 0);
+      if (valid.length === 0) continue;
+      const top = valid.reduce((a, b) =>
+        b.weight > a.weight || (b.weight === a.weight && b.reps > a.reps) ? b : a,
+      );
+      const { repMin, repMax } = parseRepRange(ex.targetReps);
+      const catalog = catalogByName.get(normalizeName(ex.name));
+      progression.recordSession(ex.name, top, {
+        repMin,
+        repMax,
+        bodyweight: isBodyweightLoad(catalog?.load_type),
+      });
+    }
+    void progression.saveToDb(userId);
 
     // refetchType: 'all' — HistoryPage/StatsPage pueden no estar montadas y el
     // cliente global usa refetchOnMount: false.

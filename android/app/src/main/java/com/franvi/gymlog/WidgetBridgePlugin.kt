@@ -10,8 +10,9 @@ import com.getcapacitor.PluginMethod
 import com.getcapacitor.annotation.CapacitorPlugin
 
 /**
- * Puente web -> widget Android. La web (JS) envía la racha y el último entreno;
- * los guardamos en SharedPreferences y forzamos el refresco del widget.
+ * Puente web -> widget Android. La web (JS) envía la racha, el último entreno y
+ * el color de acento; los guardamos en SharedPreferences y forzamos el refresco
+ * del widget.
  */
 @CapacitorPlugin(name = "WidgetBridge")
 class WidgetBridgePlugin : Plugin() {
@@ -20,11 +21,15 @@ class WidgetBridgePlugin : Plugin() {
     fun update(call: PluginCall) {
         val streak = call.getInt("streak", 0) ?: 0
         val lastLabel = call.getString("lastLabel", "") ?: ""
+        val accent = call.getString("accent", "") ?: ""
+        val fg = call.getString("fg", "") ?: ""
 
         val prefs = context.getSharedPreferences("GymLogWidget", Context.MODE_PRIVATE)
         prefs.edit()
             .putInt("streak", streak)
             .putString("lastLabel", lastLabel)
+            .putString("accent", accent)
+            .putString("fg", fg)
             .apply()
 
         // Refrescar todas las instancias del widget

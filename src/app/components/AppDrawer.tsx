@@ -12,6 +12,8 @@ import {
   IconWatch,
   IconStar,
   IconPulse,
+  IconChart,
+  IconGear,
 } from '@shared/components/icons';
 
 /**
@@ -23,10 +25,12 @@ import {
  * aquí, junto a las rutas que nunca tuvieron entrada propia en la barra inferior
  * (biblioteca, medidas, wearables, guía, entrenador).
  *
+ * Desde la decisión de dejar la barra inferior en cuatro pestañas (inicio,
+ * rutinas, historial y cardio), Estadísticas y Ajustes también viven aquí.
+ *
  * **Nada de lo que hay aquí está en la barra inferior ni en la cabecera.** Un
  * cajón que repite los destinos que ya tienes a un dedo de distancia solo añade
- * ruido: Ajustes se abre desde su pestaña y desde el icono de usuario, así que
- * no se repite aquí.
+ * ruido.
  */
 interface AppDrawerProps {
   onClose: () => void;
@@ -62,6 +66,7 @@ export function AppDrawer({ onClose, onOpenSearch, unreadCount }: AppDrawerProps
     {
       title: t('nav.group_training'),
       links: [
+        { to: '/stats', Icon: IconChart, label: t('nav.stats') },
         { to: '/cardio', Icon: IconPulse, label: t('nav.cardio'), badge: cardioActive },
         { to: '/exercises', Icon: IconDumbbell, label: t('library.title') },
         { to: '/user-stats', Icon: IconRuler, label: t('settings.my_measurements') },
@@ -171,6 +176,13 @@ export function AppDrawer({ onClose, onOpenSearch, unreadCount }: AppDrawerProps
               ))}
             </div>
           ))}
+
+          <div className="mt-4 border-t border-line pt-2">
+            <Link to="/settings" onClick={onClose} className={rowClass}>
+              <IconGear className="h-5 w-5 shrink-0 text-fg-subtle" />
+              {t('nav.settings')}
+            </Link>
+          </div>
         </nav>
       </m.div>
     </>

@@ -13,6 +13,7 @@
 
 import { registerSignOutTask } from '@shared/lib/sessionLifecycle';
 import { useRoutineStore } from '@features/routine/stores/routineStore';
+import { useProgressionStore } from '@features/routine/stores/progressionStore';
 import { useWorkoutStore } from '@features/workout/stores/workoutStore';
 
 /**
@@ -28,6 +29,20 @@ registerSignOutTask({
   // registro ya trata cualquier fallo como best-effort.
   run: async (userId) => {
     await useRoutineStore.getState().saveToDb(userId as string);
+  },
+});
+
+/**
+ * Respaldo de la progresión automática: sube las últimas sesiones registradas
+ * y el estado del ciclo (carga, contador de descarga) antes de perder las
+ * credenciales. Best-effort, igual que el de rutinas.
+ */
+registerSignOutTask({
+  phase: 'pre-signout',
+  name: 'progression:backup',
+  requiresUser: true,
+  run: async (userId) => {
+    await useProgressionStore.getState().saveToDb(userId as string);
   },
 });
 

@@ -21,13 +21,13 @@ import { toast } from 'sonner';
 import { fetchWorkouts, fetchRecentSets } from '@shared/api/queries';
 import { EmptyHistory } from '@shared/components/EmptyStates';
 import { SwipeToDelete } from '@shared/components/SwipeToDelete';
-import { Modal, Button } from '@shared/components/ui';
+import { Modal, Button, ConfirmDialog } from '@shared/components/ui';
 import { CardioTypeIcon } from '@shared/components/CardioIcons';
 import { HEALTH_SESSIONS_KEY, fetchHealthSessions } from '@features/wearables/api/wearablesQueries';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useHistoryTransfer } from '@features/stats/hooks/useHistoryTransfer';
-import { Trash2, Repeat, Share2, Pencil, BookmarkPlus, HeartPulse } from 'lucide-react';
+import { Trash2, Repeat, Share2, Pencil, BookmarkPlus, HeartPulse, Upload } from 'lucide-react';
 
 interface GroupedWorkout {
   date: string;
@@ -174,7 +174,16 @@ export function HistoryPage() {
 
   // Exportacion/importacion del historial: extraida a un hook porque eran 463
   // lineas de orquestacion (XLSX, JSON y CSV) dentro de la pagina.
-  const { exportToExcel, exportToJson, importFromJson, importFromCsv } = useHistoryTransfer({
+  const {
+    exportToExcel,
+    exportToJson,
+    importFromJson,
+    importFromCsv,
+    pendingImport,
+    pendingImportSummary,
+    confirmImport,
+    cancelImport,
+  } = useHistoryTransfer({
     workouts,
     refetchSets,
     refetchWorkouts,
@@ -697,6 +706,42 @@ export function HistoryPage() {
           </Button>
         </div>
       </Modal>
+
+      {pendingImportSummary && pendingImport && (
+        <ConfirmDialog
+          open={pendingImport !== null}
+          title={t('history.import_confirm_title')}
+          variant="default"
+          icon={<Upload className="w-5 h-5 text-accent" />}
+          confirmLabel={t('history.import_confirm')}
+          cancelLabel={t('common.cancel')}
+          onConfirm={() => void confirmImport()}
+          onCancel={cancelImport}
+          description={
+            <div className="space-y-2">
+              <p>
+                {pendingImport.kind === 'json'
+                  ? t('history.import_confirm_workouts', {
+                      workouts: pendingImportSummary.workouts,
+                      sets: pendingImportSummary.sets,
+                    })
+                  : t('history.import_confirm_excel', {
+                      sets: pendingImportSummary.sets,
+                      cardio: pendingImportSummary.cardio,
+                      routines: pendingImportSummary.routines,
+                    })}
+              </p>
+              {pendingImportSummary.skips > 0 && (
+                <p className="text-warning">
+                  {t('history.import_confirm_duplicates', {
+                    count: pendingImportSummary.skips,
+                  })}
+                </p>
+              )}
+            </div>
+          }
+        />
+      )}
     </Layout>
   );
 }

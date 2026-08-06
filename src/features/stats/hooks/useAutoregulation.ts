@@ -6,6 +6,7 @@ import {
 import { computeReadiness } from '@features/wearables/utils/readiness';
 import {
   suggestNextLoad,
+  suggestFromLastSession,
   detectStall,
   applyReadiness,
   type AutoRegSession,
@@ -81,7 +82,13 @@ export function useAutoregulation(sets: SetLike[], limit = 3): ExerciseAdvice[] 
     const advice: ExerciseAdvice[] = [];
     for (const [exercise, exerciseSets] of byExercise) {
       const sessions = toSessions(exerciseSets);
-      const suggestion = applyReadiness(suggestNextLoad(sessions), readiness);
+      // Mismo encadenamiento que `useExerciseAdvice`: si la última sesión no
+      // registra esfuerzo (RIR/RPE), el motor se niega a decidir y se cae a la
+      // doble progresión sobre la última sesión.
+      const suggestion = applyReadiness(
+        suggestNextLoad(sessions) ?? suggestFromLastSession(sessions),
+        readiness,
+      );
       if (!suggestion) continue;
       advice.push({ exercise, suggestion, stall: detectStall(sessions) });
     }

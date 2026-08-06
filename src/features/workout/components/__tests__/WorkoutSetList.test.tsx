@@ -30,12 +30,14 @@ interface Overrides {
   convert?: (kg: number) => number;
   convertToKg?: (local: number) => number;
   setErrors?: Record<number, string>;
+  onCommitSet?: () => void;
 }
 
 function setup(overrides: Overrides = {}) {
   const updateSet = vi.fn();
   const removeSet = vi.fn();
   const setSetErrors = vi.fn();
+  const onCommitSet = overrides.onCommitSet ?? vi.fn();
 
   render(
     <WorkoutSetList
@@ -45,6 +47,7 @@ function setup(overrides: Overrides = {}) {
       setSetErrors={setSetErrors}
       updateSet={updateSet}
       removeSet={removeSet}
+      onCommitSet={onCommitSet}
       checkIsNewPR={() => false}
       weightUnit={overrides.weightUnit ?? 'kg'}
       convert={overrides.convert ?? ((kg) => kg)}
@@ -52,7 +55,7 @@ function setup(overrides: Overrides = {}) {
     />,
   );
 
-  return { updateSet, removeSet, setSetErrors };
+  return { updateSet, removeSet, setSetErrors, onCommitSet };
 }
 
 const repsInput = (n = 1) => screen.getByLabelText(`workout.reps ${n}`);
@@ -218,5 +221,39 @@ describe('WorkoutSetList', () => {
 
     const row = screen.getByRole('button', { name: 'workout.edit_set 1' });
     expect(row).toHaveTextContent('60 kg × 12');
+  });
+
+  it('el botón de confirmar marca la serie como completada y añade la siguiente', async () => {
+    const user = userEvent.setup();
+    const { updateSet, onCommitSet } = setup({
+      sets: [{ id: 'a', reps: '8', weight: '100' }],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'workout.complete_set' }));
+
+    expect(updateSet).toHaveBeenCalledWith(0, { completed: true });
+    expect(onCommitSet).toHaveBeenCalledOnce();
+  });
+
+  it('muestra el valor de la serie anterior cuando la activa está vacía', () => {
+    setup({
+      sets: [
+        { id: 'a', reps: '8', weight: '100' },
+        { id: 'b', reps: '', weight: '' },
+      ],
+    });
+
+    expect(screen.getByText('workout.previous_set: 100 kg × 8')).toBeInTheDocument();
+  });
+
+  it('no muestra el recordatorio de la serie anterior si la activa ya tiene datos', () => {
+    setup({
+      sets: [
+        { id: 'a', reps: '8', weight: '100' },
+        { id: 'b', reps: '6', weight: '90' },
+      ],
+    });
+
+    expect(screen.queryByText('workout.previous_set: 100 kg × 8')).not.toBeInTheDocument();
   });
 });

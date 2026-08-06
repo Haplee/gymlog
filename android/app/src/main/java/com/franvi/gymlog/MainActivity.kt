@@ -16,6 +16,7 @@ import androidx.biometric.BiometricPrompt
 import androidx.biometric.BiometricManager
 import androidx.core.content.ContextCompat
 import android.content.Context
+import android.content.res.Configuration
 
 class MainActivity : BridgeActivity() {
     private var lockView: View? = null
@@ -26,7 +27,29 @@ class MainActivity : BridgeActivity() {
         registerPlugin(WidgetBridgePlugin::class.java)
         registerPlugin(HealthBridgePlugin::class.java)
         registerPlugin(AppIconPlugin::class.java)
-        
+        registerPlugin(ThemeBridgePlugin::class.java)
+
+        // El tema elegido en Ajustes se espeja en GymLogPrefs (persistTheme).
+        // Aplicarlo aquí, antes de super.onCreate, hace que el fondo de la
+        // ventana (splash y franjas durante el arranque) salga ya con el tema
+        // correcto en lugar de parpadear con la base oscura. El splash del
+        // sistema (Android 12+) se sigue resolviendo con el tema del manifest
+        // en values(-night), que cubre el arranque inicial antes de este punto.
+        val savedTheme = getSharedPreferences("GymLogPrefs", Context.MODE_PRIVATE)
+            .getString("theme", "dark")
+        val lightAtLaunch = when (savedTheme) {
+            "light" -> true
+            "system" -> {
+                val night = resources.configuration.uiMode and
+                    Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+                !night
+            }
+            else -> false
+        }
+        if (lightAtLaunch) {
+            setTheme(R.style.AppTheme_NoActionBarLaunch_Light)
+        }
+
         super.onCreate(savedInstanceState)
         
         // Inicializar canales de notificación
@@ -87,6 +110,18 @@ class MainActivity : BridgeActivity() {
             }
             (window.decorView as ViewGroup).addView(lockView)
         }
+    }
+
+    /**
+     * El manifest declara configChanges con `uiMode`, así que el sistema nos
+     * avisa del cambio claro/oscuro sin recrear la actividad. Lo reenviamos a
+     * JS para que la web recalcule el tema «Sistema» al vuelo.
+     */
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        val dark = newConfig.uiMode and Configuration.UI_MODE_NIGHT_MASK ==
+            Configuration.UI_MODE_NIGHT_YES
+        bridge?.triggerJSEvent("systemThemeChanged", "{\"dark\":$dark}", "window")
     }
 
     override fun onStart() {

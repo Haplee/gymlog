@@ -129,7 +129,7 @@ export function BottomSheet({
               </div>
             )}
 
-            <div className="overflow-y-auto overscroll-contain flex-1 px-4 pb-[env(safe-area-inset-bottom)]">
+            <div className="overflow-y-auto overscroll-contain flex-1 px-4 pb-[var(--inset-bottom,env(safe-area-inset-bottom))]">
               {children}
             </div>
           </m.div>

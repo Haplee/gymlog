@@ -5,11 +5,14 @@ import { supabase } from '@shared/lib/supabase';
 import { DEFAULT_MUSCLE_GROUP } from '@shared/constants/muscleGroups';
 import { fetchExercises } from '@shared/api/queries';
 import { CARDIO_LABELS, type CardioType } from '@features/cardio/stores/cardioStore';
+import { makeDedupKey } from './exportImport';
 import type { ParsedImport } from './excelImport';
 
 export interface ExcelImportResult {
   sets: number;
   cardio: number;
+  /** Series que coincidian con (fecha, ejercicio, set_num) y no se importaron. */
+  skipped: number;
 }
 
 const TYPE_BY_LABEL = new Map<string, CardioType>(
@@ -27,9 +30,12 @@ function resolveCardioType(label: string): CardioType {
 export async function applyExcelImport(
   userId: string,
   parsed: ParsedImport,
+  existingKeys?: Set<string>,
 ): Promise<ExcelImportResult> {
   let setsImported = 0;
   let cardioImported = 0;
+  let skipped = 0;
+  const dedupeKeys = existingKeys ? new Set(existingKeys) : null;
 
   // --- Fuerza ---
   const exerciseList = await fetchExercises(userId);
@@ -77,6 +83,15 @@ export async function applyExcelImport(
     const setNum = (setCounters.get(counterKey) ?? 0) + 1;
     setCounters.set(counterKey, setNum);
 
+    if (dedupeKeys) {
+      const key = makeDedupKey(row.date, row.exercise, setNum);
+      if (dedupeKeys.has(key)) {
+        skipped++;
+        continue;
+      }
+      dedupeKeys.add(key);
+    }
+
     const { error: insertError } = await supabase.from('workout_sets').insert({
       workout_id: workoutId,
       exercise_id: exerciseId,
@@ -101,5 +116,5 @@ export async function applyExcelImport(
     if (!error) cardioImported++;
   }
 
-  return { sets: setsImported, cardio: cardioImported };
+  return { sets: setsImported, cardio: cardioImported, skipped };
 }

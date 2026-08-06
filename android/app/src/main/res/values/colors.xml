@@ -6,6 +6,8 @@
     <color name="gymlog_green">#60eca8</color>
     <color name="gymlog_blue">#5AC8FA</color>
     <!-- Base oscura de la app (bg-base en tokens.css). Si cambia, actualiza
-         también index.html, el manifest PWA de vite.config.ts y capacitor.config.ts. -->
+         tambien index.html, el manifest PWA de vite.config.ts y capacitor.config.ts. -->
     <color name="appBackground">#0A0A0B</color>
+    <!-- Base clara de la app (bg-canvas light en tokens.css / THEME_CHROME). -->
+    <color name="appBackgroundLight">#F3F5F3</color>
 </resources>

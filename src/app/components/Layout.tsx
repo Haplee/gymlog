@@ -11,11 +11,10 @@ import { WifiOff, RefreshCw } from 'lucide-react';
 import {
   IconHome,
   IconDumbbell,
-  IconChart,
-  IconGear,
   IconMenu,
   IconFlame,
   IconHistory,
+  IconPulse,
 } from '@shared/components/icons';
 import { calculateCurrentStreak } from '@features/stats/utils/kpiCalculations';
 import { AppDrawer } from '@app/components/AppDrawer';
@@ -25,6 +24,7 @@ import { RestAlarmBanner } from '@features/workout/components/RestAlarmBanner';
 import { ExerciseSearchSheet } from '@features/workout/components/ExerciseSearchSheet';
 import { useNotificationsStore, selectUnreadCount } from '@shared/stores/notificationsStore';
 import { useWearableSync } from '@features/wearables/hooks/useWearableSync';
+import { registerBackAction } from '@shared/lib/backHandler';
 
 interface LayoutProps {
   children: ReactNode;
@@ -96,6 +96,19 @@ export function Layout({ children }: LayoutProps) {
   // toda página autenticada), no solo al entrar en Ajustes > Wearables.
   useWearableSync();
 
+  // El gesto de atrás (Android) cierra el drawer y la hoja de búsqueda antes de
+  // intentar navegar. El registro vive en el estado de cada overlay: al abrirse
+  // se registra, al cerrarse se da de baja (y se re-sincroniza el handler nativo).
+  useEffect(() => {
+    if (!searchOpen) return;
+    return registerBackAction('layout-search', () => setSearchOpen(false));
+  }, [searchOpen]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    return registerBackAction('layout-drawer', () => setMenuOpen(false));
+  }, [menuOpen]);
+
   // Racha para la cabecera. Comparte clave con la caché que ya alimenta
   // Historial (y que `prefetchPageData` precalienta), así que no añade una
   // petición propia salvo que nadie haya pedido los entrenos todavía.
@@ -107,15 +120,13 @@ export function Layout({ children }: LayoutProps) {
   });
   const streak = calculateCurrentStreak(streakWorkouts);
 
-  // Cinco pestañas, el máximo que marca Material Design 3 para la barra inferior.
-  // Historial sube a la barra —es el destino que más se consulta tras entrenar—
-  // y Cardio pasa al cajón, donde ya convive el resto de destinos secundarios.
+  // Cuatro pestañas: lo que se usa a diario entrenando. El resto (estadísticas,
+  // ajustes, biblioteca, medidas…) vive en el cajón que abre la hamburguesa.
   const tabs = [
     { path: '/', Icon: IconHome, label: t('nav.home'), badge: trainBadge },
     { path: '/routines', Icon: IconDumbbell, label: t('nav.routines'), badge: false },
     { path: '/history', Icon: IconHistory, label: t('history.title'), badge: false },
-    { path: '/stats', Icon: IconChart, label: t('nav.stats'), badge: false },
-    { path: '/settings', Icon: IconGear, label: t('nav.settings'), badge: false },
+    { path: '/cardio', Icon: IconPulse, label: t('nav.cardio'), badge: false },
   ];
 
   // El descanso termina (y suena) aunque el usuario esté en otra pestaña.
@@ -190,10 +201,11 @@ export function Layout({ children }: LayoutProps) {
             GYM<span className="text-accent">LOG</span>
           </span>
 
-          {/* Racha en vez del acceso a Ajustes: el engranaje ya vive en la barra
-              inferior, así que ese hueco puede llevar el dato que la app quiere
-              que mires. Sin racha viva no se enseña un cero desmotivador; se
-              deja el sitio reservado para que el wordmark no se descentre. */}
+          {/* Racha en vez del acceso a Ajustes: el engranaje vive en el menú
+              hamburguesa, así que ese hueco puede llevar el dato que la app
+              quiere que mires. Sin racha viva no se enseña un cero
+              desmotivador; se deja el sitio reservado para que el wordmark no
+              se descentre. */}
           {user && streak > 0 ? (
             <Link
               to="/stats"

@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -22,6 +23,10 @@ import {
   parseImportDate as parseDate,
   isHeaderLine,
   buildExportJson,
+  buildExistingDedupKeys,
+  estimateDedupSkips,
+  makeDedupKey,
+  type DedupCandidate,
 } from '../utils/exportImport';
 import {
   exportAllToXlsx,
@@ -30,7 +35,7 @@ import {
   type ExcelCardioRow,
   type ExcelRoutineRow,
 } from '../utils/excelExport';
-import { parseXlsxFile, DAY_LABELS } from '../utils/excelImport';
+import { parseXlsxFile, DAY_LABELS, type ParsedImport } from '../utils/excelImport';
 import { applyExcelImport } from '../utils/applyExcelImport';
 
 /**
@@ -43,7 +48,68 @@ import { applyExcelImport } from '../utils/applyExcelImport';
  * Los datos que dependen de queries (`workouts` y los dos `refetch`) entran por
  * parametro porque son de la pagina; lo que vive en stores (usuario, rutinas,
  * cardio) lo lee el hook directamente.
+ *
+ * Importar no persiste al seleccionar el archivo: se parsea, se cuentan lo que
+ * se va a importar (entrenos/series/cardio/rutinas) y cuantas series ya existen
+ * por (fecha, ejercicio, set_num), y se abre un dialogo de confirmacion. Solo al
+ * confirmar se inserta, saltandose las series duplicadas.
  */
+type PendingImport = { kind: 'json'; workouts: unknown[] } | { kind: 'excel'; parsed: ParsedImport };
+
+/** Conteo de lo que entraria al confirmar un import pendiente. */
+interface ImportSummary {
+  workouts: number;
+  sets: number;
+  cardio: number;
+  routines: number;
+  /** Series que ya existen (fecha, ejercicio, set_num) y se saltarian. */
+  skips: number;
+}
+
+/** Resumen de un JSON pendiente: entrenos, series y duplicadas ya existentes. */
+function previewJsonImport(
+  importedWorkouts: unknown[],
+  existingKeys: Set<string>,
+): ImportSummary {
+  let workoutCount = 0;
+  let setsCount = 0;
+  const candidates: DedupCandidate[] = [];
+  for (const raw of importedWorkouts) {
+    const w = raw as Record<string, unknown>;
+    const sets = Array.isArray(w?.sets) ? (w.sets as unknown[]) : [];
+    if (sets.length === 0) continue;
+    const startedAt = String(w?.started_at ?? '');
+    const date = startedAt.split('T')[0] || new Date().toISOString().split('T')[0];
+    const byExercise = new Map<string, unknown[]>();
+    for (const rawSet of sets) {
+      const s = rawSet as Record<string, unknown>;
+      const exName = String(s?.exercise ?? '').trim();
+      if (!exName) continue;
+      const group = byExercise.get(exName) ?? [];
+      group.push(rawSet);
+      byExercise.set(exName, group);
+    }
+    let hasValid = false;
+    for (const [exName, exSets] of byExercise) {
+      exSets.forEach((rawSet, i) => {
+        const s = rawSet as Record<string, unknown>;
+        if (Number(s?.reps) <= 0) return;
+        hasValid = true;
+        setsCount++;
+        candidates.push({ date, exercise: exName, setNum: Number(s?.set_num) || i + 1 });
+      });
+    }
+    if (hasValid) workoutCount++;
+  }
+  return {
+    workouts: workoutCount,
+    sets: setsCount,
+    cardio: 0,
+    routines: 0,
+    skips: estimateDedupSkips(candidates, existingKeys),
+  };
+}
+
 export function useHistoryTransfer({
   workouts,
   refetchSets,
@@ -61,6 +127,9 @@ export function useHistoryTransfer({
   const saveRoutinesToDb = useRoutineStore((s) => s.saveToDb);
   const cardioSessions = useCardioStore((s) => s.sessions);
   const syncCardio = useCardioStore((s) => s.syncFromRemote);
+
+  const [pendingImport, setPendingImport] = useState<PendingImport | null>(null);
+  const existingKeys = useMemo(() => buildExistingDedupKeys(workouts), [workouts]);
 
   const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
@@ -170,6 +239,23 @@ export function useHistoryTransfer({
     );
   };
 
+  // Resumen del pendiente: entrena/series/cardio/rutinas que entrarian y
+  // cuantas series ya existen y se saltarian (fecha, ejercicio, set_num).
+  const pendingImportSummary = useMemo<ImportSummary | null>(() => {
+    if (!pendingImport) return null;
+    if (pendingImport.kind === 'json') return previewJsonImport(pendingImport.workouts, existingKeys);
+    return {
+      workouts: 0,
+      sets: pendingImport.parsed.strength.length,
+      cardio: pendingImport.parsed.cardio.length,
+      routines: pendingImport.parsed.routines.length,
+      skips: estimateDedupSkips(
+        pendingImport.parsed.strength.map((s) => ({ date: s.date, exercise: s.exercise })),
+        existingKeys,
+      ),
+    };
+  }, [pendingImport, existingKeys]);
+
   const importFromJson = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) {
@@ -177,97 +263,17 @@ export function useHistoryTransfer({
       return;
     }
     const reader = new FileReader();
-    reader.onload = async (event) => {
+    reader.onload = (event) => {
       try {
         const parsed = JSON.parse((event.target?.result as string) || '{}');
         const importedWorkouts = Array.isArray(parsed?.workouts) ? parsed.workouts : null;
-        if (!importedWorkouts) {
+        if (!importedWorkouts || importedWorkouts.length === 0) {
           toast.error(t('history.import_json_invalid'));
           return;
         }
-
-        toast.info(t('history.loading_data'));
-        const exerciseList = await fetchExercises(user.id);
-        const resolveExerciseId = async (name: string): Promise<string | null> => {
-          const clean = (name || '').trim();
-          if (clean.length < 2) return null;
-          const existing = exerciseList.find(
-            (ex) => ex?.name?.toLowerCase() === clean.toLowerCase(),
-          );
-          if (existing?.id) return existing.id;
-          const { data: newEx, error } = await supabase
-            .from('exercises')
-            .insert({ name: clean, user_id: user.id, muscle_group: DEFAULT_MUSCLE_GROUP })
-            .select('id, name')
-            .single();
-          if (error || !newEx) return null;
-          exerciseList.push({
-            id: newEx.id,
-            name: clean,
-            muscle_group: DEFAULT_MUSCLE_GROUP,
-            muscle_detail: null,
-            equipment: 'Gimnasio',
-            movement: null,
-            is_bilateral: true,
-            is_bodyweight: false,
-            load_type: 'external',
-            is_compound: false,
-            is_public: false,
-            description: null,
-            media_url: null,
-            user_id: user.id,
-            created_at: '',
-          });
-          return newEx.id;
-        };
-
-        let imported = 0;
-        for (const w of importedWorkouts) {
-          const sets = Array.isArray(w?.sets) ? w.sets : [];
-          // Agrupa sets por ejercicio: la RPC guarda un ejercicio por llamada.
-          const byExercise = new Map<string, typeof sets>();
-          for (const s of sets) {
-            const exName = String(s?.exercise ?? '').trim();
-            if (!exName) continue;
-            const group = byExercise.get(exName) ?? [];
-            group.push(s);
-            byExercise.set(exName, group);
-          }
-          const startedAt = w?.started_at || new Date().toISOString();
-          const finishedAt = w?.finished_at || startedAt;
-
-          for (const [exName, exSets] of byExercise) {
-            const exerciseId = await resolveExerciseId(exName);
-            if (!exerciseId) continue;
-            const setsPayload = exSets
-              .map((s: Record<string, unknown>, i: number) => ({
-                set_num: Number(s.set_num) || i + 1,
-                reps: Number(s.reps) || 0,
-                weight: Number(s.weight) || 0,
-                is_warmup: !!s.is_warmup,
-                notes: typeof s.notes === 'string' ? s.notes : '',
-                rpe: s.rpe != null ? String(s.rpe) : '',
-              }))
-              .filter((s: { reps: number }) => s.reps > 0);
-            if (!setsPayload.length) continue;
-            const { error } = await supabase.rpc('save_workout_with_sets', {
-              p_user_id: user.id,
-              p_exercise_id: exerciseId,
-              p_started_at: startedAt,
-              p_finished_at: finishedAt,
-              p_sets: setsPayload,
-            });
-            if (!error) imported += 1;
-          }
-        }
-
-        refetchSets();
-        refetchWorkouts();
-        queryClient.invalidateQueries({ queryKey: ['workoutsAndSets'], refetchType: 'all' });
-        queryClient.invalidateQueries({ queryKey: ['personalRecords'], refetchType: 'all' });
-        toast.success(t('history.import_success', { count: imported }));
+        setPendingImport({ kind: 'json', workouts: importedWorkouts });
       } catch (err) {
-        devError('Error import JSON', err);
+        devError('Error parseando JSON', err);
         toast.error(t('history.import_error'));
       }
     };
@@ -275,30 +281,155 @@ export function useHistoryTransfer({
     e.target.value = '';
   };
 
-  const importExcelFile = async (file: File, userId: string) => {
+  const runJsonImport = async (importedWorkouts: unknown[]) => {
+    if (!user) return;
     try {
       toast.info(t('history.loading_data'));
-      const parsed = await parseXlsxFile(await file.arrayBuffer());
-      const result = await applyExcelImport(userId, parsed);
-      for (const routine of parsed.routines) addRoutine(routine);
-      if (parsed.routines.length > 0) void saveRoutinesToDb(userId);
-      void syncCardio(userId);
+      const exerciseList = await fetchExercises(user.id);
+      const resolveExerciseId = async (name: string): Promise<string | null> => {
+        const clean = (name || '').trim();
+        if (clean.length < 2) return null;
+        const existing = exerciseList.find(
+          (ex) => ex?.name?.toLowerCase() === clean.toLowerCase(),
+        );
+        if (existing?.id) return existing.id;
+        const { data: newEx, error } = await supabase
+          .from('exercises')
+          .insert({ name: clean, user_id: user.id, muscle_group: DEFAULT_MUSCLE_GROUP })
+          .select('id, name')
+          .single();
+        if (error || !newEx) return null;
+        exerciseList.push({
+          id: newEx.id,
+          name: clean,
+          muscle_group: DEFAULT_MUSCLE_GROUP,
+          muscle_detail: null,
+          equipment: 'Gimnasio',
+          movement: null,
+          is_bilateral: true,
+          is_bodyweight: false,
+          load_type: 'external',
+          is_compound: false,
+          is_public: false,
+          description: null,
+          media_url: null,
+          user_id: user.id,
+          created_at: '',
+        });
+        return newEx.id;
+      };
+
+      // Dedupe por (fecha, ejercicio, set_num): lo ya existente se salta y se
+      // acumula en el mismo set para no re-importar duplicados intra-archivo.
+      const dedupeKeys = new Set(existingKeys);
+      let workoutsImported = 0;
+      let skipped = 0;
+
+      for (const raw of importedWorkouts) {
+        const w = raw as Record<string, unknown>;
+        const sets = Array.isArray(w?.sets) ? (w.sets as unknown[]) : [];
+        // Agrupa sets por ejercicio: la RPC guarda un ejercicio por llamada.
+        const byExercise = new Map<string, unknown[]>();
+        for (const rawSet of sets) {
+          const s = rawSet as Record<string, unknown>;
+          const exName = String(s?.exercise ?? '').trim();
+          if (!exName) continue;
+          const group = byExercise.get(exName) ?? [];
+          group.push(rawSet);
+          byExercise.set(exName, group);
+        }
+        const startedAt = String(w?.started_at ?? '') || new Date().toISOString();
+        const finishedAt = String(w?.finished_at ?? '') || startedAt;
+        const date = startedAt.split('T')[0];
+
+        let savedAny = false;
+        for (const [exName, exSets] of byExercise) {
+          const exerciseId = await resolveExerciseId(exName);
+          if (!exerciseId) continue;
+          const setsPayload = exSets
+            .map((rawSet, i) => {
+              const s = rawSet as Record<string, unknown>;
+              return {
+                set_num: Number(s.set_num) || i + 1,
+                reps: Number(s.reps) || 0,
+                weight: Number(s.weight) || 0,
+                is_warmup: !!s.is_warmup,
+                notes: typeof s.notes === 'string' ? s.notes : '',
+                rpe: s.rpe != null ? String(s.rpe) : '',
+              };
+            })
+            .filter((s: { reps: number; set_num: number }) => {
+              if (s.reps <= 0) return false;
+              const key = makeDedupKey(date, exName, s.set_num);
+              if (dedupeKeys.has(key)) {
+                skipped++;
+                return false;
+              }
+              dedupeKeys.add(key);
+              return true;
+            });
+          if (!setsPayload.length) continue;
+          const { error } = await supabase.rpc('save_workout_with_sets', {
+            p_user_id: user.id,
+            p_exercise_id: exerciseId,
+            p_started_at: startedAt,
+            p_finished_at: finishedAt,
+            p_sets: setsPayload,
+          });
+          if (!error) savedAny = true;
+        }
+        if (savedAny) workoutsImported++;
+      }
+
       refetchSets();
       refetchWorkouts();
       queryClient.invalidateQueries({ queryKey: ['workoutsAndSets'], refetchType: 'all' });
       queryClient.invalidateQueries({ queryKey: ['personalRecords'], refetchType: 'all' });
-      toast.success(
-        t('history.import_excel_success', {
-          sets: result.sets,
-          cardio: result.cardio,
-          routines: parsed.routines.length,
-        }),
-      );
+      let message = t('history.import_success', { count: workoutsImported });
+      if (skipped > 0) message += ` ${t('history.import_duplicates_skipped', { count: skipped })}`;
+      if (workoutsImported > 0) toast.success(message);
+      else toast.error(t('history.import_none'));
+    } catch (err) {
+      devError('Error import JSON', err);
+      toast.error(t('history.import_error'));
+    }
+  };
+
+  const runExcelImport = async (parsed: ParsedImport) => {
+    if (!user) return;
+    try {
+      toast.info(t('history.loading_data'));
+      const result = await applyExcelImport(user.id, parsed, existingKeys);
+      for (const routine of parsed.routines) addRoutine(routine);
+      if (parsed.routines.length > 0) void saveRoutinesToDb(user.id);
+      void syncCardio(user.id);
+      refetchSets();
+      refetchWorkouts();
+      queryClient.invalidateQueries({ queryKey: ['workoutsAndSets'], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ['personalRecords'], refetchType: 'all' });
+      let message = t('history.import_excel_success', {
+        sets: result.sets,
+        cardio: result.cardio,
+        routines: parsed.routines.length,
+      });
+      if (result.skipped > 0)
+        message += ` ${t('history.import_duplicates_skipped', { count: result.skipped })}`;
+      toast.success(message);
     } catch (err) {
       devError('Error import xlsx', err);
       toast.error(t('history.import_error'));
     }
   };
+
+  const confirmImport = async () => {
+    const pending = pendingImport;
+    setPendingImport(null);
+    if (!pending || !user) return;
+    if (pending.kind === 'json') await runJsonImport(pending.workouts);
+    else await runExcelImport(pending.parsed);
+  };
+
+  const cancelImport = () => setPendingImport(null);
 
   const importFromCsv = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -309,7 +440,15 @@ export function useHistoryTransfer({
 
     const fileName = file.name.toLowerCase();
     if (fileName.endsWith('.xlsx')) {
-      void importExcelFile(file, user.id);
+      void (async () => {
+        try {
+          const parsed = await parseXlsxFile(await file.arrayBuffer());
+          setPendingImport({ kind: 'excel', parsed });
+        } catch (err) {
+          devError('Error parseando xlsx', err);
+          toast.error(t('history.import_error'));
+        }
+      })();
       e.target.value = '';
       return;
     }
@@ -390,6 +529,8 @@ export function useHistoryTransfer({
         const errors: string[] = [];
         const dateWorkoutMap: Record<string, string> = {};
         const exerciseSetCounts: Record<string, number> = {};
+        const dedupeCsvKeys = new Set(existingKeys);
+        let skippedCsv = 0;
         let currentDate = new Date().toISOString().split('T')[0];
 
         for (let i = 0; i < lines.length; i++) {
@@ -484,6 +625,13 @@ export function useHistoryTransfer({
             finalSetNum = exerciseSetCounts[key];
           }
 
+          const dedupeKey = makeDedupKey(parsedDate, exerciseName, finalSetNum);
+          if (dedupeCsvKeys.has(dedupeKey)) {
+            skippedCsv++;
+            continue;
+          }
+          dedupeCsvKeys.add(dedupeKey);
+
           const { error: insertError } = await supabase.from('workout_sets').insert({
             workout_id: dateWorkoutMap[parsedDate],
             exercise_id: exerciseId,
@@ -507,6 +655,9 @@ export function useHistoryTransfer({
             ? t('history.import_success', { count: imported })
             : t('history.import_none');
 
+        if (skippedCsv > 0)
+          message += ` ${t('history.import_duplicates_skipped', { count: skippedCsv })}`;
+
         if (errors.length > 0)
           message += ` ${t('history.import_skipped', { count: errors.length })}`;
 
@@ -525,5 +676,14 @@ export function useHistoryTransfer({
     reader.readAsText(file);
     e.target.value = '';
   };
-  return { exportToExcel, exportToJson, importFromJson, importFromCsv };
+  return {
+    exportToExcel,
+    exportToJson,
+    importFromJson,
+    importFromCsv,
+    pendingImport,
+    pendingImportSummary,
+    confirmImport,
+    cancelImport,
+  };
 }

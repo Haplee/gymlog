@@ -6,6 +6,7 @@ import { devError } from '@shared/lib/devtools';
 import { enqueueWorkout, isNetworkError, type OutboxSet } from '@shared/lib/workoutOutbox';
 import { resolveOrCreateExercise } from '@shared/lib/resolveOrCreateExercise';
 import { useOutboxStore } from '@shared/stores/outboxStore';
+import { normalizeExerciseName } from '@shared/lib/progressionCycle';
 import type { DayOfWeek, DayRoutine, Routine } from './routineStore';
 
 export interface SessionSet {
@@ -41,7 +42,17 @@ interface RoutineSessionState {
   saving: boolean;
 
   isActive: () => boolean;
-  start: (routine: Routine, day: DayOfWeek, dayRoutine: DayRoutine) => void;
+  /**
+   * @param prefills Pesos a precargar por nombre normalizado de ejercicio
+   *   (auto-relleno). Las filas quedan con ese peso ya escrito, listas para
+   *   ajustar o registrar directamente.
+   */
+  start: (
+    routine: Routine,
+    day: DayOfWeek,
+    dayRoutine: DayRoutine,
+    prefills?: Record<string, string>,
+  ) => void;
   addSet: (exerciseIndex: number) => void;
   updateSet: (exerciseIndex: number, setIndex: number, data: Partial<SessionSet>) => void;
   removeSet: (exerciseIndex: number, setIndex: number) => void;
@@ -126,7 +137,7 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
 
       isActive: () => get().startedAt !== null && get().exercises.length > 0,
 
-      start: (routine, day, dayRoutine) => {
+      start: (routine, day, dayRoutine, prefills) => {
         set({
           routineId: routine.id,
           routineName: routine.name,
@@ -139,9 +150,10 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
             targetSets: ex.sets,
             targetReps: ex.reps,
             // Una fila por serie objetivo, ya con las repeticiones puestas: así
-            // registrar la rutina tal cual sale es solo escribir los pesos.
+            // registrar la rutina tal cual sale es solo escribir los pesos. Si
+            // hay auto-relleno, el peso de la última sesión ya viene escrito.
             sets: Array.from({ length: Math.max(1, ex.sets ?? 1) }, () =>
-              makeSet(targetRepsValue(ex.reps)),
+              makeSet(targetRepsValue(ex.reps), prefills?.[normalizeExerciseName(ex.name)] ?? ''),
             ),
           })),
         });

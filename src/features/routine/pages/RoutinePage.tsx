@@ -6,13 +6,19 @@ import { useShallow } from 'zustand/react/shallow';
 import { toast } from 'sonner';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useRoutineStore, dayLabels } from '@features/routine/stores/routineStore';
+import { useRoutineSessionStore } from '@features/routine/stores/routineSessionStore';
+import { useProgressionStore } from '@features/routine/stores/progressionStore';
+import { useSettingsStore } from '@shared/stores/settingsStore';
 import { Layout } from '@app/components/Layout';
-import type { Routine, DayOfWeek, RoutineExercise } from '@features/routine/stores/routineStore';
-import { fetchExercises } from '@shared/api/queries';
+import type { Routine, DayOfWeek, DayRoutine, RoutineExercise } from '@features/routine/stores/routineStore';
+import { fetchExercises, fetchRecentSets } from '@shared/api/queries';
+import { useWeight } from '@shared/hooks/useWeight';
+import { isBodyweightLoad } from '@shared/lib/loadType';
+import { normalizeExerciseName } from '@shared/lib/progressionCycle';
+import { weightToInput } from '@shared/lib/weight';
 import type { Exercise } from '@shared/lib/types';
 import { SortableExerciseList } from '@features/routine/components/SortableExerciseList';
 import { RoutineSession } from '@features/routine/components/RoutineSession';
-import { useRoutineSessionStore } from '@features/routine/stores/routineSessionStore';
 import { Chip, SectionHeader, BottomSheet } from '@shared/components/ui';
 import { CoachSuggestionBanner } from '@features/coach/components/CoachSuggestionBanner';
 import { ExerciseSelector } from '@shared/components/ExerciseSelector';
@@ -54,6 +60,17 @@ export function RoutinePage() {
     queryKey: ['exercises', user?.id],
     queryFn: () => fetchExercises(user?.id),
     enabled: !!user?.id,
+  });
+
+  const { unit: weightUnit } = useWeight();
+  const autoFillWeights = useSettingsStore((s) => s.autoFillWeights);
+  // Series recientes (con el nombre del ejercicio) para el auto-relleno: con
+  // solo recorrerlas en orden se saca el último peso usado de cada ejercicio.
+  const { data: recentSets = [] } = useQuery({
+    queryKey: ['recentSets', user?.id],
+    queryFn: () => fetchRecentSets(user?.id ?? ''),
+    enabled: !!user?.id && autoFillWeights,
+    staleTime: 1000 * 60 * 5,
   });
 
   const startSession = useRoutineSessionStore((s) => s.start);
@@ -213,6 +230,50 @@ export function RoutinePage() {
     void persistRoutines();
   };
 
+  // Auto-relleno: precarga en cada ejercicio el peso que sugiere el ciclo de
+  // progresión (carga de trabajo actual, con la reducción de descarga si toca).
+  // Sin ciclo todavía, usa el último peso registrado de la última sesión. En
+  // peso corporal no se rellena carga: solo las reps, que ya van de la plantilla.
+  const buildPrefills = useCallback(
+    (routine: Routine, day: DayOfWeek): Record<string, string> => {
+      const prefills: Record<string, string> = {};
+      if (!autoFillWeights || !user) return prefills;
+
+      const lastByExercise = new Map<string, number>();
+      for (const s of recentSets) {
+        const name = s.exercise?.name;
+        if (!name || s.is_warmup || !Number.isFinite(s.weight) || s.weight <= 0) continue;
+        const key = normalizeExerciseName(name);
+        if (!lastByExercise.has(key)) lastByExercise.set(key, s.weight);
+      }
+
+      const catalogByName = new Map(
+        exercises.map((e) => [normalizeExerciseName(e.name), e]),
+      );
+
+      for (const ex of routine.days[day].exercises) {
+        const key = normalizeExerciseName(ex.name);
+        const isBodyweight = isBodyweightLoad(catalogByName.get(key)?.load_type);
+        if (isBodyweight) continue;
+        const weight = useProgressionStore
+          .getState()
+          .prefillWeightFor(ex.name, lastByExercise.get(key) ?? null);
+        if (weight === null || weight <= 0) continue;
+        prefills[key] = weightToInput(weight, weightUnit);
+      }
+      return prefills;
+    },
+    [autoFillWeights, user, recentSets, exercises, weightUnit],
+  );
+
+  const handleStartSession = useCallback(
+    (routine: Routine, day: DayOfWeek, dayRoutine: DayRoutine) => {
+      const prefills = buildPrefills(routine, day);
+      startSession(routine, day, dayRoutine, prefills);
+    },
+    [buildPrefills, startSession],
+  );
+
   return (
     <Layout>
       {/* Solo aparece si se ha llegado aquí desde «Aplicar» en el entrenador. */}
@@ -349,7 +410,7 @@ export function RoutinePage() {
             <button
               type="button"
               onClick={() =>
-                startSession(activeRoutine, selectedDay, activeRoutine.days[selectedDay])
+                handleStartSession(activeRoutine, selectedDay, activeRoutine.days[selectedDay])
               }
               className="w-full mt-4 min-h-12 rounded-pill text-sm font-display font-bold uppercase tracking-[0.12em] bg-accent text-accent-fg shadow-btn-accent active:scale-[0.98] transition-transform"
             >

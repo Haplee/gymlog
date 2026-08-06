@@ -91,6 +91,64 @@ export function isHeaderLine(firstCol: string): boolean {
   return headers.some((h) => lower.includes(h));
 }
 
+/** Clave de dedupe: fecha + ejercicio + set_num (normalizado a minúsculas). */
+export function makeDedupKey(date: string, exercise: string, setNum: number): string {
+  return `${date}|${exercise.trim().toLowerCase()}|${setNum}`;
+}
+
+/**
+ * Construye el set de claves ya existentes en BD desde los workouts cargados.
+ * Puro y sin IO: la pagina lo calcula de los datos ya en memoria.
+ */
+export function buildExistingDedupKeys(
+  workouts: {
+    started_at?: string | null;
+    sets?: { exercise?: { name?: string | null } | null; set_num?: number | null }[];
+  }[],
+): Set<string> {
+  const keys = new Set<string>();
+  for (const w of workouts) {
+    const date = w.started_at ? w.started_at.split('T')[0] : '';
+    if (!date) continue;
+    for (const s of w.sets ?? []) {
+      const name = s.exercise?.name;
+      if (!name) continue;
+      keys.add(makeDedupKey(date, name, s.set_num ?? 0));
+    }
+  }
+  return keys;
+}
+
+export interface DedupCandidate {
+  date: string;
+  exercise: string;
+  /** Si falta, se auto-asigna como contador por (fecha, ejercicio) — igual que el import. */
+  setNum?: number;
+}
+
+/**
+ * Cuenta cuantas series de un import coinciden con claves ya existentes
+ * (fecha, ejercicio, set_num). Simula la asignación de set_num por contador
+ * para los formatos que no lo traen explicito (Excel/CSV).
+ */
+export function estimateDedupSkips(candidates: DedupCandidate[], existingKeys: Set<string>): number {
+  const seen = new Set(existingKeys);
+  const counters = new Map<string, number>();
+  let skips = 0;
+  for (const c of candidates) {
+    let setNum = c.setNum;
+    if (setNum === undefined) {
+      const counterKey = `${c.date}|${c.exercise.trim().toLowerCase()}`;
+      setNum = (counters.get(counterKey) ?? 0) + 1;
+      counters.set(counterKey, setNum);
+    }
+    const key = makeDedupKey(c.date, c.exercise, setNum);
+    if (seen.has(key)) skips++;
+    else seen.add(key);
+  }
+  return skips;
+}
+
 export interface ExportCsvSet {
   exercise?: { name?: string | null } | null;
   reps?: number | null;
