@@ -2,6 +2,7 @@ import { supabase } from '@shared/lib/supabase';
 import { devError, devWarn } from '@shared/lib/devtools';
 import { groupSetsBySession } from './sessionGrouping';
 import type { ExerciseSessionSets } from './sessionGrouping';
+import { toLocalDateKey } from '@shared/lib/dateKeys';
 import type {
   WorkoutWithSets,
   WorkoutSetWithDetails,
@@ -246,6 +247,16 @@ export const deleteExercise = async (exerciseId: string): Promise<void> => {
   if (error) throw error;
 };
 
+/**
+ * Entrenos recientes que se miran para reconstruir el historial de UN ejercicio.
+ *
+ * La misma para todas las consultas de historial por ejercicio a propósito:
+ * cuando esta miraba 30 entrenos y el motor de sugerencia 40, había ejercicios
+ * con recomendación pero sin tarjeta de "última sesión". Como se guarda un
+ * entreno por ejercicio, 60 son unos 12 días de entreno reales.
+ */
+const RECENT_WORKOUTS_WINDOW = 60;
+
 export const fetchLastExerciseSets = async (
   userId: string,
   exerciseId: string,
@@ -257,35 +268,61 @@ export const fetchLastExerciseSets = async (
     .select('id, started_at')
     .eq('user_id', userId)
     .order('started_at', { ascending: false })
-    .limit(30);
+    .limit(RECENT_WORKOUTS_WINDOW);
 
   if (!workouts?.length) return [];
 
-  const workoutIds = workouts.map((w) => w.id);
-
-  const { data: latestSet } = await supabase
-    .from('workout_sets')
-    .select('workout_id')
-    .eq('exercise_id', exerciseId)
-    .in('workout_id', workoutIds)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (!latestSet?.workout_id) return [];
-
-  const workoutInfo = workouts.find((w) => w.id === latestSet.workout_id);
-
+  // Los calentamientos se descartan en el servidor, igual que en
+  // `fetchExerciseSessions`: mezclados con las series de trabajo, la tarjeta
+  // mostraba «60×8 80×6 100×5 100×5 110×5 110×5» y parecía un montón de pesos
+  // sin relación entre sí.
   const { data: sets } = await supabase
     .from('workout_sets')
-    .select('reps, weight, set_num')
-    .eq('workout_id', latestSet.workout_id)
+    .select('workout_id, reps, weight, set_num')
     .eq('exercise_id', exerciseId)
-    .order('set_num');
+    .eq('is_warmup', false)
+    .in(
+      'workout_id',
+      workouts.map((w) => w.id),
+    );
 
-  return (sets || []).map((s) => ({
-    ...s,
-    workout_started_at: workoutInfo?.started_at ?? null,
+  if (!sets?.length) return [];
+
+  // El día entero, no el último entreno: se guarda un entreno por ejercicio, y
+  // el 6-ago hubo Remo con barra a 60 kg y a 80 kg en la misma sesión. La
+  // tarjeta enseñaba solo el de 60 mientras el motor recomendaba sobre el de 80,
+  // que es la misma incoherencia que agrupar por día arregló en la sugerencia.
+  return groupSetsByLastDay(sets, workouts);
+};
+
+/** Series de trabajo del día más reciente en que se entrenó el ejercicio. */
+const groupSetsByLastDay = (
+  sets: { workout_id: string; reps: number; weight: number; set_num: number }[],
+  workouts: { id: string; started_at: string | null }[],
+): { reps: number; weight: number; set_num: number; workout_started_at: string | null }[] => {
+  const startedAt = new Map(workouts.map((w) => [w.id, w.started_at]));
+
+  const dated = sets.flatMap((s) => {
+    const date = startedAt.get(s.workout_id);
+    if (!date) return [];
+    const parsed = new Date(date);
+    if (Number.isNaN(parsed.getTime())) return [];
+    return [{ ...s, date, dayKey: toLocalDateKey(parsed) }];
+  });
+  if (dated.length === 0) return [];
+
+  const lastDay = dated.reduce((a, b) => (b.dayKey > a.dayKey ? b : a)).dayKey;
+  const ofDay = dated.filter((s) => s.dayKey === lastDay);
+
+  // Dentro del día, en el orden en que se entrenó.
+  ofDay.sort((a, b) => a.date.localeCompare(b.date) || a.set_num - b.set_num);
+
+  const dayStart = ofDay[0].date;
+  return ofDay.map(({ reps, weight, set_num }) => ({
+    reps,
+    weight,
+    set_num,
+    workout_started_at: dayStart,
   }));
 };
 
@@ -309,7 +346,7 @@ export const fetchExerciseSessions = async (
     .select('id, started_at')
     .eq('user_id', userId)
     .order('started_at', { ascending: false })
-    .limit(40);
+    .limit(RECENT_WORKOUTS_WINDOW);
 
   if (!workouts?.length) return [];
 

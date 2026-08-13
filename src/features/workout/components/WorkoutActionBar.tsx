@@ -127,7 +127,10 @@ export function WorkoutActionBar({
 
         <button
           type="button"
-          onClick={onSave}
+          // Envuelto a propósito: `onClick={onSave}` le pasaría el evento del
+          // click como primer argumento, y quien guarda espera ahí el alcance
+          // del guardado.
+          onClick={() => onSave()}
           disabled={saving}
           className={`flex-1 py-3 px-4 rounded-pill text-base font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-none text-accent-fg ${
             saveSuccess ? 'bg-success' : 'bg-accent'

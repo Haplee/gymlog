@@ -354,6 +354,43 @@ describe('suggestFromLastSession', () => {
   });
 });
 
+describe('baseReps: el pasado se reporta con datos del pasado', () => {
+  it('suggestFromLastSession lleva las reps reales de la serie tope', () => {
+    // Caso real: Remo con barra, última sesión 80 kg × 10. La tarjeta mostraba
+    // «última · 80 kg × 11» porque reutilizaba las reps sugeridas.
+    const s = suggestFromLastSession([
+      {
+        date: daysAgo(7),
+        sets: [
+          { weight: 80, reps: 6 },
+          { weight: 80, reps: 10 },
+        ],
+      },
+    ]);
+    expect(nn(s).baseWeight).toBe(80);
+    expect(nn(s).baseReps).toBe(10);
+    expect(nn(s).reps).toBe(11);
+  });
+
+  it('suggestNextLoad lleva las reps reales de la serie tope', () => {
+    const s = suggestNextLoad([
+      session(daysAgo(7), { weight: 100, reps: 8, rir: 2 }),
+      session(daysAgo(3), { weight: 100, reps: 8, rir: 2 }),
+    ]);
+    expect(nn(s).baseReps).toBe(8);
+  });
+
+  it('applyReadiness conserva el pasado al degradar a mantener', () => {
+    const raw = suggestNextLoad([
+      session(daysAgo(7), { weight: 100, reps: 8, rir: 4 }),
+      session(daysAgo(3), { weight: 100, reps: 8, rir: 4 }),
+    ]);
+    const held = applyReadiness(raw, { holdLoad: true, reasonKey: 'coach.reason.low_sleep' });
+    expect(nn(held).baseReps).toBe(8);
+    expect(nn(held).baseWeight).toBe(100);
+  });
+});
+
 describe('applyReadiness', () => {
   const increase = suggestNextLoad([
     session(daysAgo(7), { weight: 100, reps: 8, rir: 4 }),
@@ -536,11 +573,11 @@ describe('suggestDeload', () => {
 });
 
 describe('buildWeeklyDeloadSamples', () => {
-  const wo = (
-    started_at: string | null,
-    sets: AutoRegSet[],
-    rating?: number | null,
-  ) => ({ started_at, rating, sets });
+  const wo = (started_at: string | null, sets: AutoRegSet[], rating?: number | null) => ({
+    started_at,
+    rating,
+    sets,
+  });
 
   it('agrupa por semana ISO (lunes) y suma el volumen de series de trabajo', () => {
     const samples = buildWeeklyDeloadSamples([

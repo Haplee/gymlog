@@ -518,6 +518,11 @@ export const resources = {
         rest_by_exercise_desc: 'Más descanso en ejercicios compuestos (≈2×)',
         auto_fill_weights: 'Auto-rellenar pesos',
         auto_fill_weights_desc: 'Precargar el peso de la última sesión al empezar una rutina',
+        save_scope: 'Guardado de series',
+        save_scope_desc: 'Qué hacer al guardar si tienes series completadas y otras sin marcar',
+        save_scope_ask: 'Preguntar',
+        save_scope_all: 'Guardar todas',
+        save_scope_completed: 'Solo completadas',
         wearables: 'Dispositivos / Wearables',
         wearables_desc: 'Conecta Amazfit, Garmin y más',
         preferences: 'Preferencias',
@@ -928,8 +933,7 @@ export const resources = {
         import_confirm_workouts: 'Se importarán {{workouts}} entrenos y {{sets}} series.',
         import_confirm_excel:
           'El archivo contiene {{sets}} series, {{cardio}} sesiones de cardio y {{routines}} rutinas.',
-        import_confirm_duplicates:
-          'Se saltarán {{count}} series que ya existen en tu historial.',
+        import_confirm_duplicates: 'Se saltarán {{count}} series que ya existen en tu historial.',
         import_duplicates_skipped: '({{count}} duplicadas saltadas)',
         series_plural: 'series',
         search_placeholder: 'Buscar ejercicio o nota…',
@@ -1227,7 +1231,7 @@ export const resources = {
           add_rep:
             'The load is too light to add a plate without overshooting. Progress by adding reps.',
           ceiling:
-            "You hit the top of your rep range. Add one load step and work your way back up from the bottom.",
+            'You hit the top of your rep range. Add one load step and work your way back up from the bottom.',
           no_effort_reps:
             'No effort recorded (RIR/RPE), so I follow your last session: same weight, one more rep.',
           no_effort_increase:
@@ -1512,6 +1516,11 @@ export const resources = {
         rest_by_exercise_desc: 'Longer rest on compound lifts (≈2×)',
         auto_fill_weights: 'Auto-fill weights',
         auto_fill_weights_desc: 'Preload last session weight when starting a routine',
+        save_scope: 'Saving sets',
+        save_scope_desc: 'What to do when saving with both completed and unmarked sets',
+        save_scope_ask: 'Ask',
+        save_scope_all: 'Save all',
+        save_scope_completed: 'Completed only',
         wearables: 'Devices / Wearables',
         wearables_desc: 'Connect Amazfit, Garmin and more',
         preferences: 'Preferences',

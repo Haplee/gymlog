@@ -42,6 +42,13 @@ import { CoachSuggestionBanner } from '@features/coach/components/CoachSuggestio
 import { CoachHomeCard } from '@features/coach/components/CoachHomeCard';
 import { NextSessionCard } from '@features/stats/components/NextSessionCard';
 import { useExerciseAdvice } from '@features/stats/hooks/useExerciseAdvice';
+import { useExerciseRepRange } from '@shared/hooks/useExerciseRepRange';
+import {
+  readSaveScope,
+  writeSaveScope,
+  resolveSaveScope,
+  type SaveScope,
+} from '@features/workout/lib/saveScopePreference';
 import { useProgressionStore } from '@features/routine/stores/progressionStore';
 import type { LoadSuggestion } from '@features/stats/utils/autoregulation';
 import { pickDaily, pickSleepFor } from '@features/wearables/utils/pickDaily';
@@ -178,6 +185,14 @@ export function WorkoutPage() {
     return registerBackAction('workout-plates', () => setShowPlates(false));
   }, [showPlates]);
 
+  // Sin esto, el gesto de atrás sobre el diálogo de guardado navegaba fuera de
+  // la pantalla y dejaba la sesión a medias. Cerrar equivale a cancelar: no
+  // guarda y no fija preferencia.
+  useEffect(() => {
+    if (!saveDialog) return;
+    return registerBackAction('workout-save-dialog', () => setSaveDialog(null));
+  }, [saveDialog]);
+
   const { data: exercises = [] } = useQuery({
     queryKey: ['exercises', user?.id],
     queryFn: () => fetchExercises(user?.id ?? ''),
@@ -260,7 +275,15 @@ export function WorkoutPage() {
   const isBodyweightExercise = isBodyweightLoad(selectedExercise?.load_type);
 
   // Sugerencia de carga del motor determinista para el ejercicio activo.
+  //
+  // El rango de reps objetivo va por el resolutor compartido, igual que en la
+  // sesión de rutina: sin él esta pantalla caía al [8, 12] por defecto de
+  // `suggestProgression` y recomendaba un peso distinto para el mismo ejercicio.
+  const activeExerciseName = selectedExercise?.name || customExerciseName;
+  const { repMin, repMax } = useExerciseRepRange(activeExerciseName);
   const exerciseAdvice = useExerciseAdvice(user?.id, activeExerciseId ?? undefined, {
+    repMin,
+    repMax,
     bodyweight: isBodyweightExercise,
   });
 
@@ -334,9 +357,40 @@ export function WorkoutPage() {
     [currentPR],
   );
 
-  const handleSave = async (opts: { onlyCompleted?: boolean } = {}) => {
+  /**
+   * Guarda el entreno.
+   *
+   * `scope` presente = alcance ya decidido (es lo que pasan las dos ramas del
+   * diálogo). Sin `scope` hay que resolverlo, y puede acabar en preguntar.
+   *
+   * Antes esto era un único `onlyCompleted?: boolean`, y ese flag significaba a
+   * la vez «qué series guardar» y «aún no he preguntado». La confirmación no
+   * tenía forma de decir «guardar todas, ya está decidido»: volvía a entrar con
+   * `false`, el guard se cumplía otra vez y el diálogo se reabría en bucle.
+   * «Guardar todas» no llegaba a guardar nunca.
+   */
+  const handleSave = async (opts: { scope?: SaveScope } = {}) => {
     if (!user || saving) return;
-    const onlyCompleted = opts.onlyCompleted ?? false;
+
+    let scope = opts.scope;
+    if (!scope) {
+      const completedCount = sets.filter((s) => s.completed).length;
+      const pendingCount = sets.filter(
+        (s) => !s.completed && s.reps && (isBodyweightExercise || s.weight),
+      ).length;
+      const decision = resolveSaveScope({
+        completedCount,
+        pendingCount,
+        stored: readSaveScope(),
+      });
+      if (decision === 'ask') {
+        setSaveDialog({ completedCount, pendingCount });
+        return;
+      }
+      scope = decision;
+    }
+
+    const onlyCompleted = scope === 'completed-only';
     setMessage('');
     setSetErrors({});
 
@@ -363,20 +417,6 @@ export function WorkoutPage() {
     if (!hasValid) {
       setMessage(t('workout.add_valid_set'));
       return;
-    }
-
-    // Hay series completadas y series con datos sin marcar: preguntar antes de
-    // guardar, porque «solo completadas» descartaría lo no marcado. Si no hay
-    // ninguna completada se guarda todo como siempre (cero pérdida de datos).
-    if (!onlyCompleted) {
-      const completedCount = sets.filter((s) => s.completed).length;
-      const pendingCount = sets.filter(
-        (s) => !s.completed && s.reps && (isBodyweightExercise || s.weight),
-      ).length;
-      if (completedCount > 0 && pendingCount > 0) {
-        setSaveDialog({ completedCount, pendingCount });
-        return;
-      }
     }
 
     // saveWorkout limpia la sesión: hay que quedarse con el resumen antes.
@@ -476,6 +516,16 @@ export function WorkoutPage() {
       setTimeout(() => setMessage(''), 2500);
       setTimeout(() => setSaveSuccess(false), 300);
     }
+  };
+
+  /**
+   * Respuesta al diálogo: se recuerda la elección y se guarda con ella. A
+   * partir de aquí el diálogo no vuelve a salir salvo que se pida desde Ajustes.
+   */
+  const chooseSaveScope = (scope: SaveScope) => {
+    writeSaveScope(scope);
+    setSaveDialog(null);
+    void handleSave({ scope });
   };
 
   const handleAddSet = useCallback(() => {
@@ -851,14 +901,8 @@ export function WorkoutPage() {
         confirmLabel={t('workout.save_all')}
         cancelLabel={t('workout.save_completed_only')}
         variant="default"
-        onConfirm={() => {
-          setSaveDialog(null);
-          void handleSave({ onlyCompleted: false });
-        }}
-        onCancel={() => {
-          setSaveDialog(null);
-          void handleSave({ onlyCompleted: true });
-        }}
+        onConfirm={() => chooseSaveScope('all')}
+        onCancel={() => chooseSaveScope('completed-only')}
       />
     </Layout>
   );

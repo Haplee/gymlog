@@ -50,6 +50,14 @@ export interface LoadSuggestion {
   weight: number;
   /** Peso de trabajo de la última sesión, para poder mostrar "de X a Y". */
   baseWeight: number;
+  /**
+   * Repeticiones de la serie tope de la última sesión.
+   *
+   * Va aparte de `reps` (las sugeridas) porque quien pinta "de X a Y" necesita
+   * el pasado real: reutilizar `reps` para ambos lados hacía que la tarjeta
+   * mostrara «última · 80 kg × 11» cuando la última sesión fue 80 kg × 10.
+   */
+  baseReps: number;
   /** Repeticiones objetivo. */
   reps: number;
   action: LoadAction;
@@ -206,6 +214,7 @@ export function suggestNextLoad(
   ): LoadSuggestion => ({
     weight,
     baseWeight,
+    baseReps,
     reps,
     action,
     deltaPct: Math.round(((weight - baseWeight) / baseWeight) * 1000) / 10,
@@ -237,9 +246,10 @@ export function suggestNextLoad(
     }
     // Subir carga en el techo del rango se premia restando reps: se vuelve al
     // suelo y se trabaja el mismo esquema de progresión (doble progresión).
-    const reps = repMax !== undefined && baseReps >= repMax && !opts.bodyweight
-      ? repMin ?? baseReps
-      : baseReps;
+    const reps =
+      repMax !== undefined && baseReps >= repMax && !opts.bodyweight
+        ? (repMin ?? baseReps)
+        : baseReps;
     return mk(target, reps, 'increase', 'coach.reason.margin_left');
   }
 
@@ -305,6 +315,7 @@ export function suggestFromLastSession(
   return {
     weight,
     baseWeight: top.weight,
+    baseReps: top.reps,
     reps,
     action: increase ? 'increase' : 'hold',
     deltaPct: top.weight > 0 ? Math.round(((weight - top.weight) / top.weight) * 1000) / 10 : 0,
@@ -528,9 +539,7 @@ export function buildWeeklyDeloadSamples(workouts: DeloadWorkout[]): WeeklyDeloa
       weekStart,
       volume: bucket.volume,
       rir:
-        bucket.rirs.length > 0
-          ? bucket.rirs.reduce((a, b) => a + b, 0) / bucket.rirs.length
-          : null,
+        bucket.rirs.length > 0 ? bucket.rirs.reduce((a, b) => a + b, 0) / bucket.rirs.length : null,
     }))
     .sort((a, b) => a.weekStart.localeCompare(b.weekStart));
 }
