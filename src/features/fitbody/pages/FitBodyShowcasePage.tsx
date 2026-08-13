@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Layout } from '@app/components/Layout';
 import { Button, Chip, SegmentedControl, StatNumber, Badge } from '@shared/components/ui';
 import { WeeklyChallengeBanner, LevelChips, ExerciseCard } from '@shared/components/fitbody';
+import { LiquidGlassShowcase } from '../components/LiquidGlassShowcase';
 
 type Level = 'beginner' | 'intermediate' | 'advanced';
 
@@ -36,6 +37,9 @@ export function FitBodyShowcasePage() {
             {t('fitbody.subtitle', 'Componentes nuevos + los tuyos con el tema amarillo.')}
           </p>
         </header>
+
+        {/* ── Material Liquid Glass (prototipo F0.2) ── */}
+        <LiquidGlassShowcase />
 
         {/* ── Componente nuevo: banner ── */}
         <section className="flex flex-col gap-3">

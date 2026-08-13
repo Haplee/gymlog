@@ -6,7 +6,28 @@
 
 ---
 
-## Recomendación
+## Decisión de la puerta G0 (2026-08-13)
+
+| Punto | Decisión |
+| --- | --- |
+| Material | **Ámbar confirmado** — Liquid Glass sin `backdrop-filter` |
+| Iconos | **`reicon-react` como dependencia real**, no vendorizado |
+
+Sobre los iconos, la decisión va contra la recomendación del spike y se toma a
+sabiendas: se prefiere la dependencia mantenida (actualizaciones e iconos nuevos
+gratis) al SVG congelado en el repo.
+
+**El criterio de «< 40 KB gzip» queda anulado**, porque se fijó sin línea base. La
+línea base medida es **1.031 KB gzip en 88 chunks** (`excel` solo son 265 KB). El
++53 KB es **+5,1 % del JS total**, y además no cae entero en la carga inicial: los
+iconos viven en 68 ficheros que Vite reparte por los chunks lazy de cada ruta.
+
+Criterio que lo sustituye, a verificar en la Fase 6: **el chunk de entrada no crece
+más de 25 KB gzip**. Ahí sí duele, porque es lo que se descarga siempre.
+
+---
+
+## Recomendación (previa a la decisión)
 
 **Puerta G0 → ⚠️ ÁMBAR, y por un motivo distinto al previsto.**
 

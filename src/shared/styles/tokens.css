@@ -116,6 +116,43 @@
   --z-modal: 200;
   --z-toast: 300;
 
+  /* ── Material vidrio ("Liquid Glass") ─────────────
+     SIN backdrop-filter. Decidido en la puerta G0 y medido en
+     docs/spikes/liquid-glass-spike.md: en oscuro, un velo translúcido
+     sobre el acento #ffd93d da 1,04:1 — ningún alpha con velo blanco
+     alcanza AA. El vidrio se construye con base casi opaca + canto
+     luminoso + degradado, no con blur.
+
+     El velo es OSCURO y alto (≥88%), no blanco y bajo. Medido en el
+     peor caso (acento pasando por debajo): texto ≥4,90:1 en las tres
+     capas. Ver la tabla del spike.
+
+     Capas: 1 = contenido · 2 = elevado (tarjetas) · 3 = flotante
+     (header, bottom nav, FAB, modales). ── */
+  --glass-1: rgb(10 10 11 / 0.88);
+  --glass-2: rgb(20 20 22 / 0.92);
+  --glass-3: rgb(28 27 30 / 0.96);
+
+  /* Canto asimétrico: la luz entra por arriba. El borde superior se ve;
+     los laterales solo definen. Un canto uniforme parece caja, no vidrio. */
+  --glass-edge-top: rgb(255 255 255 / 0.14);
+  --glass-edge: rgb(255 255 255 / 0.06);
+  --glass-sheen: inset 0 1px 0 rgb(255 255 255 / 0.08);
+
+  /* Degradado interno: simula la caída de luz a través del material.
+     Es lo que impide que la superficie se lea como un rectángulo plano. */
+  --glass-veil: linear-gradient(180deg, rgb(255 255 255 / 0.05) 0%, rgb(255 255 255 / 0) 45%);
+
+  /* Difuminado de borde de scroll — sustituye perceptualmente al blur.
+     El contenido se disuelve al entrar bajo el chrome flotante, que es
+     la señal que da el backdrop-filter, pero pintada una sola vez y sin
+     recalcular el backdrop en cada frame. */
+  --glass-fade: linear-gradient(180deg, rgb(10 10 11 / 1) 0%, rgb(10 10 11 / 0) 100%);
+
+  --glass-shadow-1: none;
+  --glass-shadow-2: 0 1px 2px rgb(0 0 0 / 0.3);
+  --glass-shadow-3: 0 8px 28px rgb(0 0 0 / 0.5);
+
   /* ── Layout ──────────────────────────────────── */
   --header-height: 56px;
   /* Entre los 56px originales y los 48px del primer recorte: la píldora activa
@@ -176,6 +213,26 @@
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05);
   --shadow-glow: 0 0 14px rgb(var(--accent-rgb) / 0.12);
   --shadow-btn-accent: 0 1px 4px rgb(var(--accent-rgb) / 0.2);
+
+  /* ── Material vidrio en claro ──────────────────
+     Aquí el velo sí es blanco, pero alto. Medido en el peor caso
+     (texto oscuro pasando por debajo): texto ≥4,93:1 en las tres capas.
+     El canto se invierte: sobre fondo claro la luz no se ve como brillo
+     blanco sino como una sombra fina, así que el canto es oscuro. ── */
+  --glass-1: rgb(255 255 255 / 0.9);
+  --glass-2: rgb(255 255 255 / 0.94);
+  --glass-3: rgb(255 255 255 / 0.97);
+
+  --glass-edge-top: rgb(255 255 255 / 0.9);
+  --glass-edge: rgb(0 0 0 / 0.08);
+  --glass-sheen: inset 0 1px 0 rgb(255 255 255 / 0.95);
+
+  --glass-veil: linear-gradient(180deg, rgb(255 255 255 / 0.6) 0%, rgb(255 255 255 / 0) 45%);
+  --glass-fade: linear-gradient(180deg, rgb(243 245 243 / 1) 0%, rgb(243 245 243 / 0) 100%);
+
+  --glass-shadow-1: none;
+  --glass-shadow-2: 0 1px 2px rgb(0 0 0 / 0.05);
+  --glass-shadow-3: 0 8px 28px rgb(0 0 0 / 0.12);
 }
 
 /* Keyframes y clases de animación viven en index.css (fuente única). */
