@@ -28,6 +28,12 @@ import { devError } from '@shared/lib/devtools';
 import { Camera, Check, ChevronRight, Download, Loader2, LogOut, Pencil, X } from 'lucide-react';
 import { IconBook, IconRuler, IconWatch } from '@shared/components/icons';
 import { APK_DOWNLOAD_URL } from '@shared/constants/links';
+import {
+  readSaveScope,
+  writeSaveScope,
+  clearSaveScope,
+  type SaveScope,
+} from '@features/workout/lib/saveScopePreference';
 
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
 const MAX_NAME_LENGTH = 40;
@@ -111,6 +117,9 @@ export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   /** `null` = aún sin comprobar; no pintar la fila hasta saberlo. */
   const [exactAlarmsGranted, setExactAlarmsGranted] = useState<boolean | null>(null);
+  // La preferencia de guardado vive en localStorage (igual que la modalidad de
+  // carga), no en el store: aquí solo se refleja para poder cambiarla.
+  const [saveScope, setSaveScopeState] = useState<SaveScope | null>(() => readSaveScope());
   const updateProfileCache = useUpdateProfileCache();
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
@@ -514,6 +523,41 @@ export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
               }
               divider={restAutoStart}
             />
+
+            {/* Qué hacer al guardar con series completadas y sin marcar a la
+                vez. Se pregunta la primera vez y se recuerda; esta es la vía
+                para cambiar de idea o volver a que pregunte. */}
+            <div className="px-4 py-3.5">
+              <div className="text-base text-fg">{t('settings.save_scope')}</div>
+              <div className="text-xs mb-2.5 text-fg-subtle">{t('settings.save_scope_desc')}</div>
+              <div className="flex gap-1.5" role="group" aria-label={t('settings.save_scope')}>
+                {(
+                  [
+                    { value: null, label: t('settings.save_scope_ask') },
+                    { value: 'all', label: t('settings.save_scope_all') },
+                    { value: 'completed-only', label: t('settings.save_scope_completed') },
+                  ] as const
+                ).map(({ value, label }) => (
+                  <button
+                    type="button"
+                    key={value ?? 'ask'}
+                    onClick={() => {
+                      if (value === null) clearSaveScope();
+                      else writeSaveScope(value);
+                      setSaveScopeState(value);
+                    }}
+                    aria-pressed={saveScope === value}
+                    className={`flex-1 min-h-11 rounded-sm px-2 text-2xs font-medium leading-tight cursor-pointer border transition-colors ${
+                      saveScope === value
+                        ? 'bg-accent text-accent-fg border-accent'
+                        : 'bg-surface-2 text-fg-muted border-line'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {restAutoStart && (
               <div className="px-4 py-3.5">

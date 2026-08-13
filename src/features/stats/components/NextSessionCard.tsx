@@ -70,8 +70,9 @@ export function NextSessionCard({
 
       {/* De dónde se viene y a dónde se va, con el delta de carga. */}
       <div className="mt-3 flex flex-wrap items-center gap-1.5">
+        {/* El pasado con los datos del pasado: `baseReps`, no las sugeridas. */}
         <span className="label-caps rounded-sm bg-surface-2 px-2 py-1 text-fg-muted">
-          {t('coach.last_label')} · {weightDisplay(suggestion.baseWeight)} × {suggestion.reps}
+          {t('coach.last_label')} · {weightDisplay(suggestion.baseWeight)} × {suggestion.baseReps}
         </span>
         <span className="label-caps rounded-sm bg-accent/15 px-2 py-1 text-accent">
           {t('coach.next_label')} · {weightDisplay(suggestion.weight)} × {suggestion.reps}

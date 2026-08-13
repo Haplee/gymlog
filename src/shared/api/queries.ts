@@ -246,6 +246,16 @@ export const deleteExercise = async (exerciseId: string): Promise<void> => {
   if (error) throw error;
 };
 
+/**
+ * Entrenos recientes que se miran para reconstruir el historial de UN ejercicio.
+ *
+ * La misma para todas las consultas de historial por ejercicio a propósito:
+ * cuando esta miraba 30 entrenos y el motor de sugerencia 40, había ejercicios
+ * con recomendación pero sin tarjeta de "última sesión". Como se guarda un
+ * entreno por ejercicio, 60 son unos 12 días de entreno reales.
+ */
+const RECENT_WORKOUTS_WINDOW = 60;
+
 export const fetchLastExerciseSets = async (
   userId: string,
   exerciseId: string,
@@ -257,16 +267,21 @@ export const fetchLastExerciseSets = async (
     .select('id, started_at')
     .eq('user_id', userId)
     .order('started_at', { ascending: false })
-    .limit(30);
+    .limit(RECENT_WORKOUTS_WINDOW);
 
   if (!workouts?.length) return [];
 
   const workoutIds = workouts.map((w) => w.id);
 
+  // Los calentamientos se descartan en el servidor, igual que en
+  // `fetchExerciseSessions`: mezclados con las series de trabajo, la tarjeta
+  // mostraba «60×8 80×6 100×5 100×5 110×5 110×5» y parecía un montón de pesos
+  // sin relación entre sí.
   const { data: latestSet } = await supabase
     .from('workout_sets')
     .select('workout_id')
     .eq('exercise_id', exerciseId)
+    .eq('is_warmup', false)
     .in('workout_id', workoutIds)
     .order('created_at', { ascending: false })
     .limit(1)
@@ -281,6 +296,7 @@ export const fetchLastExerciseSets = async (
     .select('reps, weight, set_num')
     .eq('workout_id', latestSet.workout_id)
     .eq('exercise_id', exerciseId)
+    .eq('is_warmup', false)
     .order('set_num');
 
   return (sets || []).map((s) => ({
@@ -309,7 +325,7 @@ export const fetchExerciseSessions = async (
     .select('id, started_at')
     .eq('user_id', userId)
     .order('started_at', { ascending: false })
-    .limit(40);
+    .limit(RECENT_WORKOUTS_WINDOW);
 
   if (!workouts?.length) return [];
 

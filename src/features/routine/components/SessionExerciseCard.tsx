@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useExerciseAdvice } from '@features/stats/hooks/useExerciseAdvice';
 import type { ExerciseAdvice } from '@features/stats/hooks/useAutoregulation';
+import { useExerciseRepRange } from '@shared/hooks/useExerciseRepRange';
 import { EquipmentIcon } from '@shared/components/icons/EquipmentIcons';
 import { isBodyweightLoad } from '@shared/lib/loadType';
 import { weightToInput } from '@shared/lib/weight';
@@ -22,15 +23,6 @@ const ACTION_ICON = {
   reduce: TrendingDown,
   hold: Minus,
 } as const;
-
-/** Rango de reps del objetivo de la plantilla: '8-10' → [8, 10], '5' → [5, 5]. */
-function targetRepRange(targetReps?: string): { repMin?: number; repMax?: number } {
-  const nums = targetReps?.match(/\d+/g)?.map(Number) ?? [];
-  if (nums.length === 0) return {};
-  const repMin = nums[0];
-  const repMax = nums.length > 1 ? nums[nums.length - 1] : repMin;
-  return { repMin, repMax };
-}
 
 interface Props {
   userId: string;
@@ -68,7 +60,9 @@ export function SessionExerciseCard({
   const { t } = useTranslation();
   const [showForm, setShowForm] = useState(false);
 
-  const { repMin, repMax } = targetRepRange(exercise.targetReps);
+  // El objetivo de la sesión manda sobre la búsqueda por nombre: aquí ya se
+  // sabe de qué día viene el ejercicio.
+  const { repMin, repMax } = useExerciseRepRange(exercise.name, exercise.targetReps);
   const advice = useExerciseAdvice(userId, catalog?.id, {
     repMin,
     repMax,
