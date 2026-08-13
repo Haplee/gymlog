@@ -30,8 +30,8 @@
 
 - [x] 5.1 Consulta que identifica workouts duplicados exactos (mismo ejercicio, mismas series, <5 min de diferencia)
 - [x] 5.2 Copia de seguridad de los candidatos a fichero local fuera del repo
-- [ ] 5.3 Presentar la lista al usuario y esperar confirmación explícita
-- [ ] 5.4 Borrar los duplicados conservando el más antiguo de cada grupo
+- [x] 5.3 Lista presentada. Decisión: borrar solo el duplicado inequívoco (Press banca 11-ago 09:16:19, 29 s después del original). El lote del 10-ago 22:06 resultó ser una sesión de rutina guardada en 4 s que re-registra el entreno de la mañana, pero con Sentadilla Parcial 62,5×3 que no existe en ningún otro sitio: se conserva
+- [x] 5.4 Borrado el workout 510185a4 (4 series). Copia de seguridad restaurable en el scratchpad de la sesión
 
 ## 6. Verificación en dispositivo
 
