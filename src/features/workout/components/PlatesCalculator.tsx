@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BottomSheet } from '@shared/components/ui';
-import { calcularDiscos, DEFAULT_BAR_KG } from '@shared/lib/plates';
+import { calcularDiscos, COMMON_PLATES_KG, DEFAULT_BAR_KG } from '@shared/lib/plates';
+import { useSettingsStore } from '@shared/stores/settingsStore';
 
 interface PlatesCalculatorProps {
   open: boolean;
@@ -25,12 +26,22 @@ export function PlatesCalculator({ open, initialTargetKg, onClose }: PlatesCalcu
     initialTargetKg && initialTargetKg > 0 ? String(Math.round(initialTargetKg)) : '',
   );
   const [bar, setBar] = useState<number>(DEFAULT_BAR_KG);
+  const [editandoDiscos, setEditandoDiscos] = useState(false);
+  const availablePlates = useSettingsStore((s) => s.availablePlatesKg);
+  const setAvailablePlates = useSettingsStore((s) => s.setAvailablePlatesKg);
 
   const result = useMemo(() => {
     const targetNum = parseFloat(target.replace(',', '.'));
     if (!Number.isFinite(targetNum)) return null;
-    return calcularDiscos(targetNum, bar);
-  }, [target, bar]);
+    return calcularDiscos(targetNum, bar, availablePlates);
+  }, [target, bar, availablePlates]);
+
+  const alternarDisco = (peso: number) => {
+    const activo = availablePlates.includes(peso);
+    setAvailablePlates(
+      activo ? availablePlates.filter((p) => p !== peso) : [...availablePlates, peso],
+    );
+  };
 
   return (
     <BottomSheet open={open} onClose={onClose} title={t('workout.plates_calc')}>
@@ -99,6 +110,49 @@ export function PlatesCalculator({ open, initialTargetKg, onClose }: PlatesCalcu
           </div>
         )}
       </div>
+
+      {/* Discos del gimnasio. Plegado por defecto: se configura una vez y se
+          olvida, así que no debe competir con el resultado, que es lo que se
+          mira cada vez. */}
+      <button
+        type="button"
+        onClick={() => setEditandoDiscos((v) => !v)}
+        aria-expanded={editandoDiscos}
+        className="mt-3 flex w-full items-center justify-between gap-2 rounded-md border border-line px-3 min-h-11 text-2xs uppercase font-semibold text-fg-subtle"
+      >
+        <span>{t('workout.plates_available')}</span>
+        <span className="font-mono normal-case text-fg-muted">
+          {availablePlates.length > 0
+            ? `${[...availablePlates].sort((a, b) => b - a).join(' · ')} kg`
+            : t('workout.plates_available_none')}
+        </span>
+      </button>
+
+      {editandoDiscos && (
+        <div className="mt-2 rounded-md border border-line p-3">
+          <div className="text-2xs text-fg-subtle mb-2">{t('workout.plates_available_help')}</div>
+          <div className="flex flex-wrap gap-1.5">
+            {COMMON_PLATES_KG.map((peso) => {
+              const activo = availablePlates.includes(peso);
+              return (
+                <button
+                  key={peso}
+                  type="button"
+                  onClick={() => alternarDisco(peso)}
+                  aria-pressed={activo}
+                  className={`min-h-11 min-w-14 rounded-pill border px-3 font-mono text-sm font-semibold ${
+                    activo
+                      ? 'bg-accent border-accent text-accent-fg'
+                      : 'bg-surface-2 border-line-interactive text-fg-muted'
+                  }`}
+                >
+                  {peso}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </BottomSheet>
   );
 }

@@ -54,4 +54,57 @@ describe('calcularDiscos', () => {
     expect(calcularDiscos(NaN).perSide).toEqual([]);
     expect(calcularDiscos(Infinity).perSide).toEqual([]);
   });
+
+  // ── Inventarios no canónicos ──────────────────────────────────────
+  // Con un 1,5 y un 1,25 conviviendo, coger siempre el disco más grande que
+  // quepa deja de ser óptimo. Estos casos fallaban con el algoritmo voraz.
+  describe('inventario con 1,5 y 1,25 (no canónico)', () => {
+    const GIMNASIO = [25, 20, 15, 10, 5, 2.5, 1.5, 1.25, 0.5];
+
+    it('clava 2,75 por lado combinando 1,5 + 1,25 en vez de dejar 0,25 sin cubrir', () => {
+      const r = calcularDiscos(25.5, DEFAULT_BAR_KG, GIMNASIO); // 2,75 por lado
+      expect(r.leftoverPerSide).toBe(0);
+      expect(r.totalAchievable).toBe(25.5);
+      expect(r.perSide).toEqual([
+        { weight: 1.5, count: 1 },
+        { weight: 1.25, count: 1 },
+      ]);
+    });
+
+    it('clava 3,25 por lado', () => {
+      const r = calcularDiscos(26.5, DEFAULT_BAR_KG, GIMNASIO); // 3,25 por lado
+      expect(r.leftoverPerSide).toBe(0);
+      expect(r.totalAchievable).toBe(26.5);
+    });
+
+    it('clava un peso alto que el voraz no alcanzaba (41,75 por lado)', () => {
+      const r = calcularDiscos(103.5, DEFAULT_BAR_KG, GIMNASIO);
+      expect(r.leftoverPerSide).toBe(0);
+      expect(r.totalAchievable).toBe(103.5);
+    });
+
+    it('a igualdad de peso alcanzado, usa el menor número de discos', () => {
+      const r = calcularDiscos(30, DEFAULT_BAR_KG, GIMNASIO); // 5 por lado
+      expect(r.perSide).toEqual([{ weight: 5, count: 1 }]);
+    });
+  });
+
+  it('baja al peso alcanzable más cercano por debajo cuando no puede clavarlo', () => {
+    const r = calcularDiscos(21, DEFAULT_BAR_KG, [5]); // 0,5 por lado, solo discos de 5
+    expect(r.perSide).toEqual([]);
+    expect(r.totalAchievable).toBe(20);
+    expect(r.leftoverPerSide).toBe(0.5);
+  });
+
+  it('no se descuadra por coma flotante con muchos discos pequeños', () => {
+    const r = calcularDiscos(35, DEFAULT_BAR_KG, [2.5]); // 7,5 por lado = 2,5 × 3
+    expect(r.perSide).toEqual([{ weight: 2.5, count: 3 }]);
+    expect(r.leftoverPerSide).toBe(0);
+  });
+
+  it('sin discos disponibles, todo el peso queda como sobrante', () => {
+    const r = calcularDiscos(60, DEFAULT_BAR_KG, []);
+    expect(r.perSide).toEqual([]);
+    expect(r.leftoverPerSide).toBe(20);
+  });
 });
