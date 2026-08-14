@@ -498,7 +498,7 @@ export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
         {/* Entrenamiento */}
         <section>
           <SectionHeader title={t('settings.training')} />
-          <div className="rounded-card bg-surface border border-line overflow-hidden">
+          <div className="glass-2 rounded-card overflow-hidden">
             <SettingRow
               label={t('settings.training_reminders')}
               desc={t('settings.training_reminders_desc')}
@@ -616,7 +616,7 @@ export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
         {/* Notificaciones */}
         <section>
           <SectionHeader title={t('settings.notifications')} />
-          <div className="rounded-card bg-surface border border-line overflow-hidden">
+          <div className="glass-2 rounded-card overflow-hidden">
             <SettingRow
               label={t('settings.notifications')}
               desc={t('settings.notifications_desc')}
@@ -668,7 +668,7 @@ export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
         {/* Datos */}
         <section>
           <SectionHeader title={t('settings.data')} />
-          <div className="rounded-card bg-surface border border-line overflow-hidden">
+          <div className="glass-2 rounded-card overflow-hidden">
             <NavRow
               icon={<IconWatch className="w-4 h-4" />}
               label={t('settings.wearables')}
@@ -681,7 +681,7 @@ export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
         {/* Cuenta */}
         <section>
           <SectionHeader title={t('settings.account')} />
-          <div className="rounded-card bg-surface border border-line overflow-hidden">
+          <div className="glass-2 rounded-card overflow-hidden">
             <button
               type="button"
               onClick={() => signOut()}

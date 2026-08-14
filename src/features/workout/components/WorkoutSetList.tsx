@@ -352,7 +352,7 @@ export const WorkoutSetList = memo(function WorkoutSetList({
             placeholder={t('workout.set_note_placeholder')}
             value={active.notes ?? ''}
             onChange={(e) => updateSet(activeIndex, { notes: e.target.value.slice(0, 500) })}
-            className="w-full rounded-card border border-line bg-surface px-2 py-2 text-xs text-fg outline-none"
+            className="w-full glass-2 rounded-card px-2 py-2 text-xs text-fg outline-none"
           />
           <div>
             <div className="label-caps mb-1.5 text-fg-subtle">{t('workout.rpe_label')}</div>

@@ -92,18 +92,14 @@ export function HealthMetricsCard({ daily, sleep, onOpen }: HealthMetricsCardPro
       <button
         type="button"
         onClick={onOpen}
-        className="w-full rounded-card border border-line-strong bg-surface p-4 text-left shadow-card scale-in transition-colors active:bg-hover"
+        className="w-full glass-2 rounded-card p-4 text-left shadow-card scale-in transition-colors active:bg-hover"
       >
         {inner}
       </button>
     );
   }
 
-  return (
-    <div className="rounded-card border border-line-strong bg-surface p-4 shadow-card scale-in">
-      {inner}
-    </div>
-  );
+  return <div className="glass-2 rounded-card p-4 shadow-card scale-in">{inner}</div>;
 }
 
 function fmtMinutesOrNull(min: number | null | undefined): string | null {

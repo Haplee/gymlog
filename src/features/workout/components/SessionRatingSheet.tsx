@@ -107,7 +107,7 @@ export function SessionRatingSheet({
           placeholder={t('workout.session_notes_placeholder')}
           rows={3}
           aria-label={t('workout.session_notes')}
-          className="mt-3 w-full resize-none rounded-card border border-line bg-surface-2 p-3 text-sm text-fg outline-none placeholder:text-fg-subtle focus:border-accent"
+          className="mt-3 w-full resize-none glass-2 rounded-card-2 p-3 text-sm text-fg outline-none placeholder:text-fg-subtle focus:border-accent"
         />
 
         <button

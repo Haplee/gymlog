@@ -46,7 +46,7 @@ function InsightCard({ insight }: { insight: CoachInsight }) {
         : 'text-fg-muted';
 
   return (
-    <div className="rounded-card bg-surface border border-line p-4">
+    <div className="glass-2 rounded-card p-4">
       <h3 className="flex items-center gap-2 text-sm font-semibold text-fg">
         <Icon className={`w-4 h-4 flex-shrink-0 ${tone}`} aria-hidden="true" />
         {insight.title}
@@ -80,7 +80,7 @@ function SuggestionCard({ suggestion }: { suggestion: CoachSuggestion }) {
   };
 
   return (
-    <div className="rounded-card bg-surface border border-line p-4">
+    <div className="glass-2 rounded-card p-4">
       <div className="flex items-center gap-2">
         <span className="rounded-pill bg-accent/15 px-2.5 py-0.5 text-xs font-semibold text-accent">
           {t(`coach.kind.${suggestion.kind}`)}
@@ -223,7 +223,7 @@ export function CoachPage() {
         </header>
 
         {!output && !analyze.isPending && (
-          <div className="rounded-card bg-surface border border-line p-6 text-center">
+          <div className="glass-2 rounded-card p-6 text-center">
             <Sparkles className="mx-auto h-8 w-8 text-accent" aria-hidden="true" />
             <h2 className="mt-3 text-base font-semibold text-fg">{t('coach.empty_title')}</h2>
             <p className="mt-1 text-sm text-fg-muted">{t('coach.empty_desc')}</p>
@@ -288,7 +288,7 @@ export function CoachPage() {
                 }
               }}
               placeholder={t('coach.chat_placeholder')}
-              className="min-h-11 flex-1 resize-none rounded-card border border-line bg-surface px-3.5 py-2.5 text-sm text-fg placeholder:text-fg-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className="min-h-11 flex-1 resize-none glass-2 rounded-card px-3.5 py-2.5 text-sm text-fg placeholder:text-fg-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             />
             <Button
               size="md"

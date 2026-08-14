@@ -477,7 +477,7 @@ export function HistoryPage() {
                 key={session.id}
                 onDelete={() => void deleteCardioSession(session.id, user?.id ?? null)}
               >
-                <div className="p-4 flex items-center justify-between bg-surface border border-line rounded-card">
+                <div className="p-4 flex items-center justify-between glass-2 rounded-card">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0 bg-surface-2">
                       <span className="text-accent">

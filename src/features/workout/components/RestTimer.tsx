@@ -66,7 +66,7 @@ export function RestTimer() {
       <m.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="fixed right-4 z-40 w-[13.5rem] rounded-card border border-line bg-surface p-3 shadow-lg"
+        className="fixed right-4 z-40 w-[13.5rem] glass-2 rounded-card p-3 shadow-lg"
         style={{
           bottom:
             'calc(var(--bottom-nav-height) + var(--inset-bottom, env(safe-area-inset-bottom)) + 0.75rem)',

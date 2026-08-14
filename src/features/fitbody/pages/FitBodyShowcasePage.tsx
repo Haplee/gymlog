@@ -123,7 +123,7 @@ export function FitBodyShowcasePage() {
             <Badge>{t('fitbody.badge_new', 'Nuevo')}</Badge>
           </div>
 
-          <div className="flex gap-6 rounded-card border border-line bg-surface p-4">
+          <div className="flex gap-6 glass-2 rounded-card p-4">
             <StatNumber value={1859} label={t('fitbody.stat_volume', 'Volumen')} />
             <StatNumber value={12} label={t('fitbody.stat_streak', 'Racha')} />
           </div>

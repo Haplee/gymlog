@@ -70,7 +70,7 @@ export function GuidePage() {
   return (
     <Layout>
       <div className="space-y-6 pb-8">
-        <header className="rounded-card bg-surface border border-line p-4">
+        <header className="glass-2 rounded-card p-4">
           <div className="flex items-center gap-3">
             <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-pill bg-accent text-accent-fg">
               <IconBook className="h-5 w-5" />
@@ -85,10 +85,7 @@ export function GuidePage() {
           <SectionHeader title={t('guide.quickstart')} />
           <ol className="space-y-2">
             {STEPS.map((step, i) => (
-              <li
-                key={step}
-                className="flex gap-3 rounded-card bg-surface border border-line p-3.5"
-              >
+              <li key={step} className="flex gap-3 glass-2 rounded-card p-3.5">
                 <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-pill bg-accent font-display text-sm font-bold text-accent-fg">
                   {i + 1}
                 </span>
@@ -109,10 +106,7 @@ export function GuidePage() {
               const isOpen = open === id;
               const bullets = t(`guide.${id}.bullets`, { returnObjects: true }) as string[];
               return (
-                <div
-                  key={id}
-                  className="rounded-card bg-surface border border-line overflow-hidden"
-                >
+                <div key={id} className="glass-2 rounded-card overflow-hidden">
                   <button
                     type="button"
                     onClick={() => setOpen(isOpen ? null : id)}
@@ -170,10 +164,7 @@ export function GuidePage() {
           <SectionHeader title={t('guide.tips_title')} />
           <ul className="space-y-2">
             {(Array.isArray(tips) ? tips : []).map((tip) => (
-              <li
-                key={tip}
-                className="flex gap-3 rounded-card bg-surface border border-line p-3.5 text-sm text-fg-muted"
-              >
+              <li key={tip} className="flex gap-3 glass-2 rounded-card p-3.5 text-sm text-fg-muted">
                 <Lightbulb className="h-4 w-4 flex-shrink-0 text-accent" />
                 <span>{tip}</span>
               </li>

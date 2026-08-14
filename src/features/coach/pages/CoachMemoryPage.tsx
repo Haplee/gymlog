@@ -50,7 +50,7 @@ export function CoachMemoryPage() {
         </header>
 
         {facts.length === 0 && (
-          <div className="rounded-card bg-surface border border-line p-6 text-center">
+          <div className="glass-2 rounded-card p-6 text-center">
             <IconBrain className="mx-auto h-8 w-8 text-fg-subtle" aria-hidden="true" />
             <p className="mt-3 text-sm text-fg-muted">{t('coach.memory.empty')}</p>
           </div>
@@ -62,7 +62,7 @@ export function CoachMemoryPage() {
           return (
             <section key={category}>
               <SectionHeader title={t(`coach.memory.category.${category}`)} />
-              <ul className="rounded-card bg-surface border border-line overflow-hidden">
+              <ul className="glass-2 rounded-card overflow-hidden">
                 {items.map((fact) => (
                   <li
                     key={fact.id}

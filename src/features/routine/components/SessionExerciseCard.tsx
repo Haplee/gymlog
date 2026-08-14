@@ -134,7 +134,7 @@ export function SessionExerciseCard({
           )}
         </div>
       ) : (
-        <p className="mt-3 rounded-card border border-line bg-surface-3 p-3 text-xs text-fg-muted">
+        <p className="mt-3 glass-2 rounded-card-3 p-3 text-xs text-fg-muted">
           {t('routine.session_no_recommendation')}
         </p>
       )}

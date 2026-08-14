@@ -75,7 +75,7 @@ export function CoachSettingsSection() {
       {/* Entrenador IA — apagado por defecto; activarlo pasa por consentimiento */}
       <section>
         <SectionHeader title={t('coach.settings.section')} />
-        <div className="rounded-card bg-surface border border-line overflow-hidden">
+        <div className="glass-2 rounded-card overflow-hidden">
           <SettingRow
             label={t('coach.settings.toggle')}
             desc={t('coach.settings.toggle_desc')}

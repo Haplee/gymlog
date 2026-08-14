@@ -62,7 +62,7 @@ export function WorkoutCalendar({ workouts }: WorkoutCalendarProps) {
   ).length;
 
   return (
-    <div className="rounded-card bg-surface border border-line p-4">
+    <div className="glass-2 rounded-card p-4">
       <div className="mb-3 flex items-center justify-between gap-2">
         <button
           type="button"

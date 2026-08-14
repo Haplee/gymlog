@@ -86,7 +86,7 @@ export function PreferencesSection() {
   return (
     <section>
       <SectionHeader title={t('settings.preferences')} />
-      <div className="rounded-card bg-surface border border-line overflow-hidden">
+      <div className="glass-2 rounded-card overflow-hidden">
         <SettingRow
           label={t('settings.language')}
           control={

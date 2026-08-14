@@ -51,7 +51,7 @@ export function HistoryFilters({
   const [importOpen, setImportOpen] = useState(false);
 
   const optionClass =
-    'flex min-h-12 items-center gap-2 rounded-card border border-line bg-surface px-3 text-left text-sm font-medium text-fg transition-colors active:bg-hover';
+    'flex min-h-12 items-center gap-2 glass-2 rounded-card px-3 text-left text-sm font-medium text-fg transition-colors active:bg-hover';
   const optionIconClass = 'h-4 w-4 flex-shrink-0 text-accent';
 
   return (
@@ -122,12 +122,12 @@ export function HistoryFilters({
               onChange={(e) => onSearchText(e.target.value)}
               placeholder={t('history.search_placeholder')}
               aria-label={t('history.search_placeholder')}
-              className="flex-1 min-w-[10rem] bg-surface border border-line-strong rounded-card text-fg text-base p-2 outline-none"
+              className="flex-1 min-w-[10rem] glass-2 rounded-card text-fg text-base p-2 outline-none"
             />
             <select
               value={filterExercise}
               onChange={(e) => onFilterExercise(e.target.value)}
-              className="bg-surface border border-line-strong rounded-card text-fg-muted text-base p-2 cursor-pointer transition-all hover:scale-[1.02]"
+              className="glass-2 rounded-card text-fg-muted text-base p-2 cursor-pointer transition-all hover:scale-[1.02]"
             >
               <option value="">{t('history.filter_all')}</option>
               {exercises.map((ex) => (
@@ -139,7 +139,7 @@ export function HistoryFilters({
             <button
               type="button"
               onClick={() => setExportOpen(true)}
-              className="flex items-center gap-1.5 bg-surface border border-line-strong rounded-card text-accent text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="flex items-center gap-1.5 glass-2 rounded-card text-accent text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               <Download className="w-4 h-4" />
               {t('history.export_btn')}
@@ -147,7 +147,7 @@ export function HistoryFilters({
             <button
               type="button"
               onClick={() => setImportOpen(true)}
-              className="flex items-center gap-1.5 bg-surface border border-line-strong rounded-card text-fg-muted text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="flex items-center gap-1.5 glass-2 rounded-card text-fg-muted text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               <Upload className="w-4 h-4" />
               {t('history.import_btn')}
