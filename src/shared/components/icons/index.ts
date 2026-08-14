@@ -50,6 +50,8 @@ export {
   // Formularios
   Eye,
   EyeOff,
+  // Avisos
+  Bell,
 } from 'reicon-react';
 
 // ── SVG propios de dominio ──────────────────────────

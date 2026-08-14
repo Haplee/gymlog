@@ -27,9 +27,7 @@ const ExerciseCardComponent = ({
   className = '',
 }: ExerciseCardProps) => {
   return (
-    <div
-      className={`flex items-center gap-3 rounded-card border border-line bg-surface p-3 ${className}`}
-    >
+    <div className={`glass-2 flex items-center gap-3 rounded-card p-3 ${className}`}>
       <button
         type="button"
         onClick={onPlay}

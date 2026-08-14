@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -96,6 +96,35 @@ export function Layout({ children }: LayoutProps) {
   // toda página autenticada), no solo al entrar en Ajustes > Wearables.
   useWearableSync();
 
+  // Difuminado de borde de scroll: las tiras se encienden solo cuando hay
+  // contenido que disolver por ese lado. Es lo que sustituye al backdrop-filter
+  // —la señal de "hay algo pasando por debajo del chrome"— sin remuestrear el
+  // fondo en cada frame.
+  const scrollerRef = useRef<HTMLElement>(null);
+  const [edges, setEdges] = useState({ top: false, bottom: false });
+
+  const updateEdges = useCallback(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const top = el.scrollTop > 4;
+    const bottom = el.scrollTop + el.clientHeight < el.scrollHeight - 4;
+    // Solo re-renderiza cuando alguno de los dos cambia de verdad; si no, un
+    // scroll largo dispararía un render por frame.
+    setEdges((prev) => (prev.top === top && prev.bottom === bottom ? prev : { top, bottom }));
+  }, []);
+
+  // useLayoutEffect y no useEffect: si la página nueva no llena la pantalla, la
+  // tira de abajo se apagaría un frame tarde y se vería parpadear.
+  useLayoutEffect(updateEdges, [updateEdges, location.pathname, children]);
+
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(updateEdges);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [updateEdges]);
+
   // El gesto de atrás (Android) cierra el drawer y la hoja de búsqueda antes de
   // intentar navegar. El registro vive en el estado de cada overlay: al abrirse
   // se registra, al cerrarse se da de baja (y se re-sincroniza el handler nativo).
@@ -177,7 +206,7 @@ export function Layout({ children }: LayoutProps) {
           usuario. El punto sobre la hamburguesa hereda el aviso de no leídas que
           antes llevaba la campana, ahora dentro del cajón. */}
       <header
-        className="px-2 flex-shrink-0 bg-canvas border-b border-line"
+        className="glass-3 glass-flush glass-flush-b px-2 flex-shrink-0"
         style={{ paddingTop: 'var(--inset-top, env(safe-area-inset-top))' }}
       >
         <div className="flex items-center" style={{ height: 'var(--header-height)' }}>
@@ -263,22 +292,34 @@ export function Layout({ children }: LayoutProps) {
           (will-change/transform) en él, lo que rompe position:sticky de sus
           descendientes (barra de filtros del historial). La transición de página
           vive en un wrapper interno (solo opacidad, sin transform). */}
-      <main className="flex-1 min-h-0 px-4 pt-4 pb-24 overflow-y-auto">
-        <m.div
-          key={location.pathname}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.16, ease: 'easeOut' }}
+      <div className="relative flex-1 min-h-0">
+        <div className="glass-scroll-fade top-0" data-visible={edges.top} aria-hidden="true" />
+        <main
+          ref={scrollerRef}
+          onScroll={updateEdges}
+          className="h-full px-4 pt-4 pb-24 overflow-y-auto"
         >
-          {children}
-        </m.div>
-      </main>
+          <m.div
+            key={location.pathname}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.16, ease: 'easeOut' }}
+          >
+            {children}
+          </m.div>
+        </main>
+        <div
+          className="glass-scroll-fade glass-scroll-fade-bottom bottom-0"
+          data-visible={edges.bottom}
+          aria-hidden="true"
+        />
+      </div>
 
       {/* Barra inferior de la referencia visual: fondo del lienzo, filete
           superior, icono + rótulo por pestaña y una barrita de acento sobre la
           activa. Se mantiene la altura y el safe-area de siempre. */}
       <nav
-        className="flex flex-shrink-0 relative z-10 bg-canvas border-t border-line"
+        className="glass-3 glass-flush glass-flush-t flex flex-shrink-0 relative z-10"
         style={{
           height:
             'calc(var(--bottom-nav-height) + var(--inset-bottom, env(safe-area-inset-bottom)))',

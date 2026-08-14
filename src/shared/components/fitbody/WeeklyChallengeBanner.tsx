@@ -31,9 +31,7 @@ const WeeklyChallengeBannerComponent = ({
   className = '',
 }: WeeklyChallengeBannerProps) => {
   return (
-    <section
-      className={`relative overflow-hidden rounded-card bg-surface-2 shadow-card ${className}`}
-    >
+    <section className={`glass-2 relative overflow-hidden rounded-card ${className}`}>
       {imageUrl && (
         <img
           src={imageUrl}

@@ -260,6 +260,36 @@ body {
   transform: rotate(180deg);
 }
 
+/* Las tiras solo se ven cuando hay algo que disolver: si el scroller está
+   arriba del todo, una franja permanente dejaría el primer elemento lavado
+   sin motivo. Layout las enciende mirando scrollTop. */
+.glass-scroll-fade {
+  opacity: 0;
+  transition: opacity var(--anim-duration-normal) var(--ease-standard);
+}
+.glass-scroll-fade[data-visible='true'] {
+  opacity: 1;
+}
+
+/* Chrome a sangre (cabecera, barra inferior): lleva el fondo y el brillo del
+   material pero NO la caja. Un borde de cuatro lados en algo que va de lado a
+   lado de la pantalla dibuja dos hairlines verticales en los bordes. */
+.glass-flush {
+  border-width: 0;
+}
+.glass-flush-b {
+  border-bottom-width: 1px;
+  border-bottom-color: var(--glass-edge);
+}
+.glass-flush-t {
+  border-top-width: 1px;
+  border-top-color: var(--glass-edge-top);
+}
+.glass-flush-r {
+  border-right-width: 1px;
+  border-right-color: var(--glass-edge);
+}
+
 /* Sobre vidrio el texto necesita algo más de cuerpo: es la "vibrancy" de
    Apple. Sin esto el texto secundario se lee lavado aunque el contraste
    medido pase. */
