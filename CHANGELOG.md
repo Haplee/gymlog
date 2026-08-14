@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.8.0](https://github.com/Haplee/gymlog/compare/v5.6.0...v5.8.0) (2026-08-14)
+
+### Features
+
+- add automated git sync and private file synchronization script for Windows ([db07305](https://github.com/Haplee/gymlog/commit/db073057fa5e9a48f75b7baee0ad0c67242f4da1))
+- add privacy policy page and landing site assets including favicon and metadata. ([6d90421](https://github.com/Haplee/gymlog/commit/6d90421d51b3db4ca69bfa202047aa3c4085585f))
+- **auth:** vestir el login con el material de la app ([3d78f7f](https://github.com/Haplee/gymlog/commit/3d78f7fa1d44750ecdeafc639ad1a0d4d354e040))
+- **design:** aplicar el material a las tarjetas de pantalla (bloques D y E) ([a7b4f86](https://github.com/Haplee/gymlog/commit/a7b4f86cf7c2e246712a8aa6be3f8d332f680689)), closes [#141416](https://github.com/Haplee/gymlog/issues/141416)
+- **design:** aplicar el material a primitivas y chrome (bloques B y C) ([cedf571](https://github.com/Haplee/gymlog/commit/cedf5717ab4236157d740d3b84922925690c8075))
+- **design:** recalibrar el reparto de contraste del sistema FitBody ([98c8768](https://github.com/Haplee/gymlog/commit/98c876881e1065d31c9e28b44894847983dc07aa))
+- **discos:** discos configurables y reparto exacto en la calculadora ([c6179f0](https://github.com/Haplee/gymlog/commit/c6179f0e5c9a18f38d42a838745f3092700d855b))
+- **icons:** migrar los 82 iconos a Reicon y desinstalar lucide-react (bloque F) ([64bfa71](https://github.com/Haplee/gymlog/commit/64bfa71a02482ac2d9c76db5e7a70eb773af9a63))
+- implement routine store with persistence, DB sync, and predefined workout plans ([0b8200e](https://github.com/Haplee/gymlog/commit/0b8200e6254cded33d3118aa4543d0ad5c38da9f))
+- **rutinas:** fix de 3 bugs, autorregulación sin RIR, pill 4x5 y descripciones de ejercicios ([6ffa693](https://github.com/Haplee/gymlog/commit/6ffa693f74886a021650bca5eb1ebdacd0cbf861))
+- **scripts:** auditor de contraste, capturas de UI y siembra de la cuenta de pruebas ([fee66c1](https://github.com/Haplee/gymlog/commit/fee66c1e4dd43aac50b86bbf89f6bc2d7e072559))
+
+### Bug Fixes
+
+- **design:** bajar el velo del vidrio para no romper el AA con acentos claros ([faeef9b](https://github.com/Haplee/gymlog/commit/faeef9b07eea0452f2b1f745f9ec77eae154219d)), closes [#ffd93](https://github.com/Haplee/gymlog/issues/ffd93) [#cbf24](https://github.com/Haplee/gymlog/issues/cbf24)
+- **design:** subir la franja de difuminado de scroll a 48px ([9d2f64a](https://github.com/Haplee/gymlog/commit/9d2f64ae41d3f077c5958ca1c1caf8c414b0a4a7))
+- **nav:** el cajón repetía cardio, y los e2e que lo habrían cazado no se ejecutaban ([4ecd164](https://github.com/Haplee/gymlog/commit/4ecd16493ce1b65319edb047fe91c27bc6681042))
+- **outbox:** evitar entrenos duplicados al reenviar tras perder la respuesta ([7b23908](https://github.com/Haplee/gymlog/commit/7b239087c02e3d3f2c0d49d738be4d353fe63e2f))
+- **rutinas:** sincronizar la rutina activa entre dispositivos ([4d9fd4d](https://github.com/Haplee/gymlog/commit/4d9fd4d8e9344bc71f4da221f264d0878d7d9bff))
+- **workout:** la tarjeta de ultima sesion muestra el dia, no el ultimo entreno ([d184f5a](https://github.com/Haplee/gymlog/commit/d184f5abb94a7b1f2c502ab97fdb0ee4d0b37d5a))
+- **workout:** pedir el peso corporal solo los lunes ([2fbb174](https://github.com/Haplee/gymlog/commit/2fbb174afba1f863e86d48fdbaa922ab1b70836c))
+- **workout:** unificar la sugerencia de carga y arreglar el guardado ([d35638d](https://github.com/Haplee/gymlog/commit/d35638d5a893982ed33acc1b1c1dc313854cd9a9))
+
 ## [5.4.0](https://github.com/Haplee/gymlog/compare/v5.3.0...v5.4.0) (2026-07-31)
 
 ### Features
