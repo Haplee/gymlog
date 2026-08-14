@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=ffd93d&height=120&section=header&text=GymLog%20v5.6.0&fontSize=50&fontColor=0a0a0b&animation=fadeIn" alt="Header" />
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=ffd93d&height=120&section=header&text=GymLog%20v5.7.0&fontSize=50&fontColor=0a0a0b&animation=fadeIn" alt="Header" />
 
   <img src="./public/gimnasia.svg" alt="GymLog" width="130" />
 
@@ -17,7 +17,7 @@
   <p>
     <img src="https://img.shields.io/github/actions/workflow/status/Haplee/gymlog/android-build.yml?style=flat-square&label=Android%20Build&logo=github" />
     <img src="https://img.shields.io/github/actions/workflow/status/Haplee/gymlog/ci.yml?style=flat-square&label=CI&logo=vitest" />
-    <img src="https://img.shields.io/badge/tests-382%20passing-ffd93d?style=flat-square&logo=vitest&logoColor=0a0a0b" />
+    <img src="https://img.shields.io/badge/tests-477%20passing-ffd93d?style=flat-square&logo=vitest&logoColor=0a0a0b" />
     <img src="https://img.shields.io/github/last-commit/Haplee/gymlog?style=flat-square&label=Last%20commit&logo=git" />
     <img src="https://img.shields.io/github/repo-size/Haplee/gymlog?style=flat-square&label=Size&logo=files" />
     <img src="https://img.shields.io/github/license/Haplee/gymlog?style=flat-square&label=License&logo=opensourceinitiative" />
@@ -141,7 +141,7 @@ npm run dev              # http://localhost:5173
 ```bash
 npm run lint             # ESLint
 npm run type-check       # tsc -b --force
-npm run test             # 382 tests en 44 ficheros (Vitest)
+npm run test             # 477 tests en 49 ficheros (Vitest)
 npx playwright test      # E2E (e2e/)
 ```
 
