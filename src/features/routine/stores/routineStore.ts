@@ -30,6 +30,13 @@ export interface Routine {
 interface RoutineStore {
   routines: Routine[];
   activeRoutineId: string | null;
+  /**
+   * Cuándo se eligió `activeRoutineId` en ESTE dispositivo. Es lo que permite
+   * decidir quién manda al sincronizar: sin una marca de tiempo, «la local
+   * siempre gana» dejaba a cada teléfono clavado en su propia selección y
+   * cambiar de rutina en un dispositivo no llegaba nunca al otro.
+   */
+  activeRoutineUpdatedAt: string | null;
   lastBackup: string | null;
   loading: boolean;
   /**
@@ -731,6 +738,7 @@ export const useRoutineStore = create<RoutineStore>()(
     (set, get) => ({
       routines: defaultRoutines,
       activeRoutineId: null,
+      activeRoutineUpdatedAt: null,
       lastBackup: null,
       loading: false,
       hydrated: false,
@@ -750,10 +758,14 @@ export const useRoutineStore = create<RoutineStore>()(
       },
 
       deleteRoutine: (id) => {
-        const { routines, activeRoutineId } = get();
+        const { routines, activeRoutineId, activeRoutineUpdatedAt } = get();
+        const clearsActive = activeRoutineId === id;
         set({
           routines: routines.filter((r) => r.id !== id),
-          activeRoutineId: activeRoutineId === id ? null : activeRoutineId,
+          activeRoutineId: clearsActive ? null : activeRoutineId,
+          // Quedarse sin rutina activa también es una decisión de este
+          // dispositivo: se sella para que no la revierta un remoto anterior.
+          activeRoutineUpdatedAt: clearsActive ? new Date().toISOString() : activeRoutineUpdatedAt,
         });
       },
 
@@ -779,7 +791,8 @@ export const useRoutineStore = create<RoutineStore>()(
         return newId;
       },
 
-      setActiveRoutine: (id) => set({ activeRoutineId: id }),
+      setActiveRoutine: (id) =>
+        set({ activeRoutineId: id, activeRoutineUpdatedAt: new Date().toISOString() }),
 
       getActiveRoutine: () => {
         const { routines, activeRoutineId } = get();
@@ -813,7 +826,7 @@ export const useRoutineStore = create<RoutineStore>()(
         if (!get().hydrated) await get().loadFromDb(userId);
 
         const doSave = async (): Promise<boolean> => {
-          const { routines, activeRoutineId, lastBackup } = get();
+          const { routines, activeRoutineId, activeRoutineUpdatedAt, lastBackup } = get();
 
           const customRoutines = routines.filter((r) => r.isCustom);
 
@@ -822,7 +835,12 @@ export const useRoutineStore = create<RoutineStore>()(
           const { error } = await supabase.from('user_routines').upsert(
             {
               user_id: userId,
-              routine: { routines: customRoutines, activeRoutineId, lastBackup },
+              routine: {
+                routines: customRoutines,
+                activeRoutineId,
+                activeRoutineUpdatedAt,
+                lastBackup,
+              },
               updated_at: new Date().toISOString(),
             },
             { onConflict: 'user_id' },
@@ -864,6 +882,7 @@ export const useRoutineStore = create<RoutineStore>()(
         const container = (data?.routine ?? null) as {
           routines?: Routine[];
           activeRoutineId?: string | null;
+          activeRoutineUpdatedAt?: string | null;
           lastBackup?: string | null;
         } | null;
 
@@ -886,10 +905,33 @@ export const useRoutineStore = create<RoutineStore>()(
 
           // `hydrated` se marca aquí, antes del re-subido de abajo: si no, ese
           // `saveToDb` volvería a entrar en `loadFromDb` y se llamarían en bucle.
+          // Qué rutina queda seleccionada: gana la elección más reciente, venga
+          // del dispositivo que venga. Antes la local ganaba siempre que no
+          // fuese nula, así que cambiar de rutina activa en el móvil nunca
+          // llegaba al portátil ni al revés.
+          //
+          // Las marcas son ISO-8601, que ordena igual como texto que como
+          // fecha. Si el remoto no trae marca (datos escritos por una versión
+          // anterior) se conserva el comportamiento de siempre: manda la local.
+          const localStamp = get().activeRoutineUpdatedAt;
+          const remoteStamp = container.activeRoutineUpdatedAt ?? null;
+          const remoteIsNewer =
+            remoteStamp !== null && (localStamp === null || remoteStamp > localStamp);
+          // Una selección remota que apunte a una rutina que aquí no existe
+          // (borrada en este dispositivo) dejaría la pantalla en blanco.
+          const remoteActiveExists =
+            container.activeRoutineId != null &&
+            mergedRoutines.some((r) => r.id === container.activeRoutineId);
+          const takeRemoteActive = remoteIsNewer && remoteActiveExists;
+
           set({
             routines: mergedRoutines,
-            // Conserva la selección local si existe; la remota solo restaura.
-            activeRoutineId: get().activeRoutineId ?? container.activeRoutineId ?? null,
+            activeRoutineId: takeRemoteActive
+              ? (container.activeRoutineId ?? null)
+              : (get().activeRoutineId ?? container.activeRoutineId ?? null),
+            // Adoptar también la marca evita que la siguiente carga vuelva a
+            // considerar «nueva» la misma selección remota una y otra vez.
+            activeRoutineUpdatedAt: takeRemoteActive ? remoteStamp : localStamp,
             lastBackup: container.lastBackup ?? get().lastBackup ?? null,
             loading: false,
             hydrated: true,
@@ -929,6 +971,7 @@ export const useRoutineStore = create<RoutineStore>()(
       partialize: (state) => ({
         routines: state.routines,
         activeRoutineId: state.activeRoutineId,
+        activeRoutineUpdatedAt: state.activeRoutineUpdatedAt,
         lastBackup: state.lastBackup,
       }),
       /**
