@@ -182,6 +182,10 @@ export const useWorkoutStore = create<WorkoutState>()(
         const finishedAt = new Date().toISOString();
         const notes = sessionNotes.trim() || undefined;
         const rating = sessionRating ?? undefined;
+        // Clave de idempotencia del envío. Se genera una vez y se reutiliza tanto
+        // en el intento directo como en la entrada del outbox: si el RPC llegó a
+        // escribirse y solo se perdió la respuesta, el reenvío no duplica nada.
+        const clientId = crypto.randomUUID();
 
         // En modo peso corporal el kg introducido es lastre; el peso guardado es
         // (peso corporal vigente + lastre) para que volumen/PRs sean correctos.
@@ -214,7 +218,7 @@ export const useWorkoutStore = create<WorkoutState>()(
         // Encola el entreno en IndexedDB para sincronizarlo al volver la conexión.
         const queueOffline = async () => {
           await enqueueWorkout({
-            id: crypto.randomUUID(),
+            id: clientId,
             userId,
             exerciseId: activeExerciseId,
             customExerciseName: customExerciseName.trim(),
@@ -257,6 +261,7 @@ export const useWorkoutStore = create<WorkoutState>()(
             p_sets: setsPayload,
             p_notes: notes,
             p_rating: rating,
+            p_client_id: clientId,
           });
 
           if (rpcError) throw rpcError;

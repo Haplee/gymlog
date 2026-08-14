@@ -198,8 +198,15 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
         }
 
         // Solo se registran los ejercicios que el usuario realmente ha hecho.
+        // `clientId` es la clave de idempotencia de cada ejercicio: se genera una
+        // sola vez y viaja igual en el intento directo y en el outbox, para que un
+        // reenvío tras perder la respuesta no vuelva a escribir el mismo entreno.
         const done = exercises
-          .map((ex) => ({ name: ex.name, sets: toOutboxSets(ex.sets, toKg) }))
+          .map((ex) => ({
+            name: ex.name,
+            sets: toOutboxSets(ex.sets, toKg),
+            clientId: crypto.randomUUID(),
+          }))
           .filter((ex) => ex.sets.length > 0);
 
         if (!done.length) {
@@ -226,7 +233,7 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
         const queueOffline = async (pending: typeof done, alreadySaved: number) => {
           for (const ex of pending) {
             await enqueueWorkout({
-              id: crypto.randomUUID(),
+              id: ex.clientId,
               userId,
               exerciseId: resolveExerciseId(ex.name),
               customExerciseName: ex.name,
@@ -267,6 +274,7 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
               p_sets: ex.sets,
               p_notes: notes,
               p_rating: undefined,
+              p_client_id: ex.clientId,
             });
             if (error) throw error;
             saved += 1;

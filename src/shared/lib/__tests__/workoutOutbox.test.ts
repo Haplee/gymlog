@@ -133,6 +133,32 @@ describe('workoutOutbox — persistencia y flush', () => {
     expect(await countPendingWorkouts()).toBe(0);
   });
 
+  // Regresión: el servidor solo puede deduplicar si el reenvío trae la misma
+  // clave. Sin esto, un RPC que se escribió pero cuya respuesta se perdió acaba
+  // grabando el entreno dos veces (sesiones duplicadas en el historial).
+  it('envía el id de la entrada como clave de idempotencia, estable entre reintentos', async () => {
+    const { enqueueWorkout, flushWorkoutOutbox, getPendingWorkouts } = await loadOutbox();
+
+    // Primer intento: falla por red. La entrada se conserva con su id intacto.
+    rpcMock.mockRejectedValueOnce(new Error('Failed to fetch'));
+    await enqueueWorkout(makeEntry({ id: 'entrada-estable' }));
+    await flushWorkoutOutbox();
+
+    const pending = await getPendingWorkouts();
+    expect(pending).toHaveLength(1);
+    expect(pending[0].id).toBe('entrada-estable');
+
+    // Segundo intento: la misma clave viaja de nuevo, que es lo que permite al
+    // servidor reconocer el reenvío en vez de crear un entreno nuevo.
+    rpcMock.mockResolvedValue({ error: null });
+    pending[0].nextAttemptAt = undefined;
+    await enqueueWorkout(pending[0]);
+    await flushWorkoutOutbox();
+
+    expect(rpcMock.mock.calls).toHaveLength(2);
+    expect(rpcMock.mock.calls.every((c) => c[1].p_client_id === 'entrada-estable')).toBe(true);
+  });
+
   it('error de red: conserva la entrada para reintentar y para el flush', async () => {
     const { enqueueWorkout, flushWorkoutOutbox, countPendingWorkouts } = await loadOutbox();
     rpcMock.mockResolvedValue({ error: new Error('Failed to fetch') });

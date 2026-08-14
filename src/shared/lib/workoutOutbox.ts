@@ -156,6 +156,10 @@ export async function flushWorkoutOutbox(): Promise<number> {
         p_sets: w.sets,
         p_notes: w.notes,
         p_rating: w.rating ?? undefined,
+        // El id de la entrada es estable entre reintentos: si un envío anterior
+        // llegó a escribirse y solo se perdió la respuesta, el servidor lo
+        // reconoce y no duplica el entreno.
+        p_client_id: w.id,
       });
       if (rpcError) throw rpcError;
 
