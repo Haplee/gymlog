@@ -462,8 +462,12 @@ export function StatsPage() {
         <section className="space-y-3">
           <SectionLabel>{t('stats.section_training')}</SectionLabel>
 
+          {/* Si el número de tarjetas es impar, la última ocupa el ancho entero
+              en vez de dejar media fila vacía a su derecha. El hueco no era un
+              fallo de nadie —un grid de 2 columnas con 3 hijos lo produce solo—
+              pero se lee como algo que falta. */}
           <m.div
-            className="grid grid-cols-2 gap-3"
+            className="grid grid-cols-2 gap-3 [&>*:last-child:nth-child(odd)]:col-span-2"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
           >
@@ -558,7 +562,7 @@ export function StatsPage() {
                     type="button"
                     key={p}
                     onClick={() => setPeriodFilter(p)}
-                    className="text-[0.5625rem] px-2 py-1 rounded-sm transition-colors font-medium"
+                    className="text-2xs px-2 py-1 rounded-sm transition-colors font-medium"
                     style={
                       periodFilter === p
                         ? {

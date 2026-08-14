@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Capacitor } from '@capacitor/core';
 import { DEFAULT_ACCENT, getAccentPreset, type AccentId } from '@shared/constants/accents';
+import { DEFAULT_PLATES_KG } from '@shared/lib/plates';
 
 /** Tema elegido por el usuario: 'system' sigue al modo claro/oscuro del sistema. */
 export type Theme = 'dark' | 'light' | 'system';
@@ -9,7 +10,7 @@ export type Theme = 'dark' | 'light' | 'system';
 /** Color de chrome (status bar / theme-color) por tema; coincide con --bg-canvas. */
 const THEME_CHROME: Record<'dark' | 'light', string> = {
   dark: '#0a0a0b',
-  light: '#f3f5f3',
+  light: '#e9ebe8',
 };
 
 /** Tema efectivo a aplicar: 'system' resuelve contra el modo del sistema. */
@@ -47,6 +48,11 @@ interface SettingsState {
    * de probar colores.
    */
   appIcon: AccentId;
+  /**
+   * Discos que hay en el gimnasio del usuario, en kg. La calculadora sin esto
+   * asume el juego olímpico estándar y propone discos que no existen en su sala.
+   */
+  availablePlatesKg: number[];
   setBiometricEnabled: (enabled: boolean) => void;
   setNotificationsEnabled: (enabled: boolean) => void;
   setTrainingReminders: (enabled: boolean) => void;
@@ -67,6 +73,7 @@ interface SettingsState {
   setGuideSeen: (seen: boolean) => void;
   setAccentColor: (accent: AccentId) => void;
   setAppIcon: (icon: AccentId) => void;
+  setAvailablePlatesKg: (plates: number[]) => void;
   applyTheme: () => void;
 }
 
@@ -90,6 +97,7 @@ export const useSettingsStore = create<SettingsState>()(
       guideSeen: false,
       accentColor: DEFAULT_ACCENT,
       appIcon: DEFAULT_ACCENT,
+      availablePlatesKg: [...DEFAULT_PLATES_KG],
 
       setBiometricEnabled: (biometricEnabled) => set({ biometricEnabled }),
 
@@ -153,6 +161,10 @@ export const useSettingsStore = create<SettingsState>()(
       // El cambio nativo lo dispara la pantalla de Ajustes, que es quien puede
       // avisar del efecto en la pantalla de inicio y mostrar el error si falla.
       setAppIcon: (appIcon) => set({ appIcon }),
+      // Ordenados de mayor a menor y sin duplicados: la calculadora los recorre
+      // en ese orden y así no depende de cómo los haya ido tocando el usuario.
+      setAvailablePlatesKg: (plates) =>
+        set({ availablePlatesKg: [...new Set(plates)].sort((a, b) => b - a) }),
 
       applyTheme: () => {
         const { theme, systemDark, accentColor } = get();

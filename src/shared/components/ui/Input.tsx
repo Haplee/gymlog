@@ -53,9 +53,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           aria-invalid={hasError}
           className={[
             'w-full text-fg placeholder:text-fg-subtle',
+            // `line-interactive` y no `line-strong`: el borde de un campo es el
+            // límite de un componente de interfaz y WCAG 1.4.11 le exige 3:1.
             variant === 'underline'
-              ? 'bg-transparent border-0 border-b border-line-strong rounded-none px-1 py-3 text-base'
-              : 'bg-surface-2 border border-line-strong rounded-pill px-5 py-3.5 text-base',
+              ? 'bg-transparent border-0 border-b border-line-interactive rounded-none px-1 py-3 text-base'
+              : 'bg-surface-2 border border-line-interactive rounded-pill px-5 py-3.5 text-base',
             'transition-all duration-150',
             'focus:outline-none focus:border-accent',
             'disabled:opacity-50 disabled:cursor-not-allowed',

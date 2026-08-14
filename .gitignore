@@ -91,3 +91,9 @@ openspec/IAS.md
 
 # Credenciales de la cuenta de prueba local (nunca al repo publico)
 supabase/usuario_prueba.txt
+
+# capturas temporales de Playwright MCP
+.playwright-mcp/
+
+# capturas de UI para comparar antes/después
+.shots/

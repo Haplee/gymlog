@@ -6,16 +6,30 @@
    ════════════════════════════════════════════════ */
 
 :root {
-  /* ── Base ─────────────────────────────────────── */
-  --bg-canvas: #0a0a0b;
-  --bg-surface: #141416;
-  --bg-surface-2: #1c1b1e;
-  --bg-surface-3: #2a2a2b;
+  /* ── Base ─────────────────────────────────────────
+     La escala NO se elige a ojo: sale del presupuesto de contraste. El techo
+     de luminancia de una superficie es el que deja a --text-tertiary en 4,5:1;
+     el suelo, el que la separa del canvas 1,15:1. Entre ambos hay que meter
+     tres niveles, y por eso el terciario tuvo que aclararse primero (ver ahí).
 
-  /* ── Texto ───────────────────────────────────── */
+     Antes, toda la estructura vivía entre L=0,0031 y L=0,0232 —el 2,3 % inferior
+     de la escala— y canvas→surface daba 1,076:1: una tarjeta no se distinguía
+     de su fondo más que por el canto. Comprobar con `npm run audit:contrast`. ── */
+  --bg-canvas: #0a0a0b;
+  --bg-surface: #26262b;
+  --bg-surface-2: #313137;
+  --bg-surface-3: #3c3c42;
+
+  /* ── Texto ───────────────────────────────────────
+     --text-tertiary era #869489 y estaba estrangulando el sistema entero: con
+     ese valor, la ventana de luminancia donde cabe una superficie que separe
+     del fondo Y mantenga el AA medía 0,0071 — daba para UN nivel, no para tres.
+     Aclararlo la multiplica por 5 y además MEJORA su propio contraste sobre el
+     canvas (6,23:1 → 8,65:1). El token que parecía intocable era el que había
+     que tocar primero. ── */
   --text-primary: #e5e2e3;
   --text-secondary: #bbcabe;
-  --text-tertiary: #869489; /* ≥4.5:1 sobre --bg-canvas (WCAG AA) */
+  --text-tertiary: #a1afa4; /* ≥4.5:1 sobre todas las superficies (WCAG AA) */
   --text-inverse: #0a0a0b;
 
   /* ── Interactivo (acento amarillo-lima FitBody) ── */
@@ -65,6 +79,14 @@
   --border-subtle: #232326;
   --border-default: #3a3a40;
   --border-accent: rgb(var(--accent-rgb) / 0.28);
+
+  /* Borde de CONTROLES (inputs, botones secundarios, chips, selectores).
+     WCAG 1.4.11 pide 3:1 a los límites visuales de un componente de interfaz, y
+     ni --border-subtle (1,26:1 sobre el canvas) ni --border-default (1,75:1)
+     llegaban. Va aparte en vez de subir --border-default porque no todos los
+     bordes son controles: un separador decorativo no necesita gritar.
+     El suelo se mide contra la superficie MÁS CLARA, que es el caso peor. */
+  --border-interactive: #91919b;
 
   /* ── Radios (estética redondeada FitBody) ────── */
   --radius-sm: 8px;
@@ -163,20 +185,30 @@
      primary y secondary van holgados (7,8:1 y superiores).
 
      Capas: 1 = contenido · 2 = elevado (tarjetas) · 3 = flotante
-     (header, bottom nav, FAB, modales). ── */
-  --glass-1: rgb(10 10 11 / 0.88);
-  --glass-2: rgb(20 20 22 / 0.92);
-  --glass-3: rgb(28 27 30 / 0.96);
+     (header, bottom nav, FAB, modales).
+
+     Cada capa espeja una superficie opaca, así que al recalibrar la escala se
+     mueven las dos a la vez o el material deja de encajar con las tarjetas
+     sólidas: 1 ≈ un escalón bajo surface · 2 ≈ surface · 3 ≈ surface-2. ── */
+  --glass-1: rgb(30 30 34 / 0.9);
+  --glass-2: rgb(38 38 43 / 0.93);
+  --glass-3: rgb(49 49 55 / 0.96);
 
   /* Canto asimétrico: la luz entra por arriba. El borde superior se ve;
      los laterales solo definen. Un canto uniforme parece caja, no vidrio.
 
      Aquí es donde se gasta el presupuesto de luz, y no en el velo: aclarar
      un canto de 1px no toca el contraste del texto, mientras que aclarar
-     toda la superficie sí. Ver la nota del velo. */
-  --glass-edge-top: rgb(255 255 255 / 0.18);
-  --glass-edge: rgb(255 255 255 / 0.06);
-  --glass-sheen: inset 0 1px 0 rgb(255 255 255 / 0.11);
+     toda la superficie sí. Ver la nota del velo.
+
+     El canto sube (era 0,06 / 0,18) porque estaba puesto tan bajo que no se
+     veía: 1,13:1 sobre el canvas. Sigue sin llegar a 3:1 y no debe llegar —
+     aquí el borde acompaña a una superficie que ya separa por sí sola, así que
+     su trabajo es definir la forma, no demostrar que el objeto existe. Para eso
+     está --border-interactive. */
+  --glass-edge-top: rgb(255 255 255 / 0.24);
+  --glass-edge: rgb(255 255 255 / 0.1);
+  --glass-sheen: inset 0 1px 0 rgb(255 255 255 / 0.14);
 
   /* Degradado interno: simula la caída de luz a través del material.
      Es lo que impide que la superficie se lea como un rectángulo plano.
@@ -204,9 +236,21 @@
   --glass-fade-height: 48px;
   --glass-fade: linear-gradient(180deg, rgb(10 10 11 / 1) 0%, rgb(10 10 11 / 0) 100%);
 
+  /* Sombras del material. En OSCURO no son sombras: son halos.
+
+     Medido sobre este canvas (#0a0a0b): un negro al 30 % da 1,0175:1 contra el
+     fondo, al 50 % da 1,0295 y al 60 % da 1,0360. El umbral para percibir un
+     borde ronda 1,05, así que ninguna sombra negra existe aquí — no es que se
+     vea poco, es que no se ve, y aun así se pintaba en cada frame. Un blanco al
+     6 %, en cambio, da 1,1264:1: se ve.
+
+     Por eso la capa 2 se queda sin sombra (ya se distingue por su superficie,
+     1,314:1 contra el canvas) y la 3 la cambia por un halo claro difuso, que es
+     lo que de verdad dice «esto flota». En claro sí se conservan las sombras:
+     ahí el mismo negro al 5 % da 1,118:1 y funciona. */
   --glass-shadow-1: none;
-  --glass-shadow-2: 0 1px 2px rgb(0 0 0 / 0.3);
-  --glass-shadow-3: 0 8px 28px rgb(0 0 0 / 0.5);
+  --glass-shadow-2: none;
+  --glass-shadow-3: 0 0 28px rgb(255 255 255 / 0.05);
 
   /* ── Layout ──────────────────────────────────── */
   --header-height: 56px;
@@ -234,11 +278,16 @@
 :root.light {
   color-scheme: light;
 
-  /* ── Base (verde-gris frío, superficies blancas resaltan) ─── */
-  --bg-canvas: #f3f5f3;
+  /* ── Base (verde-gris frío, superficies blancas resaltan) ───
+     Aquí la superficie ya era blanco puro, así que la separación no podía
+     ganarse subiéndola: el canvas tenía que bajar. Era #f3f5f3 y daba 1,096:1
+     contra el blanco — la misma tarjeta invisible que en oscuro, por el
+     motivo contrario. En claro sí se toca --bg-canvas: el splash nativo y el
+     theme-color de la PWA usan el fondo OSCURO, que no se mueve. ── */
+  --bg-canvas: #e9ebe8;
   --bg-surface: #ffffff;
-  --bg-surface-2: #eceeec;
-  --bg-surface-3: #dfe3e0;
+  --bg-surface-2: #f1f3f0;
+  --bg-surface-3: #e3e7e2;
 
   /* ── Texto (contraste AA sobre fondos claros) ─── */
   --text-primary: #171d1a;
@@ -264,6 +313,8 @@
   --border-subtle: #e2e2e5;
   --border-default: #c6c6cc;
   --border-accent: rgb(var(--accent-rgb) / 0.35);
+  /* 3:1 contra el blanco y contra el resto de superficies claras (WCAG 1.4.11). */
+  --border-interactive: #767c78;
 
   /* ── Sombras (más suaves sobre fondo claro) ───── */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
@@ -283,8 +334,12 @@
      (texto oscuro pasando por debajo): texto ≥4,93:1 en las tres capas.
      El canto se invierte: sobre fondo claro la luz no se ve como brillo
      blanco sino como una sombra fina, así que el canto es oscuro. ── */
-  --glass-1: rgb(255 255 255 / 0.9);
-  --glass-2: rgb(255 255 255 / 0.94);
+  /* Las tres eran blanco puro con distinto alpha, así que sobre un fondo claro
+     se veían iguales: la elevación la llevaba solo la sombra. Ahora cada capa
+     espeja su superficie opaca, igual que en oscuro, y la sombra suma en vez
+     de cargar sola. */
+  --glass-1: rgb(241 243 240 / 0.92);
+  --glass-2: rgb(250 251 249 / 0.95);
   --glass-3: rgb(255 255 255 / 0.97);
 
   --glass-edge-top: rgb(255 255 255 / 0.9);
@@ -292,7 +347,7 @@
   --glass-sheen: inset 0 1px 0 rgb(255 255 255 / 0.95);
 
   --glass-veil: linear-gradient(180deg, rgb(255 255 255 / 0.6) 0%, rgb(255 255 255 / 0) 45%);
-  --glass-fade: linear-gradient(180deg, rgb(243 245 243 / 1) 0%, rgb(243 245 243 / 0) 100%);
+  --glass-fade: linear-gradient(180deg, rgb(233 235 232 / 1) 0%, rgb(233 235 232 / 0) 100%);
 
   --glass-shadow-1: none;
   --glass-shadow-2: 0 1px 2px rgb(0 0 0 / 0.05);

@@ -233,7 +233,7 @@ export const KPICard = memo(function KPICard({
             <m.span
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="text-[0.5625rem] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-sm"
+              className="text-2xs font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-sm"
               style={{
                 backgroundColor: 'rgba(48,209,88,0.15)',
                 color: 'var(--success)',

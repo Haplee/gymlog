@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "audit:contrast": "node scripts/contrast-audit.mjs",
     "preview": "vite preview",
     "type-check": "tsc -b --force",
     "test": "vitest run",

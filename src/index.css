@@ -27,6 +27,10 @@
   --color-line: var(--border-subtle);
   --color-line-strong: var(--border-default);
   --color-line-accent: var(--border-accent);
+  /* Para límites de CONTROLES, que WCAG 1.4.11 obliga a 3:1. `line-strong`
+     no llega (1,75:1 sobre el canvas) y no debe subir: lo usan también
+     separadores decorativos, que no tienen por qué gritar. */
+  --color-line-interactive: var(--border-interactive);
 }
 
 @theme {
@@ -91,13 +95,18 @@
   --radius-card: 18px;
   --radius-pill: 999px;
 
-  /* ── Elevación (estética plana Stitch): plano = sin sombra ·
-     elevado = shadow-card sutil · flotante = shadow-lg / shadow-fab ── */
-  /* sm/md/lg ajustados a tema oscuro (mismos valores que tokens.css) */
+  /* ── Elevación: plano = sin sombra · elevado = superficie + canto ·
+     flotante = halo (oscuro) o sombra (claro) ── */
+  /* Sobre el canvas oscuro una sombra negra no se ve: al 30 % da 1,0175:1
+     contra el fondo y el umbral de percepción ronda 1,05. Se conservan las
+     que llevan el ACENTO, que sí se ven porque el acento es claro, y las de
+     texto/elementos que viven sobre superficies claras. `:root.light` las
+     redefine con valores que ahí sí funcionan. Ver la nota de --glass-shadow-*
+     en tokens.css. */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.45);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.55);
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-card: none;
   --shadow-fab: 0 4px 20px rgb(var(--accent-rgb) / 0.18);
   --shadow-btn-accent: 0 1px 6px rgb(var(--accent-rgb) / 0.15);
   --shadow-glow: 0 0 16px rgb(var(--accent-rgb) / 0.12);

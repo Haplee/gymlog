@@ -45,7 +45,10 @@ test('Rate limit muestra error después de demasiados intentos fallidos', async 
     await page.waitForTimeout(100);
   }
 
-  // Debería bloquearlo
-  await expect(btnSubmit).toHaveText(/Wait \d+s/);
+  // Debería bloquearlo. El patrón acepta los dos idiomas: la app arranca en
+  // español («Espera 30 s») y este test solo esperaba el inglés, así que fallaba
+  // siempre en local. Con el espacio opcional porque cada idioma lo pone donde
+  // le toca.
+  await expect(btnSubmit).toHaveText(/(Wait|Espera)\s*\d+\s*s/i);
   await expect(btnSubmit).toBeDisabled();
 });

@@ -90,7 +90,7 @@ src/
 
 ## Sistema de diseño
 
-- **Sistema "FitBody"**, por defecto oscuro: base `#0a0a0b`, superficie `#141416`,
+- **Sistema "FitBody"**, por defecto oscuro: base `#0a0a0b`, superficie `#26262b`,
   acento amarillo lima `#ffd93d` (`--interactive-primary`), texto sobre acento
   `#241c00`. Sustituyó al sistema anterior «Stitch» de acento menta `#60eca8`
   (los documentos que lo mencionen en verde son de esa etapa).
@@ -126,10 +126,24 @@ src/
     quitó en julio por jank en el WebView de Android. La señal de profundidad la
     da el difuminado de borde de scroll (`glass-scroll-fade`, lo enciende
     `Layout` según `scrollTop`).
-  - **La luz se gasta en el canto, no en el área.** Aclarar 1px de borde no toca
-    el contraste del texto; aclarar la superficie sí, y con los 24 acentos rompe
-    el AA. Si tocas `--glass-veil`, recalcula: el techo es 0,027.
-  - Detalle y mediciones: `openspec/changes/liquid-glass-design-system/design.md`.
+  - **La luz se gasta en el canto, pero el canto no puede ir solo.** Aclarar 1px
+    de borde no toca el contraste del texto y aclarar el _velo_ sí, así que el
+    velo sigue teniendo techo. Lo que **no** vale es que el canto sea la única
+    señal: leído así, el reskin acabó con canvas→superficie a 1,076:1 —una
+    tarjeta indistinguible de su fondo— y con los bordes de los inputs a 1,75:1,
+    por debajo del 3:1 que exige WCAG 1.4.11. Las superficies también separan, y
+    su techo lo marca el AA de `--text-tertiary`.
+  - **Antes de dar por bueno un cambio de color, `npm run audit:contrast`.** Lee
+    los tokens reales y los 24 acentos, comprueba texto, jerarquía, bordes y
+    vidrio en los dos temas, y falla con código ≠ 0. También valida que los
+    comentarios del CSS estén bien cerrados: un `*/` huérfano no rompe el
+    servidor de desarrollo pero sí el build, y eso solo se ve en la APK.
+  - **En oscuro no hay sombras, hay halos.** Sobre `--bg-canvas` un negro al 30 %
+    da 1,0175:1 y al 60 % da 1,036, por debajo del umbral de percepción (~1,05):
+    una sombra negra no se ve y aun así se pinta. La capa 3 usa halo claro; en
+    tema claro sí se conservan las sombras, que ahí funcionan.
+  - Detalle y mediciones: `openspec/changes/liquid-glass-design-system/design.md`
+    y `openspec/changes/recalibrate-fitbody-hierarchy/design.md`.
 - **Tipografía:** Inter (cuerpo) + Space Grotesk (display y contadores/números,
   con cifras tabulares). `:root` es 15px. Usa la escala con nombre (`text-sm`,
   `text-base`, `text-lg`…), no valores arbitrarios `text-[…]`.

@@ -74,7 +74,7 @@ export function ExerciseRow({
                     </span>
                   )}
                   {typeof s.rpe === 'number' && (
-                    <span className="text-[0.5625rem] px-1.5 py-0.5 rounded-sm font-bold bg-surface-3 text-fg-muted">
+                    <span className="text-2xs px-1.5 py-0.5 rounded-sm font-bold bg-surface-3 text-fg-muted">
                       RPE {s.rpe}
                     </span>
                   )}
