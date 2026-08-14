@@ -19,7 +19,7 @@
 
 - [x] 1.1 Tokens del material en los dos temas
 - [x] 1.2 Bajar el velo a 0,02 y recuperar la luz en el canto
-- [ ] 1.3 Ajustar la franja de scroll a ~48 px y **volver a mirarla en dispositivo**
+- [x] 1.3 Ajustar la franja de scroll a 48 px (`--glass-fade-height`) — verificado en la tablet
 - [ ] 1.4 Tokens de curva (`--ease-standard/decelerate/accelerate/spring`)
 - [ ] 1.5 Conectar las ~16 animaciones de `index.css` a los tokens de duración y curva
 - [ ] 1.6 Renombrar `--accent-violet` y `--accent-fuchsia` por su función real

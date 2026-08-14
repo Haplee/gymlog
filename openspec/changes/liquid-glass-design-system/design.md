@@ -124,12 +124,19 @@ disuelve en una franja. Esa disolución es la señal que da el `backdrop-filter`
 ahí abajo»— pero pintada **una sola vez** en lugar de remuestrear el backdrop en cada
 frame.
 
-**Corrección pendiente del prototipo:** la franja mide hoy `--space-6` (24 px) y en la
-tablet **apenas se lee**. La estimación es que necesita el doble, ~48 px, para hacer su
-trabajo. Se ajusta y se vuelve a mirar en dispositivo antes de fijar el valor.
+**Altura: 48 px (`--glass-fade-height`), verificado en dispositivo.** El prototipo salió
+con 24 px y ahí **no se leía**: la franja era más corta que una fila de lista, así que el
+texto entraba y salía de ella de golpe en vez de disolverse. A 48 px la fila que entra
+bajo la cabecera se atenúa de forma visible mientras la siguiente sigue nítida, que es
+justo el efecto buscado.
 
 Va en el **borde de scroll**, no en el borde del elemento: solo donde algo se desplaza por
 debajo de algo. Un contenedor que no scrollea no lleva franja.
+
+**Límite conocido:** el degradado sale del color del canvas, así que sirve para áreas que
+scrollean apoyadas en el fondo de la página. Si el área va sobre una tarjeta u otra
+superficie, hay que redefinir `--glass-fade` en ese contenedor con el color que toque, o
+se verá una banda que no encaja. Esto aparecerá en el bloque C.
 
 ---
 

@@ -158,7 +158,17 @@
   /* Difuminado de borde de scroll — sustituye perceptualmente al blur.
      El contenido se disuelve al entrar bajo el chrome flotante, que es
      la señal que da el backdrop-filter, pero pintada una sola vez y sin
-     recalcular el backdrop en cada frame. */
+     recalcular el backdrop en cada frame.
+
+     48px y no 24px: a 24 la franja es más corta que una fila de lista, así
+     que el texto entraba y salía de ella de golpe y no llegaba a leerse como
+     disolución. Comprobado en la tablet.
+
+     El degradado sale del color del canvas, así que sirve para áreas que
+     scrollean apoyadas en el fondo de la página. Si el área va sobre una
+     tarjeta u otra superficie, hay que redefinir --glass-fade en ese
+     contenedor con el color que toque, o se verá una banda que no encaja. */
+  --glass-fade-height: 48px;
   --glass-fade: linear-gradient(180deg, rgb(10 10 11 / 1) 0%, rgb(10 10 11 / 0) 100%);
 
   --glass-shadow-1: none;

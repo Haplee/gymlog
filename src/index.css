@@ -235,15 +235,11 @@ body {
 }
 .glass-2 {
   background-color: var(--glass-2);
-  box-shadow:
-    var(--glass-sheen),
-    var(--glass-shadow-2);
+  box-shadow: var(--glass-sheen), var(--glass-shadow-2);
 }
 .glass-3 {
   background-color: var(--glass-3);
-  box-shadow:
-    var(--glass-sheen),
-    var(--glass-shadow-3);
+  box-shadow: var(--glass-sheen), var(--glass-shadow-3);
 }
 
 /* Difuminado de borde de scroll: la tira donde el contenido se disuelve al
@@ -255,7 +251,7 @@ body {
   position: absolute;
   left: 0;
   right: 0;
-  height: var(--space-6);
+  height: var(--glass-fade-height);
   background: var(--glass-fade);
   pointer-events: none;
   z-index: var(--z-raised);
