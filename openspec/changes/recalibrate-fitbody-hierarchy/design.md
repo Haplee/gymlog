@@ -78,8 +78,6 @@ en el que no dolía mirarlo.
 
 ### 2. Escala de superficies derivada, no elegida a ojo
 
-Con el terciario en `#a1afa4` (techo L = 0,05204):
-
 La escala se construye **desde arriba**, no desde abajo: el techo lo marca la superficie
 más clara, porque es la que tiene que seguir sosteniendo el AA del texto terciario. Con el
 terciario en `#a1afa4` ese techo está en L = 0,05204 (≈ `#404040`), y los tres niveles se
