@@ -17,7 +17,7 @@
   <p>
     <img src="https://img.shields.io/github/actions/workflow/status/Haplee/gymlog/android-build.yml?style=flat-square&label=Android%20Build&logo=github" />
     <img src="https://img.shields.io/github/actions/workflow/status/Haplee/gymlog/ci.yml?style=flat-square&label=CI&logo=vitest" />
-    <img src="https://img.shields.io/badge/tests-477%20passing-ffd93d?style=flat-square&logo=vitest&logoColor=0a0a0b" />
+    <img src="https://img.shields.io/badge/tests-519%20passing-ffd93d?style=flat-square&logo=vitest&logoColor=0a0a0b" />
     <img src="https://img.shields.io/github/last-commit/Haplee/gymlog?style=flat-square&label=Last%20commit&logo=git" />
     <img src="https://img.shields.io/github/repo-size/Haplee/gymlog?style=flat-square&label=Size&logo=files" />
     <img src="https://img.shields.io/github/license/Haplee/gymlog?style=flat-square&label=License&logo=opensourceinitiative" />
@@ -141,8 +141,8 @@ npm run dev              # http://localhost:5173
 ```bash
 npm run lint             # ESLint
 npm run type-check       # tsc -b --force
-npm run test             # 477 tests en 49 ficheros (Vitest)
-npx playwright test      # E2E (e2e/)
+npm run test             # 519 tests en 53 ficheros (Vitest)
+npx playwright test      # 52 E2E (e2e/) — requiere E2E_EMAIL/E2E_PASSWORD para los autenticados
 ```
 
 El flujo E2E **con sesión iniciada** (`e2e/workout-session.spec.ts`) se salta si no
@@ -153,6 +153,12 @@ pon en `.env.local` una cuenta **desechable** (el test escribe un entreno real):
 E2E_EMAIL=cuenta-de-pruebas@ejemplo.com
 E2E_PASSWORD=...
 ```
+
+Ya hay una cuenta creada para esto, con ~10 semanas de historial sembrado (30
+entrenos, 270 series, rutina activa, cardio y medidas), para que las pantallas de
+estadísticas e historial no salgan vacías al auditar la UI. Sus credenciales viven
+solo en `.env.local`. Si hay que recrearla o resembrar sus datos:
+`scripts/seed-e2e-user.sql` documenta el proceso completo, incluida la limpieza.
 
 ### 3. Build
 
@@ -222,7 +228,7 @@ Reskin **FitBody** (julio 2026) + material **Liquid Glass** (agosto 2026). Antes
 | Token             | Valor                                                                 |
 | :---------------- | :-------------------------------------------------------------------- |
 | Acento            | `#ffd93d` (amarillo lima) **por defecto** — el usuario elige entre 24 |
-| Base / superficie | `#0a0a0b` / `#141416`                                                 |
+| Base / superficie | `#0a0a0b` / `#26262b`                                                 |
 | Tipografía        | **Inter** (cuerpo) + **Space Grotesk** (display y cifras tabulares)   |
 | Material          | 3 capas: `glass-1` contenido · `glass-2` elevado · `glass-3` flotante |
 
