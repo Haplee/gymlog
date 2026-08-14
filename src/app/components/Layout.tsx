@@ -7,14 +7,15 @@ import { useWorkoutStore } from '@features/workout/stores/workoutStore';
 import { queryClient } from '@app/queryClient';
 import { fetchWorkoutsAndSets, fetchWorkouts, fetchRecentSets } from '@shared/api/queries';
 import { m, AnimatePresence } from 'framer-motion';
-import { WifiOff, RefreshCw } from 'lucide-react';
 import {
-  IconHome,
   IconDumbbell,
-  IconMenu,
   IconFlame,
   IconHistory,
+  IconHome,
+  IconMenu,
   IconPulse,
+  Refresh,
+  WifiOff,
 } from '@shared/components/icons';
 import { calculateCurrentStreak } from '@features/stats/utils/kpiCalculations';
 import { AppDrawer } from '@app/components/AppDrawer';
@@ -278,7 +279,7 @@ export function Layout({ children }: LayoutProps) {
             exit={{ opacity: 0, y: -8 }}
             className="flex items-center justify-center gap-2 py-1.5 px-4 flex-shrink-0 bg-accent/10 border-b border-line-accent"
           >
-            <RefreshCw className="w-3.5 h-3.5 text-accent" />
+            <Refresh className="w-3.5 h-3.5 text-accent" />
             <span className="text-xs font-medium text-accent">
               {pendingSync === 1
                 ? t('workout.pending_sync_one')

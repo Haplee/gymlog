@@ -15,8 +15,8 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical } from 'lucide-react';
 import type { RoutineExercise } from '@features/routine/stores/routineStore';
+import { Menu } from '@shared/components/icons';
 
 interface SortableExerciseListProps {
   exercises: RoutineExercise[];
@@ -46,7 +46,7 @@ function SortableRow({ exercise, onRemove }: { exercise: RoutineExercise; onRemo
           aria-label={`Reordenar ${exercise.name}`}
           className="w-9 h-9 -ml-1 flex items-center justify-center rounded-card text-fg-subtle touch-none cursor-grab active:cursor-grabbing"
         >
-          <GripVertical className="w-4 h-4" />
+          <Menu className="w-4 h-4" />
         </button>
         <div className="min-w-0">
           <div className="text-base font-medium text-fg truncate">{exercise.name}</div>

@@ -1,13 +1,13 @@
 import { useTranslation } from 'react-i18next';
-import { TrendingUp, TrendingDown, Minus, AlertTriangle } from 'lucide-react';
 import type { ExerciseAdvice } from '../hooks/useAutoregulation';
 import type { LoadSuggestion } from '../utils/autoregulation';
 import { useWeight } from '@shared/hooks/useWeight';
 import { formatWeightInput } from '@shared/lib/weight';
+import { AlertTriangle, Minus, TrendDown, TrendUp } from '@shared/components/icons';
 
 const ACTION_ICON = {
-  increase: TrendingUp,
-  reduce: TrendingDown,
+  increase: TrendUp,
+  reduce: TrendDown,
   hold: Minus,
 } as const;
 

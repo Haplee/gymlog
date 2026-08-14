@@ -1,13 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  AlertTriangle,
-  BookOpen,
-  ChevronDown,
-  Minus,
-  TrendingDown,
-  TrendingUp,
-} from 'lucide-react';
 import { useExerciseAdvice } from '@features/stats/hooks/useExerciseAdvice';
 import type { ExerciseAdvice } from '@features/stats/hooks/useAutoregulation';
 import { useExerciseRepRange } from '@shared/hooks/useExerciseRepRange';
@@ -17,10 +9,18 @@ import { weightToInput } from '@shared/lib/weight';
 import type { Exercise } from '@shared/lib/types';
 import type { LibraryExercise } from '@shared/api/queries';
 import type { SessionExercise } from '../stores/routineSessionStore';
+import {
+  AlertTriangle,
+  BookOpen,
+  ChevronDown,
+  Minus,
+  TrendDown,
+  TrendUp,
+} from '@shared/components/icons';
 
 const ACTION_ICON = {
-  increase: TrendingUp,
-  reduce: TrendingDown,
+  increase: TrendUp,
+  reduce: TrendDown,
   hold: Minus,
 } as const;
 

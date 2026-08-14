@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { m, useMotionValue, useTransform } from 'framer-motion';
-import { Trash2 } from 'lucide-react';
+import { Trash2 } from '@shared/components/icons';
 
 /**
  * Envuelve una fila para permitir deslizarla a la izquierda y borrar.

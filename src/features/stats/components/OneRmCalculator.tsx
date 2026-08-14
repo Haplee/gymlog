@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { m } from 'framer-motion';
-import { Calculator } from 'lucide-react';
 import { calcular1RM } from '@shared/lib/brzycki';
 import { useWeight } from '@shared/hooks/useWeight';
+import { Calculator } from '@shared/components/icons';
 
 /**
  * Calculadora de 1RM estimado (Brzycki, `@shared/lib/brzycki`).

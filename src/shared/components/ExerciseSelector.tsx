@@ -2,7 +2,6 @@ import { useTranslation } from 'react-i18next';
 import { useState, useCallback, useRef, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { m, AnimatePresence } from 'framer-motion';
-import { Search, Plus, X, Loader2, Clock } from 'lucide-react';
 import { useExerciseSearch, trackRecentExercise } from '@shared/hooks/useExerciseSearch';
 import {
   createCustomExercise,
@@ -14,6 +13,7 @@ import { DEFAULT_MUSCLE_GROUP } from '@shared/constants/muscleGroups';
 import { toast } from 'sonner';
 import { ExerciseRow, type ExerciseOption } from './exerciseSelector/ExerciseRow';
 import { CreateExerciseForm } from './exerciseSelector/CreateExerciseForm';
+import { Clock, Loader, Plus, Search, X } from '@shared/components/icons';
 
 interface ExerciseSelectorProps {
   userId: string;
@@ -320,7 +320,7 @@ export function ExerciseSelector({
           >
             {isLoading && (
               <div className="flex items-center justify-center p-4">
-                <Loader2 className="w-5 h-5 animate-spin text-fg-subtle" />
+                <Loader className="w-5 h-5 animate-spin text-fg-subtle" />
               </div>
             )}
 

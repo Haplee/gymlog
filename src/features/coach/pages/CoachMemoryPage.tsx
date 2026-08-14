@@ -1,13 +1,13 @@
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Trash2, Brain } from 'lucide-react';
 import { toast } from 'sonner';
 import { Layout } from '@app/components/Layout';
 import { SectionHeader } from '@shared/components/ui';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { fetchCoachMemory, deleteCoachMemoryFact } from '../api/coach';
 import type { CoachMemoryFact } from '../types';
+import { IconBrain, Trash2 } from '@shared/components/icons';
 
 const CATEGORIES: CoachMemoryFact['category'][] = ['injury', 'constraint', 'preference', 'goal'];
 
@@ -51,7 +51,7 @@ export function CoachMemoryPage() {
 
         {facts.length === 0 && (
           <div className="rounded-card bg-surface border border-line p-6 text-center">
-            <Brain className="mx-auto h-8 w-8 text-fg-subtle" aria-hidden="true" />
+            <IconBrain className="mx-auto h-8 w-8 text-fg-subtle" aria-hidden="true" />
             <p className="mt-3 text-sm text-fg-muted">{t('coach.memory.empty')}</p>
           </div>
         )}

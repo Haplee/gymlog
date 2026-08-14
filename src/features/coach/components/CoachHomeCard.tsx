@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { ChevronRight, Sparkles } from 'lucide-react';
 import { useCoachStore } from '../stores/coachStore';
+import { ChevronRight, Sparkles } from '@shared/components/icons';
 
 /**
  * Atajo al entrenador desde la pantalla de inicio.

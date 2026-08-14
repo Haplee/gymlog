@@ -5,7 +5,7 @@ import { CardioTypeIcon } from '@shared/components/CardioIcons';
 import { formatDuration } from '@shared/lib/duration';
 import { format, isToday, isYesterday, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { HeartPulse } from 'lucide-react';
+import { HeartPulse } from '@shared/components/icons';
 
 /** HOY / AYER / abreviatura del día, en mayúsculas. */
 function dayLabel(date: Date, t: (key: string) => string) {

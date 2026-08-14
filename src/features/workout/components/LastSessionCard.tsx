@@ -2,11 +2,11 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { History, CopyCheck } from 'lucide-react';
 import { m, AnimatePresence } from 'framer-motion';
 import { fetchLastExerciseSets } from '@shared/api/queries';
 import { useWeight } from '@shared/hooks/useWeight';
 import { formatWeightInput } from '@shared/lib/weight';
+import { CopySuccess, History } from '@shared/components/icons';
 
 interface LastSessionCardProps {
   userId: string;
@@ -58,7 +58,7 @@ export function LastSessionCard({ userId, exerciseId, onCopySets }: LastSessionC
                 }
                 className="flex items-center gap-1 text-xs px-2 py-1 rounded-sm font-medium bg-accent text-accent-fg transition-transform active:scale-95"
               >
-                <CopyCheck className="w-3 h-3" />
+                <CopySuccess className="w-3 h-3" />
                 {t('workout.copy')}
               </button>
             </div>

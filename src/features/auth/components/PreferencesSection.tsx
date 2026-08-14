@@ -2,13 +2,13 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/react/shallow';
 import { toast } from 'sonner';
-import { Check, ChevronRight } from 'lucide-react';
 import { SectionHeader, SegmentedControl, SettingRow, Toggle } from '@shared/components/ui';
 import { useSettingsStore } from '@shared/stores/settingsStore';
 import { ACCENT_PRESETS, getAccentPreset } from '@shared/constants/accents';
 import { isAppIconSupported, setAppIcon as setAppIconNative } from '@shared/lib/appIcon';
 import { playSettingsChime } from '@shared/lib/alarm';
 import { devError } from '@shared/lib/devtools';
+import { Check, ChevronRight } from '@shared/components/icons';
 
 /**
  * Bloque «Preferencias» de Ajustes: idioma, tema, acento, icono de la app,
@@ -156,10 +156,10 @@ export function PreferencesSection() {
                 aria-label={t('settings.accent')}
                 className="mt-2.5 flex flex-wrap gap-2.5"
               >
-                  {ACCENT_PRESETS.map((preset) => {
-                    const isActive = preset.id === accentColor;
-                    const swatch = preset[effectiveTheme].primary;
-                    return (
+                {ACCENT_PRESETS.map((preset) => {
+                  const isActive = preset.id === accentColor;
+                  const swatch = preset[effectiveTheme].primary;
+                  return (
                     <button
                       key={preset.id}
                       type="button"

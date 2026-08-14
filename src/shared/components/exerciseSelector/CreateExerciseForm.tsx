@@ -1,9 +1,9 @@
 import { useTranslation } from 'react-i18next';
-import { Loader2, Check, AlertCircle } from 'lucide-react';
 import { Button } from '@shared/components/ui';
 import { MuscleGroupIcon } from '@shared/components/CardioIcons';
 import { MUSCLE_GROUPS, suggestMuscleGroup } from '@shared/constants/muscleGroups';
 import { MuscleGroupPills } from './MuscleGroupPills';
+import { AlertCircle, Check, Loader } from '@shared/components/icons';
 
 interface CreateExerciseFormProps {
   name: string;
@@ -140,7 +140,7 @@ export function CreateExerciseForm({
           disabled={isPending || !name.trim()}
           className="flex-1"
         >
-          {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : t('common.create')}
+          {isPending ? <Loader className="w-4 h-4 animate-spin" /> : t('common.create')}
         </Button>
       </div>
     </div>

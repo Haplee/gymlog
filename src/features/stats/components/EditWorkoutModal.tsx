@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { Pencil } from 'lucide-react';
 import { supabase } from '@shared/lib/supabase';
 import { Modal, Button } from '@shared/components/ui';
 import type { WorkoutWithSets } from '@shared/lib/types';
 import { devError } from '@shared/lib/devtools';
+import { Edit } from '@shared/components/icons';
 
 /**
  * Edición de un entreno ya guardado: cambiar reps y kg de sus series.
@@ -74,7 +74,7 @@ export function EditWorkoutModal({
       open
       onClose={onClose}
       title={t('history.edit_title')}
-      icon={<Pencil className="w-5 h-5 text-accent" />}
+      icon={<Edit className="w-5 h-5 text-accent" />}
     >
       <div className="space-y-2 max-h-[50vh] overflow-y-auto mb-4">
         {rows.map((row, i) => (

@@ -30,20 +30,6 @@ import { useWeight } from '@shared/hooks/useWeight';
 import { comparePeriods } from '../utils/periodComparison';
 import { projectNextVolume } from '../utils/volumeProjection';
 import { useTranslation } from 'react-i18next';
-import {
-  ArrowLeft,
-  Lightbulb,
-  Trophy,
-  Activity,
-  Clock,
-  Flame,
-  BarChart3,
-  Dumbbell,
-  Medal,
-  Weight,
-  Calendar,
-  type LucideIcon,
-} from 'lucide-react';
 import { computeAchievements } from '@shared/lib/achievements';
 import { toast } from 'sonner';
 import { format, subWeeks, startOfWeek, eachWeekOfInterval, subDays } from 'date-fns';
@@ -58,6 +44,20 @@ import { DayFrequencyChart } from '../components/userStats/DayFrequencyChart';
 import { TopExercisesList } from '../components/userStats/TopExercisesList';
 import { BodyMeasurements } from '../components/userStats/BodyMeasurements';
 import { WearablesSummary } from '@features/wearables/components/WearablesSummary';
+import {
+  Activity,
+  ArrowLeft,
+  Calendar,
+  ChartBar,
+  Clock,
+  Dumbbell,
+  Flame,
+  Lightbulb,
+  Medal,
+  Trophy,
+  Weight,
+  type IconComponent,
+} from '@shared/components/icons';
 
 // recharts es pesado: cargar estos charts bajo demanda lo saca del chunk de la página
 const WeeklyVolumeChart = lazy(() =>
@@ -367,7 +367,7 @@ export function UserStatsPage() {
             <BigKPI
               value={formatVol(totalVolumeAllTime)}
               label={t('userStats.total_volume')}
-              icon={BarChart3}
+              icon={ChartBar}
               color="var(--accent-blue)"
               delay={0.05}
             />
@@ -471,7 +471,7 @@ export function UserStatsPage() {
           <SectionLabel>{t('achievements.title')}</SectionLabel>
           <div className="grid grid-cols-2 gap-2">
             {achievements.map((a, i) => {
-              const ACH_ICONS: Record<string, LucideIcon> = {
+              const ACH_ICONS: Record<string, IconComponent> = {
                 dumbbell: Dumbbell,
                 medal: Medal,
                 flame: Flame,

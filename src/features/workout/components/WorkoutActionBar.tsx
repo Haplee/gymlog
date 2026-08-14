@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { m, AnimatePresence } from 'framer-motion';
-import { Star, Trash2 } from 'lucide-react';
+import { Star, Trash2 } from '@shared/components/icons';
 
 interface WorkoutActionBarProps {
   /** Mensaje de resultado; si empieza por «✓» se pinta en color de éxito. */

@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { m } from 'framer-motion';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendDown, TrendUp } from '@shared/components/icons';
 
 interface KPICardProps {
   title: string;
@@ -222,9 +222,9 @@ export const KPICard = memo(function KPICard({
               }}
             >
               {trend >= 0 ? (
-                <TrendingUp className="w-2.5 h-2.5" />
+                <TrendUp className="w-2.5 h-2.5" />
               ) : (
-                <TrendingDown className="w-2.5 h-2.5" />
+                <TrendDown className="w-2.5 h-2.5" />
               )}
               {Math.abs(trend)}%
             </m.span>

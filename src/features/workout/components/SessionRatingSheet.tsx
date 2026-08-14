@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { m } from 'framer-motion';
-import { Star } from 'lucide-react';
 import { impact, ImpactStyle } from '@shared/lib/haptics';
+import { Star } from '@shared/components/icons';
 
 interface SessionRatingSheetProps {
   rating: number | null;

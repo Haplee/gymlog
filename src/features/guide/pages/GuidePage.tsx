@@ -1,8 +1,11 @@
 import { useEffect, useState, type ComponentType } from 'react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { Calculator, CloudOff, ChevronDown, ChevronRight, Lightbulb } from 'lucide-react';
 import {
+  Calculator,
+  ChevronDown,
+  ChevronRight,
+  CloudCross,
   IconBook,
   IconCalendar,
   IconChart,
@@ -13,6 +16,7 @@ import {
   IconShoe,
   IconTimer,
   IconWatch,
+  Lightbulb,
 } from '@shared/components/icons';
 import { Layout } from '@app/components/Layout';
 import { Button, SectionHeader } from '@shared/components/ui';
@@ -37,7 +41,7 @@ const SECTIONS: GuideSection[] = [
   { id: 'stats', Icon: IconChart, path: '/stats' },
   { id: 'measurements', Icon: IconRuler, path: '/user-stats' },
   { id: 'wearables', Icon: IconWatch, path: '/wearables' },
-  { id: 'offline', Icon: CloudOff },
+  { id: 'offline', Icon: CloudCross },
   { id: 'settings', Icon: IconGear, path: '/settings' },
 ];
 

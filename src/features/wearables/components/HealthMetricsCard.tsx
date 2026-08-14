@@ -1,6 +1,14 @@
 import { useTranslation } from 'react-i18next';
-import { Footprints, Route, Flame, HeartPulse, Heart, Moon, ChevronRight } from 'lucide-react';
 import type { WearableDaily, WearableSleep } from '../types';
+import {
+  ChevronRight,
+  Flame,
+  Heart,
+  HeartPulse,
+  Moon,
+  Route,
+  Walk,
+} from '@shared/components/icons';
 
 function fmtMinutes(min: number | null | undefined): string {
   if (!min || min <= 0) return '—';
@@ -38,7 +46,7 @@ export function HealthMetricsCard({ daily, sleep, onOpen }: HealthMetricsCardPro
   const dayLabel = daily?.date && !isToday(daily.date) ? formatDayLabel(daily.date) : null;
 
   const tiles = [
-    { icon: <Footprints size={18} />, label: t('wearables.steps'), value: num(daily?.steps) },
+    { icon: <Walk size={18} />, label: t('wearables.steps'), value: num(daily?.steps) },
     {
       icon: <Moon size={18} />,
       label: t('wearables.sleep'),

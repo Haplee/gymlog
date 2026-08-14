@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { Sparkles, Database, Server, HeartPulse, Undo2 } from 'lucide-react';
 import { Modal, Button } from '@shared/components/ui';
+import { Database, HeartPulse, Server, Sparkles, Undo } from '@shared/components/icons';
 
 /**
  * Consentimiento para activar el entrenador IA.
@@ -48,7 +48,7 @@ export function CoachConsentModal({
       body: t('coach.consent.medical_body'),
     },
     {
-      icon: <Undo2 className="w-4 h-4" aria-hidden="true" />,
+      icon: <Undo className="w-4 h-4" aria-hidden="true" />,
       title: t('coach.consent.revoke_title'),
       body: t('coach.consent.revoke_body'),
     },

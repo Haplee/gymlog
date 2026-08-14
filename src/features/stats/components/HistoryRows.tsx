@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronRight, Trash2, Star } from 'lucide-react';
 import type { WorkoutWithSets, WorkoutSetWithDetails } from '@shared/lib/types';
+import { ChevronRight, Star, Trash2 } from '@shared/components/icons';
 
 export function ExerciseRow({
   exercise,

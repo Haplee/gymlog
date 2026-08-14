@@ -1,10 +1,10 @@
 import { m } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { CheckCircle2, AlertTriangle, XCircle, TrendingUp, Zap } from 'lucide-react';
 import type { MuscleGroupStatus, RecoveryStatus } from '../utils/fatigueAnalysis';
 import { MuscleGroupIcon } from '@shared/components/CardioIcons';
 import { MUSCLE_COLORS } from '@shared/constants/muscleColors';
 import { DEFAULT_MUSCLE_GROUP } from '@shared/constants/muscleGroups';
+import { AlertTriangle, CheckCircle, Flash, TrendUp, XCircle } from '@shared/components/icons';
 
 interface FatigueAnalysisProps {
   muscleGroups: MuscleGroupStatus[];
@@ -40,7 +40,7 @@ export function FatigueAnalysis({
         return {
           color: 'var(--success)',
           bgColor: 'rgba(48, 209, 88, 0.1)',
-          icon: CheckCircle2,
+          icon: CheckCircle,
           label: t('userStats.recovery_rested'),
         };
     }
@@ -60,7 +60,7 @@ export function FatigueAnalysis({
     >
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Zap className="w-5 h-5 text-accent" />
+          <Flash className="w-5 h-5 text-accent" />
           <div className="text-base font-semibold text-fg">
             {t('userStats.recovery_card_title')}
           </div>
@@ -160,7 +160,7 @@ export function FatigueAnalysis({
           className="mt-4 pt-4 border-t border-line"
         >
           <div className="flex items-center gap-2 mb-2">
-            <TrendingUp className="w-4 h-4 text-accent" />
+            <TrendUp className="w-4 h-4 text-accent" />
             <div className="text-xs font-medium text-fg-subtle uppercase tracking-wide">
               {t('userStats.suggestion_today')}
             </div>

@@ -1,10 +1,10 @@
 import { m } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { Target } from 'lucide-react';
 import { Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { CHART_COLORS } from '../../constants';
 import { SectionLabel } from './SectionLabel';
 import { useWeight } from '@shared/hooks/useWeight';
+import { Target } from '@shared/components/icons';
 
 export interface MuscleDistributionItem {
   name: string;

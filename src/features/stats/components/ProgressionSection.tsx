@@ -1,8 +1,8 @@
 import { lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { m } from 'framer-motion';
-import { ChevronDown } from 'lucide-react';
 import { useWeight } from '@shared/hooks/useWeight';
+import { ChevronDown } from '@shared/components/icons';
 
 const ProgressionChart = lazy(() =>
   import('./Charts').then((mod) => ({ default: mod.ProgressionChart })),

@@ -1,8 +1,16 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Target, Calendar, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Modal, Button } from '@shared/components/ui';
-import { IconFemale, IconMale, IconRuler, IconUser } from '@shared/components/icons';
+import {
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  IconFemale,
+  IconMale,
+  IconRuler,
+  IconUser,
+  Target,
+} from '@shared/components/icons';
 import { supabase } from '@shared/lib/supabase';
 import type { Profile } from '@shared/lib/types';
 import { RulerPicker } from './RulerPicker';

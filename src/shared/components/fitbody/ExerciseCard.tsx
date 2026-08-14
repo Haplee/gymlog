@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Play } from 'lucide-react';
+import { Play } from '@shared/components/icons';
 
 interface ExerciseCardProps {
   /** Nombre del ejercicio */

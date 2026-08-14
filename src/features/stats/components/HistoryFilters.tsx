@@ -1,15 +1,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { m } from 'framer-motion';
-import {
-  BarChart2,
-  BarChart3,
-  Download,
-  Upload,
-  FileSpreadsheet,
-  FileJson,
-} from 'lucide-react';
 import { Modal } from '@shared/components/ui';
+import { ChartBar, DocumentCode, Download, FileContent, Upload } from '@shared/components/icons';
 
 export type HistoryView = 'all' | 'workouts' | 'sets' | 'cardio';
 
@@ -108,7 +101,7 @@ export function HistoryFilters({
           onClick={() => onOpenStats()}
           className="flex items-center gap-1.5 px-3 py-2 rounded-pill font-semibold text-sm transition-all hover:scale-[1.02] active:scale-[0.98] bg-accent text-accent-fg"
         >
-          <BarChart3 className="w-4 h-4" />
+          <ChartBar className="w-4 h-4" />
           {t('stats.title')}
         </button>
 
@@ -117,7 +110,7 @@ export function HistoryFilters({
           onClick={() => onOpenUserStats()}
           className="flex items-center gap-1.5 px-3 py-2 rounded-pill font-semibold text-sm transition-all hover:scale-[1.02] active:scale-[0.98] bg-surface-2 text-accent"
         >
-          <BarChart2 className="w-4 h-4" />
+          <ChartBar className="w-4 h-4" />
           {t('history.my_stats')}
         </button>
 
@@ -178,7 +171,7 @@ export function HistoryFilters({
             }}
             className={optionClass}
           >
-            <FileSpreadsheet className={optionIconClass} />
+            <FileContent className={optionIconClass} />
             {t('history.format_excel')}
           </button>
           <button
@@ -189,7 +182,7 @@ export function HistoryFilters({
             }}
             className={optionClass}
           >
-            <FileJson className={optionIconClass} />
+            <DocumentCode className={optionIconClass} />
             {t('history.format_json')}
           </button>
         </div>
@@ -203,7 +196,7 @@ export function HistoryFilters({
       >
         <div className="flex flex-col gap-2">
           <label className={`${optionClass} cursor-pointer`}>
-            <FileSpreadsheet className={optionIconClass} />
+            <FileContent className={optionIconClass} />
             {t('history.format_spreadsheet')}
             <input
               type="file"
@@ -216,7 +209,7 @@ export function HistoryFilters({
             />
           </label>
           <label className={`${optionClass} cursor-pointer`}>
-            <FileJson className={optionIconClass} />
+            <DocumentCode className={optionIconClass} />
             {t('history.format_json')}
             <input
               type="file"

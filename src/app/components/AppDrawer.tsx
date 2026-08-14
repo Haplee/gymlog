@@ -2,18 +2,19 @@ import { useEffect, useRef } from 'react';
 import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { m } from 'framer-motion';
-import { Bell, X } from 'lucide-react';
 import { useCardioStore } from '@features/cardio/stores/cardioStore';
 import {
-  IconSearch,
+  Bell,
   IconBook,
-  IconDumbbell,
-  IconRuler,
-  IconWatch,
-  IconStar,
-  IconPulse,
   IconChart,
+  IconDumbbell,
   IconGear,
+  IconPulse,
+  IconRuler,
+  IconSearch,
+  IconStar,
+  IconWatch,
+  X,
 } from '@shared/components/icons';
 
 /**

@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { Bot, Brain, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { NavRow, SectionHeader, SettingRow, Toggle } from '@shared/components/ui';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useCoachStore } from '../stores/coachStore';
 import { CoachConsentModal } from './CoachConsentModal';
+import { Cpu, IconBrain, Sparkles } from '@shared/components/icons';
 
 /**
  * Bloque de Ajustes del entrenador IA.
@@ -79,7 +79,7 @@ export function CoachSettingsSection() {
           <SettingRow
             label={t('coach.settings.toggle')}
             desc={t('coach.settings.toggle_desc')}
-            icon={<Bot className="w-4 h-4" />}
+            icon={<Cpu className="w-4 h-4" />}
             control={
               <Toggle
                 checked={coachEnabled}
@@ -99,7 +99,7 @@ export function CoachSettingsSection() {
                 divider
               />
               <NavRow
-                icon={<Brain className="w-4 h-4" />}
+                icon={<IconBrain className="w-4 h-4" />}
                 label={t('coach.settings.memory')}
                 desc={t('coach.settings.memory_desc')}
                 onClick={() => navigate('/coach/memory')}

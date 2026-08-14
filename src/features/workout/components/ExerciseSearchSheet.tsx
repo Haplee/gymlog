@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { m } from 'framer-motion';
-import { X } from 'lucide-react';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useWorkoutStore } from '@features/workout/stores/workoutStore';
 import {
@@ -13,7 +12,7 @@ import {
 } from '@shared/api/queries';
 import { MUSCLE_COLORS } from '@shared/constants/muscleColors';
 import { Chip } from '@shared/components/ui';
-import { IconSearch, IconDumbbell, IconBook, IconStar } from '@shared/components/icons';
+import { IconBook, IconDumbbell, IconSearch, IconStar, X } from '@shared/components/icons';
 
 interface ExerciseSearchSheetProps {
   onClose: () => void;

@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { Coffee } from 'lucide-react';
 import type { DeloadSuggestion } from '@features/stats/utils/autoregulation';
+import { Coffee } from '@shared/components/icons';
 
 /**
  * Tarjeta de descarga del motor determinista (sin IA ni red).

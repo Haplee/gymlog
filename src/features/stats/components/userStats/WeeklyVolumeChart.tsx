@@ -1,9 +1,9 @@
 import { m } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { TrendingUp, TrendingDown } from 'lucide-react';
 import { XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { SectionLabel } from './SectionLabel';
 import { useWeight } from '@shared/hooks/useWeight';
+import { TrendDown, TrendUp } from '@shared/components/icons';
 
 export interface WeeklyVolumePoint {
   week: string;
@@ -31,14 +31,14 @@ export function WeeklyVolumeChart({
       >
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-accent" />
+            <TrendUp className="w-4 h-4 text-accent" />
             <span className="text-sm font-medium text-fg-muted">{t('userStats.last_8_weeks')}</span>
           </div>
           <div className="flex items-center gap-1.5">
             {volumeChange > 0 ? (
-              <TrendingUp className="w-3.5 h-3.5 text-success" />
+              <TrendUp className="w-3.5 h-3.5 text-success" />
             ) : (
-              <TrendingDown className="w-3.5 h-3.5 text-error" />
+              <TrendDown className="w-3.5 h-3.5 text-error" />
             )}
             <span
               className="text-xs font-semibold font-mono"

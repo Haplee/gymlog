@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { m } from 'framer-motion';
-import { Scale, X } from 'lucide-react';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { fetchBodyMeasurements, upsertTodayWeight } from '@shared/api/queries';
 import { toLocalDateKey } from '@shared/lib/dateKeys';
 import { isWeightPromptDue } from '@features/workout/utils/bodyweight';
+import { Scale, X } from '@shared/components/icons';
 
 const DISMISS_KEY = 'gymlog-weight-prompt-dismissed';
 

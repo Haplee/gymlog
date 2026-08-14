@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import { m, AnimatePresence } from 'framer-motion';
-import { BellRing } from 'lucide-react';
 import { useRestTimerStore } from '@features/workout/stores/restTimerStore';
 import { impact, ImpactStyle } from '@shared/lib/haptics';
+import { BellRing } from '@shared/components/icons';
 
 /**
  * Banner global de alarma: mientras suena, es alcanzable desde cualquier

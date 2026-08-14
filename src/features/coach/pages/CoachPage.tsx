@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
-import { Sparkles, AlertTriangle, Info, CheckCircle2, Stethoscope, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { Layout } from '@app/components/Layout';
 import { Button, SectionHeader } from '@shared/components/ui';
@@ -18,10 +17,18 @@ import {
   type CoachSuggestion,
   type CoachTurn,
 } from '../types';
+import {
+  AlertTriangle,
+  CheckCircle,
+  InfoCircle,
+  Send,
+  Sparkles,
+  Stethoscope,
+} from '@shared/components/icons';
 
 const SEVERITY_ICON = {
-  info: Info,
-  success: CheckCircle2,
+  info: InfoCircle,
+  success: CheckCircle,
   warning: AlertTriangle,
 } as const;
 

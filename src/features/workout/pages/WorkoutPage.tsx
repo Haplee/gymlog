@@ -65,13 +65,13 @@ import {
   type WorkoutSummary,
 } from '@features/workout/components/WorkoutSavedCard';
 import type { ExerciseNote, PersonalRecord } from '@shared/lib/types';
-import { Calculator, Trophy } from 'lucide-react';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { impact, notificationHaptic, ImpactStyle, NotificationType } from '@shared/lib/haptics';
 import { celebrate } from '@shared/lib/celebration';
 import { playSuccessChime } from '@shared/lib/alarm';
 import { devError } from '@shared/lib/devtools';
+import { Calculator, Trophy } from '@shared/components/icons';
 
 const containerVariants = {
   hidden: { opacity: 0, y: 12 },

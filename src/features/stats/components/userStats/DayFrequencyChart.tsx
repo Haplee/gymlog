@@ -1,7 +1,7 @@
 import { m } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { Zap } from 'lucide-react';
 import { SectionLabel } from './SectionLabel';
+import { Flash } from '@shared/components/icons';
 
 export interface DayFrequencyItem {
   day: string;
@@ -28,7 +28,7 @@ export function DayFrequencyChart({
       >
         {bestDay && (
           <div className="flex items-center gap-2 mb-4">
-            <Zap className="w-4 h-4" style={{ color: '#fbbf24' }} />
+            <Flash className="w-4 h-4" style={{ color: '#fbbf24' }} />
             <span className="text-sm font-medium text-fg-muted">
               {t('userStats.favorite_day')} <span className="font-bold text-fg">{bestDay}</span>
             </span>

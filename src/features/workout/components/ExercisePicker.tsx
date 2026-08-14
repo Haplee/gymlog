@@ -2,9 +2,9 @@ import { useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { m, AnimatePresence } from 'framer-motion';
-import { BookOpen, Plus, StickyNote, Trash2 } from 'lucide-react';
 import { ExerciseSelector } from '@shared/components/ExerciseSelector';
 import type { ExerciseNote } from '@shared/lib/types';
+import { BookOpen, Plus, Stickynote, Trash2 } from '@shared/components/icons';
 
 interface ExercisePickerProps {
   userId: string;
@@ -85,7 +85,7 @@ export function ExercisePicker({
               notes.length > 0 ? 'border-accent text-accent' : 'border-line text-fg-subtle'
             }`}
           >
-            <StickyNote className="h-4 w-4" />
+            <Stickynote className="h-4 w-4" />
             {notes.length > 0 && (
               <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-pill bg-accent px-1 text-[0.625rem] font-bold text-accent-fg">
                 {notes.length}

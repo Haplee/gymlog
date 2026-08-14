@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { Plus, Repeat } from 'lucide-react';
 import type { WorkoutWithSets } from '@shared/lib/types';
+import { Plus, Repeat } from '@shared/components/icons';
 
 interface EmptyWorkoutStateProps {
   onAddSet: () => void;

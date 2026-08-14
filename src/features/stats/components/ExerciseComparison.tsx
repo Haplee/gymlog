@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { m } from 'framer-motion';
-import { TrendingUp } from 'lucide-react';
+import { TrendUp } from '@shared/components/icons';
 
 // recharts es pesado: se carga bajo demanda, igual que en la página.
 const ExerciseComparisonChart = lazy(() =>
@@ -45,7 +45,7 @@ export function ExerciseComparison({
       className="rounded-card p-4 bg-surface"
     >
       <div className="flex items-center gap-2 mb-3">
-        <TrendingUp className="w-4 h-4 text-accent" />
+        <TrendUp className="w-4 h-4 text-accent" />
         <span className="text-sm font-semibold text-fg">{t('stats.compare_exercises')}</span>
       </div>
       <div className="grid grid-cols-2 gap-2 mb-3">

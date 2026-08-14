@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight } from '@shared/components/icons';
 
 /**
  * Fila de una lista que lleva a otra pantalla: icono en círculo de acento,

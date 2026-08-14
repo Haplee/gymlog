@@ -1,7 +1,7 @@
 import { useLocation, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { Sparkles, X } from 'lucide-react';
 import { readSuggestionFromState } from '../utils/suggestionTarget';
+import { Sparkles, X } from '@shared/components/icons';
 
 /**
  * Recordatorio de la sugerencia que el usuario acaba de aceptar en `/coach`.

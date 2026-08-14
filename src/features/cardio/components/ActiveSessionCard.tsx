@@ -6,7 +6,7 @@ import { CardioTypeIcon } from '@shared/components/CardioIcons';
 import { impact, notificationHaptic, ImpactStyle, NotificationType } from '@shared/lib/haptics';
 import { formatSeconds } from '@shared/lib/duration';
 import { useVisibilityPausedInterval } from '@shared/hooks/useVisibilityPausedInterval';
-import { Play, Pause, Square } from 'lucide-react';
+import { Pause, Play, Stop } from '@shared/components/icons';
 
 /**
  * Cronómetro gigante con décimas, aislado en su propio componente: el tick de
@@ -128,7 +128,7 @@ export function ActiveSessionCard({ userId }: { userId: string | null }) {
               onClick={handleStop}
               className="flex-1 min-h-12 rounded-sm flex items-center justify-center gap-2 text-sm font-display font-bold uppercase tracking-[0.1em] bg-transparent border border-line-strong text-fg transition-transform active:scale-[0.98]"
             >
-              <Square className="w-4 h-4" />
+              <Stop className="w-4 h-4" />
               {t('cardio.finish')}
             </button>
           </div>

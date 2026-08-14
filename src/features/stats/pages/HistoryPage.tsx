@@ -27,7 +27,15 @@ import { HEALTH_SESSIONS_KEY, fetchHealthSessions } from '@features/wearables/ap
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useHistoryTransfer } from '@features/stats/hooks/useHistoryTransfer';
-import { Trash2, Repeat, Share2, Pencil, BookmarkPlus, HeartPulse, Upload } from 'lucide-react';
+import {
+  BookmarkAdd,
+  Edit,
+  HeartPulse,
+  Repeat,
+  Share,
+  Trash2,
+  Upload,
+} from '@shared/components/icons';
 
 interface GroupedWorkout {
   date: string;
@@ -291,7 +299,7 @@ export function HistoryPage() {
                       className="flex items-center gap-1 text-2xs font-semibold text-accent"
                       title={t('history.save_as_template')}
                     >
-                      <BookmarkPlus className="w-3.5 h-3.5" />
+                      <BookmarkAdd className="w-3.5 h-3.5" />
                       {t('history.save_as_template')}
                     </button>
                   )}
@@ -397,7 +405,7 @@ export function HistoryPage() {
                                 onClick={() => setEditWorkout(item.data)}
                                 className="flex items-center gap-1 text-xs font-semibold text-fg-muted"
                               >
-                                <Pencil className="w-3.5 h-3.5" />
+                                <Edit className="w-3.5 h-3.5" />
                                 {t('history.edit')}
                               </button>
                               <button
@@ -429,7 +437,7 @@ export function HistoryPage() {
                                 }}
                                 className="flex items-center gap-1 text-xs font-semibold text-fg-muted"
                               >
-                                <Share2 className="w-3.5 h-3.5" />
+                                <Share className="w-3.5 h-3.5" />
                                 {t('history.share')}
                               </button>
                             </div>
@@ -598,7 +606,7 @@ export function HistoryPage() {
                       className="flex items-center gap-1 text-xs font-semibold text-accent"
                       aria-label={t('history.save_as_template')}
                     >
-                      <BookmarkPlus className="w-3.5 h-3.5" />
+                      <BookmarkAdd className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
@@ -617,7 +625,7 @@ export function HistoryPage() {
                           onClick={() => setEditWorkout(wo)}
                           className="flex items-center gap-1 text-xs font-semibold text-fg-muted"
                         >
-                          <Pencil className="w-3.5 h-3.5" />
+                          <Edit className="w-3.5 h-3.5" />
                           {t('history.edit')}
                         </button>
                         <button
@@ -646,7 +654,7 @@ export function HistoryPage() {
                           }}
                           className="flex items-center gap-1 text-xs font-semibold text-fg-muted"
                         >
-                          <Share2 className="w-3.5 h-3.5" />
+                          <Share className="w-3.5 h-3.5" />
                           {t('history.share')}
                         </button>
                       </div>

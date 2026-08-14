@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { m } from 'framer-motion';
-import { ArrowLeft, ChevronRight, Search } from 'lucide-react';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { Layout } from '@app/components/Layout';
 import { fetchExerciseLibrary, type LibraryExercise } from '@shared/api/queries';
@@ -12,6 +11,7 @@ import { Chip, SegmentedControl } from '@shared/components/ui';
 import { ExerciseCatalog } from '@features/workout/components/ExerciseCatalog';
 import { EquipmentIcon } from '@shared/components/icons/EquipmentIcons';
 import { LoadTypeBadge } from '@shared/components/LoadTypeBadge';
+import { ArrowLeft, ChevronRight, Search } from '@shared/components/icons';
 
 function ExerciseDetail({ ex }: { ex: LibraryExercise }) {
   const { t } = useTranslation();
