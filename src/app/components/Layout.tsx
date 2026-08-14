@@ -26,6 +26,7 @@ import { ExerciseSearchSheet } from '@features/workout/components/ExerciseSearch
 import { useNotificationsStore, selectUnreadCount } from '@shared/stores/notificationsStore';
 import { useWearableSync } from '@features/wearables/hooks/useWearableSync';
 import { registerBackAction } from '@shared/lib/backHandler';
+import { useCardioStore } from '@features/cardio/stores/cardioStore';
 
 interface LayoutProps {
   children: ReactNode;
@@ -90,6 +91,7 @@ export function Layout({ children }: LayoutProps) {
   const workoutStartedAt = useWorkoutStore((s) => s.startedAt);
   const pendingSync = useOutboxStore((s) => s.pending);
   const trainBadge = !!workoutStartedAt && workoutSets.length > 0;
+  const cardioActive = useCardioStore((s) => s.isActive);
   const [searchOpen, setSearchOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const unreadCount = useNotificationsStore(selectUnreadCount);
@@ -156,7 +158,10 @@ export function Layout({ children }: LayoutProps) {
     { path: '/', Icon: IconHome, label: t('nav.home'), badge: trainBadge },
     { path: '/routines', Icon: IconDumbbell, label: t('nav.routines'), badge: false },
     { path: '/history', Icon: IconHistory, label: t('history.title'), badge: false },
-    { path: '/cardio', Icon: IconPulse, label: t('nav.cardio'), badge: false },
+    // El punto de «cardio en marcha» vivía en el cajón, de cuando cardio no
+    // tenía pestaña propia. Ahora la tiene, así que el aviso va donde está el
+    // destino y el cajón deja de duplicarlo.
+    { path: '/cardio', Icon: IconPulse, label: t('nav.cardio'), badge: cardioActive },
   ];
 
   // El descanso termina (y suena) aunque el usuario esté en otra pestaña.

@@ -58,16 +58,19 @@ test.describe('Sesión de entrenamiento (autenticado)', () => {
     });
   });
 
-  test('la barra inferior lleva a las cinco pestañas', async ({ page }) => {
+  // Este test y el siguiente describían una barra de cinco pestañas con «Stats»
+  // y «Ajustes». No existe: el reskin la dejó en cuatro y movió esos dos
+  // destinos al cajón. Nadie se enteró porque el fichero entero se salta sin
+  // E2E_EMAIL/E2E_PASSWORD, así que llevaban meses sin ejecutarse.
+  test('la barra inferior lleva a las cuatro pestañas', async ({ page }) => {
     await login(page);
 
     // Los rótulos son los del rediseño; si alguien renombra una pestaña sin
     // tocar la ruta, esto lo caza.
     for (const [name, path] of [
       ['Rutinas', '/routines'],
+      ['Historial', '/history'],
       ['Cardio', '/cardio'],
-      ['Stats', '/stats'],
-      ['Ajustes', '/settings'],
       ['Inicio', '/'],
     ] as const) {
       await page.getByRole('link', { name, exact: true }).click();
@@ -77,13 +80,31 @@ test.describe('Sesión de entrenamiento (autenticado)', () => {
 
   test('el menú no repite destinos de la barra inferior', async ({ page }) => {
     await login(page);
-    await page.getByRole('button', { name: /menú|menu/i }).click();
 
+    // Las rutas de la barra, leídas de la barra misma: así el test sigue
+    // valiendo si mañana se añade o se quita una pestaña.
+    // La barra se monta con el Layout, después de que `login` resuelva.
+    await page.locator('nav a[href]').first().waitFor({ state: 'attached' });
+    const enLaBarra = await page.evaluate(() => {
+      const barra = [...document.querySelectorAll('nav')].find((n) => n.querySelector('a[href]'));
+      return [...(barra?.querySelectorAll('a[href]') ?? [])].map(
+        (a) => new URL((a as HTMLAnchorElement).href).pathname,
+      );
+    });
+    expect(enLaBarra.length).toBeGreaterThan(0);
+
+    await page.getByRole('button', { name: /menú|menu/i }).click();
     const drawer = page.getByRole('dialog');
     await expect(drawer).toBeVisible();
-    // Ajustes vive en la barra y en el icono de usuario: en el cajón sobra.
-    await expect(drawer.getByRole('link', { name: 'Ajustes', exact: true })).toHaveCount(0);
-    await expect(drawer.getByRole('link', { name: /historial/i })).toBeVisible();
+
+    const enElCajon = await drawer
+      .getByRole('link')
+      .evaluateAll((as) => as.map((a) => new URL((a as HTMLAnchorElement).href).pathname));
+    const repetidos = enElCajon.filter((p) => enLaBarra.includes(p));
+    expect(repetidos, `el cajón repite destinos de la barra: ${repetidos.join(', ')}`).toEqual([]);
+
+    // Y sí debe ofrecer lo que la barra no tiene.
+    expect(enElCajon).toContain('/settings');
   });
 
   test('anota una serie y la guarda', async ({ page }) => {

@@ -2,14 +2,12 @@ import { useEffect, useRef } from 'react';
 import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { m } from 'framer-motion';
-import { useCardioStore } from '@features/cardio/stores/cardioStore';
 import {
   Bell,
   IconBook,
   IconChart,
   IconDumbbell,
   IconGear,
-  IconPulse,
   IconRuler,
   IconSearch,
   IconStar,
@@ -43,10 +41,6 @@ interface AppDrawerProps {
 export function AppDrawer({ onClose, onOpenSearch, unreadCount }: AppDrawerProps) {
   const { t } = useTranslation();
   const panelRef = useRef<HTMLDivElement>(null);
-  // Sesión de cardio en marcha: el cajón mantiene el punto que antes llevaba su
-  // pestaña en la barra inferior.
-  const cardioActive = useCardioStore((s) => s.isActive);
-
   // Escape cierra, y el foco entra en el panel para que el lector de pantalla no
   // siga leyendo la página de debajo.
   useEffect(() => {
@@ -68,7 +62,6 @@ export function AppDrawer({ onClose, onOpenSearch, unreadCount }: AppDrawerProps
       title: t('nav.group_training'),
       links: [
         { to: '/stats', Icon: IconChart, label: t('nav.stats') },
-        { to: '/cardio', Icon: IconPulse, label: t('nav.cardio'), badge: cardioActive },
         { to: '/exercises', Icon: IconDumbbell, label: t('library.title') },
         { to: '/user-stats', Icon: IconRuler, label: t('settings.my_measurements') },
       ],
