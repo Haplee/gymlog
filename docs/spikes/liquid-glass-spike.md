@@ -1,17 +1,17 @@
 # Spike — Liquid Glass + iconos Reicon (Fase 0)
 
-> **Fecha:** 2026-08-13 · **Rama:** `spike/liquid-glass`
+> **Fecha:** 2026-08-13, ampliado el 2026-08-14 · **Rama:** `spike/liquid-glass`
 > **Plan de referencia:** `docs/PLAN_LIQUID_GLASS_REICON.md`
-> **Estado:** completado salvo 0.3/0.4 (requieren teléfono conectado)
+> **Estado:** Fase 0 completada. 0.3/0.4 medidos el 14-ago en una Galaxy Tab A7.
 
 ---
 
 ## Decisión de la puerta G0 (2026-08-13)
 
-| Punto | Decisión |
-| --- | --- |
+| Punto    | Decisión                                                  |
+| -------- | --------------------------------------------------------- |
 | Material | **Ámbar confirmado** — Liquid Glass sin `backdrop-filter` |
-| Iconos | **`reicon-react` como dependencia real**, no vendorizado |
+| Iconos   | **`reicon-react` como dependencia real**, no vendorizado  |
 
 Sobre los iconos, la decisión va contra la recomendación del spike y se toma a
 sabiendas: se prefiere la dependencia mantenida (actualizaciones e iconos nuevos
@@ -152,12 +152,37 @@ teléfono se use para medirlo.
 solo en `text-tertiary` sobre el peor caso (3,29:1 y 4,44:1). Regla derivada: en claro,
 `text-tertiary` no se pone nunca sobre `glass-1`/`glass-2`.
 
-## 0.3 / 0.4 — Rendimiento ⏸️ NO EJECUTADO
+## 0.3 / 0.4 — Rendimiento ✅ PASA (medido el 2026-08-14)
 
-Requiere teléfono Android conectado. En el momento del spike: `adb devices` vacío y el
-daemon de MobAI (`127.0.0.1:8686`) sin responder.
+**Dispositivo:** Samsung Galaxy Tab A7 (SM-T505), Android 12, WebView 151, 1200×2000 @
+240 dpi. Es gama media-baja de 2020, o sea el hardware que motivó quitar el blur en julio:
+si el material aguanta aquí, aguanta en cualquier cosa más nueva.
 
-**Pero el proyecto ya tiene la respuesta medida, de julio.** `docs/audits/ANALISIS_LOGICA.md`
+**Método:** `dumpsys gfxinfo com.android.chrome reset`, 16 swipes de scroll sobre el
+prototipo `/fitbody` con las tres capas en pantalla, y volcado al terminar.
+
+| Métrica        | Medido         | Criterio |
+| -------------- | -------------- | -------- |
+| Frames         | 384            | —        |
+| Janky          | **1 (0,26 %)** | < 5 %    |
+| p50            | 6 ms           | —        |
+| p90            | 7 ms           | —        |
+| p99            | **11 ms**      | < 16,7   |
+| Missed Vsync   | 1              | —        |
+| Slow UI thread | 0              | —        |
+
+El histograma se concentra entre 5 y 7 ms (358 de 384 frames). **El vidrio sin
+`backdrop-filter` no cuesta un solo frame**: hay un único frame de 40 ms en toda la
+tanda, compatible con el arranque del gesto.
+
+Esto confirma la decisión de G0 por el lado del rendimiento, que era el que faltaba.
+La decisión ya se sostenía sola por contraste (0.7), pero ahora hay cifra propia.
+
+**Lo que NO prueba esta medición:** que el blur habría ido mal. No se midió la variante
+con `backdrop-filter` porque el ámbar ya estaba decidido y el blur descartado por
+contraste. Para eso sigue valiendo la medida de julio, abajo.
+
+**El proyecto ya tenía la respuesta, de julio.** `docs/audits/ANALISIS_LOGICA.md`
 §9.4 documenta el problema y `AUDIT_REPORT_2026-07-11.md` línea 98 lo clasifica como
 🟡 Media:
 
@@ -170,8 +195,44 @@ desactiva el blur y se compensa con un fondo más opaco. Es decir, **este proyec
 probó el blur en Android, lo midió, y lo quitó.** El plan proponía volver a introducirlo
 en headers y bottom nav fijos, que es un caso peor que el que ya se descartó.
 
-Aun así, conviene ejecutar 0.3/0.4 cuando haya teléfono, para tener la cifra propia.
-No cambia la recomendación; la confirmaría.
+## 0.8 — El acento no es uno, son 24 ❗ corrige a 0.7 (2026-08-14)
+
+**Todo 0.7 se midió contra `#ffd93d`, y eso era insuficiente.** El acento lo elige el
+usuario en Ajustes: `src/shared/constants/accents.ts` define **24 presets**, y varios son
+más claros que el amarillo. El peor no es el amarillo sino `lime #cbf24c` (luminancia
+0,767 frente a 0,712).
+
+Además, 0.7 midió las capas **sin contar el degradado del `::before`**, que en el
+material construido va encima y aclara la superficie. Con el velo aplicado, el peor
+caso real sobre los 24 acentos × 3 capas:
+
+| Velo blanco | Peor contraste | AA 4,5 |
+| ----------- | -------------- | ------ |
+| 0,05        | **4,20:1**     | ❌     |
+| 0,02        | **4,59:1**     | ✅     |
+
+El techo para mantener 4,5:1 es **0,027**. Se fija en 0,02 para dejar margen.
+
+Dos cosas que conviene no confundir:
+
+1. **El problema no es la translucidez, es el velo.** Esa misma capa sin degradado da
+   4,93:1. Lo que rompe el AA es aclarar el área, no dejar pasar el fondo.
+2. **El único texto en riesgo es `--text-tertiary`.** Nace justo en el filo del AA
+   (6,23:1 sobre el canvas), así que cualquier aclarado lo hunde. `--text-primary` y
+   `--text-secondary` se quedan en 10,4:1 y 7,9:1 — no se acercan al límite.
+
+**Regla de diseño que sale de aquí:** el presupuesto de luz se gasta en el **canto**
+(`--glass-edge-top`, `--glass-sheen`), no en el **área** (`--glass-veil`). Aclarar 1 px
+de borde no toca el contraste del texto; aclarar toda la superficie sí. Por eso al bajar
+el velo de 0,05 a 0,02 se subieron edge-top (0,14 → 0,18) y sheen (0,08 → 0,11): el
+material conserva la lectura de vidrio sin pagarla en legibilidad. Comprobado en la
+tablet con el acento `lavender` puesto.
+
+**Tema claro: no necesita cambio.** Ahí el velo blanco al 60 % lava el acento hacia el
+blanco y el texto es oscuro, así que el peor caso de los 24 queda en **5,63:1** (`rose`).
+
+Aplicado en `tokens.css`. Cualquier acento nuevo que se añada a `accents.ts` tiene que
+volver a pasar esta cuenta.
 
 ---
 
@@ -184,13 +245,17 @@ No cambia la recomendación; la confirmaría.
 2. **Los tokens `--glass-bg-*` de oscuro del plan hay que rehacerlos.** Los valores
    0,04/0,07/0,10 con velo blanco no son usables. En oscuro el velo tiene que ser
    **oscuro** y alto (≥ 85 %), no blanco y bajo.
-3. **Iconos: vendorizar, no depender del paquete.** Script de extracción que tome los
-   ~80 SVG usados, se quede con el peso Outline y redondee a 2 decimales. La capa
-   `shared/components/icons/` sigue siendo la buena idea del plan.
-4. **`reicon-react` se puede desinstalar** al terminar: solo hace falta como fuente de
-   los SVG durante la extracción, no en runtime.
-5. **La Fase 1 (auditoría con capturas) sigue bloqueada** por el teléfono, pero no
-   bloquea el diseño del sistema.
+3. **Iconos: `reicon-react` como dependencia real.** ~~Vendorizar~~ — la recomendación
+   de vendorizar queda **descartada por decisión de la puerta G0** (ver arriba). La capa
+   `shared/components/icons/` sigue siendo la buena idea del plan, y es lo que permitiría
+   cambiar de opinión más adelante tocando un solo fichero.
+4. ~~`reicon-react` se puede desinstalar~~ — no: se queda en runtime.
+5. **La Fase 1 (auditoría con capturas) ya no está bloqueada:** hay tablet conectada
+   (Galaxy Tab A7 vía adb). Ojo con una diferencia: la tablet da 800 px lógicos de ancho,
+   no los ~390 px del móvil, así que las capturas de la Fase 1 no valen tal cual para
+   juzgar la densidad móvil.
+6. **El velo del vidrio depende de `accents.ts`.** Ver 0.8: 24 acentos, no uno. Si se
+   añade un acento más claro que `lime #cbf24c`, hay que recalcular.
 
 ---
 
