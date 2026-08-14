@@ -47,6 +47,9 @@ export {
   InfoCircle,
   Sparkle,
   Loader,
+  // Formularios
+  Eye,
+  EyeOff,
 } from 'reicon-react';
 
 // ── SVG propios de dominio ──────────────────────────
