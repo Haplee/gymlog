@@ -484,7 +484,10 @@ export const addBodyMeasurement = async (
 
 /** Guarda (o actualiza) el peso corporal de hoy. Upsert por (user_id, date). */
 export const upsertTodayWeight = async (userId: string, weightKg: number): Promise<void> => {
-  const today = new Date().toISOString().split('T')[0];
+  // Fecha local, no UTC: pesarse un lunes a las 00:30 en España se guardaba con
+  // fecha de domingo, y el aviso semanal (que solo sale los lunes) volvía a
+  // salir por no encontrar registro de ese lunes.
+  const today = toLocalDateKey(new Date());
   const { error } = await supabase
     .from('body_measurements')
     .upsert({ user_id: userId, date: today, weight_kg: weightKg }, { onConflict: 'user_id,date' });

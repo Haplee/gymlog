@@ -5,7 +5,8 @@ import { m } from 'framer-motion';
 import { Scale, X } from 'lucide-react';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { fetchBodyMeasurements, upsertTodayWeight } from '@shared/api/queries';
-import { daysSinceLastWeight } from '@features/workout/utils/bodyweight';
+import { toLocalDateKey } from '@shared/lib/dateKeys';
+import { isWeightPromptDue } from '@features/workout/utils/bodyweight';
 
 const DISMISS_KEY = 'gymlog-weight-prompt-dismissed';
 
@@ -21,8 +22,11 @@ function currentWeekKey(): string {
 }
 
 /**
- * Pide el peso corporal ~1 vez por semana (si hace >7 días o nunca) y lo guarda
- * en body_measurements. Dismissable; no reaparece hasta la siguiente semana.
+ * Pide el peso corporal una vez por semana, **solo los lunes**, y lo guarda en
+ * body_measurements. Descartable; no reaparece hasta el lunes siguiente.
+ *
+ * El "solo los lunes" es el requisito, no un detalle: la regla vive en
+ * `isWeightPromptDue`, que explica por qué el día fijo importa.
  */
 export function WeeklyWeightPrompt() {
   const { t } = useTranslation();
@@ -49,9 +53,7 @@ export function WeeklyWeightPrompt() {
     },
   });
 
-  const today = new Date().toISOString().split('T')[0];
-  const days = daysSinceLastWeight(measurements, today);
-  const due = days === null || days >= 7;
+  const due = isWeightPromptDue(measurements, toLocalDateKey(new Date()));
 
   if (!user?.id || dismissedThisWeek || !due || saveMutation.isSuccess) return null;
 
