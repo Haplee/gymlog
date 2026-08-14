@@ -36,6 +36,7 @@ import {
   type ExcelRoutineRow,
 } from '../utils/excelExport';
 import { parseXlsxFile, DAY_LABELS, type ParsedImport } from '../utils/excelImport';
+import { parseImportedWorkouts } from '../utils/importSchema';
 import { applyExcelImport } from '../utils/applyExcelImport';
 
 /**
@@ -54,7 +55,8 @@ import { applyExcelImport } from '../utils/applyExcelImport';
  * por (fecha, ejercicio, set_num), y se abre un dialogo de confirmacion. Solo al
  * confirmar se inserta, saltandose las series duplicadas.
  */
-type PendingImport = { kind: 'json'; workouts: unknown[] } | { kind: 'excel'; parsed: ParsedImport };
+type PendingImport =
+  { kind: 'json'; workouts: unknown[] } | { kind: 'excel'; parsed: ParsedImport };
 
 /** Conteo de lo que entraria al confirmar un import pendiente. */
 interface ImportSummary {
@@ -67,42 +69,22 @@ interface ImportSummary {
 }
 
 /** Resumen de un JSON pendiente: entrenos, series y duplicadas ya existentes. */
-function previewJsonImport(
-  importedWorkouts: unknown[],
-  existingKeys: Set<string>,
-): ImportSummary {
-  let workoutCount = 0;
+function previewJsonImport(importedWorkouts: unknown, existingKeys: Set<string>): ImportSummary {
+  const { workouts } = parseImportedWorkouts(importedWorkouts);
+
   let setsCount = 0;
   const candidates: DedupCandidate[] = [];
-  for (const raw of importedWorkouts) {
-    const w = raw as Record<string, unknown>;
-    const sets = Array.isArray(w?.sets) ? (w.sets as unknown[]) : [];
-    if (sets.length === 0) continue;
-    const startedAt = String(w?.started_at ?? '');
-    const date = startedAt.split('T')[0] || new Date().toISOString().split('T')[0];
-    const byExercise = new Map<string, unknown[]>();
-    for (const rawSet of sets) {
-      const s = rawSet as Record<string, unknown>;
-      const exName = String(s?.exercise ?? '').trim();
-      if (!exName) continue;
-      const group = byExercise.get(exName) ?? [];
-      group.push(rawSet);
-      byExercise.set(exName, group);
-    }
-    let hasValid = false;
-    for (const [exName, exSets] of byExercise) {
-      exSets.forEach((rawSet, i) => {
-        const s = rawSet as Record<string, unknown>;
-        if (Number(s?.reps) <= 0) return;
-        hasValid = true;
+  for (const workout of workouts) {
+    for (const [exercise, sets] of workout.byExercise) {
+      sets.forEach((s, i) => {
         setsCount++;
-        candidates.push({ date, exercise: exName, setNum: Number(s?.set_num) || i + 1 });
+        candidates.push({ date: workout.date, exercise, setNum: s.set_num ?? i + 1 });
       });
     }
-    if (hasValid) workoutCount++;
   }
+
   return {
-    workouts: workoutCount,
+    workouts: workouts.length,
     sets: setsCount,
     cardio: 0,
     routines: 0,
@@ -243,7 +225,8 @@ export function useHistoryTransfer({
   // cuantas series ya existen y se saltarian (fecha, ejercicio, set_num).
   const pendingImportSummary = useMemo<ImportSummary | null>(() => {
     if (!pendingImport) return null;
-    if (pendingImport.kind === 'json') return previewJsonImport(pendingImport.workouts, existingKeys);
+    if (pendingImport.kind === 'json')
+      return previewJsonImport(pendingImport.workouts, existingKeys);
     return {
       workouts: 0,
       sets: pendingImport.parsed.strength.length,
@@ -289,9 +272,7 @@ export function useHistoryTransfer({
       const resolveExerciseId = async (name: string): Promise<string | null> => {
         const clean = (name || '').trim();
         if (clean.length < 2) return null;
-        const existing = exerciseList.find(
-          (ex) => ex?.name?.toLowerCase() === clean.toLowerCase(),
-        );
+        const existing = exerciseList.find((ex) => ex?.name?.toLowerCase() === clean.toLowerCase());
         if (existing?.id) return existing.id;
         const { data: newEx, error } = await supabase
           .from('exercises')
@@ -325,41 +306,25 @@ export function useHistoryTransfer({
       let workoutsImported = 0;
       let skipped = 0;
 
-      for (const raw of importedWorkouts) {
-        const w = raw as Record<string, unknown>;
-        const sets = Array.isArray(w?.sets) ? (w.sets as unknown[]) : [];
-        // Agrupa sets por ejercicio: la RPC guarda un ejercicio por llamada.
-        const byExercise = new Map<string, unknown[]>();
-        for (const rawSet of sets) {
-          const s = rawSet as Record<string, unknown>;
-          const exName = String(s?.exercise ?? '').trim();
-          if (!exName) continue;
-          const group = byExercise.get(exName) ?? [];
-          group.push(rawSet);
-          byExercise.set(exName, group);
-        }
-        const startedAt = String(w?.started_at ?? '') || new Date().toISOString();
-        const finishedAt = String(w?.finished_at ?? '') || startedAt;
-        const date = startedAt.split('T')[0];
+      // Se valida una sola vez, aquí: a partir de este punto las series ya son
+      // números dentro de rango y no hace falta volver a desconfiar de ellas.
+      const { workouts: parsedWorkouts } = parseImportedWorkouts(importedWorkouts);
 
+      for (const { startedAt, finishedAt, date, byExercise } of parsedWorkouts) {
         let savedAny = false;
         for (const [exName, exSets] of byExercise) {
           const exerciseId = await resolveExerciseId(exName);
           if (!exerciseId) continue;
           const setsPayload = exSets
-            .map((rawSet, i) => {
-              const s = rawSet as Record<string, unknown>;
-              return {
-                set_num: Number(s.set_num) || i + 1,
-                reps: Number(s.reps) || 0,
-                weight: Number(s.weight) || 0,
-                is_warmup: !!s.is_warmup,
-                notes: typeof s.notes === 'string' ? s.notes : '',
-                rpe: s.rpe != null ? String(s.rpe) : '',
-              };
-            })
-            .filter((s: { reps: number; set_num: number }) => {
-              if (s.reps <= 0) return false;
+            .map((s, i) => ({
+              set_num: s.set_num ?? i + 1,
+              reps: s.reps,
+              weight: s.weight,
+              is_warmup: s.is_warmup,
+              notes: s.notes,
+              rpe: s.rpe,
+            }))
+            .filter((s) => {
               const key = makeDedupKey(date, exName, s.set_num);
               if (dedupeKeys.has(key)) {
                 skipped++;

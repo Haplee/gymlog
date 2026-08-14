@@ -1,5 +1,6 @@
 import { supabase } from '@shared/lib/supabase';
 import { devError, devWarn } from '@shared/lib/devtools';
+import { parseRemoteWorkouts } from './schemas';
 import { groupSetsBySession } from './sessionGrouping';
 import type { ExerciseSessionSets } from './sessionGrouping';
 import { toLocalDateKey } from '@shared/lib/dateKeys';
@@ -11,14 +12,6 @@ import type {
   ExerciseNote,
   ExerciseMuscle,
 } from '@shared/lib/types';
-
-const mapWorkout = (wo: Record<string, unknown>): WorkoutWithSets =>
-  ({
-    ...wo,
-    started_at: wo.started_at,
-    ended_at: wo.finished_at,
-    sets: (wo.sets as WorkoutSetWithDetails[]) ?? [],
-  }) as unknown as WorkoutWithSets;
 
 /**
  * Resuelve workouts + sets anidados en una sola llamada RPC (join en servidor),
@@ -43,7 +36,7 @@ const fetchWorkoutsWithSets = async (
     return legacyFetchWorkoutsWithSets(userId, limit, cursor);
   }
 
-  return ((data as Record<string, unknown>[]) || []).map(mapWorkout);
+  return parseRemoteWorkouts(data);
 };
 
 /** Camino legacy: workouts + sets en dos queries con `.in` (solo fallback). */
@@ -77,8 +70,10 @@ const legacyFetchWorkoutsWithSets = async (
 
   if (setsError) throw setsError;
 
-  return workouts.map((wo) =>
-    mapWorkout({ ...wo, sets: (allSets || []).filter((s) => s.workout_id === wo.id) }),
+  // Mismo validador que el camino de la RPC: el fallback no puede tener menos
+  // garantías que el principal solo por ser el fallback.
+  return parseRemoteWorkouts(
+    workouts.map((wo) => ({ ...wo, sets: (allSets || []).filter((s) => s.workout_id === wo.id) })),
   );
 };
 

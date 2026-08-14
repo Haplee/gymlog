@@ -1,10 +1,9 @@
 import { create } from 'zustand';
 import { DEFAULT_MUSCLE_GROUP } from '@shared/constants/muscleGroups';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { supabase } from '@shared/lib/supabase';
 import { devError } from '@shared/lib/devtools';
-import { enqueueWorkout, isNetworkError, type OutboxSet } from '@shared/lib/workoutOutbox';
-import { resolveOrCreateExercise } from '@shared/lib/resolveOrCreateExercise';
+import { enqueueWorkout, type OutboxSet } from '@shared/lib/workoutOutbox';
+import { saveWorkoutOrQueue } from '@shared/lib/saveWorkout';
 import { useOutboxStore } from '@shared/stores/outboxStore';
 import { normalizeExerciseName } from '@shared/lib/progressionCycle';
 import type { DayOfWeek, DayRoutine, Routine } from './routineStore';
@@ -228,9 +227,7 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
         // El esquema guarda un `workout` por ejercicio: la sesión de rutina se
         // escribe como N entrenos que comparten started_at/finished_at, de modo
         // que el historial (que agrupa por día) los muestre como una sesión.
-        // `pending` es solo lo que aún NO se ha escrito: si la red cae a mitad,
-        // encolar la lista entera duplicaría los ejercicios ya guardados.
-        const queueOffline = async (pending: typeof done, alreadySaved: number) => {
+        const enqueueRest = async (pending: typeof done) => {
           for (const ex of pending) {
             await enqueueWorkout({
               id: ex.clientId,
@@ -245,52 +242,47 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
               createdAt: new Date().toISOString(),
             });
           }
-          set({ ...emptySession });
-          void useOutboxStore.getState().refresh();
-          return {
-            error: null,
-            success: true,
-            queued: true,
-            savedExercises: alreadySaved + pending.length,
-          };
         };
 
-        if (typeof navigator !== 'undefined' && !navigator.onLine) {
-          return queueOffline(done, 0);
-        }
+        const finishQueued = async (savedExercises: number) => {
+          set({ ...emptySession });
+          void useOutboxStore.getState().refresh();
+          return { error: null, success: true, queued: true, savedExercises };
+        };
 
         let saved = 0;
-        try {
-          for (const ex of done) {
-            const exerciseId =
-              resolveExerciseId(ex.name) ??
-              (await resolveOrCreateExercise(userId, ex.name, DEFAULT_MUSCLE_GROUP));
+        for (const [i, ex] of done.entries()) {
+          const outcome = await saveWorkoutOrQueue({
+            clientId: ex.clientId,
+            userId,
+            exerciseId: resolveExerciseId(ex.name),
+            customExerciseName: ex.name,
+            customMuscleGroup: DEFAULT_MUSCLE_GROUP,
+            startedAt: started,
+            finishedAt: finished,
+            sets: ex.sets,
+            notes,
+          });
 
-            const { error } = await supabase.rpc('save_workout_with_sets', {
-              p_user_id: userId,
-              p_exercise_id: exerciseId,
-              p_started_at: started,
-              p_finished_at: finished,
-              p_sets: ex.sets,
-              p_notes: notes,
-              p_rating: undefined,
-              p_client_id: ex.clientId,
-            });
-            if (error) throw error;
-            saved += 1;
+          if (outcome.status === 'error') {
+            set({ saving: false });
+            devError('[RoutineSession] finish:', outcome.error.message);
+            return { error: outcome.error, success: false, savedExercises: saved };
           }
 
-          set({ ...emptySession });
-          return { error: null, success: true, savedExercises: saved };
-        } catch (err) {
-          set({ saving: false });
-          if (isNetworkError(err)) {
-            return queueOffline(done.slice(saved), saved);
+          if (outcome.status === 'queued') {
+            // Este ya está en la cola; faltan los que ni se han intentado. El
+            // corte va en `i + 1` justamente por eso: encolar desde `i` lo
+            // metería dos veces.
+            await enqueueRest(done.slice(i + 1));
+            return finishQueued(done.length);
           }
-          const message = err instanceof Error ? err.message : 'Error guardando la rutina';
-          devError('[RoutineSession] finish:', message);
-          return { error: new Error(message), success: false, savedExercises: saved };
+
+          saved += 1;
         }
+
+        set({ ...emptySession });
+        return { error: null, success: true, savedExercises: saved };
       },
     }),
     {

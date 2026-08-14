@@ -20,6 +20,7 @@ import { useWorkoutReminder } from '@features/routine/hooks/useWorkoutReminder';
 import { useFatigueSuggestion } from '@features/stats/hooks/useFatigueSuggestion';
 import { getRoutineReminderDays } from '@features/routine/lib/routineReminders';
 import { useBackgroundNotifications } from '@shared/hooks/useBackgroundNotifications';
+import { useCapacitorListener } from '@shared/hooks/useCapacitorListener';
 import { Capacitor } from '@capacitor/core';
 import { initPredictiveBack, syncBackState } from '@shared/lib/backHandler';
 import { devLog, devError } from '@shared/lib/devtools';
@@ -279,6 +280,7 @@ function useWorkoutOutboxSync() {
 
 /** Mantiene el widget Android (racha + último entreno) al día. No-op en web/iOS. */
 function useWidgetSync() {
+  const queryClient = useQueryClient();
   const user = useAuthStore((s) => s.user);
   const accentColor = useSettingsStore((s) => s.accentColor);
   useEffect(() => {
@@ -286,7 +288,16 @@ function useWidgetSync() {
     let cancelled = false;
     const sync = async () => {
       try {
-        const workouts = await fetchWorkouts(user.id, 400);
+        // Por la caché, no por la red. Antes esto pedía 400 entrenos en cada
+        // `visibilitychange`, saltándose TanStack y el persister: volver a la
+        // app costaba una petición completa solo para pintar una racha.
+        // Compartiendo clave con la query que ya alimentan Layout e Historial,
+        // dentro del `staleTime` no viaja nada.
+        const workouts = await queryClient.fetchQuery({
+          queryKey: ['workouts', user.id],
+          queryFn: () => fetchWorkouts(user.id),
+          staleTime: 1000 * 60 * 5,
+        });
         if (cancelled) return;
         const streak = calculateCurrentStreak(workouts);
         const last = workouts[0];
@@ -295,14 +306,11 @@ function useWidgetSync() {
           : [];
         // El widget vive sobre fondo oscuro: usamos el preset oscuro del acento.
         const preset = getAccentPreset(accentColor).dark;
-        await updateWidget(
-          streak,
-          names.slice(0, 2).join(', '),
-          preset.primary,
-          preset.fg,
-        );
-      } catch {
-        /* ignore */
+        await updateWidget(streak, names.slice(0, 2).join(', '), preset.primary, preset.fg);
+      } catch (err) {
+        // El widget es accesorio: que falle no puede tumbar la app. Pero
+        // tragarse el error dejaba sin rastro un fallo de red o del plugin.
+        devError('[useWidgetSync]', err);
       }
     };
     void sync();
@@ -314,7 +322,7 @@ function useWidgetSync() {
       cancelled = true;
       document.removeEventListener('visibilitychange', onVis);
     };
-  }, [user?.id, accentColor]);
+  }, [user?.id, accentColor, queryClient]);
 }
 
 function AppRoutes() {
@@ -444,17 +452,14 @@ function AppRoutes() {
 
   // Re-bloquear al pasar a segundo plano, para que al volver pida biometría.
   // Listener propio (no comparte con el de appUrlOpen) para no arrastrar su
-  // removeAllListeners; se limpia con su propio handle.
-  useEffect(() => {
-    if (!isNative) return;
-    let handle: { remove: () => void } | undefined;
-    void CapApp.addListener('appStateChange', ({ isActive }) => {
+  // removeAllListeners.
+  useCapacitorListener(
+    'appStateChange',
+    ({ isActive }) => {
       if (!isActive && useSettingsStore.getState().biometricEnabled) setLocked(true);
-    }).then((h) => {
-      handle = h;
-    });
-    return () => handle?.remove();
-  }, [isNative]);
+    },
+    isNative,
+  );
 
   useEffect(() => {
     if (initialized && user) {

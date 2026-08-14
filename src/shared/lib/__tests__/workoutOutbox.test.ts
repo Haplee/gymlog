@@ -133,6 +133,46 @@ describe('workoutOutbox — persistencia y flush', () => {
     expect(await countPendingWorkouts()).toBe(0);
   });
 
+  // Regresión: `flushWorkoutOutbox` se dispara al arrancar y en el evento
+  // `online`, que el navegador puede emitir dos veces seguidas. Sin coalescer,
+  // ambas pasadas leen la misma cola y mandan los mismos entrenos.
+  it('dos flush concurrentes envían cada entreno una sola vez', async () => {
+    const { enqueueWorkout, flushWorkoutOutbox, countPendingWorkouts } = await loadOutbox();
+    // RPC lento: garantiza que la segunda llamada entra con la primera en vuelo.
+    rpcMock.mockImplementation(
+      () => new Promise((resolve) => setTimeout(() => resolve({ error: null }), 20)),
+    );
+
+    await enqueueWorkout(makeEntry({ id: 'a' }));
+    await enqueueWorkout(makeEntry({ id: 'b' }));
+
+    const [uno, dos] = await Promise.all([flushWorkoutOutbox(), flushWorkoutOutbox()]);
+
+    expect(rpcMock).toHaveBeenCalledTimes(2); // 2 entradas, no 4
+    expect(uno).toBe(2);
+    expect(dos).toBe(2); // la segunda se engancha al mismo flush
+    expect(await countPendingWorkouts()).toBe(0);
+  });
+
+  it('recoge lo encolado mientras el flush estaba en vuelo', async () => {
+    const { enqueueWorkout, flushWorkoutOutbox, countPendingWorkouts } = await loadOutbox();
+    rpcMock.mockImplementation(
+      () => new Promise((resolve) => setTimeout(() => resolve({ error: null }), 20)),
+    );
+
+    await enqueueWorkout(makeEntry({ id: 'primera' }));
+    const enVuelo = flushWorkoutOutbox();
+
+    // Entra un entreno nuevo y alguien pide otro flush: la pasada extra lo coge.
+    await enqueueWorkout(makeEntry({ id: 'tardia' }));
+    const segunda = flushWorkoutOutbox();
+
+    await Promise.all([enVuelo, segunda]);
+
+    expect(rpcMock).toHaveBeenCalledTimes(2);
+    expect(await countPendingWorkouts()).toBe(0);
+  });
+
   // Regresión: el servidor solo puede deduplicar si el reenvío trae la misma
   // clave. Sin esto, un RPC que se escribió pero cuya respuesta se perdió acaba
   // grabando el entreno dos veces (sesiones duplicadas en el historial).
