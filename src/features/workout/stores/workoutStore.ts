@@ -3,11 +3,9 @@ import { DEFAULT_MUSCLE_GROUP } from '@shared/constants/muscleGroups';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { createThrottledLocalStorage } from '@shared/lib/throttledStorage';
 import { z } from 'zod';
-import { supabase } from '@shared/lib/supabase';
 import type { WorkoutWithSets } from '@shared/lib/types';
 import { devError } from '@shared/lib/devtools';
-import { enqueueWorkout, isNetworkError } from '@shared/lib/workoutOutbox';
-import { resolveOrCreateExercise } from '@shared/lib/resolveOrCreateExercise';
+import { saveWorkoutOrQueue } from '@shared/lib/saveWorkout';
 import { useOutboxStore } from '@shared/stores/outboxStore';
 import { reconcileReminders } from '@shared/lib/reminderReconcile';
 import { getRoutineReminderDays } from '@features/routine/lib/routineReminders';
@@ -182,6 +180,10 @@ export const useWorkoutStore = create<WorkoutState>()(
         const finishedAt = new Date().toISOString();
         const notes = sessionNotes.trim() || undefined;
         const rating = sessionRating ?? undefined;
+        // Clave de idempotencia del envío. Se genera una vez y se reutiliza tanto
+        // en el intento directo como en la entrada del outbox: si el RPC llegó a
+        // escribirse y solo se perdió la respuesta, el reenvío no duplica nada.
+        const clientId = crypto.randomUUID();
 
         // En modo peso corporal el kg introducido es lastre; el peso guardado es
         // (peso corporal vigente + lastre) para que volumen/PRs sean correctos.
@@ -211,69 +213,36 @@ export const useWorkoutStore = create<WorkoutState>()(
             sessionRating: null,
           });
 
-        // Encola el entreno en IndexedDB para sincronizarlo al volver la conexión.
-        const queueOffline = async () => {
-          await enqueueWorkout({
-            id: crypto.randomUUID(),
-            userId,
-            exerciseId: activeExerciseId,
-            customExerciseName: customExerciseName.trim(),
-            customMuscleGroup,
-            startedAt,
-            finishedAt,
-            sets: setsPayload,
-            notes,
-            rating,
-            createdAt: new Date().toISOString(),
-          });
+        // Ya ha entrenado hoy: silencia los recordatorios de hoy al instante.
+        const onSaved = () => {
           resetState();
-          void useOutboxStore.getState().refresh();
-          // Ya ha entrenado hoy: silencia los recordatorios de hoy al instante.
           void reconcileReminders(userId, getRoutineReminderDays(), { trainedToday: true });
-          return { error: null, success: true, queued: true };
         };
 
-        // Sin conexión: encolar directamente (incluye crear ejercicio custom al sync).
-        if (typeof navigator !== 'undefined' && !navigator.onLine) {
-          return queueOffline();
+        const outcome = await saveWorkoutOrQueue({
+          clientId,
+          userId,
+          exerciseId: activeExerciseId,
+          customExerciseName,
+          customMuscleGroup,
+          startedAt,
+          finishedAt,
+          sets: setsPayload,
+          notes,
+          rating,
+        });
+
+        if (outcome.status === 'error') {
+          devError('[WorkoutStore] saveWorkout:', outcome.error.message);
+          return { error: outcome.error, success: false };
         }
 
-        try {
-          let exerciseId = activeExerciseId;
-          if (!exerciseId && customExerciseName.trim()) {
-            exerciseId = await resolveOrCreateExercise(
-              userId,
-              customExerciseName,
-              customMuscleGroup,
-            );
-          }
-          if (!exerciseId) return { error: new Error('Selecciona un ejercicio'), success: false };
-
-          const { error: rpcError } = await supabase.rpc('save_workout_with_sets', {
-            p_user_id: userId,
-            p_exercise_id: exerciseId,
-            p_started_at: startedAt,
-            p_finished_at: finishedAt,
-            p_sets: setsPayload,
-            p_notes: notes,
-            p_rating: rating,
-          });
-
-          if (rpcError) throw rpcError;
-
-          resetState();
-          // Ya ha entrenado hoy: silencia los recordatorios de hoy al instante.
-          void reconcileReminders(userId, getRoutineReminderDays(), { trainedToday: true });
-          return { error: null, success: true };
-        } catch (err) {
-          // Error de red → encolar para reintentar. Otros errores → reportar.
-          if (isNetworkError(err)) {
-            return queueOffline();
-          }
-          const message = err instanceof Error ? err.message : 'Error guardando';
-          devError('[WorkoutStore] saveWorkout:', message);
-          return { error: new Error(message), success: false };
+        onSaved();
+        if (outcome.status === 'queued') {
+          void useOutboxStore.getState().refresh();
+          return { error: null, success: true, queued: true };
         }
+        return { error: null, success: true };
       },
 
       clearPersistedState: () =>

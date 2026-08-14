@@ -352,6 +352,57 @@ export type Database = {
           },
         ];
       };
+      exercise_progression: {
+        Row: {
+          bodyweight: boolean;
+          created_at: string;
+          current_reps: number | null;
+          current_weight: number | null;
+          exercise_name: string;
+          id: string;
+          increment_kg: number;
+          is_deload_week: boolean;
+          next_deload_week: number;
+          rep_max: number | null;
+          rep_min: number | null;
+          session_count: number;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          bodyweight?: boolean;
+          created_at?: string;
+          current_reps?: number | null;
+          current_weight?: number | null;
+          exercise_name: string;
+          id?: string;
+          increment_kg?: number;
+          is_deload_week?: boolean;
+          next_deload_week?: number;
+          rep_max?: number | null;
+          rep_min?: number | null;
+          session_count?: number;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          bodyweight?: boolean;
+          created_at?: string;
+          current_reps?: number | null;
+          current_weight?: number | null;
+          exercise_name?: string;
+          id?: string;
+          increment_kg?: number;
+          is_deload_week?: boolean;
+          next_deload_week?: number;
+          rep_max?: number | null;
+          rep_min?: number | null;
+          session_count?: number;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       exercises: {
         Row: {
           created_at: string | null;
@@ -453,6 +504,41 @@ export type Database = {
           user_id?: string;
         };
         Relationships: [];
+      };
+      lift_analyses: {
+        Row: {
+          created_at: string;
+          id: string;
+          metrics: Json;
+          user_id: string;
+          video_url: string | null;
+          workout_set_id: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          metrics: Json;
+          user_id: string;
+          video_url?: string | null;
+          workout_set_id?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          metrics?: Json;
+          user_id?: string;
+          video_url?: string | null;
+          workout_set_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'lift_analyses_workout_set_id_fkey';
+            columns: ['workout_set_id'];
+            isOneToOne: false;
+            referencedRelation: 'workout_sets';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       personal_records: {
         Row: {
@@ -571,6 +657,39 @@ export type Database = {
           username?: string | null;
           weight_kg?: number | null;
           weight_unit?: string | null;
+        };
+        Relationships: [];
+      };
+      progression_log: {
+        Row: {
+          created_at: string;
+          event: string;
+          exercise_name: string;
+          from_weight: number | null;
+          id: string;
+          reps: number | null;
+          to_weight: number | null;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          event: string;
+          exercise_name: string;
+          from_weight?: number | null;
+          id?: string;
+          reps?: number | null;
+          to_weight?: number | null;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          event?: string;
+          exercise_name?: string;
+          from_weight?: number | null;
+          id?: string;
+          reps?: number | null;
+          to_weight?: number | null;
+          user_id?: string;
         };
         Relationships: [];
       };
@@ -837,6 +956,7 @@ export type Database = {
       };
       workouts: {
         Row: {
+          client_id: string | null;
           duration_min: number | null;
           duration_seconds: number | null;
           finished_at: string | null;
@@ -852,6 +972,7 @@ export type Database = {
           user_id: string;
         };
         Insert: {
+          client_id?: string | null;
           duration_min?: number | null;
           duration_seconds?: number | null;
           finished_at?: string | null;
@@ -867,6 +988,7 @@ export type Database = {
           user_id: string;
         };
         Update: {
+          client_id?: string | null;
           duration_min?: number | null;
           duration_seconds?: number | null;
           finished_at?: string | null;
@@ -943,6 +1065,7 @@ export type Database = {
         Args: { p_limit: number; p_mode: string; p_user: string };
         Returns: boolean;
       };
+      ai_coach_month_tokens: { Args: never; Returns: number };
       ai_coach_purge: { Args: never; Returns: undefined };
       get_exercises_with_usage: {
         Args: { p_user_id: string };
@@ -980,6 +1103,7 @@ export type Database = {
       pr_rep_band: { Args: { p_reps: number }; Returns: number };
       save_workout_with_sets: {
         Args: {
+          p_client_id?: string;
           p_exercise_id: string;
           p_finished_at: string;
           p_notes?: string;

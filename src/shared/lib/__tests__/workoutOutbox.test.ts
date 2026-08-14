@@ -133,6 +133,72 @@ describe('workoutOutbox — persistencia y flush', () => {
     expect(await countPendingWorkouts()).toBe(0);
   });
 
+  // Regresión: `flushWorkoutOutbox` se dispara al arrancar y en el evento
+  // `online`, que el navegador puede emitir dos veces seguidas. Sin coalescer,
+  // ambas pasadas leen la misma cola y mandan los mismos entrenos.
+  it('dos flush concurrentes envían cada entreno una sola vez', async () => {
+    const { enqueueWorkout, flushWorkoutOutbox, countPendingWorkouts } = await loadOutbox();
+    // RPC lento: garantiza que la segunda llamada entra con la primera en vuelo.
+    rpcMock.mockImplementation(
+      () => new Promise((resolve) => setTimeout(() => resolve({ error: null }), 20)),
+    );
+
+    await enqueueWorkout(makeEntry({ id: 'a' }));
+    await enqueueWorkout(makeEntry({ id: 'b' }));
+
+    const [uno, dos] = await Promise.all([flushWorkoutOutbox(), flushWorkoutOutbox()]);
+
+    expect(rpcMock).toHaveBeenCalledTimes(2); // 2 entradas, no 4
+    expect(uno).toBe(2);
+    expect(dos).toBe(2); // la segunda se engancha al mismo flush
+    expect(await countPendingWorkouts()).toBe(0);
+  });
+
+  it('recoge lo encolado mientras el flush estaba en vuelo', async () => {
+    const { enqueueWorkout, flushWorkoutOutbox, countPendingWorkouts } = await loadOutbox();
+    rpcMock.mockImplementation(
+      () => new Promise((resolve) => setTimeout(() => resolve({ error: null }), 20)),
+    );
+
+    await enqueueWorkout(makeEntry({ id: 'primera' }));
+    const enVuelo = flushWorkoutOutbox();
+
+    // Entra un entreno nuevo y alguien pide otro flush: la pasada extra lo coge.
+    await enqueueWorkout(makeEntry({ id: 'tardia' }));
+    const segunda = flushWorkoutOutbox();
+
+    await Promise.all([enVuelo, segunda]);
+
+    expect(rpcMock).toHaveBeenCalledTimes(2);
+    expect(await countPendingWorkouts()).toBe(0);
+  });
+
+  // Regresión: el servidor solo puede deduplicar si el reenvío trae la misma
+  // clave. Sin esto, un RPC que se escribió pero cuya respuesta se perdió acaba
+  // grabando el entreno dos veces (sesiones duplicadas en el historial).
+  it('envía el id de la entrada como clave de idempotencia, estable entre reintentos', async () => {
+    const { enqueueWorkout, flushWorkoutOutbox, getPendingWorkouts } = await loadOutbox();
+
+    // Primer intento: falla por red. La entrada se conserva con su id intacto.
+    rpcMock.mockRejectedValueOnce(new Error('Failed to fetch'));
+    await enqueueWorkout(makeEntry({ id: 'entrada-estable' }));
+    await flushWorkoutOutbox();
+
+    const pending = await getPendingWorkouts();
+    expect(pending).toHaveLength(1);
+    expect(pending[0].id).toBe('entrada-estable');
+
+    // Segundo intento: la misma clave viaja de nuevo, que es lo que permite al
+    // servidor reconocer el reenvío en vez de crear un entreno nuevo.
+    rpcMock.mockResolvedValue({ error: null });
+    pending[0].nextAttemptAt = undefined;
+    await enqueueWorkout(pending[0]);
+    await flushWorkoutOutbox();
+
+    expect(rpcMock.mock.calls).toHaveLength(2);
+    expect(rpcMock.mock.calls.every((c) => c[1].p_client_id === 'entrada-estable')).toBe(true);
+  });
+
   it('error de red: conserva la entrada para reintentar y para el flush', async () => {
     const { enqueueWorkout, flushWorkoutOutbox, countPendingWorkouts } = await loadOutbox();
     rpcMock.mockResolvedValue({ error: new Error('Failed to fetch') });

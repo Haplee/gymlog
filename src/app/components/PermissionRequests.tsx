@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
-import { App as CapApp } from '@capacitor/app';
-import { Capacitor } from '@capacitor/core';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useCapacitorListener } from '@shared/hooks/useCapacitorListener';
 import { requestPermission as requestNotifPermission } from '@shared/lib/notifications';
 import { Bell, Check, type IconComponent } from '@shared/components/icons';
 
@@ -42,29 +41,22 @@ export function PermissionRequests() {
   // descartan con el botón/gesto atrás, que nunca llega a handleContinue.
   // Sin esto, `gymlog_permissions_seen` no se guarda y el modal reaparece en
   // cada apertura. Se persiste también al pulsar atrás o pasar a segundo plano.
-  useEffect(() => {
-    if (!showModal || !Capacitor.isNativePlatform()) return;
-    let backHandle: { remove: () => void } | undefined;
-    let stateHandle: { remove: () => void } | undefined;
-
-    void CapApp.addListener('backButton', () => {
+  useCapacitorListener(
+    'backButton',
+    () => {
       localStorage.setItem(PERMISSIONS_SEEN_KEY, 'true');
       setShowModal(false);
-    }).then((h) => {
-      backHandle = h;
-    });
+    },
+    showModal,
+  );
 
-    void CapApp.addListener('appStateChange', ({ isActive }) => {
+  useCapacitorListener(
+    'appStateChange',
+    ({ isActive }) => {
       if (!isActive) localStorage.setItem(PERMISSIONS_SEEN_KEY, 'true');
-    }).then((h) => {
-      stateHandle = h;
-    });
-
-    return () => {
-      backHandle?.remove();
-      stateHandle?.remove();
-    };
-  }, [showModal]);
+    },
+    showModal,
+  );
 
   const requestPermission = async (key: string) => {
     if (key === 'notifications') {

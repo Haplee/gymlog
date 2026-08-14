@@ -110,6 +110,11 @@ async function markFailed(w: OutboxWorkout, reason: string): Promise<void> {
   devError(`[workoutOutbox] entrada conservada como fallida (${reason}): ${w.id}`);
 }
 
+/** Flush en vuelo, si lo hay. Coalescer contra él evita envíos duplicados. */
+let inFlight: Promise<number> | null = null;
+/** Alguien pidió otro flush mientras este corría: se hace una pasada más. */
+let rerunRequested = false;
+
 /**
  * Intenta enviar todos los entrenos en cola. Devuelve cuántos se sincronizaron.
  *
@@ -118,8 +123,40 @@ async function markFailed(w: OutboxWorkout, reason: string): Promise<void> {
  * - Al agotar MAX_RETRIES la entrada se marca como `failed` y **se conserva**:
  *   nunca se borra en silencio, ni por error de red ni por error del servidor
  *   (RLS/validación), para no perder el entreno del usuario.
+ * - **Nunca corren dos flush a la vez.** Se dispara al arrancar la app y en el
+ *   evento `online`, que el navegador puede emitir más de una vez seguida: dos
+ *   pasadas simultáneas leen la misma cola y mandan los mismos entrenos. La
+ *   clave de idempotencia del servidor evita que eso duplique datos, pero la
+ *   petición repetida y el borrado por partida doble siguen sobrando.
+ *
+ * Las llamadas que lleguen durante un flush se enganchan al que ya corre y
+ * provocan **una** pasada adicional al terminar, para no dejarse lo que se haya
+ * encolado mientras tanto.
  */
-export async function flushWorkoutOutbox(): Promise<number> {
+export function flushWorkoutOutbox(): Promise<number> {
+  if (inFlight) {
+    rerunRequested = true;
+    return inFlight;
+  }
+
+  const run = (async () => {
+    let total = await drainOutbox();
+    if (rerunRequested) {
+      rerunRequested = false;
+      total += await drainOutbox();
+    }
+    return total;
+  })().finally(() => {
+    inFlight = null;
+    rerunRequested = false;
+  });
+
+  inFlight = run;
+  return run;
+}
+
+/** Una pasada sobre la cola. No usar directamente: entra por `flushWorkoutOutbox`. */
+async function drainOutbox(): Promise<number> {
   const pending = await getPendingWorkouts();
   if (!pending.length) return 0;
 
@@ -156,6 +193,10 @@ export async function flushWorkoutOutbox(): Promise<number> {
         p_sets: w.sets,
         p_notes: w.notes,
         p_rating: w.rating ?? undefined,
+        // El id de la entrada es estable entre reintentos: si un envío anterior
+        // llegó a escribirse y solo se perdió la respuesta, el servidor lo
+        // reconoce y no duplica el entreno.
+        p_client_id: w.id,
       });
       if (rpcError) throw rpcError;
 
