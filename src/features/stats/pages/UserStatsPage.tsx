@@ -403,7 +403,7 @@ export function UserStatsPage() {
               {
                 value: `${avgDuration}m`,
                 label: t('userStats.avg_duration'),
-                color: 'var(--accent-violet)',
+                color: 'var(--accent-gold)',
               },
               {
                 value: uniqueExercisesCount,

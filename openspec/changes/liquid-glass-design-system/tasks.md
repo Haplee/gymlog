@@ -20,11 +20,16 @@
 - [x] 1.1 Tokens del material en los dos temas
 - [x] 1.2 Bajar el velo a 0,02 y recuperar la luz en el canto
 - [x] 1.3 Ajustar la franja de scroll a 48 px (`--glass-fade-height`) — verificado en la tablet
-- [ ] 1.4 Tokens de curva (`--ease-standard/decelerate/accelerate/spring`)
-- [ ] 1.5 Conectar las ~16 animaciones de `index.css` a los tokens de duración y curva
-- [ ] 1.6 Renombrar `--accent-violet` y `--accent-fuchsia` por su función real
-- [ ] 1.7 Purgar los alias de compatibilidad sin uso (verificar con grep antes de borrar)
-- [ ] 1.8 Corregir el comentario de `:root.light`, que describe el esquema «Stitch»
+- [x] 1.4 Tokens de curva (`--ease-standard/decelerate/accelerate/spring`) — añadidos, sin efecto todavía
+- [ ] 1.5 Conectar las **20** animaciones de `index.css` a los tokens de duración y curva
+      — **va detrás de G1**: cambia cómo se siente la app entera y hay que verlo en
+      dispositivo. Añadir los tokens (1.4) no cambia nada; conectarlos sí. Ojo también con
+      las duraciones: las actuales (0,15 / 0,2 / 0,3 / 0,4 / 0,5 / 0,6 s) no encajan en los
+      tres pasos de `--anim-duration-*`, así que hay que decidir cuáles se ajustan y cuáles
+      se quedan, no mapearlas a ciegas
+- [x] 1.6 Renombrar `--accent-violet` → `--accent-gold` y `--accent-fuchsia` → `--accent-apricot`
+- [x] 1.7 Purgar los alias sin uso — 12 de 13 borrados, sobrevive `--text-h`
+- [x] 1.8 Corregir el comentario de `:root.light`, que describía el esquema «Stitch»
 
 ## 2. Bloque B — primitivas (19)
 

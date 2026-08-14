@@ -32,14 +32,27 @@
   --error: #ffb4ab;
   --info: #0a84ff;
 
-  /* ── Paleta de acentos (iconos KPI, badges) ──── */
+  /* ── Paleta de acentos (iconos KPI, badges) ────
+     Paleta CATEGÓRICA: sirve para distinguir una métrica de otra, no para
+     significar nada. Por eso no sigue al acento que elige el usuario — si
+     lo hiciera, todos los KPI serían del mismo color y dejarían de
+     distinguirse.
+
+     Dos de estos nombres mentían y se han corregido: --accent-violet valía
+     #ffd93d (amarillo) y --accent-fuchsia valía #ffb74d (naranja claro).
+     Venían del reskin de julio, que cambió los valores y dejó los nombres.
+
+     Deuda que el renombrado destapa en vez de esconder: quedan cuatro tonos
+     cálidos muy próximos (gold, apricot, amber, orange). Distinguir dos
+     métricas por su diferencia es optimista. No se toca aquí porque cambiar
+     qué color lleva cada KPI es una decisión de diseño, no de limpieza. ── */
   --accent-orange: #fb923c;
   --accent-emerald: #34d399;
   --accent-blue: #60a5fa;
   --accent-amber: #fbbf24;
-  --accent-fuchsia: #ffb74d;
+  --accent-apricot: #ffb74d;
   --accent-sky: #38bdf8;
-  --accent-violet: #ffd93d;
+  --accent-gold: #ffd93d;
   --accent-pink: #ff8a65;
   --accent-green: #10b981;
   --accent-yellow: #facc15;
@@ -76,20 +89,17 @@
   --space-10: 40px;
   --space-12: 48px;
 
-  /* ── Mapeo backward-compat ───────────────────── */
-  --bg: var(--bg-canvas);
-  --bg-main: var(--bg-canvas);
-  --bg-card: var(--bg-surface);
-  --bg-input: var(--bg-surface-2);
+  /* ── Mapeo backward-compat ─────────────────────
+     Quedaba uno vivo de trece. Los otros doce (--bg, --text, --accent,
+     --bg-main, --bg-card, --bg-input, --text-muted, --border-color,
+     --accent-bg, --accent-border, --color-danger, --color-primary) no los
+     usaba nadie y se han quitado.
+
+     Ojo si alguien los echa de menos: public/landing.html y
+     public/tutorial.html sí usan var(--accent), var(--text) y
+     var(--text-muted), pero los definen ellas mismas en su propio <style>
+     y no importan este fichero. Son páginas estáticas independientes. ── */
   --text-h: var(--text-primary);
-  --text: var(--text-secondary);
-  --text-muted: var(--text-tertiary);
-  --border-color: var(--border-default);
-  --accent: var(--interactive-primary);
-  --accent-bg: var(--interactive-primary);
-  --accent-border: var(--border-default);
-  --color-danger: var(--error);
-  --color-primary: var(--interactive-primary);
 
   /* ── Sombras (casi planas; solo flotantes visibles) ── */
   /* shadow-card / shadow-fab / shadow-glow viven en el @theme de index.css */
@@ -108,6 +118,29 @@
   --anim-duration-fast: 120ms;
   --anim-duration-normal: 200ms;
   --anim-duration-slow: 350ms;
+
+  /* ── Curvas ────────────────────────────────────
+     Las duraciones ya estaban en tokens; las curvas no. Las ~20 animaciones
+     de index.css usan `ease-out` escrito a mano, así que no había forma de
+     ajustar el carácter del movimiento sin tocarlas una a una.
+
+     Cuál usar, por lo que hace el elemento y no por dónde está:
+       standard   — se mueve dentro de la pantalla sin entrar ni salir
+       decelerate — aparece: entra rápido y se posa
+       accelerate — desaparece: arranca suave y se va
+       spring     — responde al dedo (sheets, swipe). Con rebote
+
+     Regla: lo que responde al dedo usa muelle; lo que solo informa usa
+     curva. Un bottom sheet arrastrable se mueve como algo con masa; un
+     toast que aparece, no.
+
+     Ojo: definir estos tokens NO cambia nada todavía. Conectar las
+     animaciones existentes sí cambia cómo se siente la app entera, así que
+     eso va aparte y con revisión en dispositivo. ── */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-decelerate: cubic-bezier(0, 0, 0.2, 1);
+  --ease-accelerate: cubic-bezier(0.4, 0, 1, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
   /* ── Z-index ─────────────────────────────────── */
   --z-base: 0;
@@ -184,10 +217,19 @@
 
 /* ════════════════════════════════════════════════
    Modo claro — overrides sobre :root (default oscuro).
-   Espejo tonal M3 del esquema Stitch: mismo hue verde,
-   primario = inverse-primary (#006c45) con fg blanco.
-   Solo se redefinen los tokens base; los mapeos backward-compat
-   usan var() y se resuelven al valor claro automáticamente.
+
+   No es un tema secundario: se mantiene completo y hay que comprobarlo en
+   cada cambio de tokens o de estilos.
+
+   El acento NO es el mismo color que en oscuro, y no puede serlo. En oscuro
+   el acento se usa como relleno con texto encima; en claro se usa además
+   como color de texto sobre blanco, y un amarillo vivo sobre blanco es
+   ilegible. Por eso el par claro es un amarillo-oliva oscuro (#6b5200) con
+   texto blanco encima. Lo mismo vale para los 24 presets de accents.ts:
+   cada uno trae su pareja clara, no se deriva del valor oscuro.
+
+   (Este comentario describía un esquema menta "Stitch" con primario
+   #006c45 que dejó de existir con el reskin de julio.)
    ════════════════════════════════════════════════ */
 :root.light {
   color-scheme: light;

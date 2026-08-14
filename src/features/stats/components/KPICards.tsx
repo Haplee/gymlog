@@ -79,7 +79,7 @@ const iconDefs: Record<string, { el: React.ReactElement; color: string }> = {
     ),
   },
   duration: {
-    color: 'var(--accent-fuchsia)',
+    color: 'var(--accent-apricot)',
     el: (
       <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
         <circle cx="12" cy="12" r="9" />
@@ -99,7 +99,7 @@ const iconDefs: Record<string, { el: React.ReactElement; color: string }> = {
     ),
   },
   'cardio-time': {
-    color: 'var(--accent-violet)',
+    color: 'var(--accent-gold)',
     el: (
       <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
         <polyline points="2,12 5,12 7.5,5 10.5,19 13.5,8 16,15 18,12 22,12" />
