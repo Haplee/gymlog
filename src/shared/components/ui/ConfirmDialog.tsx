@@ -55,14 +55,14 @@ export function ConfirmDialog({
         <button
           type="button"
           onClick={onCancel}
-          className="min-h-11 flex-1 rounded-sm bg-surface-2 text-sm text-fg-muted active:opacity-60"
+          className="min-h-11 flex-1 rounded-pill bg-surface-2 text-sm text-fg-muted active:opacity-60"
         >
           {cancelLabel ?? t('common.cancel')}
         </button>
         <button
           type="button"
           onClick={onConfirm}
-          className={`min-h-11 flex-1 rounded-sm text-sm font-semibold active:opacity-60 ${
+          className={`min-h-11 flex-1 rounded-pill text-sm font-semibold active:opacity-60 ${
             variant === 'danger' ? 'bg-error text-white' : 'bg-accent text-accent-fg'
           }`}
         >

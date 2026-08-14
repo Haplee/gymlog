@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { ChevronRight, Sparkles } from 'lucide-react';
 import { useCoachStore } from '../stores/coachStore';
+import { ChevronRight, Sparkles } from '@shared/components/icons';
 
 /**
  * Atajo al entrenador desde la pantalla de inicio.
@@ -29,7 +29,7 @@ export function CoachHomeCard() {
     <button
       type="button"
       onClick={() => navigate('/coach')}
-      className="mt-3 w-full flex items-center justify-between gap-3 rounded-card border border-line bg-surface px-4 py-3.5 text-left active:bg-hover"
+      className="mt-3 w-full flex items-center justify-between gap-3 glass-2 rounded-card px-4 py-3.5 text-left active:bg-hover"
     >
       <span className="flex items-center gap-3 min-w-0">
         <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-accent text-accent-fg">

@@ -2,18 +2,19 @@ import { useEffect, useRef } from 'react';
 import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { m } from 'framer-motion';
-import { Bell, X } from 'lucide-react';
 import { useCardioStore } from '@features/cardio/stores/cardioStore';
 import {
-  IconSearch,
+  Bell,
   IconBook,
-  IconDumbbell,
-  IconRuler,
-  IconWatch,
-  IconStar,
-  IconPulse,
   IconChart,
+  IconDumbbell,
   IconGear,
+  IconPulse,
+  IconRuler,
+  IconSearch,
+  IconStar,
+  IconWatch,
+  X,
 } from '@shared/components/icons';
 
 /**
@@ -72,15 +73,15 @@ export function AppDrawer({ onClose, onOpenSearch, unreadCount }: AppDrawerProps
         { to: '/user-stats', Icon: IconRuler, label: t('settings.my_measurements') },
       ],
     },
-      {
-        title: t('nav.group_more'),
-        links: [
-          { to: '/coach', Icon: IconStar, label: t('coach.page_title') },
-          { to: '/wearables', Icon: IconWatch, label: t('settings.wearables') },
-          { to: '/guide', Icon: IconBook, label: t('guide.title') },
-        ],
-      },
-    ];
+    {
+      title: t('nav.group_more'),
+      links: [
+        { to: '/coach', Icon: IconStar, label: t('coach.page_title') },
+        { to: '/wearables', Icon: IconWatch, label: t('settings.wearables') },
+        { to: '/guide', Icon: IconBook, label: t('guide.title') },
+      ],
+    },
+  ];
 
   const rowClass =
     'flex min-h-12 items-center gap-3 rounded-card px-3 text-left text-sm text-fg transition-colors active:bg-hover';
@@ -120,7 +121,7 @@ export function AppDrawer({ onClose, onOpenSearch, unreadCount }: AppDrawerProps
         onDragEnd={(_, info) => {
           if (info.offset.x < -60 || info.velocity.x < -400) onClose();
         }}
-        className="fixed left-0 top-0 z-[201] flex h-full w-[80%] max-w-xs flex-col overflow-y-auto border-r border-line bg-surface outline-none"
+        className="glass-3 glass-flush glass-flush-r fixed left-0 top-0 z-[201] flex h-full w-[80%] max-w-xs flex-col overflow-y-auto outline-none"
         style={{
           paddingTop: 'var(--inset-top, env(safe-area-inset-top))',
           paddingBottom: 'var(--inset-bottom, env(safe-area-inset-bottom))',

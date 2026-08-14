@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { Capacitor } from '@capacitor/core';
-import { HeartPulse, Dumbbell } from 'lucide-react';
 import { toast } from 'sonner';
 import { Layout } from '@app/components/Layout';
 import { useAuthStore } from '@features/auth/stores/authStore';
@@ -18,6 +17,7 @@ import {
   isAggregatorAvailable,
   requestAggregatorPermission,
 } from '../api/healthAggregator';
+import { Dumbbell, HeartPulse } from '@shared/components/icons';
 
 export function WearablesPage() {
   const { t } = useTranslation();

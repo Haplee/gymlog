@@ -1,6 +1,6 @@
 import { m } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { CHART_COLORS } from '../../constants';
+import { CHART_COLORS, MEDAL_COLORS, MEDAL_FG } from '../../constants';
 import { SectionLabel } from './SectionLabel';
 import { useWeight } from '@shared/hooks/useWeight';
 
@@ -39,15 +39,8 @@ export function TopExercisesList({ data }: { data: TopExerciseItem[] }) {
                   <span
                     className="w-5 h-5 rounded-full flex items-center justify-center text-2xs font-bold flex-shrink-0"
                     style={{
-                      backgroundColor:
-                        i === 0
-                          ? '#fbbf24'
-                          : i === 1
-                            ? '#a3a3a3'
-                            : i === 2
-                              ? '#92400e'
-                              : 'var(--bg-surface-2)',
-                      color: i < 3 ? '#000' : 'var(--text-tertiary)',
+                      backgroundColor: MEDAL_COLORS[i] ?? 'var(--bg-surface-2)',
+                      color: i < MEDAL_COLORS.length ? MEDAL_FG : 'var(--text-tertiary)',
                     }}
                   >
                     {i + 1}

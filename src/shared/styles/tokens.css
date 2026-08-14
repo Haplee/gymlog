@@ -32,14 +32,27 @@
   --error: #ffb4ab;
   --info: #0a84ff;
 
-  /* ── Paleta de acentos (iconos KPI, badges) ──── */
+  /* ── Paleta de acentos (iconos KPI, badges) ────
+     Paleta CATEGÓRICA: sirve para distinguir una métrica de otra, no para
+     significar nada. Por eso no sigue al acento que elige el usuario — si
+     lo hiciera, todos los KPI serían del mismo color y dejarían de
+     distinguirse.
+
+     Dos de estos nombres mentían y se han corregido: --accent-violet valía
+     #ffd93d (amarillo) y --accent-fuchsia valía #ffb74d (naranja claro).
+     Venían del reskin de julio, que cambió los valores y dejó los nombres.
+
+     Deuda que el renombrado destapa en vez de esconder: quedan cuatro tonos
+     cálidos muy próximos (gold, apricot, amber, orange). Distinguir dos
+     métricas por su diferencia es optimista. No se toca aquí porque cambiar
+     qué color lleva cada KPI es una decisión de diseño, no de limpieza. ── */
   --accent-orange: #fb923c;
   --accent-emerald: #34d399;
   --accent-blue: #60a5fa;
   --accent-amber: #fbbf24;
-  --accent-fuchsia: #ffb74d;
+  --accent-apricot: #ffb74d;
   --accent-sky: #38bdf8;
-  --accent-violet: #ffd93d;
+  --accent-gold: #ffd93d;
   --accent-pink: #ff8a65;
   --accent-green: #10b981;
   --accent-yellow: #facc15;
@@ -76,20 +89,17 @@
   --space-10: 40px;
   --space-12: 48px;
 
-  /* ── Mapeo backward-compat ───────────────────── */
-  --bg: var(--bg-canvas);
-  --bg-main: var(--bg-canvas);
-  --bg-card: var(--bg-surface);
-  --bg-input: var(--bg-surface-2);
+  /* ── Mapeo backward-compat ─────────────────────
+     Quedaba uno vivo de trece. Los otros doce (--bg, --text, --accent,
+     --bg-main, --bg-card, --bg-input, --text-muted, --border-color,
+     --accent-bg, --accent-border, --color-danger, --color-primary) no los
+     usaba nadie y se han quitado.
+
+     Ojo si alguien los echa de menos: public/landing.html y
+     public/tutorial.html sí usan var(--accent), var(--text) y
+     var(--text-muted), pero los definen ellas mismas en su propio <style>
+     y no importan este fichero. Son páginas estáticas independientes. ── */
   --text-h: var(--text-primary);
-  --text: var(--text-secondary);
-  --text-muted: var(--text-tertiary);
-  --border-color: var(--border-default);
-  --accent: var(--interactive-primary);
-  --accent-bg: var(--interactive-primary);
-  --accent-border: var(--border-default);
-  --color-danger: var(--error);
-  --color-primary: var(--interactive-primary);
 
   /* ── Sombras (casi planas; solo flotantes visibles) ── */
   /* shadow-card / shadow-fab / shadow-glow viven en el @theme de index.css */
@@ -109,12 +119,94 @@
   --anim-duration-normal: 200ms;
   --anim-duration-slow: 350ms;
 
+  /* ── Curvas ────────────────────────────────────
+     Las duraciones ya estaban en tokens; las curvas no. Las ~20 animaciones
+     de index.css usan `ease-out` escrito a mano, así que no había forma de
+     ajustar el carácter del movimiento sin tocarlas una a una.
+
+     Cuál usar, por lo que hace el elemento y no por dónde está:
+       standard   — se mueve dentro de la pantalla sin entrar ni salir
+       decelerate — aparece: entra rápido y se posa
+       accelerate — desaparece: arranca suave y se va
+       spring     — responde al dedo (sheets, swipe). Con rebote
+
+     Regla: lo que responde al dedo usa muelle; lo que solo informa usa
+     curva. Un bottom sheet arrastrable se mueve como algo con masa; un
+     toast que aparece, no.
+
+     Ojo: definir estos tokens NO cambia nada todavía. Conectar las
+     animaciones existentes sí cambia cómo se siente la app entera, así que
+     eso va aparte y con revisión en dispositivo. ── */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-decelerate: cubic-bezier(0, 0, 0.2, 1);
+  --ease-accelerate: cubic-bezier(0.4, 0, 1, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
   /* ── Z-index ─────────────────────────────────── */
   --z-base: 0;
   --z-raised: 10;
   --z-floating: 100;
   --z-modal: 200;
   --z-toast: 300;
+
+  /* ── Material vidrio ("Liquid Glass") ─────────────
+     SIN backdrop-filter. Decidido en la puerta G0 y medido en
+     docs/spikes/liquid-glass-spike.md: en oscuro, un velo translúcido
+     sobre el acento #ffd93d da 1,04:1 — ningún alpha con velo blanco
+     alcanza AA. El vidrio se construye con base casi opaca + canto
+     luminoso + degradado, no con blur.
+
+     El velo es OSCURO y alto (≥88%), no blanco y bajo. Medido en el peor
+     caso (el acento más claro de los 24 de accents.ts pasando por debajo,
+     con el degradado aplicado): texto ≥4,59:1 en las tres capas. El texto
+     que manda es --text-tertiary, que ya nace justo en el filo del AA;
+     primary y secondary van holgados (7,8:1 y superiores).
+
+     Capas: 1 = contenido · 2 = elevado (tarjetas) · 3 = flotante
+     (header, bottom nav, FAB, modales). ── */
+  --glass-1: rgb(10 10 11 / 0.88);
+  --glass-2: rgb(20 20 22 / 0.92);
+  --glass-3: rgb(28 27 30 / 0.96);
+
+  /* Canto asimétrico: la luz entra por arriba. El borde superior se ve;
+     los laterales solo definen. Un canto uniforme parece caja, no vidrio.
+
+     Aquí es donde se gasta el presupuesto de luz, y no en el velo: aclarar
+     un canto de 1px no toca el contraste del texto, mientras que aclarar
+     toda la superficie sí. Ver la nota del velo. */
+  --glass-edge-top: rgb(255 255 255 / 0.18);
+  --glass-edge: rgb(255 255 255 / 0.06);
+  --glass-sheen: inset 0 1px 0 rgb(255 255 255 / 0.11);
+
+  /* Degradado interno: simula la caída de luz a través del material.
+     Es lo que impide que la superficie se lea como un rectángulo plano.
+
+     Va al 0.02, no al 0.05 con el que se probó. Medido sobre los 24 acentos
+     de accents.ts (no solo el amarillo): con velo 0.05 y un acento claro
+     debajo, --text-tertiary cae a 4,20:1 y se salta el AA. El techo para
+     mantener 4,5:1 en el peor acento (lime #cbf24c) es 0.027. La
+     translucidez no era el problema: sin velo esa misma capa da 4,93:1. */
+  --glass-veil: linear-gradient(180deg, rgb(255 255 255 / 0.02) 0%, rgb(255 255 255 / 0) 45%);
+
+  /* Difuminado de borde de scroll — sustituye perceptualmente al blur.
+     El contenido se disuelve al entrar bajo el chrome flotante, que es
+     la señal que da el backdrop-filter, pero pintada una sola vez y sin
+     recalcular el backdrop en cada frame.
+
+     48px y no 24px: a 24 la franja es más corta que una fila de lista, así
+     que el texto entraba y salía de ella de golpe y no llegaba a leerse como
+     disolución. Comprobado en la tablet.
+
+     El degradado sale del color del canvas, así que sirve para áreas que
+     scrollean apoyadas en el fondo de la página. Si el área va sobre una
+     tarjeta u otra superficie, hay que redefinir --glass-fade en ese
+     contenedor con el color que toque, o se verá una banda que no encaja. */
+  --glass-fade-height: 48px;
+  --glass-fade: linear-gradient(180deg, rgb(10 10 11 / 1) 0%, rgb(10 10 11 / 0) 100%);
+
+  --glass-shadow-1: none;
+  --glass-shadow-2: 0 1px 2px rgb(0 0 0 / 0.3);
+  --glass-shadow-3: 0 8px 28px rgb(0 0 0 / 0.5);
 
   /* ── Layout ──────────────────────────────────── */
   --header-height: 56px;
@@ -125,10 +217,19 @@
 
 /* ════════════════════════════════════════════════
    Modo claro — overrides sobre :root (default oscuro).
-   Espejo tonal M3 del esquema Stitch: mismo hue verde,
-   primario = inverse-primary (#006c45) con fg blanco.
-   Solo se redefinen los tokens base; los mapeos backward-compat
-   usan var() y se resuelven al valor claro automáticamente.
+
+   No es un tema secundario: se mantiene completo y hay que comprobarlo en
+   cada cambio de tokens o de estilos.
+
+   El acento NO es el mismo color que en oscuro, y no puede serlo. En oscuro
+   el acento se usa como relleno con texto encima; en claro se usa además
+   como color de texto sobre blanco, y un amarillo vivo sobre blanco es
+   ilegible. Por eso el par claro es un amarillo-oliva oscuro (#6b5200) con
+   texto blanco encima. Lo mismo vale para los 24 presets de accents.ts:
+   cada uno trae su pareja clara, no se deriva del valor oscuro.
+
+   (Este comentario describía un esquema menta "Stitch" con primario
+   #006c45 que dejó de existir con el reskin de julio.)
    ════════════════════════════════════════════════ */
 :root.light {
   color-scheme: light;
@@ -176,6 +277,26 @@
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05);
   --shadow-glow: 0 0 14px rgb(var(--accent-rgb) / 0.12);
   --shadow-btn-accent: 0 1px 4px rgb(var(--accent-rgb) / 0.2);
+
+  /* ── Material vidrio en claro ──────────────────
+     Aquí el velo sí es blanco, pero alto. Medido en el peor caso
+     (texto oscuro pasando por debajo): texto ≥4,93:1 en las tres capas.
+     El canto se invierte: sobre fondo claro la luz no se ve como brillo
+     blanco sino como una sombra fina, así que el canto es oscuro. ── */
+  --glass-1: rgb(255 255 255 / 0.9);
+  --glass-2: rgb(255 255 255 / 0.94);
+  --glass-3: rgb(255 255 255 / 0.97);
+
+  --glass-edge-top: rgb(255 255 255 / 0.9);
+  --glass-edge: rgb(0 0 0 / 0.08);
+  --glass-sheen: inset 0 1px 0 rgb(255 255 255 / 0.95);
+
+  --glass-veil: linear-gradient(180deg, rgb(255 255 255 / 0.6) 0%, rgb(255 255 255 / 0) 45%);
+  --glass-fade: linear-gradient(180deg, rgb(243 245 243 / 1) 0%, rgb(243 245 243 / 0) 100%);
+
+  --glass-shadow-1: none;
+  --glass-shadow-2: 0 1px 2px rgb(0 0 0 / 0.05);
+  --glass-shadow-3: 0 8px 28px rgb(0 0 0 / 0.12);
 }
 
 /* Keyframes y clases de animación viven en index.css (fuente única). */

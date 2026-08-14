@@ -1,6 +1,6 @@
 import { m } from 'framer-motion';
-import { AlertTriangle, CheckCircle2, Lightbulb } from 'lucide-react';
 import type { Tip } from '@features/stats/utils/tips';
+import { AlertTriangle, CheckCircle, Lightbulb } from '@shared/components/icons';
 
 export function TipCard({ tip, index }: { tip: Tip; index: number }) {
   const config = {
@@ -11,7 +11,7 @@ export function TipCard({ tip, index }: { tip: Tip; index: number }) {
       border: 'color-mix(in srgb, var(--warning) 20%, transparent)',
     },
     success: {
-      icon: CheckCircle2,
+      icon: CheckCircle,
       color: 'var(--success)',
       bg: 'color-mix(in srgb, var(--success) 8%, transparent)',
       border: 'color-mix(in srgb, var(--success) 20%, transparent)',

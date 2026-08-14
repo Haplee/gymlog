@@ -1,7 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { m } from 'framer-motion';
-import { X } from 'lucide-react';
-import { IconCheckBadge, IconTimer, IconDumbbell, IconChart } from '@shared/components/icons';
+import { IconChart, IconCheckBadge, IconDumbbell, IconTimer, X } from '@shared/components/icons';
 
 export interface WorkoutSummary {
   /** Duración de la sesión en minutos. */

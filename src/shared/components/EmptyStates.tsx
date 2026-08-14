@@ -1,6 +1,6 @@
-import { Dumbbell, Calendar, BarChart3, CheckSquare, Sparkles } from 'lucide-react';
 import { m } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { Calendar, ChartBar, CheckSquare, Dumbbell, Sparkles } from '@shared/components/icons';
 
 const containerVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -26,7 +26,7 @@ interface EmptyStateProps {
 const icons = {
   workout: Dumbbell,
   history: Calendar,
-  stats: BarChart3,
+  stats: ChartBar,
   routine: CheckSquare,
 };
 

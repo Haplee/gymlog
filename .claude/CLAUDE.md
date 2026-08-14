@@ -28,7 +28,7 @@ GitHub Actions.
 - **Estilos:** Tailwind CSS v4 (CSS-first vía `@tailwindcss/vite`; **no hay `tailwind.config.js`** — el theme vive en CSS)
 - **Estado:** Zustand 5 (stores por feature) + TanStack Query 5 (estado servidor)
 - **Routing:** React Router 7 (lazy-loaded pages)
-- **Charts:** Recharts 3 · **Animaciones:** Framer Motion 12 · **Iconos:** lucide-react
+- **Charts:** Recharts 3 · **Animaciones:** Framer Motion 12 · **Iconos:** reicon-react
 - **i18n:** i18next + react-i18next (español)
 - **Backend:** Supabase (auth, Postgres, RPC) · **Validación:** Zod
 - **Móvil:** Capacitor 8 (Android/iOS) + vite-plugin-pwa
@@ -94,6 +94,11 @@ src/
   acento amarillo lima `#ffd93d` (`--interactive-primary`), texto sobre acento
   `#241c00`. Sustituyó al sistema anterior «Stitch» de acento menta `#60eca8`
   (los documentos que lo mencionen en verde son de esa etapa).
+- **El acento lo elige el usuario.** `#ffd93d` es solo el valor por defecto:
+  `src/shared/constants/accents.ts` define **24 presets**, cada uno con su pareja
+  clara y oscura. Nunca asumas el amarillo al medir contraste — el peor caso es
+  `lime #cbf24c`, que es más claro. En Android el icono del lanzador también
+  sigue al acento (`ic_fg_*.xml` + `AppIconPlugin.kt`).
 - **Sí hay modo claro** y está completo: Ajustes → Preferencias → Tema (OSCURO /
   CLARO), en `settingsStore.theme` + el bloque `:root.light` de `tokens.css`. No lo
   rompas ni lo elimines: al tocar tokens o estilos, comprueba **los dos temas**.
@@ -108,11 +113,33 @@ src/
   `src/features/stats/constants.ts` (Recharts no resuelve `var()` en `fill` SVG
   de forma fiable) y `src/shared/constants/` (`accents.ts`, `muscleColors.ts`).
   Si necesitas un color literal nuevo, va a uno de esos ficheros, nunca al JSX.
-- **Elevación (3 niveles):** plano = sin sombra; elevado = `shadow-card`;
-  flotante (FABs, overlays) = `shadow-lg` / `shadow-fab`.
+- **Material «Liquid Glass», 3 capas.** Se elige **por función, nunca por
+  aspecto**: `glass-1` contenido (agrupa, sin sombra) · `glass-2` elevado (una
+  unidad que se toca: tarjetas, filas) · `glass-3` flotante (va encima del
+  contenido: header, bottom nav, FAB, modales, sheets). Para chrome a sangre,
+  `glass-flush` + `glass-flush-b/t/r`: un borde de 4 lados en algo que cruza la
+  pantalla dibuja hairlines verticales en los bordes.
+  - **No se anidan capas del mismo nivel.** Una `glass-2` dentro de otra `glass-2`
+    es señal de jerarquía mal puesta, no de que falte una capa.
+  - **Sin `backdrop-filter`.** Decidido sobre medidas, no por gusto: con el acento
+    por debajo ningún velo translúcido alcanza AA, y el blur ya se midió y se
+    quitó en julio por jank en el WebView de Android. La señal de profundidad la
+    da el difuminado de borde de scroll (`glass-scroll-fade`, lo enciende
+    `Layout` según `scrollTop`).
+  - **La luz se gasta en el canto, no en el área.** Aclarar 1px de borde no toca
+    el contraste del texto; aclarar la superficie sí, y con los 24 acentos rompe
+    el AA. Si tocas `--glass-veil`, recalcula: el techo es 0,027.
+  - Detalle y mediciones: `openspec/changes/liquid-glass-design-system/design.md`.
 - **Tipografía:** Inter (cuerpo) + Space Grotesk (display y contadores/números,
   con cifras tabulares). `:root` es 15px. Usa la escala con nombre (`text-sm`,
   `text-base`, `text-lg`…), no valores arbitrarios `text-[…]`.
+- **Iconos: un único punto de import.** Todo sale de `@shared/components/icons`;
+  ningún componente importa de `reicon-react` directamente. Ese barril es lo que
+  hace que cambiar de librería sea tocar un fichero y no 68. Conviven Reicon
+  (generalista, outline por defecto) y los `Icon*` propios de dominio (máquinas,
+  equipamiento, ♂/♀, cerebro del entrenador). **Nada de emojis como iconos**: los
+  dibuja la fuente del sistema, así que no siguen al acento ni se ven igual en
+  dos dispositivos.
 - Estilos inline `style={{}}` solo para valores genuinamente dinámicos
   (porcentajes, colores por índice de chart, props de framer-motion).
 

@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Zap, ChevronRight } from 'lucide-react';
+import { ChevronRight, Flash } from '@shared/components/icons';
 
 interface WeeklyChallengeBannerProps {
   /** Etiqueta corta (píldora amarilla), p.ej. "Reto semanal" */
@@ -31,9 +31,7 @@ const WeeklyChallengeBannerComponent = ({
   className = '',
 }: WeeklyChallengeBannerProps) => {
   return (
-    <section
-      className={`relative overflow-hidden rounded-card bg-surface-2 shadow-card ${className}`}
-    >
+    <section className={`glass-2 relative overflow-hidden rounded-card ${className}`}>
       {imageUrl && (
         <img
           src={imageUrl}
@@ -50,7 +48,7 @@ const WeeklyChallengeBannerComponent = ({
       )}
       <div className="relative flex flex-col gap-3 p-5">
         <span className="inline-flex items-center gap-1.5 self-start rounded-pill bg-accent px-3 py-1 label-caps text-accent-fg">
-          <Zap className="h-3.5 w-3.5" aria-hidden="true" />
+          <Flash className="h-3.5 w-3.5" aria-hidden="true" />
           {label}
         </span>
         <div>

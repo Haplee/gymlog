@@ -10,9 +10,7 @@ interface SkeletonProps {
 const SkeletonComponent = ({ className = '', lines, card }: SkeletonProps) => {
   if (card) {
     return (
-      <div
-        className={`rounded-card bg-surface border border-line-strong p-4 space-y-3 ${className}`}
-      >
+      <div className={`glass-2 rounded-card p-4 space-y-3 ${className}`}>
         <div className="skeleton h-4 w-2/3 rounded-md" />
         <div className="skeleton h-3 w-full rounded-md" />
         <div className="skeleton h-3 w-4/5 rounded-md" />

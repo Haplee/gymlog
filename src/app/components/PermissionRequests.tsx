@@ -3,6 +3,7 @@ import { App as CapApp } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { useTranslation } from 'react-i18next';
 import { requestPermission as requestNotifPermission } from '@shared/lib/notifications';
+import { Bell, Check, type IconComponent } from '@shared/components/icons';
 
 const PERMISSIONS_SEEN_KEY = 'gymlog_permissions_seen';
 
@@ -10,7 +11,9 @@ interface PermissionRequest {
   key: string;
   titleKey: string;
   descriptionKey: string;
-  icon: string;
+  // Icono del sistema, no emoji: un emoji lo dibuja la fuente del dispositivo,
+  // así que ni sigue al acento ni se ve igual en dos teléfonos.
+  Icon: IconComponent;
 }
 
 const PERMISSIONS: PermissionRequest[] = [
@@ -18,7 +21,7 @@ const PERMISSIONS: PermissionRequest[] = [
     key: 'notifications',
     titleKey: 'permissions.notifications',
     descriptionKey: 'permissions.notifications_desc',
-    icon: '🔔',
+    Icon: Bell,
   },
 ];
 
@@ -85,20 +88,22 @@ export function PermissionRequests() {
 
   return (
     <div className="fixed inset-0 bg-black/90 z-[var(--z-modal)] flex items-center justify-center p-4">
-      <div className="bg-surface border border-line-strong rounded-card shadow-lg p-6 max-w-[340px] w-full">
+      <div className="glass-3 rounded-card p-6 max-w-[340px] w-full">
         <div className="text-xl font-bold text-fg mb-2">{t('permissions.welcome')}</div>
         <div className="text-fg-muted text-base mb-6">{t('permissions.intro')}</div>
 
         <div className="space-y-4 mb-6">
           {PERMISSIONS.map((p) => (
-            <div key={p.key} className="flex items-center gap-3 p-3 bg-surface-2 rounded-xl">
-              <span className="text-2xl">{p.icon}</span>
+            <div key={p.key} className="flex items-center gap-3 p-3 bg-surface-2 rounded-card">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent/12">
+                <p.Icon size={20} className="text-accent" />
+              </span>
               <div className="flex-1">
                 <div className="text-fg font-semibold text-base">{t(p.titleKey)}</div>
                 <div className="text-fg-subtle text-sm">{t(p.descriptionKey)}</div>
               </div>
               {requested.includes(p.key) ? (
-                <span className="text-accent text-sm">✓</span>
+                <Check size={18} className="text-accent" aria-hidden="true" />
               ) : (
                 <button
                   type="button"
@@ -115,7 +120,7 @@ export function PermissionRequests() {
         <button
           type="button"
           onClick={handleContinue}
-          className="w-full py-3 bg-accent text-accent-fg rounded-xl font-bold cursor-pointer shadow-btn-accent transition-transform active:scale-[0.98]"
+          className="w-full py-3 bg-accent text-accent-fg rounded-pill font-bold cursor-pointer shadow-btn-accent transition-transform active:scale-[0.98]"
         >
           {allRequested ? t('permissions.thanks') : t('permissions.continue')}
         </button>

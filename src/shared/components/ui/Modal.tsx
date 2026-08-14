@@ -1,7 +1,7 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { AnimatePresence, m } from 'framer-motion';
 import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
+import { Xmark } from '@shared/components/icons';
 import { useTranslation } from 'react-i18next';
 
 interface ModalProps {
@@ -89,7 +89,7 @@ export function Modal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="relative z-10 w-full rounded-card overflow-hidden max-w-md bg-surface shadow-lg"
+            className="glass-3 relative z-10 w-full max-w-md overflow-hidden rounded-card"
           >
             <div
               className="absolute top-0 left-0 right-0 h-1"
@@ -119,7 +119,7 @@ export function Modal({
                       aria-label={t('common.close')}
                       className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center text-fg-subtle hover:bg-surface-2 hover:text-fg transition-colors"
                     >
-                      <X className="w-4 h-4" />
+                      <Xmark size={16} />
                     </button>
                   )}
                   {showCloseButton && title && (
@@ -129,7 +129,7 @@ export function Modal({
                       aria-label={t('common.close')}
                       className="w-8 h-8 rounded-full flex items-center justify-center text-fg-subtle hover:bg-surface-2 hover:text-fg transition-colors"
                     >
-                      <X className="w-4 h-4" />
+                      <Xmark size={16} />
                     </button>
                   )}
                 </div>

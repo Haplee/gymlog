@@ -1,33 +1,33 @@
+import type { CardioType } from '@features/cardio/stores/cardioStore';
 import {
   Activity,
-  Bike,
+  Bicycle,
   Dumbbell,
-  Footprints,
-  Sailboat,
-  SportShoe,
+  Run,
+  Ship,
+  Swimming,
   Timer,
-  WavesLadder,
-  type LucideIcon,
-} from 'lucide-react';
-import type { CardioType } from '@features/cardio/stores/cardioStore';
+  Walk,
+  type IconComponent,
+} from '@shared/components/icons';
 
 interface IconProps {
   className?: string;
 }
 
 /* ────────────────────────────  CARDIO  ────────────────────────────
-   Iconos del set profesional lucide-react en vez de SVG a mano: son limpios,
-   consistentes entre sí y reconocibles a tamaño pequeño. Como cada botón lleva
-   además su etiqueta ("Correr", "Remo"…), basta con un glifo semántico claro.
-   Las tres máquinas sin icono propio en lucide (remo, elíptica, comba) usan el
-   más cercano: barca (deporte de agua), pulso de cardio y cronómetro. */
+   Iconos de la librería en vez de SVG a mano: son limpios, consistentes entre
+   sí y reconocibles a tamaño pequeño. Como cada botón lleva además su etiqueta
+   ("Correr", "Remo"…), basta con un glifo semántico claro. Las máquinas sin
+   icono propio (remo, elíptica, comba) usan el más cercano: barca (deporte de
+   agua), pulso de cardio y cronómetro. */
 
-const CARDIO_ICONS: Record<CardioType, LucideIcon> = {
-  running: SportShoe,
-  cycling: Bike,
-  walking: Footprints,
-  rowing: Sailboat,
-  swimming: WavesLadder,
+const CARDIO_ICONS: Record<CardioType, IconComponent> = {
+  running: Run,
+  cycling: Bicycle,
+  walking: Walk,
+  rowing: Ship,
+  swimming: Swimming,
   elliptical: Activity,
   jump_rope: Timer,
   other: Dumbbell,

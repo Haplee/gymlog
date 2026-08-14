@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { m } from 'framer-motion';
-import { Fingerprint } from 'lucide-react';
 import BiometricPlugin from '@shared/lib/biometric';
 import { impact, ImpactStyle } from '@shared/lib/haptics';
 import { devError } from '@shared/lib/devtools';
+import { Fingerprint } from '@shared/components/icons';
 
 type Status = 'idle' | 'verifying' | 'error';
 

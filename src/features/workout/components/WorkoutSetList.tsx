@@ -1,9 +1,9 @@
 import { memo, useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { m } from 'framer-motion';
-import { Check, StickyNote, X } from 'lucide-react';
 import { impact, ImpactStyle } from '@shared/lib/haptics';
 import { formatWeightInput } from '@shared/lib/weight';
+import { Check, Stickynote, X } from '@shared/components/icons';
 
 type SetType = 'normal' | 'dropset' | 'rest_pause' | 'amrap';
 
@@ -68,7 +68,9 @@ const LoggedSetRow = memo(function LoggedSetRow({
         isPR ? 'border-l-2 border-l-accent pl-3' : ''
       }`}
     >
-      <span className={`flex items-center gap-1.5 tabular text-base ${isPR ? 'text-accent' : 'text-fg-subtle'}`}>
+      <span
+        className={`flex items-center gap-1.5 tabular text-base ${isPR ? 'text-accent' : 'text-fg-subtle'}`}
+      >
         {i + 1}
         {s.completed && <Check className="h-3.5 w-3.5 text-success" strokeWidth={3} />}
       </span>
@@ -328,7 +330,7 @@ export const WorkoutSetList = memo(function WorkoutSetList({
             hasDetails ? 'border-accent text-accent' : 'border-line text-fg-subtle'
           }`}
         >
-          <StickyNote className="h-4 w-4" />
+          <Stickynote className="h-4 w-4" />
           {/* «Nota serie», no «Notas»: justo debajo está el chip de notas del
               ejercicio y dos botones iguales seguidos confundían. */}
           {t('workout.set_note')}
@@ -350,7 +352,7 @@ export const WorkoutSetList = memo(function WorkoutSetList({
             placeholder={t('workout.set_note_placeholder')}
             value={active.notes ?? ''}
             onChange={(e) => updateSet(activeIndex, { notes: e.target.value.slice(0, 500) })}
-            className="w-full rounded-card border border-line bg-surface px-2 py-2 text-xs text-fg outline-none"
+            className="w-full glass-2 rounded-card px-2 py-2 text-xs text-fg outline-none"
           />
           <div>
             <div className="label-caps mb-1.5 text-fg-subtle">{t('workout.rpe_label')}</div>

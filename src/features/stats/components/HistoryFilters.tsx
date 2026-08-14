@@ -1,15 +1,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { m } from 'framer-motion';
-import {
-  BarChart2,
-  BarChart3,
-  Download,
-  Upload,
-  FileSpreadsheet,
-  FileJson,
-} from 'lucide-react';
 import { Modal } from '@shared/components/ui';
+import { ChartBar, DocumentCode, Download, FileContent, Upload } from '@shared/components/icons';
 
 export type HistoryView = 'all' | 'workouts' | 'sets' | 'cardio';
 
@@ -58,7 +51,7 @@ export function HistoryFilters({
   const [importOpen, setImportOpen] = useState(false);
 
   const optionClass =
-    'flex min-h-12 items-center gap-2 rounded-card border border-line bg-surface px-3 text-left text-sm font-medium text-fg transition-colors active:bg-hover';
+    'flex min-h-12 items-center gap-2 glass-2 rounded-card px-3 text-left text-sm font-medium text-fg transition-colors active:bg-hover';
   const optionIconClass = 'h-4 w-4 flex-shrink-0 text-accent';
 
   return (
@@ -108,7 +101,7 @@ export function HistoryFilters({
           onClick={() => onOpenStats()}
           className="flex items-center gap-1.5 px-3 py-2 rounded-pill font-semibold text-sm transition-all hover:scale-[1.02] active:scale-[0.98] bg-accent text-accent-fg"
         >
-          <BarChart3 className="w-4 h-4" />
+          <ChartBar className="w-4 h-4" />
           {t('stats.title')}
         </button>
 
@@ -117,7 +110,7 @@ export function HistoryFilters({
           onClick={() => onOpenUserStats()}
           className="flex items-center gap-1.5 px-3 py-2 rounded-pill font-semibold text-sm transition-all hover:scale-[1.02] active:scale-[0.98] bg-surface-2 text-accent"
         >
-          <BarChart2 className="w-4 h-4" />
+          <ChartBar className="w-4 h-4" />
           {t('history.my_stats')}
         </button>
 
@@ -129,12 +122,12 @@ export function HistoryFilters({
               onChange={(e) => onSearchText(e.target.value)}
               placeholder={t('history.search_placeholder')}
               aria-label={t('history.search_placeholder')}
-              className="flex-1 min-w-[10rem] bg-surface border border-line-strong rounded-card text-fg text-base p-2 outline-none"
+              className="flex-1 min-w-[10rem] glass-2 rounded-card text-fg text-base p-2 outline-none"
             />
             <select
               value={filterExercise}
               onChange={(e) => onFilterExercise(e.target.value)}
-              className="bg-surface border border-line-strong rounded-card text-fg-muted text-base p-2 cursor-pointer transition-all hover:scale-[1.02]"
+              className="glass-2 rounded-card text-fg-muted text-base p-2 cursor-pointer transition-all hover:scale-[1.02]"
             >
               <option value="">{t('history.filter_all')}</option>
               {exercises.map((ex) => (
@@ -146,7 +139,7 @@ export function HistoryFilters({
             <button
               type="button"
               onClick={() => setExportOpen(true)}
-              className="flex items-center gap-1.5 bg-surface border border-line-strong rounded-card text-accent text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="flex items-center gap-1.5 glass-2 rounded-card text-accent text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               <Download className="w-4 h-4" />
               {t('history.export_btn')}
@@ -154,7 +147,7 @@ export function HistoryFilters({
             <button
               type="button"
               onClick={() => setImportOpen(true)}
-              className="flex items-center gap-1.5 bg-surface border border-line-strong rounded-card text-fg-muted text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="flex items-center gap-1.5 glass-2 rounded-card text-fg-muted text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               <Upload className="w-4 h-4" />
               {t('history.import_btn')}
@@ -178,7 +171,7 @@ export function HistoryFilters({
             }}
             className={optionClass}
           >
-            <FileSpreadsheet className={optionIconClass} />
+            <FileContent className={optionIconClass} />
             {t('history.format_excel')}
           </button>
           <button
@@ -189,7 +182,7 @@ export function HistoryFilters({
             }}
             className={optionClass}
           >
-            <FileJson className={optionIconClass} />
+            <DocumentCode className={optionIconClass} />
             {t('history.format_json')}
           </button>
         </div>
@@ -203,7 +196,7 @@ export function HistoryFilters({
       >
         <div className="flex flex-col gap-2">
           <label className={`${optionClass} cursor-pointer`}>
-            <FileSpreadsheet className={optionIconClass} />
+            <FileContent className={optionIconClass} />
             {t('history.format_spreadsheet')}
             <input
               type="file"
@@ -216,7 +209,7 @@ export function HistoryFilters({
             />
           </label>
           <label className={`${optionClass} cursor-pointer`}>
-            <FileJson className={optionIconClass} />
+            <DocumentCode className={optionIconClass} />
             {t('history.format_json')}
             <input
               type="file"

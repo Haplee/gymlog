@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Backpack, PersonStanding } from 'lucide-react';
-import { IconDumbbell } from '@shared/components/icons';
+import { Backpack, IconDumbbell, Man } from '@shared/components/icons';
 import type { LoadType } from '@shared/lib/loadType';
 
 /**
@@ -34,7 +33,7 @@ export function LoadTypeBadge({
       tone: 'bg-surface-2 text-fg-subtle',
     },
     bodyweight: {
-      Icon: PersonStanding,
+      Icon: Man,
       label: t('workout.load_type_bodyweight'),
       tone: 'bg-accent/10 text-accent',
     },

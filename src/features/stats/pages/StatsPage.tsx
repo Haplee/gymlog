@@ -62,9 +62,9 @@ import { useWeight } from '@shared/hooks/useWeight';
 import { FatigueAnalysis } from '../components/FatigueAnalysis';
 import { toast } from 'sonner';
 import { m } from 'framer-motion';
-import { TrendingUp, Target } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { devError } from '@shared/lib/devtools';
+import { Target, TrendUp } from '@shared/components/icons';
 
 /** Iniciales de lunes a domingo para la tira de volumen semanal. */
 const WEEKDAY_INITIALS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'] as const;
@@ -547,7 +547,7 @@ export function StatsPage() {
           >
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-accent" />
+                <TrendUp className="w-4 h-4 text-accent" />
                 <span className="text-sm font-medium text-fg-muted">
                   {t('stats.weekly_volume')}
                 </span>

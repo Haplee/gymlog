@@ -25,8 +25,19 @@ import { useUpdateProfileCache } from '@features/auth/hooks/useProfile';
 import { toast } from 'sonner';
 import BiometricPlugin from '@shared/lib/biometric';
 import { devError } from '@shared/lib/devtools';
-import { Camera, Check, ChevronRight, Download, Loader2, LogOut, Pencil, X } from 'lucide-react';
-import { IconBook, IconRuler, IconWatch } from '@shared/components/icons';
+import {
+  Camera,
+  Check,
+  ChevronRight,
+  Download,
+  Edit,
+  IconBook,
+  IconRuler,
+  IconWatch,
+  Loader,
+  Logout,
+  X,
+} from '@shared/components/icons';
 import { APK_DOWNLOAD_URL } from '@shared/constants/links';
 import {
   readSaveScope,
@@ -383,7 +394,7 @@ export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
               )}
               <span className="absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full flex items-center justify-center bg-canvas text-accent">
                 {isUploadingAvatar ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <Loader className="w-3.5 h-3.5 animate-spin" />
                 ) : (
                   <Camera className="w-3.5 h-3.5" />
                 )}
@@ -443,7 +454,7 @@ export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
                     aria-label={t('settings.edit_name')}
                     className="w-11 h-11 -my-2 flex-shrink-0 flex items-center justify-center text-accent-fg/75 active:text-accent-fg"
                   >
-                    <Pencil className="w-3.5 h-3.5" />
+                    <Edit className="w-3.5 h-3.5" />
                   </button>
                 </div>
               )}
@@ -487,7 +498,7 @@ export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
         {/* Entrenamiento */}
         <section>
           <SectionHeader title={t('settings.training')} />
-          <div className="rounded-card bg-surface border border-line overflow-hidden">
+          <div className="glass-2 rounded-card overflow-hidden">
             <SettingRow
               label={t('settings.training_reminders')}
               desc={t('settings.training_reminders_desc')}
@@ -605,7 +616,7 @@ export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
         {/* Notificaciones */}
         <section>
           <SectionHeader title={t('settings.notifications')} />
-          <div className="rounded-card bg-surface border border-line overflow-hidden">
+          <div className="glass-2 rounded-card overflow-hidden">
             <SettingRow
               label={t('settings.notifications')}
               desc={t('settings.notifications_desc')}
@@ -657,7 +668,7 @@ export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
         {/* Datos */}
         <section>
           <SectionHeader title={t('settings.data')} />
-          <div className="rounded-card bg-surface border border-line overflow-hidden">
+          <div className="glass-2 rounded-card overflow-hidden">
             <NavRow
               icon={<IconWatch className="w-4 h-4" />}
               label={t('settings.wearables')}
@@ -670,13 +681,13 @@ export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
         {/* Cuenta */}
         <section>
           <SectionHeader title={t('settings.account')} />
-          <div className="rounded-card bg-surface border border-line overflow-hidden">
+          <div className="glass-2 rounded-card overflow-hidden">
             <button
               type="button"
               onClick={() => signOut()}
               className="w-full flex items-center gap-2.5 px-4 py-3.5 text-left text-error active:bg-hover"
             >
-              <LogOut className="w-4 h-4" />
+              <Logout className="w-4 h-4" />
               <span className="text-base font-semibold">{t('settings.logout')}</span>
             </button>
           </div>

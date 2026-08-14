@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Layout } from '@app/components/Layout';
 import { Button, Chip, SegmentedControl, StatNumber, Badge } from '@shared/components/ui';
 import { WeeklyChallengeBanner, LevelChips, ExerciseCard } from '@shared/components/fitbody';
+import { LiquidGlassShowcase } from '../components/LiquidGlassShowcase';
 
 type Level = 'beginner' | 'intermediate' | 'advanced';
 
@@ -36,6 +37,9 @@ export function FitBodyShowcasePage() {
             {t('fitbody.subtitle', 'Componentes nuevos + los tuyos con el tema amarillo.')}
           </p>
         </header>
+
+        {/* ── Material Liquid Glass (prototipo F0.2) ── */}
+        <LiquidGlassShowcase />
 
         {/* ── Componente nuevo: banner ── */}
         <section className="flex flex-col gap-3">
@@ -119,7 +123,7 @@ export function FitBodyShowcasePage() {
             <Badge>{t('fitbody.badge_new', 'Nuevo')}</Badge>
           </div>
 
-          <div className="flex gap-6 rounded-card border border-line bg-surface p-4">
+          <div className="flex gap-6 glass-2 rounded-card p-4">
             <StatNumber value={1859} label={t('fitbody.stat_volume', 'Volumen')} />
             <StatNumber value={12} label={t('fitbody.stat_streak', 'Racha')} />
           </div>

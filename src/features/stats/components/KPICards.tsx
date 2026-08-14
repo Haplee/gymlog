@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { m } from 'framer-motion';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendDown, TrendUp } from '@shared/components/icons';
 
 interface KPICardProps {
   title: string;
@@ -79,7 +79,7 @@ const iconDefs: Record<string, { el: React.ReactElement; color: string }> = {
     ),
   },
   duration: {
-    color: 'var(--accent-fuchsia)',
+    color: 'var(--accent-apricot)',
     el: (
       <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
         <circle cx="12" cy="12" r="9" />
@@ -99,7 +99,7 @@ const iconDefs: Record<string, { el: React.ReactElement; color: string }> = {
     ),
   },
   'cardio-time': {
-    color: 'var(--accent-violet)',
+    color: 'var(--accent-gold)',
     el: (
       <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
         <polyline points="2,12 5,12 7.5,5 10.5,19 13.5,8 16,15 18,12 22,12" />
@@ -222,9 +222,9 @@ export const KPICard = memo(function KPICard({
               }}
             >
               {trend >= 0 ? (
-                <TrendingUp className="w-2.5 h-2.5" />
+                <TrendUp className="w-2.5 h-2.5" />
               ) : (
-                <TrendingDown className="w-2.5 h-2.5" />
+                <TrendDown className="w-2.5 h-2.5" />
               )}
               {Math.abs(trend)}%
             </m.span>

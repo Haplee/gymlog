@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { BookmarkPlus, ChevronRight, Dumbbell, Search } from 'lucide-react';
 import { useExerciseCatalog, useExerciseDetail } from '@features/workout/hooks/useExerciseCatalog';
 import { useWorkoutStore } from '@features/workout/stores/workoutStore';
 import { useAuthStore } from '@features/auth/stores/authStore';
@@ -16,6 +15,7 @@ import {
 } from '@features/workout/utils/exerciseVocab';
 import { useTranslatedTexts } from '@features/workout/hooks/useTranslatedTexts';
 import type { CatalogExercise } from '@features/workout/utils/mapExercise';
+import { BookmarkAdd, ChevronRight, Dumbbell, Search } from '@shared/components/icons';
 
 /** Imagen del catálogo con fallback a placeholder si falta o falla la carga. */
 function CatalogMedia({
@@ -157,7 +157,7 @@ function CatalogDetail({ id, name }: { id: string; name: string }) {
               aria-label={t('library.save_as_own')}
               className="min-h-11 px-3 rounded-md bg-surface-2 text-fg-muted flex items-center justify-center gap-2 active:opacity-90 disabled:opacity-50"
             >
-              <BookmarkPlus className="w-4 h-4" />
+              <BookmarkAdd className="w-4 h-4" />
               {t('library.save_as_own')}
             </button>
           </div>

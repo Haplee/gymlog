@@ -1,13 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  AlertTriangle,
-  BookOpen,
-  ChevronDown,
-  Minus,
-  TrendingDown,
-  TrendingUp,
-} from 'lucide-react';
 import { useExerciseAdvice } from '@features/stats/hooks/useExerciseAdvice';
 import type { ExerciseAdvice } from '@features/stats/hooks/useAutoregulation';
 import { useExerciseRepRange } from '@shared/hooks/useExerciseRepRange';
@@ -17,10 +9,18 @@ import { weightToInput } from '@shared/lib/weight';
 import type { Exercise } from '@shared/lib/types';
 import type { LibraryExercise } from '@shared/api/queries';
 import type { SessionExercise } from '../stores/routineSessionStore';
+import {
+  AlertTriangle,
+  BookOpen,
+  ChevronDown,
+  Minus,
+  TrendDown,
+  TrendUp,
+} from '@shared/components/icons';
 
 const ACTION_ICON = {
-  increase: TrendingUp,
-  reduce: TrendingDown,
+  increase: TrendUp,
+  reduce: TrendDown,
   hold: Minus,
 } as const;
 
@@ -134,7 +134,7 @@ export function SessionExerciseCard({
           )}
         </div>
       ) : (
-        <p className="mt-3 rounded-card border border-line bg-surface-3 p-3 text-xs text-fg-muted">
+        <p className="mt-3 glass-2 rounded-card-3 p-3 text-xs text-fg-muted">
           {t('routine.session_no_recommendation')}
         </p>
       )}

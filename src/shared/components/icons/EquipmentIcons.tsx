@@ -1,13 +1,12 @@
 /**
  * Iconos de equipamiento con la forma real de cada implemento (no genéricos).
  * Mismo criterio que `GymIcons.tsx`: rejilla 24×24, silueta rellena,
- * `currentColor`. Se añaden aquí porque lucide-react no tiene barra olímpica,
- * banda elástica ni kettlebell con esa forma.
+ * `currentColor`. Se añaden aquí porque ninguna librería generalista trae barra
+ * olímpica, banda elástica ni kettlebell con esa forma.
  */
 import { memo } from 'react';
-import { Dumbbell, PersonStanding } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
 import { IconDumbbell } from './GymIcons';
+import { Dumbbell, Man, type IconComponent } from '@shared/components/icons';
 
 export interface GymIconProps {
   className?: string;
@@ -78,12 +77,12 @@ export const IconKettlebell = memo(({ className }: GymIconProps) => (
 ));
 IconKettlebell.displayName = 'IconKettlebell';
 
-const EQUIPMENT_ICONS: Record<string, LucideIcon | typeof IconDumbbell> = {
+const EQUIPMENT_ICONS: Record<string, IconComponent | typeof IconDumbbell> = {
   Barra: IconBarbell,
   Mancuernas: IconDumbbell,
   Máquina: IconMachine,
   Polea: IconPulley,
-  'Peso corporal': PersonStanding,
+  'Peso corporal': Man,
   Bandas: IconBand,
   Kettlebell: IconKettlebell,
   Otro: Dumbbell,

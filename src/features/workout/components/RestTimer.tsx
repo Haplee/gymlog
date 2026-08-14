@@ -5,8 +5,8 @@ import { useRestTimerStore } from '../stores/restTimerStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
 import { impact, ImpactStyle } from '@shared/lib/haptics';
 import { useVisibilityPausedInterval } from '@shared/hooks/useVisibilityPausedInterval';
-import { Plus, Minus, TimerReset, AlarmClock } from 'lucide-react';
 import { m, AnimatePresence } from 'framer-motion';
+import { AlarmClock, Minus, Plus, Timer } from '@shared/components/icons';
 
 const PRESETS = [60, 90, 120, 180];
 
@@ -66,7 +66,7 @@ export function RestTimer() {
       <m.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="fixed right-4 z-40 w-[13.5rem] rounded-card border border-line bg-surface p-3 shadow-lg"
+        className="fixed right-4 z-40 w-[13.5rem] glass-2 rounded-card p-3 shadow-lg"
         style={{
           bottom:
             'calc(var(--bottom-nav-height) + var(--inset-bottom, env(safe-area-inset-bottom)) + 0.75rem)',
@@ -123,7 +123,7 @@ export function RestTimer() {
                   aria-label={t('workout.rest_restart')}
                   className="flex h-11 w-11 items-center justify-center rounded-pill bg-surface-2 text-fg-muted"
                 >
-                  <TimerReset className="h-4 w-4" />
+                  <Timer className="h-4 w-4" />
                 </button>
                 <button
                   type="button"
@@ -145,7 +145,7 @@ export function RestTimer() {
     <div className="rounded-card p-4 mt-3 bg-surface border border-line shadow-card">
       <div className="flex items-center justify-between mb-4">
         <div className="text-xs font-semibold uppercase flex items-center gap-1.5 tracking-widest text-fg-subtle">
-          <TimerReset className="w-3.5 h-3.5" />
+          <Timer className="w-3.5 h-3.5" />
           {t('workout.rest')}
         </div>
         <button

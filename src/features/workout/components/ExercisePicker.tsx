@@ -2,9 +2,9 @@ import { useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { m, AnimatePresence } from 'framer-motion';
-import { BookOpen, Plus, StickyNote, Trash2 } from 'lucide-react';
 import { ExerciseSelector } from '@shared/components/ExerciseSelector';
 import type { ExerciseNote } from '@shared/lib/types';
+import { BookOpen, Plus, Stickynote, Trash2 } from '@shared/components/icons';
 
 interface ExercisePickerProps {
   userId: string;
@@ -68,7 +68,7 @@ export function ExercisePicker({
           <button
             type="button"
             onClick={() => setExpanded(true)}
-            className="flex min-h-11 flex-1 items-center gap-2 rounded-card border border-line bg-surface px-3 text-left transition-colors active:bg-hover"
+            className="flex min-h-11 flex-1 items-center gap-2 glass-2 rounded-card px-3 text-left transition-colors active:bg-hover"
           >
             <span className="min-w-0 flex-1 truncate text-sm font-medium text-fg">
               {exerciseName}
@@ -85,7 +85,7 @@ export function ExercisePicker({
               notes.length > 0 ? 'border-accent text-accent' : 'border-line text-fg-subtle'
             }`}
           >
-            <StickyNote className="h-4 w-4" />
+            <Stickynote className="h-4 w-4" />
             {notes.length > 0 && (
               <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-pill bg-accent px-1 text-[0.625rem] font-bold text-accent-fg">
                 {notes.length}
@@ -105,7 +105,7 @@ export function ExercisePicker({
           )}
         </div>
       ) : (
-        <div className="rounded-card border border-line-strong bg-surface p-4 shadow-card">
+        <div className="glass-2 rounded-card p-4 shadow-card">
           <ExerciseSelector
             userId={userId}
             onSelect={(id) => {
@@ -118,7 +118,7 @@ export function ExercisePicker({
           <button
             type="button"
             onClick={() => navigate('/exercises')}
-            className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-card border border-line bg-surface-2 px-2 py-2 text-xs text-fg-muted transition-colors active:bg-hover"
+            className="mt-2 flex w-full items-center justify-center gap-1.5 glass-2 rounded-card-2 px-2 py-2 text-xs text-fg-muted transition-colors active:bg-hover"
           >
             <BookOpen className="h-3.5 w-3.5" />
             {t('library.open')}
@@ -144,7 +144,7 @@ export function ExercisePicker({
             exit={{ opacity: 0, height: 0 }}
             className="overflow-hidden"
           >
-            <div className="mt-3 rounded-card border border-line-strong bg-surface p-3">
+            <div className="mt-3 glass-2 rounded-card p-3">
               {notes.length === 0 ? (
                 <div className="mb-2 text-xs text-fg-subtle">{t('workout.no_notes')}</div>
               ) : (
@@ -173,7 +173,7 @@ export function ExercisePicker({
                   placeholder={t('workout.new_note')}
                   value={noteText}
                   onChange={(e) => setNoteText(e.target.value)}
-                  className="flex-1 rounded-card border border-line bg-surface-2 p-2 text-xs text-fg outline-none"
+                  className="flex-1 glass-2 rounded-card-2 p-2 text-xs text-fg outline-none"
                 />
                 <button
                   type="button"

@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { Loader2, Pencil, Trash2, Check } from 'lucide-react';
 import { MuscleGroupPills } from './MuscleGroupPills';
+import { Check, Edit, Loader, Trash2 } from '@shared/components/icons';
 
 export interface ExerciseOption {
   id: string;
@@ -81,7 +81,7 @@ export function ExerciseRow({
             aria-label={`Editar grupo muscular de ${exercise.name}`}
             title={`Editar grupo muscular de ${exercise.name}`}
           >
-            <Pencil className="w-3.5 h-3.5" />
+            <Edit className="w-3.5 h-3.5" />
           </button>
         )}
         {isOwn && (
@@ -116,7 +116,7 @@ export function ExerciseRow({
             }}
           >
             {updatePending ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader className="w-4 h-4 animate-spin" />
             ) : (
               <>
                 <Check className="w-4 h-4 mr-2" />

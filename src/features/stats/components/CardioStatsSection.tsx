@@ -76,7 +76,7 @@ export function CardioStatsSection({ stats, breakdown, Label }: CardioStatsSecti
           value={stats.totalSessions}
           subtitle={t('stats.kpi_history')}
           icon="cardio-sessions"
-          accentColor="#38bdf8"
+          accentColor="var(--accent-sky)"
         />
       </m.div>
 

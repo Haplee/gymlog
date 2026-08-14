@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=ffd93d&height=120&section=header&text=GymLog%20v5.6.0&fontSize=50&fontColor=0a0a0b&animation=fadeIn" alt="Header" />
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=ffd93d&height=120&section=header&text=GymLog%20v5.7.0&fontSize=50&fontColor=0a0a0b&animation=fadeIn" alt="Header" />
 
   <img src="./public/gimnasia.svg" alt="GymLog" width="130" />
 
@@ -17,7 +17,7 @@
   <p>
     <img src="https://img.shields.io/github/actions/workflow/status/Haplee/gymlog/android-build.yml?style=flat-square&label=Android%20Build&logo=github" />
     <img src="https://img.shields.io/github/actions/workflow/status/Haplee/gymlog/ci.yml?style=flat-square&label=CI&logo=vitest" />
-    <img src="https://img.shields.io/badge/tests-382%20passing-ffd93d?style=flat-square&logo=vitest&logoColor=0a0a0b" />
+    <img src="https://img.shields.io/badge/tests-477%20passing-ffd93d?style=flat-square&logo=vitest&logoColor=0a0a0b" />
     <img src="https://img.shields.io/github/last-commit/Haplee/gymlog?style=flat-square&label=Last%20commit&logo=git" />
     <img src="https://img.shields.io/github/repo-size/Haplee/gymlog?style=flat-square&label=Size&logo=files" />
     <img src="https://img.shields.io/github/license/Haplee/gymlog?style=flat-square&label=License&logo=opensourceinitiative" />
@@ -141,7 +141,7 @@ npm run dev              # http://localhost:5173
 ```bash
 npm run lint             # ESLint
 npm run type-check       # tsc -b --force
-npm run test             # 382 tests en 44 ficheros (Vitest)
+npm run test             # 477 tests en 49 ficheros (Vitest)
 npx playwright test      # E2E (e2e/)
 ```
 
@@ -197,6 +197,7 @@ Crear `.env.local`. Sin Supabase → pantalla negra.
 | **Data Flow**      | TanStack Query 5           | Estado del servidor, caché, invalidación y sincronización con Supabase         |
 | **Global Store**   | Zustand 5                  | Estado local persistido: workout activo, rutinas, cardio, ajustes              |
 | **Gráficos**       | Recharts 3                 | Volumen semanal, distribución muscular, progresión por ejercicio               |
+| **Iconos**         | reicon-react               | Set generalista + `Icon*` propios de dominio, tras un único barril             |
 | **Virtualización** | TanStack Virtual 3         | Biblioteca de ejercicios sin montar la lista entera                            |
 | **Validación**     | Zod 3                      | Validación de series (reps/peso) con mensajes tipados                          |
 | **i18n**           | i18next 24 + react-i18next | Multiidioma ES/EN con detección automática y persistencia                      |
@@ -216,18 +217,33 @@ Crear `.env.local`. Sin Supabase → pantalla negra.
 
 ## Sistema de Diseño
 
-Reskin **FitBody** (julio 2026). Antes era el sistema «Stitch» de acento menta; las capturas y documentos que se vean en verde son de esa etapa.
+Reskin **FitBody** (julio 2026) + material **Liquid Glass** (agosto 2026). Antes era el sistema «Stitch» de acento menta; las capturas y documentos que se vean en verde son de esa etapa.
 
-| Token             | Valor                                                               |
-| :---------------- | :------------------------------------------------------------------ |
-| Acento            | `#ffd93d` (amarillo lima) sobre texto oscuro                        |
-| Base / superficie | `#0a0a0b` / `#141416`                                               |
-| Tipografía        | **Inter** (cuerpo) + **Space Grotesk** (display y cifras tabulares) |
-| Elevación         | 3 niveles: plano · `shadow-card` · `shadow-lg`/`shadow-fab`         |
+| Token             | Valor                                                                 |
+| :---------------- | :-------------------------------------------------------------------- |
+| Acento            | `#ffd93d` (amarillo lima) **por defecto** — el usuario elige entre 24 |
+| Base / superficie | `#0a0a0b` / `#141416`                                                 |
+| Tipografía        | **Inter** (cuerpo) + **Space Grotesk** (display y cifras tabulares)   |
+| Material          | 3 capas: `glass-1` contenido · `glass-2` elevado · `glass-3` flotante |
 
-- **Hay modo claro y está completo**: Ajustes → Preferencias → Tema (OSCURO / CLARO). Vive en `settingsStore.theme` + el bloque `:root.light` de `tokens.css`, y es independiente del tema del sistema.
-- **Acentos configurables**: la paleta de acentos alternativos está en `@shared/constants/accents.ts`.
-- La fuente única de los tokens es `src/shared/styles/tokens.css`; `src/index.css` los mapea a utilidades Tailwind con `@theme inline`. **Nunca se hardcodean colores hex en componentes** — las excepciones son los ficheros de paleta (`features/stats/constants.ts`, porque Recharts no resuelve `var()` en `fill` SVG de forma fiable, y `@shared/constants/`).
+### Liquid Glass
+
+Un vidrio no se reconoce porque deje ver lo que hay detrás, sino por **cómo le da la luz**: canto luminoso arriba, caída de luz hacia abajo y un borde que define sin encerrar. Lo de «ver a través» resulta ser la parte cara y la prescindible.
+
+- **La capa se elige por función, nunca por aspecto**, y no se anidan capas del mismo nivel. Una tarjeta dentro de otra idéntica es señal de que la jerarquía está mal, no de que falte una capa.
+- **Sin `backdrop-filter`**, y por dos medidas, no por gusto. Con el acento pasando por debajo, ningún velo translúcido alcanza AA a ninguna opacidad — es aritmética de composición alpha, no algo ajustable. Y el blur ya se midió en julio y se quitó por jank en el WebView de Android. La señal de «hay algo pasando por debajo» la da el **difuminado de borde de scroll**, que se pinta una vez en vez de remuestrear el fondo en cada frame.
+- **La luz se gasta en el canto, no en el área.** Aclarar 1 px de borde no toca el contraste del texto; aclarar toda la superficie sí, y con los 24 acentos rompe el AA.
+- Medido en una Galaxy Tab A7 (Android 12, gama media-baja de 2020): **1 frame con jank de 384, p99 11 ms**.
+
+**Modo claro completo**: Ajustes → Preferencias → Tema (OSCURO / CLARO). Vive en `settingsStore.theme` + el bloque `:root.light` de `tokens.css`, y es independiente del tema del sistema.
+
+**Acentos configurables**: 24 presets en `@shared/constants/accents.ts`, cada uno con su pareja clara y oscura — en claro el acento tiene que ser oscuro porque también se usa como color de texto sobre blanco. En Android el icono del lanzador sigue al acento elegido.
+
+**Iconos**: todo pasa por `@shared/components/icons`. Ningún componente importa de la librería directamente, que es lo que convierte «cambiar de librería de iconos» en tocar un fichero y no 68.
+
+La fuente única de los tokens es `src/shared/styles/tokens.css`; `src/index.css` los mapea a utilidades Tailwind con `@theme inline`. **Nunca se hardcodean colores hex en componentes** — las excepciones son los ficheros de paleta (`features/stats/constants.ts`, porque Recharts no resuelve `var()` en `fill` SVG de forma fiable, y `@shared/constants/`) y el logotipo de Google, que son colores de marca de un tercero.
+
+Diseño completo y mediciones: `openspec/changes/liquid-glass-design-system/design.md`.
 
 ---
 

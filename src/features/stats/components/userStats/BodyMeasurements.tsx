@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { m } from 'framer-motion';
-import { Plus, Trash2 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -15,6 +14,7 @@ import {
   type BodyMeasurement,
 } from '@shared/api/queries';
 import { SectionLabel } from './SectionLabel';
+import { Plus, Trash2 } from '@shared/components/icons';
 
 const MEASUREMENTS_KEY = (userId: string) => ['bodyMeasurements', userId];
 

@@ -1,6 +1,6 @@
 import { m } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle } from '@shared/components/icons';
 
 export interface StagnantExercise {
   id: string;

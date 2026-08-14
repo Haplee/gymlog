@@ -245,6 +245,22 @@ export const IconStar = memo(({ className }: GymIconProps) => (
 ));
 IconStar.displayName = 'IconStar';
 
+/**
+ * Cerebro — lo que el entrenador ha aprendido de ti.
+ *
+ * Propio porque Reicon no trae ninguno, y los sustitutos que sí trae (Cpu,
+ * Sparkle) ya significan otra cosa en esta app: Cpu es el propio entrenador y
+ * Sparkle es "generado por IA". Reutilizar uno de los dos aquí haría que tres
+ * conceptos distintos compartieran dibujo.
+ */
+export const IconBrain = memo(({ className }: GymIconProps) => (
+  <svg {...svgProps(className)}>
+    <path d="M9.5 2A3.5 3.5 0 0 0 6 5.5v.12A3.5 3.5 0 0 0 3.5 9c0 .78.26 1.5.69 2.08A3.5 3.5 0 0 0 3 13.5c0 1.3.71 2.44 1.77 3.05A3.5 3.5 0 0 0 8 21.5c1.05 0 1.98-.46 2.62-1.19V3.9A3.49 3.49 0 0 0 9.5 2z" />
+    <path d="M14.5 2c-.98 0-1.87.4-2.5 1.05v16.9c.63.65 1.52 1.05 2.5 1.05a3.5 3.5 0 0 0 3.48-3.15A3.51 3.51 0 0 0 20 14.8c0-.93-.36-1.77-.95-2.4A3.49 3.49 0 0 0 20.5 9.5a3.5 3.5 0 0 0-2.02-3.17V6.2A3.5 3.5 0 0 0 14.5 2z" />
+  </svg>
+));
+IconBrain.displayName = 'IconBrain';
+
 /** Símbolo de Marte (♂) — paso de sexo del onboarding. */
 export const IconMale = memo(({ className }: GymIconProps) => (
   <svg {...svgProps(className)}>

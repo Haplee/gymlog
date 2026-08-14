@@ -15,7 +15,7 @@ interface SegmentedControlProps<T extends string> {
 }
 
 /**
- * Control segmentado estilo Stitch: contenedor angular bg-surface-2,
+ * Control segmentado: contenedor en píldora sobre bg-surface-2,
  * segmento activo relleno de acento con texto on-primary.
  */
 function SegmentedControlComponent<T extends string>({

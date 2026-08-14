@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   addMonths,
   eachDayOfInterval,
@@ -11,6 +10,7 @@ import {
 } from 'date-fns';
 import { toLocalDateKey } from '@shared/lib/dateKeys';
 import type { WorkoutWithSets } from '@shared/lib/types';
+import { ChevronLeft, ChevronRight } from '@shared/components/icons';
 
 interface WorkoutCalendarProps {
   workouts: WorkoutWithSets[];
@@ -62,7 +62,7 @@ export function WorkoutCalendar({ workouts }: WorkoutCalendarProps) {
   ).length;
 
   return (
-    <div className="rounded-card bg-surface border border-line p-4">
+    <div className="glass-2 rounded-card p-4">
       <div className="mb-3 flex items-center justify-between gap-2">
         <button
           type="button"

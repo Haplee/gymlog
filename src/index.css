@@ -192,6 +192,142 @@ body {
 }
 
 /* ════════════════════════════════════════════════
+   Material vidrio "Liquid Glass"
+
+   Sin backdrop-filter, a propósito. La decisión y las mediciones que la
+   sustentan están en docs/spikes/liquid-glass-spike.md; el resumen es que
+   en oscuro ningún velo translúcido alcanza AA sobre el acento, y que la
+   auditoría de julio ya midió el jank de backdrop-filter en el WebView de
+   Android (ver BottomSheet.tsx).
+
+   Lo que hace que se lea como vidrio y no como una tarjeta cualquiera:
+   base casi opaca + canto luminoso arriba + degradado interno de caída de
+   luz. Las tres cosas juntas; quitar una lo rompe.
+
+   .glass-1 contenido · .glass-2 elevado · .glass-3 flotante
+   ════════════════════════════════════════════════ */
+
+.glass-1,
+.glass-2,
+.glass-3 {
+  position: relative;
+  border: 1px solid var(--glass-edge);
+  border-top-color: var(--glass-edge-top);
+  box-shadow: var(--glass-sheen);
+}
+
+/* El degradado va en un ::before y no en el background del elemento para no
+   pisar el background-image de quien lo use (charts, imágenes de fondo). */
+.glass-1::before,
+.glass-2::before,
+.glass-3::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--glass-veil);
+  pointer-events: none;
+}
+
+.glass-1 {
+  background-color: var(--glass-1);
+  box-shadow: var(--glass-sheen);
+}
+.glass-2 {
+  background-color: var(--glass-2);
+  box-shadow: var(--glass-sheen), var(--glass-shadow-2);
+}
+.glass-3 {
+  background-color: var(--glass-3);
+  box-shadow: var(--glass-sheen), var(--glass-shadow-3);
+}
+
+/* Difuminado de borde de scroll: la tira donde el contenido se disuelve al
+   entrar bajo el chrome flotante. Es el sustituto perceptual del blur —
+   da la misma señal ("hay algo pasando por debajo") pintando un degradado
+   estático, sin muestrear el backdrop en cada frame.
+   Se coloca pegado al borde interior del header o del bottom nav. */
+.glass-scroll-fade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: var(--glass-fade-height);
+  background: var(--glass-fade);
+  pointer-events: none;
+  z-index: var(--z-raised);
+}
+.glass-scroll-fade-bottom {
+  transform: rotate(180deg);
+}
+
+/* Las tiras solo se ven cuando hay algo que disolver: si el scroller está
+   arriba del todo, una franja permanente dejaría el primer elemento lavado
+   sin motivo. Layout las enciende mirando scrollTop. */
+.glass-scroll-fade {
+  opacity: 0;
+  transition: opacity var(--anim-duration-normal) var(--ease-standard);
+}
+.glass-scroll-fade[data-visible='true'] {
+  opacity: 1;
+}
+
+/* Chrome a sangre (cabecera, barra inferior): lleva el fondo y el brillo del
+   material pero NO la caja. Un borde de cuatro lados en algo que va de lado a
+   lado de la pantalla dibuja dos hairlines verticales en los bordes. */
+.glass-flush {
+  border-width: 0;
+}
+.glass-flush-b {
+  border-bottom-width: 1px;
+  border-bottom-color: var(--glass-edge);
+}
+.glass-flush-t {
+  border-top-width: 1px;
+  border-top-color: var(--glass-edge-top);
+}
+.glass-flush-r {
+  border-right-width: 1px;
+  border-right-color: var(--glass-edge);
+}
+
+/* Sobre vidrio el texto necesita algo más de cuerpo: es la "vibrancy" de
+   Apple. Sin esto el texto secundario se lee lavado aunque el contraste
+   medido pase. */
+.glass-text {
+  font-weight: 500;
+  letter-spacing: 0.005em;
+}
+
+/* Si el usuario pide menos transparencia, el vidrio se vuelve sólido.
+   Nuestras capas ya son casi opacas, así que el salto es pequeño. */
+@media (prefers-reduced-transparency: reduce) {
+  .glass-1 {
+    background-color: var(--bg-canvas);
+  }
+  .glass-2 {
+    background-color: var(--bg-surface);
+  }
+  .glass-3 {
+    background-color: var(--bg-surface-2);
+  }
+  .glass-1::before,
+  .glass-2::before,
+  .glass-3::before {
+    background: none;
+  }
+}
+
+/* Más contraste: el canto deja de ser sutil y pasa a ser un borde de verdad. */
+@media (prefers-contrast: more) {
+  .glass-1,
+  .glass-2,
+  .glass-3 {
+    border-color: var(--border-default);
+    border-top-color: var(--border-default);
+  }
+}
+
+/* ════════════════════════════════════════════════
    Fluidez / rendimiento táctil (WebView Android)
    ════════════════════════════════════════════════ */
 
@@ -361,11 +497,11 @@ input[type='range'] {
 }
 
 .slide-up {
-  animation: slide-up 0.4s ease-out forwards;
+  animation: slide-up 0.4s var(--ease-decelerate) forwards;
 }
 
 .fade-in {
-  animation: fade-in 0.5s ease-out forwards;
+  animation: fade-in 0.5s var(--ease-decelerate) forwards;
 }
 
 .pulse {
@@ -377,7 +513,7 @@ input[type='range'] {
 }
 
 .bounce-in {
-  animation: bounce-in 0.5s ease-out forwards;
+  animation: bounce-in 0.5s var(--ease-decelerate) forwards;
 }
 
 input,
@@ -473,7 +609,7 @@ input[type='number'] {
 }
 
 .btn-press {
-  animation: button-press 0.15s ease-out;
+  animation: button-press 0.15s var(--ease-standard);
 }
 
 .toggle-on {
@@ -481,7 +617,7 @@ input[type='number'] {
 }
 
 .fade-in-up {
-  animation: fade-in-up 0.3s ease-out forwards;
+  animation: fade-in-up 0.3s var(--ease-decelerate) forwards;
 }
 
 @keyframes timer-pulse {
@@ -519,7 +655,7 @@ input[type='number'] {
 }
 
 .timer-complete {
-  animation: timer-complete 0.5s ease-out;
+  animation: timer-complete 0.5s var(--ease-standard);
 }
 
 @keyframes ripple {
@@ -537,7 +673,7 @@ input[type='number'] {
   position: absolute;
   border-radius: 50%;
   background: rgb(var(--accent-rgb) / 0.3);
-  animation: ripple 0.6s ease-out;
+  animation: ripple 0.6s var(--ease-standard);
 }
 
 @keyframes slide-in-right {
@@ -647,25 +783,25 @@ input[type='number'] {
 }
 
 .slide-in-right {
-  animation: slide-in-right 0.3s ease-out forwards;
+  animation: slide-in-right 0.3s var(--ease-decelerate) forwards;
 }
 .slide-out-left {
-  animation: slide-out-left 0.2s ease-out forwards;
+  animation: slide-out-left 0.2s var(--ease-accelerate) forwards;
 }
 .scale-in {
-  animation: scale-in 0.3s ease-out forwards;
+  animation: scale-in 0.3s var(--ease-decelerate) forwards;
 }
 .scale-out {
-  animation: scale-out 0.2s ease-out forwards;
+  animation: scale-out 0.2s var(--ease-accelerate) forwards;
 }
 .shimmer {
   animation: shimmer 1.5s infinite;
 }
 .success-pulse {
-  animation: success-pulse 0.3s ease-out;
+  animation: success-pulse 0.3s var(--ease-standard);
 }
 .error-shake {
-  animation: error-shake 0.4s ease-out;
+  animation: error-shake 0.4s var(--ease-standard);
 }
 .skeleton {
   background: linear-gradient(

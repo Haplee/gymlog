@@ -1,9 +1,9 @@
 import { m } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { TrendingUp, TrendingDown } from 'lucide-react';
 import { XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { SectionLabel } from './SectionLabel';
 import { useWeight } from '@shared/hooks/useWeight';
+import { TrendDown, TrendUp } from '@shared/components/icons';
 
 export interface WeeklyVolumePoint {
   week: string;
@@ -31,14 +31,14 @@ export function WeeklyVolumeChart({
       >
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-accent" />
+            <TrendUp className="w-4 h-4 text-accent" />
             <span className="text-sm font-medium text-fg-muted">{t('userStats.last_8_weeks')}</span>
           </div>
           <div className="flex items-center gap-1.5">
             {volumeChange > 0 ? (
-              <TrendingUp className="w-3.5 h-3.5 text-success" />
+              <TrendUp className="w-3.5 h-3.5 text-success" />
             ) : (
-              <TrendingDown className="w-3.5 h-3.5 text-error" />
+              <TrendDown className="w-3.5 h-3.5 text-error" />
             )}
             <span
               className="text-xs font-semibold font-mono"
@@ -54,8 +54,8 @@ export function WeeklyVolumeChart({
             <AreaChart data={data}>
               <defs>
                 <linearGradient id="userStatsGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#ffd93d" stopOpacity={0.35} />
-                  <stop offset="100%" stopColor="#ffd93d" stopOpacity={0.02} />
+                  <stop offset="0%" stopColor="var(--interactive-primary)" stopOpacity={0.35} />
+                  <stop offset="100%" stopColor="var(--interactive-primary)" stopOpacity={0.02} />
                 </linearGradient>
               </defs>
               <XAxis
@@ -80,7 +80,7 @@ export function WeeklyVolumeChart({
               <Area
                 type="monotone"
                 dataKey="vol"
-                stroke="#ffd93d"
+                stroke="var(--interactive-primary)"
                 strokeWidth={2.5}
                 fill="url(#userStatsGrad)"
               />

@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { AnimatePresence, m } from 'framer-motion';
 import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
+import { Xmark } from '@shared/components/icons';
 import { useTranslation } from 'react-i18next';
 import { Capacitor } from '@capacitor/core';
 
@@ -87,7 +87,7 @@ export function BottomSheet({
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-            className="fixed bottom-0 left-0 right-0 z-[calc(var(--z-modal)+1)] flex flex-col rounded-t-card bg-surface shadow-lg"
+            className="glass-3 fixed bottom-0 left-0 right-0 z-[calc(var(--z-modal)+1)] flex flex-col rounded-t-card"
             style={{ maxHeight: `${maxHeightVh}dvh` }}
           >
             <div
@@ -123,7 +123,7 @@ export function BottomSheet({
                     aria-label={t('common.close')}
                     className="w-8 h-8 rounded-full flex items-center justify-center text-fg-subtle hover:bg-surface-2 hover:text-fg transition-colors"
                   >
-                    <X className="w-4 h-4" />
+                    <Xmark size={16} />
                   </button>
                 )}
               </div>

@@ -1,13 +1,13 @@
 import { useTranslation } from 'react-i18next';
-import { TrendingUp, TrendingDown, Minus, AlertTriangle } from 'lucide-react';
 import type { ExerciseAdvice } from '../hooks/useAutoregulation';
 import type { LoadSuggestion } from '../utils/autoregulation';
 import { useWeight } from '@shared/hooks/useWeight';
 import { formatWeightInput } from '@shared/lib/weight';
+import { AlertTriangle, Minus, TrendDown, TrendUp } from '@shared/components/icons';
 
 const ACTION_ICON = {
-  increase: TrendingUp,
-  reduce: TrendingDown,
+  increase: TrendUp,
+  reduce: TrendDown,
   hold: Minus,
 } as const;
 
@@ -57,7 +57,7 @@ export function NextSessionCard({
         : 'text-fg-muted';
 
   return (
-    <article className="rounded-card bg-surface border border-line p-4">
+    <article className="glass-2 rounded-card p-4">
       <header className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="truncate text-sm font-semibold text-fg">{exercise}</h3>
