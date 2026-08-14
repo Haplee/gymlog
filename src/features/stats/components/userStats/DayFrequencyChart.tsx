@@ -28,7 +28,7 @@ export function DayFrequencyChart({
       >
         {bestDay && (
           <div className="flex items-center gap-2 mb-4">
-            <Flash className="w-4 h-4" style={{ color: '#fbbf24' }} />
+            <Flash className="w-4 h-4" style={{ color: 'var(--accent-amber)' }} />
             <span className="text-sm font-medium text-fg-muted">
               {t('userStats.favorite_day')} <span className="font-bold text-fg">{bestDay}</span>
             </span>
@@ -46,7 +46,12 @@ export function DayFrequencyChart({
                     transition={{ delay: 0.45 + i * 0.04, duration: 0.5 }}
                     className="h-full rounded-full"
                     style={{
-                      backgroundColor: pct === 100 ? '#ffd93d' : pct > 60 ? '#ffa93d' : '#38bdf8',
+                      backgroundColor:
+                        pct === 100
+                          ? 'var(--interactive-primary)'
+                          : pct > 60
+                            ? 'var(--accent-orange)'
+                            : 'var(--accent-sky)',
                     }}
                   />
                 </div>
