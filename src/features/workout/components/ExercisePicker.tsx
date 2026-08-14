@@ -87,7 +87,7 @@ export function ExercisePicker({
           >
             <Stickynote className="h-4 w-4" />
             {notes.length > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-pill bg-accent px-1 text-[0.625rem] font-bold text-accent-fg">
+              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-pill bg-accent px-1 text-2xs font-bold text-accent-fg">
                 {notes.length}
               </span>
             )}

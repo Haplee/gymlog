@@ -5,8 +5,15 @@ import { updateExerciseLoadType } from '@shared/api/exerciseMutations';
 import { LOAD_TYPES, type LoadType } from '@shared/lib/loadType';
 import { impact, ImpactStyle } from '@shared/lib/haptics';
 import { devError } from '@shared/lib/devtools';
-import { EquipmentIcon, IconKettlebell } from '@shared/components/icons/EquipmentIcons';
-import { IconUser } from '@shared/components/icons';
+import { EquipmentIcon } from '@shared/components/icons/EquipmentIcons';
+// Los dos de Reicon, y los mismos que ya usa `LoadTypeBadge` para estos
+// conceptos en las listas: antes el selector dibujaba `IconUser` donde el badge
+// dibuja `Man`, y `IconKettlebell` donde el badge dibuja `Backpack`. El mismo
+// tipo de carga se veía distinto según la pantalla, y encima la kettlebell
+// mentía: el lastre no es una kettlebell. La kettlebell propia sigue existiendo
+// para el equipamiento que sí lo es — Reicon no la trae con esa forma, ni
+// tampoco máquina, polea o banda.
+import { Backpack, Man } from '@shared/components/icons';
 
 const CONFIRMED_KEY = 'gymlog-loadtype-confirmed';
 
@@ -100,9 +107,9 @@ export function ExerciseLoadType({
               {value === 'external' ? (
                 <EquipmentIcon equipment={equipment} className="h-4 w-4 flex-shrink-0" />
               ) : value === 'bodyweight' ? (
-                <IconUser className="h-4 w-4 flex-shrink-0" />
+                <Man className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
               ) : (
-                <IconKettlebell className="h-4 w-4 flex-shrink-0" />
+                <Backpack className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
               )}
               <span className="w-full">{t(`workout.load_type_${value}`)}</span>
             </button>

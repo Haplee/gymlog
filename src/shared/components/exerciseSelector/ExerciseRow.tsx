@@ -56,7 +56,7 @@ export function ExerciseRow({
           <span className="text-base font-medium">{exercise.name}</span>
           {isOwn && (
             <span
-              className="text-[0.5625rem] px-1.5 py-0.5 rounded-sm font-medium ml-2 flex-shrink-0"
+              className="text-2xs px-1.5 py-0.5 rounded-sm font-medium ml-2 flex-shrink-0"
               style={{
                 backgroundColor: 'rgba(200,255,0,0.1)',
                 color: 'var(--interactive-primary)',

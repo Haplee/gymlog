@@ -108,7 +108,7 @@ export function Modal({
                     </div>
                   )}
                   {title && (
-                    <h2 id={titleId} className="text-[1rem] font-semibold text-fg flex-1">
+                    <h2 id={titleId} className="text-lg font-semibold text-fg flex-1">
                       {title}
                     </h2>
                   )}
