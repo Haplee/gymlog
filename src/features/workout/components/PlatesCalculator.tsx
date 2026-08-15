@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BottomSheet } from '@shared/components/ui';
-import { calcularDiscos, COMMON_PLATES_KG, DEFAULT_BAR_KG } from '@shared/lib/plates';
+import { BottomSheet, PlatesPicker } from '@shared/components/ui';
+import { calcularDiscos, DEFAULT_BAR_KG } from '@shared/lib/plates';
 import { useSettingsStore } from '@shared/stores/settingsStore';
 
 interface PlatesCalculatorProps {
@@ -28,20 +28,12 @@ export function PlatesCalculator({ open, initialTargetKg, onClose }: PlatesCalcu
   const [bar, setBar] = useState<number>(DEFAULT_BAR_KG);
   const [editandoDiscos, setEditandoDiscos] = useState(false);
   const availablePlates = useSettingsStore((s) => s.availablePlatesKg);
-  const setAvailablePlates = useSettingsStore((s) => s.setAvailablePlatesKg);
 
   const result = useMemo(() => {
     const targetNum = parseFloat(target.replace(',', '.'));
     if (!Number.isFinite(targetNum)) return null;
     return calcularDiscos(targetNum, bar, availablePlates);
   }, [target, bar, availablePlates]);
-
-  const alternarDisco = (peso: number) => {
-    const activo = availablePlates.includes(peso);
-    setAvailablePlates(
-      activo ? availablePlates.filter((p) => p !== peso) : [...availablePlates, peso],
-    );
-  };
 
   return (
     <BottomSheet open={open} onClose={onClose} title={t('workout.plates_calc')}>
@@ -131,26 +123,7 @@ export function PlatesCalculator({ open, initialTargetKg, onClose }: PlatesCalcu
       {editandoDiscos && (
         <div className="mt-2 rounded-md border border-line p-3">
           <div className="text-2xs text-fg-subtle mb-2">{t('workout.plates_available_help')}</div>
-          <div className="flex flex-wrap gap-1.5">
-            {COMMON_PLATES_KG.map((peso) => {
-              const activo = availablePlates.includes(peso);
-              return (
-                <button
-                  key={peso}
-                  type="button"
-                  onClick={() => alternarDisco(peso)}
-                  aria-pressed={activo}
-                  className={`min-h-11 min-w-14 rounded-pill border px-3 font-mono text-sm font-semibold ${
-                    activo
-                      ? 'bg-accent border-accent text-accent-fg'
-                      : 'bg-surface-2 border-line-interactive text-fg-muted'
-                  }`}
-                >
-                  {peso}
-                </button>
-              );
-            })}
-          </div>
+          <PlatesPicker />
         </div>
       )}
     </BottomSheet>

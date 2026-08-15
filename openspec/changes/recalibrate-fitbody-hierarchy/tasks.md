@@ -101,10 +101,23 @@
       con la línea base
 - [x] 4.5 Comprobación en el **emulador** (`emulator-5554`): safe-areas, `--header-height`,
       `--bottom-nav-height`, touch targets ≥44 px
-- [ ] 4.6 Comprobación en **dispositivo real** (`R9TR308HG0J`) — **no hecha a propósito**:
-      es la tablet personal del usuario y tiene la app instalada con la firma de release.
-      Instalar la debug obligaría a desinstalar la suya y perdería sus datos locales. Queda
-      a decisión del usuario
+- [x] 4.6 Comprobación en **dispositivo real**: **Pixel 9a `59131JEBF00062`** (Android 17,
+      1080×2424 @ 420 dpi), el 2026-08-15. La tablet `R9TR308HG0J` queda descartada: el
+      usuario ya no la usa.
+      Se instaló la **release firmada** con el keystore propio (`assembleRelease` →
+      `adb install -r`), no la debug: así actualiza en sitio (5.7.0 → 5.8.0) conservando los
+      datos —`firstInstallTime` sigue siendo el del 30-jul—. La debug habría servido también,
+      porque `applicationIdSuffix ".fitbody"` la instala al lado, pero se prefirió la release
+      por ser el binario que el usuario realmente usa (y el que pasa por R8, donde vive la
+      trampa del CSS).
+      Verificado en pantalla real: superficies distinguibles del canvas, header y barra
+      inferior a sangre, safe-areas correctas con navegación por gestos, sin overlays
+      transparentes tras la minificación. **Falso positivo descartado**: una captura del
+      cajón salió con el contenido desplazado y el panel sin llegar abajo — era un fotograma
+      a mitad de animación; repetida con la animación asentada, limpia.
+      Nota de método: `android/local.properties` no existía y hubo que recrearlo; ojo, las
+      rutas van con `/` — Java Properties se come las barras invertidas (`\U` → `U`) y el
+      build falla con un error de sintaxis de ruta que no menciona el fichero
 - [x] 4.7 Forzar recarga limpia del service worker antes de dar nada por bueno (trampa
       conocida: sirve JS viejo en nativo)
 
@@ -120,6 +133,14 @@
 - [x] 4b.3 Iconos del selector de tipo de carga a Reicon (`Man` y `Backpack`), que son los
       que `LoadTypeBadge` ya usaba para esos mismos conceptos en las listas. Máquina,
       polea, banda, barra y kettlebell siguen siendo propios: Reicon no los tiene
+- [x] 4b.4 **Los discos del gimnasio no se encontraban** (dicho por el usuario el 2026-08-15
+      mirando Ajustes en su móvil). El selector del 4b.1 existía, pero solo dentro de la
+      calculadora y plegado, y la calculadora solo se abre desde un entreno. Es una
+      configuración del gimnasio que se pone una vez: su sitio es Ajustes. Extraído a
+      `shared/components/ui/PlatesPicker` —los dos sitios escriben en el mismo store, así que
+      no hay dos verdades— y añadido a Ajustes → Entrenamiento, desplegado, sin nada que
+      abrir. E2E nuevo (`e2e/settings-plates.spec.ts`) que fija el contrato: está en Ajustes,
+      12 discos, y lo que marcas sobrevive a una recarga
 
 ## 5. Fase 5 — cerrar
 
@@ -129,6 +150,8 @@
 - [x] 5.2 ~~Anotar en `diary.md`~~ — **ese fichero no existe** (CLAUDE.md lo menciona, pero
       no está en el repo). El registro de la decisión vive en este `openspec/changes/`, que
       es la convención que el proyecto sí usa. Actualizados también README y CLAUDE.md
-- [ ] 5.3 Commit en rama `feat/recalibrate-fitbody-hierarchy` (sin push: lo pide el usuario)
-- [ ] 5.4 Decidir con el usuario si esto merece bump de versión (política: mediano →
-      patch, grande → minor)
+- [x] 5.3 Commiteado en `feat/recalibrate-fitbody-hierarchy` y mergeado a `main` en
+      `fcbbe73` («merge: recalibrar la jerarquia visual de FitBody y mejorar la
+      calculadora de discos»)
+- [x] 5.4 Bump aplicado: **5.8.0** (`fa1d596`). Minor, por la política de versionado —
+      cambio grande, toca el sistema de diseño entero

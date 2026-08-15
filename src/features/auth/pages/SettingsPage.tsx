@@ -5,7 +5,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
 import { Layout } from '@app/components/Layout';
-import { NavRow, SectionHeader, SettingRow, Toggle } from '@shared/components/ui';
+import { NavRow, PlatesPicker, SectionHeader, SettingRow, Toggle } from '@shared/components/ui';
 import { PreferencesSection } from '@features/auth/components/PreferencesSection';
 import { supabase } from '@shared/lib/supabase';
 import { App as CapApp } from '@capacitor/app';
@@ -568,6 +568,18 @@ export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Discos del gimnasio. Estaba solo dentro de la calculadora, donde
+                nadie lo encontraba: es una configuración del gimnasio que se
+                pone una vez, así que su sitio es Ajustes. Los dos sitios
+                escriben en el mismo store. */}
+            <div className="px-4 py-3.5">
+              <div className="text-base text-fg">{t('workout.plates_available')}</div>
+              <div className="text-xs mb-2.5 text-fg-subtle">
+                {t('workout.plates_available_help')}
+              </div>
+              <PlatesPicker />
             </div>
 
             {restAutoStart && (
