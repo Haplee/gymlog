@@ -27,7 +27,7 @@ export function SessionHistoryItem({
   return (
     // Se borra deslizando, como en el historial de entrenamientos: la maqueta
     // no lleva papelera por fila y el gesto ya es el patrón de la app.
-    <SwipeToDelete onDelete={onDelete}>
+    <SwipeToDelete onDelete={onDelete} flush>
       {/* Fila en línea: icono de la actividad a la izquierda, texto en el
           centro y el dato duro a la derecha. Es el mismo esqueleto que el resto
           de listas de la app; sin el icono esta era la única cuyas filas

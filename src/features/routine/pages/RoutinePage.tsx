@@ -10,7 +10,12 @@ import { useRoutineSessionStore } from '@features/routine/stores/routineSessionS
 import { useProgressionStore } from '@features/routine/stores/progressionStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
 import { Layout } from '@app/components/Layout';
-import type { Routine, DayOfWeek, DayRoutine, RoutineExercise } from '@features/routine/stores/routineStore';
+import type {
+  Routine,
+  DayOfWeek,
+  DayRoutine,
+  RoutineExercise,
+} from '@features/routine/stores/routineStore';
 import { fetchExercises, fetchRecentSets } from '@shared/api/queries';
 import { useWeight } from '@shared/hooks/useWeight';
 import { isBodyweightLoad } from '@shared/lib/loadType';
@@ -19,7 +24,8 @@ import { weightToInput } from '@shared/lib/weight';
 import type { Exercise } from '@shared/lib/types';
 import { SortableExerciseList } from '@features/routine/components/SortableExerciseList';
 import { RoutineSession } from '@features/routine/components/RoutineSession';
-import { Chip, SectionHeader, BottomSheet } from '@shared/components/ui';
+import { Chip, SectionHeader, BottomSheet, ConfirmDialog } from '@shared/components/ui';
+import { EmptyState } from '@shared/components/EmptyStates';
 import { CoachSuggestionBanner } from '@features/coach/components/CoachSuggestionBanner';
 import { ExerciseSelector } from '@shared/components/ExerciseSelector';
 
@@ -83,6 +89,8 @@ export function RoutinePage() {
   const [newRoutineName, setNewRoutineName] = useState('');
   const [newRoutineDesc, setNewRoutineDesc] = useState('');
   const [showExercisePicker, setShowExercisePicker] = useState(false);
+  /** Id de la rutina pendiente de confirmar su borrado; null = nada que borrar. */
+  const [routineToDelete, setRoutineToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -148,10 +156,9 @@ export function RoutinePage() {
   };
 
   const handleDeleteRoutine = (id: string) => {
-    if (confirm(t('routine.delete_confirm'))) {
-      deleteRoutine(id);
-      void persistRoutines();
-    }
+    deleteRoutine(id);
+    setRoutineToDelete(null);
+    void persistRoutines();
   };
 
   // Las plantillas no se pueden guardar en la nube tal cual: editar una la
@@ -247,9 +254,7 @@ export function RoutinePage() {
         if (!lastByExercise.has(key)) lastByExercise.set(key, s.weight);
       }
 
-      const catalogByName = new Map(
-        exercises.map((e) => [normalizeExerciseName(e.name), e]),
-      );
+      const catalogByName = new Map(exercises.map((e) => [normalizeExerciseName(e.name), e]));
 
       for (const ex of routine.days[day].exercises) {
         const key = normalizeExerciseName(ex.name);
@@ -382,7 +387,9 @@ export function RoutinePage() {
           <div className="rounded-card p-3 bg-surface border border-line">
             <div className="hairline-separator flex justify-between items-center pb-2 mb-3">
               <div className="label-caps text-fg-subtle">{dayLabels[selectedDay]}</div>
-              {activeRoutine && (
+              {/* Con el día vacío la acción ya la ofrece el estado vacío, en
+                  grande y en el centro: repetirla aquí solo añade ruido. */}
+              {activeRoutine && activeRoutine.days[selectedDay].exercises.length > 0 && (
                 <button
                   type="button"
                   onClick={() => setShowExercisePicker(true)}
@@ -394,9 +401,27 @@ export function RoutinePage() {
             </div>
 
             {activeRoutine?.days[selectedDay].exercises.length === 0 ? (
-              <div className="text-center py-6 text-xs text-fg-subtle">
-                {activeRoutine?.isCustom ? t('routine.empty_custom_day') : t('routine.rest_day')}
-              </div>
+              // Antes era una línea de texto de 12 px en medio de una pantalla
+              // medio vacía, y en las rutinas propias remataba mandando al
+              // usuario a «el selector de arriba»: describía la acción en vez de
+              // ofrecerla. Ahora el vacío se explica y trae su botón.
+              activeRoutine?.isCustom ? (
+                <EmptyState
+                  type="workout"
+                  title={t('routine.empty_custom_day')}
+                  description={t('routine.empty_custom_day_desc')}
+                  action={{
+                    label: t('routine.add_exercise_full'),
+                    onClick: () => setShowExercisePicker(true),
+                  }}
+                />
+              ) : (
+                <EmptyState
+                  type="routine"
+                  title={t('routine.rest_day')}
+                  description={t('routine.rest_day_desc')}
+                />
+              )
             ) : activeRoutine ? (
               <SortableExerciseList
                 exercises={activeRoutine.days[selectedDay].exercises}
@@ -418,14 +443,21 @@ export function RoutinePage() {
             </button>
           )}
 
+          {/* Zona de peligro. Antes era un botón rojo suelto a 4 px del final del
+              contenido, flotando en medio del vacío de la pantalla: parecía el
+              siguiente paso, no el último recurso. Separado por una línea y con
+              aire, se lee como pie de página. */}
           {activeRoutine?.isCustom && (
-            <button
-              type="button"
-              onClick={() => handleDeleteRoutine(activeRoutine.id)}
-              className="mt-4 min-h-11 label-caps text-error"
-            >
-              {t('routine.delete_routine')}
-            </button>
+            <>
+              <div className="hairline-separator mt-10" />
+              <button
+                type="button"
+                onClick={() => setRoutineToDelete(activeRoutine.id)}
+                className="mt-3 min-h-11 label-caps text-error"
+              >
+                {t('routine.delete_routine')}
+              </button>
+            </>
           )}
         </>
       )}
@@ -492,6 +524,19 @@ export function RoutinePage() {
           />
         </BottomSheet>
       )}
+
+      {/* El borrado usaba `confirm()` del navegador: en el WebView de Android eso
+          abre un diálogo del sistema con la URL de la app en la cabecera, en el
+          idioma del dispositivo y sin relación con el tema. */}
+      <ConfirmDialog
+        open={routineToDelete !== null}
+        title={t('routine.delete_confirm')}
+        description={t('routine.delete_confirm_desc')}
+        confirmLabel={t('routine.delete_routine')}
+        variant="danger"
+        onConfirm={() => routineToDelete && handleDeleteRoutine(routineToDelete)}
+        onCancel={() => setRoutineToDelete(null)}
+      />
     </Layout>
   );
 }

@@ -11,10 +11,19 @@ export function SwipeToDelete({
   children,
   onDelete,
   className = '',
+  flush = false,
 }: {
   children: ReactNode;
   onDelete: () => void;
   className?: string;
+  /**
+   * `true` para filas que van a sangre dentro de una lista, sin superficie
+   * propia. El redondeo aquí solo existe para recortar el fondo rojo del
+   * deslizamiento; cuando la fila no es una tarjeta, ese recorte además muerde
+   * los extremos del hairline y deja cada fila dentro de una bandeja
+   * redondeada que no existe: un borde sin superficie detrás.
+   */
+  flush?: boolean;
 }) {
   const x = useMotionValue(0);
   const [armed, setArmed] = useState(false);
@@ -22,7 +31,7 @@ export function SwipeToDelete({
   const iconOpacity = useTransform(x, [-96, -40, 0], [1, 0.6, 0]);
 
   return (
-    <div className={`relative overflow-hidden rounded-card ${className}`}>
+    <div className={`relative overflow-hidden ${flush ? '' : 'rounded-card'} ${className}`.trim()}>
       <div
         className={`absolute inset-y-0 right-0 flex items-center justify-end pr-5 transition-colors ${
           armed ? 'bg-error' : 'bg-error/70'

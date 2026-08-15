@@ -8,6 +8,7 @@ import {
   type CreateCustomExerciseInput,
 } from '@shared/api/exerciseMutations';
 import { MuscleGroupIcon } from '@shared/components/CardioIcons';
+import { ConfirmDialog } from '@shared/components/ui';
 import { supabase } from '@shared/lib/supabase';
 import { DEFAULT_MUSCLE_GROUP } from '@shared/constants/muscleGroups';
 import { toast } from 'sonner';
@@ -45,6 +46,8 @@ export function ExerciseSelector({
   const [error, setError] = useState<string | null>(null);
   const [editingMuscleId, setEditingMuscleId] = useState<string | null>(null);
   const [editingMuscleValue, setEditingMuscleValue] = useState('');
+  /** Ejercicio pendiente de confirmar su borrado; null = nada que borrar. */
+  const [exerciseToDelete, setExerciseToDelete] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -130,15 +133,10 @@ export function ExerciseSelector({
     },
   });
 
-  const handleDeleteExercise = useCallback(
-    (e: React.MouseEvent, exerciseId: string) => {
-      e.stopPropagation();
-      if (confirm(t('workout.confirm_delete_exercise'))) {
-        deleteMutation.mutate(exerciseId);
-      }
-    },
-    [deleteMutation, t],
-  );
+  const handleDeleteExercise = useCallback((e: React.MouseEvent, exerciseId: string) => {
+    e.stopPropagation();
+    setExerciseToDelete(exerciseId);
+  }, []);
 
   const handleSelect = useCallback(
     (ex: ExerciseOption) => {
@@ -429,6 +427,20 @@ export function ExerciseSelector({
           </m.div>
         )}
       </AnimatePresence>
+
+      {/* Borrar un ejercicio propio se pregunta con el diálogo de la app, no con
+          el del sistema: es destructivo y arrastra su historial. */}
+      <ConfirmDialog
+        open={exerciseToDelete !== null}
+        title={t('workout.confirm_delete_exercise')}
+        confirmLabel={t('common.delete')}
+        variant="danger"
+        onConfirm={() => {
+          if (exerciseToDelete) deleteMutation.mutate(exerciseToDelete);
+          setExerciseToDelete(null);
+        }}
+        onCancel={() => setExerciseToDelete(null)}
+      />
 
       {/* Backdrop to close dropdown */}
       {isOpen && !defaultOpen && (

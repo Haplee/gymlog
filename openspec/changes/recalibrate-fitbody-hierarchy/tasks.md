@@ -91,6 +91,68 @@
       escala con nombre
 - [x] 3.8 Revisar los 24 espaciados arbitrarios (`p-[`, `gap-[`…) contra `--space-*`
 
+## 3b. Segunda pasada de composición (2026-08-15, con la cuenta sembrada)
+
+La primera pasada midió huecos y desbordes. Esta mira **semántica**: qué se lleva el
+acento, qué ofrece el vacío y con qué diálogo se pregunta. Cuatro candidatos, dos
+descartados por medición.
+
+- [x] 3b.1 **Descartado — `/stats` no desborda.** El número grande de VOLUMEN parecía
+      salirse por la derecha; medidos todos los nodos de `main` contra el ancho del
+      viewport, cero desbordes. Ilusión óptica: llega justo al borde del relleno
+- [x] 3b.2 **Descartado — `/cardio` no recorta.** La cifra de SESIONES parecía cortada por
+      arriba; comparadas las cajas de cada nodo de texto con las de su padre, ningún
+      desbordamiento vertical
+- [x] 3b.3 **`/routines` desperdiciaba media pantalla.** Con un día vacío, 444,8 px de 806
+      en blanco (55 %) y el día resumido en una línea de 12 px que remataba mandando al
+      usuario a «el selector de arriba»: describía la acción en vez de ofrecerla. Ahora usa
+      `EmptyState` con copia propia (título, explicación y botón), y el vacío baja al 17,6 %.
+      `EmptyState` acepta `title`/`description` opcionales para casos concretos
+- [x] 3b.4 **La acción destructiva flotaba en ese vacío.** «Eliminar rutina» quedaba a 16 px
+      del contenido, en medio de la nada, leyéndose como el siguiente paso. Separada por
+      hairline y con aire, como pie de página. Ojo: `hairline-separator` pinta la línea
+      **abajo**, así que como envoltorio deja la raya debajo del botón — va como `<div>`
+      propio encima, que es el idiom que ya usa `SettingsPage`
+- [x] 3b.5 **Con el día vacío había dos botones para lo mismo** («+ Añadir» en la cabecera y
+      el del estado vacío). El de la cabecera solo aparece si el día tiene ejercicios
+- [x] 3b.6 **Tres acentos en dos filas seguidas en `/history`**, mezclando estado y destino:
+      la píldora del filtro activo, «Estadísticas» con relleno de acento y «Mis
+      estadísticas» con el texto en acento. Los dos enlaces pasan a neutros con el icono en
+      acento —el idiom que ese mismo fichero ya usa en `optionClass`— y el segundo estrena
+      icono propio, que los dos llevaban el mismo
+- [x] 3b.7 **Once insignias «Fuerza» con relleno de acento sólido**, lo más llamativo de la
+      pantalla para decir algo que casi nunca cambia; y en el mismo listado la insignia
+      «Salud» ya iba neutra. Unificadas. Medido con la ventana real: los rellenos de acento
+      de `/history` pasan de 12 a 1, y el que queda es el filtro activo
+- [x] 3b.8 **`window.confirm` en tres borrados** (rutina, ejercicio propio, datos del
+      entrenador), cuando `ConfirmDialog` existe **precisamente** para eso y lo dice en su
+      propio comentario. En el WebView de Android el nativo abre un diálogo con la URL de la
+      app en la cabecera y los botones en el idioma del dispositivo. Los tres migrados, con
+      la consecuencia escrita en el cuerpo y no solo la pregunta
+
+- [x] 3b.9 **`/stats` tenía tres compases en una sección**: 2 tarjetas, luego 1 a ancho
+      completo con el 60 % vacío, luego 3 pequeñas. El ancho completo lo provocaba el propio
+      arreglo del 3.5 —`col-span-2` para la última impar—, que cambió media fila vacía por
+      media tarjeta vacía. La causa real era partir seis KPIs en dos rejillas distintas.
+      Unificadas en una de 2 columnas: seis tarjetas, tres filas, ninguna huérfana, el truco
+      fuera y los números recuperan `text-3xl` (`size="sm"` existe para las rejillas de 3,
+      y sigue usándose en `CardioStatsSection`)
+- [x] 3b.10 **Cada fila de `/cardio` vivía en una bandeja redondeada que no existe.**
+      `SwipeToDelete` envuelve la fila en `overflow-hidden rounded-card` —el redondeo está
+      para recortar el fondo rojo del gesto—, y en una fila sin superficie propia ese
+      recorte muerde los extremos del hairline: ampliando la unión entre filas se ve la
+      línea curvarse. Es un borde sin superficie detrás, lo que el sistema prohíbe. Nueva
+      prop `flush` para las filas a sangre; `HistoryPage`, que sí envuelve tarjetas, se
+      queda como estaba
+- [x] 3b.11 **`/` dejaba 165,5 px muertos al final** (20,5 % del alto) con la pantalla
+      cargada arriba, porque el estado vacío medía siempre lo mismo (`py-10` fijo). Ahora
+      reserva una fracción del alto de la ventana (`min-h-[42vh]`) y el hueco lo absorbe él:
+      13,1 %, sin estirar ninguna tarjeta. En vh y no en píxeles porque el alto útil depende
+      del dispositivo
+- [x] 3b.12 **Tercer falso positivo descartado**: la cifra de SESIONES de `/cardio` parecía
+      tachada. Ampliada 5×, es el glifo del `1` de Space Grotesk sobre el hairline de la
+      tira. La medición del DOM (3b.2) ya lo decía; la ampliación lo confirma
+
 ## 4. Fase 4 — verificación
 
 - [x] 4.1 `npm run lint && npm run type-check && npm run test` en verde
@@ -101,10 +163,23 @@
       con la línea base
 - [x] 4.5 Comprobación en el **emulador** (`emulator-5554`): safe-areas, `--header-height`,
       `--bottom-nav-height`, touch targets ≥44 px
-- [ ] 4.6 Comprobación en **dispositivo real** (`R9TR308HG0J`) — **no hecha a propósito**:
-      es la tablet personal del usuario y tiene la app instalada con la firma de release.
-      Instalar la debug obligaría a desinstalar la suya y perdería sus datos locales. Queda
-      a decisión del usuario
+- [x] 4.6 Comprobación en **dispositivo real**: **Pixel 9a `59131JEBF00062`** (Android 17,
+      1080×2424 @ 420 dpi), el 2026-08-15. La tablet `R9TR308HG0J` queda descartada: el
+      usuario ya no la usa.
+      Se instaló la **release firmada** con el keystore propio (`assembleRelease` →
+      `adb install -r`), no la debug: así actualiza en sitio (5.7.0 → 5.8.0) conservando los
+      datos —`firstInstallTime` sigue siendo el del 30-jul—. La debug habría servido también,
+      porque `applicationIdSuffix ".fitbody"` la instala al lado, pero se prefirió la release
+      por ser el binario que el usuario realmente usa (y el que pasa por R8, donde vive la
+      trampa del CSS).
+      Verificado en pantalla real: superficies distinguibles del canvas, header y barra
+      inferior a sangre, safe-areas correctas con navegación por gestos, sin overlays
+      transparentes tras la minificación. **Falso positivo descartado**: una captura del
+      cajón salió con el contenido desplazado y el panel sin llegar abajo — era un fotograma
+      a mitad de animación; repetida con la animación asentada, limpia.
+      Nota de método: `android/local.properties` no existía y hubo que recrearlo; ojo, las
+      rutas van con `/` — Java Properties se come las barras invertidas (`\U` → `U`) y el
+      build falla con un error de sintaxis de ruta que no menciona el fichero
 - [x] 4.7 Forzar recarga limpia del service worker antes de dar nada por bueno (trampa
       conocida: sirve JS viejo en nativo)
 
@@ -120,6 +195,14 @@
 - [x] 4b.3 Iconos del selector de tipo de carga a Reicon (`Man` y `Backpack`), que son los
       que `LoadTypeBadge` ya usaba para esos mismos conceptos en las listas. Máquina,
       polea, banda, barra y kettlebell siguen siendo propios: Reicon no los tiene
+- [x] 4b.4 **Los discos del gimnasio no se encontraban** (dicho por el usuario el 2026-08-15
+      mirando Ajustes en su móvil). El selector del 4b.1 existía, pero solo dentro de la
+      calculadora y plegado, y la calculadora solo se abre desde un entreno. Es una
+      configuración del gimnasio que se pone una vez: su sitio es Ajustes. Extraído a
+      `shared/components/ui/PlatesPicker` —los dos sitios escriben en el mismo store, así que
+      no hay dos verdades— y añadido a Ajustes → Entrenamiento, desplegado, sin nada que
+      abrir. E2E nuevo (`e2e/settings-plates.spec.ts`) que fija el contrato: está en Ajustes,
+      12 discos, y lo que marcas sobrevive a una recarga
 
 ## 5. Fase 5 — cerrar
 
@@ -129,6 +212,8 @@
 - [x] 5.2 ~~Anotar en `diary.md`~~ — **ese fichero no existe** (CLAUDE.md lo menciona, pero
       no está en el repo). El registro de la decisión vive en este `openspec/changes/`, que
       es la convención que el proyecto sí usa. Actualizados también README y CLAUDE.md
-- [ ] 5.3 Commit en rama `feat/recalibrate-fitbody-hierarchy` (sin push: lo pide el usuario)
-- [ ] 5.4 Decidir con el usuario si esto merece bump de versión (política: mediano →
-      patch, grande → minor)
+- [x] 5.3 Commiteado en `feat/recalibrate-fitbody-hierarchy` y mergeado a `main` en
+      `fcbbe73` («merge: recalibrar la jerarquia visual de FitBody y mejorar la
+      calculadora de discos»)
+- [x] 5.4 Bump aplicado: **5.8.0** (`fa1d596`). Minor, por la política de versionado —
+      cambio grande, toca el sistema de diseño entero
