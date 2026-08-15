@@ -462,12 +462,16 @@ export function StatsPage() {
         <section className="space-y-3">
           <SectionLabel>{t('stats.section_training')}</SectionLabel>
 
-          {/* Si el número de tarjetas es impar, la última ocupa el ancho entero
-              en vez de dejar media fila vacía a su derecha. El hueco no era un
-              fallo de nadie —un grid de 2 columnas con 3 hijos lo produce solo—
-              pero se lee como algo que falta. */}
+          {/* Una sección, un ritmo. Antes eran dos rejillas —2 columnas con 3
+              tarjetas y 3 columnas con otras 3— y salían tres compases seguidos:
+              2, luego 1 a ancho completo con el 60 % vacío, luego 3 pequeñas. El
+              ancho completo lo provocaba el truco de `col-span-2` para la última
+              impar, que resolvía la media fila vacía creando media tarjeta vacía.
+              Con las seis juntas en 2 columnas no hay huérfana, no hace falta el
+              truco, y los números conservan su tamaño: `size="sm"` existe para
+              las rejillas de 3, donde no cabe `text-3xl`. */}
           <m.div
-            className="grid grid-cols-2 gap-3 [&>*:last-child:nth-child(odd)]:col-span-2"
+            className="grid grid-cols-2 gap-3"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
           >
@@ -493,31 +497,19 @@ export function StatsPage() {
               subtitle={t('stats.kpi_per_session')}
               icon="duration"
             />
-          </m.div>
-
-          {/* Volumen total + Mejor 1RM + Notas */}
-          <m.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.06 }}
-            className="grid grid-cols-3 gap-3"
-          >
             <KPICard
-              size="sm"
               title={t('stats.kpi_total_volume')}
               value={formatVol(allTimeVolume)}
               subtitle={t('stats.kpi_all_time')}
               icon="all-volume"
             />
             <KPICard
-              size="sm"
               title={t('stats.kpi_best_1rm')}
               value={bestOneRm > 0 ? formatKg(bestOneRm, 0) : '—'}
               subtitle={t('stats.kpi_estimated')}
               icon="best-1rm"
             />
             <KPICard
-              size="sm"
               title={t('stats.kpi_notes')}
               value={setNotesCount}
               subtitle={t('stats.kpi_noted_sets')}

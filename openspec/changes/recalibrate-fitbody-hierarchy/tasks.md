@@ -130,6 +130,29 @@ descartados por medición.
       app en la cabecera y los botones en el idioma del dispositivo. Los tres migrados, con
       la consecuencia escrita en el cuerpo y no solo la pregunta
 
+- [x] 3b.9 **`/stats` tenía tres compases en una sección**: 2 tarjetas, luego 1 a ancho
+      completo con el 60 % vacío, luego 3 pequeñas. El ancho completo lo provocaba el propio
+      arreglo del 3.5 —`col-span-2` para la última impar—, que cambió media fila vacía por
+      media tarjeta vacía. La causa real era partir seis KPIs en dos rejillas distintas.
+      Unificadas en una de 2 columnas: seis tarjetas, tres filas, ninguna huérfana, el truco
+      fuera y los números recuperan `text-3xl` (`size="sm"` existe para las rejillas de 3,
+      y sigue usándose en `CardioStatsSection`)
+- [x] 3b.10 **Cada fila de `/cardio` vivía en una bandeja redondeada que no existe.**
+      `SwipeToDelete` envuelve la fila en `overflow-hidden rounded-card` —el redondeo está
+      para recortar el fondo rojo del gesto—, y en una fila sin superficie propia ese
+      recorte muerde los extremos del hairline: ampliando la unión entre filas se ve la
+      línea curvarse. Es un borde sin superficie detrás, lo que el sistema prohíbe. Nueva
+      prop `flush` para las filas a sangre; `HistoryPage`, que sí envuelve tarjetas, se
+      queda como estaba
+- [x] 3b.11 **`/` dejaba 165,5 px muertos al final** (20,5 % del alto) con la pantalla
+      cargada arriba, porque el estado vacío medía siempre lo mismo (`py-10` fijo). Ahora
+      reserva una fracción del alto de la ventana (`min-h-[42vh]`) y el hueco lo absorbe él:
+      13,1 %, sin estirar ninguna tarjeta. En vh y no en píxeles porque el alto útil depende
+      del dispositivo
+- [x] 3b.12 **Tercer falso positivo descartado**: la cifra de SESIONES de `/cardio` parecía
+      tachada. Ampliada 5×, es el glifo del `1` de Space Grotesk sobre el hairline de la
+      tira. La medición del DOM (3b.2) ya lo decía; la ampliación lo confirma
+
 ## 4. Fase 4 — verificación
 
 - [x] 4.1 `npm run lint && npm run type-check && npm run test` en verde

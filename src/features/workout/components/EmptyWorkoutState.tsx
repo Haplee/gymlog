@@ -11,7 +11,13 @@ interface EmptyWorkoutStateProps {
 export function EmptyWorkoutState({ onAddSet, lastWorkout, onRepeatLast }: EmptyWorkoutStateProps) {
   const { t } = useTranslation();
   return (
-    <div className="flex flex-col items-center justify-center text-center py-10 px-2 gap-4">
+    // `min-h` en vh, no relleno fijo: con relleno fijo (py-10) el bloque medía
+    // siempre lo mismo y la pantalla quedaba cargada arriba con 165 px muertos
+    // al final —el 20 % del alto—. Reservando una fracción del alto de la
+    // ventana, el hueco lo absorbe el propio vacío y el reparto queda
+    // equilibrado en cualquier pantalla, sin estirar ninguna tarjeta.
+    // Porcentaje y no píxeles porque el alto útil depende del dispositivo.
+    <div className="flex min-h-[42vh] flex-col items-center justify-center text-center py-10 px-2 gap-4">
       <div className="w-16 h-16 rounded-full bg-surface-2 flex items-center justify-center">
         <Plus className="w-7 h-7 text-accent" aria-hidden="true" />
       </div>
