@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.9.0](https://github.com/Haplee/gymlog/compare/v5.8.0...v5.9.0) (2026-08-15)
+
+### Bug Fixes
+
+- **ajustes:** los discos del gimnasio se configuran desde Ajustes ([fd52eeb](https://github.com/Haplee/gymlog/commit/fd52eeb8b2a3eb3da13a66c5f61752a53948943b))
+- **ui:** que el acento signifique algo y que los vacios ofrezcan la accion ([4a0f887](https://github.com/Haplee/gymlog/commit/4a0f8879d227bc1b8759e5c9a360e0ac94ce78ea))
+- **ui:** un ritmo por seccion, filas sin bandejas y vacios que reparten ([72cd22a](https://github.com/Haplee/gymlog/commit/72cd22a79d651721e939beefd6ad94daefb73b9c))
+
 ## [5.8.0](https://github.com/Haplee/gymlog/compare/v5.6.0...v5.8.0) (2026-08-14)
 
 ### Features
