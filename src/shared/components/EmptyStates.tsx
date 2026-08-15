@@ -33,13 +33,18 @@ const icons = {
 export function EmptyState({
   type,
   action,
+  title: titleProp,
+  description: descProp,
 }: {
   type: EmptyStateProps['icon'];
   action?: { label: string; onClick: () => void };
+  /** Copia propia cuando el vacío es de un caso concreto y no del tipo entero. */
+  title?: string;
+  description?: string;
 }) {
   const { t } = useTranslation();
-  const title = t(`empty.${type}_title`);
-  const desc = t(`empty.${type}_desc`);
+  const title = titleProp ?? t(`empty.${type}_title`);
+  const desc = descProp ?? t(`empty.${type}_desc`);
   const Icon = icons[type];
 
   return (

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { NavRow, SectionHeader, SettingRow, Toggle } from '@shared/components/ui';
+import { ConfirmDialog, NavRow, SectionHeader, SettingRow, Toggle } from '@shared/components/ui';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useCoachStore } from '../stores/coachStore';
 import { CoachConsentModal } from './CoachConsentModal';
@@ -31,6 +31,7 @@ export function CoachSettingsSection() {
   const disableCoach = useCoachStore((s) => s.disable);
   const [showCoachConsent, setShowCoachConsent] = useState(false);
   const [coachBusy, setCoachBusy] = useState(false);
+  const [showPurgeConfirm, setShowPurgeConfirm] = useState(false);
 
   useEffect(() => {
     if (user?.id) void syncCoach(user.id);
@@ -40,12 +41,17 @@ export function CoachSettingsSection() {
    * Encender NUNCA es directo: pasa por el consentimiento. Apagar sí es
    * inmediato, pero avisa de que borra los datos, porque los borra de verdad.
    */
-  const handleCoachToggle = async (next: boolean) => {
+  const handleCoachToggle = (next: boolean) => {
     if (next) {
       setShowCoachConsent(true);
       return;
     }
-    if (!window.confirm(t('coach.settings.purge_confirm'))) return;
+    setShowPurgeConfirm(true);
+  };
+
+  /** Apagar borra de verdad lo que el entrenador sabe, así que se confirma. */
+  const handlePurge = async () => {
+    setShowPurgeConfirm(false);
     setCoachBusy(true);
     try {
       await disableCoach();
@@ -114,6 +120,16 @@ export function CoachSettingsSection() {
         loading={coachBusy}
         onAccept={handleCoachAccept}
         onClose={() => setShowCoachConsent(false)}
+      />
+
+      <ConfirmDialog
+        open={showPurgeConfirm}
+        title={t('coach.settings.purge_title')}
+        description={t('coach.settings.purge_confirm')}
+        confirmLabel={t('coach.settings.purge_cta')}
+        variant="danger"
+        onConfirm={() => void handlePurge()}
+        onCancel={() => setShowPurgeConfirm(false)}
       />
     </>
   );

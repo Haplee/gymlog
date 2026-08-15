@@ -2,7 +2,14 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { m } from 'framer-motion';
 import { Modal } from '@shared/components/ui';
-import { ChartBar, DocumentCode, Download, FileContent, Upload } from '@shared/components/icons';
+import {
+  ChartBar,
+  DocumentCode,
+  Download,
+  FileContent,
+  IconUser,
+  Upload,
+} from '@shared/components/icons';
 
 export type HistoryView = 'all' | 'workouts' | 'sets' | 'cardio';
 
@@ -96,21 +103,27 @@ export function HistoryFilters({
       </div>
 
       <div className="flex gap-2 flex-wrap">
+        {/* Estos dos son navegación, y estaban con el mismo peso que el filtro
+            activo de arriba: un relleno de acento y otro con el texto en acento,
+            justo debajo de la píldora que marca «dónde estoy». Tres acentos en
+            dos filas seguidas y ninguna forma de distinguir estado de destino.
+            Ahora van neutros con el icono en acento, que es como este mismo
+            fichero pinta el resto de sus filas de navegación (`optionClass`). */}
         <button
           type="button"
           onClick={() => onOpenStats()}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-pill font-semibold text-sm transition-all hover:scale-[1.02] active:scale-[0.98] bg-accent text-accent-fg"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-pill font-semibold text-sm transition-all hover:scale-[1.02] active:scale-[0.98] bg-surface-2 text-fg"
         >
-          <ChartBar className="w-4 h-4" />
+          <ChartBar className="w-4 h-4 text-accent" />
           {t('stats.title')}
         </button>
 
         <button
           type="button"
           onClick={() => onOpenUserStats()}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-pill font-semibold text-sm transition-all hover:scale-[1.02] active:scale-[0.98] bg-surface-2 text-accent"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-pill font-semibold text-sm transition-all hover:scale-[1.02] active:scale-[0.98] bg-surface-2 text-fg"
         >
-          <ChartBar className="w-4 h-4" />
+          <IconUser className="w-4 h-4 text-accent" />
           {t('history.my_stats')}
         </button>
 

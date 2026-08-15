@@ -395,7 +395,12 @@ export function HistoryPage() {
                                   minute: '2-digit',
                                 })}
                               </span>
-                              <span className="text-2xs px-1.5 py-0.5 rounded-pill font-bold bg-accent text-accent-fg">
+                              {/* Iba con relleno de acento sólido en cada fila:
+                                  once insignias siendo lo más llamativo de la
+                                  pantalla para decir algo que casi nunca cambia.
+                                  Neutra, como la de «Salud» de este mismo
+                                  listado, que ya lo hacía bien. */}
+                              <span className="text-2xs px-1.5 py-0.5 rounded-pill font-bold bg-surface-2 text-fg-muted">
                                 {t('stats.strength_badge')}
                               </span>
                             </div>

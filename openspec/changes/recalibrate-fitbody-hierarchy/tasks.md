@@ -91,6 +91,45 @@
       escala con nombre
 - [x] 3.8 Revisar los 24 espaciados arbitrarios (`p-[`, `gap-[`…) contra `--space-*`
 
+## 3b. Segunda pasada de composición (2026-08-15, con la cuenta sembrada)
+
+La primera pasada midió huecos y desbordes. Esta mira **semántica**: qué se lleva el
+acento, qué ofrece el vacío y con qué diálogo se pregunta. Cuatro candidatos, dos
+descartados por medición.
+
+- [x] 3b.1 **Descartado — `/stats` no desborda.** El número grande de VOLUMEN parecía
+      salirse por la derecha; medidos todos los nodos de `main` contra el ancho del
+      viewport, cero desbordes. Ilusión óptica: llega justo al borde del relleno
+- [x] 3b.2 **Descartado — `/cardio` no recorta.** La cifra de SESIONES parecía cortada por
+      arriba; comparadas las cajas de cada nodo de texto con las de su padre, ningún
+      desbordamiento vertical
+- [x] 3b.3 **`/routines` desperdiciaba media pantalla.** Con un día vacío, 444,8 px de 806
+      en blanco (55 %) y el día resumido en una línea de 12 px que remataba mandando al
+      usuario a «el selector de arriba»: describía la acción en vez de ofrecerla. Ahora usa
+      `EmptyState` con copia propia (título, explicación y botón), y el vacío baja al 17,6 %.
+      `EmptyState` acepta `title`/`description` opcionales para casos concretos
+- [x] 3b.4 **La acción destructiva flotaba en ese vacío.** «Eliminar rutina» quedaba a 16 px
+      del contenido, en medio de la nada, leyéndose como el siguiente paso. Separada por
+      hairline y con aire, como pie de página. Ojo: `hairline-separator` pinta la línea
+      **abajo**, así que como envoltorio deja la raya debajo del botón — va como `<div>`
+      propio encima, que es el idiom que ya usa `SettingsPage`
+- [x] 3b.5 **Con el día vacío había dos botones para lo mismo** («+ Añadir» en la cabecera y
+      el del estado vacío). El de la cabecera solo aparece si el día tiene ejercicios
+- [x] 3b.6 **Tres acentos en dos filas seguidas en `/history`**, mezclando estado y destino:
+      la píldora del filtro activo, «Estadísticas» con relleno de acento y «Mis
+      estadísticas» con el texto en acento. Los dos enlaces pasan a neutros con el icono en
+      acento —el idiom que ese mismo fichero ya usa en `optionClass`— y el segundo estrena
+      icono propio, que los dos llevaban el mismo
+- [x] 3b.7 **Once insignias «Fuerza» con relleno de acento sólido**, lo más llamativo de la
+      pantalla para decir algo que casi nunca cambia; y en el mismo listado la insignia
+      «Salud» ya iba neutra. Unificadas. Medido con la ventana real: los rellenos de acento
+      de `/history` pasan de 12 a 1, y el que queda es el filtro activo
+- [x] 3b.8 **`window.confirm` en tres borrados** (rutina, ejercicio propio, datos del
+      entrenador), cuando `ConfirmDialog` existe **precisamente** para eso y lo dice en su
+      propio comentario. En el WebView de Android el nativo abre un diálogo con la URL de la
+      app en la cabecera y los botones en el idioma del dispositivo. Los tres migrados, con
+      la consecuencia escrita en el cuerpo y no solo la pregunta
+
 ## 4. Fase 4 — verificación
 
 - [x] 4.1 `npm run lint && npm run type-check && npm run test` en verde
