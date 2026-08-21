@@ -60,7 +60,7 @@ export function PlatesCalculator({ open, initialTargetKg, onClose }: PlatesCalcu
             key={b}
             onClick={() => setBar(b)}
             aria-pressed={bar === b}
-            className="flex-1 min-h-11 rounded-card text-sm font-medium border"
+            className="flex-1 min-h-11 rounded-card text-sm font-medium border transition-transform active:scale-[0.98]"
             style={{
               backgroundColor: bar === b ? 'var(--interactive-primary)' : 'var(--bg-surface-2)',
               color: bar === b ? 'var(--interactive-primary-fg)' : 'var(--text-secondary)',
@@ -110,7 +110,7 @@ export function PlatesCalculator({ open, initialTargetKg, onClose }: PlatesCalcu
         type="button"
         onClick={() => setEditandoDiscos((v) => !v)}
         aria-expanded={editandoDiscos}
-        className="mt-3 flex w-full items-center justify-between gap-2 rounded-md border border-line px-3 min-h-11 text-2xs uppercase font-semibold text-fg-subtle"
+        className="mt-3 flex w-full items-center justify-between gap-2 rounded-md border border-line px-3 min-h-11 text-2xs uppercase font-semibold text-fg-subtle transition-colors active:bg-hover"
       >
         <span>{t('workout.plates_available')}</span>
         <span className="font-mono normal-case text-fg-muted">

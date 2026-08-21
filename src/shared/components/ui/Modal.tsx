@@ -129,7 +129,7 @@ export function Modal({
                       type="button"
                       onClick={onClose}
                       aria-label={t('common.close')}
-                      className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center text-fg-subtle hover:bg-surface-2 hover:text-fg transition-colors"
+                      className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center text-fg-subtle hover:bg-surface-2 hover:text-fg active:bg-hover transition-colors"
                     >
                       <Xmark size={16} />
                     </button>
@@ -139,7 +139,7 @@ export function Modal({
                       type="button"
                       onClick={onClose}
                       aria-label={t('common.close')}
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-fg-subtle hover:bg-surface-2 hover:text-fg transition-colors"
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-fg-subtle hover:bg-surface-2 hover:text-fg active:bg-hover transition-colors"
                     >
                       <Xmark size={16} />
                     </button>

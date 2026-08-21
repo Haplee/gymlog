@@ -131,7 +131,15 @@ export function FatigueAnalysis({
                     <m.div
                       initial={{ width: 0 }}
                       animate={{ width: `${recoveryPercent}%` }}
-                      transition={{ delay: 0.3 + index * 0.1, duration: 0.6, ease: 'easeOut' }}
+                      // El retardo se capa: sin tope, con 8-11 grupos musculares
+                      // la última barra no acababa de rellenarse hasta ~1,6 s
+                      // después de montar la sección — el valor más lento de
+                      // toda la app, y en una lista que se mira de un vistazo.
+                      transition={{
+                        delay: 0.3 + Math.min(index * 0.06, 0.3),
+                        duration: 0.4,
+                        ease: 'easeOut',
+                      }}
                       className="h-full rounded-full"
                       style={{ backgroundColor: muscleColor, opacity: 0.85 }}
                     />

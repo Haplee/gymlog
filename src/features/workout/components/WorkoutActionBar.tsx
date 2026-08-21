@@ -67,7 +67,7 @@ export function WorkoutActionBar({
         <button
           type="button"
           onClick={onAddSet}
-          className="flex-1 py-2 px-3 border border-dashed rounded-card text-sm font-medium cursor-pointer border-line-strong text-fg-muted"
+          className="flex-1 py-2 px-3 border border-dashed rounded-card text-sm font-medium cursor-pointer border-line-strong text-fg-muted transition-transform active:scale-[0.98]"
         >
           {t('workout.add_set')}
         </button>
@@ -98,7 +98,7 @@ export function WorkoutActionBar({
                   type="button"
                   onClick={() => setConfirmDeleteAll(false)}
                   aria-label={t('common.cancel')}
-                  className="py-2 px-3 rounded-card text-sm border border-line-strong text-fg-subtle"
+                  className="py-2 px-3 rounded-card text-sm border border-line-strong text-fg-subtle transition-transform active:scale-95"
                 >
                   ✕
                 </button>
@@ -110,7 +110,7 @@ export function WorkoutActionBar({
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setConfirmDeleteAll(true)}
-                className="py-2 px-3 border border-dashed rounded-card text-sm font-medium cursor-pointer border-line-strong text-error"
+                className="py-2 px-3 border border-dashed rounded-card text-sm font-medium cursor-pointer border-line-strong text-error transition-transform active:scale-95"
                 title={t('workout.remove_all')}
               >
                 <Trash2 className="w-4 h-4" />
@@ -128,7 +128,7 @@ export function WorkoutActionBar({
           type="button"
           onClick={onOpenRating}
           aria-label={t('workout.rate_session')}
-          className="relative flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-card border border-line-strong text-fg-subtle"
+          className="relative flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-card border border-line-strong text-fg-subtle transition-transform active:scale-95"
         >
           <Star
             className={`h-4 w-4 ${hasRating ? 'fill-accent text-accent' : ''}`}
@@ -146,7 +146,7 @@ export function WorkoutActionBar({
           // del guardado.
           onClick={() => onSave()}
           disabled={saving}
-          className={`flex-1 py-3 px-4 rounded-pill text-base font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-none text-accent-fg ${
+          className={`flex-1 py-3 px-4 rounded-pill text-base font-semibold cursor-pointer transition-transform active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 border-none text-accent-fg ${
             saveSuccess ? 'bg-success' : 'bg-accent'
           }`}
         >

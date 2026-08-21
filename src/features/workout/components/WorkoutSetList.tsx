@@ -313,7 +313,7 @@ export const WorkoutSetList = memo(function WorkoutSetList({
             }}
             aria-pressed={active.isWarmup}
             aria-label={`${t('workout.set_n', { n: activeIndex + 1 })}: ${t('workout.warmup')}`}
-            className={`label-caps min-h-11 rounded-sm border px-3 transition-colors ${
+            className={`label-caps min-h-11 rounded-sm border px-3 transition-colors active:opacity-60 ${
               active.isWarmup
                 ? 'border-warning bg-warning text-fg-inverse'
                 : 'border-dashed border-line-strong text-fg-subtle'
@@ -326,7 +326,7 @@ export const WorkoutSetList = memo(function WorkoutSetList({
           type="button"
           onClick={() => setShowDetails((v) => !v)}
           aria-expanded={showDetails}
-          className={`flex min-h-11 items-center gap-1.5 rounded-sm border px-3 label-caps transition-colors ${
+          className={`flex min-h-11 items-center gap-1.5 rounded-sm border px-3 label-caps transition-colors active:opacity-60 ${
             hasDetails ? 'border-accent text-accent' : 'border-line text-fg-subtle'
           }`}
         >
@@ -337,9 +337,12 @@ export const WorkoutSetList = memo(function WorkoutSetList({
         </button>
         <button
           type="button"
-          onClick={() => removeSet(activeIndex)}
+          onClick={() => {
+            void impact(ImpactStyle.Medium);
+            removeSet(activeIndex);
+          }}
           aria-label={`${t('workout.session_remove_set')} ${activeIndex + 1}`}
-          className="ml-auto flex h-11 w-11 items-center justify-center rounded-sm border border-line text-fg-subtle"
+          className="ml-auto flex h-11 w-11 items-center justify-center rounded-sm border border-line text-fg-subtle transition-opacity active:opacity-60"
         >
           <X className="h-4 w-4" />
         </button>

@@ -111,7 +111,7 @@ export function WeeklyWeightPrompt() {
               type="button"
               onClick={submit}
               disabled={saveMutation.isPending || !value}
-              className="min-h-11 px-4 rounded-md bg-accent text-accent-fg text-sm font-medium disabled:opacity-50"
+              className="min-h-11 px-4 rounded-md bg-accent text-accent-fg text-sm font-medium transition-transform active:scale-95 disabled:opacity-50 disabled:active:scale-100"
             >
               {t('weight_prompt.save')}
             </button>
@@ -126,7 +126,7 @@ export function WeeklyWeightPrompt() {
           type="button"
           onClick={dismiss}
           aria-label={t('common.close')}
-          className="w-8 h-8 rounded-full flex items-center justify-center text-fg-subtle hover:text-fg-muted flex-shrink-0"
+          className="w-8 h-8 rounded-full flex items-center justify-center text-fg-subtle hover:text-fg-muted active:opacity-60 flex-shrink-0"
         >
           <X className="w-4 h-4" />
         </button>

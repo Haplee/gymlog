@@ -36,7 +36,7 @@ const ChipComponent = ({
       onClick={onClick}
       disabled={disabled}
       aria-pressed={selected}
-      className={`inline-flex label-caps rounded-pill transition-colors duration-100 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${base} ${
+      className={`inline-flex label-caps rounded-pill transition-[background-color,color,transform] duration-100 cursor-pointer active:scale-95 disabled:opacity-40 disabled:active:scale-100 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${base} ${
         selected
           ? 'bg-accent text-accent-fg font-semibold'
           : 'bg-surface-2 text-fg-muted hover:text-fg'

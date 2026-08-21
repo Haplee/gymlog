@@ -98,7 +98,7 @@ export function ExerciseLoadType({
               type="button"
               onClick={() => choose(value)}
               aria-pressed={active}
-              className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-md border px-1.5 py-2 text-2xs font-medium leading-tight text-center min-h-11 ${
+              className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-md border px-1.5 py-2 text-2xs font-medium leading-tight text-center min-h-11 transition-transform active:scale-95 ${
                 active
                   ? 'bg-accent border-accent text-accent-fg'
                   : 'bg-surface border-line text-fg-muted'

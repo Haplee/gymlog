@@ -40,7 +40,7 @@ function SegmentedControlComponent<T extends string>({
             role="radio"
             aria-checked={isActive}
             onClick={() => onChange(opt.value)}
-            className={`min-h-9 px-4 rounded-pill label-caps transition-colors duration-100 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+            className={`min-h-9 px-4 rounded-pill label-caps transition-[background-color,color,opacity] duration-100 cursor-pointer active:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
               isActive ? 'bg-accent text-accent-fg font-semibold' : 'text-fg-subtle hover:text-fg'
             }`}
           >
