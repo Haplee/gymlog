@@ -17,3 +17,4 @@ export { SectionHeader } from './SectionHeader';
 export { SettingRow } from './SettingRow';
 export { NavRow } from './NavRow';
 export { PlatesPicker } from './PlatesPicker';
+export { PageHeader } from './PageHeader';

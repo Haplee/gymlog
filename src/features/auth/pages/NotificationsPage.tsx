@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { m } from 'framer-motion';
 import { Layout } from '@app/components/Layout';
 import { IconCheckBadge, IconTimer } from '@shared/components/icons';
+import { PageHeader } from '@shared/components/ui';
 import { useNotificationsStore } from '@shared/stores/notificationsStore';
 
 /** "hace 5 min", "hace 2 h", "hace 3 d" — suficiente para un historial corto. */
@@ -33,17 +34,21 @@ export function NotificationsPage() {
   return (
     <Layout>
       <div className="space-y-3 pb-8">
-        {items.length > 0 && (
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={clear}
-              className="min-h-11 rounded-pill bg-surface-2 px-4 text-sm text-fg-muted active:opacity-70"
-            >
-              {t('notifications.clear')}
-            </button>
-          </div>
-        )}
+        <PageHeader
+          title={t('notifications.title')}
+          action={
+            items.length > 0 ? (
+              <button
+                type="button"
+                onClick={clear}
+                className="min-h-11 rounded-pill bg-surface-2 px-4 text-sm text-fg-muted active:opacity-70"
+              >
+                {t('notifications.clear')}
+              </button>
+            ) : undefined
+          }
+          className="mb-0"
+        />
 
         {items.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-16 text-center">

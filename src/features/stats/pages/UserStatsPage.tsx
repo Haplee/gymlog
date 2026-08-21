@@ -44,9 +44,9 @@ import { DayFrequencyChart } from '../components/userStats/DayFrequencyChart';
 import { TopExercisesList } from '../components/userStats/TopExercisesList';
 import { BodyMeasurements } from '../components/userStats/BodyMeasurements';
 import { WearablesSummary } from '@features/wearables/components/WearablesSummary';
+import { PageHeader } from '@shared/components/ui';
 import {
   Activity,
-  ArrowLeft,
   Calendar,
   ChartBar,
   Clock,
@@ -335,22 +335,13 @@ export function UserStatsPage() {
 
   return (
     <Layout>
-      {/* Back header */}
-      <m.div
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center gap-3 mb-5"
-      >
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="w-11 h-11 rounded-full flex items-center justify-center transition-colors bg-surface border border-line hover:bg-surface-2"
-        >
-          <ArrowLeft className="w-4 h-4 text-fg-muted" />
-        </button>
-        {/* El título va en la cabecera del Layout; aquí solo la bajada. */}
-        <p className="text-xs text-fg-subtle">{t('userStats.page_subtitle')}</p>
-      </m.div>
+      <PageHeader
+        title={t('userStats.page_title')}
+        subtitle={t('userStats.page_subtitle')}
+        onBack={() => navigate(-1)}
+        backLabel={t('common.back')}
+        className="mb-5"
+      />
 
       <div className="space-y-5">
         {/* ── Hero KPIs ── */}

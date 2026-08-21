@@ -3,15 +3,14 @@ import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { m } from 'framer-motion';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { Layout } from '@app/components/Layout';
 import { fetchExerciseLibrary, type LibraryExercise } from '@shared/api/queries';
-import { Chip, SegmentedControl } from '@shared/components/ui';
+import { Chip, PageHeader, SegmentedControl } from '@shared/components/ui';
 import { ExerciseCatalog } from '@features/workout/components/ExerciseCatalog';
 import { EquipmentIcon } from '@shared/components/icons/EquipmentIcons';
 import { LoadTypeBadge } from '@shared/components/LoadTypeBadge';
-import { ArrowLeft, ChevronRight, Search } from '@shared/components/icons';
+import { ChevronRight, Search } from '@shared/components/icons';
 
 function ExerciseDetail({ ex }: { ex: LibraryExercise }) {
   const { t } = useTranslation();
@@ -135,21 +134,11 @@ export function ExerciseLibraryPage() {
 
   return (
     <Layout>
-      <m.div
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center gap-3 mb-4"
-      >
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          aria-label={t('common.back')}
-          className="w-11 h-11 rounded-full flex items-center justify-center bg-surface border border-line hover:bg-surface-2"
-        >
-          <ArrowLeft className="w-4 h-4 text-fg-muted" />
-        </button>
-        {/* El rótulo de la pantalla lo pone la cabecera del Layout. */}
-      </m.div>
+      <PageHeader
+        title={t('library.title')}
+        onBack={() => navigate(-1)}
+        backLabel={t('common.back')}
+      />
 
       <div className="mb-4">
         <SegmentedControl

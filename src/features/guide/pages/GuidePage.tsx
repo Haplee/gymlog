@@ -6,7 +6,6 @@ import {
   ChevronDown,
   ChevronRight,
   CloudCross,
-  IconBook,
   IconCalendar,
   IconChart,
   IconDumbbell,
@@ -19,7 +18,7 @@ import {
   Lightbulb,
 } from '@shared/components/icons';
 import { Layout } from '@app/components/Layout';
-import { Button, SectionHeader } from '@shared/components/ui';
+import { Button, PageHeader, SectionHeader } from '@shared/components/ui';
 import { useSettingsStore } from '@shared/stores/settingsStore';
 
 interface GuideSection {
@@ -70,15 +69,7 @@ export function GuidePage() {
   return (
     <Layout>
       <div className="space-y-6 pb-8">
-        <header className="glass-2 rounded-card p-4">
-          <div className="flex items-center gap-3">
-            <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-pill bg-accent text-accent-fg">
-              <IconBook className="h-5 w-5" />
-            </span>
-            {/* El título ya está en la cabecera; aquí basta la bajada. */}
-            <p className="min-w-0 text-sm text-fg-muted">{t('guide.subtitle')}</p>
-          </div>
-        </header>
+        <PageHeader title={t('guide.title')} subtitle={t('guide.subtitle')} className="mb-0" />
 
         {/* Quickstart: los 3 pasos del primer entreno */}
         <section>

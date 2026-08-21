@@ -12,6 +12,7 @@ import { pickDaily, pickSleepFor } from '../utils/pickDaily';
 import { useWearableDaily, useWearableSleep } from '../hooks/useWearableConnections';
 import { useWearableSync } from '../hooks/useWearableSync';
 import { useWearableStore } from '../stores/wearableStore';
+import { PageHeader } from '@shared/components/ui';
 import {
   aggregatorHasPermission,
   isAggregatorAvailable,
@@ -62,6 +63,8 @@ export function WearablesPage() {
   return (
     <Layout>
       <div className="space-y-3 pb-20">
+        <PageHeader title={t('wearables.title')} className="mb-0" />
+
         {/* Agregador nativo (Health Connect / HealthKit) — solo en app */}
         {isNative ? (
           <ConnectionCard
