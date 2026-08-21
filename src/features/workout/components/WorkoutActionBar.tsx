@@ -2,10 +2,22 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { m, AnimatePresence } from 'framer-motion';
 import { Star, Trash2 } from '@shared/components/icons';
+import { impact, ImpactStyle } from '@shared/lib/haptics';
 
 interface WorkoutActionBarProps {
-  /** Mensaje de resultado; si empieza por «✓» se pinta en color de éxito. */
+  /** Mensaje de resultado del guardado. */
   message: string;
+  /**
+   * Tono del mensaje, explícito.
+   *
+   * Antes se deducía del texto —«¿empieza por ✓?»— y por eso el aviso de récord
+   * personal salía en rojo: `handleSave` sobreescribe el «✓ Entrenamiento
+   * guardado» con «Nuevo PR: …», que no lleva el símbolo. Celebrar un PR con el
+   * color de error es exactamente lo contrario de lo que se quería decir, y con
+   * el tono deducido del texto el fallo vuelve en cuanto alguien cambie una
+   * cadena o traduzca la app.
+   */
+  messageTone?: 'success' | 'error';
   saving: boolean;
   saveSuccess: boolean;
   /** El botón de borrar todo solo aparece con más de una serie. */
@@ -27,6 +39,7 @@ interface WorkoutActionBarProps {
  */
 export function WorkoutActionBar({
   message,
+  messageTone = 'error',
   saving,
   saveSuccess,
   canRemoveAll,
@@ -45,7 +58,7 @@ export function WorkoutActionBar({
       {message && (
         <div
           className="mb-2 text-center text-sm"
-          style={{ color: message.startsWith('✓') ? 'var(--success)' : 'var(--error)' }}
+          style={{ color: messageTone === 'success' ? 'var(--success)' : 'var(--error)' }}
         >
           {message}
         </div>
@@ -72,11 +85,12 @@ export function WorkoutActionBar({
                 <button
                   type="button"
                   onClick={() => {
+                    void impact(ImpactStyle.Medium);
                     onRemoveAll();
                     setConfirmDeleteAll(false);
                   }}
                   aria-label={t('common.confirm')}
-                  className="py-2 px-3 rounded-card text-sm font-medium bg-error text-white"
+                  className="py-2 px-3 rounded-card text-sm font-medium bg-error text-white transition-transform active:scale-95"
                 >
                   ✓
                 </button>

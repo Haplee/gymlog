@@ -681,6 +681,17 @@ export const resources = {
         pending_sync_other: '{{count}} entrenos pendientes de sincronizar',
         note_save_error: 'No se pudo guardar la nota',
         confirm_delete_exercise: '¿Eliminar este ejercicio? Esta acción no se puede deshacer.',
+        delete_exercise_title: '¿Eliminar «{{name}}»?',
+        delete_exercise_body:
+          'Desaparece de tu lista y se pierden sus records personales. No se puede deshacer.',
+        delete_exercise_in_use:
+          'No se puede eliminar: tienes entrenos guardados con este ejercicio.',
+        delete_exercise_failed: 'No se pudo eliminar el ejercicio.',
+        delete_exercise_done: 'Ejercicio eliminado',
+        copy_replace_title: '¿Sustituir las series que llevas?',
+        copy_replace_body:
+          'Copiar la última sesión reemplaza lo que has anotado en este ejercicio. No se puede deshacer.',
+        copy_replace_accept: 'Sustituir',
         custom_badge: 'Propio',
         create_custom_exercise: 'Crear ejercicio personalizado',
         new_exercise: 'Nuevo ejercicio',
@@ -1726,6 +1737,16 @@ export const resources = {
         pending_sync_other: '{{count}} workouts pending sync',
         note_save_error: 'Could not save the note',
         confirm_delete_exercise: 'Delete this exercise? This action cannot be undone.',
+        delete_exercise_title: 'Delete “{{name}}”?',
+        delete_exercise_body:
+          'It disappears from your list and its personal records are lost. This cannot be undone.',
+        delete_exercise_in_use: 'Cannot delete: you have saved workouts using this exercise.',
+        delete_exercise_failed: 'Could not delete the exercise.',
+        delete_exercise_done: 'Exercise deleted',
+        copy_replace_title: 'Replace the sets you logged?',
+        copy_replace_body:
+          'Copying the last session replaces what you logged for this exercise. This cannot be undone.',
+        copy_replace_accept: 'Replace',
         custom_badge: 'Custom',
         create_custom_exercise: 'Create custom exercise',
         new_exercise: 'New exercise',

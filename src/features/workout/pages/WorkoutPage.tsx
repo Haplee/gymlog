@@ -158,6 +158,8 @@ export function WorkoutPage() {
   const restTimerRunning = useRestTimerStore((s) => s.isRunning);
 
   const [message, setMessage] = useState('');
+  const [messageTone, setMessageTone] = useState<'success' | 'error'>('error');
+  const [copyConfirm, setCopyConfirm] = useState<{ reps: number; weight: number }[] | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [setErrors, setSetErrors] = useState<Record<number, string>>({});
@@ -418,6 +420,7 @@ export function WorkoutPage() {
     }
     if (!hasValid) {
       setMessage(t('workout.add_valid_set'));
+      setMessageTone('error');
       return;
     }
 
@@ -469,12 +472,14 @@ export function WorkoutPage() {
 
     if (result.error) {
       setMessage(result.error.message);
+      setMessageTone('error');
       toast.error(result.error.message);
     } else if (result.queued) {
       // Guardado offline: se sincronizará al volver la conexión.
       recordProgression();
       setSaveSuccess(true);
       setMessage(t('workout.saved_offline'));
+      setMessageTone('success');
       toast.success(t('workout.saved_offline'));
       void notificationHaptic(NotificationType.Success);
       setTimeout(() => setMessage(''), 2500);
@@ -482,6 +487,7 @@ export function WorkoutPage() {
     } else {
       setSaveSuccess(true);
       setMessage(t('workout.saved'));
+      setMessageTone('success');
       toast.success(t('workout.saved'));
       void notificationHaptic(NotificationType.Success);
       if (sound) playSuccessChime();
@@ -516,6 +522,7 @@ export function WorkoutPage() {
         const exerciseName = selectedExercise?.name || customExerciseName || 'Ejercicio';
         prLabel = `Nuevo PR: ${exerciseName} - ${convert(max1RM).toFixed(1)} ${weightUnit}`;
         setMessage(prLabel);
+        setMessageTone('success');
       }
 
       setCompleted({
@@ -564,9 +571,8 @@ export function WorkoutPage() {
     startRestTimer,
   ]);
 
-  const handleCopySets = useCallback(
+  const applyCopiedSets = useCallback(
     (copied: { reps: number; weight: number }[]) => {
-      if (!copied.length) return;
       setSets(
         copied.map((s) => ({
           id: crypto.randomUUID(),
@@ -582,6 +588,25 @@ export function WorkoutPage() {
       void impact(ImpactStyle.Light);
     },
     [setSets],
+  );
+
+  /**
+   * «Copiar» de la última sesión **reemplaza** el array de series, no lo añade.
+   * Con series ya anotadas eso las borraba en silencio y sin deshacer, en un
+   * botón que no se lee como destructivo. Si hay algo escrito de verdad —una
+   * fila con reps o peso, no la fila vacía inicial— se pregunta antes.
+   */
+  const handleCopySets = useCallback(
+    (copied: { reps: number; weight: number }[]) => {
+      if (!copied.length) return;
+      const hasRealData = sets.some((s) => s.reps.trim() !== '' || s.weight.trim() !== '');
+      if (hasRealData) {
+        setCopyConfirm(copied);
+        return;
+      }
+      applyCopiedSets(copied);
+    },
+    [sets, applyCopiedSets],
   );
 
   // «Aplicar» de la tarjeta de sugerencia: rellena la serie en curso con el peso
@@ -657,11 +682,23 @@ export function WorkoutPage() {
         queryClient.invalidateQueries({ queryKey: ['exercises'] });
         queryClient.invalidateQueries({ queryKey: ['exerciseLibrary'] });
         setActiveExercise(null);
+        toast.success(t('workout.delete_exercise_done'));
       } catch (err) {
         devError('Error deleting exercise:', err);
+        // `workout_sets.exercise_id` es ON DELETE RESTRICT: un ejercicio con
+        // series guardadas no se puede borrar, y Postgres devuelve 23503.
+        // Hasta ahora el error solo iba a la consola de desarrollo, así que en
+        // la app el usuario tocaba la papelera y no pasaba absolutamente nada
+        // —ni se borraba ni se le decía por qué—.
+        const code = (err as { code?: string } | null)?.code;
+        toast.error(
+          code === '23503'
+            ? t('workout.delete_exercise_in_use')
+            : t('workout.delete_exercise_failed'),
+        );
       }
     },
-    [queryClient, setActiveExercise],
+    [queryClient, setActiveExercise, t],
   );
 
   return (
@@ -680,6 +717,7 @@ export function WorkoutPage() {
       <AnimatePresence>
         {showResumeBanner && startedAt && (
           <ResumeWorkoutBanner
+            setCount={sets.length}
             onContinue={() => setShowResumeBanner(false)}
             onDiscard={() => {
               clearPersistedState();
@@ -850,6 +888,7 @@ export function WorkoutPage() {
       {sets.length > 0 && (
         <WorkoutActionBar
           message={message}
+          messageTone={messageTone}
           saving={saving}
           saveSuccess={saveSuccess}
           canRemoveAll={sets.length > 1}
@@ -915,6 +954,18 @@ export function WorkoutPage() {
         variant="default"
         onConfirm={() => chooseSaveScope('all')}
         onCancel={() => chooseSaveScope('completed-only')}
+      />
+
+      <ConfirmDialog
+        open={!!copyConfirm}
+        title={t('workout.copy_replace_title')}
+        description={t('workout.copy_replace_body')}
+        confirmLabel={t('workout.copy_replace_accept')}
+        onConfirm={() => {
+          if (copyConfirm) applyCopiedSets(copyConfirm);
+          setCopyConfirm(null);
+        }}
+        onCancel={() => setCopyConfirm(null)}
       />
     </Layout>
   );

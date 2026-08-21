@@ -5,6 +5,7 @@ import { m, AnimatePresence } from 'framer-motion';
 import { ExerciseSelector } from '@shared/components/ExerciseSelector';
 import type { ExerciseNote } from '@shared/lib/types';
 import { BookOpen, Plus, Stickynote, Trash2 } from '@shared/components/icons';
+import { ConfirmDialog } from '@shared/components/ui';
 
 interface ExercisePickerProps {
   userId: string;
@@ -51,6 +52,7 @@ export function ExercisePicker({
   const [expanded, setExpanded] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [noteText, setNoteText] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const collapsed = !!activeExerciseId && !expanded;
 
@@ -96,7 +98,7 @@ export function ExercisePicker({
           {canDelete && (
             <button
               type="button"
-              onClick={onDeleteExercise}
+              onClick={() => setConfirmDelete(true)}
               aria-label={t('common.delete')}
               className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-card border border-line text-error"
             >
@@ -191,6 +193,18 @@ export function ExercisePicker({
       </AnimatePresence>
 
       {children}
+
+      <ConfirmDialog
+        open={confirmDelete}
+        title={t('workout.delete_exercise_title', { name: exerciseName })}
+        description={t('workout.delete_exercise_body')}
+        confirmLabel={t('common.delete')}
+        onConfirm={() => {
+          setConfirmDelete(false);
+          onDeleteExercise();
+        }}
+        onCancel={() => setConfirmDelete(false)}
+      />
     </div>
   );
 }
