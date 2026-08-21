@@ -855,6 +855,137 @@ input[type='number'] {
   animation: offline-pulse 2s ease-in-out infinite;
 }
 
+/* ════════════════════════════════════════════════
+   Avisos (sonner)
+   ════════════════════════════════════════════════
+   Sonner se monta sin estilos (`unstyled`) y el aspecto lo pone el sistema de
+   diseño. El aviso es chrome flotante, así que lleva `glass-3` en el className
+   y aquí solo se añade lo que la capa no cubre: tipografía, espaciado y el
+   color del icono según el tipo.
+
+   El tipo se distingue por el ICONO y por el canto, nunca por el fondo: un
+   fondo rojo o verde bajo el texto se sale del techo de contraste que marca el
+   AA de --text-primary, y es lo que hace ilegibles los avisos de las apps que
+   pintan la superficie entera de color. */
+
+.gl-toast {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: var(--text-base);
+  line-height: 1.4;
+}
+
+.gl-toast__title {
+  font-weight: 600;
+}
+
+.gl-toast__description {
+  margin-top: 2px;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.gl-toast__icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+}
+
+/* Es el único sitio donde el color del estado vale más que el acento: un aviso
+   de error tiene que leerse como error aunque el acento del usuario sea rojo. */
+.gl-toast--success .gl-toast__icon {
+  color: var(--success);
+}
+
+.gl-toast--error .gl-toast__icon {
+  color: var(--error);
+}
+
+.gl-toast--warning .gl-toast__icon {
+  color: var(--warning);
+}
+
+.gl-toast--info .gl-toast__icon {
+  color: var(--interactive-primary);
+}
+
+/* El canto tintado es la segunda señal, para quien no distinga los colores del
+   icono: cambia el borde, no el velo. */
+.gl-toast--error {
+  border-color: color-mix(in srgb, var(--error) 45%, transparent);
+}
+
+.gl-toast--success {
+  border-color: color-mix(in srgb, var(--success) 40%, transparent);
+}
+
+/* Los botones van cualificados con `[data-sonner-toast]` a propósito: sonner
+   trae sus propias reglas con esa misma forma (`[data-sonner-toast]
+   [data-close-button]`), que con una sola clase ganan por especificidad. Sin
+   esto el aspa se quedaba negra sobre blanco en tema claro. */
+[data-sonner-toast] .gl-toast__action,
+[data-sonner-toast] .gl-toast__cancel,
+[data-sonner-toast] .gl-toast__close {
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+[data-sonner-toast] .gl-toast__action,
+[data-sonner-toast] .gl-toast__cancel {
+  min-height: 32px;
+  padding: 0 var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+[data-sonner-toast] .gl-toast__action {
+  border: none;
+  background: var(--interactive-primary);
+  color: var(--interactive-primary-fg);
+}
+
+[data-sonner-toast] .gl-toast__cancel {
+  border: none;
+  background: var(--bg-surface-2);
+  color: var(--text-secondary);
+}
+
+[data-sonner-toast] .gl-toast__close {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--glass-edge);
+  background: var(--bg-surface-2);
+  color: var(--text-secondary);
+}
+
+/* El aspa mide 28px porque más grande desequilibra el aviso, pero lo que
+   responde al dedo llega a 44: es la regla dura de objetivo táctil del
+   proyecto, y cerrar un aviso es justo lo que se toca en movimiento. */
+[data-sonner-toast] .gl-toast__close::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+}
+
+[data-sonner-toast] .gl-toast__close:hover {
+  color: var(--text-primary);
+}
+
 /* Accesibilidad: desactivar animaciones decorativas */
 @media (prefers-reduced-motion: reduce) {
   .slide-up,
@@ -875,5 +1006,11 @@ input[type='number'] {
   .offline-pulse,
   .ripple {
     animation: none !important;
+  }
+
+  /* Sonner no anima con @keyframes sino con transiciones sobre transform y
+     opacity, así que la lista de arriba no le llega: hay que apagarlas aparte. */
+  [data-sonner-toast] {
+    transition: none !important;
   }
 }
