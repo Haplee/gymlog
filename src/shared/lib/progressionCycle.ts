@@ -68,14 +68,19 @@ export interface ProgressionSessionOutcome {
   weight: number;
   /** Reps de la mejor serie. */
   reps: number;
+  /**
+   * Repeticiones de **todas** las series de trabajo de la sesión.
+   *
+   * Sin esto el ciclo subía el peso en cuanto la mejor serie tocaba el techo
+   * del rango, y la mejor serie casi siempre es la primera, la que se hace
+   * fresco: 100 × 10, 100 × 8, 100 × 7 contaba como sesión completada. Es
+   * opcional para no romper a quien registre una sola serie, pero cuando llega
+   * manda: la doble progresión exige el esquema entero antes de tocar la carga.
+   */
+  sessionReps?: number[];
 }
 
-export type ProgressionEventName =
-  | 'seed'
-  | 'increase'
-  | 'add-reps'
-  | 'deload-start'
-  | 'deload-end';
+export type ProgressionEventName = 'seed' | 'increase' | 'add-reps' | 'deload-start' | 'deload-end';
 
 /* ------------------------------------------------------------------ */
 /* Helpers                                                             */
@@ -101,6 +106,21 @@ export function parseRepRange(targetReps?: string): { repMin?: number; repMax?: 
 
 function roundToStep(weight: number, step: number): number {
   return Math.round(Math.round(weight / step) * step * 100) / 100;
+}
+
+/**
+ * ¿Se completaron todas las series de trabajo en el techo del rango?
+ *
+ * Sin techo declarado o sin el detalle de las series no hay nada que exigir y
+ * se da por buena: es preferible comportarse como antes a frenar por una
+ * ausencia de datos.
+ */
+function sessionCompleted(state: ProgressionState, outcome: ProgressionSessionOutcome): boolean {
+  const repMax = state.repMax;
+  if (repMax === undefined) return true;
+  const reps = outcome.sessionReps;
+  if (!reps || reps.length === 0) return true;
+  return reps.every((r) => r >= repMax);
 }
 
 /** Fracción de descarga con seguridad ante configuraciones inválidas. */
@@ -149,10 +169,12 @@ export function createInitialProgression(
  *
  * - Si la sesión era de descarga, se cierra: se reanuda el ciclo de carga con la
  *   misma carga de trabajo y se pone el contador a cero.
- * - Si era de carga, se aplica doble progresión sobre la mejor serie (subir
- *   peso en el techo del rango, sumar una repetición en caso contrario) y se
- *   des cuenta el contador hacia la próxima descarga. Al agotarse, la siguiente
- *   sesión queda marcada como de descarga.
+ * - Si era de carga y el esquema se completó (todas las series de trabajo en el
+ *   techo del rango, cuando se conocen), se aplica doble progresión sobre la
+ *   mejor serie y se descuenta el contador hacia la próxima descarga. Al
+ *   agotarse, la siguiente sesión queda marcada como de descarga.
+ * - Si el esquema se quedó corto, la carga se consolida: la sesión cuenta, pero
+ *   el peso no se mueve.
  * - En peso corporal nunca se sube carga: se progresa sumando repeticiones.
  */
 export function advanceProgression(
@@ -173,6 +195,16 @@ export function advanceProgression(
     };
   }
 
+  // El esquema no está completo: se consolida el peso sin tocar nada. Este es
+  // el freno que faltaba en el auto-relleno de la rutina.
+  if (!sessionCompleted(state, outcome)) {
+    return {
+      ...state,
+      sessionCount: state.sessionCount + 1,
+      updatedAt: now,
+    };
+  }
+
   let nextWeight: number;
   let nextReps: number;
 
@@ -180,14 +212,11 @@ export function advanceProgression(
     nextWeight = state.currentWeight ?? outcome.weight;
     nextReps = (state.currentReps ?? outcome.reps) + 1;
   } else {
-    const prog = suggestProgression(
-      [{ weight: outcome.weight, reps: outcome.reps }],
-      {
-        repMin: state.repMin,
-        repMax: state.repMax,
-        incrementKg: state.incrementKg,
-      },
-    );
+    const prog = suggestProgression([{ weight: outcome.weight, reps: outcome.reps }], {
+      repMin: state.repMin,
+      repMax: state.repMax,
+      incrementKg: state.incrementKg,
+    });
     nextWeight = prog ? prog.weight : outcome.weight;
     nextReps = prog ? prog.reps : outcome.reps;
   }

@@ -4,15 +4,11 @@ import {
   useWearableSleep,
 } from '@features/wearables/hooks/useWearableConnections';
 import { computeReadiness } from '@features/wearables/utils/readiness';
-import {
-  suggestNextLoad,
-  suggestFromLastSession,
-  detectStall,
-  applyReadiness,
-  type AutoRegSession,
-  type LoadSuggestion,
-  type StallResult,
-} from '../utils/autoregulation';
+import { useSettingsStore } from '@shared/stores/settingsStore';
+import { smallestLoadStep } from '@shared/lib/loadStep';
+import type { AutoRegSession, LoadSuggestion, StallResult } from '../utils/autoregulation';
+import { buildLoadAdvice } from '../utils/loadAdvisor';
+import { buildVolumeContext, type VolumeContext, type VolumeSet } from '../utils/trainingLoad';
 
 /** Forma mínima que necesita el motor; evita acoplarse al tipo de la query. */
 interface SetLike {
@@ -21,7 +17,7 @@ interface SetLike {
   rir?: number | null;
   rpe?: number | null;
   is_warmup?: boolean | null;
-  exercise?: { name?: string } | null;
+  exercise?: { name?: string; muscle_group?: string } | null;
   workout?: { started_at: string | null } | null;
 }
 
@@ -29,6 +25,8 @@ export interface ExerciseAdvice {
   exercise: string;
   suggestion: LoadSuggestion;
   stall: StallResult | null;
+  /** Volumen semanal del grupo muscular, cuando se conoce. */
+  volume?: VolumeContext | null;
 }
 
 /** Agrupa las series de un ejercicio en sesiones por día. */
@@ -65,15 +63,26 @@ function toSessions(sets: SetLike[]): AutoRegSession[] {
 export function useAutoregulation(sets: SetLike[], limit = 3): ExerciseAdvice[] {
   const { data: daily } = useWearableDaily();
   const { data: sleep } = useWearableSleep();
+  const plates = useSettingsStore((s) => s.availablePlatesKg);
 
   // Sin wearable esto es null y las sugerencias salen intactas.
   const readiness = useMemo(() => computeReadiness(daily, sleep), [daily, sleep]);
+  const stepKg = useMemo(() => smallestLoadStep(plates), [plates]);
 
   return useMemo(() => {
     const byExercise = new Map<string, SetLike[]>();
+    // Las series duras de TODOS los ejercicios, para poder medir el volumen
+    // semanal del grupo muscular: subir carga en press banca depende de cuánto
+    // pecho lleva la semana, no solo de cómo fue el press banca.
+    const volumeSets: VolumeSet[] = [];
     for (const s of sets) {
       const name = s.exercise?.name;
       if (!name || !s.weight || !s.reps) continue;
+      const startedAt = s.workout?.started_at;
+      const muscleGroup = s.exercise?.muscle_group;
+      if (!s.is_warmup && startedAt && muscleGroup) {
+        volumeSets.push({ date: startedAt, muscleGroup });
+      }
       const bucket = byExercise.get(name);
       if (bucket) bucket.push(s);
       else byExercise.set(name, [s]);
@@ -82,15 +91,14 @@ export function useAutoregulation(sets: SetLike[], limit = 3): ExerciseAdvice[] 
     const advice: ExerciseAdvice[] = [];
     for (const [exercise, exerciseSets] of byExercise) {
       const sessions = toSessions(exerciseSets);
-      // Mismo encadenamiento que `useExerciseAdvice`: si la última sesión no
-      // registra esfuerzo (RIR/RPE), el motor se niega a decidir y se cae a la
-      // doble progresión sobre la última sesión.
-      const suggestion = applyReadiness(
-        suggestNextLoad(sessions) ?? suggestFromLastSession(sessions),
-        readiness,
-      );
-      if (!suggestion) continue;
-      advice.push({ exercise, suggestion, stall: detectStall(sessions) });
+      const muscleGroup = exerciseSets.find((s) => s.exercise?.muscle_group)?.exercise
+        ?.muscle_group;
+      const volume = muscleGroup ? buildVolumeContext(volumeSets, muscleGroup) : null;
+      // Misma cadena que `useExerciseAdvice`, y por el mismo sitio: si las dos
+      // pantallas no comparten compositor acaban recomendando cosas distintas.
+      const advised = buildLoadAdvice({ sessions, stepKg, volume, readiness });
+      if (!advised) continue;
+      advice.push({ exercise, ...advised });
     }
 
     // Primero lo accionable: bajar carga o estar estancado importa más que un
@@ -111,5 +119,5 @@ export function useAutoregulation(sets: SetLike[], limit = 3): ExerciseAdvice[] 
           b.suggestion.confidence.localeCompare(a.suggestion.confidence),
       )
       .slice(0, limit);
-  }, [sets, readiness, limit]);
+  }, [sets, readiness, limit, stepKg]);
 }

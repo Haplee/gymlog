@@ -241,6 +241,22 @@ export const resources = {
           deload:
             'Volumen al alza tres semanas seguidas, cada vez cuesta más y las sesiones se valoran peor. Toca una semana de descarga.',
           no_deload: 'No hay señales de que necesites descargar todavía.',
+          finish_the_sets:
+            'Solo la primera serie llegó al techo del rango; las demás se quedaron cortas. Consolida el peso hasta completar todas las series antes de subir.',
+          stale_data:
+            'Hace más de dos semanas que no tocas este ejercicio. Repite el último peso para volver a medir dónde estás antes de subir.',
+          weekly_cap:
+            'Ya subiste la carga esta misma semana. Dale una sesión más a este peso: dos saltos en siete días no da tiempo a asimilarlos.',
+          stall_hold:
+            'Llevas varias sesiones sin mejorar tu marca. Subir más peso no va a desatascarlo: repite carga y busca calidad de repetición.',
+          stall_reset:
+            'El estancamiento se alarga. Baja un 10% y vuelve a subir desde ahí: coger carrerilla desatasca más que insistir.',
+          volume_spike:
+            'Este músculo lleva bastante más trabajo esta semana que en las últimas cuatro. Mantén la carga hasta que el volumen se asiente.',
+          volume_over_mrv:
+            'Ya acumulas más series semanales de las que sueles recuperar en este músculo. La carga se queda como está.',
+          volume_below_mev:
+            'Estás haciendo pocas series semanales de este músculo. Antes de tocar el peso, añade series.',
         },
         readiness: {
           ok: 'Tu recuperación acompaña.',
@@ -1271,6 +1287,22 @@ export const resources = {
           deload:
             'Volume up three weeks running, effort climbing and sessions rated worse. Time for a deload week.',
           no_deload: 'No signs you need a deload yet.',
+          finish_the_sets:
+            'Only your first set hit the top of the range; the rest fell short. Hold this weight until every set is complete before adding load.',
+          stale_data:
+            "You haven't trained this lift in over two weeks. Repeat your last weight to see where you stand before adding load.",
+          weekly_cap:
+            'You already added load this week. Give this weight one more session: two jumps in seven days is more than you can absorb.',
+          stall_hold:
+            "You've gone several sessions without a new best. More weight won't unstick it: repeat the load and chase rep quality.",
+          stall_reset:
+            'The plateau is dragging on. Drop 10% and build back up: a running start unsticks more than pushing harder.',
+          volume_spike:
+            'This muscle is doing far more work this week than in the last four. Hold the load until volume settles.',
+          volume_over_mrv:
+            'Your weekly sets for this muscle are already past what you usually recover from. The load stays put.',
+          volume_below_mev:
+            "You're doing very few weekly sets for this muscle. Add sets before touching the weight.",
         },
         readiness: {
           ok: 'Your recovery is on track.',

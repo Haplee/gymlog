@@ -95,7 +95,11 @@ describe('advanceProgression', () => {
   });
 
   it('programa la descarga al agotarse el contador', () => {
-    let state = createInitialProgression('Press banca', { weight: 80, reps: 8 }, { repMin: 8, repMax: 10 });
+    let state = createInitialProgression(
+      'Press banca',
+      { weight: 80, reps: 8 },
+      { repMin: 8, repMax: 10 },
+    );
     expect(state.nextDeloadWeek).toBe(DEFAULT_DELOAD_CYCLE_LENGTH - 1);
     for (let i = 0; i < DEFAULT_DELOAD_CYCLE_LENGTH - 1; i++) {
       state = advanceProgression(state, { weight: 80, reps: 8 }, {});
@@ -105,7 +109,11 @@ describe('advanceProgression', () => {
   });
 
   it('la semana de descarga se cierra y reanuda el ciclo con la carga previa', () => {
-    const loading = advanceProgression(base({ isDeloadWeek: false, nextDeloadWeek: 0 }), { weight: 85, reps: 10 }, {});
+    const loading = advanceProgression(
+      base({ isDeloadWeek: false, nextDeloadWeek: 0 }),
+      { weight: 85, reps: 10 },
+      {},
+    );
     expect(loading.isDeloadWeek).toBe(true);
 
     const deloadSession = advanceProgression(loading, { weight: 56, reps: 10 }, {});
@@ -154,5 +162,40 @@ describe('suggestedPrefillWeight', () => {
     const state = base({ isDeloadWeek: true, currentWeight: undefined });
     const expected = Math.round(Math.round((80 * DEFAULT_DELOAD_FRACTION) / 2.5) * 2.5 * 100) / 100;
     expect(suggestedPrefillWeight(state, 80)).toBe(expected);
+  });
+});
+
+describe('advanceProgression — el esquema completo manda sobre la mejor serie', () => {
+  it('con series por debajo del techo consolida la carga en vez de subirla', () => {
+    const state = base({ currentWeight: 80, currentReps: 12 });
+    const next = advanceProgression(state, {
+      weight: 80,
+      reps: 12,
+      sessionReps: [12, 9, 8],
+    });
+
+    expect(next.currentWeight).toBe(80);
+    expect(next.currentReps).toBe(12);
+    // La sesión cuenta para el ciclo aunque el peso no se mueva.
+    expect(next.sessionCount).toBe(state.sessionCount + 1);
+  });
+
+  it('con todas las series en el techo sí sube un escalón', () => {
+    const state = base({ currentWeight: 80, currentReps: 12 });
+    const next = advanceProgression(state, {
+      weight: 80,
+      reps: 12,
+      sessionReps: [12, 12, 12],
+    });
+
+    expect(next.currentWeight).toBe(82.5);
+    expect(next.currentReps).toBe(8);
+  });
+
+  it('sin detalle de series se comporta como antes: no penaliza a quien anota poco', () => {
+    const state = base({ currentWeight: 80, currentReps: 12 });
+    const next = advanceProgression(state, { weight: 80, reps: 12 });
+
+    expect(next.currentWeight).toBe(82.5);
   });
 });

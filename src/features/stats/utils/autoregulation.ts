@@ -13,19 +13,51 @@
 
 import { calcular1RM } from '@shared/lib/brzycki';
 import { suggestProgression } from '@shared/lib/progression';
+import {
+  DEFAULT_LOAD_STEP_KG,
+  LOAD_RATIO_PER_RIR,
+  MAX_INCREASE_RATIO,
+  TARGET_INCREASE_RATIO,
+  backOffLoad,
+  nextAchievableLoad,
+} from '@shared/lib/loadStep';
 import { format, startOfWeek } from 'date-fns';
+
+export { DEFAULT_LOAD_STEP_KG, MAX_INCREASE_RATIO };
 
 /** RIR objetivo por defecto: dejar ~2 repeticiones en recámara. */
 export const DEFAULT_TARGET_RIR = 2;
-/** Salto máximo de carga permitido en una sesión, en tanto por uno. */
-export const MAX_INCREASE_RATIO = 0.1;
-/** Escalón de carga por defecto (par de discos de 1,25 kg). */
-export const DEFAULT_LOAD_STEP_KG = 2.5;
 
 /** Sesiones sin mejora de e1RM a partir de las cuales se considera estancamiento. */
 const STALL_SESSIONS = 3;
 /** Días sin mejora de e1RM a partir de los cuales se considera estancamiento. */
 const STALL_DAYS = 21;
+/** Sesiones estancado a partir de las cuales se retrocede en vez de insistir. */
+const STALL_RESET_SESSIONS = 5;
+/** Cuánto se retrocede al reiniciar tras un estancamiento largo. */
+const STALL_RESET_RATIO = 0.1;
+
+/**
+ * Días desde la última sesión a partir de los cuales el dato deja de servir
+ * para subir carga.
+ *
+ * Tras dos semanas sin tocar un ejercicio, la carga de la última sesión ya no
+ * describe lo que se puede levantar hoy. Subir sobre un dato caducado es la
+ * forma más rápida de fallar una serie: se repite el peso y se vuelve a medir.
+ */
+const STALE_DAYS = 14;
+
+/**
+ * Subida acumulada máxima en una misma semana, en tanto por uno.
+ *
+ * Quien entrena un ejercicio dos veces por semana recibía dos subidas: dos
+ * escalones seguidos son un +5 % en siete días sobre cargas altas y bastante
+ * más sobre las ligeras. El tope se mide sobre el histórico real de esa ventana,
+ * no sobre la sesión anterior.
+ */
+const WEEKLY_INCREASE_CAP = 0.06;
+
+const DAY_MS = 86_400_000;
 
 export interface AutoRegSet {
   weight: number;
@@ -155,8 +187,52 @@ function usableSessions(sessions: AutoRegSession[]): AutoRegSession[] {
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 }
 
-function roundToStep(weight: number, step: number): number {
-  return Math.round(Math.round(weight / step) * step * 100) / 100;
+/** Días transcurridos entre dos sesiones. */
+function daysBetween(from: string, to: string): number {
+  return (new Date(to).getTime() - new Date(from).getTime()) / DAY_MS;
+}
+
+/**
+ * ¿Cumplió la sesión el esquema completo en el techo del rango?
+ *
+ * Esta es la corrección de fondo del motor. Antes bastaba con que la **serie
+ * tope** llegara al techo para recomendar más peso, y la serie tope es casi
+ * siempre la primera, la que se hace fresco. Con 100 × 12, 100 × 9 y 100 × 7 la
+ * sesión no está terminada —dos de las tres series se quedaron cortas— y aun
+ * así el motor mandaba subir. De ahí la sensación de que la app sube el peso
+ * todas las semanas pase lo que pase.
+ *
+ * La doble progresión de manual exige completar **todas** las series de trabajo
+ * en el techo antes de tocar la carga. Con una sola serie registrada el
+ * resultado es el mismo que antes, así que no penaliza a quien registra poco.
+ */
+function allWorkingSetsAtCeiling(session: AutoRegSession, repMax: number): boolean {
+  const working = session.sets.filter(isWorkingSet);
+  if (working.length === 0) return false;
+  return working.every((s) => s.reps >= repMax);
+}
+
+/**
+ * Subida de carga ya acumulada en los últimos 7 días, en tanto por uno.
+ *
+ * Se compara la carga de trabajo de la última sesión con la más baja registrada
+ * dentro de la ventana. Devuelve 0 si no hay otra sesión en esos 7 días, que es
+ * el caso normal de quien entrena cada ejercicio una vez por semana: a ese no le
+ * frena nada.
+ */
+function weeklyIncreaseSoFar(usable: AutoRegSession[]): number {
+  const last = usable[usable.length - 1];
+  const lastTop = topSet(last);
+  if (!lastTop) return 0;
+
+  let lowest = lastTop.weight;
+  for (let i = usable.length - 2; i >= 0; i--) {
+    if (daysBetween(usable[i].date, last.date) > 7) break;
+    const top = topSet(usable[i]);
+    if (top && top.weight < lowest) lowest = top.weight;
+  }
+  if (lowest <= 0) return 0;
+  return lastTop.weight / lowest - 1;
 }
 
 /* ------------------------------------------------------------------ */
@@ -222,34 +298,45 @@ export function suggestNextLoad(
     confidence,
   });
 
-  // 1. Al límite y perdiendo repeticiones ⇒ bajar carga.
+  // 1. Al límite y perdiendo repeticiones ⇒ bajar carga. El recorte se deriva
+  //    del desfase de esfuerzo (≈4 % por punto de RPE), con un suelo de un 5 %:
+  //    recortar menos que eso no cambia nada en la barra.
   const maxRpe = sessionMaxRpe(last);
   const repsDropped = prevTop ? lastTop.reps < prevTop.reps : false;
   if (maxRpe !== null && maxRpe >= 9.5 && repsDropped) {
-    const reduced = Math.max(step, roundToStep(baseWeight * 0.95, step));
-    return mk(reduced, baseReps, 'reduce', 'coach.reason.at_failure');
+    const overshoot = Math.max(1, maxRpe - (10 - targetRir));
+    const ratio = Math.min(0.1, Math.max(0.05, overshoot * 0.04));
+    return mk(backOffLoad(baseWeight, ratio, step), baseReps, 'reduce', 'coach.reason.at_failure');
   }
 
-  // 2. Sobra margen ⇒ subir, respetando el tope del 10%.
-  if (lastRir >= targetRir + 2) {
-    const ratio = lastRir >= targetRir + 3 ? 0.05 : 0.025;
-    const cap = baseWeight * (1 + MAX_INCREASE_RATIO);
-    let target = roundToStep(baseWeight * (1 + ratio), step);
-    // El redondeo puede comerse el incremento: forzar al menos un escalón.
-    if (target <= baseWeight) target = roundToStep(baseWeight + step, step);
-    if (target > cap) target = roundToStep(baseWeight * (1 + MAX_INCREASE_RATIO), step);
+  // Puertas previas a cualquier subida. Ninguna baja la carga: solo impiden
+  // subirla cuando el dato no da para tanto.
+  const staleDays = daysBetween(prev.date, last.date);
+  const dataIsStale = staleDays > STALE_DAYS;
+  const weeklyJump = weeklyIncreaseSoFar(usable);
+  const alreadyRaisedThisWeek = weeklyJump >= WEEKLY_INCREASE_CAP;
 
-    // Si ni un escalón cabe bajo el tope (cargas muy ligeras), progresa por
-    // repeticiones en lugar de por carga. Es doble progresión, no un parche.
-    if (target <= baseWeight || target > cap) {
-      return mk(baseWeight, baseReps + 1, 'hold', 'coach.reason.add_rep');
+  /** Subida efectiva, o `null` si por carga no toca (o no cabe). */
+  const raise = (ratio: number) =>
+    opts.bodyweight ? null : nextAchievableLoad(baseWeight, { ratio, stepKg: step });
+
+  // 2. Sobra margen ⇒ subir. Cuánto lo dice la propia desviación de esfuerzo:
+  //    la literatura de autorregulación mueve la carga en torno a un 4 % por
+  //    punto de RPE, así que se usa ~3 % por RIR sobrante, con el tope del 10 %.
+  if (lastRir >= targetRir + 2) {
+    if (dataIsStale) return mk(baseWeight, baseReps, 'hold', 'coach.reason.stale_data');
+    if (alreadyRaisedThisWeek) {
+      return mk(baseWeight, baseReps, 'hold', 'coach.reason.weekly_cap');
     }
+    const target = raise((lastRir - targetRir) * LOAD_RATIO_PER_RIR);
+
+    // Sin salto montable bajo el tope (cargas muy ligeras, o peso corporal),
+    // progresa por repeticiones. Es doble progresión, no un parche.
+    if (target === null) return mk(baseWeight, baseReps + 1, 'hold', 'coach.reason.add_rep');
+
     // Subir carga en el techo del rango se premia restando reps: se vuelve al
     // suelo y se trabaja el mismo esquema de progresión (doble progresión).
-    const reps =
-      repMax !== undefined && baseReps >= repMax && !opts.bodyweight
-        ? (repMin ?? baseReps)
-        : baseReps;
+    const reps = repMax !== undefined && baseReps >= repMax ? (repMin ?? baseReps) : baseReps;
     return mk(target, reps, 'increase', 'coach.reason.margin_left');
   }
 
@@ -258,20 +345,20 @@ export function suggestNextLoad(
     return mk(baseWeight, baseReps, 'hold', 'coach.reason.too_hard');
   }
 
-  // 4. En rango: misma carga, una repetición más. Si ya se está en el techo del
-  //    rango de reps objetivo, la única progresión segura es subir un escalón y
-  //    volver al suelo (doble progresión). En peso corporal no se puede subir
-  //    carga, así que se suma una repetición aunque se pase del techo.
+  // 4. En rango: misma carga, una repetición más. Solo cuando **todas** las
+  //    series de trabajo llegaron al techo del rango se sube un escalón y se
+  //    vuelve al suelo (doble progresión de verdad). En peso corporal no se
+  //    puede subir carga, así que se suma una repetición aunque se pase.
   if (repMax !== undefined && baseReps >= repMax) {
-    if (opts.bodyweight) {
-      return mk(baseWeight, baseReps + 1, 'hold', 'coach.reason.on_target');
+    if (!allWorkingSetsAtCeiling(last, repMax)) {
+      return mk(baseWeight, baseReps, 'hold', 'coach.reason.finish_the_sets');
     }
-    const target = roundToStep(baseWeight + step, step);
-    // El escalón no cabe bajo el tope del 10% (cargas muy ligeras): se
-    // progresa por repeticiones igual que en el caso de margen.
-    if (target > baseWeight * (1 + MAX_INCREASE_RATIO)) {
-      return mk(baseWeight, baseReps + 1, 'hold', 'coach.reason.on_target');
+    if (dataIsStale) return mk(baseWeight, baseReps, 'hold', 'coach.reason.stale_data');
+    if (alreadyRaisedThisWeek) {
+      return mk(baseWeight, baseReps, 'hold', 'coach.reason.weekly_cap');
     }
+    const target = raise(TARGET_INCREASE_RATIO);
+    if (target === null) return mk(baseWeight, baseReps + 1, 'hold', 'coach.reason.on_target');
     return mk(target, repMin ?? baseReps, 'increase', 'coach.reason.ceiling');
   }
   return mk(baseWeight, baseReps + 1, 'hold', 'coach.reason.on_target');
@@ -288,7 +375,7 @@ export function suggestNextLoad(
  */
 export function suggestFromLastSession(
   sessions: AutoRegSession[],
-  opts: { repMin?: number; repMax?: number; bodyweight?: boolean } = {},
+  opts: { repMin?: number; repMax?: number; bodyweight?: boolean; stepKg?: number } = {},
 ): LoadSuggestion | null {
   const usable = usableSessions(sessions);
   if (usable.length === 0) return null;
@@ -300,28 +387,54 @@ export function suggestFromLastSession(
   const top = topSet(last);
   if (!top) return null;
 
+  const step = opts.stepKg ?? DEFAULT_LOAD_STEP_KG;
   const prog = suggestProgression(
     working.map((s) => ({ weight: s.weight, reps: s.reps })),
-    { repMin: opts.repMin, repMax: opts.repMax },
+    { repMin: opts.repMin, repMax: opts.repMax, incrementKg: step },
   );
   if (!prog) return null;
 
-  const increase = prog.action === 'increase-weight' && !opts.bodyweight;
-  const weight = increase ? prog.weight : top.weight;
-  // En peso corporal, alcanzar el techo no se premia reseteando las reps a la
-  // baja: se sigue sumando una repetición, que es la única progresión segura.
-  const reps = increase ? prog.reps : prog.action === 'increase-weight' ? top.reps + 1 : prog.reps;
-
-  return {
+  const mk = (
+    weight: number,
+    reps: number,
+    action: LoadAction,
+    reasonKey: string,
+  ): LoadSuggestion => ({
     weight,
     baseWeight: top.weight,
     baseReps: top.reps,
     reps,
-    action: increase ? 'increase' : 'hold',
+    action,
     deltaPct: top.weight > 0 ? Math.round(((weight - top.weight) / top.weight) * 1000) / 10 : 0,
-    reasonKey: increase ? 'coach.reason.no_effort_increase' : 'coach.reason.no_effort_reps',
+    reasonKey,
     confidence: 'low',
-  };
+  });
+
+  // Sin esfuerzo registrado este es el único camino, así que es el que decide de
+  // verdad para la mayoría de usuarios. Por eso lleva las mismas puertas que el
+  // motor con RIR: aquí es donde se producía la subida automática cada semana.
+  if (prog.action !== 'increase-weight' || opts.bodyweight) {
+    // En peso corporal, alcanzar el techo no se premia reseteando las reps a la
+    // baja: se sigue sumando una repetición, la única progresión segura.
+    const reps = prog.action === 'increase-weight' ? top.reps + 1 : prog.reps;
+    return mk(top.weight, reps, 'hold', 'coach.reason.no_effort_reps');
+  }
+
+  const repMax = opts.repMax;
+  if (repMax !== undefined && !allWorkingSetsAtCeiling(last, repMax)) {
+    return mk(top.weight, top.reps, 'hold', 'coach.reason.finish_the_sets');
+  }
+  if (usable.length >= 2 && daysBetween(usable[usable.length - 2].date, last.date) > STALE_DAYS) {
+    return mk(top.weight, top.reps, 'hold', 'coach.reason.stale_data');
+  }
+  if (weeklyIncreaseSoFar(usable) >= WEEKLY_INCREASE_CAP) {
+    return mk(top.weight, top.reps, 'hold', 'coach.reason.weekly_cap');
+  }
+
+  const target = nextAchievableLoad(top.weight, { ratio: TARGET_INCREASE_RATIO, stepKg: step });
+  if (target === null) return mk(top.weight, top.reps + 1, 'hold', 'coach.reason.add_rep');
+
+  return mk(target, prog.reps, 'increase', 'coach.reason.no_effort_increase');
 }
 
 /**
@@ -344,6 +457,59 @@ export function applyReadiness(
     weight: suggestion.baseWeight,
     deltaPct: 0,
     reasonKey: readiness.reasonKey,
+  };
+}
+
+/**
+ * Retroceso programado ante un estancamiento.
+ *
+ * El estancamiento ya se detectaba, pero solo se pintaba en la tarjeta: la
+ * sugerencia de carga seguía a lo suyo y podía mandar subir peso a alguien que
+ * llevaba cinco sesiones sin mejorar. Insistir en subir sobre un tope que no se
+ * mueve es la definición de estancarse más.
+ *
+ * - Estancado ⇒ nunca se sube: primero hay que romper el techo con el peso que
+ *   ya se tiene.
+ * - Estancado de largo (≥5 sesiones o ≥3 semanas) ⇒ se retrocede un 10 % para
+ *   volver a coger carrerilla. Es la descarga clásica de reinicio, no un
+ *   castigo.
+ *
+ * Una bajada ya decidida por esfuerzo se respeta: es una señal más específica.
+ */
+export function applyStall(
+  suggestion: LoadSuggestion | null,
+  stall: StallResult | null,
+  opts: { stepKg?: number } = {},
+): LoadSuggestion | null {
+  if (!suggestion || !stall?.stalled) return suggestion;
+  if (suggestion.action === 'reduce') return suggestion;
+
+  const step = opts.stepKg ?? DEFAULT_LOAD_STEP_KG;
+  const deep = stall.sessionsSinceBest >= STALL_RESET_SESSIONS || stall.daysSinceBest >= STALL_DAYS;
+
+  if (deep) {
+    const weight = backOffLoad(suggestion.baseWeight, STALL_RESET_RATIO, step);
+    if (weight < suggestion.baseWeight) {
+      return {
+        ...suggestion,
+        action: 'reduce',
+        weight,
+        reps: suggestion.baseReps,
+        deltaPct:
+          Math.round(((weight - suggestion.baseWeight) / suggestion.baseWeight) * 1000) / 10,
+        reasonKey: 'coach.reason.stall_reset',
+      };
+    }
+  }
+
+  if (suggestion.action !== 'increase') return suggestion;
+  return {
+    ...suggestion,
+    action: 'hold',
+    weight: suggestion.baseWeight,
+    reps: suggestion.baseReps,
+    deltaPct: 0,
+    reasonKey: 'coach.reason.stall_hold',
   };
 }
 

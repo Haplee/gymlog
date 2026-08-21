@@ -8,6 +8,8 @@ import { useRoutineSessionStore } from '@features/routine/stores/routineSessionS
 import { useProgressionStore } from '@features/routine/stores/progressionStore';
 import { useWeight } from '@shared/hooks/useWeight';
 import { impact, notificationHaptic, ImpactStyle, NotificationType } from '@shared/lib/haptics';
+import { smallestLoadStep } from '@shared/lib/loadStep';
+import { useSettingsStore } from '@shared/stores/settingsStore';
 import { celebrate } from '@shared/lib/celebration';
 import { fetchExerciseLibrary } from '@shared/api/queries';
 import { weightToInput } from '@shared/lib/weight';
@@ -112,6 +114,8 @@ export function RoutineSession({ userId, exercises }: Props) {
     // Progresión automática: con la sesión ya guardada, avanza el ciclo de cada
     // ejercicio con su mejor serie. El store lo persiste y sincroniza solo.
     const progression = useProgressionStore.getState();
+    // El escalón sale de los discos declarados en Ajustes, no de un 2,5 kg fijo.
+    const loadStepKg = smallestLoadStep(useSettingsStore.getState().availablePlatesKg);
     for (const ex of withWeights) {
       const valid = ex.sets
         .map((s) => ({ reps: Number(s.reps), weight: toKg(Number(s.weight)) }))
@@ -122,11 +126,19 @@ export function RoutineSession({ userId, exercises }: Props) {
       );
       const { repMin, repMax } = parseRepRange(ex.targetReps);
       const catalog = catalogByName.get(normalizeName(ex.name));
-      progression.recordSession(ex.name, top, {
-        repMin,
-        repMax,
-        bodyweight: isBodyweightLoad(catalog?.load_type),
-      });
+      // `sessionReps` va con todas las series, no solo la mejor: subir el peso
+      // porque la primera serie llegó al techo es lo que hacía que la carga
+      // creciera cada semana sin haber completado el esquema.
+      progression.recordSession(
+        ex.name,
+        { ...top, sessionReps: valid.map((s) => s.reps) },
+        {
+          repMin,
+          repMax,
+          bodyweight: isBodyweightLoad(catalog?.load_type),
+          incrementKg: loadStepKg,
+        },
+      );
     }
     void progression.saveToDb(userId);
 

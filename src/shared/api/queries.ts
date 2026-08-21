@@ -360,6 +360,57 @@ export const fetchExerciseSessions = async (
   return groupSetsBySession(sets, workouts, sessionLimit);
 };
 
+/** Serie dura reciente, reducida a lo que necesita el contexto de volumen. */
+export interface RecentMuscleSet {
+  date: string;
+  muscleGroup: string;
+}
+
+/**
+ * Series duras de las últimas semanas con su grupo muscular.
+ *
+ * La pantalla de entreno decide la carga de UN ejercicio, pero para saber si
+ * toca subirla hace falta cuánto trabajo lleva ese músculo en la semana. Traer
+ * el historial entero para eso sería absurdo en la pantalla que más se abre, así
+ * que esta consulta baja solo dos columnas y la ventana justa.
+ */
+export const fetchRecentMuscleSets = async (
+  userId: string,
+  days = 28,
+): Promise<RecentMuscleSet[]> => {
+  const since = new Date(Date.now() - days * 86_400_000).toISOString();
+
+  const { data: workouts } = await supabase
+    .from('workouts')
+    .select('id, started_at')
+    .eq('user_id', userId)
+    .gte('started_at', since)
+    .order('started_at', { ascending: false });
+
+  if (!workouts?.length) return [];
+
+  const dateById = new Map(workouts.map((w) => [w.id, w.started_at]));
+  const { data: sets } = await supabase
+    .from('workout_sets')
+    .select('workout_id, exercise:exercises(muscle_group)')
+    .eq('is_warmup', false)
+    .in(
+      'workout_id',
+      workouts.map((w) => w.id),
+    );
+
+  if (!sets?.length) return [];
+
+  return sets.flatMap((row) => {
+    const date = dateById.get(row.workout_id);
+    // El join embebido llega como objeto o como array de un elemento según lo
+    // que infiera el cliente; se normalizan los dos casos.
+    const joined = Array.isArray(row.exercise) ? row.exercise[0] : row.exercise;
+    const muscleGroup = joined?.muscle_group;
+    return date && muscleGroup ? [{ date, muscleGroup }] : [];
+  });
+};
+
 export interface LibraryExercise {
   id: string;
   name: string;

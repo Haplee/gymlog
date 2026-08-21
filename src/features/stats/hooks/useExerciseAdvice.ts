@@ -1,17 +1,15 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { fetchExerciseSessions } from '@shared/api/queries';
+import { fetchExerciseSessions, fetchRecentMuscleSets } from '@shared/api/queries';
+import { useSettingsStore } from '@shared/stores/settingsStore';
+import { smallestLoadStep } from '@shared/lib/loadStep';
 import {
   useWearableDaily,
   useWearableSleep,
 } from '@features/wearables/hooks/useWearableConnections';
 import { computeReadiness } from '@features/wearables/utils/readiness';
-import {
-  suggestNextLoad,
-  detectStall,
-  applyReadiness,
-  suggestFromLastSession,
-} from '../utils/autoregulation';
+import { buildLoadAdvice } from '../utils/loadAdvisor';
+import { buildVolumeContext } from '../utils/trainingLoad';
 import type { ExerciseAdvice } from './useAutoregulation';
 
 /**
@@ -38,6 +36,8 @@ export interface ExerciseAdviceOptions {
   repMax?: number;
   /** En peso corporal no se sugiere subir carga: solo repeticiones. */
   bodyweight?: boolean;
+  /** Grupo muscular del ejercicio, para medir el volumen semanal que acumula. */
+  muscleGroup?: string;
 }
 
 export function useExerciseAdvice(
@@ -52,35 +52,40 @@ export function useExerciseAdvice(
     staleTime: 1000 * 60 * 5,
   });
 
+  // Volumen semanal del músculo: solo se pide si se sabe de qué músculo va.
+  const { data: muscleSets = [] } = useQuery({
+    queryKey: ['recentMuscleSets', userId],
+    queryFn: () => fetchRecentMuscleSets(userId ?? ''),
+    enabled: !!userId && !!opts.muscleGroup,
+    staleTime: 1000 * 60 * 30,
+  });
+
   const { data: daily } = useWearableDaily();
   const { data: sleep } = useWearableSleep();
   const readiness = useMemo(() => computeReadiness(daily, sleep), [daily, sleep]);
 
+  const plates = useSettingsStore((s) => s.availablePlatesKg);
+  const stepKg = useMemo(() => smallestLoadStep(plates), [plates]);
+  const muscleGroup = opts.muscleGroup;
+  const volume = useMemo(
+    () => (muscleGroup ? buildVolumeContext(muscleSets, muscleGroup) : null),
+    [muscleSets, muscleGroup],
+  );
+
   return useMemo(() => {
     if (sessions.length === 0) return null;
-    const autoRegSessions = sessions.map((s) => ({ date: s.started_at, sets: s.sets }));
+    const advised = buildLoadAdvice({
+      sessions: sessions.map((s) => ({ date: s.started_at, sets: s.sets })),
+      repMin: opts.repMin,
+      repMax: opts.repMax,
+      bodyweight: opts.bodyweight,
+      stepKg,
+      volume,
+      readiness,
+    });
+    if (!advised) return null;
 
-    const raw =
-      suggestNextLoad(autoRegSessions, {
-        repMin: opts.repMin,
-        repMax: opts.repMax,
-        bodyweight: opts.bodyweight,
-      }) ??
-      suggestFromLastSession(autoRegSessions, {
-        repMin: opts.repMin,
-        repMax: opts.repMax,
-        bodyweight: opts.bodyweight,
-      });
-    if (!raw) return null;
-
-    const suggestion = applyReadiness(raw, readiness);
-    if (!suggestion) return null;
-
-    return {
-      // El nombre lo pone quien pinta la tarjeta: aquí solo se conoce el id.
-      exercise: '',
-      suggestion,
-      stall: detectStall(autoRegSessions),
-    };
-  }, [sessions, readiness, opts.repMin, opts.repMax, opts.bodyweight]);
+    // El nombre lo pone quien pinta la tarjeta: aquí solo se conoce el id.
+    return { exercise: '', ...advised };
+  }, [sessions, readiness, volume, stepKg, opts.repMin, opts.repMax, opts.bodyweight]);
 }

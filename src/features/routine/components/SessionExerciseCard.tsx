@@ -63,13 +63,14 @@ export function SessionExerciseCard({
   // El objetivo de la sesión manda sobre la búsqueda por nombre: aquí ya se
   // sabe de qué día viene el ejercicio.
   const { repMin, repMax } = useExerciseRepRange(exercise.name, exercise.targetReps);
+  const equipment = catalog?.equipment ?? libraryExercise?.equipment ?? null;
+  const muscleGroup = catalog?.muscle_group ?? libraryExercise?.muscle_group ?? null;
   const advice = useExerciseAdvice(userId, catalog?.id, {
     repMin,
     repMax,
     bodyweight: isBodyweightLoad(catalog?.load_type),
+    muscleGroup: muscleGroup ?? undefined,
   });
-  const equipment = catalog?.equipment ?? libraryExercise?.equipment ?? null;
-  const muscleGroup = catalog?.muscle_group ?? libraryExercise?.muscle_group ?? null;
   const description = libraryExercise?.description ?? null;
   const AdviceIcon = advice ? ACTION_ICON[advice.suggestion.action] : null;
 

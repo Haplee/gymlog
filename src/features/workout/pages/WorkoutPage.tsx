@@ -13,6 +13,7 @@ import { useWorkoutStore } from '@features/workout/stores/workoutStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
 import { useWeight } from '@shared/hooks/useWeight';
 import { calcular1RM } from '@shared/lib/brzycki';
+import { smallestLoadStep } from '@shared/lib/loadStep';
 import { useRoutineStore } from '@features/routine/stores/routineStore';
 import { useRestTimerStore } from '@features/workout/stores/restTimerStore';
 import { Layout } from '@app/components/Layout';
@@ -285,6 +286,7 @@ export function WorkoutPage() {
     repMin,
     repMax,
     bodyweight: isBodyweightExercise,
+    muscleGroup: selectedExercise?.muscle_group ?? undefined,
   });
 
   // Mantener el store al día con el contexto de peso corporal del ejercicio activo.
@@ -449,9 +451,19 @@ export function WorkoutPage() {
       const top = valid.reduce((a, b) =>
         b.weight > a.weight || (b.weight === a.weight && b.reps > a.reps) ? b : a,
       );
-      useProgressionStore.getState().recordSession(name, top, {
-        bodyweight: isBodyweightExercise,
-      });
+      // El escalón sale de los discos que el usuario tiene en su gimnasio: 2,5 kg
+      // fijos proponían pesos que en su sala no se pueden montar.
+      const loadStepKg = smallestLoadStep(useSettingsStore.getState().availablePlatesKg);
+      useProgressionStore.getState().recordSession(
+        name,
+        { ...top, sessionReps: valid.map((s) => s.reps) },
+        {
+          repMin,
+          repMax,
+          bodyweight: isBodyweightExercise,
+          incrementKg: loadStepKg,
+        },
+      );
       void useProgressionStore.getState().saveToDb(user.id);
     };
 
