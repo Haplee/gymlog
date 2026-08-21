@@ -66,6 +66,17 @@ export function CardioPage() {
           señalado; los demás se desactivan (cambiar de tipo a mitad de sesión no
           es una función que exista). */}
       <m.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+        {/* La rejilla abría la pantalla sin nada que dijera qué hace tocarla:
+            ocho iconos sin rótulo de sección, sin estado seleccionado y sin
+            botón de empezar. Tocar uno arranca el cronómetro al instante, y eso
+            no se adivina. El rótulo lo dice, y con la sesión ya en marcha pasa a
+            decir cuál está corriendo. */}
+        <SectionHeader
+          title={isActive ? t('cardio.recording') : t('cardio.pick_activity')}
+          subtitle={
+            isActive && activeType ? CARDIO_LABELS[activeType] : t('cardio.pick_activity_help')
+          }
+        />
         <div className="grid grid-cols-4 gap-x-2 gap-y-4">
           {CARDIO_TYPES.map((type) => {
             const selected = isActive && activeType === type;
@@ -75,7 +86,7 @@ export function CardioPage() {
                 key={type}
                 onClick={() => handleStart(type)}
                 disabled={isActive && !selected}
-                aria-label={CARDIO_LABELS[type]}
+                aria-label={t('cardio.start_type', { type: CARDIO_LABELS[type] })}
                 aria-pressed={selected}
                 className="flex min-w-0 flex-col items-center gap-2 disabled:opacity-40 transition-transform active:scale-95"
               >
