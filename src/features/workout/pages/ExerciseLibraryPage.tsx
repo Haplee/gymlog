@@ -222,9 +222,6 @@ export function ExerciseLibraryPage() {
                         <div className="min-w-0">
                           <div className="text-base font-medium text-fg truncate">{ex.name}</div>
                           <div className="flex flex-wrap gap-1 mt-1">
-                            <span className="label-caps inline-block px-1.5 py-0.5 rounded-sm bg-accent/10 text-accent">
-                              {t('library.source_own')}
-                            </span>
                             {ex.muscle_group && (
                               <span className="label-caps inline-block px-1.5 py-0.5 rounded-sm bg-surface-2 text-fg-subtle">
                                 {ex.muscle_group}
