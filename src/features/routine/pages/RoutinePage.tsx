@@ -383,21 +383,32 @@ export function RoutinePage() {
         </>
       ) : (
         <>
-          <div className="flex items-center justify-between mb-4">
-            <div>
+          {/* `items-start` y no `items-center`: con una descripción de cuatro
+              líneas, "Cambiar" quedaba flotando a media altura del párrafo en
+              vez de emparejado con el nombre de la rutina, que es a lo que se
+              refiere. `min-w-0` para que un nombre largo trunque en vez de
+              empujar al botón fuera. */}
+          <div className="flex items-start justify-between gap-3 mb-4">
+            <div className="min-w-0">
               <div className="text-data font-display font-bold text-fg">{activeRoutine?.name}</div>
               <div className="text-xs text-fg-subtle">{activeRoutine?.description}</div>
             </div>
             <button
               type="button"
               onClick={() => setActiveRoutine(null)}
-              className="label-caps min-h-11 px-3 py-1.5 rounded-pill bg-surface-2 text-fg-muted"
+              className="label-caps min-h-11 flex-shrink-0 px-3 py-1.5 rounded-pill bg-surface-2 text-fg-muted"
             >
               {t('routine.change')}
             </button>
           </div>
 
-          {todayRoutine && todayRoutine.exercises.length > 0 && (
+          {/* Solo cuando se está mirando otro día. Con el día de hoy seleccionado
+              —que es como abre la pantalla— esta tarjeta repetía exactamente la
+              lista de ejercicios que hay dos bloques más abajo, con un tinte de
+              acento encima para llamar la atención sobre algo ya visible. Su
+              trabajo es recordarte qué toca hoy cuando te has ido a hojear el
+              jueves; hoy mismo no tiene nada que contar. */}
+          {todayRoutine && todayRoutine.exercises.length > 0 && selectedDay !== getDayName() && (
             <div className="mb-4 p-3 rounded-md bg-accent/10 border border-line-accent">
               <div className="label-caps mb-2 text-accent">
                 {t('routine.today')} — {todayRoutine.name}
@@ -485,7 +496,7 @@ export function RoutinePage() {
                 <button
                   type="button"
                   onClick={() => setShowExercisePicker(true)}
-                  className="min-h-11 text-xs px-2.5 py-1.5 rounded-pill bg-surface-2 text-accent"
+                  className="min-h-11 text-xs px-2.5 py-1.5 rounded-pill bg-surface-2 text-fg-muted"
                 >
                   {t('routine.add_exercise')}
                 </button>
