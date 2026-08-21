@@ -219,10 +219,28 @@ body {
 .glass-1,
 .glass-2,
 .glass-3 {
-  position: relative;
   border: 1px solid var(--glass-edge);
   border-top-color: var(--glass-edge-top);
   box-shadow: var(--glass-sheen);
+}
+
+/* El `position` va en @layer components, y no arriba con el resto, por una
+   razón concreta: este bloque de CSS no está en ninguna capa, y el CSS sin capa
+   gana SIEMPRE a las utilidades de Tailwind, por mucho que la clase aparezca
+   después en el className.
+   Con `position: relative` aquí, cualquier capa 3 que además quisiera anclarse
+   al viewport se quedaba en `relative`: el cajón de navegación (`glass-3 fixed`)
+   volvía al flujo, ocupaba el alto de la pantalla y empujaba cabecera y barra
+   inferior hacia abajo hasta cortarlas.
+   En `components` la utilidad manda, que es lo que espera cualquiera que
+   escriba `fixed`. El relative se mantiene como valor por defecto porque lo
+   necesita el ::before del velo, que va con `inset: 0`. */
+@layer components {
+  .glass-1,
+  .glass-2,
+  .glass-3 {
+    position: relative;
+  }
 }
 
 /* El degradado va en un ::before y no en el background del elemento para no
