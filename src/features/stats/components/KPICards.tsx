@@ -20,13 +20,20 @@ interface KPICardProps {
     | 'notes'
     | 'best-1rm';
   trend?: number;
+  /**
+   * Para las tarjetas cuyo *valor* ya es una variación con signo (p. ej.
+   * «vs. semana pasada»): el icono y el color del número lo siguen.
+   *
+   * Sin esto la tarjeta pintaba una flecha verde hacia arriba fija, así que un
+   * -100 % se leía con la señal de que todo va bien.
+   */
+  delta?: number;
   isNewPR?: boolean;
   /**
    * 'sm' para las rejillas de 3 columnas: a 3 por fila la tarjeta no da para
    * el tamaño grande y valores como "124 kg" partían en dos líneas y se salían.
    */
   size?: 'md' | 'sm';
-  accentColor?: string;
 }
 
 const svgProps = {
@@ -37,119 +44,94 @@ const svgProps = {
   strokeLinejoin: 'round' as const,
 };
 
-const iconDefs: Record<string, { el: React.ReactElement; color: string }> = {
-  flame: {
-    color: 'var(--accent-orange)',
-    el: (
-      <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
-        <path d="M12 2c0 6-6 7-6 12a6 6 0 0 0 12 0c0-5-6-6-6-12z" />
-        <path d="M12 12c0 3-2 4-2 6a2 2 0 0 0 4 0c0-2-2-3-2-6z" />
-      </svg>
-    ),
-  },
-  volume: {
-    color: 'var(--accent-emerald)',
-    el: (
-      <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
-        <polyline points="3,17 8,12 13,15 21,7" />
-        <polyline points="15,7 21,7 21,13" />
-      </svg>
-    ),
-  },
-  frequency: {
-    color: 'var(--accent-blue)',
-    el: (
-      <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
-        <rect x="3" y="4" width="18" height="18" rx="2" />
-        <line x1="3" y1="9" x2="21" y2="9" />
-        <line x1="8" y1="2" x2="8" y2="6" />
-        <line x1="16" y1="2" x2="16" y2="6" />
-        <circle cx="8" cy="14" r="1" fill="currentColor" stroke="none" />
-        <circle cx="12" cy="14" r="1" fill="currentColor" stroke="none" />
-        <circle cx="16" cy="14" r="1" fill="currentColor" stroke="none" />
-      </svg>
-    ),
-  },
-  prs: {
-    color: 'var(--accent-amber)',
-    el: (
-      <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
-        <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
-      </svg>
-    ),
-  },
-  duration: {
-    color: 'var(--accent-apricot)',
-    el: (
-      <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
-        <circle cx="12" cy="12" r="9" />
-        <polyline points="12,7 12,12 15.5,14.5" />
-      </svg>
-    ),
-  },
-  'cardio-sessions': {
-    color: 'var(--accent-sky)',
-    el: (
-      <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
-        <path d="M13 4.5L10 9l2.5 1.5-2.5 6" />
-        <path d="M13 4.5l3.5-1 1.5 3.5" />
-        <circle cx="14" cy="3" r="1.5" />
-        <path d="M10 9l-3-1.5 1.5-3.5" />
-      </svg>
-    ),
-  },
-  'cardio-time': {
-    color: 'var(--accent-gold)',
-    el: (
-      <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
-        <polyline points="2,12 5,12 7.5,5 10.5,19 13.5,8 16,15 18,12 22,12" />
-      </svg>
-    ),
-  },
-  'cardio-dist': {
-    color: 'var(--accent-pink)',
-    el: (
-      <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
-        <path d="M3 12h18" />
-        <path d="M3 6l9-4 9 4" />
-        <path d="M3 18l9 4 9-4" />
-      </svg>
-    ),
-  },
-  'all-volume': {
-    color: 'var(--accent-green)',
-    el: (
-      <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
-        <path d="M3 21h18" />
-        <rect x="6" y="13" width="3" height="8" />
-        <rect x="11" y="9" width="3" height="12" />
-        <rect x="16" y="5" width="3" height="16" />
-      </svg>
-    ),
-  },
-  notes: {
-    color: 'var(--accent-yellow)',
-    el: (
-      <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
-        <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
-        <polyline points="14,3 14,9 20,9" />
-        <line x1="8" y1="13" x2="16" y2="13" />
-        <line x1="8" y1="17" x2="13" y2="17" />
-      </svg>
-    ),
-  },
-  'best-1rm': {
-    color: 'var(--accent-deep-orange)',
-    el: (
-      <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
-        <circle cx="6" cy="12" r="3" />
-        <circle cx="18" cy="12" r="3" />
-        <line x1="9" y1="12" x2="15" y2="12" />
-        <line x1="3" y1="9" x2="3" y2="15" />
-        <line x1="21" y1="9" x2="21" y2="15" />
-      </svg>
-    ),
-  },
+/**
+ * Solo el glifo. Antes cada métrica traía además su propio tono —esmeralda para
+ * volumen, azul para frecuencia, albaricoque para duración…, once en total— y
+ * ninguno significaba nada: eran decoración. Con el color repartido así, el
+ * único sitio donde de verdad codifica algo (una variación que sube o baja) no
+ * se distinguía del resto. El color se gasta ahora en el estado; la métrica se
+ * reconoce por su icono y su rótulo, que es para lo que están.
+ */
+const iconDefs: Record<string, React.ReactElement> = {
+  flame: (
+    <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
+      <path d="M12 2c0 6-6 7-6 12a6 6 0 0 0 12 0c0-5-6-6-6-12z" />
+      <path d="M12 12c0 3-2 4-2 6a2 2 0 0 0 4 0c0-2-2-3-2-6z" />
+    </svg>
+  ),
+  volume: (
+    <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
+      <polyline points="3,17 8,12 13,15 21,7" />
+      <polyline points="15,7 21,7 21,13" />
+    </svg>
+  ),
+  frequency: (
+    <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
+      <rect x="3" y="4" width="18" height="18" rx="2" />
+      <line x1="3" y1="9" x2="21" y2="9" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <circle cx="8" cy="14" r="1" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="14" r="1" fill="currentColor" stroke="none" />
+      <circle cx="16" cy="14" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  ),
+  prs: (
+    <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
+      <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
+    </svg>
+  ),
+  duration: (
+    <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
+      <circle cx="12" cy="12" r="9" />
+      <polyline points="12,7 12,12 15.5,14.5" />
+    </svg>
+  ),
+  'cardio-sessions': (
+    <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
+      <path d="M13 4.5L10 9l2.5 1.5-2.5 6" />
+      <path d="M13 4.5l3.5-1 1.5 3.5" />
+      <circle cx="14" cy="3" r="1.5" />
+      <path d="M10 9l-3-1.5 1.5-3.5" />
+    </svg>
+  ),
+  'cardio-time': (
+    <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
+      <polyline points="2,12 5,12 7.5,5 10.5,19 13.5,8 16,15 18,12 22,12" />
+    </svg>
+  ),
+  'cardio-dist': (
+    <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
+      <path d="M3 12h18" />
+      <path d="M3 6l9-4 9 4" />
+      <path d="M3 18l9 4 9-4" />
+    </svg>
+  ),
+  'all-volume': (
+    <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
+      <path d="M3 21h18" />
+      <rect x="6" y="13" width="3" height="8" />
+      <rect x="11" y="9" width="3" height="12" />
+      <rect x="16" y="5" width="3" height="16" />
+    </svg>
+  ),
+  notes: (
+    <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
+      <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
+      <polyline points="14,3 14,9 20,9" />
+      <line x1="8" y1="13" x2="16" y2="13" />
+      <line x1="8" y1="17" x2="13" y2="17" />
+    </svg>
+  ),
+  'best-1rm': (
+    <svg viewBox="0 0 24 24" className="w-4 h-4" {...svgProps}>
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="12" r="3" />
+      <line x1="9" y1="12" x2="15" y2="12" />
+      <line x1="3" y1="9" x2="3" y2="15" />
+      <line x1="21" y1="9" x2="21" y2="15" />
+    </svg>
+  ),
 };
 
 export const KPICard = memo(function KPICard({
@@ -158,13 +140,14 @@ export const KPICard = memo(function KPICard({
   subtitle,
   icon,
   trend,
+  delta,
   isNewPR,
-  accentColor,
   size = 'md',
 }: KPICardProps) {
   const { t } = useTranslation();
-  const def = iconDefs[icon] ?? iconDefs.duration;
-  const color = accentColor ?? def.color;
+  const glyph = iconDefs[icon] ?? iconDefs.duration;
+  const deltaTone = delta === undefined ? null : delta >= 0 ? 'var(--success)' : 'var(--error)';
+  const DeltaIcon = delta !== undefined && delta < 0 ? TrendDown : TrendUp;
 
   return (
     <m.div
@@ -173,19 +156,25 @@ export const KPICard = memo(function KPICard({
       transition={{ duration: 0.2, ease: 'easeOut' }}
       className="relative overflow-hidden rounded-card p-4 bg-surface shadow-card"
     >
-      {/* Left accent bar */}
-      <div
-        className="absolute top-0 left-0 bottom-0 w-[3px] rounded-l-card"
-        style={{ backgroundColor: color }}
-      />
-      {/* Tinte sutil del acento en el borde superior */}
+      {/* Raíl izquierdo. Neutro salvo que la tarjeta lleve estado: entonces es
+          la señal, no un adorno. */}
       <div
         aria-hidden="true"
-        className="absolute inset-x-0 top-0 h-14 pointer-events-none"
-        style={{
-          background: `linear-gradient(to bottom, color-mix(in srgb, ${color} 8%, transparent), transparent)`,
-        }}
+        className="absolute top-0 left-0 bottom-0 w-[3px] rounded-l-card"
+        style={{ backgroundColor: deltaTone ?? 'var(--border-interactive)' }}
       />
+      {/* El velo de refuerzo solo acompaña a esa señal. En las tarjetas neutras
+          era un gris sobre la superficie: ensuciaba la jerarquía medida sin
+          aportar nada. */}
+      {deltaTone && (
+        <div
+          aria-hidden="true"
+          className="absolute inset-x-0 top-0 h-14 pointer-events-none"
+          style={{
+            background: `linear-gradient(to bottom, color-mix(in srgb, ${deltaTone} 8%, transparent), transparent)`,
+          }}
+        />
+      )}
 
       <div className="pl-2">
         {/* Icon + label row */}
@@ -193,14 +182,17 @@ export const KPICard = memo(function KPICard({
           <span className="text-2xs font-semibold uppercase tracking-[0.08em] text-fg-subtle">
             {title}
           </span>
-          <span style={{ color }}>{def.el}</span>
+          <span style={{ color: deltaTone ?? 'var(--text-tertiary)' }}>
+            {delta === undefined ? glyph : <DeltaIcon className="w-4 h-4" />}
+          </span>
         </div>
 
         {/* Value */}
         <m.div
-          className={`font-mono font-bold leading-none tracking-tight text-fg tabular-nums whitespace-nowrap ${
-            size === 'sm' ? 'text-xl' : 'text-3xl'
-          }`}
+          className={`font-mono font-bold leading-none tracking-tight tabular-nums whitespace-nowrap ${
+            deltaTone ? '' : 'text-fg'
+          } ${size === 'sm' ? 'text-xl' : 'text-3xl'}`}
+          style={deltaTone ? { color: deltaTone } : undefined}
           initial={{ y: 8, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.05 }}

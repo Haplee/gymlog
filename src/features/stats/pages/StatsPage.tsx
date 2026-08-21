@@ -484,6 +484,7 @@ export function StatsPage() {
               value={`${volumeChange > 0 ? '+' : ''}${volumeChange}%`}
               subtitle={t('stats.kpi_volume')}
               icon="volume"
+              delta={volumeChange}
             />
             <KPICard
               title={t('stats.kpi_frequency')}

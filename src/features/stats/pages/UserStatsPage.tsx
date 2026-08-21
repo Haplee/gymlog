@@ -352,23 +352,15 @@ export function UserStatsPage() {
               value={workouts.length}
               label={t('userStats.total_workouts')}
               icon={Activity}
-              color="var(--interactive-primary)"
               delay={0}
             />
             <BigKPI
               value={formatVol(totalVolumeAllTime)}
               label={t('userStats.total_volume')}
               icon={ChartBar}
-              color="var(--accent-blue)"
               delay={0.05}
             />
-            <BigKPI
-              value={totalPRs}
-              label={t('userStats.total_prs')}
-              icon={Trophy}
-              color="var(--accent-amber)"
-              delay={0.1}
-            />
+            <BigKPI value={totalPRs} label={t('userStats.total_prs')} icon={Trophy} delay={0.1} />
             <BigKPI
               value={currentStreak}
               label={
@@ -378,7 +370,6 @@ export function UserStatsPage() {
                   : '')
               }
               icon={Flame}
-              color="var(--error)"
               delay={0.15}
             />
           </div>
@@ -389,17 +380,14 @@ export function UserStatsPage() {
               {
                 value: sessionCount30d,
                 label: t('userStats.sessions_30d'),
-                color: 'var(--accent-green)',
               },
               {
                 value: `${avgDuration}m`,
                 label: t('userStats.avg_duration'),
-                color: 'var(--accent-gold)',
               },
               {
                 value: uniqueExercisesCount,
                 label: t('userStats.distinct_exercises'),
-                color: 'var(--accent-sky)',
               },
             ].map((item, i) => (
               <m.div
@@ -414,14 +402,10 @@ export function UserStatsPage() {
                 <div className="flex items-stretch gap-2">
                   <span
                     aria-hidden="true"
-                    className="w-1 flex-shrink-0 rounded-pill"
-                    style={{ backgroundColor: item.color }}
+                    className="w-1 flex-shrink-0 rounded-pill bg-line-interactive"
                   />
                   <div className="min-w-0">
-                    <div
-                      className="font-display font-bold text-xl tabular"
-                      style={{ color: item.color }}
-                    >
+                    <div className="font-display font-bold text-xl tabular text-fg">
                       {item.value}
                     </div>
                     <div className="text-2xs mt-0.5 text-fg-subtle">{item.label}</div>
