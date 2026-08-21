@@ -1,4 +1,8 @@
-import { ExerciseRow, WorkoutMeta } from '@features/stats/components/HistoryRows';
+import {
+  ExerciseRow,
+  WorkoutMeta,
+  WorkoutSetsSummary,
+} from '@features/stats/components/HistoryRows';
 import { EditWorkoutModal } from '@features/stats/components/EditWorkoutModal';
 import { HistoryFilters } from '@features/stats/components/HistoryFilters';
 import { buildTemplateFromWorkouts } from '@features/stats/utils/historyHelpers';
@@ -296,10 +300,10 @@ export function HistoryPage() {
                           group.date,
                         )
                       }
-                      className="flex items-center gap-1 text-2xs font-semibold text-accent"
+                      className="flex items-center gap-1 text-2xs font-semibold text-fg-muted"
                       title={t('history.save_as_template')}
                     >
-                      <BookmarkAdd className="w-3.5 h-3.5" />
+                      <BookmarkAdd className="w-3.5 h-3.5 text-accent" />
                       {t('history.save_as_template')}
                     </button>
                   )}
@@ -416,9 +420,9 @@ export function HistoryPage() {
                               <button
                                 type="button"
                                 onClick={() => handleRepeat(item.data)}
-                                className="flex items-center gap-1 text-xs font-semibold text-accent"
+                                className="flex items-center gap-1 text-xs font-semibold text-fg-muted"
                               >
-                                <Repeat className="w-3.5 h-3.5" />
+                                <Repeat className="w-3.5 h-3.5 text-accent" />
                                 {t('history.repeat')}
                               </button>
                               <button
@@ -447,16 +451,7 @@ export function HistoryPage() {
                               </button>
                             </div>
                           </div>
-                          <div className="flex flex-wrap gap-1.5">
-                            {item.data.sets.map((s, si) => (
-                              <span
-                                key={si}
-                                className="px-2 py-1 rounded-sm text-xs bg-surface-2 border border-line text-fg-muted"
-                              >
-                                {s.exercise?.name}: {s.reps}×{s.weight}
-                              </span>
-                            ))}
-                          </div>
+                          <WorkoutSetsSummary sets={item.data.sets} />
                           <WorkoutMeta workout={item.data} />
                         </div>
                       </div>
@@ -608,10 +603,10 @@ export function HistoryPage() {
                     <button
                       type="button"
                       onClick={() => handleSaveTemplate(group.workouts, group.date)}
-                      className="flex items-center gap-1 text-xs font-semibold text-accent"
+                      className="flex items-center gap-1 text-xs font-semibold text-fg-muted"
                       aria-label={t('history.save_as_template')}
                     >
-                      <BookmarkAdd className="w-3.5 h-3.5" />
+                      <BookmarkAdd className="w-3.5 h-3.5 text-accent" />
                     </button>
                   </div>
                 </div>
@@ -636,9 +631,9 @@ export function HistoryPage() {
                         <button
                           type="button"
                           onClick={() => handleRepeat(wo)}
-                          className="flex items-center gap-1 text-xs font-semibold text-accent"
+                          className="flex items-center gap-1 text-xs font-semibold text-fg-muted"
                         >
-                          <Repeat className="w-3.5 h-3.5" />
+                          <Repeat className="w-3.5 h-3.5 text-accent" />
                           {t('history.repeat')}
                         </button>
                         <button
@@ -664,16 +659,7 @@ export function HistoryPage() {
                         </button>
                       </div>
                     </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {wo.sets.map((s: WorkoutSetWithDetails, si) => (
-                        <span
-                          key={si}
-                          className="px-2 py-1 rounded-sm text-xs bg-surface-2 border border-line text-fg-muted"
-                        >
-                          {s.exercise?.name}: {s.reps}×{s.weight}
-                        </span>
-                      ))}
-                    </div>
+                    <WorkoutSetsSummary sets={wo.sets} />
                     <WorkoutMeta workout={wo} />
                   </div>
                 ))}

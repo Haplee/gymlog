@@ -1,12 +1,48 @@
 // Helpers puros de HistoryPage: rango de reps y construcción de rutina custom.
 import type { Routine, RoutineExercise, DayOfWeek } from '@features/routine/stores/routineStore';
-import type { WorkoutWithSets } from '@shared/lib/types';
+import type { WorkoutSetWithDetails, WorkoutWithSets } from '@shared/lib/types';
 
 export function repsRange(reps: number[]): string {
   if (!reps.length) return '';
   const min = Math.min(...reps);
   const max = Math.max(...reps);
   return min === max ? String(min) : `${min}-${max}`;
+}
+
+/** Un ejercicio del entreno, con sus series ya resumidas en una línea. */
+export interface ExerciseSummary {
+  name: string;
+  setCount: number;
+  /** Repeticiones observadas: "8" si todas iguales, "8-10" si varían. */
+  reps: string;
+  /** Peso observado, con el mismo criterio: "115" o "115-125". */
+  weight: string;
+}
+
+/**
+ * Agrupa las series de un entreno por ejercicio, en el orden en que aparecen.
+ *
+ * El historial pintaba una píldora por serie, así que un entreno normal se leía
+ * como «Hip thrust: 8×115», «Hip thrust: 9×115», «Hip thrust: 10×115», … — el
+ * nombre repetido tantas veces como series y el dato útil disuelto entre ellas.
+ * Resumido por ejercicio, ese mismo entreno son tres líneas en vez de nueve.
+ */
+export function groupSetsByExercise(sets: WorkoutSetWithDetails[]): ExerciseSummary[] {
+  const map = new Map<string, { reps: number[]; weights: number[] }>();
+  for (const s of sets) {
+    const name = s.exercise?.name?.trim();
+    if (!name) continue;
+    const entry = map.get(name) ?? { reps: [], weights: [] };
+    entry.reps.push(s.reps);
+    entry.weights.push(s.weight);
+    map.set(name, entry);
+  }
+  return [...map].map(([name, { reps, weights }]) => ({
+    name,
+    setCount: reps.length,
+    reps: repsRange(reps),
+    weight: repsRange(weights),
+  }));
 }
 
 // Crea una rutina custom a partir de los entrenos de un día: agrupa por ejercicio

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { WorkoutWithSets, WorkoutSetWithDetails } from '@shared/lib/types';
+import { groupSetsByExercise } from '../utils/historyHelpers';
 import { ChevronRight, Star, Trash2 } from '@shared/components/icons';
 
 export function ExerciseRow({
@@ -100,6 +101,36 @@ export function ExerciseRow({
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * Las series de un entreno, resumidas por ejercicio.
+ *
+ * Antes era una píldora por serie, con el nombre del ejercicio repetido en cada
+ * una: nueve píldoras para tres ejercicios, y el nombre —lo único que se busca
+ * al repasar— compitiendo consigo mismo. Ahora es una línea por ejercicio, con
+ * el nombre a la izquierda y las cifras alineadas a la derecha, que es como se
+ * comparan.
+ */
+export function WorkoutSetsSummary({ sets }: { sets: WorkoutSetWithDetails[] }) {
+  const { t } = useTranslation();
+  const groups = groupSetsByExercise(sets);
+  if (!groups.length) return null;
+
+  return (
+    <div className="space-y-1.5">
+      {groups.map((g) => (
+        <div key={g.name} className="flex items-baseline justify-between gap-3">
+          <span className="min-w-0 truncate text-sm text-fg-muted">{g.name}</span>
+          <span className="flex-shrink-0 font-mono text-xs tabular-nums text-fg-subtle">
+            {/* Peso 0 = ejercicio de peso corporal: escribir "0 kg" era ruido. */}
+            {g.setCount}×{g.reps}
+            {g.weight !== '0' && ` · ${g.weight} ${t('stats.kg_unit')}`}
+          </span>
+        </div>
+      ))}
     </div>
   );
 }
