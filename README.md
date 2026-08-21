@@ -533,7 +533,7 @@ El registro completo y automático está en **[CHANGELOG.md](./CHANGELOG.md)**. 
 - **El respaldo de rutinas se borraba solo**: se subía el estado local a la nube sin haberla leído antes, así que el primer respaldo de un dispositivo recién instalado pisaba con una lista vacía lo que hubiera guardado. Ahora leer es requisito para escribir
 - **Realizar una rutina** ya no empieza con las filas en blanco: las repeticiones vienen puestas desde la plantilla, así que registrar un 4×5 tal cual sale es solo escribir los pesos
 - **Racha en la cabecera** en lugar del acceso a Ajustes, que ya vivía en la barra inferior
-- **Plantilla «Rutina de FranVi»**: cinco días para un pivote de balonmano, con día propio de bisagra de cadera y olímpicos a 2 repeticiones
+- **Plantilla «Pivote — 5 días»**: cinco días para un pivote de balonmano, con día propio de bisagra de cadera y olímpicos a 2 repeticiones
 - **Pulido visual**: separador de línea fina en vez de punteado, los ocho tipos de cardio en rejilla sin recortar ninguno, diálogo de confirmación propio al descartar un entreno (antes salía el del sistema) e iconos del set propio en el selector de modalidad de carga
 
 ### v5.2 — Rendimiento en el WebView

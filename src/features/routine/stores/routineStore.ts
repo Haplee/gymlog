@@ -718,7 +718,10 @@ export const PREDEFINED_ROUTINES: Routine[] = [
   },
   {
     id: 'franvi',
-    name: 'Rutina de FranVi',
+    // El id se queda en 'franvi' a propósito: es la clave con la que las rutinas
+    // ya clonadas se emparejan con la plantilla. Cambiarlo convertiría en
+    // huérfanas las copias que la gente tenga guardadas.
+    name: 'Pivote — 5 días',
     description:
       'Cinco días pensados para un pivote: fuerza en los básicos, un día entero de bisagra de cadera y olímpicos programados a 2 repeticiones. Deja el fin de semana libre para partido.',
     isCustom: false,
