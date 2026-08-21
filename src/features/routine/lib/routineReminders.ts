@@ -1,8 +1,4 @@
-import {
-  useRoutineStore,
-  type DayOfWeek,
-  type DayRoutine,
-} from '@features/routine/stores/routineStore';
+import { useRoutineStore, DAY_ORDER, type DayOfWeek } from '@features/routine/stores/routineStore';
 import type { ReminderDay } from '@shared/lib/notifications';
 
 /** JS DayOfWeek → weekday Capacitor (1=domingo … 7=sábado) */
@@ -23,12 +19,16 @@ const DAY_TO_WEEKDAY: Record<DayOfWeek, number> = {
  * de importar el store directamente.
  */
 export function getRoutineReminderDays(): ReminderDay[] {
-  const active = useRoutineStore.getState().getActiveRoutine();
-  if (!active) return [];
-  return (Object.entries(active.days) as [DayOfWeek, DayRoutine][])
-    .filter(([, day]) => day.exercises.length > 0)
-    .map(([day, dayRoutine]) => ({
-      weekday: DAY_TO_WEEKDAY[day],
-      routineName: dayRoutine.name,
-    }));
+  const store = useRoutineStore.getState();
+  if (!store.getActiveRoutine()) return [];
+
+  // Se lee dia a dia con `getRoutineDay` en vez de recorrer `active.days` para
+  // que los avisos respeten la reorganizacion de la semana: si el entreno del
+  // martes se movio al viernes, el recordatorio tiene que sonar el viernes. En
+  // cuanto el plan caduca, esto vuelve solo a la rutina de siempre.
+  return DAY_ORDER.flatMap((day: DayOfWeek) => {
+    const routine = store.getRoutineDay(day);
+    if (!routine || routine.exercises.length === 0) return [];
+    return [{ weekday: DAY_TO_WEEKDAY[day], routineName: routine.name }];
+  });
 }

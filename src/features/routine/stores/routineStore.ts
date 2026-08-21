@@ -27,6 +27,115 @@ export interface Routine {
   createdAt: string;
 }
 
+/**
+ * Reorganizacion puntual de la semana en curso: «el martes no pude, lo paso al
+ * viernes».
+ *
+ * `map` va del dia del calendario al dia de la rutina cuyo contenido se muestra
+ * ahi (`null` = ese dia queda libre). Se guarda la referencia al dia de origen,
+ * no una copia de los ejercicios: asi editar la rutina se sigue viendo en el
+ * dia movido, y la rutina base nunca se toca.
+ *
+ * `weekStart` es lo que hace que sea «solo para esta semana»: en cuanto el
+ * lunes actual deja de coincidir, el plan caduca solo y la rutina vuelve a su
+ * sitio sin que el usuario tenga que deshacer nada.
+ */
+export interface WeekPlan {
+  /** Lunes (yyyy-mm-dd, hora local) de la semana a la que aplica. */
+  weekStart: string;
+  map: Record<DayOfWeek, DayOfWeek | null>;
+}
+
+export const DAY_ORDER: DayOfWeek[] = [
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+  'sunday',
+];
+
+/** Lunes de la semana de `date`, en formato yyyy-mm-dd y en hora local. */
+export function weekStartOf(date: Date): string {
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  // getDay(): 0 = domingo. El domingo pertenece a la semana que empezo 6 dias antes.
+  d.setDate(d.getDate() + (d.getDay() === 0 ? -6 : 1 - d.getDay()));
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${mm}-${dd}`;
+}
+
+/** Semana sin reorganizar: cada dia muestra lo suyo. */
+export function identityWeekMap(): Record<DayOfWeek, DayOfWeek | null> {
+  return {
+    monday: 'monday',
+    tuesday: 'tuesday',
+    wednesday: 'wednesday',
+    thursday: 'thursday',
+    friday: 'friday',
+    saturday: 'saturday',
+    sunday: 'sunday',
+  };
+}
+
+/**
+ * Mueve el entreno de `from` a `to` arrastrando la semana.
+ *
+ * El dia de origen queda libre. Si el destino ya tenia entreno, ese entreno y
+ * los que le siguen bajan un puesto hasta el primer dia libre — no se apilan
+ * dos sesiones en el mismo dia ni se pierde ninguna. Los dias que quedan entre
+ * medias no se tocan.
+ *
+ * Devuelve el mismo objeto que recibio cuando el movimiento no tiene sentido
+ * (mover un descanso, o una semana tan llena que no cabe el arrastre): quien
+ * llama lo usa para no marcar la semana como reorganizada sin motivo.
+ */
+export function shiftWeekPlan(
+  map: Record<DayOfWeek, DayOfWeek | null>,
+  hasWork: (day: DayOfWeek | null) => boolean,
+  from: DayOfWeek,
+  to: DayOfWeek,
+): Record<DayOfWeek, DayOfWeek | null> {
+  if (from === to) return map;
+
+  const moved = map[from];
+  if (!hasWork(moved)) return map;
+
+  const next = { ...map };
+  next[from] = null;
+
+  if (hasWork(next[to])) {
+    const target = DAY_ORDER.indexOf(to);
+    let gap = -1;
+
+    // Primer dia libre a partir del destino: ahi termina el arrastre.
+    for (let i = target; i < DAY_ORDER.length; i++) {
+      if (!hasWork(next[DAY_ORDER[i]])) {
+        gap = i;
+        break;
+      }
+    }
+
+    if (gap !== -1) {
+      for (let i = gap; i > target; i--) next[DAY_ORDER[i]] = next[DAY_ORDER[i - 1]];
+    } else {
+      // Sin hueco hasta el domingo, se arrastra hacia el principio de la semana.
+      for (let i = target; i >= 0; i--) {
+        if (!hasWork(next[DAY_ORDER[i]])) {
+          gap = i;
+          break;
+        }
+      }
+      if (gap === -1) return map;
+      for (let i = gap; i < target; i++) next[DAY_ORDER[i]] = next[DAY_ORDER[i + 1]];
+    }
+  }
+
+  next[to] = moved;
+  return next;
+}
+
 interface RoutineStore {
   routines: Routine[];
   activeRoutineId: string | null;
@@ -37,6 +146,9 @@ interface RoutineStore {
    * cambiar de rutina en un dispositivo no llegaba nunca al otro.
    */
   activeRoutineUpdatedAt: string | null;
+  /** Reorganizacion de la semana en curso; null = la rutina va tal cual. */
+  weekPlan: WeekPlan | null;
+  weekPlanUpdatedAt: string | null;
   lastBackup: string | null;
   loading: boolean;
   /**
@@ -52,7 +164,16 @@ interface RoutineStore {
   cloneRoutine: (sourceId: string, name?: string) => string | null;
   setActiveRoutine: (id: string | null) => void;
 
+  moveRoutineDay: (from: DayOfWeek, to: DayOfWeek) => void;
+  resetWeekPlan: () => void;
+
   getActiveRoutine: () => Routine | null;
+  /** Plan de esta semana, o null si no hay o si el guardado es de otra semana. */
+  getWeekPlan: () => WeekPlan | null;
+  /** Que toca el dia `day` de esta semana, ya con la reorganizacion aplicada. */
+  getRoutineDay: (day: DayOfWeek) => DayRoutine | null;
+  /** Dia de la rutina cuyo contenido se ve en `day` (donde hay que editar). */
+  getSourceDay: (day: DayOfWeek) => DayOfWeek | null;
   getTodayRoutine: () => DayRoutine | null;
   getDayName: () => DayOfWeek;
 
@@ -739,6 +860,8 @@ export const useRoutineStore = create<RoutineStore>()(
       routines: defaultRoutines,
       activeRoutineId: null,
       activeRoutineUpdatedAt: null,
+      weekPlan: null,
+      weekPlanUpdatedAt: null,
       lastBackup: null,
       loading: false,
       hydrated: false,
@@ -800,13 +923,56 @@ export const useRoutineStore = create<RoutineStore>()(
         return routines.find((r) => r.id === activeRoutineId) || null;
       },
 
-      getTodayRoutine: () => {
+      moveRoutineDay: (from, to) => {
+        const routine = get().getActiveRoutine();
+        if (!routine) return;
+
+        const current = get().getWeekPlan()?.map ?? identityWeekMap();
+        const hasWork = (day: DayOfWeek | null) =>
+          day !== null && (routine.days[day]?.exercises.length ?? 0) > 0;
+
+        const map = shiftWeekPlan(current, hasWork, from, to);
+        // shiftWeekPlan devuelve el mapa original cuando no hay nada que mover:
+        // sin esta salida, arrastrar un descanso dejaria la semana marcada como
+        // reorganizada sin haber cambiado nada.
+        if (map === current) return;
+
+        set({
+          weekPlan: { weekStart: weekStartOf(new Date()), map },
+          weekPlanUpdatedAt: new Date().toISOString(),
+        });
+      },
+
+      resetWeekPlan: () => {
+        if (!get().weekPlan) return;
+        set({ weekPlan: null, weekPlanUpdatedAt: new Date().toISOString() });
+      },
+
+      getWeekPlan: () => {
+        const plan = get().weekPlan;
+        if (!plan) return null;
+        // Caduca sola: un plan de la semana pasada no se aplica ni se borra
+        // aqui (un getter no deberia escribir); lo limpia el primer movimiento
+        // o el guardado.
+        return plan.weekStart === weekStartOf(new Date()) ? plan : null;
+      },
+
+      getSourceDay: (day) => {
+        const plan = get().getWeekPlan();
+        return plan ? plan.map[day] : day;
+      },
+
+      getRoutineDay: (day) => {
         const activeRoutine = get().getActiveRoutine();
         if (!activeRoutine) return null;
 
-        const day = get().getDayName();
-        return activeRoutine.days[day] || null;
+        const source = get().getSourceDay(day);
+        if (!source) return null;
+
+        return activeRoutine.days[source] || null;
       },
+
+      getTodayRoutine: () => get().getRoutineDay(get().getDayName()),
 
       getDayName: () => {
         const dayIndex = new Date().getDay();
@@ -826,7 +992,16 @@ export const useRoutineStore = create<RoutineStore>()(
         if (!get().hydrated) await get().loadFromDb(userId);
 
         const doSave = async (): Promise<boolean> => {
-          const { routines, activeRoutineId, activeRoutineUpdatedAt, lastBackup } = get();
+          const {
+            routines,
+            activeRoutineId,
+            activeRoutineUpdatedAt,
+            weekPlanUpdatedAt,
+            lastBackup,
+          } = get();
+          // Solo viaja el plan si sigue siendo el de esta semana: subir uno
+          // caducado lo reviviria en el resto de dispositivos.
+          const weekPlan = get().getWeekPlan();
 
           const customRoutines = routines.filter((r) => r.isCustom);
 
@@ -839,6 +1014,8 @@ export const useRoutineStore = create<RoutineStore>()(
                 routines: customRoutines,
                 activeRoutineId,
                 activeRoutineUpdatedAt,
+                weekPlan,
+                weekPlanUpdatedAt,
                 lastBackup,
               },
               updated_at: new Date().toISOString(),
@@ -883,6 +1060,8 @@ export const useRoutineStore = create<RoutineStore>()(
           routines?: Routine[];
           activeRoutineId?: string | null;
           activeRoutineUpdatedAt?: string | null;
+          weekPlan?: WeekPlan | null;
+          weekPlanUpdatedAt?: string | null;
           lastBackup?: string | null;
         } | null;
 
@@ -924,8 +1103,27 @@ export const useRoutineStore = create<RoutineStore>()(
             mergedRoutines.some((r) => r.id === container.activeRoutineId);
           const takeRemoteActive = remoteIsNewer && remoteActiveExists;
 
+          // El plan de la semana se sincroniza con la misma regla que la rutina
+          // activa (gana la marca mas reciente) y con un filtro extra: solo se
+          // adopta si es de la semana en curso. Reorganizar en el movil el
+          // martes y abrir la web el miercoles tiene que enseñar lo mismo.
+          const localPlanStamp = get().weekPlanUpdatedAt;
+          const remotePlanStamp = container.weekPlanUpdatedAt ?? null;
+          const remotePlan = container.weekPlan ?? null;
+          const remotePlanIsCurrent =
+            remotePlan != null && remotePlan.weekStart === weekStartOf(new Date());
+          const takeRemotePlan =
+            remotePlanStamp !== null &&
+            (localPlanStamp === null || remotePlanStamp > localPlanStamp);
+
           set({
             routines: mergedRoutines,
+            weekPlan: takeRemotePlan
+              ? remotePlanIsCurrent
+                ? remotePlan
+                : null
+              : (get().getWeekPlan() ?? null),
+            weekPlanUpdatedAt: takeRemotePlan ? remotePlanStamp : localPlanStamp,
             activeRoutineId: takeRemoteActive
               ? (container.activeRoutineId ?? null)
               : (get().activeRoutineId ?? container.activeRoutineId ?? null),
@@ -972,6 +1170,8 @@ export const useRoutineStore = create<RoutineStore>()(
         routines: state.routines,
         activeRoutineId: state.activeRoutineId,
         activeRoutineUpdatedAt: state.activeRoutineUpdatedAt,
+        weekPlan: state.weekPlan,
+        weekPlanUpdatedAt: state.weekPlanUpdatedAt,
         lastBackup: state.lastBackup,
       }),
       /**

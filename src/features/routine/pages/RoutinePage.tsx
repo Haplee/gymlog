@@ -48,6 +48,10 @@ export function RoutinePage() {
     getActiveRoutine,
     getTodayRoutine,
     getDayName,
+    getSourceDay,
+    getRoutineDay,
+    moveRoutineDay,
+    resetWeekPlan,
   } = useRoutineStore(
     useShallow((s) => ({
       setActiveRoutine: s.setActiveRoutine,
@@ -58,6 +62,10 @@ export function RoutinePage() {
       checkAndBackup: s.checkAndBackup,
       getActiveRoutine: s.getActiveRoutine,
       getTodayRoutine: s.getTodayRoutine,
+      getSourceDay: s.getSourceDay,
+      getRoutineDay: s.getRoutineDay,
+      moveRoutineDay: s.moveRoutineDay,
+      resetWeekPlan: s.resetWeekPlan,
       getDayName: s.getDayName,
     })),
   );
@@ -89,6 +97,7 @@ export function RoutinePage() {
   const [newRoutineName, setNewRoutineName] = useState('');
   const [newRoutineDesc, setNewRoutineDesc] = useState('');
   const [showExercisePicker, setShowExercisePicker] = useState(false);
+  const [showMovePicker, setShowMovePicker] = useState(false);
   /** Id de la rutina pendiente de confirmar su borrado; null = nada que borrar. */
   const [routineToDelete, setRoutineToDelete] = useState<string | null>(null);
 
@@ -104,6 +113,23 @@ export function RoutinePage() {
   const activeRoutine = getActiveRoutine();
   const todayRoutine = getTodayRoutine();
 
+  // Suscribirse al plan (y no solo leerlo con el getter) es lo que hace que la
+  // pantalla se repinte al mover un dia.
+  const weekPlan = useRoutineStore((s) => s.weekPlan);
+  const planMap = useRoutineStore.getState().getWeekPlan()?.map ?? null;
+  void weekPlan;
+
+  /**
+   * Dia de la rutina cuyo contenido se ve en el dia seleccionado. Con la semana
+   * reorganizada no coinciden: el viernes puede estar enseñando el lunes, y
+   * editar ahi tiene que escribir en el lunes de la rutina, no crear una copia.
+   * `null` = este dia quedo libre al mover su entreno a otro sitio.
+   */
+  const sourceDay = getSourceDay(selectedDay);
+  const dayRoutine = getRoutineDay(selectedDay);
+  const dayExercises = dayRoutine?.exercises ?? [];
+  const movedFrom = sourceDay !== null && sourceDay !== selectedDay ? sourceDay : null;
+
   // El guardado remoto fallaba en silencio: la rutina quedaba solo en local y
   // desaparecía en la siguiente carga. Ahora se avisa al usuario.
   const persistRoutines = useCallback(async () => {
@@ -111,6 +137,24 @@ export function RoutinePage() {
     const ok = await useRoutineStore.getState().saveToDb(user.id);
     if (!ok) toast.error(t('routine.save_failed'));
   }, [user, t]);
+
+  /**
+   * Mover el entreno del dia visible a otro dia de esta semana. La rutina no se
+   * toca: lo que cambia es el plan de la semana, que caduca solo el lunes.
+   */
+  const handleMoveDay = (to: DayOfWeek) => {
+    moveRoutineDay(selectedDay, to);
+    setShowMovePicker(false);
+    setSelectedDay(to);
+    void persistRoutines();
+    toast.success(t('routine.move_done', { day: dayLabels[to] }));
+  };
+
+  const handleRestoreWeek = () => {
+    resetWeekPlan();
+    void persistRoutines();
+    toast.success(t('routine.week_restored'));
+  };
 
   const handleSelectRoutine = (routineId: string) => {
     setActiveRoutine(routineId);
@@ -200,7 +244,7 @@ export function RoutinePage() {
     const cached = queryClient.getQueryData<Exercise[]>(['exercises', user?.id]) ?? exercises;
     const exercise = cached.find((e) => e.id === exerciseId);
     if (!exercise) return;
-    addExerciseToDay(selectedDay, exercise.name);
+    addExerciseToDay(sourceDay ?? selectedDay, exercise.name);
     setShowExercisePicker(false);
   };
 
@@ -371,25 +415,73 @@ export function RoutinePage() {
             </div>
           )}
 
-          <div className="flex gap-1.5 mb-4 overflow-x-auto pb-1">
-            {DAYS.map((day) => (
-              <Chip
-                key={day}
-                variant="day"
-                selected={selectedDay === day}
-                onClick={() => setSelectedDay(day)}
+          {planMap && (
+            <div className="mb-3 p-3 rounded-md bg-surface-2 border border-line flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <div className="label-caps text-fg">{t('routine.week_reorganized')}</div>
+                <div className="text-xs mt-0.5 text-fg-subtle">
+                  {t('routine.week_reorganized_desc')}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleRestoreWeek}
+                className="flex-shrink-0 min-h-11 label-caps px-3 py-1.5 rounded-pill bg-surface-3 text-accent active:scale-[0.98] transition-transform"
               >
-                {dayLabels[day].slice(0, 3)}
-              </Chip>
-            ))}
+                {t('routine.week_restore')}
+              </button>
+            </div>
+          )}
+
+          <div className="flex gap-1.5 mb-4 overflow-x-auto pb-1">
+            {DAYS.map((day) => {
+              // Un punto marca los dias que esta semana no llevan lo suyo: sin
+              // el, la barra L-D se ve igual con la semana movida y sin mover.
+              const shifted = planMap != null && planMap[day] !== day;
+              return (
+                <Chip
+                  key={day}
+                  variant="day"
+                  selected={selectedDay === day}
+                  onClick={() => setSelectedDay(day)}
+                  className="relative"
+                >
+                  {dayLabels[day].slice(0, 3)}
+                  {shifted && (
+                    <span
+                      aria-hidden
+                      className={`absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-pill ${
+                        selectedDay === day ? 'bg-accent-fg' : 'bg-accent'
+                      }`}
+                    />
+                  )}
+                </Chip>
+              );
+            })}
           </div>
 
           <div className="rounded-card p-3 bg-surface border border-line">
-            <div className="hairline-separator flex justify-between items-center pb-2 mb-3">
-              <div className="label-caps text-fg-subtle">{dayLabels[selectedDay]}</div>
+            <div className="hairline-separator flex justify-between items-center gap-2 pb-2 mb-3">
+              <div className="min-w-0">
+                <div className="label-caps text-fg-subtle">{dayLabels[selectedDay]}</div>
+                {movedFrom && (
+                  <div className="text-xs mt-0.5 text-accent">
+                    {t('routine.moved_from', { day: dayLabels[movedFrom] })}
+                  </div>
+                )}
+              </div>
+              {dayExercises.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowMovePicker(true)}
+                  className="flex-shrink-0 min-h-11 text-xs px-2.5 py-1.5 rounded-pill bg-surface-2 text-fg-muted"
+                >
+                  {t('routine.move_day')}
+                </button>
+              )}
               {/* Con el día vacío la acción ya la ofrece el estado vacío, en
                   grande y en el centro: repetirla aquí solo añade ruido. */}
-              {activeRoutine && activeRoutine.days[selectedDay].exercises.length > 0 && (
+              {activeRoutine && dayExercises.length > 0 && (
                 <button
                   type="button"
                   onClick={() => setShowExercisePicker(true)}
@@ -400,7 +492,14 @@ export function RoutinePage() {
               )}
             </div>
 
-            {activeRoutine?.days[selectedDay].exercises.length === 0 ? (
+            {sourceDay === null ? (
+              <EmptyState
+                type="routine"
+                title={t('routine.day_freed')}
+                description={t('routine.day_freed_desc')}
+                action={{ label: t('routine.week_restore'), onClick: handleRestoreWeek }}
+              />
+            ) : dayExercises.length === 0 ? (
               // Antes era una línea de texto de 12 px en medio de una pantalla
               // medio vacía, y en las rutinas propias remataba mandando al
               // usuario a «el selector de arriba»: describía la acción en vez de
@@ -424,19 +523,17 @@ export function RoutinePage() {
               )
             ) : activeRoutine ? (
               <SortableExerciseList
-                exercises={activeRoutine.days[selectedDay].exercises}
-                onReorder={(next) => reorderDay(selectedDay, next)}
-                onRemove={(i) => removeExerciseFromDay(selectedDay, i)}
+                exercises={dayExercises}
+                onReorder={(next) => sourceDay && reorderDay(sourceDay, next)}
+                onRemove={(i) => sourceDay && removeExerciseFromDay(sourceDay, i)}
               />
             ) : null}
           </div>
 
-          {activeRoutine && activeRoutine.days[selectedDay].exercises.length > 0 && (
+          {activeRoutine && dayRoutine && dayExercises.length > 0 && (
             <button
               type="button"
-              onClick={() =>
-                handleStartSession(activeRoutine, selectedDay, activeRoutine.days[selectedDay])
-              }
+              onClick={() => handleStartSession(activeRoutine, selectedDay, dayRoutine)}
               className="w-full mt-4 min-h-12 rounded-pill text-sm font-display font-bold uppercase tracking-[0.12em] bg-accent text-accent-fg shadow-btn-accent active:scale-[0.98] transition-transform"
             >
               {t('routine.start_session')}
@@ -517,11 +614,38 @@ export function RoutinePage() {
             onSelect={handleExerciseSelected}
             defaultOpen
             excludeIds={exercises
-              .filter((e) =>
-                activeRoutine.days[selectedDay].exercises.some((ex) => ex.name === e.name),
-              )
+              .filter((e) => dayExercises.some((ex) => ex.name === e.name))
               .map((e) => e.id)}
           />
+        </BottomSheet>
+      )}
+
+      {activeRoutine && (
+        <BottomSheet
+          open={showMovePicker}
+          onClose={() => setShowMovePicker(false)}
+          title={t('routine.move_title', { name: dayRoutine?.name ?? '' })}
+        >
+          <div className="flex flex-col gap-2 pb-2">
+            <p className="text-xs text-fg-subtle">{t('routine.move_help')}</p>
+            {DAYS.filter((day) => day !== selectedDay).map((day) => {
+              const target = getRoutineDay(day);
+              const busy = (target?.exercises.length ?? 0) > 0;
+              return (
+                <button
+                  key={day}
+                  type="button"
+                  onClick={() => handleMoveDay(day)}
+                  className="w-full min-h-12 px-3 py-2 rounded-md flex items-center justify-between gap-3 text-left bg-surface-2 border border-line active:scale-[0.99] transition-transform"
+                >
+                  <span className="text-sm font-medium text-fg">{dayLabels[day]}</span>
+                  <span className="text-xs truncate text-fg-subtle">
+                    {busy ? target?.name : t('routine.move_free')}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </BottomSheet>
       )}
 

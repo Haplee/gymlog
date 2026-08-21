@@ -10,6 +10,9 @@ import { supabase } from '@shared/lib/supabase';
 import {
   useRoutineStore,
   PREDEFINED_ROUTINES,
+  shiftWeekPlan,
+  identityWeekMap,
+  weekStartOf,
   type DayOfWeek,
   type Routine,
 } from '../routineStore';
@@ -255,5 +258,142 @@ describe('loadFromDb — resolución de la rutina activa', () => {
 
     // Sin esta guarda la pantalla de rutinas se quedaría en blanco.
     expect(useRoutineStore.getState().activeRoutineId).toBe('local');
+  });
+});
+
+/**
+ * Semana de ejemplo con la forma real del usuario: entreno de lunes a viernes y
+ * fin de semana libre. `hasWork` mira el dia de ORIGEN, que es lo que guarda el
+ * plan.
+ */
+const TRAINING_DAYS: DayOfWeek[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+const hasWork = (day: DayOfWeek | null) => day !== null && TRAINING_DAYS.includes(day);
+
+describe('shiftWeekPlan — arrastrar la semana', () => {
+  it('deja libre el origen y arrastra hasta el primer dia libre', () => {
+    const next = shiftWeekPlan(identityWeekMap(), hasWork, 'monday', 'friday');
+
+    expect(next.monday).toBeNull();
+    // El viernes recibe el lunes y lo que habia el viernes baja al sabado, que
+    // estaba libre. Los dias de en medio no se tocan.
+    expect(next.friday).toBe('monday');
+    expect(next.saturday).toBe('friday');
+    expect(next.tuesday).toBe('tuesday');
+    expect(next.wednesday).toBe('wednesday');
+    expect(next.thursday).toBe('thursday');
+  });
+
+  it('no arrastra nada si el destino esta libre', () => {
+    const next = shiftWeekPlan(identityWeekMap(), hasWork, 'tuesday', 'saturday');
+
+    expect(next.tuesday).toBeNull();
+    expect(next.saturday).toBe('tuesday');
+    expect(next.sunday).toBe('sunday');
+  });
+
+  it('mover hacia atras frena en el hueco que deja el propio origen', () => {
+    const next = shiftWeekPlan(identityWeekMap(), hasWork, 'friday', 'tuesday');
+
+    expect(next.tuesday).toBe('friday');
+    expect(next.wednesday).toBe('tuesday');
+    expect(next.thursday).toBe('wednesday');
+    expect(next.friday).toBe('thursday');
+    // El arrastre se para en el hueco del viernes: el fin de semana ni se toca.
+    expect(next.saturday).toBe('saturday');
+    expect(next.sunday).toBe('sunday');
+  });
+
+  it('ningun entreno se pierde por el camino', () => {
+    const next = shiftWeekPlan(identityWeekMap(), hasWork, 'monday', 'thursday');
+    const colocados = Object.values(next).filter((d) => d !== null);
+
+    expect(new Set(colocados).size).toBe(colocados.length);
+    for (const day of TRAINING_DAYS) expect(colocados).toContain(day);
+  });
+
+  it('mover un dia de descanso no cambia la semana', () => {
+    const map = identityWeekMap();
+
+    expect(shiftWeekPlan(map, hasWork, 'sunday', 'monday')).toBe(map);
+    expect(shiftWeekPlan(map, hasWork, 'monday', 'monday')).toBe(map);
+  });
+});
+
+describe('plan de la semana en el store', () => {
+  const USUARIO = 'user-plan-semanal';
+  const semanaViva = () => weekStartOf(new Date());
+
+  beforeEach(() => {
+    const rutina = customRoutine('con-entrenos');
+    rutina.days.monday = { name: 'Inferior', exercises: [{ name: 'Sentadilla', sets: 4 }] };
+    rutina.days.friday = { name: 'Potencia', exercises: [{ name: 'Power clean', sets: 4 }] };
+
+    useRoutineStore.setState({
+      routines: [rutina],
+      activeRoutineId: rutina.id,
+      weekPlan: null,
+      weekPlanUpdatedAt: null,
+    });
+  });
+
+  it('mover el lunes al viernes cambia lo que toca cada dia, no la rutina', () => {
+    useRoutineStore.getState().moveRoutineDay('monday', 'friday');
+    const store = useRoutineStore.getState();
+
+    expect(store.getRoutineDay('friday')?.name).toBe('Inferior');
+    expect(store.getRoutineDay('saturday')?.name).toBe('Potencia');
+    expect(store.getRoutineDay('monday')).toBeNull();
+    // La rutina guardada sigue intacta: el lunes es el lunes.
+    expect(store.getActiveRoutine()?.days.monday.name).toBe('Inferior');
+  });
+
+  it('el plan caduca solo al cambiar de semana', () => {
+    useRoutineStore.getState().moveRoutineDay('monday', 'friday');
+    expect(useRoutineStore.getState().getWeekPlan()).not.toBeNull();
+
+    // Mismo plan, pero fechado la semana pasada: deja de aplicarse.
+    const plan = useRoutineStore.getState().weekPlan;
+    expect(plan).not.toBeNull();
+    useRoutineStore.setState({
+      weekPlan: { weekStart: '2026-01-05', map: plan?.map ?? identityWeekMap() },
+    });
+
+    const store = useRoutineStore.getState();
+    expect(store.getWeekPlan()).toBeNull();
+    expect(store.getRoutineDay('monday')?.name).toBe('Inferior');
+    expect(store.getRoutineDay('friday')?.name).toBe('Potencia');
+  });
+
+  it('restaurar la semana devuelve cada entreno a su dia', () => {
+    useRoutineStore.getState().moveRoutineDay('monday', 'friday');
+    useRoutineStore.getState().resetWeekPlan();
+
+    expect(useRoutineStore.getState().getWeekPlan()).toBeNull();
+    expect(useRoutineStore.getState().getRoutineDay('monday')?.name).toBe('Inferior');
+  });
+
+  it('no adopta un plan remoto de otra semana', async () => {
+    mockRemoteContainer({
+      routines: [customRoutine('con-entrenos')],
+      weekPlan: { weekStart: '2026-01-05', map: { ...identityWeekMap(), monday: null } },
+      weekPlanUpdatedAt: '2026-01-05T10:00:00.000Z',
+    });
+
+    await useRoutineStore.getState().loadFromDb(USUARIO);
+
+    expect(useRoutineStore.getState().weekPlan).toBeNull();
+  });
+
+  it('adopta el plan remoto de esta semana', async () => {
+    const map = { ...identityWeekMap(), monday: null, friday: 'monday' as DayOfWeek };
+    mockRemoteContainer({
+      routines: [customRoutine('con-entrenos')],
+      weekPlan: { weekStart: semanaViva(), map },
+      weekPlanUpdatedAt: new Date().toISOString(),
+    });
+
+    await useRoutineStore.getState().loadFromDb(USUARIO);
+
+    expect(useRoutineStore.getState().getWeekPlan()?.map.friday).toBe('monday');
   });
 });
