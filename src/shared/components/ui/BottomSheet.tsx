@@ -3,6 +3,7 @@ import { AnimatePresence, m } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import { Xmark } from '@shared/components/icons';
 import { useTranslation } from 'react-i18next';
+import { registerBackAction } from '@shared/lib/backHandler';
 import { Capacitor } from '@capacitor/core';
 
 // backdrop-filter provoca jank en el WebView de Android de gama media/baja al
@@ -36,9 +37,20 @@ export function BottomSheet({
   const { t } = useTranslation();
   const sheetRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
+  const backId = useId();
 
   const accentColor = variant === 'danger' ? 'var(--error)' : 'var(--interactive-primary)';
   const iconBg = variant === 'danger' ? 'var(--icon-bg-danger)' : 'var(--icon-bg-accent)';
+
+  // El atrás de Android cierra el diálogo en vez de navegar fuera. Vive aquí y
+  // no en cada consumidor: `BottomSheet` lo usan varias pantallas y ninguna lo
+  // registraba por su cuenta, así que en la APK el gesto de atrás sobre un
+  // diálogo abierto hacía `history.back()` —o cerraba la app desde la raíz—
+  // dejando el diálogo detrás. `Escape` solo cubre el teclado.
+  useEffect(() => {
+    if (!open) return;
+    return registerBackAction(`sheet-${backId}`, onClose);
+  }, [open, onClose, backId]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {

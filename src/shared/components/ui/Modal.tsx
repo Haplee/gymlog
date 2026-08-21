@@ -1,8 +1,9 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { AnimatePresence, m } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import { Xmark } from '@shared/components/icons';
 import { useTranslation } from 'react-i18next';
+import { registerBackAction } from '@shared/lib/backHandler';
 
 interface ModalProps {
   open: boolean;
@@ -28,6 +29,7 @@ export function Modal({
   const { t } = useTranslation();
   const panelRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
+  const backId = useId();
 
   const accentColor = variant === 'danger' ? 'var(--error)' : 'var(--interactive-primary)';
   const iconBg = variant === 'danger' ? 'var(--icon-bg-danger)' : 'var(--icon-bg-accent)';
@@ -43,6 +45,16 @@ export function Modal({
       previouslyFocused.current?.focus();
     }
   }, [open]);
+
+  // El atrás de Android cierra el diálogo en vez de navegar fuera. Vive aquí y
+  // no en cada consumidor: `Modal` lo usan doce pantallas y ninguna lo
+  // registraba por su cuenta, así que en la APK el gesto de atrás sobre un
+  // diálogo abierto hacía `history.back()` —o cerraba la app desde la raíz—
+  // dejando el diálogo detrás. `Escape` solo cubre el teclado.
+  useEffect(() => {
+    if (!open) return;
+    return registerBackAction(`modal-${backId}`, onClose);
+  }, [open, onClose, backId]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
