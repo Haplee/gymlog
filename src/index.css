@@ -381,6 +381,31 @@ textarea {
   touch-action: manipulation;
 }
 
+/* Área táctil de 44 px sin engordar el control.
+
+   La regla de móvil pide 44 px, pero hay controles cuyo fondo SÍ se ve en
+   reposo —los círculos de ±15 s del descanso, las flechas de mes del
+   calendario— y agrandar la caja les cambia el diseño. Este pseudo-elemento es
+   transparente y solo existe para el dedo: el círculo sigue midiendo lo que
+   medía y la zona que responde pasa a 44.
+
+   Solo para controles con hueco alrededor: dos `tap-44` a menos de 44 px de
+   distancia se solapan y el de después en el DOM se queda con la zona común.
+   Cuando el control no tiene fondo en reposo no hace falta esto — allí basta
+   con darle los 44 px de verdad, porque no se nota. */
+.tap-44 {
+  position: relative;
+}
+.tap-44::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%);
+}
+
 /* Scroll con momentum y sin encadenar el rebote al contenedor padre */
 .overflow-y-auto,
 .overflow-auto,

@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { X } from '@shared/components/icons';
 import {
   DndContext,
   closestCenter,
@@ -46,7 +47,7 @@ function SortableRow({ exercise, onRemove }: { exercise: RoutineExercise; onRemo
           {...attributes}
           {...listeners}
           aria-label={t('library.reorder', { name: exercise.name })}
-          className="w-9 h-9 -ml-1 flex items-center justify-center rounded-card text-fg-subtle touch-none cursor-grab active:cursor-grabbing"
+          className="h-11 w-11 -ml-1 flex items-center justify-center rounded-card text-fg-subtle touch-none cursor-grab active:cursor-grabbing"
         >
           <Menu className="w-4 h-4" />
         </button>
@@ -63,9 +64,9 @@ function SortableRow({ exercise, onRemove }: { exercise: RoutineExercise; onRemo
         type="button"
         onClick={onRemove}
         aria-label={t('library.remove_exercise', { name: exercise.name })}
-        className="w-9 h-9 flex items-center justify-center rounded-card text-lg text-fg-subtle"
+        className="h-11 w-11 flex items-center justify-center rounded-card text-fg-subtle"
       >
-        ×
+        <X className="h-4 w-4" />
       </button>
     </div>
   );

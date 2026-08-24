@@ -53,7 +53,7 @@ export function WorkoutSavedCard({ summary, onDismiss }: WorkoutSavedCardProps) 
           type="button"
           onClick={onDismiss}
           aria-label={t('common.close')}
-          className="-m-1.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-accent-fg/85 active:text-accent-fg"
+          className="-m-1.5 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full text-accent-fg/85 active:text-accent-fg"
         >
           <X className="h-4 w-4" />
         </button>

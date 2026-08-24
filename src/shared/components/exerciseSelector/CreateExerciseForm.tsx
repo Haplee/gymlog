@@ -3,7 +3,7 @@ import { Button } from '@shared/components/ui';
 import { MuscleGroupIcon } from '@shared/components/CardioIcons';
 import { MUSCLE_GROUPS, suggestMuscleGroup } from '@shared/constants/muscleGroups';
 import { MuscleGroupPills } from './MuscleGroupPills';
-import { AlertCircle, Check, Loader } from '@shared/components/icons';
+import { AlertCircle, Check, Loader, Minus, Plus } from '@shared/components/icons';
 
 interface CreateExerciseFormProps {
   name: string;
@@ -88,17 +88,17 @@ export function CreateExerciseForm({
                     type="button"
                     onClick={() => onAdjustSecondary(mg, -10)}
                     aria-label={`${mg} -10%`}
-                    className="w-8 h-8 rounded-sm bg-surface-2 text-fg-muted text-sm"
+                    className="flex h-11 w-11 items-center justify-center rounded-sm bg-surface-2 text-fg-muted"
                   >
-                    −
+                    <Minus className="h-4 w-4" />
                   </button>
                   <button
                     type="button"
                     onClick={() => onAdjustSecondary(mg, 10)}
                     aria-label={`${mg} +10%`}
-                    className="w-8 h-8 rounded-sm bg-surface-2 text-fg-muted text-sm ml-0.5"
+                    className="ml-0.5 flex h-11 w-11 items-center justify-center rounded-sm bg-surface-2 text-fg-muted"
                   >
-                    +
+                    <Plus className="h-4 w-4" />
                   </button>
                 </span>
               )}

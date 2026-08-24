@@ -133,7 +133,7 @@ export function BottomSheet({
                     type="button"
                     onClick={onClose}
                     aria-label={t('common.close')}
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-fg-subtle hover:bg-surface-2 hover:text-fg active:bg-hover transition-colors"
+                    className="h-11 w-11 rounded-full flex items-center justify-center text-fg-subtle hover:bg-surface-2 hover:text-fg active:bg-hover transition-colors"
                   >
                     <Xmark size={16} />
                   </button>

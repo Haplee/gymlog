@@ -126,7 +126,7 @@ export function WeeklyWeightPrompt() {
           type="button"
           onClick={dismiss}
           aria-label={t('common.close')}
-          className="w-8 h-8 rounded-full flex items-center justify-center text-fg-subtle hover:text-fg-muted active:opacity-60 flex-shrink-0"
+          className="h-11 w-11 rounded-full flex items-center justify-center text-fg-subtle hover:text-fg-muted active:opacity-60 flex-shrink-0"
         >
           <X className="w-4 h-4" />
         </button>

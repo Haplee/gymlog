@@ -68,7 +68,7 @@ export function WorkoutCalendar({ workouts }: WorkoutCalendarProps) {
           type="button"
           onClick={() => setMonth(subMonths(month, 1))}
           aria-label={t('common.back')}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-2 text-fg-muted active:opacity-70"
+          className="tap-44 flex h-9 w-9 items-center justify-center rounded-full bg-surface-2 text-fg-muted active:opacity-70"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
@@ -88,7 +88,7 @@ export function WorkoutCalendar({ workouts }: WorkoutCalendarProps) {
           type="button"
           onClick={() => setMonth(addMonths(month, 1))}
           aria-label={t('common.next')}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-2 text-fg-muted active:opacity-70"
+          className="tap-44 flex h-9 w-9 items-center justify-center rounded-full bg-surface-2 text-fg-muted active:opacity-70"
         >
           <ChevronRight className="h-4 w-4" />
         </button>

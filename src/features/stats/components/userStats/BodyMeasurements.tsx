@@ -186,7 +186,7 @@ export function BodyMeasurements({ userId }: { userId: string }) {
                     type="button"
                     onClick={() => deleteMutation.mutate(entry.id)}
                     aria-label={t('common.delete')}
-                    className="w-8 h-8 flex items-center justify-center rounded-card text-fg-subtle"
+                    className="h-11 w-11 flex items-center justify-center rounded-card text-fg-subtle"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>

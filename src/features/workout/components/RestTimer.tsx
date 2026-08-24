@@ -195,7 +195,7 @@ export function RestTimer() {
           <button
             type="button"
             onClick={() => adjustCustom(-15)}
-            className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-surface-2 text-fg-muted"
+            className="tap-44 w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-surface-2 text-fg-muted"
           >
             <Minus className="w-3.5 h-3.5" />
           </button>
@@ -213,7 +213,7 @@ export function RestTimer() {
           <button
             type="button"
             onClick={() => adjustCustom(15)}
-            className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-surface-2 text-fg-muted"
+            className="tap-44 w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-surface-2 text-fg-muted"
           >
             <Plus className="w-3.5 h-3.5" />
           </button>
