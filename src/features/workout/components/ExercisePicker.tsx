@@ -120,7 +120,7 @@ export function ExercisePicker({
           <button
             type="button"
             onClick={() => navigate('/exercises')}
-            className="mt-2 flex w-full items-center justify-center gap-1.5 glass-2 rounded-card-2 px-2 py-2 text-xs text-fg-muted transition-colors active:bg-hover"
+            className="mt-2 flex w-full items-center justify-center gap-1.5 glass-1 rounded-card-2 px-2 py-2 text-xs text-fg-muted transition-colors active:bg-hover"
           >
             <BookOpen className="h-3.5 w-3.5" />
             {t('library.open')}
@@ -175,7 +175,7 @@ export function ExercisePicker({
                   placeholder={t('workout.new_note')}
                   value={noteText}
                   onChange={(e) => setNoteText(e.target.value)}
-                  className="flex-1 glass-2 rounded-card-2 p-2 text-xs text-fg outline-none"
+                  className="flex-1 glass-1 rounded-card-2 p-2 text-xs text-fg outline-none"
                 />
                 <button
                   type="button"

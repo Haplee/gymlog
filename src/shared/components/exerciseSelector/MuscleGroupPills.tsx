@@ -20,7 +20,7 @@ export function MuscleGroupPills({ active, onSelect, className = '' }: MuscleGro
             className="flex items-center gap-1 px-2.5 py-1 text-xs rounded-sm transition-colors border"
             style={{
               backgroundColor: isActive ? 'var(--interactive-primary)' : 'var(--bg-surface-2)',
-              color: isActive ? '#000' : 'var(--text-secondary)',
+              color: isActive ? 'var(--interactive-primary-fg)' : 'var(--text-secondary)',
               borderColor: isActive ? 'var(--interactive-primary)' : 'var(--border-subtle)',
               fontWeight: isActive ? 'bold' : 'normal',
             }}

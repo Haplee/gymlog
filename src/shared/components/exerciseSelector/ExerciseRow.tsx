@@ -78,8 +78,8 @@ export function ExerciseRow({
             style={{
               color: isEditing ? 'var(--interactive-primary)' : 'var(--text-tertiary)',
             }}
-            aria-label={`Editar grupo muscular de ${exercise.name}`}
-            title={`Editar grupo muscular de ${exercise.name}`}
+            aria-label={t('library.edit_muscle_group', { name: exercise.name })}
+            title={t('library.edit_muscle_group', { name: exercise.name })}
           >
             <Edit className="w-3.5 h-3.5" />
           </button>
@@ -90,8 +90,8 @@ export function ExerciseRow({
             onClick={onDelete}
             disabled={deletePending}
             className="px-2 py-2 transition-colors text-fg-subtle"
-            aria-label={`Eliminar ejercicio ${exercise.name}`}
-            title={`Eliminar ejercicio ${exercise.name}`}
+            aria-label={t('library.delete_exercise', { name: exercise.name })}
+            title={t('library.delete_exercise', { name: exercise.name })}
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -112,7 +112,7 @@ export function ExerciseRow({
             className="w-full flex items-center justify-center py-2 rounded-md text-sm font-semibold transition-transform active:scale-[0.98]"
             style={{
               backgroundColor: 'var(--interactive-primary)',
-              color: '#000',
+              color: 'var(--interactive-primary-fg)',
             }}
           >
             {updatePending ? (

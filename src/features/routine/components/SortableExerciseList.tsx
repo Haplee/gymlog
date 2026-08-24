@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import {
   DndContext,
   closestCenter,
@@ -25,6 +26,7 @@ interface SortableExerciseListProps {
 }
 
 function SortableRow({ exercise, onRemove }: { exercise: RoutineExercise; onRemove: () => void }) {
+  const { t } = useTranslation();
   // El nombre es único por día (el selector de añadir filtra los ya presentes).
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: exercise.name,
@@ -43,7 +45,7 @@ function SortableRow({ exercise, onRemove }: { exercise: RoutineExercise; onRemo
           type="button"
           {...attributes}
           {...listeners}
-          aria-label={`Reordenar ${exercise.name}`}
+          aria-label={t('library.reorder', { name: exercise.name })}
           className="w-9 h-9 -ml-1 flex items-center justify-center rounded-card text-fg-subtle touch-none cursor-grab active:cursor-grabbing"
         >
           <Menu className="w-4 h-4" />
@@ -60,7 +62,7 @@ function SortableRow({ exercise, onRemove }: { exercise: RoutineExercise; onRemo
       <button
         type="button"
         onClick={onRemove}
-        aria-label={`Eliminar ${exercise.name}`}
+        aria-label={t('library.remove_exercise', { name: exercise.name })}
         className="w-9 h-9 flex items-center justify-center rounded-card text-lg text-fg-subtle"
       >
         ×
