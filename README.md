@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=ffd93d&height=120&section=header&text=GymLog%20v5.9.0&fontSize=50&fontColor=0a0a0b&animation=fadeIn" alt="Header" />
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=ffd93d&height=120&section=header&text=GymLog%20v5.10.0&fontSize=50&fontColor=0a0a0b&animation=fadeIn" alt="Header" />
 
   <img src="./public/gimnasia.svg" alt="GymLog" width="130" />
 
@@ -592,6 +592,6 @@ El registro completo y automático está en **[CHANGELOG.md](./CHANGELOG.md)**. 
 <a href="https://www.instagram.com/franvidalmateo"><img src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white" /></a>
 
 <br><br>
-<b>GymLog v5.9.0</b> — <a href="https://github.com/Haplee">Francisco Vidal Mateo</a>
+<b>GymLog v5.10.0</b> — <a href="https://github.com/Haplee">Francisco Vidal Mateo</a>
 
 </div>
