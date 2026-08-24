@@ -626,7 +626,7 @@ export function UserStatsPage() {
         {/* Sin datos */}
         {workouts.length === 0 && (
           <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-16">
-            <div className="text-5xl mb-4">📊</div>
+            <ChartBar className="mx-auto mb-4 h-12 w-12 text-accent" />
             <div className="text-base font-semibold mb-2 text-fg">{t('userStats.empty_title')}</div>
             <div className="text-sm text-fg-subtle">{t('userStats.empty_desc')}</div>
           </m.div>
