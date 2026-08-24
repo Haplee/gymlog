@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=ffd93d&height=120&section=header&text=GymLog%20v5.7.0&fontSize=50&fontColor=0a0a0b&animation=fadeIn" alt="Header" />
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=ffd93d&height=120&section=header&text=GymLog%20v5.9.0&fontSize=50&fontColor=0a0a0b&animation=fadeIn" alt="Header" />
 
   <img src="./public/gimnasia.svg" alt="GymLog" width="130" />
 
@@ -17,7 +17,7 @@
   <p>
     <img src="https://img.shields.io/github/actions/workflow/status/Haplee/gymlog/android-build.yml?style=flat-square&label=Android%20Build&logo=github" />
     <img src="https://img.shields.io/github/actions/workflow/status/Haplee/gymlog/ci.yml?style=flat-square&label=CI&logo=vitest" />
-    <img src="https://img.shields.io/badge/tests-519%20passing-ffd93d?style=flat-square&logo=vitest&logoColor=0a0a0b" />
+    <img src="https://img.shields.io/badge/tests-577%20passing-ffd93d?style=flat-square&logo=vitest&logoColor=0a0a0b" />
     <img src="https://img.shields.io/github/last-commit/Haplee/gymlog?style=flat-square&label=Last%20commit&logo=git" />
     <img src="https://img.shields.io/github/repo-size/Haplee/gymlog?style=flat-square&label=Size&logo=files" />
     <img src="https://img.shields.io/github/license/Haplee/gymlog?style=flat-square&label=License&logo=opensourceinitiative" />
@@ -141,7 +141,7 @@ npm run dev              # http://localhost:5173
 ```bash
 npm run lint             # ESLint
 npm run type-check       # tsc -b --force
-npm run test             # 519 tests en 53 ficheros (Vitest)
+npm run test             # 577 tests en 57 ficheros (Vitest)
 npx playwright test      # 52 E2E (e2e/) — requiere E2E_EMAIL/E2E_PASSWORD para los autenticados
 ```
 
@@ -239,6 +239,7 @@ Un vidrio no se reconoce porque deje ver lo que hay detrás, sino por **cómo le
 - **La capa se elige por función, nunca por aspecto**, y no se anidan capas del mismo nivel. Una tarjeta dentro de otra idéntica es señal de que la jerarquía está mal, no de que falte una capa.
 - **Sin `backdrop-filter`**, y por dos medidas, no por gusto. Con el acento pasando por debajo, ningún velo translúcido alcanza AA a ninguna opacidad — es aritmética de composición alpha, no algo ajustable. Y el blur ya se midió en julio y se quitó por jank en el WebView de Android. La señal de «hay algo pasando por debajo» la da el **difuminado de borde de scroll**, que se pinta una vez en vez de remuestrear el fondo en cada frame.
 - **La luz se gasta en el canto, no en el área.** Aclarar 1 px de borde no toca el contraste del texto; aclarar toda la superficie sí, y con los 24 acentos rompe el AA.
+- **Lo que tapa contenido no puede ser translúcido**, aunque sea capa 3. El 4 % de `glass-3` está pensado para chrome delgado —una barra de 56 px sobre contenido que se desplaza—, donde solo deja intuir que hay algo debajo. En un panel del 80 % de ancho y alto completo ese mismo 4 % deja **leer** lo de detrás: el cajón de navegación enseñaba el titular de la portada por debajo del menú. Para esos casos está `glass-solid`, que conserva canto, brillo y sombra y solo quita el alpha. Los modales no lo necesitan: con su velo al 60 % detrás, el residuo cae por debajo de lo representable en 8 bits (medido: banda vacía con amplitud 0).
 - Medido en una Galaxy Tab A7 (Android 12, gama media-baja de 2020): **1 frame con jank de 384, p99 11 ms**.
 
 **Modo claro completo**: Ajustes → Preferencias → Tema (OSCURO / CLARO). Vive en `settingsStore.theme` + el bloque `:root.light` de `tokens.css`, y es independiente del tema del sistema.
@@ -419,6 +420,8 @@ Definidos en `vite.aliases.ts` y sincronizados en `tsconfig.app.json`.
 - **Lazy loading**: todas las páginas con `lazy()` en `App.tsx`
 - **Tests**: Vitest, `__tests__/` colocalizado, `*.test.ts*`, mock con path alias
 - **Móvil**: mobile-first, touch targets ≥44px, probar a ~390px y no tocar las utilidades de safe-area sin verificar en Android
+  - Cuando el control **no** tiene fondo en reposo (los cerrar de diálogos y hojas, donde el fondo solo aparece en hover y en un móvil no hay hover), se le dan los 44 px de verdad: no se nota, porque lo que se ve es el icono.
+  - Cuando el fondo **sí** se ve (los círculos de ±15 s del descanso, las flechas de mes del calendario), agrandar la caja les cambia el diseño. Para esos está `tap-44`: un pseudo-elemento transparente que lleva el área que responde a 44 px dejando el círculo como estaba. Solo sirve con hueco alrededor — dos áreas a menos de 44 px se solapan y gana la de después en el DOM.
 
 ---
 
@@ -589,6 +592,6 @@ El registro completo y automático está en **[CHANGELOG.md](./CHANGELOG.md)**. 
 <a href="https://www.instagram.com/franvidalmateo"><img src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white" /></a>
 
 <br><br>
-<b>GymLog v5.6.0</b> — <a href="https://github.com/Haplee">Francisco Vidal Mateo</a>
+<b>GymLog v5.9.0</b> — <a href="https://github.com/Haplee">Francisco Vidal Mateo</a>
 
 </div>
