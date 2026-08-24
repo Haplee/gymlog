@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { m, AnimatePresence } from 'framer-motion';
-import { Star, Trash2 } from '@shared/components/icons';
+import { Check, Star, Trash2, X } from '@shared/components/icons';
 import { impact, ImpactStyle } from '@shared/lib/haptics';
 
 interface WorkoutActionBarProps {
@@ -92,7 +92,7 @@ export function WorkoutActionBar({
                   aria-label={t('common.confirm')}
                   className="py-2 px-3 rounded-card text-sm font-medium bg-error text-white transition-transform active:scale-95"
                 >
-                  ✓
+                  <Check className="h-4 w-4" />
                 </button>
                 <button
                   type="button"
@@ -100,7 +100,7 @@ export function WorkoutActionBar({
                   aria-label={t('common.cancel')}
                   className="py-2 px-3 rounded-card text-sm border border-line-strong text-fg-subtle transition-transform active:scale-95"
                 >
-                  ✕
+                  <X className="h-4 w-4" />
                 </button>
               </m.div>
             ) : (
@@ -150,7 +150,13 @@ export function WorkoutActionBar({
             saveSuccess ? 'bg-success' : 'bg-accent'
           }`}
         >
-          {saving ? t('workout.saving') : saveSuccess ? '✓' : t('workout.save_workout')}
+          {saving ? (
+            t('workout.saving')
+          ) : saveSuccess ? (
+            <Check className="mx-auto h-5 w-5" />
+          ) : (
+            t('workout.save_workout')
+          )}
         </button>
       </div>
     </div>

@@ -6,7 +6,7 @@ import { useSettingsStore } from '@shared/stores/settingsStore';
 import { impact, ImpactStyle } from '@shared/lib/haptics';
 import { useVisibilityPausedInterval } from '@shared/hooks/useVisibilityPausedInterval';
 import { m, AnimatePresence } from 'framer-motion';
-import { AlarmClock, Minus, Plus, Timer } from '@shared/components/icons';
+import { AlarmClock, Minus, Plus, Timer, X } from '@shared/components/icons';
 
 const PRESETS = [60, 90, 120, 180];
 
@@ -131,7 +131,7 @@ export function RestTimer() {
                   aria-label={t('common.close')}
                   className="flex h-11 w-11 items-center justify-center rounded-pill text-fg-subtle"
                 >
-                  ✕
+                  <X className="h-5 w-5" />
                 </button>
               </div>
             </m.div>

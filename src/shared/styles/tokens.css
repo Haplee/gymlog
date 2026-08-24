@@ -26,10 +26,20 @@
      del fondo Y mantenga el AA medía 0,0071 — daba para UN nivel, no para tres.
      Aclararlo la multiplica por 5 y además MEJORA su propio contraste sobre el
      canvas (6,23:1 → 8,65:1). El token que parecía intocable era el que había
-     que tocar primero. ── */
+     que tocar primero.
+
+     Segundo arreglo, este de croma y no de luminancia: secundario y terciario
+     eran verdes (sesgo +14 y +13 de g sobre r/b) mientras fondos, bordes y
+     texto primario son grises fríos (−2, −3). Dos familias opuestas a la vez,
+     residuo del menta que el reskin sustituyó por el amarillo. No rompía
+     ninguna medida —por eso sobrevivió— pero era el «no se ve bien» que no
+     daba error en ningún sitio. Ahora los dos están en la familia fría con la
+     MISMA luminancia relativa: el terciario cambia 0,00001 y el secundario
+     sube 0,0018, así que ningún contraste empeora. El tema claro no se toca:
+     allí la paleta ya era coherente (+3 a +8 en todo). ── */
   --text-primary: #e5e2e3;
-  --text-secondary: #bbcabe;
-  --text-tertiary: #a1afa4; /* ≥4.5:1 sobre todas las superficies (WCAG AA) */
+  --text-secondary: #c6c6cb;
+  --text-tertiary: #ababb0; /* ≥4.5:1 sobre todas las superficies (WCAG AA) */
   --text-inverse: #0a0a0b;
 
   /* ── Interactivo (acento amarillo-lima FitBody) ── */
