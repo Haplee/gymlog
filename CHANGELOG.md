@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.10.0](https://github.com/Haplee/gymlog/compare/v5.9.0...v5.10.0) (2026-08-24)
+
+### Features
+
+- **coach:** que la carga suba cuando toca, no cada semana ([3b53c82](https://github.com/Haplee/gymlog/commit/3b53c82ddff932ffd51fa8850e1cf7bd03039a7b))
+- **rutina:** mover el entreno a otro día solo por esta semana ([e82e113](https://github.com/Haplee/gymlog/commit/e82e11388730431262dc6ef9b37f5c4b06d363f8))
+- **ui:** dar rotulo a las pantallas que se habian quedado sin el ([f2b40f6](https://github.com/Haplee/gymlog/commit/f2b40f62e2845e2bc35f83e752ead006c832ee84))
+
+### Bug Fixes
+
+- **a11y:** negro fijo sobre el acento, textos sin traducir y vidrio anidado ([ce3b239](https://github.com/Haplee/gymlog/commit/ce3b239f9b8c373e308ccfd70666270767888f6c)), closes [#000](https://github.com/Haplee/gymlog/issues/000) [#6b5200](https://github.com/Haplee/gymlog/issues/6b5200)
+- **a11y:** que los 14 controles pequeños lleguen a los 44 px de la regla ([df9117d](https://github.com/Haplee/gymlog/commit/df9117d443468acdf39e1e26dd336ea03373b564))
+- **biblioteca:** quitar el distintivo «Mio» de mis ejercicios ([13183f7](https://github.com/Haplee/gymlog/commit/13183f7a1cc072e9c6e65a1c7c26ab6fdc94a825))
+- **buscador:** que el desplegable no se apague con el campo enfocado ([45ad919](https://github.com/Haplee/gymlog/commit/45ad9199f28a7db0e1997731048fcbac4e70fc8f))
+- **cajon:** que el panel tape lo de detrás y hable en español ([b5fd266](https://github.com/Haplee/gymlog/commit/b5fd2664494f988a24ed71a200a155ec8a249cbd))
+- **cardio:** decir que tocar una actividad arranca el cronometro ([1976ff7](https://github.com/Haplee/gymlog/commit/1976ff7a0f0d915ae92625dbb4c5cb0719c0bd1a))
+- **diseño:** unificar la familia de grises y quitar los últimos glifos de fuente ([3928b91](https://github.com/Haplee/gymlog/commit/3928b919cba86eda5d1f73b2288e14ddccf15303))
+- **entreno:** avisar de lo que pasa y preguntar antes de borrar ([a61b029](https://github.com/Haplee/gymlog/commit/a61b0294aed7d0cb5eca3696992e28a04fdfb763))
+- **historial:** resumir las series por ejercicio ([64bcfdd](https://github.com/Haplee/gymlog/commit/64bcfdde5a28db069ed1c9b4fc50355b28ec351a))
+- **medidas:** que el estado vacío use el icono del sistema, no un emoji ([15289bc](https://github.com/Haplee/gymlog/commit/15289bc36a61d2d78f15a73f2c3c815a35bb463b))
+- **overlays:** que el atras de Android cierre dialogos y hojas ([f251792](https://github.com/Haplee/gymlog/commit/f251792f3fd7761ff92fbf6686f55c3605a695d3))
+- **rutina:** no repetir hoy cuando ya se esta mirando hoy ([ecbdc1c](https://github.com/Haplee/gymlog/commit/ecbdc1ceb96994d10937b8bf54ad5df7f416d7ea))
+- **stats:** que el color de las tarjetas signifique algo ([9a3574d](https://github.com/Haplee/gymlog/commit/9a3574d0b1323c889df65c9362e678d0dfe7f6a2))
+- **ui:** que el cajón de navegación flote en vez de empujar la pantalla ([363df5d](https://github.com/Haplee/gymlog/commit/363df5dcccac099f207fc34325378eb678cb2827))
+- **ui:** que lo que se toca responda al toque ([09a29b3](https://github.com/Haplee/gymlog/commit/09a29b3bacd7e9e9fcef001aa3e3b74c1a6f5753))
+
 ## [5.9.0](https://github.com/Haplee/gymlog/compare/v5.8.0...v5.9.0) (2026-08-15)
 
 ### Bug Fixes
