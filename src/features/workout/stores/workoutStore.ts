@@ -9,6 +9,8 @@ import { saveWorkoutOrQueue } from '@shared/lib/saveWorkout';
 import { useOutboxStore } from '@shared/stores/outboxStore';
 import { reconcileReminders } from '@shared/lib/reminderReconcile';
 import { getRoutineReminderDays } from '@features/routine/lib/routineReminders';
+import { queryClient } from '@app/queryClient';
+import { toLocalDateKey } from '@shared/lib/dateKeys';
 
 const SetDataSchema = z.object({
   id: z.string().default(() => crypto.randomUUID()),
@@ -214,8 +216,11 @@ export const useWorkoutStore = create<WorkoutState>()(
           });
 
         // Ya ha entrenado hoy: silencia los recordatorios de hoy al instante.
+        // La caché de `trainedToday` se actualiza en el mismo sitio para que el
+        // aviso de apertura y la reconciliación no discrepen entre sí.
         const onSaved = () => {
           resetState();
+          queryClient.setQueryData(['trainedToday', userId, toLocalDateKey(new Date())], true);
           void reconcileReminders(userId, getRoutineReminderDays(), { trainedToday: true });
         };
 
