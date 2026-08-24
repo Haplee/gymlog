@@ -267,13 +267,20 @@ export function ExerciseSelector({
           aria-label={t('search.placeholder')}
           aria-expanded={isFocused}
           aria-controls="exercise-list"
-          className="w-full pl-10 pr-10 py-2.5 rounded-card text-sm outline-none transition-all bg-surface-2 border border-line-strong text-fg"
+          // `transition-all` animaba también las propiedades geométricas, y un
+          // elemento que se mueve entre el touchstart y el touchend no llega a
+          // generar el click: la X de al lado solo respondía si se mantenía el
+          // dedo. Aquí solo cambian colores al enfocar, así que se anima eso.
+          className="w-full pl-10 pr-10 py-2.5 rounded-card text-sm outline-none transition-colors bg-surface-2 border border-line-strong text-fg"
         />
         {query && (
           <button
             type="button"
             onClick={() => setQuery('')}
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded-full"
+            // El icono sigue midiendo 16 px, pero el botón que lo envuelve pasa
+            // de 20 px a los 44 de la regla: era el objetivo más pequeño de la
+            // pantalla y fallarlo dejaba el buscador con texto y sin resultados.
+            className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full"
             aria-label={t('search.clear')}
           >
             <X className="w-4 h-4 text-fg-subtle" />

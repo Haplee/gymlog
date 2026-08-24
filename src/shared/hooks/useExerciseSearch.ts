@@ -81,15 +81,30 @@ export function useExerciseSearch({ debounceMs = 250, userId }: UseExerciseSearc
     [debounceMs],
   );
 
-  const handleFocus = useCallback(() => setIsFocused(true), []);
+  // El cierre del desplegable se retrasa a propósito: sin esa espera, el blur
+  // del campo lo desmonta antes de que el toque llegue al resultado que se
+  // quería pulsar. Lo que faltaba era guardar el temporizador para poder
+  // cancelarlo: si el foco vuelve dentro de esos 200 ms —al pulsar la X de
+  // limpiar, o al volver al campo tras un roce fuera— el temporizador huérfano
+  // vencía igual y apagaba el foco con el campo enfocado. El buscador se
+  // quedaba escribible pero mudo: texto dentro, ningún resultado y ninguna
+  // forma de recuperarlos salvo salir y volver a entrar.
+  const blurTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleFocus = useCallback(() => {
+    if (blurTimer.current) clearTimeout(blurTimer.current);
+    setIsFocused(true);
+  }, []);
 
   const handleBlur = useCallback(() => {
-    setTimeout(() => setIsFocused(false), 200);
+    if (blurTimer.current) clearTimeout(blurTimer.current);
+    blurTimer.current = setTimeout(() => setIsFocused(false), 200);
   }, []);
 
   useEffect(() => {
     return () => {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
+      if (blurTimer.current) clearTimeout(blurTimer.current);
     };
   }, []);
 
