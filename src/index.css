@@ -269,6 +269,15 @@ body {
   box-shadow: var(--glass-sheen), var(--glass-shadow-3);
 }
 
+/* Modificador para la capa 3 que TAPA contenido en lugar de flotar sobre él:
+   paneles a pantalla completa (el cajón de navegación), no chrome delgado.
+   Conserva canto, brillo y sombra —sigue siendo capa 3— y solo quita el alpha
+   del fondo. Va después de `.glass-3` y fuera de capa a propósito: `.glass-3`
+   tampoco está en ninguna capa, así que a igual especificidad decide el orden. */
+.glass-solid {
+  background-color: var(--glass-3-solid);
+}
+
 /* Difuminado de borde de scroll: la tira donde el contenido se disuelve al
    entrar bajo el chrome flotante. Es el sustituto perceptual del blur —
    da la misma señal ("hay algo pasando por debajo") pintando un degradado

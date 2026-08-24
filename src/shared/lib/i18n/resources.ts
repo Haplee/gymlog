@@ -29,9 +29,11 @@ export const resources = {
         home: 'Inicio',
         routines: 'Rutinas',
         cardio: 'Cardio',
-        // "Stats", no "Estadísticas": cada pestaña mide ~78 px y la palabra
-        // larga se partiría o se recortaría.
-        stats: 'Stats',
+        // Fue "Stats" mientras la pestaña medía ~78 px y la palabra larga se
+        // partía. Ya no: esto solo se usa en la fila del cajón, que tiene el
+        // ancho del panel entero, y allí el anglicismo desentonaba entre
+        // "Biblioteca de ejercicios", "Mis medidas" y "Guía de uso".
+        stats: 'Estadísticas',
         settings: 'Ajustes',
         menu: 'Menú',
         menu_close: 'Cerrar menú',

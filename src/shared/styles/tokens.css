@@ -194,6 +194,14 @@
   --glass-2: rgb(38 38 43 / 0.93);
   --glass-3: rgb(49 49 55 / 0.96);
 
+  /* Variante opaca de la capa 3, para lo que tapa contenido en vez de flotar
+     sobre él. El 4 % de la capa 3 se pensó para chrome delgado —una barra de
+     56 px sobre contenido que se desplaza—, donde deja intuir que hay algo
+     debajo. En un panel del 80 % de ancho y alto completo ese mismo 4 % deja
+     LEER lo de detrás: el cajón enseñaba el titular de la portada y el botón
+     de acción a través del menú. Mismo color, sin el alpha. */
+  --glass-3-solid: rgb(49 49 55);
+
   /* Canto asimétrico: la luz entra por arriba. El borde superior se ve;
      los laterales solo definen. Un canto uniforme parece caja, no vidrio.
 
@@ -341,6 +349,7 @@
   --glass-1: rgb(241 243 240 / 0.92);
   --glass-2: rgb(250 251 249 / 0.95);
   --glass-3: rgb(255 255 255 / 0.97);
+  --glass-3-solid: rgb(255 255 255);
 
   --glass-edge-top: rgb(255 255 255 / 0.9);
   --glass-edge: rgb(0 0 0 / 0.08);

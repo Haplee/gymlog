@@ -114,7 +114,7 @@ export function AppDrawer({ onClose, onOpenSearch, unreadCount }: AppDrawerProps
         onDragEnd={(_, info) => {
           if (info.offset.x < -60 || info.velocity.x < -400) onClose();
         }}
-        className="glass-3 glass-flush glass-flush-r fixed left-0 top-0 z-[201] flex h-full w-[80%] max-w-xs flex-col overflow-y-auto outline-none"
+        className="glass-3 glass-solid glass-flush glass-flush-r fixed left-0 top-0 z-[201] flex h-full w-[80%] max-w-xs flex-col overflow-y-auto outline-none"
         style={{
           paddingTop: 'var(--inset-top, env(safe-area-inset-top))',
           paddingBottom: 'var(--inset-bottom, env(safe-area-inset-bottom))',
