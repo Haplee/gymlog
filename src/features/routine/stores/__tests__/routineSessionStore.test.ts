@@ -237,3 +237,128 @@ describe('useRoutineSessionStore', () => {
     expect(mockEnqueue.mock.calls[0][0]).toMatchObject({ customExerciseName: 'Press militar' });
   });
 });
+
+/* --------------------------------------------- registrar por tiempo (f3) --- */
+
+/** Un día con una plancha por tiempo y un press normal. */
+const dayConPlancha: DayRoutine = {
+  name: 'Core',
+  exercises: [
+    { name: 'Plancha', sets: 2, mode: 'time', durationSeconds: 45 },
+    { name: 'Press banca', sets: 1, reps: '8' },
+  ],
+};
+
+const rutinaConPlancha = {
+  ...routine,
+  days: { monday: dayConPlancha },
+} as unknown as Routine;
+
+describe('sesión de rutina con series por tiempo', () => {
+  beforeEach(() => {
+    useRoutineSessionStore.getState().discard();
+    mockRpc.mockClear();
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: null,
+      count: null,
+      status: 200,
+      statusText: 'OK',
+    } as never);
+    mockResolve.mockClear();
+    mockResolve.mockResolvedValue('created-exercise-id');
+    Object.defineProperty(navigator, 'onLine', { configurable: true, value: true });
+  });
+
+  it('copia el modo del plan y precarga los segundos, no las repeticiones', () => {
+    useRoutineSessionStore.getState().start(rutinaConPlancha, 'monday', dayConPlancha);
+    const [plancha, press] = useRoutineSessionStore.getState().exercises;
+
+    expect(plancha.mode).toBe('time');
+    expect(plancha.targetDurationSeconds).toBe(45);
+    expect(plancha.sets).toHaveLength(2);
+    for (const s of plancha.sets) {
+      expect(s.durationSeconds).toBe('45');
+      // Vacío a propósito: `targetReps` de un ejercicio por tiempo puede traer
+      // un «30-45s» escrito a mano, y tomarlo por repeticiones sería inventarse
+      // un 30 que nadie hizo.
+      expect(s.reps).toBe('');
+    }
+
+    expect(press.mode).toBeUndefined();
+    expect(press.sets[0].reps).toBe('8');
+    expect(press.sets[0].durationSeconds).toBe('');
+  });
+
+  it('guarda una plancha sin peso: reps null y duration_seconds con el tiempo', async () => {
+    useRoutineSessionStore.getState().start(rutinaConPlancha, 'monday', dayConPlancha);
+    useRoutineSessionStore.getState().updateSet(0, 0, { durationSeconds: '52' });
+    useRoutineSessionStore.getState().updateSet(0, 1, { durationSeconds: '38' });
+
+    const result = await useRoutineSessionStore
+      .getState()
+      .finish('u1', () => 'ex-plancha', identity);
+    expect(result.error).toBeNull();
+
+    const llamada = mockRpc.mock.calls.find(
+      (c) => (c[1] as { p_exercise_id?: string })?.p_exercise_id === 'ex-plancha',
+    );
+    expect(llamada).toBeDefined();
+    const sets = (llamada?.[1] as { p_sets: Record<string, unknown>[] }).p_sets;
+
+    expect(sets).toHaveLength(2);
+    // `null`, no `0`: es lo que separa «no se mide así» de «hizo cero», y lo que
+    // el CHECK `workout_sets_measured` de la BD espera ver.
+    expect(sets[0].reps).toBeNull();
+    expect(sets[0].duration_seconds).toBe(52);
+    expect(sets[1].duration_seconds).toBe(38);
+    expect(sets[0].weight).toBe(0);
+  });
+
+  it('una serie de repeticiones sigue guardándose sin duration_seconds', async () => {
+    useRoutineSessionStore.getState().start(rutinaConPlancha, 'monday', dayConPlancha);
+    fillExercise(1, '8', '80');
+
+    await useRoutineSessionStore.getState().finish('u1', (n) => `ex-${n}`, identity);
+
+    const llamada = mockRpc.mock.calls.find(
+      (c) => (c[1] as { p_exercise_id?: string })?.p_exercise_id === 'ex-Press banca',
+    );
+    const sets = (llamada?.[1] as { p_sets: Record<string, unknown>[] }).p_sets;
+
+    expect(sets[0].reps).toBe(8);
+    expect(sets[0]).not.toHaveProperty('duration_seconds');
+  });
+
+  it('una serie sin tiempo y sin reps no se guarda', async () => {
+    useRoutineSessionStore.getState().start(rutinaConPlancha, 'monday', dayConPlancha);
+    useRoutineSessionStore.getState().updateSet(0, 0, { durationSeconds: '' });
+    useRoutineSessionStore.getState().updateSet(0, 1, { durationSeconds: '30' });
+
+    await useRoutineSessionStore.getState().finish('u1', () => 'ex-plancha', identity);
+
+    const llamada = mockRpc.mock.calls.find(
+      (c) => (c[1] as { p_exercise_id?: string })?.p_exercise_id === 'ex-plancha',
+    );
+    const sets = (llamada?.[1] as { p_sets: Record<string, unknown>[] }).p_sets;
+    expect(sets).toHaveLength(1);
+    expect(sets[0].duration_seconds).toBe(30);
+  });
+
+  it('una duración absurda se descarta como si no estuviera', async () => {
+    useRoutineSessionStore.getState().start(rutinaConPlancha, 'monday', dayConPlancha);
+    // Más de una hora aguantando una plancha es un dedo resbalando en el teclado
+    // numérico, no un récord.
+    useRoutineSessionStore.getState().updateSet(0, 0, { durationSeconds: '99999' });
+    useRoutineSessionStore.getState().updateSet(0, 1, { durationSeconds: '40' });
+
+    await useRoutineSessionStore.getState().finish('u1', () => 'ex-plancha', identity);
+
+    const llamada = mockRpc.mock.calls.find(
+      (c) => (c[1] as { p_exercise_id?: string })?.p_exercise_id === 'ex-plancha',
+    );
+    const sets = (llamada?.[1] as { p_sets: Record<string, unknown>[] }).p_sets;
+    expect(sets).toHaveLength(1);
+    expect(sets[0].duration_seconds).toBe(40);
+  });
+});

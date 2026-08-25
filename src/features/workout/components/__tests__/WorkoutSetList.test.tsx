@@ -25,7 +25,8 @@ vi.mock('@shared/lib/haptics', () => ({
 const LB_PER_KG = 2.20462;
 
 interface Overrides {
-  sets?: { id: string; reps: string; weight: string }[];
+  sets?: { id: string; reps: string; weight: string; durationSeconds?: string }[];
+  loggingMode?: 'reps' | 'time';
   weightUnit?: string;
   convert?: (kg: number) => number;
   convertToKg?: (local: number) => number;
@@ -48,6 +49,8 @@ function setup(overrides: Overrides = {}) {
       updateSet={updateSet}
       removeSet={removeSet}
       onCommitSet={onCommitSet}
+      loggingMode={overrides.loggingMode ?? 'reps'}
+      onLoggingModeChange={vi.fn()}
       checkIsNewPR={() => false}
       weightUnit={overrides.weightUnit ?? 'kg'}
       convert={overrides.convert ?? ((kg) => kg)}
@@ -73,6 +76,8 @@ describe('WorkoutSetList', () => {
         setSetErrors={vi.fn()}
         updateSet={vi.fn()}
         removeSet={vi.fn()}
+        loggingMode="reps"
+        onLoggingModeChange={vi.fn()}
         checkIsNewPR={() => false}
         weightUnit="kg"
         convert={(kg) => kg}
@@ -88,8 +93,11 @@ describe('WorkoutSetList', () => {
 
     await user.type(repsInput(), '1a2');
 
-    expect(updateSet).toHaveBeenCalledWith(0, { reps: '1' });
-    expect(updateSet).toHaveBeenLastCalledWith(0, { reps: '2' });
+    // `durationSeconds: ''` va en la misma llamada a propósito: una serie es de
+    // repeticiones o de tiempo, y dejar las dos haría que una plancha entrase en
+    // el volumen de fuerza (ver `setShape.isRepSet`).
+    expect(updateSet).toHaveBeenCalledWith(0, { reps: '1', durationSeconds: '' });
+    expect(updateSet).toHaveBeenLastCalledWith(0, { reps: '2', durationSeconds: '' });
   });
 
   it('muestra el peso derivado de kg cuando no se está escribiendo', () => {

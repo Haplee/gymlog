@@ -7,11 +7,14 @@ import { saveWorkoutOrQueue } from '@shared/lib/saveWorkout';
 import { useOutboxStore } from '@shared/stores/outboxStore';
 import { normalizeExerciseName } from '@shared/lib/progressionCycle';
 import type { DayOfWeek, DayRoutine, Routine } from './routineStore';
+import { planDurationOf, planModeOf } from '../utils/planTarget';
 
 export interface SessionSet {
   id: string;
   reps: string;
   weight: string;
+  /** Segundos aguantados. Vacío en una serie de repeticiones. */
+  durationSeconds: string;
 }
 
 export interface SessionExercise {
@@ -20,6 +23,17 @@ export interface SessionExercise {
   /** Objetivo de la plantilla, solo informativo en la UI. */
   targetSets?: number;
   targetReps?: string;
+  /**
+   * Cómo se registra, copiado del plan al empezar la sesión.
+   *
+   * Se copia en vez de leerse de la rutina en cada render porque la sesión debe
+   * sobrevivir a que el usuario edite la rutina a mitad: lo que se está
+   * registrando es el plan de cuando se pulsó «empezar», no el de ahora.
+   */
+  mode?: 'reps' | 'time';
+  perSide?: boolean;
+  /** Segundos objetivo por serie cuando `mode === 'time'`. */
+  targetDurationSeconds?: number;
   sets: SessionSet[];
 }
 
@@ -75,10 +89,11 @@ interface RoutineSessionState {
   ) => Promise<RoutineSessionResult>;
 }
 
-const makeSet = (reps = '', weight = ''): SessionSet => ({
+const makeSet = (reps = '', weight = '', durationSeconds = ''): SessionSet => ({
   id: crypto.randomUUID(),
   reps,
   weight,
+  durationSeconds,
 });
 
 /**
@@ -98,25 +113,55 @@ function targetRepsValue(reps?: string): string {
   return match ? match[0] : '';
 }
 
-/** Una serie cuenta si tiene reps > 0 y un peso numérico >= 0 (0 = peso corporal). */
+/** Segundos válidos de la serie, o `null` si no se mide en tiempo. */
+function segundosDe(s: SessionSet): number | null {
+  const n = Number.parseInt(s.durationSeconds ?? '', 10);
+  return Number.isFinite(n) && n > 0 && n <= 3600 ? n : null;
+}
+
+/** Repeticiones válidas de la serie, o `null` si no se miden. */
+function repsDe(s: SessionSet): number | null {
+  const n = Number(s.reps);
+  return s.reps.trim() && Number.isFinite(n) && n > 0 ? n : null;
+}
+
+/**
+ * Una serie cuenta si mide algo —repeticiones o segundos— y el peso es válido.
+ *
+ * Una plancha **sin lastre pesa 0 y vale**: exigirle un peso positivo dejaría
+ * fuera justo el caso normal. En cambio una serie de repeticiones sin peso sigue
+ * sin contar, que es como funcionaba antes.
+ */
 function isValidSet(s: SessionSet): boolean {
-  const reps = Number(s.reps);
+  const segundos = segundosDe(s);
+  const reps = repsDe(s);
+  if (reps == null && segundos == null) return false;
+
   const weight = Number(s.weight);
-  if (!s.reps.trim() || !Number.isFinite(reps) || reps <= 0) return false;
+  if (segundos != null && reps == null) {
+    // Sin peso escrito se entiende «sin lastre», no «serie inválida».
+    return !s.weight.trim() || (Number.isFinite(weight) && weight >= 0);
+  }
   if (!s.weight.trim() || !Number.isFinite(weight) || weight < 0) return false;
   return true;
 }
 
 function toOutboxSets(sets: SessionSet[], toKg: (w: number) => number): OutboxSet[] {
-  return sets.filter(isValidSet).map((s, i) => ({
-    set_num: i + 1,
-    reps: Number(s.reps),
-    weight: toKg(Number(s.weight)),
-    is_warmup: false,
-    notes: '',
-    rpe: '',
-    set_type: 'normal',
-  }));
+  return sets.filter(isValidSet).map((s, i) => {
+    const segundos = segundosDe(s);
+    const peso = s.weight.trim() ? toKg(Number(s.weight)) : 0;
+    return {
+      set_num: i + 1,
+      // `null`, no `0`: la BD distingue «no se mide así» de «hizo cero».
+      reps: repsDe(s),
+      weight: peso,
+      is_warmup: false,
+      notes: '',
+      rpe: '',
+      set_type: 'normal',
+      ...(segundos != null ? { duration_seconds: segundos } : {}),
+    };
+  });
 }
 
 const emptySession = {
@@ -144,17 +189,31 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
           day,
           startedAt: new Date().toISOString(),
           saving: false,
-          exercises: dayRoutine.exercises.map((ex) => ({
-            name: ex.name,
-            targetSets: ex.sets,
-            targetReps: ex.reps,
-            // Una fila por serie objetivo, ya con las repeticiones puestas: así
-            // registrar la rutina tal cual sale es solo escribir los pesos. Si
-            // hay auto-relleno, el peso de la última sesión ya viene escrito.
-            sets: Array.from({ length: Math.max(1, ex.sets ?? 1) }, () =>
-              makeSet(targetRepsValue(ex.reps), prefills?.[normalizeExerciseName(ex.name)] ?? ''),
-            ),
-          })),
+          exercises: dayRoutine.exercises.map((ex) => {
+            const modo = planModeOf(ex);
+            const duracion = planDurationOf(ex);
+            return {
+              name: ex.name,
+              targetSets: ex.sets,
+              targetReps: ex.reps,
+              ...(modo === 'time' ? { mode: 'time' as const } : {}),
+              ...(ex.perSide ? { perSide: true } : {}),
+              ...(duracion != null ? { targetDurationSeconds: duracion } : {}),
+              // Una fila por serie objetivo, ya con el objetivo puesto: así
+              // registrar la rutina tal cual sale es solo escribir los pesos. Si
+              // hay auto-relleno, el peso de la última sesión ya viene escrito.
+              // En modo tiempo lo que se precarga son los segundos del plan, no
+              // las repeticiones: `targetReps` puede traer un «30-45s» viejo
+              // escrito a mano y tomarlo por repeticiones sería inventarse 30.
+              sets: Array.from({ length: Math.max(1, ex.sets ?? 1) }, () =>
+                makeSet(
+                  modo === 'time' ? '' : targetRepsValue(ex.reps),
+                  prefills?.[normalizeExerciseName(ex.name)] ?? '',
+                  duracion != null ? String(duracion) : '',
+                ),
+              ),
+            };
+          }),
         });
       },
 
@@ -162,7 +221,13 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
         const exercises = get().exercises.map((ex, i) => {
           if (i !== exerciseIndex) return ex;
           const last = ex.sets.at(-1);
-          return { ...ex, sets: [...ex.sets, makeSet(last?.reps ?? '', last?.weight ?? '')] };
+          return {
+            ...ex,
+            sets: [
+              ...ex.sets,
+              makeSet(last?.reps ?? '', last?.weight ?? '', last?.durationSeconds ?? ''),
+            ],
+          };
         });
         set({ exercises });
       },

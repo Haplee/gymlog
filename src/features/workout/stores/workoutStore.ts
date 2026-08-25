@@ -14,8 +14,13 @@ import { toLocalDateKey } from '@shared/lib/dateKeys';
 
 const SetDataSchema = z.object({
   id: z.string().default(() => crypto.randomUUID()),
-  reps: z.string().min(1, 'Min 1 rep').max(4, 'Max 9999'),
+  // Vacío en una serie por tiempo. La validación de «tiene que medir algo» no
+  // puede vivir aquí campo a campo: es una regla entre los dos, y se comprueba
+  // en `esSerieValida` justo antes de guardar.
+  reps: z.string().max(4, 'Max 9999').optional().default(''),
   weight: z.string().min(1, 'Min 1 kg').max(6, 'Max 999999'),
+  /** Segundos aguantados, como texto. Vacío en una serie de repeticiones. */
+  durationSeconds: z.string().max(4).optional().default(''),
   isWarmup: z.boolean().default(false),
   notes: z.string().max(500).optional().default(''),
   // RPE 1-10 como string ('' = sin valor). Validado a SMALLINT en la RPC.
@@ -65,16 +70,36 @@ interface WorkoutState extends PersistedWorkout {
   clearPersistedState: () => void;
 }
 
-const makeSet = (reps = '', weight = '', isWarmup = false, notes = '', rpe = ''): SetData => ({
+const makeSet = (
+  reps = '',
+  weight = '',
+  isWarmup = false,
+  notes = '',
+  rpe = '',
+  durationSeconds = '',
+): SetData => ({
   id: crypto.randomUUID(),
   reps,
   weight,
+  durationSeconds,
   isWarmup,
   notes,
   rpe,
   setType: 'normal',
   completed: false,
 });
+
+/** Segundos válidos de la serie, o `null` si no se mide en tiempo. */
+export function segundosDeSerie(s: { durationSeconds?: string }): number | null {
+  const n = Number.parseInt(s.durationSeconds ?? '', 10);
+  return Number.isFinite(n) && n > 0 && n <= 3600 ? n : null;
+}
+
+/** Repeticiones válidas de la serie, o `null` si no se mide en repeticiones. */
+export function repsDeSerie(s: { reps?: string }): number | null {
+  const n = Number(s.reps);
+  return s.reps?.trim() && Number.isFinite(n) && n > 0 ? n : null;
+}
 
 export const useWorkoutStore = create<WorkoutState>()(
   persist(
@@ -164,10 +189,19 @@ export const useWorkoutStore = create<WorkoutState>()(
           .filter((s) => {
             const result = SetDataSchema.safeParse(s);
             if (!result.success) return false;
-            const reps = Number(s.reps);
+
+            // Una serie tiene que medir algo: repeticiones o segundos. Es la
+            // misma regla que el `CHECK workout_sets_measured` de la BD, puesta
+            // aquí para que el usuario vea un mensaje en vez de un error de
+            // Postgres.
+            const segundos = segundosDeSerie(s);
+            const reps = repsDeSerie(s);
+            if (reps == null && segundos == null) return false;
+
             const weight = Number(s.weight);
-            if (!Number.isFinite(reps) || reps <= 0) return false;
             if (!Number.isFinite(weight) || weight < 0) return false;
+            // Una plancha sin lastre pesa 0 y sigue siendo una serie válida.
+            if (segundos != null && reps == null) return true;
             // En modo peso corporal el kg introducido es lastre y puede ser 0.
             if (bodyweightMode) return true;
             // Allow weight=0 only on warmup sets (e.g. bodyweight warmup)
@@ -194,15 +228,24 @@ export const useWorkoutStore = create<WorkoutState>()(
           return bodyweightMode ? (bodyWeightKg ?? 0) + entered : Number(s.weight);
         };
 
-        const setsPayload = validSets.map((s, i) => ({
-          set_num: i + 1,
-          reps: Number(s.reps),
-          weight: effectiveWeight(s),
-          is_warmup: !!s.isWarmup,
-          notes: s.notes?.trim() || '',
-          rpe: s.rpe?.trim() || '',
-          set_type: s.setType || 'normal',
-        }));
+        const setsPayload = validSets.map((s, i) => {
+          const segundos = segundosDeSerie(s);
+          const reps = repsDeSerie(s);
+          return {
+            set_num: i + 1,
+            // `null`, no `0`: es lo que separa «no se mide así» de «hizo cero».
+            reps,
+            weight: effectiveWeight(s),
+            is_warmup: !!s.isWarmup,
+            notes: s.notes?.trim() || '',
+            rpe: s.rpe?.trim() || '',
+            set_type: s.setType || 'normal',
+            // Solo viaja si de verdad hay duración: la RPC ignora lo que no
+            // parezca un entero positivo, pero mandar `undefined` es más claro
+            // que mandar un campo vacío en cada serie de repeticiones.
+            ...(segundos != null ? { duration_seconds: segundos } : {}),
+          };
+        });
 
         const resetState = () =>
           set({

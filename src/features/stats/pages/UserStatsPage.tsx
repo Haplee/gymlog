@@ -141,9 +141,16 @@ export function UserStatsPage() {
   const musclesMap = useExerciseMusclesMap();
   // Volúmenes en la unidad del usuario (kg→t, lb→k lb), no toneladas fijas.
   const { formatVol } = useWeight();
+  // Aquí van TODAS las series, no solo las de repeticiones. La recuperación no
+  // es una medida de volumen sino de recencia —cuántos días hace que se tocó ese
+  // músculo— y una plancha trabaja el core igual que un crunch. Filtrarla con
+  // `strengthSets` dejaba a la app diciendo que el core llevaba una semana
+  // descansando el día después de una sesión entera de planchas. El aviso de
+  // «hoy toca X» (`useFatigueSuggestion`) ya usaba las series sin filtrar: esto
+  // hace que las dos digan lo mismo.
   const muscleRecovery = useMemo(
-    () => analyzeMuscleRecovery(strengthSets, musclesMap),
-    [strengthSets, musclesMap],
+    () => analyzeMuscleRecovery(recentSets, musclesMap),
+    [recentSets, musclesMap],
   );
   const periodComparison = useMemo(() => comparePeriods(strengthSets, 30), [strengthSets]);
 

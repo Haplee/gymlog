@@ -9,6 +9,8 @@ import { weightToInput } from '@shared/lib/weight';
 import type { Exercise } from '@shared/lib/types';
 import type { LibraryExercise } from '@shared/api/queries';
 import type { SessionExercise } from '../stores/routineSessionStore';
+import { WorkTimer } from '@features/workout/components/WorkTimer';
+import { formatSegundos } from '@features/routine/utils/planTarget';
 import {
   AlertTriangle,
   BookOpen,
@@ -38,6 +40,11 @@ interface Props {
    * el botón «Completar» pueda rellenarla sin que el usuario teclee nada.
    */
   onAdvice: (exerciseName: string, advice: ExerciseAdvice | null) => void;
+  /**
+   * Segundos aguantados en una serie por tiempo, según el cronómetro. Solo se
+   * pasa para los ejercicios en modo tiempo.
+   */
+  onDuration?: (exerciseName: string, seconds: number) => void;
 }
 
 /**
@@ -56,9 +63,11 @@ export function SessionExerciseCard({
   libraryExercise,
   weightUnit,
   onAdvice,
+  onDuration,
 }: Props) {
   const { t } = useTranslation();
   const [showForm, setShowForm] = useState(false);
+  const esPorTiempo = exercise.mode === 'time';
 
   // El objetivo de la sesión manda sobre la búsqueda por nombre: aquí ya se
   // sabe de qué día viene el ejercicio.
@@ -75,9 +84,12 @@ export function SessionExerciseCard({
   const AdviceIcon = advice ? ACTION_ICON[advice.suggestion.action] : null;
 
   useEffect(() => {
+    // Un ejercicio por tiempo nunca reporta consejo: si lo hiciera, el peso
+    // recomendado se escribiría en las series de una plancha.
+    if (esPorTiempo) return;
     onAdvice(exercise.name, advice);
     return () => onAdvice(exercise.name, null);
-  }, [advice, exercise.name, onAdvice]);
+  }, [advice, exercise.name, onAdvice, esPorTiempo]);
 
   return (
     <div className="rounded-card p-3 bg-surface-2 border border-line">
@@ -104,12 +116,27 @@ export function SessionExerciseCard({
           <span className="flex-shrink-0 font-display text-lg font-bold px-2.5 py-1 rounded-pill bg-accent/10 text-accent tabular">
             {exercise.targetSets}
             <span className="mx-1 text-fg-subtle">×</span>
-            {exercise.targetReps}
+            {/* En modo tiempo el objetivo son segundos. Pintar `targetReps`
+                aquí diría «45 repeticiones de plancha». */}
+            {esPorTiempo
+              ? exercise.targetDurationSeconds != null
+                ? formatSegundos(exercise.targetDurationSeconds)
+                : t('workout.mode_time')
+              : exercise.targetReps}
           </span>
         )}
       </div>
 
-      {advice ? (
+      {esPorTiempo ? (
+        // Un ejercicio por tiempo no recibe consejo de carga: el motor solo mira
+        // series de repeticiones. Lo que necesita aquí es el cronómetro.
+        <div className="mt-3">
+          <WorkTimer
+            targetSeconds={exercise.targetDurationSeconds ?? null}
+            onAccept={(seconds) => onDuration?.(exercise.name, seconds)}
+          />
+        </div>
+      ) : advice ? (
         <div className="mt-3 rounded-card border border-accent/25 bg-accent/5 p-3">
           <div className="label-caps text-accent">{t('routine.session_recommended_weight')}</div>
           <div className="mt-0.5 flex items-baseline gap-1.5">

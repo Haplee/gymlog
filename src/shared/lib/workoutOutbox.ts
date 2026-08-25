@@ -22,12 +22,21 @@ function getDb(): Promise<IDBPDatabase> {
 
 export interface OutboxSet {
   set_num: number;
-  reps: number;
+  /**
+   * `null` en una serie por tiempo: una plancha no tiene repeticiones.
+   *
+   * No es `0`. La RPC y el `CHECK workout_sets_measured` distinguen las dos
+   * cosas, y un cero entraría en las medias como «hizo cero» en vez de quedar
+   * fuera. Ver `shared/lib/setShape.ts`.
+   */
+  reps: number | null;
   weight: number;
   is_warmup: boolean;
   notes: string;
   rpe: string;
   set_type: string;
+  /** Segundos aguantados. Solo en las series por tiempo. */
+  duration_seconds?: number;
 }
 
 const MAX_RETRIES = 5;

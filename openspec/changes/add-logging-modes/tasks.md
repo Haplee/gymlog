@@ -210,19 +210,65 @@ ajenos) · **719 tests en 65 ficheros**, 31 más que antes de la fase.
 
 ## Fase 3 — Registrar por tiempo
 
-- [ ] 3.1 `workTimerStore`: store propio (ver `design.md` §6), sobre
-      `useVisibilityPausedInterval`.
-- [ ] 3.2 UI de la serie por tiempo en `SessionExerciseCard` y `WorkoutSetList`:
-      cronómetro en vez de campo de reps, con el peso opcional.
-- [ ] 3.3 Guardado: `duration_seconds` poblado, `reps` según lo aprobado en §1.
-- [ ] 3.4 Historial: pintar «45 s» donde hoy iría «10 reps». Comprobar a 390px y
-      en **los dos temas**.
-- [ ] 3.5 Blindar la analítica (ver `design.md` §4): volumen, 1RM,
-      autorregulación y PRs. **Un test por cada una** de las cuatro reglas.
-- [ ] 3.6 Resolver el punto abierto de `design.md` §4.2: `calcular1RM`
-      devuelve **0** ante reps ausente, no `null`, así que una serie por tiempo
-      no queda excluida sino contada como cero. Decidir entre cambiar el valor
-      de retorno o filtrar en cada llamante, y dejarlo escrito aquí.
+- [x] 3.1 `workTimerStore` con 10 tests. Cuenta **hacia arriba** y sin alarma:
+      en una plancha lo que importa es cuánto se aguantó, y un aviso a los 45 s
+      invita a soltar justo cuando quedaba algo. Al rehidratar **descarta el
+      tramo en vuelo**: el de descanso sí puede recuperar reloj de pared, este
+      no —la app pudo estar cerrada horas y nadie sostiene una plancha desde
+      ayer—, así que sumar ese hueco sería un récord inventado.
+- [x] 3.2 `WorkTimer` compartido, montado en `SessionExerciseCard` (sesión de
+      rutina) y en `WorkoutSetList` (entreno libre, con selector de modo). En
+      modo tiempo el campo de reps se sustituye por el de segundos, **y escribir
+      en uno borra el otro**: dejar los dos haría que `isRepSet` contase la
+      plancha como serie de fuerza.
+- [x] 3.3 Guardado con `reps: null` (nunca `0`) y `duration_seconds`, en los dos
+      caminos —entreno libre y sesión de rutina— y en el outbox. Una plancha sin
+      lastre pesa 0 y es válida; exigirle peso positivo dejaba fuera el caso
+      normal. 5 tests sobre la carga real que sale hacia la RPC.
+- [x] 3.4 Historial: `groupSetsByExercise` mantiene los dos montones separados y
+      resume «2×45-60 s». Aquí estaba el aviso que la fase 0 dejó escrito en el
+      código apuntando a esta tarea. Un ejercicio con las dos formas las muestra
+      aparte: metidas en el mismo rango darían «8-45», que no es ni 8 segundos ni
+      45 repeticiones.
+- [x] 3.5 Las cuatro reglas de `design.md` §4, con un test cada una, en
+      `stats/utils/__tests__/timedSetsGuards.test.ts`.
+- [x] 3.6 **Decisión: se filtra en el llamante; `calcular1RM` sigue devolviendo
+      un número.** Ver abajo.
+
+### Lo que se encontró al blindar la analítica
+
+**El daño no era un NaN.** El plan daba por hecho que `peso × reps` con `reps`
+nula reventaría el volumen. En JavaScript `20 * null` es **0**, no NaN: la suma
+sobrevive intacta y no se rompe nada a la vista. Lo que se rompe es todo lo que
+divide entre el número de series, porque la plancha entra como una serie que hizo
+cero trabajo. Es exactamente lo que `setShape.ts` explicaba al negarse a usar
+`?? 0`, y el test lo deja escrito con el número: 1000/2 = 500 en vez de 1000.
+
+**La regla 4 va al revés que las otras tres.** La recuperación muscular **sí**
+cuenta las series por tiempo. No es una métrica de volumen sino de recencia
+—cuántos días hace que se tocó ese músculo— y una plancha trabaja el core igual
+que un crunch. Al comprobarlo apareció un hueco real de la fase 0:
+`StatsPage` y `UserStatsPage` le pasaban `strengthSets`, ya filtrado, mientras
+que el aviso de «hoy toca X» (`useFatigueSuggestion`) usaba las series sin
+filtrar. Las dos pantallas habrían dicho cosas distintas sobre el mismo músculo.
+Corregido: ahora las dos leen sin filtrar. Cierra también el punto abierto que
+había en este documento sobre si la recuperación debía contar las series por
+tiempo.
+
+### 3.6 — la decisión sobre `calcular1RM`
+
+**Se filtra en el llamante. `calcular1RM` no cambia de firma.**
+
+No es la opción cómoda, es la que dicen los datos: se revisaron los 8 sitios que
+la llaman y **todos están ya protegidos**. `StatsPage` y `UserStatsPage` pasan
+por `onlyRepSets` desde la fase 0; `autoregulation.isWorkingSet` exige
+`Number.isFinite(reps) && reps > 0`, y `Number.isFinite(null)` es `false`;
+`WorkoutPage` descarta con `r <= 0` antes de llamar. Cambiar el retorno a `null`
+obligaría a 34 sitios a tratar un caso que no puede llegarles, y volvería
+opcional (`?? 0`, `!`) justo la decisión que la fase 0 hizo obligatoria.
+
+Queda un test que fija el comportamiento —`calcular1RM(20, null)` es `0`— para
+que si algún día alguien lo cambia, sea a propósito.
 
 ## Fase 4 — Por lado
 

@@ -50,6 +50,32 @@ export function RoutineSession({ userId, exercises }: Props) {
 
   const [confirmDiscard, setConfirmDiscard] = useState(false);
 
+  /**
+   * El cronómetro entrega los segundos de **una** serie, y se escriben en la
+   * primera que aún no tenga tiempo propio del usuario.
+   *
+   * Se recorren en orden en vez de rellenar todas de golpe porque las series de
+   * una plancha no duran lo mismo: la cuarta siempre cae respecto a la primera,
+   * y eso es justo lo que interesa registrar.
+   */
+  const registerDuration = useCallback((name: string, seconds: number) => {
+    const store = useRoutineSessionStore.getState();
+    const exIndex = store.exercises.findIndex((e) => normalizeName(e.name) === normalizeName(name));
+    if (exIndex < 0) return;
+
+    const sets = store.exercises[exIndex].sets;
+    const objetivo = store.exercises[exIndex].targetDurationSeconds;
+    // «Aún sin tiempo propio» = vacía, o con el valor precargado del plan.
+    const libre = sets.findIndex(
+      (s) =>
+        !s.durationSeconds.trim() || (objetivo != null && s.durationSeconds === String(objetivo)),
+    );
+    const destino = libre >= 0 ? libre : sets.length - 1;
+
+    store.updateSet(exIndex, destino, { durationSeconds: String(seconds) });
+    void impact(ImpactStyle.Light);
+  }, []);
+
   // Recomendación de cada ejercicio, reportada por su tarjeta: al pulsar
   // «Completar» se rellena el peso en todas las series sin que el usuario
   // teclee nada. El ref evita que el flujo dependa del estado de React.
@@ -89,13 +115,24 @@ export function RoutineSession({ userId, exercises }: Props) {
     // ejercicios que tienen recomendación. Los que no la tienen (sin historial)
     // se muestran informativos pero se quedan fuera del registro.
     const withWeights = sessionExercises.map((ex) => {
+      // Un ejercicio por tiempo no recibe peso recomendado: el motor de
+      // autorregulación solo mira series de repeticiones, así que su consejo
+      // aquí sería el de otro ejercicio o ninguno. La plancha se registra con
+      // sus segundos y, si acaso, el lastre que escriba el usuario.
+      if (ex.mode === 'time') return ex;
       const advice = adviceByName.current.get(normalizeName(ex.name));
       if (!advice) return ex;
       const weight = weightToInput(advice.suggestion.weight, weightUnit);
       return { ...ex, sets: ex.sets.map((s) => ({ ...s, weight })) };
     });
 
-    if (withWeights.every((ex) => ex.sets.every((s) => !s.weight.trim()))) {
+    // Hay algo que registrar si alguna serie tiene peso **o** duración. Antes
+    // solo se miraba el peso, y una sesión de solo planchas —que no lleva
+    // ninguno— se rechazaba diciendo que no había recomendaciones.
+    const hayAlgoQueRegistrar = withWeights.some((ex) =>
+      ex.sets.some((s) => s.weight.trim() || s.durationSeconds.trim()),
+    );
+    if (!hayAlgoQueRegistrar) {
       void notificationHaptic(NotificationType.Error);
       toast.error(t('routine.session_no_advice'));
       return;
@@ -183,6 +220,7 @@ export function RoutineSession({ userId, exercises }: Props) {
             libraryExercise={libraryByName.get(normalizeName(ex.name))}
             weightUnit={weightUnit}
             onAdvice={registerAdvice}
+            onDuration={registerDuration}
           />
         ))}
       </div>
