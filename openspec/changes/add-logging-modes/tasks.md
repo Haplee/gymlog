@@ -8,7 +8,7 @@
 
 - [x] 0.1 `src/shared/lib/setShape.ts`: acceso único a la forma de una serie.
       **La API cambió respecto a lo planificado.** En vez de `repsForVolume(s)
-    → number` (un `?? 0` disfrazado), la pieza central es un **predicado de
+  → number` (un `?? 0` disfrazado), la pieza central es un **predicado de
       tipo**: `isRepSet(s): s is T & { reps: number }` y `onlyRepSets(sets)`.
       Motivo: un cero es un dato —una serie de cero repeticiones que entra en el
       recuento y en las medias—, mientras que filtrar con narrowing obliga al
@@ -66,20 +66,71 @@ De paso, los tres cálculos de volumen duplicados en `HistoryPage` pasan a usar 
   que una plancha no contaría como abdominales entrenados. **Es discutible**: sí
   entrena, aunque no aporte volumen. Decidir en fase 3.
 
-## Fase 1 — Esquema (requiere aprobación de `design.md` §1)
+## Fase 1 — Esquema (opción A aprobada) — **escrita y probada, SIN APLICAR**
 
-- [ ] 1.1 Migración idempotente `supabase/migrations/<ts>_timed_sets.sql`:
-      relajar `reps` según la opción aprobada, ajustar el `CHECK`, y añadir un
-      `CHECK` que impida una serie sin reps **y** sin duración (una serie tiene
-      que medir algo).
-- [ ] 1.2 `save_workout_with_sets`: aceptar y escribir `duration_seconds`.
-      Mantener la firma compatible — el parámetro nuevo con `DEFAULT NULL`, para
-      que un cliente viejo (APK sin actualizar) siga guardando.
-- [ ] 1.3 `get_workouts_with_sets`: incluir `duration_seconds` en el JSON.
-- [ ] 1.4 `npm run gen:types` y ajustar lo que el `type-check` señale.
-- [ ] 1.5 `RemoteWorkoutSetSchema` (Zod) al día con la forma nueva.
-- [ ] 1.6 Probar la migración **hacia adelante y hacia atrás** en una rama de
-      Supabase antes de tocar producción.
+- [x] 1.1 `supabase/migrations/20260825143244_timed_sets.sql`: `reps` pasa a
+      admitir NULL, `CHECK` reescrito, y `workout_sets_measured` nuevo para que
+      una serie sin reps **y** sin duración no pueda entrar.
+- [x] 1.2 `save_workout_with_sets` escribe `duration_seconds`. **La firma no
+      cambia**: el dato viaja dentro del JSON de series que ya recibía, así que
+      un APK sin actualizar sigue guardando igual. Descarta las filas que no
+      miden nada en vez de tumbar el entreno entero contra el CHECK.
+- [x] 1.3 `get_workouts_with_sets` devuelve `duration_seconds`.
+- [x] **1.4bis (no estaba en el plan) — el trigger `process_new_set`.** Ver
+      abajo: es lo que habría roto el guardado.
+- [ ] 1.4 `npm run gen:types` — **bloqueado**: necesita la migración aplicada.
+- [x] 1.5 `RemoteWorkoutSetSchema` acepta `reps` nulo y `duration_seconds`, con
+      4 tests nuevos. **Tenía que ir antes que la migración**: con
+      `reps: z.number()`, la primera serie por tiempo se habría descartado al
+      validar y el usuario vería su plancha desaparecer sin un solo error.
+- [x] 1.6 Probada en un **Postgres 17 desechable** (Docker en WSL) sobre una
+      reproducción del esquema vigente. Ver resultados abajo.
+
+### Lo que no estaba en el plan y lo habría roto
+
+`process_new_set` corre en cada INSERT de `workout_sets` y da por hecho que hay
+repeticiones. Con `reps` NULL:
+
+1. **`personal_records.reps` es NOT NULL** y el trigger intenta insertar un PR
+   con `NEW.reps`. Guardar una plancha **fallaba entero**, no solo el récord.
+2. `total_volume + (NEW.weight * NEW.reps)` da NULL en cuanto uno lo es: una
+   sola serie por tiempo dejaba el volumen del entreno en NULL.
+3. `IF NEW.reps >= 1 ...` con NULL da UNKNOWN y caía en el ELSE, guardando
+   `one_rm = NEW.weight`: un «récord» inventado para una plancha lastrada.
+
+El otro trigger vivo, `sync_workout_volume`, **no hace falta tocarlo**: usa
+`SUM(weight * reps)`, y SUM ignora los NULL en vez de propagarlos. Comprobado
+sobre la definición viva en producción, no sobre las migraciones — son los dos
+únicos triggers activos de la tabla.
+
+### Verificación en Postgres 17 local
+
+Reproducción del esquema actual + migración. **El fallo se reprodujo primero**:
+
+```
+ERROR: null value in column "reps" of relation "personal_records"
+       violates not-null constraint
+```
+
+Con la migración completa, 8 comprobaciones en verde:
+
+| #   | Comprobación                               | Resultado                             |
+| --- | ------------------------------------------ | ------------------------------------- |
+| 1   | Serie de repeticiones igual que antes      | volumen 500, PR creado                |
+| 2   | Serie por tiempo se guarda                 | sin error                             |
+| 3   | El volumen **no** se va a NULL             | sigue en 500                          |
+| 4   | La plancha no crea récord por repeticiones | 1 récord, no 2                        |
+| 5   | La plancha no tiene 1RM inventado          | NULL                                  |
+| 6   | Serie sin reps y sin duración              | rechazada por `workout_sets_measured` |
+| 7   | Reps fuera de rango                        | siguen rechazadas                     |
+| 8   | Idempotencia: 3 pasadas seguidas           | sin errores, datos intactos           |
+
+### Pendiente: aplicarla
+
+**No se ha tocado producción.** Queda decidir cómo (ver el resumen al usuario).
+La vuelta atrás solo es limpia **mientras no haya ninguna serie por tiempo**:
+después, `SET NOT NULL` fallaría hasta borrarlas. Es inherente a la opción A y
+conviene tenerlo presente, no es un descuido.
 
 ## Fase 2 — Modo en el plan de la rutina (sin migración)
 
