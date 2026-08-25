@@ -342,12 +342,44 @@ al leer rompería exactamente eso.
       ficheros** · `build` con PWA en verde (118 entradas precacheadas).
 - [x] V.2 `audit:contrast` — 104 comprobaciones, 24 acentos × 2 temas, todo en
       verde. Peor caso de texto 4,790:1 en oscuro y 4,824:1 en claro.
-- [ ] V.3 **Pendiente: no se puede hacer sin el dispositivo.** `adb devices` no
-      devuelve ninguno, así que la plancha con cronómetro, el remo por lado y la
-      superserie no se han recorrido en la APK. Es la comprobación que más
-      cuesta suplir: el cronómetro depende de que Android dispare
-      `appStateChange` al irse a segundo plano, y eso solo se ve ahí.
-      Lo más cerca que se ha llegado es la suite de Playwright (ver abajo).
+- [x] V.3 Recorrido entero en la **APK sobre el emulador** (`emulator-5554`,
+      `com.franvi.gymlog.fitbody`). **Encontró cuatro fallos que ni los 776 tests
+      ni Playwright habían visto**, y ese es exactamente el motivo de que esta
+      comprobación estuviera en la lista. Ver abajo.
+
+### Lo que solo se vio en la APK
+
+**1. El cronómetro sí sobrevive al segundo plano.** Arrancado, 5 s, `HOME`
+durante 12 s, vuelta: marcó **0:21**, ni un segundo perdido. Es la propiedad que
+no se puede comprobar en el navegador y la razón de derivar el tiempo de marcas
+absolutas en vez de un contador.
+
+**2. El modo lo tenía que mandar el dato, no la pantalla.** `loggingMode` vive en
+el padre y vuelve a `reps` al reabrir la app. Con una serie de 48 s ya guardada,
+la pantalla mostraba «REPS 0» encima de un dato correcto: la lectura mentía. Se
+deriva ahora de la propia serie, y cambiar de modo limpia el campo del otro para
+que nunca se contradigan. 5 tests.
+
+**3. La validación de la pantalla se había quedado atrás.** `WorkoutPage` tenía
+su propio `setSchema` exigiendo `reps > 0`, y descartaba la fila como «en blanco»
+antes de validarla. Guardar una plancha respondía «añade al menos una serie
+válida» sobre una serie que estaba bien. El store ya lo admitía; la pantalla no.
+
+**4. Y el esquema del store exigía peso.** Con `weight: min(1)`, una plancha sin
+lastre —que no lleva peso escrito— se descartaba. No afloja nada quitarlo: una
+serie de repeticiones sin peso sigue cayendo en la regla `weight === 0`.
+
+**5. La superserie se creaba a medias.** El editor solo devuelve la fila que se
+edita, así que el `supersetId` se escribía en una sola de las dos. Como
+`groupPlanExercises` exige que coincidan, el grupo no se pintaba en ningún sitio.
+Ahora el id se propaga también a la fila de arriba.
+
+Con los cinco arreglos: la plancha se guarda y llega a la base de datos con
+`reps NULL`, `duration_seconds 48`, `total_volume 0` (**no NULL**: el trigger
+blindado hizo su trabajo) y **sin inventar ningún récord**. El historial la pinta
+«1×48 s · 78.5 kg» y los entrenos anteriores se leen igual que siempre. La
+etiqueta SUPERSERIE aparece en la fila encadenada.
+
 - [x] V.4 Comprobado **contra la base de datos real**, no solo con fixtures: las
       6 rutinas guardadas son todas anteriores al cambio —ninguna trae `mode`,
       `perSide` ni `supersetId`— y las 1447 series son todas de repeticiones,

@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { useState, useCallback, useRef, useMemo } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { m, AnimatePresence } from 'framer-motion';
 import { useExerciseSearch, trackRecentExercise } from '@shared/hooks/useExerciseSearch';
@@ -232,10 +232,62 @@ export function ExerciseSelector({
     return result;
   }, [exercises, recentSet, activeMuscleGroup]);
 
+  const isOpen = isFocused || editingMuscleId !== null || isCreating || defaultOpen;
+
+  /**
+   * Alto máximo del desplegable, medido contra la pantalla de verdad.
+   *
+   * Cuando cuelga del buscador va en `position: absolute`, así que **no empuja
+   * al documento**: con un tope fijo de 60rem (960 px, más que cualquier móvil)
+   * la lista se salía por debajo del viewport, el `overflow-y-auto` interno
+   * nunca llegaba a activarse y no había forma de llegar a los últimos
+   * ejercicios — ni desplazando la lista ni la página.
+   *
+   * Se mide desde el borde inferior del buscador hasta el final del viewport
+   * **visual** (`visualViewport`, no `innerHeight`): en Android el teclado no
+   * encoge la ventana, la tapa, y sin esto la lista seguía terminando debajo del
+   * teclado. Se descuenta además la barra inferior, que va fija encima de todo.
+   */
+  const [maxHeight, setMaxHeight] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!isOpen || defaultOpen) return;
+
+    const medir = () => {
+      const input = inputRef.current;
+      if (!input) return;
+      const vv = window.visualViewport;
+      const alto = vv?.height ?? window.innerHeight;
+      const desplazamiento = vv?.offsetTop ?? 0;
+      const nav =
+        Number.parseFloat(
+          getComputedStyle(document.documentElement).getPropertyValue('--bottom-nav-height'),
+        ) || 0;
+      // 12 px de aire para que la última fila no quede pegada al borde.
+      const disponible = alto + desplazamiento - input.getBoundingClientRect().bottom - nav - 12;
+      setMaxHeight(Math.max(160, Math.round(disponible)));
+    };
+
+    // Tras el layout, no en el cuerpo del efecto: medir antes de que el
+    // navegador coloque el desplegable da la posición del render anterior.
+    const raf = requestAnimationFrame(medir);
+    window.addEventListener('resize', medir);
+    window.visualViewport?.addEventListener('resize', medir);
+    window.visualViewport?.addEventListener('scroll', medir);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', medir);
+      window.visualViewport?.removeEventListener('resize', medir);
+      window.visualViewport?.removeEventListener('scroll', medir);
+    };
+  }, [isOpen, defaultOpen]);
+
   const dropdownStyle: React.CSSProperties = {
     backgroundColor: 'var(--bg-surface-3)',
     border: '1px solid var(--border-default)',
     boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
+    ...(!defaultOpen && maxHeight != null ? { maxHeight } : {}),
   };
 
   const groupHeaderStyle: React.CSSProperties = {
@@ -244,8 +296,6 @@ export function ExerciseSelector({
     position: 'sticky',
     top: 0,
   };
-
-  const isOpen = isFocused || editingMuscleId !== null || isCreating || defaultOpen;
 
   return (
     <div className="relative">
@@ -301,7 +351,7 @@ export function ExerciseSelector({
             className={
               defaultOpen
                 ? 'relative z-50 mt-1.5 max-h-[calc(100dvh-8rem)] overflow-y-auto rounded-card'
-                : 'absolute z-50 top-full left-0 right-0 mt-1.5 max-h-[60rem] overflow-y-auto rounded-card'
+                : 'absolute z-50 top-full left-0 right-0 mt-1.5 overflow-y-auto overscroll-contain rounded-card'
             }
             style={dropdownStyle}
             onMouseDown={(e) => {

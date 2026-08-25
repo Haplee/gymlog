@@ -214,6 +214,25 @@ export const WorkoutSetList = memo(function WorkoutSetList({
 
   const shownWeight = localWeight ?? displayWeight(active.weight, convert);
 
+  /**
+   * El modo que se pinta **manda el dato, no el estado de la pantalla**.
+   *
+   * `loggingMode` vive en el padre y vuelve a `reps` al cambiar de ejercicio o al
+   * reabrir la app. Eso está bien para una serie en blanco, pero con una serie ya
+   * medida en segundos hacía que la app dijera «REPS 0» encima de un dato de 48
+   * segundos que seguía guardado: el dato correcto y la lectura mintiendo.
+   * Se vio en la APK, donde reabrir la app a mitad de entreno es lo normal.
+   *
+   * Con la serie vacía manda lo que haya elegido el usuario, que es lo único que
+   * hay para decidir.
+   */
+  const modo: 'reps' | 'time' =
+    Number(active.durationSeconds) > 0 && !active.reps
+      ? 'time'
+      : active.reps
+        ? 'reps'
+        : loggingMode;
+
   // Recordatorio efímero del valor de la serie anterior: solo aparece cuando la
   // fila activa está vacía (recién abierta o tras borrar lo heredado).
   const prev = activeIndex > 0 ? sets[activeIndex - 1] : null;
@@ -244,8 +263,16 @@ export const WorkoutSetList = memo(function WorkoutSetList({
       <div className="mt-3">
         <SegmentedControl
           ariaLabel={t('workout.mode_time')}
-          value={loggingMode}
-          onChange={onLoggingModeChange}
+          value={modo}
+          onChange={(siguiente) => {
+            onLoggingModeChange(siguiente);
+            // Se limpia el dato del modo que se abandona: si no, la serie
+            // guardaría reps y segundos a la vez y `setShape.isRepSet` la
+            // contaría como serie de fuerza — una plancha entrando en el volumen.
+            if (siguiente === 'time') updateSet(activeIndex, { reps: '' });
+            else updateSet(activeIndex, { durationSeconds: '' });
+            if (error) onClearError(activeIndex);
+          }}
           options={[
             { value: 'reps', label: t('workout.mode_reps') },
             { value: 'time', label: t('workout.mode_time') },
@@ -302,11 +329,11 @@ export const WorkoutSetList = memo(function WorkoutSetList({
         <div className="flex-1 min-w-0">
           <label
             className="label-caps block text-fg-subtle"
-            htmlFor={loggingMode === 'time' ? 'active-set-duration' : 'active-set-reps'}
+            htmlFor={modo === 'time' ? 'active-set-duration' : 'active-set-reps'}
           >
-            {loggingMode === 'time' ? t('workout.seconds') : t('workout.reps')}
+            {modo === 'time' ? t('workout.seconds') : t('workout.reps')}
           </label>
-          {loggingMode === 'time' ? (
+          {modo === 'time' ? (
             <input
               id="active-set-duration"
               type="text"
@@ -374,7 +401,7 @@ export const WorkoutSetList = memo(function WorkoutSetList({
       {error && <div className="mt-2 text-xs text-error">{error}</div>}
       {previousHint && <div className="mt-1.5 text-xs text-fg-muted">{previousHint}</div>}
 
-      {loggingMode === 'time' && (
+      {modo === 'time' && (
         // El cronómetro escribe en el campo de segundos, no guarda por su
         // cuenta: el usuario sigue pudiendo corregir el número antes de
         // confirmar la serie, que es lo que pasa cuando el móvil se queda

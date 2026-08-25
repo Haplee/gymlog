@@ -265,3 +265,60 @@ describe('WorkoutSetList', () => {
     expect(screen.queryByText('workout.previous_set: 100 kg × 8')).not.toBeInTheDocument();
   });
 });
+
+describe('WorkoutSetList — el modo lo manda el dato', () => {
+  afterEach(cleanup);
+
+  it('una serie con segundos se lee en modo tiempo aunque el padre diga reps', () => {
+    // Es lo que pasa al reabrir la app a mitad de entreno: `loggingMode` vuelve
+    // a 'reps' pero la serie guardada tiene 48 segundos. Antes se pintaba
+    // «REPS 0» encima de un dato correcto — la lectura mentía.
+    setup({
+      sets: [{ id: 'a', reps: '', weight: '0', durationSeconds: '48' }],
+      loggingMode: 'reps',
+    });
+
+    expect(screen.getByLabelText('workout.seconds 1')).toHaveValue('48');
+    expect(screen.queryByLabelText('workout.reps 1')).not.toBeInTheDocument();
+  });
+
+  it('una serie con reps se lee en modo reps aunque el padre diga tiempo', () => {
+    setup({
+      sets: [{ id: 'a', reps: '10', weight: '100' }],
+      loggingMode: 'time',
+    });
+
+    expect(repsInput()).toHaveValue('10');
+  });
+
+  it('una serie vacía sigue lo que eligió el usuario', () => {
+    setup({ sets: [{ id: 'a', reps: '', weight: '' }], loggingMode: 'time' });
+    expect(screen.getByLabelText('workout.seconds 1')).toBeInTheDocument();
+  });
+
+  it('cambiar a tiempo borra las reps: una serie no puede medir las dos cosas', async () => {
+    const user = userEvent.setup();
+    const { updateSet } = setup({
+      sets: [{ id: 'a', reps: '10', weight: '100' }],
+      loggingMode: 'reps',
+    });
+
+    await user.click(screen.getByRole('radio', { name: 'workout.mode_time' }));
+
+    // Con reps Y segundos, `setShape.isRepSet` la contaría como serie de fuerza
+    // y la plancha entraría en el volumen.
+    expect(updateSet).toHaveBeenCalledWith(0, { reps: '' });
+  });
+
+  it('cambiar a reps borra los segundos', async () => {
+    const user = userEvent.setup();
+    const { updateSet } = setup({
+      sets: [{ id: 'a', reps: '', weight: '0', durationSeconds: '48' }],
+      loggingMode: 'time',
+    });
+
+    await user.click(screen.getByRole('radio', { name: 'workout.mode_reps' }));
+
+    expect(updateSet).toHaveBeenCalledWith(0, { durationSeconds: '' });
+  });
+});

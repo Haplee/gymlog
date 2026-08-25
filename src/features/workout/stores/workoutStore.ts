@@ -18,7 +18,12 @@ const SetDataSchema = z.object({
   // puede vivir aquí campo a campo: es una regla entre los dos, y se comprueba
   // en `esSerieValida` justo antes de guardar.
   reps: z.string().max(4, 'Max 9999').optional().default(''),
-  weight: z.string().min(1, 'Min 1 kg').max(6, 'Max 999999'),
+  // Sin `min(1)`: una plancha sin lastre no lleva peso escrito, y exigirlo la
+  // descartaba antes de llegar a las reglas de abajo — el guardado respondia
+  // «anade reps y kg validas» sobre una serie de 48 segundos que estaba bien.
+  // No afloja nada: una serie de repeticiones sin peso sigue cayendo en la
+  // regla `weight === 0` unas lineas mas abajo, igual que siempre.
+  weight: z.string().max(6, 'Max 999999').optional().default(''),
   /** Segundos aguantados, como texto. Vacío en una serie de repeticiones. */
   durationSeconds: z.string().max(4).optional().default(''),
   isWarmup: z.boolean().default(false),

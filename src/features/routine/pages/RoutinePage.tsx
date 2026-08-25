@@ -274,6 +274,10 @@ export function RoutinePage() {
     void persistRoutines();
   };
 
+  /** El ejercicio anterior al índice dado, o `null` si es el primero. */
+  const updatedDaysAnterior = (lista: RoutineExercise[], index: number) =>
+    index > 0 ? (lista[index - 1] ?? null) : null;
+
   /** Reemplaza un ejercicio del día por su versión editada. */
   const updateExerciseInDay = (day: DayOfWeek, index: number, next: RoutineExercise) => {
     const editableId = ensureEditableRoutine();
@@ -282,10 +286,23 @@ export function RoutinePage() {
     const routine = useRoutineStore.getState().routines.find((r) => r.id === editableId);
     if (!routine) return;
 
+    const anterior = index > 0 ? updatedDaysAnterior(routine.days[day].exercises, index) : null;
+
     const updatedDays = { ...routine.days };
     updatedDays[day] = {
       ...updatedDays[day],
-      exercises: updatedDays[day].exercises.map((ex, i) => (i === index ? next : ex)),
+      exercises: updatedDays[day].exercises.map((ex, i) => {
+        if (i === index) return next;
+        // Un grupo lo forman DOS filas. El editor solo devuelve la que se estaba
+        // editando, así que al encadenar hay que escribir el id también en la
+        // de arriba: sin esto el grupo existía a medias —una fila con id y la
+        // otra sin él— y `groupPlanExercises`, que exige que coincidan, no
+        // pintaba la superserie por ninguna parte.
+        if (i === index - 1 && next.supersetId && anterior?.supersetId !== next.supersetId) {
+          return { ...ex, supersetId: next.supersetId };
+        }
+        return ex;
+      }),
     };
 
     useRoutineStore.getState().updateRoutine(editableId, { days: updatedDays });
