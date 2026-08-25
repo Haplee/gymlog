@@ -239,3 +239,69 @@ describe('el volumen semanal manda sobre la subida', () => {
     expect(buildLoadAdvice({ sessions: [], ...RANGO })).toBeNull();
   });
 });
+
+/* ------------------------------------------------------ por lado (f4) ------ */
+
+describe('objetivo de un ejercicio por lado', () => {
+  it('sube de dos en dos: 16 → 18, no 17', () => {
+    // Una zancada a 16 repeticiones totales son 8 por pierna. Sumar 1 daría 17,
+    // es decir 9 en una pierna y 8 en la otra: no es un objetivo que nadie se
+    // plantee.
+    const advice = exigir(
+      buildLoadAdvice({
+        sessions: [sesion('2026-08-14', 20, [16, 16, 16]), sesion('2026-08-21', 20, [16, 16, 16])],
+        repMin: 16,
+        repMax: 24,
+        perSide: true,
+      }),
+    );
+
+    expect(advice.suggestion.reps).toBe(18);
+  });
+
+  it('sin la bandera el mismo caso sube de uno en uno', () => {
+    const advice = exigir(
+      buildLoadAdvice({
+        sessions: [sesion('2026-08-14', 20, [16, 16, 16]), sesion('2026-08-21', 20, [16, 16, 16])],
+        repMin: 16,
+        repMax: 24,
+      }),
+    );
+
+    expect(advice.suggestion.reps).toBe(17);
+  });
+
+  it('nunca propone un objetivo impar, se venga de donde se venga', () => {
+    // Recorre todos los puntos de partida del rango, incluidos los impares que
+    // pudo dejar una versión anterior de la app.
+    for (let desde = 12; desde <= 23; desde++) {
+      const advice = buildLoadAdvice({
+        sessions: [
+          sesion('2026-08-14', 20, [desde, desde, desde]),
+          sesion('2026-08-21', 20, [desde, desde, desde]),
+        ],
+        repMin: 16,
+        repMax: 24,
+        perSide: true,
+      });
+      if (!advice) continue;
+      expect(advice.suggestion.reps % 2, `partiendo de ${desde}`).toBe(0);
+    }
+  });
+
+  it('también respeta el paso por el camino de la última sesión sin esfuerzo', () => {
+    // `suggestNextLoad` se niega a decidir sin RIR/RPE y cae en
+    // `suggestFromLastSession`. Es el camino que recorre la mayoría de usuarios,
+    // que registra solo peso y reps, así que el paso tiene que valer ahí también.
+    const advice = exigir(
+      buildLoadAdvice({
+        sessions: [sesion('2026-08-21', 20, [16, 16, 16])],
+        repMin: 16,
+        repMax: 24,
+        perSide: true,
+      }),
+    );
+
+    expect(advice.suggestion.reps).toBe(18);
+  });
+});

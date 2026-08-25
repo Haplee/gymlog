@@ -8,6 +8,7 @@ import { useOutboxStore } from '@shared/stores/outboxStore';
 import { normalizeExerciseName } from '@shared/lib/progressionCycle';
 import type { DayOfWeek, DayRoutine, Routine } from './routineStore';
 import { planDurationOf, planModeOf } from '../utils/planTarget';
+import { totalFromPerSide } from '@shared/lib/perSide';
 
 export interface SessionSet {
   id: string;
@@ -113,6 +114,21 @@ function targetRepsValue(reps?: string): string {
   return match ? match[0] : '';
 }
 
+/**
+ * Objetivo que se precarga en la fila, ya en **total**.
+ *
+ * El plan se escribe por lado —«3 × 12 por lado» es lo que el usuario teclea y
+ * lo que se imprime— y lo que se guarda es el total, para que dentro de seis
+ * meses un «12» del historial no sea ambiguo. Aquí es donde se cruzan las dos
+ * convenciones, y por eso la conversión está en una función con nombre y no
+ * escrita en línea.
+ */
+function objetivoDeReps(reps: string | undefined, perSide?: boolean): string {
+  const base = targetRepsValue(reps);
+  if (!base) return '';
+  return String(totalFromPerSide(Number(base), perSide));
+}
+
 /** Segundos válidos de la serie, o `null` si no se mide en tiempo. */
 function segundosDe(s: SessionSet): number | null {
   const n = Number.parseInt(s.durationSeconds ?? '', 10);
@@ -207,7 +223,7 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
               // escrito a mano y tomarlo por repeticiones sería inventarse 30.
               sets: Array.from({ length: Math.max(1, ex.sets ?? 1) }, () =>
                 makeSet(
-                  modo === 'time' ? '' : targetRepsValue(ex.reps),
+                  modo === 'time' ? '' : objetivoDeReps(ex.reps, ex.perSide),
                   prefills?.[normalizeExerciseName(ex.name)] ?? '',
                   duracion != null ? String(duracion) : '',
                 ),

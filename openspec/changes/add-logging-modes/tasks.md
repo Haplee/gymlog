@@ -272,11 +272,33 @@ que si algún día alguien lo cambia, sea a propósito.
 
 ## Fase 4 — Por lado
 
-- [ ] 4.1 `repStep(cfg)` → 2 cuando `perSide`. Enganchar en `loadAdvisor`.
-- [ ] 4.2 Presentación derivada: «16 (8 por lado)». Total impar se muestra tal
-      cual, con test.
-- [ ] 4.3 Que el objetivo sugerido nunca caiga en impar para un ejercicio por
-      lado.
+- [x] 4.1 `shared/lib/perSide.ts` con `repStep`, `nextRepTarget`,
+      `totalFromPerSide` y `perSideCount`, 13 tests. Enganchado por toda la
+      cadena: `suggestProgression` → `suggestNextLoad` /
+      `suggestFromLastSession` → `buildLoadAdvice` → `useExerciseAdvice` →
+      `SessionExerciseCard`. **Manda el plan, no `exercises.is_bilateral`**: el
+      mismo remo se puede programar a una o a dos manos.
+- [x] 4.2 «24 (12 por lado)» en la tarjeta de la sesión. El número grande es el
+      total porque es lo que se registra; el paréntesis es lo que se cuenta en la
+      serie. Un total impar sale con decimal —15 son 7,5 por lado— y con el
+      separador del idioma, no con un punto fijo.
+- [x] 4.3 Cubierto por un test que recorre **todos** los puntos de partida del
+      rango, incluidos los impares, y por los dos caminos del motor: el de
+      autorregulación con RIR y el de doble progresión sin él, que es el que
+      recorre la mayoría de usuarios.
+
+### Dónde se cruzan las dos convenciones
+
+El plan se escribe **por lado** —«3 × 12 por lado» es lo que se teclea y lo que
+se imprime— y lo que se guarda es el **total**. La conversión ocurre en un solo
+sitio con nombre propio, `objetivoDeReps` en `routineSessionStore`, y no escrita
+en línea: es exactamente el punto donde las dos convenciones se tocan, y donde
+un futuro cambio va a mirar primero.
+
+`nextRepTarget` redondea **hacia arriba** al múltiplo del paso en vez de sumar 2.
+Así un objetivo que ya venía impar —de una versión anterior, o de un ejercicio
+que pasó a ser por lado después— se corrige en la primera subida en vez de
+arrastrar el impar para siempre.
 
 ## Fase 5 — Superseries
 

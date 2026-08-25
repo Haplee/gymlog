@@ -13,6 +13,7 @@
 
 import { calcular1RM } from '@shared/lib/brzycki';
 import { suggestProgression } from '@shared/lib/progression';
+import { nextRepTarget } from '@shared/lib/perSide';
 import {
   DEFAULT_LOAD_STEP_KG,
   LOAD_RATIO_PER_RIR,
@@ -102,6 +103,11 @@ export interface LoadSuggestion {
 }
 
 export interface AutoRegOptions {
+  /**
+   * El ejercicio se hace un lado cada vez: el objetivo sube de dos en dos.
+   * Un objetivo impar pondría una repetición en un lado y no en el otro.
+   */
+  perSide?: boolean;
   targetRir?: number;
   /** Escalón mínimo de carga en kg. */
   stepKg?: number;
@@ -332,7 +338,8 @@ export function suggestNextLoad(
 
     // Sin salto montable bajo el tope (cargas muy ligeras, o peso corporal),
     // progresa por repeticiones. Es doble progresión, no un parche.
-    if (target === null) return mk(baseWeight, baseReps + 1, 'hold', 'coach.reason.add_rep');
+    if (target === null)
+      return mk(baseWeight, nextRepTarget(baseReps, opts), 'hold', 'coach.reason.add_rep');
 
     // Subir carga en el techo del rango se premia restando reps: se vuelve al
     // suelo y se trabaja el mismo esquema de progresión (doble progresión).
@@ -358,10 +365,11 @@ export function suggestNextLoad(
       return mk(baseWeight, baseReps, 'hold', 'coach.reason.weekly_cap');
     }
     const target = raise(TARGET_INCREASE_RATIO);
-    if (target === null) return mk(baseWeight, baseReps + 1, 'hold', 'coach.reason.on_target');
+    if (target === null)
+      return mk(baseWeight, nextRepTarget(baseReps, opts), 'hold', 'coach.reason.on_target');
     return mk(target, repMin ?? baseReps, 'increase', 'coach.reason.ceiling');
   }
-  return mk(baseWeight, baseReps + 1, 'hold', 'coach.reason.on_target');
+  return mk(baseWeight, nextRepTarget(baseReps, opts), 'hold', 'coach.reason.on_target');
 }
 
 /**
@@ -375,7 +383,13 @@ export function suggestNextLoad(
  */
 export function suggestFromLastSession(
   sessions: AutoRegSession[],
-  opts: { repMin?: number; repMax?: number; bodyweight?: boolean; stepKg?: number } = {},
+  opts: {
+    repMin?: number;
+    repMax?: number;
+    bodyweight?: boolean;
+    stepKg?: number;
+    perSide?: boolean;
+  } = {},
 ): LoadSuggestion | null {
   const usable = usableSessions(sessions);
   if (usable.length === 0) return null;
@@ -390,7 +404,7 @@ export function suggestFromLastSession(
   const step = opts.stepKg ?? DEFAULT_LOAD_STEP_KG;
   const prog = suggestProgression(
     working.map((s) => ({ weight: s.weight, reps: s.reps })),
-    { repMin: opts.repMin, repMax: opts.repMax, incrementKg: step },
+    { repMin: opts.repMin, repMax: opts.repMax, incrementKg: step, perSide: opts.perSide },
   );
   if (!prog) return null;
 

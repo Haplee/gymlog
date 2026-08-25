@@ -11,6 +11,7 @@ import type { LibraryExercise } from '@shared/api/queries';
 import type { SessionExercise } from '../stores/routineSessionStore';
 import { WorkTimer } from '@features/workout/components/WorkTimer';
 import { formatSegundos } from '@features/routine/utils/planTarget';
+import { perSideCount, totalFromPerSide } from '@shared/lib/perSide';
 import {
   AlertTriangle,
   BookOpen,
@@ -65,9 +66,28 @@ export function SessionExerciseCard({
   onAdvice,
   onDuration,
 }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [showForm, setShowForm] = useState(false);
   const esPorTiempo = exercise.mode === 'time';
+
+  /**
+   * El objetivo de repeticiones, en total y con la lectura por lado detrás:
+   * «24 (12 por lado)».
+   *
+   * El número grande es el total porque es lo que se registra; el paréntesis es
+   * lo que se cuenta en la serie. Enseñar solo uno de los dos obliga a hacer la
+   * cuenta mental justo en el momento de menos cabeza libre.
+   */
+  const objetivoReps = (() => {
+    if (esPorTiempo) return null;
+    const base = Number(exercise.targetReps?.trim().match(/^\d+/)?.[0]);
+    if (!Number.isFinite(base)) return exercise.targetReps ?? null;
+    const total = totalFromPerSide(base, exercise.perSide);
+    const porLado = perSideCount(total, exercise.perSide);
+    if (porLado == null) return exercise.targetReps ?? String(total);
+    const num = porLado.toLocaleString(i18n.language, { maximumFractionDigits: 1 });
+    return `${total} (${num} ${t('routine.target_per_side')})`;
+  })();
 
   // El objetivo de la sesión manda sobre la búsqueda por nombre: aquí ya se
   // sabe de qué día viene el ejercicio.
@@ -78,6 +98,10 @@ export function SessionExerciseCard({
     repMin,
     repMax,
     bodyweight: isBodyweightLoad(catalog?.load_type),
+    // Manda el plan, no `exercises.is_bilateral`: el mismo remo se puede
+    // programar a una o a dos manos, y lo que decide el objetivo es cómo lo
+    // planificó quien entrena.
+    perSide: exercise.perSide === true,
     muscleGroup: muscleGroup ?? undefined,
   });
   const description = libraryExercise?.description ?? null;
@@ -122,7 +146,7 @@ export function SessionExerciseCard({
               ? exercise.targetDurationSeconds != null
                 ? formatSegundos(exercise.targetDurationSeconds)
                 : t('workout.mode_time')
-              : exercise.targetReps}
+              : objetivoReps}
           </span>
         )}
       </div>

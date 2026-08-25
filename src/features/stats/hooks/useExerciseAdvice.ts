@@ -36,6 +36,8 @@ export interface ExerciseAdviceOptions {
   repMax?: number;
   /** En peso corporal no se sugiere subir carga: solo repeticiones. */
   bodyweight?: boolean;
+  /** El ejercicio va por lado: el objetivo de reps sube de dos en dos. */
+  perSide?: boolean;
   /** Grupo muscular del ejercicio, para medir el volumen semanal que acumula. */
   muscleGroup?: string;
 }
@@ -79,6 +81,7 @@ export function useExerciseAdvice(
       repMin: opts.repMin,
       repMax: opts.repMax,
       bodyweight: opts.bodyweight,
+      perSide: opts.perSide,
       stepKg,
       volume,
       readiness,
@@ -87,5 +90,14 @@ export function useExerciseAdvice(
 
     // El nombre lo pone quien pinta la tarjeta: aquí solo se conoce el id.
     return { exercise: '', ...advised };
-  }, [sessions, readiness, volume, stepKg, opts.repMin, opts.repMax, opts.bodyweight]);
+  }, [
+    sessions,
+    readiness,
+    volume,
+    stepKg,
+    opts.repMin,
+    opts.repMax,
+    opts.bodyweight,
+    opts.perSide,
+  ]);
 }
