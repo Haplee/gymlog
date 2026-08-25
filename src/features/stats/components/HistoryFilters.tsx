@@ -7,6 +7,7 @@ import {
   DocumentCode,
   Download,
   FileContent,
+  HeartPulse,
   IconUser,
   Upload,
 } from '@shared/components/icons';
@@ -27,6 +28,7 @@ interface HistoryFiltersProps {
   exportToJson: () => void;
   importFromCsv: (e: React.ChangeEvent<HTMLInputElement>) => void;
   importFromJson: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  importFromAppleHealth: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 /**
@@ -52,6 +54,7 @@ export function HistoryFilters({
   exportToJson,
   importFromCsv,
   importFromJson,
+  importFromAppleHealth,
 }: HistoryFiltersProps) {
   const { t } = useTranslation();
   const [exportOpen, setExportOpen] = useState(false);
@@ -216,6 +219,22 @@ export function HistoryFilters({
               accept=".csv,.txt,.xlsx"
               onChange={(e) => {
                 importFromCsv(e);
+                setImportOpen(false);
+              }}
+              className="hidden"
+            />
+          </label>
+          {/* El export de Salud es un XML enorme, así que va por su propia
+              opción: mezclarlo con «Excel o CSV» significaría intentar leerlo
+              como tabla y fallar con un mensaje que no ayuda a nadie. */}
+          <label className={`${optionClass} cursor-pointer`}>
+            <HeartPulse className={optionIconClass} />
+            {t('history.format_apple_health')}
+            <input
+              type="file"
+              accept=".xml,.zip,text/xml,application/xml"
+              onChange={(e) => {
+                importFromAppleHealth(e);
                 setImportOpen(false);
               }}
               className="hidden"

@@ -28,6 +28,8 @@ import { Chip, SectionHeader, BottomSheet, ConfirmDialog } from '@shared/compone
 import { EmptyState } from '@shared/components/EmptyStates';
 import { CoachSuggestionBanner } from '@features/coach/components/CoachSuggestionBanner';
 import { ExerciseSelector } from '@shared/components/ExerciseSelector';
+import { useRoutineTransfer } from '@features/routine/hooks/useRoutineTransfer';
+import { Printer, Share, Upload } from '@shared/components/icons';
 
 const DAYS = Object.keys(dayLabels) as DayOfWeek[];
 
@@ -111,6 +113,7 @@ export function RoutinePage() {
   }, [user, navigate, loadFromDb, checkAndBackup]);
 
   const activeRoutine = getActiveRoutine();
+  const { shareRoutineFile, printRoutine, importRoutineFile } = useRoutineTransfer();
   const todayRoutine = getTodayRoutine();
 
   // Suscribirse al plan (y no solo leerlo con el getter) es lo que hace que la
@@ -380,6 +383,19 @@ export function RoutinePage() {
           >
             {t('routine.create_custom')}
           </button>
+
+          {/* Recibir la rutina de alguien: entra como una más, nunca sustituye
+              a las que ya hay. */}
+          <label className="w-full mt-2.5 min-h-12 flex items-center justify-center gap-2 rounded-pill label-caps bg-surface-2 text-fg-muted cursor-pointer active:scale-[0.98] transition-transform">
+            <Upload className="w-4 h-4 text-accent" aria-hidden="true" />
+            {t('routine.import_file')}
+            <input
+              type="file"
+              accept=".json,application/json"
+              onChange={importRoutineFile}
+              className="hidden"
+            />
+          </label>
         </>
       ) : (
         <>
@@ -392,6 +408,29 @@ export function RoutinePage() {
             <div className="min-w-0">
               <div className="text-data font-display font-bold text-fg">{activeRoutine?.name}</div>
               <div className="text-xs text-fg-subtle">{activeRoutine?.description}</div>
+            </div>
+            <div className="flex flex-shrink-0 items-center gap-1.5">
+              {/* Compartir manda solo el plan: ni entrenamientos, ni pesos, ni
+                  pesajes. Imprimir saca la misma rutina en una hoja con casillas
+                  para apuntar a boli. */}
+              <button
+                type="button"
+                onClick={() => activeRoutine && void shareRoutineFile(activeRoutine)}
+                aria-label={t('routine.share')}
+                title={t('routine.share')}
+                className="min-h-11 min-w-11 grid place-items-center rounded-pill bg-surface-2 text-fg-muted active:scale-[0.98] transition-transform"
+              >
+                <Share className="w-4 h-4" aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                onClick={() => activeRoutine && void printRoutine(activeRoutine)}
+                aria-label={t('routine.print')}
+                title={t('routine.print')}
+                className="min-h-11 min-w-11 grid place-items-center rounded-pill bg-surface-2 text-fg-muted active:scale-[0.98] transition-transform"
+              >
+                <Printer className="w-4 h-4" aria-hidden="true" />
+              </button>
             </div>
             <button
               type="button"

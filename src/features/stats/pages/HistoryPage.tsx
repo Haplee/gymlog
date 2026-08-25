@@ -191,6 +191,7 @@ export function HistoryPage() {
     exportToJson,
     importFromJson,
     importFromCsv,
+    importFromAppleHealth,
     pendingImport,
     pendingImportSummary,
     pendingImportSource,
@@ -274,6 +275,7 @@ export function HistoryPage() {
         exportToExcel={exportToExcel}
         exportToJson={exportToJson}
         importFromCsv={importFromCsv}
+        importFromAppleHealth={importFromAppleHealth}
         importFromJson={importFromJson}
       />
 
@@ -730,12 +732,17 @@ export function HistoryPage() {
                       workouts: pendingImportSummary.workouts,
                       sets: pendingImportSummary.sets,
                     })
-                  : t('history.import_confirm_excel', {
-                      sets: pendingImportSummary.sets,
-                      cardio: pendingImportSummary.cardio,
-                      routines: pendingImportSummary.routines,
-                    })}
+                  : pendingImport.kind === 'health'
+                    ? t('history.health_confirm', { count: pendingImportSummary.weights ?? 0 })
+                    : t('history.import_confirm_excel', {
+                        sets: pendingImportSummary.sets,
+                        cardio: pendingImportSummary.cardio,
+                        routines: pendingImportSummary.routines,
+                      })}
               </p>
+              {pendingImport.kind === 'health' && (
+                <p className="text-fg-muted">{t('history.health_only_gaps')}</p>
+              )}
               {pendingImportSummary.skips > 0 && (
                 <p className="text-warning">
                   {t('history.import_confirm_duplicates', {
