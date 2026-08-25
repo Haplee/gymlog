@@ -8,7 +8,7 @@
 
 - [x] 0.1 `src/shared/lib/setShape.ts`: acceso único a la forma de una serie.
       **La API cambió respecto a lo planificado.** En vez de `repsForVolume(s)
-  → number` (un `?? 0` disfrazado), la pieza central es un **predicado de
+→ number` (un `?? 0` disfrazado), la pieza central es un **predicado de
       tipo**: `isRepSet(s): s is T & { reps: number }` y `onlyRepSets(sets)`.
       Motivo: un cero es un dato —una serie de cero repeticiones que entra en el
       recuento y en las medias—, mientras que filtrar con narrowing obliga al
@@ -68,7 +68,7 @@ De paso, los tres cálculos de volumen duplicados en `HistoryPage` pasan a usar 
 
 ## Fase 1 — Esquema (opción A aprobada) — **escrita y probada, SIN APLICAR**
 
-- [x] 1.1 `supabase/migrations/20260825143244_timed_sets.sql`: `reps` pasa a
+- [x] 1.1 `supabase/migrations/20260825125843_timed_sets.sql`: `reps` pasa a
       admitir NULL, `CHECK` reescrito, y `workout_sets_measured` nuevo para que
       una serie sin reps **y** sin duración no pueda entrar.
 - [x] 1.2 `save_workout_with_sets` escribe `duration_seconds`. **La firma no
@@ -78,7 +78,10 @@ De paso, los tres cálculos de volumen duplicados en `HistoryPage` pasan a usar 
 - [x] 1.3 `get_workouts_with_sets` devuelve `duration_seconds`.
 - [x] **1.4bis (no estaba en el plan) — el trigger `process_new_set`.** Ver
       abajo: es lo que habría roto el guardado.
-- [ ] 1.4 `npm run gen:types` — **bloqueado**: necesita la migración aplicada.
+- [x] 1.4 `npm run gen:types` tras aplicar la migración. El diff real son **3
+      líneas**: `reps` pasa a `number | null` en Row, Insert y Update de
+      `workout_sets`. Ojo: la salida cruda del CLI no viene formateada, hay que
+      pasarle `npx prettier --write` o el diff sale de mil líneas y no se lee.
 - [x] 1.5 `RemoteWorkoutSetSchema` acepta `reps` nulo y `duration_seconds`, con
       4 tests nuevos. **Tenía que ir antes que la migración**: con
       `reps: z.number()`, la primera serie por tiempo se habría descartado al
@@ -125,12 +128,38 @@ Con la migración completa, 8 comprobaciones en verde:
 | 7   | Reps fuera de rango                        | siguen rechazadas                     |
 | 8   | Idempotencia: 3 pasadas seguidas           | sin errores, datos intactos           |
 
-### Pendiente: aplicarla
+### Aplicada en producción
 
-**No se ha tocado producción.** Queda decidir cómo (ver el resumen al usuario).
+Aplicada al proyecto `eoltmipoklizewxdpzfa` el 2026-08-25. Supabase la registró
+con su propia versión, **`20260825125843`**, distinta del nombre local que tenía
+el fichero; se renombró para que `supabase db push` la vea como ya aplicada.
+
+Antes de aplicarla se guardaron las definiciones previas de las tres funciones y
+la nota de vuelta atrás en el scratchpad de la sesión, y se comprobó que no había
+ninguna fila con `duration_seconds`.
+
+Estado posterior comprobado con una consulta a la base viva:
+
+| Comprobación                                   | Resultado                                                  |
+| ---------------------------------------------- | ---------------------------------------------------------- |
+| `reps` admite NULL                             | `YES`                                                      |
+| `workout_sets_measured` existe                 | `CHECK (reps IS NOT NULL OR duration_seconds IS NOT NULL)` |
+| `workout_sets_reps_check` (el viejo) eliminado | ausente de la lista de constraints                         |
+| Filas con `reps` NULL                          | 0                                                          |
+| Trigger blindado                               | sí                                                         |
+| La RPC devuelve `duration_seconds`             | sí                                                         |
+
 La vuelta atrás solo es limpia **mientras no haya ninguna serie por tiempo**:
 después, `SET NOT NULL` fallaría hasta borrarlas. Es inherente a la opción A y
 conviene tenerlo presente, no es un descuido.
+
+### Verificación del código tras regenerar los tipos
+
+`type-check` 0 errores · `lint` 0 errores (5 warnings previos, ajenos) · **688
+tests en 64 ficheros, todos en verde**. Confirma la medida de la fase 0: la
+sonda del compilador dio 26 puntos con `reps` nulable _antes_ de la migración y
+**0 después**, porque los sitios que lo tocaban ya se habían pasado a
+`setShape.ts`.
 
 ## Fase 2 — Modo en el plan de la rutina (sin migración)
 
