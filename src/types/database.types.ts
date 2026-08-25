@@ -895,7 +895,7 @@ export type Database = {
           is_warmup: boolean;
           notes: string | null;
           one_rm: number | null;
-          reps: number;
+          reps: number | null;
           rir: number | null;
           rpe: number | null;
           set_num: number;
@@ -912,7 +912,7 @@ export type Database = {
           is_warmup?: boolean;
           notes?: string | null;
           one_rm?: number | null;
-          reps: number;
+          reps?: number | null;
           rir?: number | null;
           rpe?: number | null;
           set_num: number;
@@ -929,7 +929,7 @@ export type Database = {
           is_warmup?: boolean;
           notes?: string | null;
           one_rm?: number | null;
-          reps?: number;
+          reps?: number | null;
           rir?: number | null;
           rpe?: number | null;
           set_num?: number;

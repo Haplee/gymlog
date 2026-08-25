@@ -51,9 +51,11 @@ ALTER TABLE public.workout_sets
 
 -- 3. Guardar la duración ----------------------------------------------------
 
--- El parámetro nuevo va al final y con DEFAULT, así que la firma anterior sigue
--- resolviendo: un APK sin actualizar guarda igual que antes. Sin eso, publicar
--- esta migración rompería a todo el que no hubiera actualizado todavía.
+-- **La firma no cambia.** La duración viaja dentro del JSON de series que la
+-- función ya recibía, así que un APK sin actualizar sigue llamando igual y
+-- guardando igual: manda series sin `duration_seconds` y se escriben con NULL.
+-- Añadir un parámetro habría creado una sobrecarga y roto la resolución para
+-- quien no hubiera actualizado todavía.
 CREATE OR REPLACE FUNCTION public.save_workout_with_sets(
   p_user_id uuid,
   p_exercise_id uuid,
