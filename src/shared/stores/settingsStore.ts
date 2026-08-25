@@ -38,6 +38,14 @@ interface SettingsState {
   /** Precargar el peso de la última sesión al empezar una rutina. */
   autoFillWeights: boolean;
   wearablesSyncOnOpen: boolean;
+  /**
+   * Mantener la pantalla encendida mientras hay un entrenamiento en curso.
+   *
+   * Por defecto activo: entre serie y serie el móvil se bloquea y hay que
+   * desbloquearlo y buscar por dónde ibas, que es justo la fricción que hace
+   * que la gente deje de registrar las series.
+   */
+  keepScreenAwake: boolean;
   /** La guía de uso solo se abre sola la primera vez; luego se entra desde Ajustes. */
   guideSeen: boolean;
   /** Color de acento elegido por el usuario (Ajustes → Preferencias). */
@@ -70,6 +78,7 @@ interface SettingsState {
   setRestByExercise: (enabled: boolean) => void;
   setAutoFillWeights: (enabled: boolean) => void;
   setWearablesSyncOnOpen: (enabled: boolean) => void;
+  setKeepScreenAwake: (enabled: boolean) => void;
   setGuideSeen: (seen: boolean) => void;
   setAccentColor: (accent: AccentId) => void;
   setAppIcon: (icon: AccentId) => void;
@@ -94,6 +103,7 @@ export const useSettingsStore = create<SettingsState>()(
       restByExercise: true,
       autoFillWeights: true,
       wearablesSyncOnOpen: true,
+      keepScreenAwake: true,
       guideSeen: false,
       accentColor: DEFAULT_ACCENT,
       appIcon: DEFAULT_ACCENT,
@@ -151,6 +161,7 @@ export const useSettingsStore = create<SettingsState>()(
       setRestByExercise: (restByExercise) => set({ restByExercise }),
       setAutoFillWeights: (autoFillWeights) => set({ autoFillWeights }),
       setWearablesSyncOnOpen: (wearablesSyncOnOpen) => set({ wearablesSyncOnOpen }),
+      setKeepScreenAwake: (keepScreenAwake) => set({ keepScreenAwake }),
       setGuideSeen: (guideSeen) => set({ guideSeen }),
 
       setAccentColor: (accentColor) => {

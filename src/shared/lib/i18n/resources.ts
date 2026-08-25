@@ -538,6 +538,9 @@ export const resources = {
         rest_by_exercise_desc: 'Más descanso en ejercicios compuestos (≈2×)',
         auto_fill_weights: 'Auto-rellenar pesos',
         auto_fill_weights_desc: 'Precargar el peso de la última sesión al empezar una rutina',
+        keep_screen_awake: 'Pantalla siempre encendida',
+        keep_screen_awake_desc:
+          'Evita que el móvil se bloquee mientras entrenas. Se suelta al terminar la sesión',
         save_scope: 'Guardado de series',
         save_scope_desc: 'Qué hacer al guardar si tienes series completadas y otras sin marcar',
         save_scope_ask: 'Preguntar',
@@ -911,6 +914,8 @@ export const resources = {
         reps: 'Reps',
         max_streak: 'Racha máxima',
         estimated_1rm: '1RM estimado',
+        rm_unreliable:
+          'Por encima de {{reps}} repeticiones la estimación mide más resistencia que fuerza máxima: tómala como orientación.',
         weight_label: 'Peso',
         exercise_a: 'Ejercicio A',
         exercise_b: 'Ejercicio B',
@@ -1600,6 +1605,9 @@ export const resources = {
         rest_by_exercise_desc: 'Longer rest on compound lifts (≈2×)',
         auto_fill_weights: 'Auto-fill weights',
         auto_fill_weights_desc: 'Preload last session weight when starting a routine',
+        keep_screen_awake: 'Keep screen awake',
+        keep_screen_awake_desc:
+          'Stops the phone locking while you train. Released when the session ends',
         save_scope: 'Saving sets',
         save_scope_desc: 'What to do when saving with both completed and unmarked sets',
         save_scope_ask: 'Ask',
@@ -1969,6 +1977,8 @@ export const resources = {
         reps: 'Reps',
         max_streak: 'Max streak',
         estimated_1rm: 'Estimated 1RM',
+        rm_unreliable:
+          'Above {{reps}} reps the estimate says more about endurance than maximal strength — treat it as a ballpark.',
         weight_label: 'Weight',
         exercise_a: 'Exercise A',
         exercise_b: 'Exercise B',

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/react/shallow';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
+import { isWakeLockSupported } from '@shared/hooks/useWakeLock';
 import { Layout } from '@app/components/Layout';
 import { NavRow, PlatesPicker, SectionHeader, SettingRow, Toggle } from '@shared/components/ui';
 import { PreferencesSection } from '@features/auth/components/PreferencesSection';
@@ -99,6 +100,8 @@ export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
     setRestByExercise,
     autoFillWeights,
     setAutoFillWeights,
+    keepScreenAwake,
+    setKeepScreenAwake,
   } = useSettingsStore(
     useShallow((s) => ({
       biometricEnabled: s.biometricEnabled,
@@ -115,8 +118,13 @@ export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
       setRestByExercise: s.setRestByExercise,
       autoFillWeights: s.autoFillWeights,
       setAutoFillWeights: s.setAutoFillWeights,
+      keepScreenAwake: s.keepScreenAwake,
+      setKeepScreenAwake: s.setKeepScreenAwake,
     })),
   );
+
+  // El soporte no cambia durante la sesión: se resuelve una vez al montar.
+  const [wakeLockDisponible] = useState(isWakeLockSupported);
 
   const [biometricSupport, setBiometricSupport] = useState<{ available: boolean; message: string }>(
     { available: false, message: '' },
@@ -534,6 +542,22 @@ export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
               }
               divider={restAutoStart}
             />
+            {/* La API de Wake Lock no existe en todos los WebView; sin soporte
+                la fila prometería algo que no se cumple, así que no se pinta. */}
+            {wakeLockDisponible && (
+              <SettingRow
+                label={t('settings.keep_screen_awake')}
+                desc={t('settings.keep_screen_awake_desc')}
+                control={
+                  <Toggle
+                    checked={keepScreenAwake}
+                    onChange={setKeepScreenAwake}
+                    ariaLabel={t('settings.keep_screen_awake')}
+                  />
+                }
+                divider={restAutoStart}
+              />
+            )}
 
             {/* Qué hacer al guardar con series completadas y sin marcar a la
                 vez. Se pregunta la primera vez y se recuerda; esta es la vía
