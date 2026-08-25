@@ -163,19 +163,50 @@ sonda del compilador dio 26 puntos con `reps` nulable _antes_ de la migración y
 
 ## Fase 2 — Modo en el plan de la rutina (sin migración)
 
-- [ ] 2.1 `RoutineExercise`: `mode?: 'reps' | 'time'`, `perSide?: boolean`,
-      `durationSeconds?: number`. Todos opcionales; **ausente = `reps`**.
-- [ ] 2.2 Lectura tolerante en `routineStore`: una rutina guardada sin estos
-      campos se lee igual que hoy. Test con una rutina serializada de la versión
-      actual.
-- [ ] 2.3 Editor de rutina: elegir modo y «por lado» al añadir o editar un
-      ejercicio. Por defecto `reps`; `perSide` se propone desde
-      `exercises.is_bilateral` pero manda lo que diga el plan.
-- [ ] 2.4 `shareRoutine.ts`: incluir los campos nuevos en el fichero compartido y
-      validarlos al leer. Subir `SHARE_FORMAT_VERSION` a 2 y comprobar que un
-      fichero v1 sigue importándose.
-- [ ] 2.5 `printRoutine.ts`: una serie por tiempo se imprime como «3 × 45 s», no
-      como «3 series · 45 reps».
+- [x] 2.1 `RoutineExercise`: `mode?: 'reps' | 'time'`, `perSide?: boolean`,
+      `durationSeconds?: number`. Todos opcionales; **ausente = `reps`**. No hay
+      `'cardio'`: el cardio tiene su propia pantalla, no es un ejercicio dentro
+      del plan de fuerza.
+- [x] 2.2 Lectura tolerante, con una rutina serializada de la versión actual
+      escrita literal en el test. Entra por `loadFromDb` y sale intacta. Se
+      comprueba además que las plantillas predefinidas siguen siendo todas de
+      repeticiones.
+- [x] 2.3 Editor de ejercicio (`RoutineExerciseEditor`): modo, series,
+      reps o segundos, y «por lado». Antes un ejercicio del plan **solo se podía
+      añadir y quitar** —entraba con `3 × 10-12` fijos—, así que la hoja es nueva
+      y la fila de la lista estrena botón de editar. `perSide` se propone al
+      añadir desde `is_bilateral === false`, pero manda lo que diga el plan.
+- [x] 2.4 `SHARE_FORMAT_VERSION` a 2, con los campos nuevos escritos solo cuando
+      aplican: **un fichero de una rutina de repeticiones sale igual que antes**.
+      Al leer se valida como frontera de verdad — un `mode` inventado cae en
+      repeticiones, una duración fuera de rango se descarta y `perSide` solo se
+      acepta si viene como `true`. Test de que un fichero v1 se importa entero.
+- [x] 2.5 `formatearObjetivo` en `printRoutine.ts`: «3 × 45 s», con «por lado»
+      visible porque es lo que decide si la serie son 12 repeticiones o 24. Modo
+      tiempo sin duración imprime «3 × tiempo» en vez de inventar un número.
+
+### Lo que se sacó a un módulo propio
+
+`features/routine/utils/planTarget.ts`. Los mismos tres campos viajan en tres
+formas distintas —el `RoutineExercise` del store, el `SharedExercise` de un
+fichero y la fila que se imprime— y las tres tienen que decidir lo mismo. Con la
+lógica repartida bastaría que una tratase el `undefined` de otra manera para que
+una rutina vieja se leyera bien en un sitio y mal en otro.
+
+`planModeOf` estrecha `modeOfPlanned` a `reps | time`: `cardio` es un modo válido
+para lo que se registra, pero no para una rutina, y un fichero manipulado que lo
+traiga crearía un ejercicio que ninguna pantalla sabe pintar.
+
+### Un tropiezo que dejó mejor código
+
+La primera versión del editor copiaba las props al estado con un `useEffect`.
+`react-hooks/set-state-in-effect` lo rechazó, y con razón: encadena un render de
+más y deja la puerta abierta a pisar lo que el usuario está escribiendo. La
+solución fue montar el formulario con `key` y sembrar el estado en el
+inicializador de `useState`.
+
+Verificación: `type-check` 0 errores · `lint` 0 errores (los 5 warnings previos,
+ajenos) · **719 tests en 65 ficheros**, 31 más que antes de la fase.
 
 ## Fase 3 — Registrar por tiempo
 

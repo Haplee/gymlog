@@ -1,12 +1,12 @@
 /**
  * Acceso único a la forma de una serie registrada.
  *
- * Existe para preparar los ejercicios por tiempo (ver
- * `openspec/changes/add-logging-modes/`). Hoy `workout_sets.reps` es
- * `NOT NULL`, así que **todo lo de aquí es un no-op**: `isRepSet` devuelve
- * `true` para cualquier serie real y `onlyRepSets` no filtra nada. Cuando la
- * columna pase a admitir NULL —una plancha no tiene repeticiones—, los sitios
- * que ya pasen por aquí seguirán siendo correctos sin tocarlos.
+ * Existe para los ejercicios por tiempo (ver
+ * `openspec/changes/add-logging-modes/`). Se escribió mientras
+ * `workout_sets.reps` todavía era `NOT NULL`, cuando todo esto era un no-op;
+ * desde la migración `20260825125843_timed_sets` la columna admite NULL —una
+ * plancha no tiene repeticiones— y los filtros sí filtran. Los sitios que ya
+ * pasaban por aquí no hubo que tocarlos: era exactamente el objetivo.
  *
  * **Por qué un predicado de tipo y no un `reps ?? 0`.** Un cero es un dato: una
  * serie de cero repeticiones que entra en el recuento de series, en las medias y
@@ -49,8 +49,9 @@ export function isRepSet<T extends SetShape>(s: T): s is T & { reps: number } {
 /**
  * ¿Es una serie por tiempo? Tiene duración y no tiene repeticiones.
  *
- * Hoy no puede devolver `true` para nada guardado: `duration_seconds` existe en
- * el esquema pero no la escribe nadie todavía.
+ * `duration_seconds` ya se puede guardar (la RPC `save_workout_with_sets` la
+ * escribe), pero hasta que la pantalla de entreno registre por tiempo —fase 3—
+ * lo normal es que no haya ninguna fila así.
  */
 export function isTimedSet<T extends SetShape>(s: T): s is T & { duration_seconds: number } {
   return (

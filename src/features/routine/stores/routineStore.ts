@@ -11,6 +11,25 @@ export interface RoutineExercise {
   sets?: number;
   reps?: string;
   notes?: string;
+  /**
+   * Como se registra el ejercicio. **Ausente = `reps`**, y por eso ninguna
+   * rutina guardada hasta hoy necesita migrarse: el campo simplemente no esta.
+   * La regla vive en `modeOfPlanned` (`@shared/lib/setShape`); aqui solo se
+   * declara el hueco donde se guarda.
+   *
+   * No existe `'cardio'`: el cardio tiene su propia pantalla y su propio
+   * temporizador, no es un ejercicio dentro del plan de fuerza.
+   */
+  mode?: 'reps' | 'time';
+  /**
+   * El objetivo es **por lado**: «3 x 12 por lado» son 24 repeticiones de
+   * trabajo, no 12. Se propone desde `exercises.is_bilateral` al anadir, pero
+   * manda lo que diga el plan: la misma zancada se puede planificar de las dos
+   * formas y quien decide es quien entrena.
+   */
+  perSide?: boolean;
+  /** Segundos por serie cuando `mode === 'time'`. Ignorado en modo `reps`. */
+  durationSeconds?: number;
 }
 
 export interface DayRoutine {

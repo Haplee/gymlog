@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { X } from '@shared/components/icons';
+import { Edit, X } from '@shared/components/icons';
 import {
   DndContext,
   closestCenter,
@@ -18,15 +18,45 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { RoutineExercise } from '@features/routine/stores/routineStore';
+import { formatSegundos, planDurationOf, planModeOf } from '@features/routine/utils/planTarget';
 import { Menu } from '@shared/components/icons';
 
 interface SortableExerciseListProps {
   exercises: RoutineExercise[];
   onReorder: (next: RoutineExercise[]) => void;
   onRemove: (index: number) => void;
+  /** Sin esto no se pinta el lápiz: en una plantilla no hay nada que editar. */
+  onEdit?: (index: number) => void;
 }
 
-function SortableRow({ exercise, onRemove }: { exercise: RoutineExercise; onRemove: () => void }) {
+/**
+ * El objetivo del ejercicio, en una línea.
+ *
+ * Una serie por tiempo se lee «3 × 45 s»: pintar «3 series × 45» reutilizando el
+ * campo de reps diría que hay que hacer 45 repeticiones de plancha.
+ */
+function subtitulo(ex: RoutineExercise, porLado: string): string {
+  const sufijo = ex.perSide ? ` ${porLado}` : '';
+
+  if (planModeOf(ex) === 'time') {
+    const segundos = planDurationOf(ex);
+    const cuanto = segundos != null ? formatSegundos(segundos) : '—';
+    return `${ex.sets ?? '?'} × ${cuanto}${sufijo}`;
+  }
+
+  if (ex.sets == null && !ex.reps) return sufijo.trim();
+  return `${ex.sets ?? '?'} series × ${ex.reps ?? '?'}${sufijo}`;
+}
+
+function SortableRow({
+  exercise,
+  onRemove,
+  onEdit,
+}: {
+  exercise: RoutineExercise;
+  onRemove: () => void;
+  onEdit?: () => void;
+}) {
   const { t } = useTranslation();
   // El nombre es único por día (el selector de añadir filtra los ya presentes).
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -53,21 +83,33 @@ function SortableRow({ exercise, onRemove }: { exercise: RoutineExercise; onRemo
         </button>
         <div className="min-w-0">
           <div className="text-base font-medium text-fg truncate">{exercise.name}</div>
-          {exercise.sets && (
+          {subtitulo(exercise, t('routine.target_per_side')) && (
             <div className="text-xs mt-0.5 text-fg-subtle">
-              {exercise.sets} series × {exercise.reps}
+              {subtitulo(exercise, t('routine.target_per_side'))}
             </div>
           )}
         </div>
       </div>
-      <button
-        type="button"
-        onClick={onRemove}
-        aria-label={t('library.remove_exercise', { name: exercise.name })}
-        className="h-11 w-11 flex items-center justify-center rounded-card text-fg-subtle"
-      >
-        <X className="h-4 w-4" />
-      </button>
+      <div className="flex items-center shrink-0">
+        {onEdit && (
+          <button
+            type="button"
+            onClick={onEdit}
+            aria-label={t('routine.edit_exercise', { name: exercise.name })}
+            className="h-11 w-11 flex items-center justify-center rounded-card text-fg-subtle"
+          >
+            <Edit className="h-4 w-4" />
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label={t('library.remove_exercise', { name: exercise.name })}
+          className="h-11 w-11 flex items-center justify-center rounded-card text-fg-subtle"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
     </div>
   );
 }
@@ -76,6 +118,7 @@ export function SortableExerciseList({
   exercises,
   onReorder,
   onRemove,
+  onEdit,
 }: SortableExerciseListProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -96,7 +139,12 @@ export function SortableExerciseList({
       <SortableContext items={exercises.map((e) => e.name)} strategy={verticalListSortingStrategy}>
         <div className="space-y-1.5">
           {exercises.map((ex, i) => (
-            <SortableRow key={ex.name} exercise={ex} onRemove={() => onRemove(i)} />
+            <SortableRow
+              key={ex.name}
+              exercise={ex}
+              onRemove={() => onRemove(i)}
+              onEdit={onEdit ? () => onEdit(i) : undefined}
+            />
           ))}
         </div>
       </SortableContext>

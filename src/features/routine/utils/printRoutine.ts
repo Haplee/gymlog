@@ -12,7 +12,8 @@
  * que toda la funcionalidad que aporta aquí.
  */
 
-import { DAY_LABEL, type SharedRoutine } from './shareRoutine';
+import { DAY_LABEL, type SharedExercise, type SharedRoutine } from './shareRoutine';
+import { formatSegundos, planDurationOf, planModeOf } from './planTarget';
 
 /**
  * Casillas que se dibujan por ejercicio cuando no dice cuántas series lleva.
@@ -46,6 +47,39 @@ export function formatearReps(reps: string): string {
   return /^[\d\s\-–/,x×]+$/.test(limpio) ? `${limpio} reps` : limpio;
 }
 
+/**
+ * La columna «Objetivo» de la hoja.
+ *
+ * Un ejercicio por tiempo se imprime «3 × 45 s»: escribir «3 series · 45 reps»
+ * —que es lo que salía leyendo `reps` a ciegas— es sencillamente falso, y en
+ * papel no hay nada que tocar para averiguar qué se quería decir.
+ *
+ * «por lado» va al final y siempre visible: es lo que decide si la serie son 12
+ * repeticiones o 24, y es justo lo que se olvida a mitad del entreno.
+ */
+export function formatearObjetivo(ex: SharedExercise): string {
+  const porLado = ex.perSide ? ' por lado' : '';
+
+  if (planModeOf(ex) === 'time') {
+    const segundos = planDurationOf(ex);
+    if (segundos == null) {
+      // Modo tiempo sin duración válida: se dice lo que se sabe en vez de
+      // inventar un número o caer a repeticiones que no se pidieron.
+      return `${ex.sets != null ? `${ex.sets} × ` : ''}tiempo${porLado}`;
+    }
+    return `${ex.sets != null ? `${ex.sets} × ` : ''}${formatSegundos(segundos)}${porLado}`;
+  }
+
+  const partes = [
+    ex.sets != null ? `${ex.sets} series` : null,
+    ex.reps ? `${formatearReps(ex.reps)}${porLado}` : null,
+  ].filter(Boolean);
+
+  // Sin series ni reps, «por lado» sigue siendo información útil.
+  if (partes.length === 0) return porLado ? porLado.trim() : '';
+  return partes.join(' · ');
+}
+
 /** Fecha larga en español para el pie de la hoja. */
 function fechaLarga(d: Date): string {
   return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -64,12 +98,7 @@ export function buildRoutinePrintHtml(routine: SharedRoutine, now: Date = new Da
       const filas = dia.exercises
         .map((ex) => {
           const casillas = Math.min(MAX_CASILLAS, Math.max(1, ex.sets ?? SERIES_POR_DEFECTO));
-          const objetivo = [
-            ex.sets != null ? `${ex.sets} series` : null,
-            ex.reps ? escapar(formatearReps(ex.reps)) : null,
-          ]
-            .filter(Boolean)
-            .join(' · ');
+          const objetivo = escapar(formatearObjetivo(ex));
 
           return `
             <tr>

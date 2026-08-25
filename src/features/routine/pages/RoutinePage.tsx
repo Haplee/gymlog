@@ -23,6 +23,7 @@ import { normalizeExerciseName } from '@shared/lib/progressionCycle';
 import { weightToInput } from '@shared/lib/weight';
 import type { Exercise } from '@shared/lib/types';
 import { SortableExerciseList } from '@features/routine/components/SortableExerciseList';
+import { RoutineExerciseEditor } from '@features/routine/components/RoutineExerciseEditor';
 import { RoutineSession } from '@features/routine/components/RoutineSession';
 import { Chip, SectionHeader, BottomSheet, ConfirmDialog } from '@shared/components/ui';
 import { EmptyState } from '@shared/components/EmptyStates';
@@ -102,6 +103,13 @@ export function RoutinePage() {
   const [showMovePicker, setShowMovePicker] = useState(false);
   /** Id de la rutina pendiente de confirmar su borrado; null = nada que borrar. */
   const [routineToDelete, setRoutineToDelete] = useState<string | null>(null);
+  /**
+   * Posición del ejercicio que se está editando dentro del día; null = cerrado.
+   *
+   * Se guarda el índice y no el objeto para que la hoja siempre lea del store:
+   * con una copia, editar y volver a abrir enseñaría lo de antes.
+   */
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -131,6 +139,14 @@ export function RoutinePage() {
   const sourceDay = getSourceDay(selectedDay);
   const dayRoutine = getRoutineDay(selectedDay);
   const dayExercises = dayRoutine?.exercises ?? [];
+  /**
+   * El ejercicio abierto en la hoja de edición.
+   *
+   * Se resuelve por índice contra la lista actual: si el día cambia o el
+   * ejercicio ya no está, sale `null` y la hoja se cierra sola en vez de
+   * escribir sobre el que haya caído en esa posición.
+   */
+  const editingExercise = editingIndex != null ? (dayExercises[editingIndex] ?? null) : null;
   const movedFrom = sourceDay !== null && sourceDay !== selectedDay ? sourceDay : null;
 
   // El guardado remoto fallaba en silencio: la rutina quedaba solo en local y
@@ -225,7 +241,41 @@ export function RoutinePage() {
     return newId;
   }, [t, persistRoutines]);
 
-  const addExerciseToDay = (day: DayOfWeek, exerciseName: string) => {
+  /**
+   * `perSide` se **propone**, no se impone.
+   *
+   * `is_bilateral === false` significa que el ejercicio se hace un lado cada vez
+   * (zancada, remo a una mano), y ahí lo normal es que el objetivo sea por lado.
+   * Queda guardado en el plan y editable: la misma zancada se puede planificar
+   * «12 por lado» o «12 en total alternando», y eso lo decide quien entrena.
+   */
+  const addExerciseToDay = (day: DayOfWeek, exerciseName: string, isBilateral?: boolean | null) => {
+    const editableId = ensureEditableRoutine();
+    if (!editableId) return;
+
+    const routine = useRoutineStore.getState().routines.find((r) => r.id === editableId);
+    if (!routine) return;
+
+    const nuevo: RoutineExercise = {
+      name: exerciseName,
+      sets: 3,
+      reps: '10-12',
+      ...(isBilateral === false ? { perSide: true } : {}),
+    };
+
+    const updatedDays = { ...routine.days };
+    updatedDays[day] = {
+      ...updatedDays[day],
+      exercises: [...updatedDays[day].exercises, nuevo],
+    };
+
+    useRoutineStore.getState().updateRoutine(editableId, { days: updatedDays });
+
+    void persistRoutines();
+  };
+
+  /** Reemplaza un ejercicio del día por su versión editada. */
+  const updateExerciseInDay = (day: DayOfWeek, index: number, next: RoutineExercise) => {
     const editableId = ensureEditableRoutine();
     if (!editableId) return;
 
@@ -235,7 +285,7 @@ export function RoutinePage() {
     const updatedDays = { ...routine.days };
     updatedDays[day] = {
       ...updatedDays[day],
-      exercises: [...updatedDays[day].exercises, { name: exerciseName, sets: 3, reps: '10-12' }],
+      exercises: updatedDays[day].exercises.map((ex, i) => (i === index ? next : ex)),
     };
 
     useRoutineStore.getState().updateRoutine(editableId, { days: updatedDays });
@@ -247,7 +297,7 @@ export function RoutinePage() {
     const cached = queryClient.getQueryData<Exercise[]>(['exercises', user?.id]) ?? exercises;
     const exercise = cached.find((e) => e.id === exerciseId);
     if (!exercise) return;
-    addExerciseToDay(sourceDay ?? selectedDay, exercise.name);
+    addExerciseToDay(sourceDay ?? selectedDay, exercise.name, exercise.is_bilateral);
     setShowExercisePicker(false);
   };
 
@@ -576,6 +626,7 @@ export function RoutinePage() {
                 exercises={dayExercises}
                 onReorder={(next) => sourceDay && reorderDay(sourceDay, next)}
                 onRemove={(i) => sourceDay && removeExerciseFromDay(sourceDay, i)}
+                onEdit={(i) => setEditingIndex(i)}
               />
             ) : null}
           </div>
@@ -669,6 +720,16 @@ export function RoutinePage() {
           />
         </BottomSheet>
       )}
+
+      <RoutineExerciseEditor
+        exercise={editingExercise}
+        onClose={() => setEditingIndex(null)}
+        onSave={(next) => {
+          if (sourceDay != null && editingIndex != null) {
+            updateExerciseInDay(sourceDay, editingIndex, next);
+          }
+        }}
+      />
 
       {activeRoutine && (
         <BottomSheet

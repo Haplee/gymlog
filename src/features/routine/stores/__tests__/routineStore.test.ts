@@ -16,6 +16,7 @@ import {
   type DayOfWeek,
   type Routine,
 } from '../routineStore';
+import { planModeOf, planDurationOf } from '../../utils/planTarget';
 
 const mockFrom = vi.mocked(supabase.from);
 
@@ -67,6 +68,80 @@ function customRoutine(id: string): Routine {
     },
   };
 }
+
+/**
+ * Una rutina propia tal y como la deja serializada la version **actual** de la
+ * app en localStorage y en `user_routines`: sin `mode`, sin `perSide` y sin
+ * `durationSeconds`, porque esos campos no existian cuando se guardo.
+ *
+ * Es la unica prueba que importa de la compatibilidad de la fase 2: si algun
+ * dia la lectura empieza a exigir los campos nuevos, esto se cae aqui y no en
+ * el movil de alguien que abre la app y ve su rutina en blanco.
+ */
+const RUTINA_SERIALIZADA_V1 = JSON.stringify({
+  id: 'mia-vieja',
+  name: 'Torso pierna',
+  description: '',
+  isCustom: true,
+  createdAt: '2026-01-15T10:00:00.000Z',
+  days: {
+    monday: {
+      name: 'Torso',
+      exercises: [
+        { name: 'Press banca', sets: 4, reps: '8-10' },
+        { name: 'Remo con barra', sets: 4, reps: '8-10', notes: 'Espalda neutra' },
+      ],
+    },
+    tuesday: { name: 'Descanso', exercises: [] },
+    wednesday: { name: 'Pierna', exercises: [{ name: 'Sentadilla', sets: 5, reps: '5' }] },
+    thursday: { name: 'Descanso', exercises: [] },
+    friday: { name: 'Descanso', exercises: [] },
+    saturday: { name: 'Descanso', exercises: [] },
+    sunday: { name: 'Descanso', exercises: [] },
+  },
+});
+
+describe('rutinas guardadas antes de los modos de registro', () => {
+  it('se leen igual que hoy: sin modo es modo repeticiones', () => {
+    const rutina = JSON.parse(RUTINA_SERIALIZADA_V1) as Routine;
+    const ejercicios = rutina.days.monday.exercises;
+
+    expect(ejercicios).toHaveLength(2);
+    for (const ex of ejercicios) {
+      expect(ex.mode).toBeUndefined();
+      expect(planModeOf(ex)).toBe('reps');
+      expect(planDurationOf(ex)).toBeNull();
+    }
+    expect(ejercicios[0].sets).toBe(4);
+    expect(ejercicios[0].reps).toBe('8-10');
+    expect(ejercicios[1].notes).toBe('Espalda neutra');
+  });
+
+  it('entra en el store por loadFromDb y sale intacta', async () => {
+    const rutina = JSON.parse(RUTINA_SERIALIZADA_V1) as Routine;
+    mockRemoteContainer({ routines: [rutina], activeRoutineId: rutina.id });
+
+    await useRoutineStore.getState().loadFromDb('u1');
+
+    const guardada = useRoutineStore.getState().routines.find((r) => r.id === 'mia-vieja');
+    expect(guardada).toBeDefined();
+    expect(guardada?.days.wednesday.exercises[0]).toEqual({
+      name: 'Sentadilla',
+      sets: 5,
+      reps: '5',
+    });
+  });
+
+  it('las plantillas predefinidas tampoco declaran modo: todas son de reps', () => {
+    for (const routine of PREDEFINED_ROUTINES) {
+      for (const day of DAYS) {
+        for (const ex of routine.days[day].exercises) {
+          expect(planModeOf(ex)).toBe('reps');
+        }
+      }
+    }
+  });
+});
 
 describe('plantillas predefinidas', () => {
   it('todas cubren los siete días de la semana', () => {

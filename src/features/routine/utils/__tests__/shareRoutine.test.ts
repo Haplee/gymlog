@@ -11,9 +11,10 @@ import {
   sharedRoutineToStore,
   SharedRoutineError,
   SHARE_KIND,
+  SHARE_FORMAT_VERSION,
 } from '../shareRoutine';
 import { DAY_ORDER, type Routine } from '@features/routine/stores/routineStore';
-import { buildRoutinePrintHtml, formatearReps } from '../printRoutine';
+import { buildRoutinePrintHtml, formatearReps, formatearObjetivo } from '../printRoutine';
 
 const vacios = (): Routine['days'] => {
   const days = {} as Routine['days'];
@@ -231,5 +232,202 @@ describe('buildRoutinePrintHtml', () => {
   it('no marca el fichero como rutina compartible por error', () => {
     // La hoja impresa es para leer, no para reimportar: no debe llevar la marca.
     expect(html()).not.toContain(SHARE_KIND);
+  });
+});
+
+/* ------------------------------------------------ modos de registro (f2) --- */
+
+/**
+ * Fichero **v1**: el que generaba la app antes de que existieran los modos. Se
+ * deja escrito a mano y literal a propósito: si algún día el parser empieza a
+ * exigir los campos nuevos, esto se cae aquí y no en el móvil de alguien que
+ * recibe la rutina de un amigo con una versión anterior.
+ */
+const FICHERO_V1 = {
+  kind: SHARE_KIND,
+  version: 1,
+  name: 'Rutina de un amigo',
+  description: 'Compartida antes de la fase 2',
+  days: [
+    {
+      day: 'monday',
+      name: 'Empuje',
+      exercises: [
+        { name: 'Press banca', sets: 3, reps: '6-8' },
+        { name: 'Fondos', sets: 3, reps: 'AMRAP', notes: 'Sin lastre' },
+      ],
+    },
+  ],
+  exportedAt: '2026-02-01T09:00:00.000Z',
+};
+
+describe('compatibilidad del formato compartido', () => {
+  it('la versión del formato es 2', () => {
+    expect(SHARE_FORMAT_VERSION).toBe(2);
+  });
+
+  it('un fichero v1 se sigue importando entero', () => {
+    const leido = parseSharedRoutine(FICHERO_V1);
+
+    expect(leido.name).toBe('Rutina de un amigo');
+    expect(leido.days).toHaveLength(1);
+    expect(leido.days[0].exercises).toEqual([
+      { name: 'Press banca', sets: 3, reps: '6-8' },
+      { name: 'Fondos', sets: 3, reps: 'AMRAP', notes: 'Sin lastre' },
+    ]);
+  });
+
+  it('un fichero v1 no inventa modos: todo entra como repeticiones', () => {
+    const store = sharedRoutineToStore(parseSharedRoutine(FICHERO_V1), () => 'id-nuevo');
+    for (const ex of store.days.monday.exercises) {
+      expect(ex.mode).toBeUndefined();
+      expect(ex.perSide).toBeUndefined();
+      expect(ex.durationSeconds).toBeUndefined();
+    }
+  });
+
+  it('un fichero de una versión más nueva se rechaza con un mensaje claro', () => {
+    expect(() => parseSharedRoutine({ ...FICHERO_V1, version: SHARE_FORMAT_VERSION + 1 })).toThrow(
+      SharedRoutineError,
+    );
+  });
+});
+
+describe('compartir ejercicios por tiempo', () => {
+  const conTiempo = (): Routine => ({
+    ...rutina(),
+    days: {
+      ...vacios(),
+      monday: {
+        name: 'Core',
+        exercises: [
+          { name: 'Plancha', sets: 3, mode: 'time', durationSeconds: 45 },
+          { name: 'Zancada', sets: 3, reps: '12', perSide: true },
+          { name: 'Press banca', sets: 3, reps: '6-8' },
+        ],
+      },
+    },
+  });
+
+  it('escribe modo, por lado y duración', () => {
+    const [plancha, zancada, press] = buildSharedRoutine(conTiempo()).days[0].exercises;
+
+    expect(plancha).toEqual({ name: 'Plancha', sets: 3, mode: 'time', durationSeconds: 45 });
+    expect(zancada).toEqual({ name: 'Zancada', sets: 3, reps: '12', perSide: true });
+    // El modo por defecto no se escribe: un fichero de una rutina normal sale
+    // exactamente igual que antes de la fase 2.
+    expect(press).toEqual({ name: 'Press banca', sets: 3, reps: '6-8' });
+  });
+
+  it('ida y vuelta completa: exportar, leer y volver al store', () => {
+    const leido = parseSharedRoutine(JSON.parse(serializeSharedRoutine(conTiempo())));
+    const store = sharedRoutineToStore(leido, () => 'id-nuevo');
+
+    expect(store.days.monday.exercises[0]).toEqual({
+      name: 'Plancha',
+      sets: 3,
+      mode: 'time',
+      durationSeconds: 45,
+    });
+    expect(store.days.monday.exercises[1].perSide).toBe(true);
+  });
+
+  it('descarta un modo inventado y deja el ejercicio en repeticiones', () => {
+    const leido = parseSharedRoutine({
+      ...FICHERO_V1,
+      version: 2,
+      days: [
+        {
+          day: 'monday',
+          name: 'Raro',
+          exercises: [{ name: 'X', sets: 3, reps: '10', mode: 'cardio', durationSeconds: 60 }],
+        },
+      ],
+    });
+    expect(leido.days[0].exercises[0]).toEqual({ name: 'X', sets: 3, reps: '10' });
+  });
+
+  it('descarta una duración fuera de rango y no deja el número dentro', () => {
+    const leido = parseSharedRoutine({
+      ...FICHERO_V1,
+      version: 2,
+      days: [
+        {
+          day: 'monday',
+          name: 'Raro',
+          exercises: [
+            { name: 'A', sets: 3, mode: 'time', durationSeconds: -10 },
+            { name: 'B', sets: 3, mode: 'time', durationSeconds: 99999 },
+          ],
+        },
+      ],
+    });
+    for (const ex of leido.days[0].exercises) {
+      expect(ex.mode).toBe('time');
+      expect(ex.durationSeconds).toBeUndefined();
+    }
+  });
+
+  it('perSide solo se acepta si viene como true de verdad', () => {
+    const leido = parseSharedRoutine({
+      ...FICHERO_V1,
+      version: 2,
+      days: [
+        {
+          day: 'monday',
+          name: 'Raro',
+          exercises: [{ name: 'A', sets: 3, reps: '10', perSide: 'sí' }],
+        },
+      ],
+    });
+    expect(leido.days[0].exercises[0].perSide).toBeUndefined();
+  });
+});
+
+describe('formatearObjetivo', () => {
+  it('una serie por tiempo se imprime «3 × 45 s», no como repeticiones', () => {
+    expect(formatearObjetivo({ name: 'Plancha', sets: 3, mode: 'time', durationSeconds: 45 })).toBe(
+      '3 × 45 s',
+    );
+  });
+
+  it('a partir del minuto usa m:ss', () => {
+    expect(formatearObjetivo({ name: 'Plancha', sets: 2, mode: 'time', durationSeconds: 90 })).toBe(
+      '2 × 1:30',
+    );
+  });
+
+  it('los ejercicios de siempre se imprimen igual que antes', () => {
+    expect(formatearObjetivo({ name: 'Press', sets: 3, reps: '6-8' })).toBe('3 series · 6-8 reps');
+    expect(formatearObjetivo({ name: 'Fondos', sets: 3, reps: 'AMRAP' })).toBe('3 series · AMRAP');
+  });
+
+  it('«por lado» se ve, que es lo que decide si son 12 repeticiones o 24', () => {
+    expect(formatearObjetivo({ name: 'Zancada', sets: 3, reps: '12', perSide: true })).toBe(
+      '3 series · 12 reps por lado',
+    );
+  });
+
+  it('modo tiempo sin duración dice «tiempo» en vez de inventarse un número', () => {
+    expect(formatearObjetivo({ name: 'Plancha', sets: 3, mode: 'time' })).toBe('3 × tiempo');
+  });
+
+  it('la hoja impresa muestra los segundos', () => {
+    const html = buildRoutinePrintHtml({
+      kind: SHARE_KIND,
+      version: SHARE_FORMAT_VERSION,
+      name: 'Core',
+      description: '',
+      days: [
+        {
+          day: 'monday',
+          name: 'Core',
+          exercises: [{ name: 'Plancha', sets: 3, mode: 'time', durationSeconds: 45 }],
+        },
+      ],
+      exportedAt: '2026-02-01T09:00:00.000Z',
+    });
+    expect(html).toContain('3 × 45 s');
+    expect(html).not.toContain('reps');
   });
 });

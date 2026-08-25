@@ -13,6 +13,7 @@
  */
 
 import { DAY_ORDER, type DayOfWeek, type Routine } from '@features/routine/stores/routineStore';
+import { MAX_DURACION_SEGUNDOS, MIN_DURACION_SEGUNDOS } from './planTarget';
 
 /**
  * Versión del formato del fichero.
@@ -20,7 +21,17 @@ import { DAY_ORDER, type DayOfWeek, type Routine } from '@features/routine/store
  * Va dentro para que un GymLog viejo sepa reconocer un fichero nuevo y avisar,
  * en vez de leerlo a medias y crear una rutina incompleta.
  */
-export const SHARE_FORMAT_VERSION = 1;
+export const SHARE_FORMAT_VERSION = 2;
+
+/**
+ * Versiones que este GymLog sabe leer.
+ *
+ * La v1 no llevaba modo de registro, y no lleva nada que haya que traducir: un
+ * ejercicio sin `mode` **es** un ejercicio de repeticiones, que es justo lo que
+ * significaba antes. Por eso la compatibilidad hacia atrás no necesita ninguna
+ * conversión, solo no exigir los campos nuevos.
+ */
+export const SHARE_MIN_READABLE_VERSION = 1;
 
 /** Marca del fichero: identifica que esto es un plan de GymLog y no otra cosa. */
 export const SHARE_KIND = 'gymlog.routine';
@@ -30,6 +41,10 @@ export interface SharedExercise {
   sets?: number;
   reps?: string;
   notes?: string;
+  /** Ausente = repeticiones. Ver `planTarget`. */
+  mode?: 'reps' | 'time';
+  perSide?: boolean;
+  durationSeconds?: number;
 }
 
 export interface SharedDay {
@@ -80,6 +95,14 @@ export function buildSharedRoutine(routine: Routine, now: Date = new Date()): Sh
         ...(ex.sets != null ? { sets: ex.sets } : {}),
         ...(ex.reps ? { reps: ex.reps } : {}),
         ...(ex.notes ? { notes: ex.notes } : {}),
+        // El modo por defecto no se escribe: un fichero de una rutina de
+        // repeticiones sale byte a byte como salía antes, y quien lo abra a
+        // mano no se encuentra `"mode": "reps"` repetido en cada línea.
+        ...(ex.mode === 'time' ? { mode: 'time' as const } : {}),
+        ...(ex.perSide ? { perSide: true } : {}),
+        ...(ex.mode === 'time' && ex.durationSeconds != null
+          ? { durationSeconds: ex.durationSeconds }
+          : {}),
       })),
     });
   }
@@ -127,6 +150,13 @@ const MAX_LARGO_TEXTO = 200;
 const texto = (v: unknown, porDefecto = ''): string =>
   typeof v === 'string' ? v.trim().slice(0, MAX_LARGO_TEXTO) : porDefecto;
 
+/** Segundos de una serie por tiempo, o `null` si el número no sirve. */
+const duracion = (v: unknown): number | null => {
+  if (typeof v !== 'number' || !Number.isFinite(v)) return null;
+  const n = Math.floor(v);
+  return n >= MIN_DURACION_SEGUNDOS && n <= MAX_DURACION_SEGUNDOS ? n : null;
+};
+
 /**
  * Lee un fichero de rutina compartida y lo deja listo para añadir.
  *
@@ -145,6 +175,9 @@ export function parseSharedRoutine(raw: unknown): SharedRoutine {
   }
   if (typeof obj.version !== 'number' || obj.version > SHARE_FORMAT_VERSION) {
     throw new SharedRoutineError('El fichero viene de una versión más nueva de GymLog.');
+  }
+  if (obj.version < SHARE_MIN_READABLE_VERSION) {
+    throw new SharedRoutineError('El fichero viene de una versión de GymLog demasiado antigua.');
   }
 
   const nombre = texto(obj.name);
@@ -173,6 +206,15 @@ export function parseSharedRoutine(raw: unknown): SharedRoutine {
           : {}),
         ...(texto(e.reps) ? { reps: texto(e.reps) } : {}),
         ...(texto(e.notes) ? { notes: texto(e.notes) } : {}),
+        // Solo se acepta 'time'. Cualquier otra cosa —'cardio', un número, un
+        // objeto— se ignora y el ejercicio queda de repeticiones, que es el
+        // comportamiento de siempre y el único que todas las pantallas saben
+        // pintar.
+        ...(e.mode === 'time' ? { mode: 'time' as const } : {}),
+        ...(e.perSide === true ? { perSide: true } : {}),
+        ...(e.mode === 'time' && duracion(e.durationSeconds) != null
+          ? { durationSeconds: duracion(e.durationSeconds) as number }
+          : {}),
       });
     }
 
@@ -220,6 +262,9 @@ export function sharedRoutineToStore(
         ...(e.sets != null ? { sets: e.sets } : {}),
         ...(e.reps ? { reps: e.reps } : {}),
         ...(e.notes ? { notes: e.notes } : {}),
+        ...(e.mode === 'time' ? { mode: 'time' as const } : {}),
+        ...(e.perSide ? { perSide: true } : {}),
+        ...(e.durationSeconds != null ? { durationSeconds: e.durationSeconds } : {}),
       })),
     };
   }
