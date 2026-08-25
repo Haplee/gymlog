@@ -190,6 +190,27 @@ arquitectura actual de GymLog (S = horas, M = un día, L = varios días).
 | 4.3 | **Filtro por equipamiento adaptativo**        | S        | Que las opciones se recalculen sobre el conjunto ya filtrado, para que ninguna combinación dé cero resultados                                                                                                                                                     |
 | 4.4 | **Ejercicios propios de usuario**             | M        | Nombre y grupo muscular; que se comporten como los nativos en rutinas, historial y analítica                                                                                                                                                                      |
 
+#### Estado de la Fase 4 (25 de agosto de 2026)
+
+| #   | Estado                        | Qué se encontró                                                                                                                                                                                                                            |
+| --- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 4.1 | **Pendiente**                 | Es la de verdad grande. Los paths hay que dibujarlos desde cero (los de openGym son AGPL) y auditarlos con `audit:contrast` contra los 24 acentos en los dos temas                                                                         |
+| 4.2 | **Pendiente — decisión tuya** | No es trabajo de código sino de licencia: hay que elegir un dataset y comprobar que su licencia permite empaquetarlo en una app MIT. Es justo el terreno que pediste no pisar a la ligera, así que no se ha elegido ninguno por ti         |
+| 4.3 | **Hecho**                     | Añadido el filtro por equipamiento y hechos adaptativos los dos: las opciones de cada uno se calculan sobre lo que dejan los demás, así que ningún chip pulsable lleva a cero resultados. 6 tests sobre esa propiedad                      |
+| 4.4 | **Ya estaba**                 | `createCustomExercise` + `resolveOrCreateExercise` con `user_id` e índice único `(user_id, lower(name))`, y el catálogo ya ofrece crearlos. Se comportan como los nativos porque son filas de la misma tabla. Esta tabla lo daba por hacer |
+
+#### Estado de la Fase 5
+
+Sigue siendo opcional y estratégica, con una corrección medida:
+
+- **5.4 (medidas corporales) tiene más contenido del que decía la tabla.**
+  `userStats/BodyMeasurements.tsx` existe, pero solo cubre **peso y % de grasa**.
+  Cintura, brazo, pecho y muslo no están en ninguna parte, ni en la UI ni en el
+  esquema: añadirlas es una migración, no un formulario.
+- El resto (5.1, 5.2, 5.3, 5.5) son decisiones de producto, no tareas: a qué
+  público te diriges, cuántos idiomas quieres mantener sincronizados y si te
+  interesa el usuario que no quiere sus datos en Supabase.
+
 ### Fase 5 — Opcional / estratégico
 
 | #   | Tarea                                                                           | Comentario                                                                                                                                                                                                                                    |

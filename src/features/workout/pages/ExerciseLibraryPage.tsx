@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
@@ -62,6 +62,7 @@ export function ExerciseLibraryPage() {
   const [tab, setTab] = useState<'own' | 'catalog'>('own');
   const [search, setSearch] = useState('');
   const [muscleFilter, setMuscleFilter] = useState<string | null>(null);
+  const [equipmentFilter, setEquipmentFilter] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const { data: exercises = [] } = useQuery({
@@ -71,26 +72,64 @@ export function ExerciseLibraryPage() {
     staleTime: 1000 * 60 * 5,
   });
 
+  /** ¿La búsqueda de texto encaja con este ejercicio? */
+  const coincideTexto = useCallback(
+    (e: LibraryExercise, q: string) =>
+      !q ||
+      e.name.toLowerCase().includes(q) ||
+      (e.muscle_group?.toLowerCase().includes(q) ?? false) ||
+      (e.muscle_detail?.toLowerCase().includes(q) ?? false),
+    [],
+  );
+
+  const busqueda = search.trim().toLowerCase();
+
+  /**
+   * Los filtros son **adaptativos**: las opciones de cada uno se calculan sobre
+   * el conjunto que ya han dejado los demás.
+   *
+   * Con listas fijas, «Pecho» + «Mancuerna» puede dar cero resultados y la
+   * pantalla se queda vacía sin explicar cuál de los dos chips sobra. Calculando
+   * cada lista sobre lo que dejan los otros, un chip que se pueda pulsar siempre
+   * lleva a algo — y el que llevaría a cero directamente no aparece.
+   *
+   * Cada lista se excluye a sí misma del filtrado (el filtro de músculo no se
+   * aplica al calcular los músculos disponibles). Si no, al elegir uno los demás
+   * desaparecerían y no habría forma de cambiar de opción sin deseleccionar
+   * primero.
+   */
   const muscleGroups = useMemo(() => {
     const set = new Set<string>();
     for (const e of exercises) {
+      if (equipmentFilter && e.equipment !== equipmentFilter) continue;
+      if (!coincideTexto(e, busqueda)) continue;
       if (e.muscle_group) set.add(e.muscle_group);
     }
+    // El filtro activo se conserva aunque se quede sin resultados: quitarle el
+    // chip de debajo al usuario deja la pantalla vacía sin nada que pulsar para
+    // volver.
+    if (muscleFilter) set.add(muscleFilter);
     return Array.from(set).toSorted((a, b) => a.localeCompare(b));
-  }, [exercises]);
+  }, [exercises, equipmentFilter, busqueda, muscleFilter, coincideTexto]);
+
+  const equipments = useMemo(() => {
+    const set = new Set<string>();
+    for (const e of exercises) {
+      if (muscleFilter && e.muscle_group !== muscleFilter) continue;
+      if (!coincideTexto(e, busqueda)) continue;
+      if (e.equipment) set.add(e.equipment);
+    }
+    if (equipmentFilter) set.add(equipmentFilter);
+    return Array.from(set).toSorted((a, b) => a.localeCompare(b));
+  }, [exercises, muscleFilter, busqueda, equipmentFilter, coincideTexto]);
 
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
     return exercises.filter((e) => {
       if (muscleFilter && e.muscle_group !== muscleFilter) return false;
-      if (!q) return true;
-      return (
-        e.name.toLowerCase().includes(q) ||
-        (e.muscle_group?.toLowerCase().includes(q) ?? false) ||
-        (e.muscle_detail?.toLowerCase().includes(q) ?? false)
-      );
+      if (equipmentFilter && e.equipment !== equipmentFilter) return false;
+      return coincideTexto(e, busqueda);
     });
-  }, [exercises, search, muscleFilter]);
+  }, [exercises, busqueda, muscleFilter, equipmentFilter, coincideTexto]);
 
   // Virtualización de la lista.
   //
@@ -182,6 +221,23 @@ export function ExerciseLibraryPage() {
               </Chip>
             ))}
           </div>
+
+          {equipments.length > 0 && (
+            <div className="flex gap-1.5 mb-4 overflow-x-auto pb-1">
+              <Chip selected={equipmentFilter === null} onClick={() => setEquipmentFilter(null)}>
+                {t('library.all_equipment')}
+              </Chip>
+              {equipments.map((eq) => (
+                <Chip
+                  key={eq}
+                  selected={equipmentFilter === eq}
+                  onClick={() => setEquipmentFilter(equipmentFilter === eq ? null : eq)}
+                >
+                  {eq}
+                </Chip>
+              ))}
+            </div>
+          )}
 
           {filtered.length === 0 ? (
             <div className="text-center py-12 text-sm text-fg-subtle">{t('library.empty')}</div>
