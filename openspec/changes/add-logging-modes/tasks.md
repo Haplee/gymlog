@@ -337,9 +337,30 @@ al leer rompería exactamente eso.
 
 ## Verificación final
 
-- [ ] V.1 `npm run lint && npm run type-check && npm run test && npm run build`
-- [ ] V.2 `npm run audit:contrast` (toca UI nueva)
-- [ ] V.3 En la **APK sobre el Pixel**, no solo en el navegador: una plancha con
-      cronómetro, un remo por lado y una superserie, de principio a fin.
-- [ ] V.4 Comprobar que una rutina y un historial creados **antes** del cambio se
-      siguen leyendo y editando igual.
+- [x] V.1 `type-check` 0 errores · `lint` 0 errores (los 5 warnings de
+      `notificationsSchedule.test.ts`, previos y ajenos) · **776 tests en 68
+      ficheros** · `build` con PWA en verde (118 entradas precacheadas).
+- [x] V.2 `audit:contrast` — 104 comprobaciones, 24 acentos × 2 temas, todo en
+      verde. Peor caso de texto 4,790:1 en oscuro y 4,824:1 en claro.
+- [ ] V.3 **Pendiente: no se puede hacer sin el dispositivo.** `adb devices` no
+      devuelve ninguno, así que la plancha con cronómetro, el remo por lado y la
+      superserie no se han recorrido en la APK. Es la comprobación que más
+      cuesta suplir: el cronómetro depende de que Android dispare
+      `appStateChange` al irse a segundo plano, y eso solo se ve ahí.
+      Lo más cerca que se ha llegado es la suite de Playwright (ver abajo).
+- [x] V.4 Comprobado **contra la base de datos real**, no solo con fixtures: las
+      6 rutinas guardadas son todas anteriores al cambio —ninguna trae `mode`,
+      `perSide` ni `supersetId`— y las 1447 series son todas de repeticiones,
+      con 0 filas sin `reps`, 0 entrenos con `total_volume` en NULL y 0 récords
+      sin repeticiones. Es exactamente el caso que cubren los tests de
+      compatibilidad de `routineStore` y `shareRoutine`.
+
+### La suite e2e
+
+54 pruebas de Playwright en verde, en los dos dispositivos del config. Con el
+timeout por defecto salían **8 fallos en el proyecto iPhone 13**, todos
+`page.goto` agotando los 30 s en rutas que este cambio no toca (`/login` entre
+ellas) y todos pasando en Chromium. Con `--timeout=90000` pasan las 54: es WebKit
+tardando en arrancar en este equipo, no una regresión. Queda anotado porque el
+patrón —fallos solo en un proyecto, siempre en la navegación, nunca en una
+aserción— es fácil de confundir con un fallo real.
