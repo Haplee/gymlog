@@ -50,10 +50,13 @@ function subtitulo(ex: RoutineExercise, porLado: string): string {
 
 function SortableRow({
   exercise,
+  encadenado,
   onRemove,
   onEdit,
 }: {
   exercise: RoutineExercise;
+  /** Comparte superserie con la fila de arriba. */
+  encadenado: boolean;
   onRemove: () => void;
   onEdit?: () => void;
 }) {
@@ -82,7 +85,14 @@ function SortableRow({
           <Menu className="w-4 h-4" />
         </button>
         <div className="min-w-0">
-          <div className="text-base font-medium text-fg truncate">{exercise.name}</div>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <div className="text-base font-medium text-fg truncate">{exercise.name}</div>
+            {encadenado && (
+              <span className="label-caps flex-shrink-0 rounded-pill bg-accent/15 px-1.5 py-0.5 text-accent">
+                {t('routine.superset_label')}
+              </span>
+            )}
+          </div>
           {subtitulo(exercise, t('routine.target_per_side')) && (
             <div className="text-xs mt-0.5 text-fg-subtle">
               {subtitulo(exercise, t('routine.target_per_side'))}
@@ -142,6 +152,10 @@ export function SortableExerciseList({
             <SortableRow
               key={ex.name}
               exercise={ex}
+              // Solo la segunda fila del grupo en adelante lleva la etiqueta:
+              // marcarla también en la primera repetiría la misma información
+              // dos veces seguidas sin decir nada nuevo.
+              encadenado={i > 0 && !!ex.supersetId && ex.supersetId === exercises[i - 1].supersetId}
               onRemove={() => onRemove(i)}
               onEdit={onEdit ? () => onEdit(i) : undefined}
             />

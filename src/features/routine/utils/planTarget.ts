@@ -66,3 +66,64 @@ export function formatSegundos(segundos: number): string {
   const s = total % 60;
   return `${m}:${String(s).padStart(2, '0')}`;
 }
+
+/* --------------------------------------------------------- superseries ---- */
+
+/** Un tramo de la lista de ejercicios: suelto, o un grupo encadenado. */
+export interface PlanGroup<T> {
+  /** `null` en un ejercicio suelto. */
+  supersetId: string | null;
+  /** Índices en la lista original. Se conservan para poder editar en su sitio. */
+  indices: number[];
+  exercises: T[];
+}
+
+/**
+ * Parte la lista de ejercicios del día en tramos: sueltos y superseries.
+ *
+ * **Solo agrupa ejercicios consecutivos.** Dos ejercicios con el mismo
+ * `supersetId` separados por un tercero no forman una superserie: forman dos
+ * grupos de uno. Es lo que hace que reordenar la lista rompa el encadenado en
+ * vez de dejar una superserie que salta por encima de otro ejercicio, que es lo
+ * que el usuario acaba de decir que no quiere al mover la fila.
+ */
+export function groupPlanExercises<T extends { supersetId?: string }>(
+  exercises: readonly T[],
+): PlanGroup<T>[] {
+  const grupos: PlanGroup<T>[] = [];
+
+  exercises.forEach((ex, i) => {
+    const id = ex.supersetId ?? null;
+    const ultimo = grupos[grupos.length - 1];
+    if (id !== null && ultimo && ultimo.supersetId === id) {
+      ultimo.indices.push(i);
+      ultimo.exercises.push(ex);
+      return;
+    }
+    grupos.push({ supersetId: id, indices: [i], exercises: [ex] });
+  });
+
+  return grupos;
+}
+
+/**
+ * Orden de ejecución de una superserie: serie 1 de A, serie 1 de B, serie 2 de
+ * A, serie 2 de B…
+ *
+ * Devuelve pares `[índiceDeEjercicio, númeroDeSerie]` con el número de serie
+ * empezando en 1. Se calcula aquí y no en la pantalla para poder probarlo sin
+ * montar nada.
+ */
+export function supersetOrder(setsPorEjercicio: readonly number[]): [number, number][] {
+  const vueltas = Math.max(0, ...setsPorEjercicio);
+  const orden: [number, number][] = [];
+  for (let vuelta = 0; vuelta < vueltas; vuelta++) {
+    setsPorEjercicio.forEach((n, ejercicio) => {
+      // Un ejercicio con menos series que el resto **sale del ciclo** cuando se
+      // le acaban, en vez de bloquear la vuelta: un 4×A + 3×B es una superserie
+      // perfectamente normal y la cuarta vuelta es solo A.
+      if (vuelta < n) orden.push([ejercicio, vuelta + 1]);
+    });
+  }
+  return orden;
+}

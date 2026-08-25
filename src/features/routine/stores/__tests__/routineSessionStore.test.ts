@@ -362,3 +362,76 @@ describe('sesión de rutina con series por tiempo', () => {
     expect(sets[0].duration_seconds).toBe(40);
   });
 });
+
+/* ------------------------------------------------------ superseries (f5) --- */
+
+const dayConSuperserie: DayRoutine = {
+  name: 'Empuje',
+  exercises: [
+    { name: 'Press banca', sets: 2, reps: '8', supersetId: 'ss-1' },
+    { name: 'Aperturas', sets: 2, reps: '12', supersetId: 'ss-1' },
+    { name: 'Extensiones', sets: 1, reps: '15' },
+  ],
+};
+
+const rutinaConSuperserie = {
+  ...routine,
+  days: { monday: dayConSuperserie },
+} as unknown as Routine;
+
+describe('superseries en la sesión', () => {
+  beforeEach(() => {
+    useRoutineSessionStore.getState().discard();
+    mockRpc.mockClear();
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: null,
+      count: null,
+      status: 200,
+      statusText: 'OK',
+    } as never);
+    mockResolve.mockClear();
+    mockResolve.mockResolvedValue('created-exercise-id');
+    Object.defineProperty(navigator, 'onLine', { configurable: true, value: true });
+  });
+
+  it('copia el grupo del plan a la sesión', () => {
+    useRoutineSessionStore.getState().start(rutinaConSuperserie, 'monday', dayConSuperserie);
+    const [a, b, c] = useRoutineSessionStore.getState().exercises;
+
+    expect(a.supersetId).toBe('ss-1');
+    expect(b.supersetId).toBe('ss-1');
+    expect(c.supersetId).toBeUndefined();
+  });
+
+  it('un grupo a medias NO bloquea el guardado del resto', async () => {
+    // El caso real: se hace el press banca de la superserie, no da tiempo a las
+    // aperturas y sí a las extensiones. Un guardado «todo o nada» por grupo
+    // perdería el entreno entero por la mitad que falta.
+    useRoutineSessionStore.getState().start(rutinaConSuperserie, 'monday', dayConSuperserie);
+    fillExercise(0, '8', '80');
+    fillExercise(2, '15', '30');
+
+    const result = await useRoutineSessionStore.getState().finish('u1', (n) => `ex-${n}`, identity);
+
+    expect(result.error).toBeNull();
+    expect(result.savedExercises).toBe(2);
+
+    const guardados = mockRpc.mock.calls.map(
+      (c) => (c[1] as { p_exercise_id?: string })?.p_exercise_id,
+    );
+    expect(guardados).toContain('ex-Press banca');
+    expect(guardados).toContain('ex-Extensiones');
+    expect(guardados).not.toContain('ex-Aperturas');
+  });
+
+  it('la mitad hecha de la superserie se guarda aunque la otra mitad esté vacía', async () => {
+    useRoutineSessionStore.getState().start(rutinaConSuperserie, 'monday', dayConSuperserie);
+    fillExercise(1, '12', '15');
+
+    const result = await useRoutineSessionStore.getState().finish('u1', (n) => `ex-${n}`, identity);
+
+    expect(result.error).toBeNull();
+    expect(result.savedExercises).toBe(1);
+  });
+});

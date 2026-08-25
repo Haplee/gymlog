@@ -723,6 +723,7 @@ export function RoutinePage() {
 
       <RoutineExerciseEditor
         exercise={editingExercise}
+        previous={editingIndex != null && editingIndex > 0 ? dayExercises[editingIndex - 1] : null}
         onClose={() => setEditingIndex(null)}
         onSave={(next) => {
           if (sourceDay != null && editingIndex != null) {

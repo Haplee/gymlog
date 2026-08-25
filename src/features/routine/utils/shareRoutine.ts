@@ -45,6 +45,8 @@ export interface SharedExercise {
   mode?: 'reps' | 'time';
   perSide?: boolean;
   durationSeconds?: number;
+  /** Grupo de superserie. Ver `RoutineExercise.supersetId`. */
+  supersetId?: string;
 }
 
 export interface SharedDay {
@@ -103,6 +105,7 @@ export function buildSharedRoutine(routine: Routine, now: Date = new Date()): Sh
         ...(ex.mode === 'time' && ex.durationSeconds != null
           ? { durationSeconds: ex.durationSeconds }
           : {}),
+        ...(ex.supersetId ? { supersetId: ex.supersetId } : {}),
       })),
     });
   }
@@ -215,6 +218,10 @@ export function parseSharedRoutine(raw: unknown): SharedRoutine {
         ...(e.mode === 'time' && duracion(e.durationSeconds) != null
           ? { durationSeconds: duracion(e.durationSeconds) as number }
           : {}),
+        // El id que llega se recorta pero no se regenera: lo que importa es que
+        // dos ejercicios del fichero compartan el mismo, y renombrarlo aquí
+        // rompería justo eso.
+        ...(texto(e.supersetId) ? { supersetId: texto(e.supersetId) } : {}),
       });
     }
 
@@ -265,6 +272,7 @@ export function sharedRoutineToStore(
         ...(e.mode === 'time' ? { mode: 'time' as const } : {}),
         ...(e.perSide ? { perSide: true } : {}),
         ...(e.durationSeconds != null ? { durationSeconds: e.durationSeconds } : {}),
+        ...(e.supersetId ? { supersetId: e.supersetId } : {}),
       })),
     };
   }

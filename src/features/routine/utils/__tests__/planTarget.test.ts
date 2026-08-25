@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { planModeOf, planDurationOf, formatSegundos, MAX_DURACION_SEGUNDOS } from '../planTarget';
+import {
+  planModeOf,
+  planDurationOf,
+  formatSegundos,
+  MAX_DURACION_SEGUNDOS,
+  groupPlanExercises,
+  supersetOrder,
+} from '../planTarget';
 
 describe('planModeOf', () => {
   it('un ejercicio sin modo es de repeticiones', () => {
@@ -65,5 +72,81 @@ describe('formatSegundos', () => {
     expect(formatSegundos(60)).toBe('1:00');
     expect(formatSegundos(90)).toBe('1:30');
     expect(formatSegundos(605)).toBe('10:05');
+  });
+});
+
+describe('groupPlanExercises', () => {
+  const ex = (name: string, supersetId?: string) => ({
+    name,
+    ...(supersetId ? { supersetId } : {}),
+  });
+
+  it('sin superseries, cada ejercicio es su propio grupo', () => {
+    const grupos = groupPlanExercises([ex('A'), ex('B')]);
+    expect(grupos).toHaveLength(2);
+    expect(grupos.every((g) => g.supersetId === null)).toBe(true);
+  });
+
+  it('dos consecutivos con el mismo id forman un grupo', () => {
+    const grupos = groupPlanExercises([ex('A', 's1'), ex('B', 's1'), ex('C')]);
+
+    expect(grupos).toHaveLength(2);
+    expect(grupos[0].supersetId).toBe('s1');
+    expect(grupos[0].indices).toEqual([0, 1]);
+    expect(grupos[1].exercises[0].name).toBe('C');
+  });
+
+  it('con un ejercicio en medio NO forman superserie', () => {
+    // Es lo que pasa al reordenar la lista. Dejar una superserie que salta por
+    // encima de otro ejercicio contradice lo que el usuario acaba de hacer al
+    // mover la fila.
+    const grupos = groupPlanExercises([ex('A', 's1'), ex('C'), ex('B', 's1')]);
+
+    expect(grupos).toHaveLength(3);
+    expect(grupos.every((g) => g.exercises.length === 1)).toBe(true);
+  });
+
+  it('los índices apuntan a la lista original, para poder editar en su sitio', () => {
+    const grupos = groupPlanExercises([ex('A'), ex('B', 's1'), ex('C', 's1')]);
+    expect(grupos[1].indices).toEqual([1, 2]);
+  });
+
+  it('una lista vacía no revienta', () => {
+    expect(groupPlanExercises([])).toEqual([]);
+  });
+});
+
+describe('supersetOrder', () => {
+  it('recorre en ciclo: A1, B1, A2, B2', () => {
+    expect(supersetOrder([2, 2])).toEqual([
+      [0, 1],
+      [1, 1],
+      [0, 2],
+      [1, 2],
+    ]);
+  });
+
+  it('el ejercicio con menos series sale del ciclo, no lo bloquea', () => {
+    // 3×A + 2×B es una superserie normal; la tercera vuelta es solo A.
+    expect(supersetOrder([3, 2])).toEqual([
+      [0, 1],
+      [1, 1],
+      [0, 2],
+      [1, 2],
+      [0, 3],
+    ]);
+  });
+
+  it('tres ejercicios encadenados también giran', () => {
+    expect(supersetOrder([1, 1, 1])).toEqual([
+      [0, 1],
+      [1, 1],
+      [2, 1],
+    ]);
+  });
+
+  it('sin series no hay orden', () => {
+    expect(supersetOrder([])).toEqual([]);
+    expect(supersetOrder([0, 0])).toEqual([]);
   });
 });

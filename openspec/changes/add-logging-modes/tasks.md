@@ -302,10 +302,38 @@ arrastrar el impar para siempre.
 
 ## Fase 5 — Superseries
 
-- [ ] 5.1 `supersetId?: string` en `RoutineExercise` y agrupación en el editor.
-- [ ] 5.2 `RoutineSession`: recorrido en ciclo por el grupo.
-- [ ] 5.3 Descanso solo al cerrar el grupo.
-- [ ] 5.4 Comprobar que un grupo a medias no bloquea el guardado del entreno.
+- [x] 5.1 `supersetId?: string` en `RoutineExercise`, con
+      `groupPlanExercises` para partir el día en tramos. En el editor se
+      encadena **con el anterior** —«esto va seguido de lo de arriba»—, que es
+      como se construyen en la práctica, y no eligiendo compañeros de una lista.
+      Encadenar tres seguidos los mete a los tres en el mismo grupo sin pasos
+      extra, porque el id se hereda.
+- [x] 5.2 La sesión pinta el grupo dentro de un marco con su etiqueta, y la
+      lista del editor marca las filas encadenadas. `supersetOrder` deja escrito
+      y probado el orden de ejecución (A1, B1, A2, B2), incluido el caso de un
+      ejercicio con menos series que el resto: **sale del ciclo en vez de
+      bloquear la vuelta**, porque 3×A + 2×B es una superserie normal.
+- [x] 5.3 **No hay nada que cambiar, y conviene que quede escrito por qué.** La
+      sesión de rutina no arranca ningún temporizador de descanso: el único
+      arranque automático vive en `WorkoutPage.handleAddSet`, en el entreno
+      libre, donde no hay plan y por tanto no hay superserie. No hay descanso
+      por ejercicio que suprimir. El día que la sesión de rutina gane su
+      temporizador, `groupPlanExercises` ya deja marcado dónde acaba el grupo.
+- [x] 5.4 Tres tests sobre el caso real: se hace el press de la superserie, no
+      da tiempo a las aperturas y sí a las extensiones. Se guarda lo hecho, con
+      una llamada por ejercicio; un guardado «todo o nada» por grupo perdería el
+      entreno por la mitad que falta.
+
+### Solo se agrupan ejercicios consecutivos
+
+Dos ejercicios con el mismo `supersetId` separados por un tercero **no** forman
+superserie: forman dos grupos de uno. Así, mover una fila rompe el encadenado en
+vez de dejar una superserie que salta por encima de otro ejercicio — que es justo
+lo contrario de lo que el usuario acaba de decir al mover la fila.
+
+El id viaja también en el fichero compartido, y al importarlo **no se regenera**:
+lo que importa es que dos ejercicios del fichero compartan el mismo, y renombrarlo
+al leer rompería exactamente eso.
 
 ## Verificación final
 

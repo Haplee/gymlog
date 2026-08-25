@@ -11,6 +11,14 @@ import {
 interface RoutineExerciseEditorProps {
   /** Ejercicio que se está editando, o `null` para tener la hoja cerrada. */
   exercise: RoutineExercise | null;
+  /**
+   * El ejercicio que va justo antes en el día, si lo hay.
+   *
+   * Hace falta para encadenar una superserie: el grupo se forma con el
+   * **anterior**, que es como se construyen en la práctica —«esto va seguido de
+   * lo de arriba»— y no eligiendo compañeros de una lista.
+   */
+  previous?: RoutineExercise | null;
   onClose: () => void;
   onSave: (next: RoutineExercise) => void;
 }
@@ -35,22 +43,35 @@ const MAX_SERIES = 50;
  * cada apertura: ese patrón encadena un render de más y deja la puerta abierta
  * a pisar lo que el usuario está escribiendo.
  */
-export function RoutineExerciseEditor({ exercise, onClose, onSave }: RoutineExerciseEditorProps) {
+export function RoutineExerciseEditor({
+  exercise,
+  previous,
+  onClose,
+  onSave,
+}: RoutineExerciseEditorProps) {
   if (!exercise) return null;
 
   return (
     <BottomSheet open onClose={onClose} title={exercise.name}>
-      <Formulario key={exercise.name} exercise={exercise} onClose={onClose} onSave={onSave} />
+      <Formulario
+        key={exercise.name}
+        exercise={exercise}
+        previous={previous ?? null}
+        onClose={onClose}
+        onSave={onSave}
+      />
     </BottomSheet>
   );
 }
 
 function Formulario({
   exercise,
+  previous,
   onClose,
   onSave,
 }: {
   exercise: RoutineExercise;
+  previous: RoutineExercise | null;
   onClose: () => void;
   onSave: (next: RoutineExercise) => void;
 }) {
@@ -70,6 +91,12 @@ function Formulario({
       : String(DURACION_POR_DEFECTO),
   );
   const [perSide, setPerSide] = useState(() => exercise.perSide === true);
+  // Encadenado con el anterior si comparten grupo. Sin ejercicio anterior no hay
+  // nada que encadenar, así que la fila ni se ofrece.
+  const puedeEncadenar = previous != null;
+  const [encadenado, setEncadenado] = useState(
+    () => puedeEncadenar && !!exercise.supersetId && exercise.supersetId === previous?.supersetId,
+  );
 
   const seriesNum = Number.parseInt(sets, 10);
   const seriesValidas =
@@ -99,6 +126,12 @@ function Formulario({
       ...(mode === 'time' ? { mode: 'time' as const } : {}),
       ...(perSide ? { perSide: true } : {}),
       ...(mode === 'time' && duracionValida != null ? { durationSeconds: duracionValida } : {}),
+      // Al encadenar se **hereda** el id del anterior, creándolo si aún no
+      // tiene: así encadenar tres seguidos los mete a los tres en el mismo
+      // grupo sin ningún paso extra.
+      ...(encadenado && previous
+        ? { supersetId: previous.supersetId ?? `ss-${crypto.randomUUID()}` }
+        : {}),
     };
 
     onSave(next);
@@ -159,6 +192,18 @@ function Formulario({
         </div>
         <Toggle checked={perSide} onChange={setPerSide} ariaLabel={t('routine.per_side')} />
       </div>
+
+      {puedeEncadenar && (
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <div className="text-base text-fg">{t('routine.superset')}</div>
+            <p className="text-xs text-fg-subtle mt-0.5">
+              {t('routine.superset_help', { name: previous?.name ?? '' })}
+            </p>
+          </div>
+          <Toggle checked={encadenado} onChange={setEncadenado} ariaLabel={t('routine.superset')} />
+        </div>
+      )}
 
       <button
         type="button"

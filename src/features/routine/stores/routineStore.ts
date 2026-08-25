@@ -30,6 +30,19 @@ export interface RoutineExercise {
   perSide?: boolean;
   /** Segundos por serie cuando `mode === 'time'`. Ignorado en modo `reps`. */
   durationSeconds?: number;
+  /**
+   * Superserie: los ejercicios **consecutivos** que compartan este id se hacen
+   * encadenados, sin descanso entre ellos.
+   *
+   * Vive en el plan y no en la serie registrada. En el historial una superserie
+   * son series de dos ejercicios del mismo entreno, que es lo que son; añadir
+   * una columna a `workout_sets` para poder reconstruir el emparejado sería
+   * pagar un cambio de esquema por una pregunta que nadie ha hecho todavía.
+   *
+   * Se exige que sean consecutivos a propósito: un grupo con un ejercicio
+   * suelto en medio no es una superserie, es un id repetido por error.
+   */
+  supersetId?: string;
 }
 
 export interface DayRoutine {

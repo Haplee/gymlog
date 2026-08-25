@@ -35,6 +35,8 @@ export interface SessionExercise {
   perSide?: boolean;
   /** Segundos objetivo por serie cuando `mode === 'time'`. */
   targetDurationSeconds?: number;
+  /** Grupo de superserie copiado del plan. Ver `RoutineExercise.supersetId`. */
+  supersetId?: string;
   sets: SessionSet[];
 }
 
@@ -215,6 +217,7 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
               ...(modo === 'time' ? { mode: 'time' as const } : {}),
               ...(ex.perSide ? { perSide: true } : {}),
               ...(duracion != null ? { targetDurationSeconds: duracion } : {}),
+              ...(ex.supersetId ? { supersetId: ex.supersetId } : {}),
               // Una fila por serie objetivo, ya con el objetivo puesto: así
               // registrar la rutina tal cual sale es solo escribir los pesos. Si
               // hay auto-relleno, el peso de la última sesión ya viene escrito.

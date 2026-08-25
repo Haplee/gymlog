@@ -18,6 +18,7 @@ import { isBodyweightLoad } from '@shared/lib/loadType';
 import type { Exercise } from '@shared/lib/types';
 import type { ExerciseAdvice } from '@features/stats/hooks/useAutoregulation';
 import { SessionExerciseCard } from './SessionExerciseCard';
+import { groupPlanExercises } from '@features/routine/utils/planTarget';
 
 interface Props {
   userId: string;
@@ -211,18 +212,37 @@ export function RoutineSession({ userId, exercises }: Props) {
       </div>
 
       <div className="space-y-3">
-        {sessionExercises.map((ex) => (
-          <SessionExerciseCard
-            key={ex.name}
-            userId={userId}
-            exercise={ex}
-            catalog={catalogByName.get(normalizeName(ex.name))}
-            libraryExercise={libraryByName.get(normalizeName(ex.name))}
-            weightUnit={weightUnit}
-            onAdvice={registerAdvice}
-            onDuration={registerDuration}
-          />
-        ))}
+        {groupPlanExercises(sessionExercises).map((grupo) => {
+          const tarjetas = grupo.exercises.map((ex) => (
+            <SessionExerciseCard
+              key={ex.name}
+              userId={userId}
+              exercise={ex}
+              catalog={catalogByName.get(normalizeName(ex.name))}
+              libraryExercise={libraryByName.get(normalizeName(ex.name))}
+              weightUnit={weightUnit}
+              onAdvice={registerAdvice}
+              onDuration={registerDuration}
+            />
+          ));
+
+          // Un ejercicio suelto se pinta igual que siempre: sin marco, sin
+          // etiqueta y sin un nivel de anidamiento de más.
+          if (grupo.supersetId === null || grupo.exercises.length < 2) return tarjetas;
+
+          return (
+            <div
+              key={grupo.supersetId}
+              className="rounded-card border border-accent/30 bg-accent/5 p-2"
+            >
+              <div className="label-caps px-1 pb-2 text-accent">{t('routine.superset_label')}</div>
+              {/* Encadenados y en el orden en que se hacen: el marco es lo que
+                  dice «esto va seguido», que es la única diferencia real entre
+                  una superserie y dos ejercicios uno detrás de otro. */}
+              <div className="space-y-2">{tarjetas}</div>
+            </div>
+          );
+        })}
       </div>
 
       <button
