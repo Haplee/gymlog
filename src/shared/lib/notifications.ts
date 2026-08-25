@@ -6,6 +6,14 @@ import { useNotificationsStore } from '@shared/stores/notificationsStore';
 
 export const isNative = (): boolean => Capacitor.isNativePlatform();
 
+/** Rango de ids para avisos inmediatos sin id propio. Un id fijo compartido
+    hacía que dos avisos seguidos (p. ej. racha y resumen) se pisaran: el
+    segundo reemplazaba al primero y el usuario solo veía uno. */
+const GENERIC_ID_MIN = 992000;
+const GENERIC_ID_SPAN = 1000;
+let genericSeq = 0;
+const nextGenericId = (): number => GENERIC_ID_MIN + (genericSeq++ % GENERIC_ID_SPAN);
+
 /** IDs reservados: cada tipo tiene un id fijo → se puede cancelar/reemplazar sin duplicados. */
 export const NOTIF_IDS = {
   TIMER: 990001,
@@ -222,7 +230,7 @@ export async function notify(
         {
           title,
           body: options.body ?? '',
-          id: options.id ?? NOTIF_IDS.GENERIC,
+          id: options.id ?? nextGenericId(),
           channelId: 'reminders',
           extra: { url: options.url },
           schedule: { at: new Date(Date.now() + 100) },
@@ -381,6 +389,11 @@ export async function syncRoutineReminders(
   trainedToday = false,
 ): Promise<void> {
   if (!isNative()) return;
+  // El permiso se comprueba ANTES de cancelar: si se cancela primero y luego
+  // resulta que no se puede reprogramar, el usuario se queda sin recordatorios
+  // y sin saberlo. Cancelar con `days` vacío sí es intencionado (desactivar).
+  const allowed = await canNotifyAsync();
+  if (!allowed && days.length > 0) return;
   try {
     // Cancelar siempre los 7 posibles antes de reprogramar
     await LocalNotifications.cancel({
@@ -389,7 +402,7 @@ export async function syncRoutineReminders(
       })),
     });
 
-    if (days.length === 0 || !(await canNotifyAsync())) return;
+    if (days.length === 0) return;
 
     const todayWeekday = new Date().getDay() + 1;
 
