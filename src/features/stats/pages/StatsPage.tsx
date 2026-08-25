@@ -20,6 +20,7 @@ import {
   deleteExerciseGoal,
 } from '@shared/api/queries';
 import { calcular1RM } from '@shared/lib/brzycki';
+import { onlyRepSets } from '@shared/lib/setShape';
 import { Skeleton } from '@shared/components/ui';
 import { KPICard } from '../components/KPICards';
 import { StatsSummary } from '../components/StatsSummary';
@@ -142,16 +143,29 @@ export function StatsPage() {
   const workouts = useMemo(() => data?.workouts ?? [], [data?.workouts]);
   const recentSets = useMemo(() => data?.sets ?? [], [data?.sets]);
 
+  /**
+   * Solo las series que se miden en repeticiones.
+   *
+   * Todo lo que sigue —volumen, 1RM, distribución muscular— multiplica peso por
+   * repeticiones o estima una marca a partir de ellas, y eso no se puede hacer
+   * con una serie por tiempo. Filtrar aquí una vez evita repetirlo en nueve
+   * sitios y que el décimo se olvide.
+   *
+   * Hoy no descarta nada: `reps` es NOT NULL en la BD. Ver
+   * `openspec/changes/add-logging-modes/`.
+   */
+  const strengthSets = useMemo(() => onlyRepSets(recentSets), [recentSets]);
+
   const currentStreak = useMemo(() => calculateCurrentStreak(workouts), [workouts]);
   const maxStreak = useMemo(() => calculateMaxStreak(workouts), [workouts]);
-  const weeklyVolume = useMemo(() => calculateWeeklyVolume(recentSets), [recentSets]);
-  const dailyVolume = useMemo(() => calculateDailyVolumeThisWeek(recentSets), [recentSets]);
+  const weeklyVolume = useMemo(() => calculateWeeklyVolume(strengthSets), [strengthSets]);
+  const dailyVolume = useMemo(() => calculateDailyVolumeThisWeek(strengthSets), [strengthSets]);
   const maxDailyVolume = useMemo(() => Math.max(...dailyVolume, 1), [dailyVolume]);
   const todayIndex = useMemo(() => {
     const d = new Date().getDay();
     return d === 0 ? 6 : d - 1;
   }, []);
-  const prevWeekVolume = useMemo(() => calculatePreviousWeekVolume(recentSets), [recentSets]);
+  const prevWeekVolume = useMemo(() => calculatePreviousWeekVolume(strengthSets), [strengthSets]);
   const volumeChange = useMemo(
     () => calculateVolumeChangePercent(weeklyVolume, prevWeekVolume),
     [weeklyVolume, prevWeekVolume],
@@ -164,13 +178,13 @@ export function StatsPage() {
   // Volúmenes en la unidad del usuario (kg→t, lb→k lb), no toneladas fijas.
   const { formatVol, format: formatKg, toKg } = useWeight();
   const muscleRecovery = useMemo(
-    () => analyzeMuscleRecovery(recentSets, musclesMap),
-    [recentSets, musclesMap],
+    () => analyzeMuscleRecovery(strengthSets, musclesMap),
+    [strengthSets, musclesMap],
   );
   const suggestedGroup = useMemo(() => getSuggestedMuscleGroup(muscleRecovery), [muscleRecovery]);
   const muscleGroupDistribution = useMemo(
-    () => calculateMuscleGroupDistribution(recentSets, musclesMap),
-    [recentSets, musclesMap],
+    () => calculateMuscleGroupDistribution(strengthSets, musclesMap),
+    [strengthSets, musclesMap],
   );
   const uniqueExercises = useMemo(() => {
     return [...new Set(recentSets.map((s) => s.exercise?.name).filter(Boolean))] as string[];
@@ -212,14 +226,14 @@ export function StatsPage() {
   );
   const currentBest1rm = useMemo(() => {
     let best = 0;
-    for (const s of recentSets) {
+    for (const s of strengthSets) {
       if (s.exercise?.name !== activeExercise) continue;
       if ((s as { is_warmup?: boolean | null }).is_warmup) continue;
       const e = calcular1RM(s.weight, s.reps);
       if (e > best) best = e;
     }
     return Math.round(best);
-  }, [recentSets, activeExercise]);
+  }, [strengthSets, activeExercise]);
   const activeGoal = useMemo(
     () => exerciseGoals.find((g) => g.exercise_id === activeExerciseId)?.target_one_rm ?? null,
     [exerciseGoals, activeExerciseId],
@@ -260,7 +274,7 @@ export function StatsPage() {
     return weekStarts
       .map((weekStart, i) => {
         const weekEnd = subDays(weekStart, -7);
-        const vol = recentSets
+        const vol = strengthSets
           .filter((s) => !(s as { is_warmup?: boolean | null }).is_warmup)
           .filter((s) => {
             const dateStr = s.workout?.started_at ?? '';
@@ -272,11 +286,11 @@ export function StatsPage() {
         return { week: `S${i + 1}`, vol };
       })
       .reverse();
-  }, [recentSets, periodFilter]);
+  }, [strengthSets, periodFilter]);
 
   const progressionData = useMemo(() => {
-    return buildProgressionData(recentSets, activeExercise, metricFilter);
-  }, [recentSets, activeExercise, metricFilter]);
+    return buildProgressionData(strengthSets, activeExercise, metricFilter);
+  }, [strengthSets, activeExercise, metricFilter]);
 
   // Comparador: mejor 1RM estimado por día para dos ejercicios, alineado por fecha.
   const cmpA = compareA || uniqueExercises[0] || '';
@@ -285,7 +299,7 @@ export function StatsPage() {
     if (!cmpA || !cmpB || cmpA === cmpB) return [];
     const byDateA = new Map<string, number>();
     const byDateB = new Map<string, number>();
-    for (const s of recentSets) {
+    for (const s of strengthSets) {
       if ((s as { is_warmup?: boolean | null }).is_warmup) continue;
       const name = s.exercise?.name;
       const dateStr = s.workout?.started_at;
@@ -301,7 +315,7 @@ export function StatsPage() {
       a: byDateA.has(day) ? Math.round(byDateA.get(day) as number) : null,
       b: byDateB.has(day) ? Math.round(byDateB.get(day) as number) : null,
     }));
-  }, [recentSets, cmpA, cmpB]);
+  }, [strengthSets, cmpA, cmpB]);
 
   // Cardio stats
   const cardioStats = useMemo(() => {
@@ -329,10 +343,10 @@ export function StatsPage() {
   // Total volume + notes count + best 1RM
   const allTimeVolume = useMemo(
     () =>
-      recentSets
+      strengthSets
         .filter((s) => !(s as { is_warmup?: boolean | null }).is_warmup)
         .reduce((sum, s) => sum + s.reps * s.weight, 0),
-    [recentSets],
+    [strengthSets],
   );
   const setNotesCount = useMemo(
     () => recentSets.filter((s) => (s as { notes?: string | null }).notes).length,

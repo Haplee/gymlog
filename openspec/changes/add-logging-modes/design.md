@@ -49,7 +49,7 @@ La serie «ocurrió una vez, durante N segundos».
   `UNION`, y el dedupe del importador, la exportación y la analítica se duplican.
   Es el camino que parece barato hoy y se cobra en cada feature.
 
-### Recomendación: **Opción A**
+### Decisión: **Opción A — aprobada el 25 de agosto de 2026**
 
 El coste es real pero es **de una vez** y el `type-check` lo enumera entero. La
 opción B no elimina ese trabajo: lo reparte en gotas por cada feature futura que
@@ -65,10 +65,20 @@ export const repsOf = (s: SetLike): number | null => s.reps ?? null;
 export const repsForVolume = (s: SetLike): number => s.reps ?? 0;
 ```
 
-Los 34 sitios pasan por ahí y cada uno declara qué quiere. Sin eso, el arreglo se
-convierte en 34 `?? 0` puestos a ojo, que es exactamente cómo se cuela un fallo.
+Cada sitio pasa por ahí y declara qué quiere. Sin eso, el arreglo se convierte en
+un puñado de `?? 0` puestos a ojo, que es exactamente cómo se cuela un fallo.
 
-> **Esta es la decisión que hay que aprobar antes de tocar la migración.**
+> **Al implementar la fase 0 esta API cambió a mejor.** `repsForVolume(s) => s.reps ?? 0`
+> era el mismo `?? 0` con otro nombre: una serie sin repeticiones seguiría entrando
+> en el recuento aportando cero, y una media dividiría entre una serie de más. La
+> pieza real es un **predicado de tipo** — `isRepSet` / `onlyRepSets` — que
+> estrecha `reps: number | null` a `number` y obliga al compilador a exigir la
+> decisión en cada sitio. Ver `src/shared/lib/setShape.ts`.
+
+**Medición real del alcance** (fase 0, con el compilador y no a ojo): no son 34
+ficheros sino **5, con 26 puntos**. Los otros 29 ficheros contienen `.reps` pero
+de otros tipos —el rango objetivo de la rutina es un `string`, el del formulario
+también—. Tras la fase 0, poner `reps: number | null` da **0 errores**.
 
 ## 2. Dónde vive el modo
 

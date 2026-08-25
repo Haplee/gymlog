@@ -15,6 +15,7 @@ import { useCardioStore, CARDIO_LABELS } from '@features/cardio/stores/cardioSto
 import { supabase } from '@shared/lib/supabase';
 import { devError } from '@shared/lib/devtools';
 import { fetchExercises, insertMissingWeights } from '@shared/api/queries';
+import { onlyRepSets } from '@shared/lib/setShape';
 import { DEFAULT_MUSCLE_GROUP } from '@shared/constants/muscleGroups';
 import type { WorkoutWithSets } from '@shared/lib/types';
 import {
@@ -172,7 +173,11 @@ export function useHistoryTransfer({
       const strength: ExcelStrengthSet[] = workouts.flatMap((w) => {
         const date = w.started_at ? w.started_at.split('T')[0] : '';
         if (!date) return [];
-        return w.sets.map((s) => ({
+        // La hoja tiene columna de repeticiones y no de duración: una serie por
+        // tiempo no cabe en ella todavía. Hoy no descarta nada (`reps` es NOT
+        // NULL); cuando existan, la exportación necesita su propia columna.
+        // Ver openspec/changes/add-logging-modes/ tarea 3.4.
+        return onlyRepSets(w.sets).map((s) => ({
           date,
           exercise: s.exercise?.name || 'Desconocido',
           muscleGroup: s.exercise?.muscle_group || DEFAULT_MUSCLE_GROUP,
@@ -244,7 +249,11 @@ export function useHistoryTransfer({
     const fileName = `gymlog_${new Date().toISOString().split('T')[0]}.json`;
     await saveBlob(
       fileName,
-      buildExportJson(workouts, cardioSessions),
+      buildExportJson(
+        // Mismo motivo que en la exportación a Excel.
+        workouts.map((w) => ({ ...w, sets: onlyRepSets(w.sets) })),
+        cardioSessions,
+      ),
       'application/json;charset=utf-8;',
     );
   };

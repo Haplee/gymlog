@@ -1,6 +1,7 @@
 // Helpers puros de HistoryPage: rango de reps y construcción de rutina custom.
 import type { Routine, RoutineExercise, DayOfWeek } from '@features/routine/stores/routineStore';
 import type { WorkoutSetWithDetails, WorkoutWithSets } from '@shared/lib/types';
+import { isRepSet } from '@shared/lib/setShape';
 
 export function repsRange(reps: number[]): string {
   if (!reps.length) return '';
@@ -32,6 +33,11 @@ export function groupSetsByExercise(sets: WorkoutSetWithDetails[]): ExerciseSumm
   for (const s of sets) {
     const name = s.exercise?.name?.trim();
     if (!name) continue;
+    // Un resumen «8-10 reps» no sabe describir una plancha. Cuando existan las
+    // series por tiempo habrá que darles su propio resumen («45-60 s»); hasta
+    // entonces esto no descarta nada, porque `reps` es NOT NULL.
+    // Ver openspec/changes/add-logging-modes/ tarea 3.4.
+    if (!isRepSet(s)) continue;
     const entry = map.get(name) ?? { reps: [], weights: [] };
     entry.reps.push(s.reps);
     entry.weights.push(s.weight);
@@ -53,6 +59,9 @@ export function buildTemplateFromWorkouts(dayWorkouts: WorkoutWithSets[], name: 
     for (const s of wo.sets) {
       const exName = s.exercise?.name?.trim();
       if (!exName) continue;
+      // Misma razón que arriba: el rango de repeticiones de la plantilla se
+      // construye solo con las series que se miden en repeticiones.
+      if (!isRepSet(s)) continue;
       const arr = map.get(exName) ?? [];
       arr.push(s.reps);
       map.set(exName, arr);

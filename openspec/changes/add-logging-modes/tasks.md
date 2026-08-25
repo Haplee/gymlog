@@ -4,24 +4,67 @@
 >
 > **La fase 1 no empieza hasta que esté aprobada la opción de `design.md` §1.**
 
-## Fase 0 — Preparar el terreno (sin migración, sin cambio visible)
+## Fase 0 — Preparar el terreno (sin migración, sin cambio visible) — **HECHA**
 
-Todo esto se puede hacer y commitear **antes** de decidir nada del esquema, y
-deja el cambio grande mucho más pequeño.
+- [x] 0.1 `src/shared/lib/setShape.ts`: acceso único a la forma de una serie.
+      **La API cambió respecto a lo planificado.** En vez de `repsForVolume(s)
+    → number` (un `?? 0` disfrazado), la pieza central es un **predicado de
+      tipo**: `isRepSet(s): s is T & { reps: number }` y `onlyRepSets(sets)`.
+      Motivo: un cero es un dato —una serie de cero repeticiones que entra en el
+      recuento y en las medias—, mientras que filtrar con narrowing obliga al
+      compilador a exigir la decisión en cada sitio. También `isTimedSet`,
+      `onlyTimedSets`, `repsOf`, `durationOf`, `isMeasuredSet` y `modeOfPlanned`.
+- [x] 0.2 19 tests, incluido el caso «reps y duración a la vez»: **gana reps**
+      (cronometrar 10 sentadillas no las convierte en una plancha, y la regla
+      contraria borraría de las estadísticas cualquier serie cronometrada).
+- [x] 0.3 Inventario — ver abajo. **El alcance real es mucho menor que 34
+      ficheros.**
+- [x] 0.4 Migrados los 26 puntos. La suite pasa **sin tocar ni un test
+      existente** (684/684), que era el criterio de aceptación.
 
-- [ ] 0.1 `src/shared/lib/setShape.ts`: acceso único a la forma de una serie —
-      `repsOf(s): number | null`, `repsForVolume(s): number`,
-      `durationOf(s): number | null`, `isTimedSet(s): boolean`,
-      `modeOfPlanned(cfg): 'reps' | 'time' | 'cardio'`. Puras, sin dependencias.
-- [ ] 0.2 Tests de 0.1, incluidos los casos que hoy no existen: serie sin reps,
-      serie con duración y peso, serie con ambos (no debería pasar: se decide y
-      se documenta cuál gana).
-- [ ] 0.3 Inventariar los **34 ficheros** que leen `.reps` y clasificarlos en:
-      (a) volumen/analítica, (b) presentación, (c) motor de progresión. El
-      inventario se deja escrito en este fichero, no en la cabeza.
-- [ ] 0.4 Migrar esos 34 sitios a los accesores de 0.1 **sin cambiar el
-      comportamiento**: hoy `reps` nunca es null, así que la suite debe seguir en
-      verde sin tocar un solo test. Es el commit que hace segura la fase 1.
+### Inventario real (0.3)
+
+Los 34 ficheros que contienen `.reps` **no** hablan todos del mismo campo. Hay
+cuatro tipos distintos y solo uno se ve afectado:
+
+| Tipo                                            | Qué es                                | ¿Afectado? |
+| ----------------------------------------------- | ------------------------------------- | ---------- |
+| `workout_sets.reps` vía `WorkoutSetWithDetails` | La serie registrada                   | **Sí**     |
+| `RoutineExercise.reps`                          | Rango objetivo, un **string** («6-8») | No         |
+| `SetFormData.reps` / borrador de `workoutStore` | Un **string** del formulario          | No         |
+| Formas propias de los importadores              | Sus tipos, con su validación          | No         |
+
+El alcance se midió **con el compilador**, no a ojo: se puso `reps: number | null`
+en `WorkoutSetWithDetails` y se ejecutó `type-check`. Resultado:
+
+**5 ficheros, 26 puntos.** Tras la migración, la misma sonda da **0 errores**.
+
+| Fichero                       | Puntos | Clasificación                            |
+| ----------------------------- | ------ | ---------------------------------------- |
+| `pages/UserStatsPage.tsx`     | 10     | volumen, 1RM, descarga, reparto muscular |
+| `pages/StatsPage.tsx`         | 9      | volumen, 1RM, progresión, comparador     |
+| `pages/HistoryPage.tsx`       | 3      | volumen por entreno (×3 duplicado)       |
+| `utils/historyHelpers.ts`     | 2      | presentación (resumen y plantilla)       |
+| `hooks/useHistoryTransfer.ts` | 2      | exportación Excel y JSON                 |
+
+Patrón encontrado: **la nulabilidad se detiene en las interfaces locales de cada
+util** (`VolumeSet`, `SetLike`, `DeloadWorkout`, `ExcelStrengthSet`), que declaran
+`reps: number`. Son la costura natural, así que el filtro va en las páginas —que
+es además lo que dice `design.md` §4.1— y los utils no se tocan.
+
+De paso, los tres cálculos de volumen duplicados en `HistoryPage` pasan a usar el
+`calculateSessionVolume` que ya existía.
+
+### Decisiones que la fase 0 deja pendientes (no las cierra)
+
+- **Historial y plantillas** (`historyHelpers`): hoy filtran las series por
+  tiempo. En fase 3 hay que darles su propio resumen («45-60 s») en vez de
+  esconderlas. → tarea 3.4
+- **Exportación** (Excel y JSON): igual. Una copia de seguridad que pierde las
+  planchas no es una copia de seguridad. → tarea 3.4
+- **Reparto muscular y recuperación**: ahora reciben solo series de fuerza, así
+  que una plancha no contaría como abdominales entrenados. **Es discutible**: sí
+  entrena, aunque no aporte volumen. Decidir en fase 3.
 
 ## Fase 1 — Esquema (requiere aprobación de `design.md` §1)
 
