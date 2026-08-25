@@ -159,6 +159,11 @@ arquitectura actual de GymLog (S = horas, M = un día, L = varios días).
 
 ### Fase 2 — Cerrar el hueco de mecánica (3-5 días)
 
+> **Propuesta escrita y pendiente de aprobación**: `openspec/changes/add-logging-modes/`.
+> Al investigar el esquema, tres suposiciones de esta tabla resultaron falsas —
+> `duration_seconds` y `is_bilateral` ya existen, y las rutinas son una columna
+> `Json` que no necesita migración—. El bloqueo real es `reps NOT NULL`.
+
 | #   | Tarea                                                          | Esfuerzo | Notas                                                                                                                                                                                                                                                                                    |
 | --- | -------------------------------------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 2.1 | **Modo de registro por ejercicio: `reps` / `time` / `cardio`** | **L**    | Es el cambio estructural de la fase y condiciona 2.2 y 2.3. Requiere migración idempotente en `supabase/migrations/` (columna `mode`, ausente = `reps`) y que todo lo que lee series lo tolere. Nada de migrar datos existentes: la ausencia del campo debe seguir leyéndose como `reps` |
