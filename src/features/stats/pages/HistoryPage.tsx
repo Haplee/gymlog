@@ -193,6 +193,7 @@ export function HistoryPage() {
     importFromCsv,
     pendingImport,
     pendingImportSummary,
+    pendingImportSource,
     confirmImport,
     cancelImport,
   } = useHistoryTransfer({
@@ -718,6 +719,11 @@ export function HistoryPage() {
           onCancel={cancelImport}
           description={
             <div className="space-y-2">
+              {pendingImportSource && (
+                <p className="text-fg-muted">
+                  {t('history.import_detected_source', { app: pendingImportSource.name })}
+                </p>
+              )}
               <p>
                 {pendingImport.kind === 'json'
                   ? t('history.import_confirm_workouts', {
@@ -734,6 +740,13 @@ export function HistoryPage() {
                 <p className="text-warning">
                   {t('history.import_confirm_duplicates', {
                     count: pendingImportSummary.skips,
+                  })}
+                </p>
+              )}
+              {pendingImportSource && pendingImportSource.skippedRows > 0 && (
+                <p className="text-fg-muted">
+                  {t('history.import_skipped_rows', {
+                    count: pendingImportSource.skippedRows,
                   })}
                 </p>
               )}

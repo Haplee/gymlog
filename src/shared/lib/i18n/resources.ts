@@ -997,6 +997,9 @@ export const resources = {
         import_confirm_excel:
           'El archivo contiene {{sets}} series, {{cardio}} sesiones de cardio y {{routines}} rutinas.',
         import_confirm_duplicates: 'Se saltarán {{count}} series que ya existen en tu historial.',
+        import_detected_source: 'Detectado: export de {{app}}.',
+        import_skipped_rows_one: '1 fila no es de fuerza (cardio) y no se importará.',
+        import_skipped_rows_other: '{{count}} filas no son de fuerza (cardio) y no se importarán.',
         import_duplicates_skipped: '({{count}} duplicadas saltadas)',
         series_plural: 'series',
         search_placeholder: 'Buscar ejercicio o nota…',
@@ -2061,6 +2064,10 @@ export const resources = {
         import_confirm_excel:
           'The file contains {{sets}} sets, {{cardio}} cardio sessions and {{routines}} routines.',
         import_confirm_duplicates: '{{count}} sets already in your history will be skipped.',
+        import_detected_source: 'Detected: {{app}} export.',
+        import_skipped_rows_one: '1 row is not a strength set (cardio) and will be skipped.',
+        import_skipped_rows_other:
+          '{{count}} rows are not strength sets (cardio) and will be skipped.',
         import_duplicates_skipped: '({{count}} duplicates skipped)',
         series_plural: 'sets',
         search_placeholder: 'Search exercise or note…',

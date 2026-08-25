@@ -37,6 +37,12 @@ import {
 } from '../utils/excelExport';
 import { parseXlsxFile, DAY_LABELS, type ParsedImport } from '../utils/excelImport';
 import { parseImportedWorkouts } from '../utils/importSchema';
+import {
+  parseTrackerCsv,
+  TrackerFormatError,
+  TRACKER_NAME,
+  type TrackerId,
+} from '../utils/importTrackers';
 import { applyExcelImport } from '../utils/applyExcelImport';
 
 /**
@@ -56,7 +62,15 @@ import { applyExcelImport } from '../utils/applyExcelImport';
  * confirmar se inserta, saltandose las series duplicadas.
  */
 type PendingImport =
-  { kind: 'json'; workouts: unknown[] } | { kind: 'excel'; parsed: ParsedImport };
+  | {
+      kind: 'json';
+      workouts: unknown[];
+      /** App de origen, cuando el fichero venía de otro tracker. */
+      tracker?: TrackerId;
+      /** Filas que el tracker no supo importar (cardio, sobre todo). */
+      skippedRows?: number;
+    }
+  | { kind: 'excel'; parsed: ParsedImport };
 
 /** Conteo de lo que entraria al confirmar un import pendiente. */
 interface ImportSummary {
@@ -396,6 +410,19 @@ export function useHistoryTransfer({
 
   const cancelImport = () => setPendingImport(null);
 
+  /**
+   * Nombre legible de la app de origen, cuando el fichero venía de otro tracker.
+   * El diálogo lo usa para que el usuario confirme sabiendo qué se ha detectado:
+   * si la detección se equivoca, es el momento de cancelar y no después.
+   */
+  const pendingImportSource =
+    pendingImport?.kind === 'json' && pendingImport.tracker
+      ? {
+          name: TRACKER_NAME[pendingImport.tracker],
+          skippedRows: pendingImport.skippedRows ?? 0,
+        }
+      : null;
+
   const importFromCsv = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) {
@@ -432,6 +459,29 @@ export function useHistoryTransfer({
         if (!text || text.trim().length === 0) {
           toast.error(t('history.file_empty'));
           return;
+        }
+
+        // Primero se intenta leer como export de otra app (Strong, Hevy,
+        // FitNotes). Va por cabeceras, así que o reconoce el fichero o falla
+        // limpio; si falla, se cae al importador de posición de siempre, que es
+        // el que entiende los CSV propios.
+        try {
+          const fromTracker = parseTrackerCsv(text);
+          if (fromTracker.workouts.length > 0) {
+            setPendingImport({
+              kind: 'json',
+              workouts: fromTracker.workouts,
+              tracker: fromTracker.tracker,
+              skippedRows: fromTracker.skippedRows,
+            });
+            return;
+          }
+        } catch (err) {
+          // Solo se ignora el «esto no es de un tracker conocido»: cualquier
+          // otro error sí es un fallo de verdad y no debe pasar en silencio.
+          if (!(err instanceof TrackerFormatError)) {
+            devError('Error leyendo CSV de tracker', err);
+          }
         }
 
         const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
@@ -648,6 +698,7 @@ export function useHistoryTransfer({
     importFromCsv,
     pendingImport,
     pendingImportSummary,
+    pendingImportSource,
     confirmImport,
     cancelImport,
   };
