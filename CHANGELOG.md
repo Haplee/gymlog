@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [5.10.1](https://github.com/Haplee/gymlog/compare/v5.10.0...v5.10.1) (2026-08-25)
+
+### Bug Fixes
+
+- **notificaciones:** que dejen de saltar avisos que no tocan ([8d305e9](https://github.com/Haplee/gymlog/commit/8d305e96a85506b7bfd9017c81dd800994be7bcf))
+
 ## [5.10.0](https://github.com/Haplee/gymlog/compare/v5.9.0...v5.10.0) (2026-08-24)
 
 ### Features
