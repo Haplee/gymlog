@@ -380,6 +380,22 @@ blindado hizo su trabajo) y **sin inventar ningún récord**. El historial la pi
 «1×48 s · 78.5 kg» y los entrenos anteriores se leen igual que siempre. La
 etiqueta SUPERSERIE aparece en la fila encadenada.
 
+**6. Y el scroll del buscador tenía otra causa, la de verdad.** El primer arreglo
+—acotar el alto— era necesario pero no suficiente: el desplegable hacía
+`preventDefault()` en `touchstart`, que es la forma canónica de **desactivar** el
+desplazamiento táctil. El dedo no movía la lista por bien que cupiera. Estaba
+puesto para que tocar la lista no le robara el foco al buscador, pero eso ya lo
+cubría el retardo de 200 ms del blur en `useExerciseSearch`: sobraba.
+
+Y el alto tampoco estaba bien calculado: `env(safe-area-inset-bottom)` no se puede
+leer desde `getComputedStyle`, así que se descontaban los 52 px de la barra pero no
+los ~48 de la franja de gestos, y la última fila quedaba tapada. Ahora JS aporta
+solo la posición del buscador —lo único que CSS no sabe— y el `max-height` lo
+resuelve la hoja de estilos con `100dvh` y `env()`.
+
+Comprobado en la APK: la lista se desplaza con el dedo y se llega hasta «crear
+ejercicio propio», entero y por encima de la barra.
+
 - [x] V.4 Comprobado **contra la base de datos real**, no solo con fixtures: las
       6 rutinas guardadas son todas anteriores al cambio —ninguna trae `mode`,
       `perSide` ni `supersetId`— y las 1447 series son todas de repeticiones,

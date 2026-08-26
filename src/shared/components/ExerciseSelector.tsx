@@ -235,20 +235,19 @@ export function ExerciseSelector({
   const isOpen = isFocused || editingMuscleId !== null || isCreating || defaultOpen;
 
   /**
-   * Alto máximo del desplegable, medido contra la pantalla de verdad.
+   * Distancia del borde superior de la pantalla al final del buscador.
    *
-   * Cuando cuelga del buscador va en `position: absolute`, así que **no empuja
-   * al documento**: con un tope fijo de 60rem (960 px, más que cualquier móvil)
-   * la lista se salía por debajo del viewport, el `overflow-y-auto` interno
-   * nunca llegaba a activarse y no había forma de llegar a los últimos
-   * ejercicios — ni desplazando la lista ni la página.
+   * Es **lo único que CSS no puede saber** de este cálculo, así que es lo único
+   * que se mide en JS: el resto —alto del viewport, alto de la barra inferior y
+   * el área segura de los gestos de Android— lo resuelve la propia hoja de
+   * estilos, que sí sabe leer `env(safe-area-inset-bottom)`.
    *
-   * Se mide desde el borde inferior del buscador hasta el final del viewport
-   * **visual** (`visualViewport`, no `innerHeight`): en Android el teclado no
-   * encoge la ventana, la tapa, y sin esto la lista seguía terminando debajo del
-   * teclado. Se descuenta además la barra inferior, que va fija encima de todo.
+   * Hacerlo entero en JS fue el primer intento y se quedó corto: `env()` no se
+   * puede leer desde `getComputedStyle`, así que la lista descontaba los 52 px
+   * de la barra pero no los ~48 de la franja de gestos, y la última fila
+   * («crear ejercicio propio») quedaba tapada.
    */
-  const [maxHeight, setMaxHeight] = useState<number | null>(null);
+  const [topOffset, setTopOffset] = useState<number | null>(null);
 
   useEffect(() => {
     if (!isOpen || defaultOpen) return;
@@ -256,16 +255,7 @@ export function ExerciseSelector({
     const medir = () => {
       const input = inputRef.current;
       if (!input) return;
-      const vv = window.visualViewport;
-      const alto = vv?.height ?? window.innerHeight;
-      const desplazamiento = vv?.offsetTop ?? 0;
-      const nav =
-        Number.parseFloat(
-          getComputedStyle(document.documentElement).getPropertyValue('--bottom-nav-height'),
-        ) || 0;
-      // 12 px de aire para que la última fila no quede pegada al borde.
-      const disponible = alto + desplazamiento - input.getBoundingClientRect().bottom - nav - 12;
-      setMaxHeight(Math.max(160, Math.round(disponible)));
+      setTopOffset(Math.round(input.getBoundingClientRect().bottom));
     };
 
     // Tras el layout, no en el cuerpo del efecto: medir antes de que el
@@ -287,7 +277,14 @@ export function ExerciseSelector({
     backgroundColor: 'var(--bg-surface-3)',
     border: '1px solid var(--border-default)',
     boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
-    ...(!defaultOpen && maxHeight != null ? { maxHeight } : {}),
+    // `100dvh` y no `100vh`: en Android el teclado encoge el viewport dinámico,
+    // que es justo lo que hay que descontar para que la lista no acabe debajo.
+    // El suelo de 160px evita que con el teclado abierto quede un hueco inútil.
+    ...(!defaultOpen && topOffset != null
+      ? {
+          maxHeight: `max(160px, calc(100dvh - ${topOffset}px - var(--bottom-nav-height) - env(safe-area-inset-bottom) - 12px))`,
+        }
+      : {}),
   };
 
   const groupHeaderStyle: React.CSSProperties = {
@@ -360,18 +357,17 @@ export function ExerciseSelector({
                 e.preventDefault();
               }
             }}
-            onTouchStart={(e) => {
-              const tag = (e.target as HTMLElement).tagName;
-              // No prevenimos para input/select para poder escribir y elegir
-              // Tampoco para los botones de las píldoras de grupos musculares
-              if (tag !== 'INPUT' && tag !== 'SELECT') {
-                // Except for our Pill buttons which we do want to preventDefault on
-                // so they don't steal focus from the search input when editing a muscle group.
-                // But wait, the edit muscle group doesn't steal focus if we handle it well,
-                // actually we can just preventDefault if it's NOT an input or select.
-                e.preventDefault();
-              }
-            }}
+            // Aquí NO se hace `preventDefault` en `touchstart`, y es deliberado:
+            // hacerlo cancela el desplazamiento por defecto del navegador —es la
+            // forma canónica de *desactivar* el scroll táctil—, así que el dedo
+            // no movía esta lista por bien que cupiera. Era el motivo real de que
+            // no se pudiera llegar a los últimos ejercicios en el móvil.
+            //
+            // Estaba puesto para que tocar la lista no le robara el foco al
+            // buscador y se cerrara el desplegable, pero eso ya lo cubre el
+            // retardo de 200 ms del blur (`useExerciseSearch`): sobra tiempo para
+            // que el toque llegue a su destino. El `onMouseDown` de arriba sí se
+            // mantiene, porque con ratón no hay gesto de desplazamiento que romper.
           >
             {isLoading && (
               <div className="flex items-center justify-center p-4">
