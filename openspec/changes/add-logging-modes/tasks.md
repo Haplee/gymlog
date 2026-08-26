@@ -380,21 +380,35 @@ blindado hizo su trabajo) y **sin inventar ningún récord**. El historial la pi
 «1×48 s · 78.5 kg» y los entrenos anteriores se leen igual que siempre. La
 etiqueta SUPERSERIE aparece en la fila encadenada.
 
-**6. Y el scroll del buscador tenía otra causa, la de verdad.** El primer arreglo
-—acotar el alto— era necesario pero no suficiente: el desplegable hacía
-`preventDefault()` en `touchstart`, que es la forma canónica de **desactivar** el
-desplazamiento táctil. El dedo no movía la lista por bien que cupiera. Estaba
-puesto para que tocar la lista no le robara el foco al buscador, pero eso ya lo
-cubría el retardo de 200 ms del blur en `useExerciseSearch`: sobraba.
+**6. El scroll del buscador: la causa era el alto, y el diagnóstico intermedio
+estaba mal.**
 
-Y el alto tampoco estaba bien calculado: `env(safe-area-inset-bottom)` no se puede
-leer desde `getComputedStyle`, así que se descontaban los 52 px de la barra pero no
-los ~48 de la franja de gestos, y la última fila quedaba tapada. Ahora JS aporta
-solo la posición del buscador —lo único que CSS no sabe— y el `max-height` lo
-resuelve la hoja de estilos con `100dvh` y `env()`.
+El desplegable cuelga del buscador en `position: absolute`, así que no empuja al
+documento. Con un tope fijo de `60rem` (960 px, más que cualquier móvil) se salía
+por debajo del viewport y el final quedaba inalcanzable. Esa era la causa.
+
+El cálculo tampoco salía a la primera: `env(safe-area-inset-bottom)` **no se puede
+leer con `getComputedStyle`**, así que la primera versión descontaba los 52 px de
+la barra pero no los ~48 de la franja de gestos, y la última fila («crear
+ejercicio propio») quedaba tapada. Se resolvió dándole la vuelta: JS mide solo la
+posición del buscador —lo único que CSS no puede saber— y el `max-height` lo
+calcula la hoja de estilos con `100dvh` y `env()`.
+
+**Rectificación.** En medio se dio por causa un `preventDefault()` en
+`touchstart`, y se llegó a escribir en un commit que era «la causa real». **Era
+falso.** React registra `touchstart` como listener **pasivo**, y ahí el navegador
+ignora `preventDefault()`: ese código nunca hizo nada. El error vino de cambiar
+dos cosas a la vez —quitar el `preventDefault` y pasar el gesto de `adb` de 200 ms
+a 600 ms— y atribuir el efecto a la equivocada; lo que desbloqueó el gesto fue la
+duración, porque un flick de 200 ms se interpretaba como toque. Se comprobó
+reintroduciendo el `preventDefault` y viendo que la lista se desplazaba igual.
+Quitarlo sigue estando bien —era código muerto con un comentario lleno de dudas—
+pero no arreglaba nada.
 
 Comprobado en la APK: la lista se desplaza con el dedo y se llega hasta «crear
-ejercicio propio», entero y por encima de la barra.
+ejercicio propio», entero y por encima de la barra. Con test de regresión en
+`ExerciseSelector.dropdown.test.tsx`, **verificado al revés**: se reintrodujo el
+tope de `60rem` y se exigió que fallara.
 
 - [x] V.4 Comprobado **contra la base de datos real**, no solo con fixtures: las
       6 rutinas guardadas son todas anteriores al cambio —ninguna trae `mode`,
