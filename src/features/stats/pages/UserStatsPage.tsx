@@ -40,6 +40,7 @@ import { SectionLabel } from '../components/userStats/SectionLabel';
 import { BigKPI } from '../components/userStats/BigKPI';
 import { TipCard } from '../components/userStats/TipCard';
 import { MuscleRecovery } from '../components/userStats/MuscleRecovery';
+import { MuscleMap } from '../components/MuscleMap';
 import { WorkoutCalendar } from '../components/userStats/WorkoutCalendar';
 import { DayFrequencyChart } from '../components/userStats/DayFrequencyChart';
 import { TopExercisesList } from '../components/userStats/TopExercisesList';
@@ -593,6 +594,10 @@ export function UserStatsPage() {
         {topExercises.length > 0 && <TopExercisesList data={topExercises} />}
 
         {/* ── Estado muscular ── */}
+        {/* El mapa va justo antes de la lista y con el mismo dato: responde
+            «¿qué me falta por entrenar?» de un vistazo, y la lista de debajo da
+            el detalle en días. Uno no sustituye a la otra. */}
+        <MuscleMap recovery={muscleRecovery} />
         <MuscleRecovery muscleRecovery={muscleRecovery} />
 
         {/* ── Descarga (motor determinista, sin IA ni red) ── */}

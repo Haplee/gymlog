@@ -285,6 +285,16 @@ export const resources = {
             'Prueba a cambiar algo: rango de repeticiones, tempo o una variante del ejercicio.',
         },
       },
+      muscleMap: {
+        title: 'Mapa muscular',
+        front: 'Frente',
+        back: 'Espalda',
+        legend_recovering: 'En recuperación',
+        legend_partial: 'Casi listo',
+        legend_recovered: 'Recuperado',
+        legend_untrained: 'Sin entrenar',
+        untrained_list: 'Sin datos todavía: {{groups}}',
+      },
       userStats: {
         page_title: 'Mis Estadísticas',
         page_subtitle: 'Análisis completo de tu progreso',
@@ -1408,6 +1418,16 @@ export const resources = {
           cause_unknown:
             'Try changing something: rep range, tempo, or a variation of the exercise.',
         },
+      },
+      muscleMap: {
+        title: 'Muscle map',
+        front: 'Front',
+        back: 'Back',
+        legend_recovering: 'Recovering',
+        legend_partial: 'Almost ready',
+        legend_recovered: 'Recovered',
+        legend_untrained: 'Untrained',
+        untrained_list: 'No data yet: {{groups}}',
       },
       userStats: {
         page_title: 'My Stats',
