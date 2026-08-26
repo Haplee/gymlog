@@ -154,7 +154,11 @@ describe('suggestNextLoad', () => {
     expect(nn(s).reps).toBeLessThanOrEqual(12);
   });
 
-  it('en peso corporal con esfuerzo no sube carga al llegar al techo', () => {
+  it('en peso corporal, en el techo añade una serie en vez de otra repetición', () => {
+    // Este test esperaba 13 repeticiones, y la semana siguiente habría esperado
+    // 14: era el «+1 sin fin» que con dominadas acababa en series de treinta.
+    // Lo que se protege sigue siendo lo mismo —en peso corporal no se sube la
+    // carga—, pero ahora la progresión es por series.
     const s = suggestNextLoad(
       [
         session(daysAgo(7), { weight: 75, reps: 12, rir: 2 }),
@@ -164,7 +168,10 @@ describe('suggestNextLoad', () => {
     );
     expect(nn(s).action).toBe('hold');
     expect(nn(s).weight).toBe(75);
-    expect(nn(s).reps).toBe(13);
+    // El helper `session` monta 3 series, así que la propuesta es la cuarta.
+    expect(nn(s).sets).toBe(4);
+    expect(nn(s).reps).toBe(8);
+    expect(nn(s).reasonKey).toBe('coach.reason.bodyweight_add_set');
   });
 
   it('al subir por margen en el techo del rango vuelve al suelo de reps', () => {
@@ -323,13 +330,26 @@ describe('suggestFromLastSession', () => {
     expect(nn(s).reps).toBe(4);
   });
 
-  it('en peso corporal nunca sube carga: suma una repetición al llegar al techo', () => {
+  it('en peso corporal nunca sube carga: en el techo añade serie', () => {
+    // Mismo cambio que en `suggestNextLoad`, y este camino importa más: es el
+    // que recorre quien registra solo peso y repeticiones, que son la mayoría.
     const s = suggestFromLastSession([session(daysAgo(3), { weight: 75, reps: 12 })], {
       bodyweight: true,
     });
     expect(nn(s).action).toBe('hold');
-    expect(nn(s).weight).toBe(75);
-    expect(nn(s).reps).toBe(13);
+    expect(nn(s).weight, 'la carga no se toca en peso corporal').toBe(75);
+    expect(nn(s).sets, 'el helper monta 3 series: se propone la cuarta').toBe(4);
+    expect(nn(s).reasonKey).toBe('coach.reason.bodyweight_add_set');
+  });
+
+  it('por debajo del techo sigue sumando repeticiones, como siempre', () => {
+    const s = suggestFromLastSession([session(daysAgo(3), { weight: 75, reps: 9 })], {
+      repMin: 8,
+      repMax: 12,
+      bodyweight: true,
+    });
+    expect(nn(s).reps).toBe(10);
+    expect(nn(s).sets).toBeUndefined();
     expect(nn(s).reasonKey).toBe('coach.reason.no_effort_reps');
   });
 

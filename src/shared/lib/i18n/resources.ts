@@ -224,6 +224,10 @@ export const resources = {
           reduce: 'Baja la carga',
         },
         reason: {
+          bodyweight_add_set:
+            'Llegaste al techo de repeticiones y no hay carga que subir. Suma una serie y vuelve al suelo del rango.',
+          bodyweight_add_load:
+            'Con estas series ya trabajas más resistencia que fuerza. Toca lastrar: empieza por el disco más pequeño que puedas montar.',
           at_failure:
             'Llegaste al límite y perdiste repeticiones. Baja un 5% y recupera la técnica antes de volver a subir.',
           margin_left:
@@ -1347,6 +1351,10 @@ export const resources = {
           reduce: 'Drop the load',
         },
         reason: {
+          bodyweight_add_set:
+            'You hit the rep ceiling and there is no load to add. Add a set and go back to the bottom of the range.',
+          bodyweight_add_load:
+            'At this many sets you are training endurance more than strength. Time to add load: start with the smallest plate you can rack.',
           at_failure:
             'You hit the limit and lost reps. Drop 5% and rebuild your technique before adding load again.',
           margin_left: 'You had reps left in the tank in your last sessions. Time to add load.',
