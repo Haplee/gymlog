@@ -12,6 +12,7 @@ import { EquipmentIcon } from '@shared/components/icons/EquipmentIcons';
 import { LoadTypeBadge } from '@shared/components/LoadTypeBadge';
 import { ChevronRight, Search } from '@shared/components/icons';
 import { muscleGroupLabel } from '@shared/lib/muscleGroupLabel';
+import { equipmentLabel } from '@shared/lib/equipmentLabel';
 
 function ExerciseDetail({ ex }: { ex: LibraryExercise }) {
   const { t } = useTranslation();
@@ -35,7 +36,7 @@ function ExerciseDetail({ ex }: { ex: LibraryExercise }) {
         {ex.equipment && (
           <span className="label-caps px-2 py-1 rounded-sm bg-surface-2 text-fg-muted inline-flex items-center gap-1">
             <EquipmentIcon equipment={ex.equipment} className="w-3.5 h-3.5" />
-            {t('library.equipment')}: {ex.equipment}
+            {t('library.equipment')}: {equipmentLabel(ex.equipment, t)}
           </span>
         )}
         {ex.movement && (
@@ -123,8 +124,10 @@ export function ExerciseLibraryPage() {
       if (e.equipment) set.add(e.equipment);
     }
     if (equipmentFilter) set.add(equipmentFilter);
-    return Array.from(set).toSorted((a, b) => a.localeCompare(b));
-  }, [exercises, muscleFilter, busqueda, equipmentFilter, coincideTexto]);
+    return Array.from(set).toSorted((a, b) =>
+      equipmentLabel(a, t).localeCompare(equipmentLabel(b, t)),
+    );
+  }, [exercises, muscleFilter, busqueda, equipmentFilter, coincideTexto, t]);
 
   const filtered = useMemo(() => {
     return exercises.filter((e) => {
@@ -236,7 +239,7 @@ export function ExerciseLibraryPage() {
                   selected={equipmentFilter === eq}
                   onClick={() => setEquipmentFilter(equipmentFilter === eq ? null : eq)}
                 >
-                  {eq}
+                  {equipmentLabel(eq, t)}
                 </Chip>
               ))}
             </div>

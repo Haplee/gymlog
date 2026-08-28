@@ -13,15 +13,7 @@
  * en inglés.
  */
 import type { TFunction } from 'i18next';
-
-/** Minúsculas y sin acentos: la clave i18n de «Glúteo» es `gluteo`. */
-function claveDe(grupo: string): string {
-  return grupo
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '');
-}
+import { catalogKey } from './catalogKey';
 
 /**
  * Traduce el grupo, o lo devuelve tal cual si no es uno de los del catálogo.
@@ -33,5 +25,5 @@ function claveDe(grupo: string): string {
  */
 export function muscleGroupLabel(grupo: string | null | undefined, t: TFunction): string {
   if (!grupo) return '';
-  return t(`muscleGroups.${claveDe(grupo)}`, { defaultValue: grupo });
+  return t(`muscleGroups.${catalogKey(grupo)}`, { defaultValue: grupo });
 }

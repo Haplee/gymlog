@@ -302,6 +302,18 @@ export const resources = {
         cardio: 'Cardio',
         otro: 'Otro',
       },
+      /* Equipamiento de los ejercicios propios. Mismo trato que muscleGroups:
+         el valor guardado es el español y aquí solo vive la etiqueta. */
+      equipment: {
+        barra: 'Barra',
+        mancuernas: 'Mancuernas',
+        maquina: 'Máquina',
+        polea: 'Polea',
+        peso_corporal: 'Peso corporal',
+        bandas: 'Bandas',
+        kettlebell: 'Kettlebell',
+        otro: 'Otro',
+      },
       muscleMap: {
         title: 'Mapa muscular',
         front: 'Frente',
@@ -1451,6 +1463,16 @@ export const resources = {
         antebrazo: 'Forearms',
         core: 'Core',
         cardio: 'Cardio',
+        otro: 'Other',
+      },
+      equipment: {
+        barra: 'Barbell',
+        mancuernas: 'Dumbbells',
+        maquina: 'Machine',
+        polea: 'Cable',
+        peso_corporal: 'Bodyweight',
+        bandas: 'Bands',
+        kettlebell: 'Kettlebell',
         otro: 'Other',
       },
       muscleMap: {

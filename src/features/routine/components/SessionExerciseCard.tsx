@@ -13,6 +13,7 @@ import { WorkTimer } from '@features/workout/components/WorkTimer';
 import { formatSegundos } from '@features/routine/utils/planTarget';
 import { perSideCount, totalFromPerSide } from '@shared/lib/perSide';
 import { muscleGroupLabel } from '@shared/lib/muscleGroupLabel';
+import { equipmentLabel } from '@shared/lib/equipmentLabel';
 import {
   AlertTriangle,
   BookOpen,
@@ -131,7 +132,7 @@ export function SessionExerciseCard({
               {equipment && (
                 <span className="label-caps px-2 py-1 rounded-pill bg-surface-3 text-fg-muted inline-flex items-center gap-1">
                   <EquipmentIcon equipment={equipment} className="w-3.5 h-3.5" />
-                  {equipment}
+                  {equipmentLabel(equipment, t)}
                 </span>
               )}
             </div>
