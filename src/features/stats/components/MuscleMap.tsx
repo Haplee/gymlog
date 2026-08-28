@@ -11,6 +11,7 @@ import {
   type RegionMuscular,
 } from '@shared/constants/muscleMap';
 import type { MuscleGroupStatus, RecoveryStatus } from '../utils/fatigueAnalysis';
+import { SectionLabel } from './userStats/SectionLabel';
 
 interface MuscleMapProps {
   /** Lo que devuelve `analyzeMuscleRecovery`. */
@@ -92,6 +93,9 @@ function Vista({
             <Forma
               key={`${region.grupo}-${i}`}
               f={f}
+              // El estado de un músculo solo se ve en su color, así que sin este
+              // atributo no hay forma de comprobarlo salvo contando elipses.
+              data-grupo={region.grupo}
               fill={colorDe(region.grupo)}
               // El canto separa músculos contiguos del mismo color: sin él, dos
               // regiones «recuperadas» pegadas se leen como una sola mancha.
@@ -147,42 +151,49 @@ export function MuscleMap({ recovery }: MuscleMapProps) {
   /** Grupos que el mapa dibuja pero de los que no hay ni un dato. */
   const sinDatos = GRUPOS_DEL_MAPA.filter((g) => !estadoPorGrupo.has(g));
 
+  // Sin un solo entreno el mapa sería una silueta gris entera: un dibujo que no
+  // dice nada. El resto de la página oculta las secciones vacías; esta también.
+  if (recovery.length === 0) return null;
+
   return (
-    <div className="rounded-card border border-line bg-surface p-4 shadow-card">
-      <div className="flex gap-3">
-        <Vista regiones={MAPA_FRENTE} colorDe={colorDe} etiqueta={t('muscleMap.front')} />
-        <Vista regiones={MAPA_ESPALDA} colorDe={colorDe} etiqueta={t('muscleMap.back')} />
-      </div>
+    <section className="space-y-3">
+      <SectionLabel>{t('muscleMap.title')}</SectionLabel>
+      <div className="rounded-card border border-line bg-surface p-4 shadow-card">
+        <div className="flex gap-3">
+          <Vista regiones={MAPA_FRENTE} colorDe={colorDe} etiqueta={t('muscleMap.front')} />
+          <Vista regiones={MAPA_ESPALDA} colorDe={colorDe} etiqueta={t('muscleMap.back')} />
+        </div>
 
-      {/* Leyenda: sin ella el color es un adorno. */}
-      <ul className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-1.5">
-        {(['recovering', 'partial', 'recovered'] as const).map((estado) => (
-          <li key={estado} className="flex items-center gap-1.5">
-            <span
-              className="h-2.5 w-2.5 rounded-full"
-              style={{ backgroundColor: COLOR_ESTADO[estado] }}
-              aria-hidden="true"
-            />
-            <span className="text-xs text-fg-muted">{t(`muscleMap.legend_${estado}`)}</span>
-          </li>
-        ))}
+        {/* Leyenda: sin ella el color es un adorno. */}
+        <ul className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-1.5">
+          {(['recovering', 'partial', 'recovered'] as const).map((estado) => (
+            <li key={estado} className="flex items-center gap-1.5">
+              <span
+                className="h-2.5 w-2.5 rounded-full"
+                style={{ backgroundColor: COLOR_ESTADO[estado] }}
+                aria-hidden="true"
+              />
+              <span className="text-xs text-fg-muted">{t(`muscleMap.legend_${estado}`)}</span>
+            </li>
+          ))}
+          {sinDatos.length > 0 && (
+            <li className="flex items-center gap-1.5">
+              <span
+                className="h-2.5 w-2.5 rounded-full border border-line"
+                style={{ backgroundColor: SIN_DATOS }}
+                aria-hidden="true"
+              />
+              <span className="text-xs text-fg-muted">{t('muscleMap.legend_untrained')}</span>
+            </li>
+          )}
+        </ul>
+
         {sinDatos.length > 0 && (
-          <li className="flex items-center gap-1.5">
-            <span
-              className="h-2.5 w-2.5 rounded-full border border-line"
-              style={{ backgroundColor: SIN_DATOS }}
-              aria-hidden="true"
-            />
-            <span className="text-xs text-fg-muted">{t('muscleMap.legend_untrained')}</span>
-          </li>
+          <p className="mt-2 text-center text-xs text-fg-subtle">
+            {t('muscleMap.untrained_list', { groups: sinDatos.join(', ') })}
+          </p>
         )}
-      </ul>
-
-      {sinDatos.length > 0 && (
-        <p className="mt-2 text-center text-xs text-fg-subtle">
-          {t('muscleMap.untrained_list', { groups: sinDatos.join(', ') })}
-        </p>
-      )}
-    </div>
+      </div>
+    </section>
   );
 }

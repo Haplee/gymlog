@@ -43,12 +43,6 @@ export interface RegionMuscular {
 }
 
 /**
- * Partes que no son músculo entrenable: cabeza, cuello, manos y pies.
- *
- * Se pintan en gris neutro y sin estado. Sin ellas las regiones flotan sueltas y
- * no se lee que aquello es una persona.
- */
-/**
  * El cuerpo de fondo: cabeza, cuello, torso, brazos, piernas, manos y pies.
  *
  * Va **debajo** de los músculos y en gris. Sin él las regiones flotaban sueltas
