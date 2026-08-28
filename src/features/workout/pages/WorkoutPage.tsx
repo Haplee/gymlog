@@ -79,10 +79,35 @@ const containerVariants = {
   show: { opacity: 1, y: 0 },
 };
 
-const setSchema = z.object({
-  reps: z.coerce.number().positive('Las repeticiones deben ser mayores a 0'),
-  weight: z.coerce.number().nonnegative('El peso no puede ser negativo'),
-});
+/**
+ * Validación de la fila antes de guardar.
+ *
+ * **Una serie tiene que medir algo: repeticiones o segundos.** Antes solo
+ * contemplaba repeticiones, así que una plancha de 48 s con 0 kg no llegaba
+ * siquiera a validarse: se descartaba como fila en blanco y el guardado
+ * respondía «añade al menos una serie válida» sobre una serie que estaba bien.
+ * El store ya admitía las series por tiempo; esta comprobación de pantalla se
+ * quedó atrás, y solo se vio recorriendo el entreno entero en la APK.
+ *
+ * Es la misma regla que el `CHECK workout_sets_measured` de la base de datos,
+ * puesta aquí para que el usuario vea un mensaje en su idioma en vez de un error
+ * de Postgres.
+ */
+const setSchema = z
+  .object({
+    reps: z.string().optional().default(''),
+    durationSeconds: z.string().optional().default(''),
+    weight: z.coerce.number().nonnegative('El peso no puede ser negativo'),
+  })
+  .refine((s) => Number(s.reps) > 0 || Number(s.durationSeconds) > 0, {
+    message: 'Añade repeticiones o segundos',
+  });
+
+/** ¿La fila tiene algo escrito? Una en blanco se salta, no se marca en rojo. */
+function filaEnBlanco(s: { reps: string; weight: string; durationSeconds?: string }): boolean {
+  const vacio = (v?: string) => v === '' || v === '0' || v === undefined;
+  return vacio(s.reps) && vacio(s.weight) && vacio(s.durationSeconds);
+}
 
 export function WorkoutPage() {
   const navigate = useNavigate();
@@ -403,7 +428,7 @@ export function WorkoutPage() {
 
     sets.forEach((s, i) => {
       if (onlyCompleted && !s.completed) return;
-      if ((s.reps === '' || s.reps === '0') && (s.weight === '' || s.weight === '0')) return;
+      if (filaEnBlanco(s)) return;
       const validation = setSchema.safeParse(s);
       if (!validation.success) {
         newErrors[i] = validation.error.errors[0]?.message || 'Inválido';
@@ -571,6 +596,26 @@ export function WorkoutPage() {
     startRestTimer,
   ]);
 
+  /**
+   * Cómo se registra el ejercicio activo: repeticiones o tiempo.
+   *
+   * Es estado de pantalla y no del store porque **vuelve a `reps` al cambiar de
+   * ejercicio**: dejar el cronómetro puesto al pasar de la plancha al press
+   * banca invitaba a registrar una serie de fuerza sin repeticiones.
+   */
+  const [loggingMode, setLoggingMode] = useState<'reps' | 'time'>('reps');
+
+  // Ajuste durante el render, no en un efecto: es el patron que React documenta
+  // para «resetear estado cuando cambia una entrada». Con `useEffect` el modo
+  // viejo llegaria a pintarse un fotograma —el cronometro parpadeando sobre el
+  // ejercicio nuevo— y ademas encadena un render de mas.
+  const exerciseKey = activeExerciseId ?? customExerciseName;
+  const [prevExerciseKey, setPrevExerciseKey] = useState(exerciseKey);
+  if (prevExerciseKey !== exerciseKey) {
+    setPrevExerciseKey(exerciseKey);
+    setLoggingMode('reps');
+  }
+
   const applyCopiedSets = useCallback(
     (copied: { reps: number; weight: number }[]) => {
       setSets(
@@ -578,6 +623,7 @@ export function WorkoutPage() {
           id: crypto.randomUUID(),
           reps: String(s.reps),
           weight: String(s.weight),
+          durationSeconds: '',
           notes: '',
           isWarmup: false,
           rpe: '',
@@ -835,6 +881,8 @@ export function WorkoutPage() {
               weightUnit={weightUnit}
               convert={convert}
               convertToKg={convertToKg}
+              loggingMode={loggingMode}
+              onLoggingModeChange={setLoggingMode}
             />
 
             {/* Chips de la maqueta: calculadora de discos, 1RM estimado y notas

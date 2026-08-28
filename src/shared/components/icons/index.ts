@@ -60,6 +60,7 @@ export {
   Download,
   Upload,
   Share,
+  Printer,
   Send,
   Repeat,
   Refresh,

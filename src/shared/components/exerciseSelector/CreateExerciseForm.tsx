@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@shared/components/ui';
 import { MuscleGroupIcon } from '@shared/components/CardioIcons';
 import { MUSCLE_GROUPS, suggestMuscleGroup } from '@shared/constants/muscleGroups';
+import { muscleGroupLabel } from '@shared/lib/muscleGroupLabel';
 import { MuscleGroupPills } from './MuscleGroupPills';
 import { AlertCircle, Check, Loader, Minus, Plus } from '@shared/components/icons';
 
@@ -66,6 +67,7 @@ export function CreateExerciseForm({
       <div className="mt-1.5 flex flex-wrap gap-1.5">
         {MUSCLE_GROUPS.filter((mg) => mg !== muscle).map((mg) => {
           const active = mg in secondaries;
+          const etiqueta = muscleGroupLabel(mg, t);
           return (
             <div key={mg} className="flex items-center">
               <button
@@ -79,7 +81,7 @@ export function CreateExerciseForm({
                 }`}
               >
                 <MuscleGroupIcon name={mg} className="w-3 h-3" />
-                {mg}
+                {etiqueta}
                 {active && <span className="tabular-nums">· {secondaries[mg]}%</span>}
               </button>
               {active && (
@@ -87,7 +89,7 @@ export function CreateExerciseForm({
                   <button
                     type="button"
                     onClick={() => onAdjustSecondary(mg, -10)}
-                    aria-label={`${mg} -10%`}
+                    aria-label={`${etiqueta} -10%`}
                     className="flex h-11 w-11 items-center justify-center rounded-sm bg-surface-2 text-fg-muted"
                   >
                     <Minus className="h-4 w-4" />
@@ -95,7 +97,7 @@ export function CreateExerciseForm({
                   <button
                     type="button"
                     onClick={() => onAdjustSecondary(mg, 10)}
-                    aria-label={`${mg} +10%`}
+                    aria-label={`${etiqueta} +10%`}
                     className="ml-0.5 flex h-11 w-11 items-center justify-center rounded-sm bg-surface-2 text-fg-muted"
                   >
                     <Plus className="h-4 w-4" />

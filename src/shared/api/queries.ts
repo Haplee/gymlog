@@ -540,6 +540,53 @@ export const upsertTodayWeight = async (userId: string, weightKg: number): Promi
   if (error) throw error;
 };
 
+/**
+ * Guarda en bloque los pesos importados desde otra app.
+ *
+ * **Solo rellena huecos.** Un día que ya tiene peso en GymLog no se toca, por
+ * dos motivos: lo que el usuario apuntó aquí a mano es el dato en el que más
+ * confía, y `body_measurements` guarda además grasa y masa muscular en la misma
+ * fila — un upsert las dejaría a null sin que nadie lo hubiera pedido.
+ *
+ * Devuelve cuántos entraron y cuántos se saltaron, para poder decirlo en vez de
+ * dar un «listo» que esconde la mitad.
+ */
+export const insertMissingWeights = async (
+  userId: string,
+  weights: { date: string; weightKg: number }[],
+): Promise<{ inserted: number; skipped: number }> => {
+  if (weights.length === 0) return { inserted: 0, skipped: 0 };
+
+  const { data: existentes, error: errorLectura } = await supabase
+    .from('body_measurements')
+    .select('date')
+    .eq('user_id', userId)
+    .not('weight_kg', 'is', null);
+  if (errorLectura) throw errorLectura;
+
+  const yaHay = new Set((existentes ?? []).map((m) => m.date));
+  const nuevos = weights.filter((w) => !yaHay.has(w.date));
+  const skipped = weights.length - nuevos.length;
+  if (nuevos.length === 0) return { inserted: 0, skipped };
+
+  // Por lotes: un historial de años son miles de filas y una sola petición con
+  // todas se queda sin aire (límite de tamaño del cuerpo y timeout).
+  const LOTE = 500;
+  let inserted = 0;
+  for (let i = 0; i < nuevos.length; i += LOTE) {
+    const lote = nuevos.slice(i, i + LOTE).map((w) => ({
+      user_id: userId,
+      date: w.date,
+      weight_kg: w.weightKg,
+    }));
+    const { error } = await supabase.from('body_measurements').insert(lote);
+    if (error) throw error;
+    inserted += lote.length;
+  }
+
+  return { inserted, skipped };
+};
+
 export const deleteBodyMeasurement = async (id: string): Promise<void> => {
   const { error } = await supabase.from('body_measurements').delete().eq('id', id);
   if (error) throw error;

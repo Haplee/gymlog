@@ -12,6 +12,7 @@ import {
 } from '@shared/api/queries';
 import { MUSCLE_COLORS } from '@shared/constants/muscleColors';
 import { Chip } from '@shared/components/ui';
+import { muscleGroupLabel } from '@shared/lib/muscleGroupLabel';
 import { IconBook, IconDumbbell, IconSearch, IconStar, X } from '@shared/components/icons';
 
 interface ExerciseSearchSheetProps {
@@ -78,8 +79,10 @@ export function ExerciseSearchSheet({ onClose }: ExerciseSearchSheetProps) {
   const muscleGroups = useMemo(() => {
     const set = new Set<string>();
     for (const e of exercises) if (e.muscle_group) set.add(e.muscle_group);
-    return Array.from(set).toSorted((a, b) => a.localeCompare(b));
-  }, [exercises]);
+    return Array.from(set).toSorted((a, b) =>
+      muscleGroupLabel(a, t).localeCompare(muscleGroupLabel(b, t)),
+    );
+  }, [exercises, t]);
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -157,7 +160,7 @@ export function ExerciseSearchSheet({ onClose }: ExerciseSearchSheetProps) {
           </Chip>
           {muscleGroups.map((g) => (
             <Chip key={g} selected={muscle === g} onClick={() => setMuscle(g)}>
-              {g}
+              {muscleGroupLabel(g, t)}
             </Chip>
           ))}
         </div>
@@ -193,7 +196,7 @@ export function ExerciseSearchSheet({ onClose }: ExerciseSearchSheetProps) {
                           {ex.name}
                         </span>
                         <span className="block truncate text-xs text-fg-subtle">
-                          {ex.muscle_detail || ex.muscle_group}
+                          {ex.muscle_detail || muscleGroupLabel(ex.muscle_group, t)}
                         </span>
                       </span>
                       <span className="label-caps flex-shrink-0 rounded-pill bg-accent px-2.5 py-1 text-accent-fg">

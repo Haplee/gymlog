@@ -1,5 +1,7 @@
+import { useTranslation } from 'react-i18next';
 import { MuscleGroupIcon } from '@shared/components/CardioIcons';
 import { MUSCLE_GROUPS } from '@shared/constants/muscleGroups';
+import { muscleGroupLabel } from '@shared/lib/muscleGroupLabel';
 
 interface MuscleGroupPillsProps {
   active: string;
@@ -8,6 +10,8 @@ interface MuscleGroupPillsProps {
 }
 
 export function MuscleGroupPills({ active, onSelect, className = '' }: MuscleGroupPillsProps) {
+  const { t } = useTranslation();
+
   return (
     <div className={`flex flex-wrap gap-1.5 ${className}`}>
       {MUSCLE_GROUPS.map((mg) => {
@@ -26,7 +30,7 @@ export function MuscleGroupPills({ active, onSelect, className = '' }: MuscleGro
             }}
           >
             <MuscleGroupIcon name={mg} className="w-3 h-3" />
-            {mg}
+            {muscleGroupLabel(mg, t)}
           </button>
         );
       })}

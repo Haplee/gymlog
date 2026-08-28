@@ -6,6 +6,8 @@
  * al suelo del rango. Si no, se intenta sumar 1 repetición.
  */
 
+import { nextRepTarget } from './perSide';
+
 export interface ProgressionInput {
   reps: number;
   weight: number;
@@ -26,6 +28,11 @@ export interface ProgressionOptions {
   repMax?: number;
   /** Incremento de peso en kg al subir carga. */
   incrementKg?: number;
+  /**
+   * El objetivo es por lado, así que las repeticiones suben de dos en dos.
+   * Ver `shared/lib/perSide.ts`.
+   */
+  perSide?: boolean;
 }
 
 export function suggestProgression(
@@ -54,5 +61,5 @@ export function suggestProgression(
     };
   }
 
-  return { weight: top.weight, reps: top.reps + 1, action: 'add-reps' };
+  return { weight: top.weight, reps: nextRepTarget(top.reps, opts), action: 'add-reps' };
 }

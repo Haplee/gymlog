@@ -9,6 +9,11 @@ import { weightToInput } from '@shared/lib/weight';
 import type { Exercise } from '@shared/lib/types';
 import type { LibraryExercise } from '@shared/api/queries';
 import type { SessionExercise } from '../stores/routineSessionStore';
+import { WorkTimer } from '@features/workout/components/WorkTimer';
+import { formatSegundos } from '@features/routine/utils/planTarget';
+import { perSideCount, totalFromPerSide } from '@shared/lib/perSide';
+import { muscleGroupLabel } from '@shared/lib/muscleGroupLabel';
+import { equipmentLabel } from '@shared/lib/equipmentLabel';
 import {
   AlertTriangle,
   BookOpen,
@@ -38,6 +43,11 @@ interface Props {
    * el botón «Completar» pueda rellenarla sin que el usuario teclee nada.
    */
   onAdvice: (exerciseName: string, advice: ExerciseAdvice | null) => void;
+  /**
+   * Segundos aguantados en una serie por tiempo, según el cronómetro. Solo se
+   * pasa para los ejercicios en modo tiempo.
+   */
+  onDuration?: (exerciseName: string, seconds: number) => void;
 }
 
 /**
@@ -56,9 +66,30 @@ export function SessionExerciseCard({
   libraryExercise,
   weightUnit,
   onAdvice,
+  onDuration,
 }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [showForm, setShowForm] = useState(false);
+  const esPorTiempo = exercise.mode === 'time';
+
+  /**
+   * El objetivo de repeticiones, en total y con la lectura por lado detrás:
+   * «24 (12 por lado)».
+   *
+   * El número grande es el total porque es lo que se registra; el paréntesis es
+   * lo que se cuenta en la serie. Enseñar solo uno de los dos obliga a hacer la
+   * cuenta mental justo en el momento de menos cabeza libre.
+   */
+  const objetivoReps = (() => {
+    if (esPorTiempo) return null;
+    const base = Number(exercise.targetReps?.trim().match(/^\d+/)?.[0]);
+    if (!Number.isFinite(base)) return exercise.targetReps ?? null;
+    const total = totalFromPerSide(base, exercise.perSide);
+    const porLado = perSideCount(total, exercise.perSide);
+    if (porLado == null) return exercise.targetReps ?? String(total);
+    const num = porLado.toLocaleString(i18n.language, { maximumFractionDigits: 1 });
+    return `${total} (${num} ${t('routine.target_per_side')})`;
+  })();
 
   // El objetivo de la sesión manda sobre la búsqueda por nombre: aquí ya se
   // sabe de qué día viene el ejercicio.
@@ -69,15 +100,22 @@ export function SessionExerciseCard({
     repMin,
     repMax,
     bodyweight: isBodyweightLoad(catalog?.load_type),
+    // Manda el plan, no `exercises.is_bilateral`: el mismo remo se puede
+    // programar a una o a dos manos, y lo que decide el objetivo es cómo lo
+    // planificó quien entrena.
+    perSide: exercise.perSide === true,
     muscleGroup: muscleGroup ?? undefined,
   });
   const description = libraryExercise?.description ?? null;
   const AdviceIcon = advice ? ACTION_ICON[advice.suggestion.action] : null;
 
   useEffect(() => {
+    // Un ejercicio por tiempo nunca reporta consejo: si lo hiciera, el peso
+    // recomendado se escribiría en las series de una plancha.
+    if (esPorTiempo) return;
     onAdvice(exercise.name, advice);
     return () => onAdvice(exercise.name, null);
-  }, [advice, exercise.name, onAdvice]);
+  }, [advice, exercise.name, onAdvice, esPorTiempo]);
 
   return (
     <div className="rounded-card p-3 bg-surface-2 border border-line">
@@ -88,13 +126,13 @@ export function SessionExerciseCard({
             <div className="mt-1 flex flex-wrap gap-1.5">
               {muscleGroup && (
                 <span className="label-caps px-2 py-1 rounded-pill bg-surface-3 text-fg-muted">
-                  {muscleGroup}
+                  {muscleGroupLabel(muscleGroup, t)}
                 </span>
               )}
               {equipment && (
                 <span className="label-caps px-2 py-1 rounded-pill bg-surface-3 text-fg-muted inline-flex items-center gap-1">
                   <EquipmentIcon equipment={equipment} className="w-3.5 h-3.5" />
-                  {equipment}
+                  {equipmentLabel(equipment, t)}
                 </span>
               )}
             </div>
@@ -104,12 +142,27 @@ export function SessionExerciseCard({
           <span className="flex-shrink-0 font-display text-lg font-bold px-2.5 py-1 rounded-pill bg-accent/10 text-accent tabular">
             {exercise.targetSets}
             <span className="mx-1 text-fg-subtle">×</span>
-            {exercise.targetReps}
+            {/* En modo tiempo el objetivo son segundos. Pintar `targetReps`
+                aquí diría «45 repeticiones de plancha». */}
+            {esPorTiempo
+              ? exercise.targetDurationSeconds != null
+                ? formatSegundos(exercise.targetDurationSeconds)
+                : t('workout.mode_time')
+              : objetivoReps}
           </span>
         )}
       </div>
 
-      {advice ? (
+      {esPorTiempo ? (
+        // Un ejercicio por tiempo no recibe consejo de carga: el motor solo mira
+        // series de repeticiones. Lo que necesita aquí es el cronómetro.
+        <div className="mt-3">
+          <WorkTimer
+            targetSeconds={exercise.targetDurationSeconds ?? null}
+            onAccept={(seconds) => onDuration?.(exercise.name, seconds)}
+          />
+        </div>
+      ) : advice ? (
         <div className="mt-3 rounded-card border border-accent/25 bg-accent/5 p-3">
           <div className="label-caps text-accent">{t('routine.session_recommended_weight')}</div>
           <div className="mt-0.5 flex items-baseline gap-1.5">

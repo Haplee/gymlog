@@ -4,6 +4,8 @@ import { m } from 'framer-motion';
 import { impact, ImpactStyle } from '@shared/lib/haptics';
 import { formatWeightInput } from '@shared/lib/weight';
 import { Check, Stickynote, X } from '@shared/components/icons';
+import { SegmentedControl } from '@shared/components/ui';
+import { WorkTimer } from './WorkTimer';
 
 type SetType = 'normal' | 'dropset' | 'rest_pause' | 'amrap';
 
@@ -11,11 +13,30 @@ interface SetData {
   id?: string;
   reps: string;
   weight: string;
+  /** Segundos aguantados. Vacío en una serie de repeticiones. */
+  durationSeconds?: string;
   isWarmup?: boolean;
   notes?: string;
   rpe?: string;
   setType?: SetType;
   completed?: boolean;
+}
+
+/** `m:ss`, o `45 s` por debajo del minuto. Igual que en el plan de la rutina. */
+function formatoTiempo(segundos: number): string {
+  if (segundos < 60) return `${segundos} s`;
+  return `${Math.floor(segundos / 60)}:${String(segundos % 60).padStart(2, '0')}`;
+}
+
+/** Lo que se lee en la fila de una serie ya anotada. */
+function resumenSerie(s: SetData, weightUnit: string, peso: string): string {
+  const segundos = Number.parseInt(s.durationSeconds ?? '', 10);
+  if (Number.isFinite(segundos) && segundos > 0 && !s.reps) {
+    // Una plancha sin lastre no enseña «0 kg»: el cero ahí es ruido, no dato.
+    const lastre = Number(s.weight) > 0 ? `${peso} ${weightUnit} · ` : '';
+    return `${lastre}${formatoTiempo(segundos)}`;
+  }
+  return `${peso || '0'} ${weightUnit} × ${s.reps || '0'}`;
 }
 
 const RPE_OPTIONS = ['6', '7', '8', '9', '10'] as const;
@@ -90,7 +111,7 @@ const LoggedSetRow = memo(function LoggedSetRow({
       <span
         className={`ml-auto tabular text-base font-medium ${isPR ? 'text-accent' : 'text-fg-muted'}`}
       >
-        {displayWeight(s.weight, convert) || '0'} {weightUnit} × {s.reps || '0'}
+        {resumenSerie(s, weightUnit, displayWeight(s.weight, convert))}
       </span>
     </button>
   );
@@ -111,6 +132,15 @@ interface WorkoutSetListProps {
   weightUnit: string;
   convert: (kg: number) => number;
   convertToKg: (local: number) => number;
+  /**
+   * Cómo se registra el ejercicio activo y cómo cambiarlo.
+   *
+   * Vive en el padre y no aquí porque es del **ejercicio**, no de la lista: al
+   * cambiar de ejercicio tiene que volver a repeticiones, y un estado local aquí
+   * dejaría el cronómetro puesto sobre un press banca.
+   */
+  loggingMode: 'reps' | 'time';
+  onLoggingModeChange: (mode: 'reps' | 'time') => void;
 }
 
 /**
@@ -140,6 +170,8 @@ export const WorkoutSetList = memo(function WorkoutSetList({
   weightUnit,
   convert,
   convertToKg,
+  loggingMode,
+  onLoggingModeChange,
 }: WorkoutSetListProps) {
   const { t } = useTranslation();
   // `null` significa «la última serie», que es lo que hay que abrir al entrar y
@@ -182,6 +214,25 @@ export const WorkoutSetList = memo(function WorkoutSetList({
 
   const shownWeight = localWeight ?? displayWeight(active.weight, convert);
 
+  /**
+   * El modo que se pinta **manda el dato, no el estado de la pantalla**.
+   *
+   * `loggingMode` vive en el padre y vuelve a `reps` al cambiar de ejercicio o al
+   * reabrir la app. Eso está bien para una serie en blanco, pero con una serie ya
+   * medida en segundos hacía que la app dijera «REPS 0» encima de un dato de 48
+   * segundos que seguía guardado: el dato correcto y la lectura mintiendo.
+   * Se vio en la APK, donde reabrir la app a mitad de entreno es lo normal.
+   *
+   * Con la serie vacía manda lo que haya elegido el usuario, que es lo único que
+   * hay para decidir.
+   */
+  const modo: 'reps' | 'time' =
+    Number(active.durationSeconds) > 0 && !active.reps
+      ? 'time'
+      : active.reps
+        ? 'reps'
+        : loggingMode;
+
   // Recordatorio efímero del valor de la serie anterior: solo aparece cuando la
   // fila activa está vacía (recién abierta o tras borrar lo heredado).
   const prev = activeIndex > 0 ? sets[activeIndex - 1] : null;
@@ -207,6 +258,26 @@ export const WorkoutSetList = memo(function WorkoutSetList({
         <span className="label-caps flex-shrink-0 text-fg-subtle">
           {t('workout.set_n', { n: activeIndex + 1 })}
         </span>
+      </div>
+
+      <div className="mt-3">
+        <SegmentedControl
+          ariaLabel={t('workout.mode_time')}
+          value={modo}
+          onChange={(siguiente) => {
+            onLoggingModeChange(siguiente);
+            // Se limpia el dato del modo que se abandona: si no, la serie
+            // guardaría reps y segundos a la vez y `setShape.isRepSet` la
+            // contaría como serie de fuerza — una plancha entrando en el volumen.
+            if (siguiente === 'time') updateSet(activeIndex, { reps: '' });
+            else updateSet(activeIndex, { durationSeconds: '' });
+            if (error) onClearError(activeIndex);
+          }}
+          options={[
+            { value: 'reps', label: t('workout.mode_reps') },
+            { value: 'time', label: t('workout.mode_time') },
+          ]}
+        />
       </div>
 
       {/* Editor grande: KG, REPS y confirmar. */}
@@ -256,23 +327,52 @@ export const WorkoutSetList = memo(function WorkoutSetList({
         </div>
 
         <div className="flex-1 min-w-0">
-          <label className="label-caps block text-fg-subtle" htmlFor="active-set-reps">
-            {t('workout.reps')}
+          <label
+            className="label-caps block text-fg-subtle"
+            htmlFor={modo === 'time' ? 'active-set-duration' : 'active-set-reps'}
+          >
+            {modo === 'time' ? t('workout.seconds') : t('workout.reps')}
           </label>
-          <input
-            id="active-set-reps"
-            type="text"
-            inputMode="numeric"
-            aria-label={`${t('workout.reps')} ${activeIndex + 1}`}
-            pattern="[0-9]*"
-            placeholder="0"
-            value={active.reps}
-            onChange={(e) => {
-              updateSet(activeIndex, { reps: e.target.value.replace(/[^\d]/g, '') });
-              if (error) onClearError(activeIndex);
-            }}
-            className={inputClass}
-          />
+          {modo === 'time' ? (
+            <input
+              id="active-set-duration"
+              type="text"
+              inputMode="numeric"
+              aria-label={`${t('workout.seconds')} ${activeIndex + 1}`}
+              pattern="[0-9]*"
+              placeholder="0"
+              value={active.durationSeconds ?? ''}
+              onChange={(e) => {
+                // Las reps se borran a la vez: una serie es de repeticiones o de
+                // tiempo, y dejar las dos haría que `isRepSet` la contase como de
+                // fuerza y la plancha entrase en el volumen.
+                updateSet(activeIndex, {
+                  durationSeconds: e.target.value.replace(/[^\d]/g, ''),
+                  reps: '',
+                });
+                if (error) onClearError(activeIndex);
+              }}
+              className={inputClass}
+            />
+          ) : (
+            <input
+              id="active-set-reps"
+              type="text"
+              inputMode="numeric"
+              aria-label={`${t('workout.reps')} ${activeIndex + 1}`}
+              pattern="[0-9]*"
+              placeholder="0"
+              value={active.reps}
+              onChange={(e) => {
+                updateSet(activeIndex, {
+                  reps: e.target.value.replace(/[^\d]/g, ''),
+                  durationSeconds: '',
+                });
+                if (error) onClearError(activeIndex);
+              }}
+              className={inputClass}
+            />
+          )}
         </div>
 
         {onCommitSet && (
@@ -300,6 +400,21 @@ export const WorkoutSetList = memo(function WorkoutSetList({
 
       {error && <div className="mt-2 text-xs text-error">{error}</div>}
       {previousHint && <div className="mt-1.5 text-xs text-fg-muted">{previousHint}</div>}
+
+      {modo === 'time' && (
+        // El cronómetro escribe en el campo de segundos, no guarda por su
+        // cuenta: el usuario sigue pudiendo corregir el número antes de
+        // confirmar la serie, que es lo que pasa cuando el móvil se queda
+        // debajo de la esterilla y se acepta el tiempo dos segundos tarde.
+        <div className="mt-3">
+          <WorkTimer
+            onAccept={(seconds) => {
+              updateSet(activeIndex, { durationSeconds: String(seconds), reps: '' });
+              if (error) onClearError(activeIndex);
+            }}
+          />
+        </div>
+      )}
 
       {/* Controles de la serie activa que la maqueta no dibuja pero existen:
           calentamiento, nota/RPE/tipo y borrar. */}

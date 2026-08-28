@@ -27,6 +27,7 @@ import { useNotificationsStore, selectUnreadCount } from '@shared/stores/notific
 import { useWearableSync } from '@features/wearables/hooks/useWearableSync';
 import { registerBackAction } from '@shared/lib/backHandler';
 import { useCardioStore } from '@features/cardio/stores/cardioStore';
+import { useTrainingWakeLock } from '@app/hooks/useTrainingWakeLock';
 
 interface LayoutProps {
   children: ReactNode;
@@ -98,6 +99,9 @@ export function Layout({ children }: LayoutProps) {
   // Sincroniza con Health Connect/HealthKit al abrir la app (Layout envuelve
   // toda página autenticada), no solo al entrar en Ajustes > Wearables.
   useWearableSync();
+  // Pantalla encendida mientras se entrena. Se monta aquí, no en cada página,
+  // para que sobreviva a navegar a mitad de sesión.
+  useTrainingWakeLock();
 
   // Difuminado de borde de scroll: las tiras se encienden solo cuando hay
   // contenido que disolver por ese lado. Es lo que sustituye al backdrop-filter

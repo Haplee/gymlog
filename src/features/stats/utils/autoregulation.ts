@@ -13,6 +13,7 @@
 
 import { calcular1RM } from '@shared/lib/brzycki';
 import { suggestProgression } from '@shared/lib/progression';
+import { nextRepTarget } from '@shared/lib/perSide';
 import {
   DEFAULT_LOAD_STEP_KG,
   LOAD_RATIO_PER_RIR,
@@ -92,6 +93,16 @@ export interface LoadSuggestion {
   baseReps: number;
   /** Repeticiones objetivo. */
   reps: number;
+  /**
+   * Series objetivo. **Solo va cuando cambian**, que hoy es únicamente la
+   * progresión de peso corporal al llegar al techo de repeticiones.
+   *
+   * Va como campo opcional y no como un valor más de `action` a propósito:
+   * `action` la consumen cinco sitios con su icono y su texto, y un cuarto valor
+   * obligaría a tocarlos todos para un caso que solo se da en calistenia. Quien
+   * no lo pinte sigue funcionando igual.
+   */
+  sets?: number;
   action: LoadAction;
   /** Variación sobre el peso de trabajo anterior, en % con un decimal. */
   deltaPct: number;
@@ -102,6 +113,11 @@ export interface LoadSuggestion {
 }
 
 export interface AutoRegOptions {
+  /**
+   * El ejercicio se hace un lado cada vez: el objetivo sube de dos en dos.
+   * Un objetivo impar pondría una repetición en un lado y no en el otro.
+   */
+  perSide?: boolean;
   targetRir?: number;
   /** Escalón mínimo de carga en kg. */
   stepKg?: number;
@@ -161,6 +177,31 @@ function sessionMaxRpe(session: AutoRegSession): number | null {
     .filter((v): v is number => v !== null);
   if (values.length === 0) return null;
   return Math.max(...values);
+}
+
+/**
+ * Series de trabajo a partir de las cuales deja de tener sentido añadir otra.
+ *
+ * Cinco no es un número redondo elegido al azar: por encima de eso una sesión de
+ * dominadas se convierte en trabajo de resistencia, y lo honesto es lastrar en
+ * vez de seguir acumulando series.
+ */
+const MAX_SERIES_PESO_CORPORAL = 5;
+
+/**
+ * Qué hacer en **peso corporal** cuando ya se llegó al techo de repeticiones.
+ *
+ * Antes no había respuesta: el motor sumaba una repetición y volvía a sumarla la
+ * semana siguiente, indefinidamente. Con dominadas o fondos eso acaba
+ * recomendando series de treinta, que ya no entrenan fuerza.
+ *
+ * La progresión honesta es: primero más series, y cuando tampoco eso tiene
+ * sentido, lastre. No se puede subir la carga de un ejercicio que no la lleva,
+ * así que el escalón es el disco más pequeño que el usuario puede montar.
+ */
+function techoPesoCorporal(seriesHechas: number): { añadirSerie: number } | { lastrar: true } {
+  if (seriesHechas < MAX_SERIES_PESO_CORPORAL) return { añadirSerie: seriesHechas + 1 };
+  return { lastrar: true };
 }
 
 /** Serie más pesada de la sesión; a igualdad de peso, la de más repeticiones. */
@@ -287,16 +328,43 @@ export function suggestNextLoad(
     reps: number,
     action: LoadAction,
     reasonKey: string,
+    sets?: number,
   ): LoadSuggestion => ({
     weight,
     baseWeight,
     baseReps,
     reps,
+    ...(sets != null ? { sets } : {}),
     action,
-    deltaPct: Math.round(((weight - baseWeight) / baseWeight) * 1000) / 10,
+    // Con peso 0 (peso corporal sin lastre) el porcentaje sería una división por
+    // cero: ahí no hay variación de carga que expresar.
+    deltaPct: baseWeight > 0 ? Math.round(((weight - baseWeight) / baseWeight) * 1000) / 10 : 0,
     reasonKey,
     confidence,
   });
+
+  /** Sugerencia de peso corporal en el techo: más series, o lastrar. */
+  const pesoCorporalEnTecho = (): LoadSuggestion => {
+    const series = last.sets.filter(isWorkingSet).length;
+    const decision = techoPesoCorporal(series);
+    if ('añadirSerie' in decision) {
+      // Se vuelve al suelo del rango: añadir una serie y esperar el mismo tope
+      // en todas es pedir dos progresiones a la vez.
+      return mk(
+        baseWeight,
+        repMin ?? baseReps,
+        'hold',
+        'coach.reason.bodyweight_add_set',
+        decision.añadirSerie,
+      );
+    }
+    return mk(
+      baseWeight + step,
+      repMin ?? baseReps,
+      'increase',
+      'coach.reason.bodyweight_add_load',
+    );
+  };
 
   // 1. Al límite y perdiendo repeticiones ⇒ bajar carga. El recorte se deriva
   //    del desfase de esfuerzo (≈4 % por punto de RPE), con un suelo de un 5 %:
@@ -332,7 +400,14 @@ export function suggestNextLoad(
 
     // Sin salto montable bajo el tope (cargas muy ligeras, o peso corporal),
     // progresa por repeticiones. Es doble progresión, no un parche.
-    if (target === null) return mk(baseWeight, baseReps + 1, 'hold', 'coach.reason.add_rep');
+    if (target === null) {
+      // ...salvo que en peso corporal ya se esté en el techo: ahí seguir sumando
+      // repeticiones es lo que llevaba a series de treinta dominadas.
+      if (opts.bodyweight && repMax !== undefined && baseReps >= repMax) {
+        return pesoCorporalEnTecho();
+      }
+      return mk(baseWeight, nextRepTarget(baseReps, opts), 'hold', 'coach.reason.add_rep');
+    }
 
     // Subir carga en el techo del rango se premia restando reps: se vuelve al
     // suelo y se trabaja el mismo esquema de progresión (doble progresión).
@@ -358,10 +433,13 @@ export function suggestNextLoad(
       return mk(baseWeight, baseReps, 'hold', 'coach.reason.weekly_cap');
     }
     const target = raise(TARGET_INCREASE_RATIO);
-    if (target === null) return mk(baseWeight, baseReps + 1, 'hold', 'coach.reason.on_target');
+    if (target === null) {
+      if (opts.bodyweight) return pesoCorporalEnTecho();
+      return mk(baseWeight, nextRepTarget(baseReps, opts), 'hold', 'coach.reason.on_target');
+    }
     return mk(target, repMin ?? baseReps, 'increase', 'coach.reason.ceiling');
   }
-  return mk(baseWeight, baseReps + 1, 'hold', 'coach.reason.on_target');
+  return mk(baseWeight, nextRepTarget(baseReps, opts), 'hold', 'coach.reason.on_target');
 }
 
 /**
@@ -375,7 +453,13 @@ export function suggestNextLoad(
  */
 export function suggestFromLastSession(
   sessions: AutoRegSession[],
-  opts: { repMin?: number; repMax?: number; bodyweight?: boolean; stepKg?: number } = {},
+  opts: {
+    repMin?: number;
+    repMax?: number;
+    bodyweight?: boolean;
+    stepKg?: number;
+    perSide?: boolean;
+  } = {},
 ): LoadSuggestion | null {
   const usable = usableSessions(sessions);
   if (usable.length === 0) return null;
@@ -390,7 +474,7 @@ export function suggestFromLastSession(
   const step = opts.stepKg ?? DEFAULT_LOAD_STEP_KG;
   const prog = suggestProgression(
     working.map((s) => ({ weight: s.weight, reps: s.reps })),
-    { repMin: opts.repMin, repMax: opts.repMax, incrementKg: step },
+    { repMin: opts.repMin, repMax: opts.repMax, incrementKg: step, perSide: opts.perSide },
   );
   if (!prog) return null;
 
@@ -399,11 +483,13 @@ export function suggestFromLastSession(
     reps: number,
     action: LoadAction,
     reasonKey: string,
+    sets?: number,
   ): LoadSuggestion => ({
     weight,
     baseWeight: top.weight,
     baseReps: top.reps,
     reps,
+    ...(sets != null ? { sets } : {}),
     action,
     deltaPct: top.weight > 0 ? Math.round(((weight - top.weight) / top.weight) * 1000) / 10 : 0,
     reasonKey,
@@ -414,10 +500,28 @@ export function suggestFromLastSession(
   // verdad para la mayoría de usuarios. Por eso lleva las mismas puertas que el
   // motor con RIR: aquí es donde se producía la subida automática cada semana.
   if (prog.action !== 'increase-weight' || opts.bodyweight) {
-    // En peso corporal, alcanzar el techo no se premia reseteando las reps a la
-    // baja: se sigue sumando una repetición, la única progresión segura.
-    const reps = prog.action === 'increase-weight' ? top.reps + 1 : prog.reps;
-    return mk(top.weight, reps, 'hold', 'coach.reason.no_effort_reps');
+    // Peso corporal en el techo: ya no se suma otra repetición sin más. Primero
+    // se añade una serie y, cuando tampoco eso tiene sentido, se propone lastrar.
+    if (opts.bodyweight && prog.action === 'increase-weight') {
+      const series = working.length;
+      const decision = techoPesoCorporal(series);
+      if ('añadirSerie' in decision) {
+        return mk(
+          top.weight,
+          opts.repMin ?? top.reps,
+          'hold',
+          'coach.reason.bodyweight_add_set',
+          decision.añadirSerie,
+        );
+      }
+      return mk(
+        top.weight + step,
+        opts.repMin ?? top.reps,
+        'increase',
+        'coach.reason.bodyweight_add_load',
+      );
+    }
+    return mk(top.weight, prog.reps, 'hold', 'coach.reason.no_effort_reps');
   }
 
   const repMax = opts.repMax;

@@ -1,6 +1,7 @@
 // Helpers puros de HistoryPage: rango de reps y construcción de rutina custom.
 import type { Routine, RoutineExercise, DayOfWeek } from '@features/routine/stores/routineStore';
 import type { WorkoutSetWithDetails, WorkoutWithSets } from '@shared/lib/types';
+import { isRepSet, isTimedSet } from '@shared/lib/setShape';
 
 export function repsRange(reps: number[]): string {
   if (!reps.length) return '';
@@ -12,11 +13,30 @@ export function repsRange(reps: number[]): string {
 /** Un ejercicio del entreno, con sus series ya resumidas en una línea. */
 export interface ExerciseSummary {
   name: string;
+  /** Número de series **de repeticiones**. */
   setCount: number;
   /** Repeticiones observadas: "8" si todas iguales, "8-10" si varían. */
   reps: string;
   /** Peso observado, con el mismo criterio: "115" o "115-125". */
   weight: string;
+  /** Número de series por tiempo. Cero en un ejercicio de fuerza normal. */
+  timedSetCount: number;
+  /**
+   * Segundos observados, ya formateados: "45 s" o "45-60 s".
+   *
+   * Van aparte de `reps` y no en el mismo campo porque un ejercicio puede tener
+   * las dos cosas —una serie de flexiones y otra al fallo por tiempo— y
+   * mezclarlas en un solo rango daría «8-45», que no significa nada.
+   */
+  duration: string;
+}
+
+/** «45 s» o «45-60 s» a partir de los segundos observados. */
+function durationRange(segundos: number[]): string {
+  if (!segundos.length) return '';
+  const min = Math.min(...segundos);
+  const max = Math.max(...segundos);
+  return min === max ? `${min} s` : `${min}-${max} s`;
 }
 
 /**
@@ -28,20 +48,37 @@ export interface ExerciseSummary {
  * Resumido por ejercicio, ese mismo entreno son tres líneas en vez de nueve.
  */
 export function groupSetsByExercise(sets: WorkoutSetWithDetails[]): ExerciseSummary[] {
-  const map = new Map<string, { reps: number[]; weights: number[] }>();
+  const map = new Map<string, { reps: number[]; weights: number[]; seconds: number[] }>();
   for (const s of sets) {
     const name = s.exercise?.name?.trim();
     if (!name) continue;
-    const entry = map.get(name) ?? { reps: [], weights: [] };
-    entry.reps.push(s.reps);
-    entry.weights.push(s.weight);
+    // Cada forma de serie va a su propio montón. Un resumen «8-10 reps» no sabe
+    // describir una plancha, y meter los 45 segundos en el rango de
+    // repeticiones daría «8-45», que no significa nada.
+    const entry = map.get(name) ?? { reps: [], weights: [], seconds: [] };
+    if (isRepSet(s)) {
+      entry.reps.push(s.reps);
+      entry.weights.push(s.weight);
+    } else if (isTimedSet(s)) {
+      entry.seconds.push(s.duration_seconds);
+      // El lastre de una plancha sí cuenta como peso observado; el 0 de una
+      // plancha sin lastre no, porque «0-115» sería falso.
+      if (s.weight > 0) entry.weights.push(s.weight);
+    } else {
+      // Ni repeticiones ni duración: la BD ya lo impide con
+      // `workout_sets_measured`, pero un dato viejo o corrupto no puede
+      // aparecer como «0 reps».
+      continue;
+    }
     map.set(name, entry);
   }
-  return [...map].map(([name, { reps, weights }]) => ({
+  return [...map].map(([name, { reps, weights, seconds }]) => ({
     name,
     setCount: reps.length,
     reps: repsRange(reps),
     weight: repsRange(weights),
+    timedSetCount: seconds.length,
+    duration: durationRange(seconds),
   }));
 }
 
@@ -53,6 +90,9 @@ export function buildTemplateFromWorkouts(dayWorkouts: WorkoutWithSets[], name: 
     for (const s of wo.sets) {
       const exName = s.exercise?.name?.trim();
       if (!exName) continue;
+      // Misma razón que arriba: el rango de repeticiones de la plantilla se
+      // construye solo con las series que se miden en repeticiones.
+      if (!isRepSet(s)) continue;
       const arr = map.get(exName) ?? [];
       arr.push(s.reps);
       map.set(exName, arr);

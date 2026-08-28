@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { useState, useCallback, useRef, useMemo } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { m, AnimatePresence } from 'framer-motion';
 import { useExerciseSearch, trackRecentExercise } from '@shared/hooks/useExerciseSearch';
@@ -15,6 +15,16 @@ import { toast } from 'sonner';
 import { ExerciseRow, type ExerciseOption } from './exerciseSelector/ExerciseRow';
 import { CreateExerciseForm } from './exerciseSelector/CreateExerciseForm';
 import { Clock, Loader, Plus, Search, X } from '@shared/components/icons';
+import { muscleGroupLabel } from '@shared/lib/muscleGroupLabel';
+
+/**
+ * Montón de «lo último usado», no un grupo del catálogo.
+ *
+ * Va como centinela y no traducido: el desplegable compara este valor por
+ * igualdad para decidir si pinta el reloj o el icono del músculo, y si aquí
+ * hubiera un texto traducido esa comparación fallaría al cambiar de idioma.
+ */
+const GRUPO_RECIENTES = 'Recientes';
 
 interface ExerciseSelectorProps {
   userId: string;
@@ -218,7 +228,7 @@ export function ExerciseSelector({
     }
 
     // Recientes
-    if (recentExercises.length > 0) result.push(['Recientes', recentExercises]);
+    if (recentExercises.length > 0) result.push([GRUPO_RECIENTES, recentExercises]);
 
     // Rest of groups
     const otherMap: Record<string, ExerciseOption[]> = {};
@@ -232,10 +242,59 @@ export function ExerciseSelector({
     return result;
   }, [exercises, recentSet, activeMuscleGroup]);
 
+  const isOpen = isFocused || editingMuscleId !== null || isCreating || defaultOpen;
+
+  /**
+   * Distancia del borde superior de la pantalla al final del buscador.
+   *
+   * Es **lo único que CSS no puede saber** de este cálculo, así que es lo único
+   * que se mide en JS: el resto —alto del viewport, alto de la barra inferior y
+   * el área segura de los gestos de Android— lo resuelve la propia hoja de
+   * estilos, que sí sabe leer `env(safe-area-inset-bottom)`.
+   *
+   * Hacerlo entero en JS fue el primer intento y se quedó corto: `env()` no se
+   * puede leer desde `getComputedStyle`, así que la lista descontaba los 52 px
+   * de la barra pero no los ~48 de la franja de gestos, y la última fila
+   * («crear ejercicio propio») quedaba tapada.
+   */
+  const [topOffset, setTopOffset] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!isOpen || defaultOpen) return;
+
+    const medir = () => {
+      const input = inputRef.current;
+      if (!input) return;
+      setTopOffset(Math.round(input.getBoundingClientRect().bottom));
+    };
+
+    // Tras el layout, no en el cuerpo del efecto: medir antes de que el
+    // navegador coloque el desplegable da la posición del render anterior.
+    const raf = requestAnimationFrame(medir);
+    window.addEventListener('resize', medir);
+    window.visualViewport?.addEventListener('resize', medir);
+    window.visualViewport?.addEventListener('scroll', medir);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', medir);
+      window.visualViewport?.removeEventListener('resize', medir);
+      window.visualViewport?.removeEventListener('scroll', medir);
+    };
+  }, [isOpen, defaultOpen]);
+
   const dropdownStyle: React.CSSProperties = {
     backgroundColor: 'var(--bg-surface-3)',
     border: '1px solid var(--border-default)',
     boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
+    // `100dvh` y no `100vh`: en Android el teclado encoge el viewport dinámico,
+    // que es justo lo que hay que descontar para que la lista no acabe debajo.
+    // El suelo de 160px evita que con el teclado abierto quede un hueco inútil.
+    ...(!defaultOpen && topOffset != null
+      ? {
+          maxHeight: `max(160px, calc(100dvh - ${topOffset}px - var(--bottom-nav-height) - env(safe-area-inset-bottom) - 12px))`,
+        }
+      : {}),
   };
 
   const groupHeaderStyle: React.CSSProperties = {
@@ -244,8 +303,6 @@ export function ExerciseSelector({
     position: 'sticky',
     top: 0,
   };
-
-  const isOpen = isFocused || editingMuscleId !== null || isCreating || defaultOpen;
 
   return (
     <div className="relative">
@@ -301,7 +358,7 @@ export function ExerciseSelector({
             className={
               defaultOpen
                 ? 'relative z-50 mt-1.5 max-h-[calc(100dvh-8rem)] overflow-y-auto rounded-card'
-                : 'absolute z-50 top-full left-0 right-0 mt-1.5 max-h-[60rem] overflow-y-auto rounded-card'
+                : 'absolute z-50 top-full left-0 right-0 mt-1.5 overflow-y-auto overscroll-contain rounded-card'
             }
             style={dropdownStyle}
             onMouseDown={(e) => {
@@ -310,18 +367,17 @@ export function ExerciseSelector({
                 e.preventDefault();
               }
             }}
-            onTouchStart={(e) => {
-              const tag = (e.target as HTMLElement).tagName;
-              // No prevenimos para input/select para poder escribir y elegir
-              // Tampoco para los botones de las píldoras de grupos musculares
-              if (tag !== 'INPUT' && tag !== 'SELECT') {
-                // Except for our Pill buttons which we do want to preventDefault on
-                // so they don't steal focus from the search input when editing a muscle group.
-                // But wait, the edit muscle group doesn't steal focus if we handle it well,
-                // actually we can just preventDefault if it's NOT an input or select.
-                e.preventDefault();
-              }
-            }}
+            // Aquí NO se hace `preventDefault` en `touchstart`, y es deliberado:
+            // hacerlo cancela el desplazamiento por defecto del navegador —es la
+            // forma canónica de *desactivar* el scroll táctil—, así que el dedo
+            // no movía esta lista por bien que cupiera. Era el motivo real de que
+            // no se pudiera llegar a los últimos ejercicios en el móvil.
+            //
+            // Estaba puesto para que tocar la lista no le robara el foco al
+            // buscador y se cerrara el desplegable, pero eso ya lo cubre el
+            // retardo de 200 ms del blur (`useExerciseSearch`): sobra tiempo para
+            // que el toque llegue a su destino. El `onMouseDown` de arriba sí se
+            // mantiene, porque con ratón no hay gesto de desplazamiento que romper.
           >
             {isLoading && (
               <div className="flex items-center justify-center p-4">
@@ -341,7 +397,7 @@ export function ExerciseSelector({
                   <div key={group}>
                     {/* Group header */}
                     <div className="px-3 py-2 flex items-center gap-1.5" style={groupHeaderStyle}>
-                      {group === 'Recientes' ? (
+                      {group === GRUPO_RECIENTES ? (
                         <Clock className="w-3 h-3 flex-shrink-0 text-fg-subtle" />
                       ) : (
                         <span
@@ -357,9 +413,13 @@ export function ExerciseSelector({
                         </span>
                       )}
                       <span className="text-2xs font-bold uppercase tracking-[0.12em] text-fg-subtle">
-                        {group === activeMuscleGroup && group !== 'Recientes'
-                          ? `${group} — Sugerido`
-                          : group}
+                        {group === GRUPO_RECIENTES
+                          ? t('workout.group_recent')
+                          : group === activeMuscleGroup
+                            ? t('workout.group_suggested', {
+                                group: muscleGroupLabel(group, t),
+                              })
+                            : muscleGroupLabel(group, t)}
                       </span>
                     </div>
 

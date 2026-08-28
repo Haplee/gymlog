@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { isTimedSet } from '@shared/lib/setShape';
 import type { WorkoutWithSets, WorkoutSetWithDetails } from '@shared/lib/types';
 import { groupSetsByExercise } from '../utils/historyHelpers';
 import { ChevronRight, Star, Trash2 } from '@shared/components/icons';
@@ -67,7 +68,11 @@ export function ExerciseRow({
                     {t('workout.sets')} {s.set_num}
                   </span>
                   <span className="text-sm text-fg-muted">
-                    {s.reps} {t('workout.reps').toLowerCase()}
+                    {/* Una plancha se lee «45 s». Pintar `s.reps` aquí daba
+                        «null reps» en cuanto la columna admitió NULL. */}
+                    {isTimedSet(s)
+                      ? `${s.duration_seconds} s`
+                      : `${s.reps ?? 0} ${t('workout.reps').toLowerCase()}`}
                   </span>
                   {s.is_warmup && (
                     <span className="text-2xs px-1.5 py-0.5 rounded-sm font-bold uppercase bg-warning/15 text-warning">
@@ -126,8 +131,10 @@ export function WorkoutSetsSummary({ sets }: { sets: WorkoutSetWithDetails[] }) 
           <span className="min-w-0 truncate text-sm text-fg-muted">{g.name}</span>
           <span className="flex-shrink-0 font-mono text-xs tabular-nums text-fg-subtle">
             {/* Peso 0 = ejercicio de peso corporal: escribir "0 kg" era ruido. */}
-            {g.setCount}×{g.reps}
-            {g.weight !== '0' && ` · ${g.weight} ${t('stats.kg_unit')}`}
+            {g.setCount > 0 && `${g.setCount}×${g.reps}`}
+            {g.setCount > 0 && g.timedSetCount > 0 && ' · '}
+            {g.timedSetCount > 0 && `${g.timedSetCount}×${g.duration}`}
+            {g.weight !== '0' && g.weight !== '' && ` · ${g.weight} ${t('stats.kg_unit')}`}
           </span>
         </div>
       ))}

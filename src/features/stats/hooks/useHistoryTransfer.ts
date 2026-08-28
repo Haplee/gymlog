@@ -14,7 +14,8 @@ import {
 import { useCardioStore, CARDIO_LABELS } from '@features/cardio/stores/cardioStore';
 import { supabase } from '@shared/lib/supabase';
 import { devError } from '@shared/lib/devtools';
-import { fetchExercises } from '@shared/api/queries';
+import { fetchExercises, insertMissingWeights } from '@shared/api/queries';
+import { onlyRepSets } from '@shared/lib/setShape';
 import { DEFAULT_MUSCLE_GROUP } from '@shared/constants/muscleGroups';
 import type { WorkoutWithSets } from '@shared/lib/types';
 import {
@@ -37,6 +38,17 @@ import {
 } from '../utils/excelExport';
 import { parseXlsxFile, DAY_LABELS, type ParsedImport } from '../utils/excelImport';
 import { parseImportedWorkouts } from '../utils/importSchema';
+import {
+  parseTrackerCsv,
+  TrackerFormatError,
+  TRACKER_NAME,
+  type TrackerId,
+} from '../utils/importTrackers';
+import {
+  parseAppleHealthExport,
+  AppleHealthFormatError,
+  type PesoImportado,
+} from '../utils/importAppleHealth';
 import { applyExcelImport } from '../utils/applyExcelImport';
 
 /**
@@ -56,7 +68,22 @@ import { applyExcelImport } from '../utils/applyExcelImport';
  * confirmar se inserta, saltandose las series duplicadas.
  */
 type PendingImport =
-  { kind: 'json'; workouts: unknown[] } | { kind: 'excel'; parsed: ParsedImport };
+  | {
+      kind: 'json';
+      workouts: unknown[];
+      /** App de origen, cuando el fichero venía de otro tracker. */
+      tracker?: TrackerId;
+      /** Filas que el tracker no supo importar (cardio, sobre todo). */
+      skippedRows?: number;
+    }
+  | { kind: 'excel'; parsed: ParsedImport }
+  | {
+      kind: 'health';
+      /** Un peso por día, ya en kg y ordenados. */
+      weights: PesoImportado[];
+      /** Registros descartados por fecha o valor imposible. */
+      descartados: number;
+    };
 
 /** Conteo de lo que entraria al confirmar un import pendiente. */
 interface ImportSummary {
@@ -66,6 +93,8 @@ interface ImportSummary {
   routines: number;
   /** Series que ya existen (fecha, ejercicio, set_num) y se saltarian. */
   skips: number;
+  /** Días con peso corporal que entrarían (solo importación de Apple Health). */
+  weights?: number;
 }
 
 /** Resumen de un JSON pendiente: entrenos, series y duplicadas ya existentes. */
@@ -144,7 +173,11 @@ export function useHistoryTransfer({
       const strength: ExcelStrengthSet[] = workouts.flatMap((w) => {
         const date = w.started_at ? w.started_at.split('T')[0] : '';
         if (!date) return [];
-        return w.sets.map((s) => ({
+        // La hoja tiene columna de repeticiones y no de duración: una serie por
+        // tiempo no cabe en ella todavía. Hoy no descarta nada (`reps` es NOT
+        // NULL); cuando existan, la exportación necesita su propia columna.
+        // Ver openspec/changes/add-logging-modes/ tarea 3.4.
+        return onlyRepSets(w.sets).map((s) => ({
           date,
           exercise: s.exercise?.name || 'Desconocido',
           muscleGroup: s.exercise?.muscle_group || DEFAULT_MUSCLE_GROUP,
@@ -216,7 +249,11 @@ export function useHistoryTransfer({
     const fileName = `gymlog_${new Date().toISOString().split('T')[0]}.json`;
     await saveBlob(
       fileName,
-      buildExportJson(workouts, cardioSessions),
+      buildExportJson(
+        // Mismo motivo que en la exportación a Excel.
+        workouts.map((w) => ({ ...w, sets: onlyRepSets(w.sets) })),
+        cardioSessions,
+      ),
       'application/json;charset=utf-8;',
     );
   };
@@ -227,6 +264,16 @@ export function useHistoryTransfer({
     if (!pendingImport) return null;
     if (pendingImport.kind === 'json')
       return previewJsonImport(pendingImport.workouts, existingKeys);
+    if (pendingImport.kind === 'health') {
+      return {
+        workouts: 0,
+        sets: 0,
+        cardio: 0,
+        routines: 0,
+        skips: 0,
+        weights: pendingImport.weights.length,
+      };
+    }
     return {
       workouts: 0,
       sets: pendingImport.parsed.strength.length,
@@ -386,15 +433,89 @@ export function useHistoryTransfer({
     }
   };
 
+  /**
+   * Lee un `export.xml` de Apple Health y prepara los pesos para confirmar.
+   *
+   * El fichero puede pesar cientos de megas, así que no se lee entero: el lector
+   * va por trozos (ver `importAppleHealth`). Se acepta también el `.zip` tal
+   * cual sale del móvil solo para poder avisar de que hay que descomprimirlo
+   * antes — descomprimirlo aquí exigiría una dependencia nueva.
+   */
+  const importFromAppleHealth = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || !user) {
+      toast.error(t('history.select_file_login'));
+      return;
+    }
+
+    if (file.name.toLowerCase().endsWith('.zip')) {
+      toast.error(t('history.health_zip_hint'));
+      return;
+    }
+
+    void (async () => {
+      try {
+        toast.info(t('history.health_reading'));
+        const { weights, descartados } = await parseAppleHealthExport(file);
+        if (weights.length === 0) {
+          toast.error(t('history.health_no_weights'));
+          return;
+        }
+        setPendingImport({ kind: 'health', weights, descartados });
+      } catch (err) {
+        if (err instanceof AppleHealthFormatError) {
+          toast.error(t('history.health_invalid'));
+          return;
+        }
+        devError('Error leyendo export de Apple Health', err);
+        toast.error(t('history.import_error'));
+      }
+    })();
+  };
+
+  const runHealthImport = async (weights: PesoImportado[]) => {
+    if (!user) return;
+    try {
+      toast.info(t('history.loading_data'));
+      const { inserted, skipped } = await insertMissingWeights(
+        user.id,
+        weights.map((w) => ({ date: w.date, weightKg: w.weightKg })),
+      );
+      queryClient.invalidateQueries({ queryKey: ['bodyMeasurements'], refetchType: 'all' });
+      let message = t('history.health_success', { count: inserted });
+      if (skipped > 0) message += ` ${t('history.health_skipped', { count: skipped })}`;
+      if (inserted > 0) toast.success(message);
+      else toast.info(t('history.health_all_existing'));
+    } catch (err) {
+      devError('Error importando pesos de Apple Health', err);
+      toast.error(t('history.import_error'));
+    }
+  };
+
   const confirmImport = async () => {
     const pending = pendingImport;
     setPendingImport(null);
     if (!pending || !user) return;
     if (pending.kind === 'json') await runJsonImport(pending.workouts);
+    else if (pending.kind === 'health') await runHealthImport(pending.weights);
     else await runExcelImport(pending.parsed);
   };
 
   const cancelImport = () => setPendingImport(null);
+
+  /**
+   * Nombre legible de la app de origen, cuando el fichero venía de otro tracker.
+   * El diálogo lo usa para que el usuario confirme sabiendo qué se ha detectado:
+   * si la detección se equivoca, es el momento de cancelar y no después.
+   */
+  const pendingImportSource =
+    pendingImport?.kind === 'json' && pendingImport.tracker
+      ? {
+          name: TRACKER_NAME[pendingImport.tracker],
+          skippedRows: pendingImport.skippedRows ?? 0,
+        }
+      : null;
 
   const importFromCsv = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -432,6 +553,29 @@ export function useHistoryTransfer({
         if (!text || text.trim().length === 0) {
           toast.error(t('history.file_empty'));
           return;
+        }
+
+        // Primero se intenta leer como export de otra app (Strong, Hevy,
+        // FitNotes). Va por cabeceras, así que o reconoce el fichero o falla
+        // limpio; si falla, se cae al importador de posición de siempre, que es
+        // el que entiende los CSV propios.
+        try {
+          const fromTracker = parseTrackerCsv(text);
+          if (fromTracker.workouts.length > 0) {
+            setPendingImport({
+              kind: 'json',
+              workouts: fromTracker.workouts,
+              tracker: fromTracker.tracker,
+              skippedRows: fromTracker.skippedRows,
+            });
+            return;
+          }
+        } catch (err) {
+          // Solo se ignora el «esto no es de un tracker conocido»: cualquier
+          // otro error sí es un fallo de verdad y no debe pasar en silencio.
+          if (!(err instanceof TrackerFormatError)) {
+            devError('Error leyendo CSV de tracker', err);
+          }
         }
 
         const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
@@ -646,8 +790,10 @@ export function useHistoryTransfer({
     exportToJson,
     importFromJson,
     importFromCsv,
+    importFromAppleHealth,
     pendingImport,
     pendingImportSummary,
+    pendingImportSource,
     confirmImport,
     cancelImport,
   };

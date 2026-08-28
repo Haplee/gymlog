@@ -40,8 +40,7 @@ const aLineal = (c) => {
   return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
 };
 
-const luminancia = ({ r, g, b }) =>
-  0.2126 * aLineal(r) + 0.7152 * aLineal(g) + 0.0722 * aLineal(b);
+const luminancia = ({ r, g, b }) => 0.2126 * aLineal(r) + 0.7152 * aLineal(g) + 0.0722 * aLineal(b);
 
 const contraste = (x, y) => {
   const [a, b] = [luminancia(x), luminancia(y)];
@@ -74,14 +73,20 @@ function parseColor(valor, vars) {
   // rgb(var(--algo) / 0.28) — el var() aporta los tres canales
   const conVar = v.match(/^rgba?\(\s*var\(\s*(--[\w-]+)\s*\)\s*(?:\/\s*([\d.]+))?\s*\)$/i);
   if (conVar) {
-    const canales = (vars.get(conVar[1]) ?? '').trim().split(/[\s,]+/).map(Number);
+    const canales = (vars.get(conVar[1]) ?? '')
+      .trim()
+      .split(/[\s,]+/)
+      .map(Number);
     if (canales.length < 3 || canales.some(Number.isNaN)) return null;
     return { r: canales[0], g: canales[1], b: canales[2], a: Number(conVar[2] ?? 1) };
   }
 
   const rgb = v.match(/^rgba?\(([^)]+)\)$/i);
   if (rgb) {
-    const partes = rgb[1].split(/[\s,/]+/).filter(Boolean).map(Number);
+    const partes = rgb[1]
+      .split(/[\s,/]+/)
+      .filter(Boolean)
+      .map(Number);
     if (partes.length < 3 || partes.slice(0, 3).some(Number.isNaN)) return null;
     return { r: partes[0], g: partes[1], b: partes[2], a: partes[3] ?? 1 };
   }
@@ -288,10 +293,35 @@ function auditarTema(nombreTema, vars, claveAcento) {
     const fondo = parseColor(a[claveAcento].primary, vars);
     const frente = parseColor(a[claveAcento].fg, vars);
     if (!fondo || !frente) continue;
-    comprobar(nombreTema, 'acentos', `fg sobre acento «${a.id}»`, contraste(frente, fondo), SUELO.textoAA);
+    comprobar(
+      nombreTema,
+      'acentos',
+      `fg sobre acento «${a.id}»`,
+      contraste(frente, fondo),
+      SUELO.textoAA,
+    );
   }
 
-  // 5. El caso que hundió al reskin: texto sobre una capa de vidrio con el
+  // 5. Los semánticos como relleno informativo. No es cosmética: el mapa
+  //    muscular pinta cada región con uno de los tres y ahí el color es la
+  //    ÚNICA señal del estado, así que WCAG 1.4.11 pide 3:1. Este bloque
+  //    existe porque `--warning` no estaba definido en el tema claro y heredaba
+  //    el amarillo del oscuro: 1,41:1 sobre blanco, invisible.
+  for (const nombre of ['--success', '--warning', '--error']) {
+    const color = t(nombre);
+    for (const sup of [{ nombre: '--bg-canvas', color: canvas }, ...superficies]) {
+      if (!color || !sup.color) continue;
+      comprobar(
+        nombreTema,
+        'semánticos',
+        `${nombre} sobre ${sup.nombre}`,
+        contraste(color, sup.color),
+        SUELO.noTexto,
+      );
+    }
+  }
+
+  // 6. El caso que hundió al reskin: texto sobre una capa de vidrio con el
   //    acento MÁS CLARO pasando por debajo. La capa es translúcida, así que
   //    parte de ese acento la atraviesa, y encima va el velo.
   const peor = acentoMasClaro(claveAcento);
@@ -330,7 +360,7 @@ for (const tema of ['oscuro', 'claro']) {
   const malos = delTema.filter((r) => !r.pasa);
   console.log(`${tema.toUpperCase()}  ${delTema.length - malos.length}/${delTema.length} ok`);
 
-  for (const grupo of ['texto', 'jerarquía', 'bordes', 'acentos', 'vidrio']) {
+  for (const grupo of ['texto', 'jerarquía', 'bordes', 'semánticos', 'acentos', 'vidrio']) {
     const delGrupo = delTema.filter((r) => r.grupo === grupo);
     if (delGrupo.length === 0) continue;
     const malosDelGrupo = delGrupo.filter((r) => !r.pasa);
@@ -344,7 +374,9 @@ for (const tema of ['oscuro', 'claro']) {
 }
 
 if (fallos.length > 0) {
-  console.error(`FALLA: ${fallos.length} de ${resultados.length} comprobaciones por debajo del suelo.\n`);
+  console.error(
+    `FALLA: ${fallos.length} de ${resultados.length} comprobaciones por debajo del suelo.\n`,
+  );
   process.exit(1);
 }
 console.log(`Todo en verde: ${resultados.length} comprobaciones.\n`);

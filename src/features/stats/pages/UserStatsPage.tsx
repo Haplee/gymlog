@@ -35,10 +35,12 @@ import { toast } from 'sonner';
 import { format, subWeeks, startOfWeek, eachWeekOfInterval, subDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { calcular1RM } from '@shared/lib/brzycki';
+import { onlyRepSets } from '@shared/lib/setShape';
 import { SectionLabel } from '../components/userStats/SectionLabel';
 import { BigKPI } from '../components/userStats/BigKPI';
 import { TipCard } from '../components/userStats/TipCard';
 import { MuscleRecovery } from '../components/userStats/MuscleRecovery';
+import { MuscleMap } from '../components/MuscleMap';
 import { WorkoutCalendar } from '../components/userStats/WorkoutCalendar';
 import { DayFrequencyChart } from '../components/userStats/DayFrequencyChart';
 import { TopExercisesList } from '../components/userStats/TopExercisesList';
@@ -105,21 +107,30 @@ export function UserStatsPage() {
 
   const workouts = useMemo(() => data?.workouts ?? [], [data?.workouts]);
   const recentSets = useMemo(() => data?.sets ?? [], [data?.sets]);
+
+  /**
+   * Solo las series que se miden en repeticiones. Ver la nota equivalente en
+   * `StatsPage`: volumen, 1RM y reparto muscular no saben qué hacer con una
+   * serie por tiempo. Hoy no descarta nada.
+   */
+  const strengthSets = useMemo(() => onlyRepSets(recentSets), [recentSets]);
   // Sugerencias de carga a partir del RIR/RPE ya registrado. Local y gratis:
   // se muestran tenga o no activado el entrenador IA.
-  const nextSessionAdvice = useAutoregulation(recentSets);
+  const nextSessionAdvice = useAutoregulation(strengthSets);
 
   // Semana de descarga: volumen y RIR agregados por semana ISO (productor puro)
   // y la regla del motor determinista. null si aún no hay 3 semanas de datos.
   const deloadSuggestion = useMemo(() => {
-    const input = buildDeloadInput(workouts);
+    // Solo series de fuerza: una plancha no puede disparar una semana de
+    // descarga de press banca (design.md §4.3). Hoy no descarta nada.
+    const input = buildDeloadInput(workouts.map((w) => ({ ...w, sets: onlyRepSets(w.sets) })));
     return input ? suggestDeload(input) : null;
   }, [workouts]);
 
   const currentStreak = useMemo(() => calculateCurrentStreak(workouts), [workouts]);
   const maxStreak = useMemo(() => calculateMaxStreak(workouts), [workouts]);
-  const weeklyVolume = useMemo(() => calculateWeeklyVolume(recentSets), [recentSets]);
-  const prevWeekVolume = useMemo(() => calculatePreviousWeekVolume(recentSets), [recentSets]);
+  const weeklyVolume = useMemo(() => calculateWeeklyVolume(strengthSets), [strengthSets]);
+  const prevWeekVolume = useMemo(() => calculatePreviousWeekVolume(strengthSets), [strengthSets]);
   const volumeChange = useMemo(
     () => calculateVolumeChangePercent(weeklyVolume, prevWeekVolume),
     [weeklyVolume, prevWeekVolume],
@@ -131,22 +142,29 @@ export function UserStatsPage() {
   const musclesMap = useExerciseMusclesMap();
   // Volúmenes en la unidad del usuario (kg→t, lb→k lb), no toneladas fijas.
   const { formatVol } = useWeight();
+  // Aquí van TODAS las series, no solo las de repeticiones. La recuperación no
+  // es una medida de volumen sino de recencia —cuántos días hace que se tocó ese
+  // músculo— y una plancha trabaja el core igual que un crunch. Filtrarla con
+  // `strengthSets` dejaba a la app diciendo que el core llevaba una semana
+  // descansando el día después de una sesión entera de planchas. El aviso de
+  // «hoy toca X» (`useFatigueSuggestion`) ya usaba las series sin filtrar: esto
+  // hace que las dos digan lo mismo.
   const muscleRecovery = useMemo(
     () => analyzeMuscleRecovery(recentSets, musclesMap),
     [recentSets, musclesMap],
   );
-  const periodComparison = useMemo(() => comparePeriods(recentSets, 30), [recentSets]);
+  const periodComparison = useMemo(() => comparePeriods(strengthSets, 30), [strengthSets]);
 
   // Muscle group distribution (reparto ponderado entre los músculos del ejercicio)
   const muscleDistribution = useMemo(
-    () => calculateMuscleGroupDistribution(recentSets, musclesMap),
-    [recentSets, musclesMap],
+    () => calculateMuscleGroupDistribution(strengthSets, musclesMap),
+    [strengthSets, musclesMap],
   );
 
   // Top exercises by volume
   const topExercises = useMemo(() => {
     const byEx: Record<string, { volume: number; sets: number; best1rm: number }> = {};
-    recentSets.filter(isWorkingSet).forEach((s) => {
+    strengthSets.filter(isWorkingSet).forEach((s) => {
       const name = s.exercise?.name || 'Desconocido';
       if (!byEx[name]) byEx[name] = { volume: 0, sets: 0, best1rm: 0 };
       byEx[name].volume += s.weight * s.reps;
@@ -158,7 +176,7 @@ export function UserStatsPage() {
       .map(([name, stats]) => ({ name, ...stats }))
       .sort((a, b) => b.volume - a.volume)
       .slice(0, 6);
-  }, [recentSets]);
+  }, [strengthSets]);
 
   // Weekly volume last 8 weeks
   const weeklyVolumeData = useMemo(() => {
@@ -169,7 +187,7 @@ export function UserStatsPage() {
     );
     return weekStarts.map((weekStart, i) => {
       const weekEnd = subDays(weekStart, -7);
-      const vol = recentSets
+      const vol = strengthSets
         .filter(isWorkingSet)
         .filter((s) => {
           const d = s.workout?.started_at ? new Date(s.workout.started_at) : null;
@@ -178,7 +196,7 @@ export function UserStatsPage() {
         .reduce((sum, s) => sum + s.reps * s.weight, 0);
       return { week: `S${i + 1}`, vol, label: format(weekStart, 'dd/MM', { locale: es }) };
     });
-  }, [recentSets]);
+  }, [strengthSets]);
 
   const volumeProjection = useMemo(
     () => projectNextVolume(weeklyVolumeData.map((w) => w.vol)),
@@ -205,8 +223,8 @@ export function UserStatsPage() {
 
   // Total volume all time
   const totalVolumeAllTime = useMemo(
-    () => recentSets.filter(isWorkingSet).reduce((sum, s) => sum + s.weight * s.reps, 0),
-    [recentSets],
+    () => strengthSets.filter(isWorkingSet).reduce((sum, s) => sum + s.weight * s.reps, 0),
+    [strengthSets],
   );
 
   // Logros
@@ -576,6 +594,10 @@ export function UserStatsPage() {
         {topExercises.length > 0 && <TopExercisesList data={topExercises} />}
 
         {/* ── Estado muscular ── */}
+        {/* El mapa va justo antes de la lista y con el mismo dato: responde
+            «¿qué me falta por entrenar?» de un vistazo, y la lista de debajo da
+            el detalle en días. Uno no sustituye a la otra. */}
+        <MuscleMap recovery={muscleRecovery} />
         <MuscleRecovery muscleRecovery={muscleRecovery} />
 
         {/* ── Descarga (motor determinista, sin IA ni red) ── */}

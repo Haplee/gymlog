@@ -106,3 +106,39 @@ describe('parseRemoteWorkouts', () => {
     expect(w.sets).toEqual([]);
   });
 });
+
+describe('series por tiempo', () => {
+  it('una serie sin repeticiones sobrevive a la validación', () => {
+    // Antes de relajar el esquema, `reps: z.number()` descartaba la serie entera
+    // en silencio: la plancha desaparecía del historial sin un solo error.
+    const [w] = parseRemoteWorkouts([
+      remoteWorkout({
+        sets: [remoteSet({ reps: null, duration_seconds: 45, weight: 0 })],
+      }),
+    ]);
+    expect(w.sets).toHaveLength(1);
+    expect(w.sets[0].reps).toBeNull();
+  });
+
+  it('conserva la duración', () => {
+    const [w] = parseRemoteWorkouts([
+      remoteWorkout({ sets: [remoteSet({ reps: null, duration_seconds: 90, weight: 20 })] }),
+    ]);
+    expect((w.sets[0] as { duration_seconds?: number | null }).duration_seconds).toBe(90);
+  });
+
+  it('una serie de repeticiones se sigue leyendo igual', () => {
+    const [w] = parseRemoteWorkouts([remoteWorkout()]);
+    expect(w.sets[0].reps).toBe(5);
+    expect(w.sets[0].weight).toBe(120);
+  });
+
+  it('un entreno que mezcla los dos tipos conserva las dos series', () => {
+    const [w] = parseRemoteWorkouts([
+      remoteWorkout({
+        sets: [remoteSet(), remoteSet({ id: 's2', reps: null, duration_seconds: 60, weight: 0 })],
+      }),
+    ]);
+    expect(w.sets).toHaveLength(2);
+  });
+});

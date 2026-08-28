@@ -42,6 +42,8 @@ export interface LoadAdviceInput {
   repMax?: number;
   /** En peso corporal no se sugiere subir carga: solo repeticiones. */
   bodyweight?: boolean;
+  /** El ejercicio va por lado: el objetivo de reps sube de dos en dos. */
+  perSide?: boolean;
   /** Escalón mínimo montable con los discos del usuario. */
   stepKg?: number;
   /** Contexto de volumen del grupo muscular, si se conoce. */
@@ -57,12 +59,12 @@ export interface LoadAdvice {
 }
 
 export function buildLoadAdvice(input: LoadAdviceInput): LoadAdvice | null {
-  const { sessions, repMin, repMax, bodyweight, stepKg } = input;
+  const { sessions, repMin, repMax, bodyweight, stepKg, perSide } = input;
   if (sessions.length === 0) return null;
 
   const base =
-    suggestNextLoad(sessions, { repMin, repMax, bodyweight, stepKg }) ??
-    suggestFromLastSession(sessions, { repMin, repMax, bodyweight, stepKg });
+    suggestNextLoad(sessions, { repMin, repMax, bodyweight, stepKg, perSide }) ??
+    suggestFromLastSession(sessions, { repMin, repMax, bodyweight, stepKg, perSide });
   if (!base) return null;
 
   const stall = detectStall(sessions);

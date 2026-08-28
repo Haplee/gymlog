@@ -25,7 +25,17 @@ import type { WorkoutWithSets, WorkoutSetWithDetails } from '@shared/lib/types';
 export const RemoteWorkoutSetSchema = z
   .object({
     id: z.string(),
-    reps: z.number(),
+    /**
+     * `null` en las series por tiempo: una plancha no tiene repeticiones.
+     *
+     * Esto tiene que aceptar el nulo **antes** de que la migración lo permita en
+     * la BD. Con `z.number()` a secas, la primera serie por tiempo que llegase
+     * no fallaría de forma visible: la serie entera se descartaría al validar y
+     * el usuario vería su plancha desaparecer del historial sin un solo error.
+     */
+    reps: z.number().nullish(),
+    /** Segundos de la serie por tiempo. `null` en las de repeticiones. */
+    duration_seconds: z.number().nullish(),
     weight: z.number(),
     set_num: z.number().nullish(),
     exercise_id: z.string().nullish(),

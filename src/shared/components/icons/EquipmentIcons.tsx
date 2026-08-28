@@ -7,6 +7,7 @@
 import { memo } from 'react';
 import { IconDumbbell } from './GymIcons';
 import { Dumbbell, Man, type IconComponent } from '@shared/components/icons';
+import type { EquipmentType } from '@shared/constants/equipment';
 
 export interface GymIconProps {
   className?: string;
@@ -77,7 +78,9 @@ export const IconKettlebell = memo(({ className }: GymIconProps) => (
 ));
 IconKettlebell.displayName = 'IconKettlebell';
 
-const EQUIPMENT_ICONS: Record<string, IconComponent | typeof IconDumbbell> = {
+// El tipo es exhaustivo a propósito: añadir un equipo a EQUIPMENT_TYPES sin
+// darle icono no compila, en vez de salir con la mancuerna genérica.
+const EQUIPMENT_ICONS: Record<EquipmentType, IconComponent | typeof IconDumbbell> = {
   Barra: IconBarbell,
   Mancuernas: IconDumbbell,
   Máquina: IconMachine,
@@ -96,6 +99,8 @@ export function EquipmentIcon({
   equipment?: string | null;
   className?: string;
 }) {
-  const Icon = (equipment && EQUIPMENT_ICONS[equipment]) || Dumbbell;
+  // Lo que no está en el enum —el equipamiento del catálogo público— cae en la
+  // mancuerna genérica en vez de quedarse sin icono.
+  const Icon = (equipment && EQUIPMENT_ICONS[equipment as EquipmentType]) || Dumbbell;
   return <Icon className={className} aria-hidden="true" />;
 }

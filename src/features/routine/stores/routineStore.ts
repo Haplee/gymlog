@@ -11,6 +11,38 @@ export interface RoutineExercise {
   sets?: number;
   reps?: string;
   notes?: string;
+  /**
+   * Como se registra el ejercicio. **Ausente = `reps`**, y por eso ninguna
+   * rutina guardada hasta hoy necesita migrarse: el campo simplemente no esta.
+   * La regla vive en `modeOfPlanned` (`@shared/lib/setShape`); aqui solo se
+   * declara el hueco donde se guarda.
+   *
+   * No existe `'cardio'`: el cardio tiene su propia pantalla y su propio
+   * temporizador, no es un ejercicio dentro del plan de fuerza.
+   */
+  mode?: 'reps' | 'time';
+  /**
+   * El objetivo es **por lado**: «3 x 12 por lado» son 24 repeticiones de
+   * trabajo, no 12. Se propone desde `exercises.is_bilateral` al anadir, pero
+   * manda lo que diga el plan: la misma zancada se puede planificar de las dos
+   * formas y quien decide es quien entrena.
+   */
+  perSide?: boolean;
+  /** Segundos por serie cuando `mode === 'time'`. Ignorado en modo `reps`. */
+  durationSeconds?: number;
+  /**
+   * Superserie: los ejercicios **consecutivos** que compartan este id se hacen
+   * encadenados, sin descanso entre ellos.
+   *
+   * Vive en el plan y no en la serie registrada. En el historial una superserie
+   * son series de dos ejercicios del mismo entreno, que es lo que son; añadir
+   * una columna a `workout_sets` para poder reconstruir el emparejado sería
+   * pagar un cambio de esquema por una pregunta que nadie ha hecho todavía.
+   *
+   * Se exige que sean consecutivos a propósito: un grupo con un ejercicio
+   * suelto en medio no es una superserie, es un id repetido por error.
+   */
+  supersetId?: string;
 }
 
 export interface DayRoutine {

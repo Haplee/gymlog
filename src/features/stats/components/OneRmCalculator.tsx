@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { m } from 'framer-motion';
-import { calcular1RM } from '@shared/lib/brzycki';
+import { calcular1RM, es1RMFiable, REPS_MAX_FIABLE_1RM } from '@shared/lib/brzycki';
 import { useWeight } from '@shared/hooks/useWeight';
 import { Calculator } from '@shared/components/icons';
 
@@ -21,15 +21,19 @@ export function OneRmCalculator() {
   const [weight, setWeight] = useState('');
   const [reps, setReps] = useState('');
   const [result, setResult] = useState<number | null>(null);
+  /** La estimación sale igual, pero por encima del límite se avisa de que no es fiable. */
+  const [fiable, setFiable] = useState(true);
 
   const recalc = (w: string, r: string) => {
     const weightNum = parseFloat(w);
     const repsNum = parseInt(r, 10);
     if (!Number.isFinite(weightNum) || !Number.isFinite(repsNum) || repsNum <= 0) {
       setResult(null);
+      setFiable(true);
       return;
     }
     setResult(toDisplay(calcular1RM(toKg(weightNum), repsNum)));
+    setFiable(es1RMFiable(repsNum));
   };
 
   return (
@@ -80,6 +84,11 @@ export function OneRmCalculator() {
         <div className="text-3xl font-bold font-mono text-accent tabular-nums">
           {result ? `${result.toFixed(1)} ${unit}` : '—'}
         </div>
+        {result !== null && !fiable && (
+          <p className="mt-2 text-xs text-fg-muted">
+            {t('stats.rm_unreliable', { reps: REPS_MAX_FIABLE_1RM })}
+          </p>
+        )}
       </div>
     </m.div>
   );

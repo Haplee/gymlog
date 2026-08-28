@@ -21,6 +21,8 @@ import { shareWorkoutImage } from '@shared/lib/shareImage';
 import { formatDuration } from '@shared/lib/duration';
 import { formatDisplayDate } from '@shared/lib/formatDate';
 import type { WorkoutWithSets, WorkoutSetWithDetails } from '@shared/lib/types';
+import { onlyRepSets } from '@shared/lib/setShape';
+import { calculateSessionVolume } from '../utils/progressionMetrics';
 import { toast } from 'sonner';
 import { fetchWorkouts, fetchRecentSets } from '@shared/api/queries';
 import { EmptyHistory } from '@shared/components/EmptyStates';
@@ -161,7 +163,7 @@ export function HistoryPage() {
   const groupedWorkouts: GroupedWorkout[] = workouts.reduce((acc: GroupedWorkout[], wo) => {
     const date = formatDisplayDate(wo.started_at ?? '');
     const existing = acc.find((g) => g.date === date);
-    const volume = wo.sets.reduce((sum, s) => sum + s.reps * s.weight, 0);
+    const volume = calculateSessionVolume(onlyRepSets(wo.sets));
     if (existing) {
       existing.workouts.push(wo);
       existing.totalSets += wo.sets.length;
@@ -191,8 +193,10 @@ export function HistoryPage() {
     exportToJson,
     importFromJson,
     importFromCsv,
+    importFromAppleHealth,
     pendingImport,
     pendingImportSummary,
+    pendingImportSource,
     confirmImport,
     cancelImport,
   } = useHistoryTransfer({
@@ -273,6 +277,7 @@ export function HistoryPage() {
         exportToExcel={exportToExcel}
         exportToJson={exportToJson}
         importFromCsv={importFromCsv}
+        importFromAppleHealth={importFromAppleHealth}
         importFromJson={importFromJson}
       />
 
@@ -431,9 +436,8 @@ export function HistoryPage() {
                                   const uniqueExercises = [
                                     ...new Set(item.data.sets.map((s) => s.exercise?.name)),
                                   ].length;
-                                  const volume = item.data.sets.reduce(
-                                    (sum, s) => sum + s.reps * s.weight,
-                                    0,
+                                  const volume = calculateSessionVolume(
+                                    onlyRepSets(item.data.sets),
                                   );
                                   const success = await shareWorkoutImage({
                                     exerciseCount: uniqueExercises,
@@ -642,7 +646,7 @@ export function HistoryPage() {
                             const uniqueExercises = [
                               ...new Set(wo.sets.map((s) => s.exercise?.name)),
                             ].length;
-                            const volume = wo.sets.reduce((sum, s) => sum + s.reps * s.weight, 0);
+                            const volume = calculateSessionVolume(onlyRepSets(wo.sets));
                             const success = await shareWorkoutImage({
                               exerciseCount: uniqueExercises,
                               totalSets: wo.sets.length,
@@ -718,22 +722,39 @@ export function HistoryPage() {
           onCancel={cancelImport}
           description={
             <div className="space-y-2">
+              {pendingImportSource && (
+                <p className="text-fg-muted">
+                  {t('history.import_detected_source', { app: pendingImportSource.name })}
+                </p>
+              )}
               <p>
                 {pendingImport.kind === 'json'
                   ? t('history.import_confirm_workouts', {
                       workouts: pendingImportSummary.workouts,
                       sets: pendingImportSummary.sets,
                     })
-                  : t('history.import_confirm_excel', {
-                      sets: pendingImportSummary.sets,
-                      cardio: pendingImportSummary.cardio,
-                      routines: pendingImportSummary.routines,
-                    })}
+                  : pendingImport.kind === 'health'
+                    ? t('history.health_confirm', { count: pendingImportSummary.weights ?? 0 })
+                    : t('history.import_confirm_excel', {
+                        sets: pendingImportSummary.sets,
+                        cardio: pendingImportSummary.cardio,
+                        routines: pendingImportSummary.routines,
+                      })}
               </p>
+              {pendingImport.kind === 'health' && (
+                <p className="text-fg-muted">{t('history.health_only_gaps')}</p>
+              )}
               {pendingImportSummary.skips > 0 && (
                 <p className="text-warning">
                   {t('history.import_confirm_duplicates', {
                     count: pendingImportSummary.skips,
+                  })}
+                </p>
+              )}
+              {pendingImportSource && pendingImportSource.skippedRows > 0 && (
+                <p className="text-fg-muted">
+                  {t('history.import_skipped_rows', {
+                    count: pendingImportSource.skippedRows,
                   })}
                 </p>
               )}

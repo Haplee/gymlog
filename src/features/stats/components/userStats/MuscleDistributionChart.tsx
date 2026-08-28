@@ -4,6 +4,7 @@ import { Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { CHART_COLORS } from '../../constants';
 import { SectionLabel } from './SectionLabel';
 import { useWeight } from '@shared/hooks/useWeight';
+import { muscleGroupLabel } from '@shared/lib/muscleGroupLabel';
 import { Target } from '@shared/components/icons';
 
 export interface MuscleDistributionItem {
@@ -82,7 +83,7 @@ export function MuscleDistributionChart({ data }: { data: MuscleDistributionItem
                       className="w-2 h-2 rounded-full flex-shrink-0"
                       style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }}
                     />
-                    <span className="text-sm text-fg-muted">{name}</span>
+                    <span className="text-sm text-fg-muted">{muscleGroupLabel(name, t)}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-mono text-fg-subtle">{formatVol(value)}</span>
