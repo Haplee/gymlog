@@ -4,6 +4,7 @@ import type { MuscleGroupStatus, RecoveryStatus } from '../utils/fatigueAnalysis
 import { MuscleGroupIcon } from '@shared/components/CardioIcons';
 import { MUSCLE_COLORS } from '@shared/constants/muscleColors';
 import { DEFAULT_MUSCLE_GROUP } from '@shared/constants/muscleGroups';
+import { muscleGroupLabel } from '@shared/lib/muscleGroupLabel';
 import { AlertTriangle, CheckCircle, Flash, TrendUp, XCircle } from '@shared/components/icons';
 
 interface FatigueAnalysisProps {
@@ -117,7 +118,9 @@ export function FatigueAnalysis({
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-sm font-semibold text-fg">{mg.name}</span>
+                  <span className="text-sm font-semibold text-fg">
+                    {muscleGroupLabel(mg.name, t)}
+                  </span>
                   <div className="flex items-center gap-1 ml-2">
                     <Icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: config.color }} />
                     <span className="text-xs whitespace-nowrap" style={{ color: config.color }}>
@@ -191,7 +194,7 @@ export function FatigueAnalysis({
                 </div>
                 <div>
                   <div className="text-base font-semibold" style={{ color: suggColor }}>
-                    {t('userStats.train_muscle', { muscle: suggestedGroup })}
+                    {t('userStats.train_muscle', { muscle: muscleGroupLabel(suggestedGroup, t) })}
                   </div>
                   <div className="text-xs text-fg-muted">{t('userStats.muscle_recovered')}</div>
                 </div>

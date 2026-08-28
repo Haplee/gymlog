@@ -11,6 +11,7 @@ import {
   type RegionMuscular,
 } from '@shared/constants/muscleMap';
 import type { MuscleGroupStatus, RecoveryStatus } from '../utils/fatigueAnalysis';
+import { muscleGroupLabel } from '@shared/lib/muscleGroupLabel';
 import { SectionLabel } from './userStats/SectionLabel';
 
 interface MuscleMapProps {
@@ -190,7 +191,9 @@ export function MuscleMap({ recovery }: MuscleMapProps) {
 
         {sinDatos.length > 0 && (
           <p className="mt-2 text-center text-xs text-fg-subtle">
-            {t('muscleMap.untrained_list', { groups: sinDatos.join(', ') })}
+            {t('muscleMap.untrained_list', {
+              groups: sinDatos.map((g) => muscleGroupLabel(g, t)).join(', '),
+            })}
           </p>
         )}
       </div>

@@ -12,6 +12,7 @@ import type { SessionExercise } from '../stores/routineSessionStore';
 import { WorkTimer } from '@features/workout/components/WorkTimer';
 import { formatSegundos } from '@features/routine/utils/planTarget';
 import { perSideCount, totalFromPerSide } from '@shared/lib/perSide';
+import { muscleGroupLabel } from '@shared/lib/muscleGroupLabel';
 import {
   AlertTriangle,
   BookOpen,
@@ -124,7 +125,7 @@ export function SessionExerciseCard({
             <div className="mt-1 flex flex-wrap gap-1.5">
               {muscleGroup && (
                 <span className="label-caps px-2 py-1 rounded-pill bg-surface-3 text-fg-muted">
-                  {muscleGroup}
+                  {muscleGroupLabel(muscleGroup, t)}
                 </span>
               )}
               {equipment && (

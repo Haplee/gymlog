@@ -15,6 +15,16 @@ import { toast } from 'sonner';
 import { ExerciseRow, type ExerciseOption } from './exerciseSelector/ExerciseRow';
 import { CreateExerciseForm } from './exerciseSelector/CreateExerciseForm';
 import { Clock, Loader, Plus, Search, X } from '@shared/components/icons';
+import { muscleGroupLabel } from '@shared/lib/muscleGroupLabel';
+
+/**
+ * Montón de «lo último usado», no un grupo del catálogo.
+ *
+ * Va como centinela y no traducido: el desplegable compara este valor por
+ * igualdad para decidir si pinta el reloj o el icono del músculo, y si aquí
+ * hubiera un texto traducido esa comparación fallaría al cambiar de idioma.
+ */
+const GRUPO_RECIENTES = 'Recientes';
 
 interface ExerciseSelectorProps {
   userId: string;
@@ -218,7 +228,7 @@ export function ExerciseSelector({
     }
 
     // Recientes
-    if (recentExercises.length > 0) result.push(['Recientes', recentExercises]);
+    if (recentExercises.length > 0) result.push([GRUPO_RECIENTES, recentExercises]);
 
     // Rest of groups
     const otherMap: Record<string, ExerciseOption[]> = {};
@@ -387,7 +397,7 @@ export function ExerciseSelector({
                   <div key={group}>
                     {/* Group header */}
                     <div className="px-3 py-2 flex items-center gap-1.5" style={groupHeaderStyle}>
-                      {group === 'Recientes' ? (
+                      {group === GRUPO_RECIENTES ? (
                         <Clock className="w-3 h-3 flex-shrink-0 text-fg-subtle" />
                       ) : (
                         <span
@@ -403,9 +413,13 @@ export function ExerciseSelector({
                         </span>
                       )}
                       <span className="text-2xs font-bold uppercase tracking-[0.12em] text-fg-subtle">
-                        {group === activeMuscleGroup && group !== 'Recientes'
-                          ? `${group} — Sugerido`
-                          : group}
+                        {group === GRUPO_RECIENTES
+                          ? t('workout.group_recent')
+                          : group === activeMuscleGroup
+                            ? t('workout.group_suggested', {
+                                group: muscleGroupLabel(group, t),
+                              })
+                            : muscleGroupLabel(group, t)}
                       </span>
                     </div>
 

@@ -11,6 +11,7 @@ import { ExerciseCatalog } from '@features/workout/components/ExerciseCatalog';
 import { EquipmentIcon } from '@shared/components/icons/EquipmentIcons';
 import { LoadTypeBadge } from '@shared/components/LoadTypeBadge';
 import { ChevronRight, Search } from '@shared/components/icons';
+import { muscleGroupLabel } from '@shared/lib/muscleGroupLabel';
 
 function ExerciseDetail({ ex }: { ex: LibraryExercise }) {
   const { t } = useTranslation();
@@ -109,8 +110,10 @@ export function ExerciseLibraryPage() {
     // chip de debajo al usuario deja la pantalla vacía sin nada que pulsar para
     // volver.
     if (muscleFilter) set.add(muscleFilter);
-    return Array.from(set).toSorted((a, b) => a.localeCompare(b));
-  }, [exercises, equipmentFilter, busqueda, muscleFilter, coincideTexto]);
+    return Array.from(set).toSorted((a, b) =>
+      muscleGroupLabel(a, t).localeCompare(muscleGroupLabel(b, t)),
+    );
+  }, [exercises, equipmentFilter, busqueda, muscleFilter, coincideTexto, t]);
 
   const equipments = useMemo(() => {
     const set = new Set<string>();
@@ -217,7 +220,7 @@ export function ExerciseLibraryPage() {
                 selected={muscleFilter === mg}
                 onClick={() => setMuscleFilter(muscleFilter === mg ? null : mg)}
               >
-                {mg}
+                {muscleGroupLabel(mg, t)}
               </Chip>
             ))}
           </div>
@@ -280,7 +283,7 @@ export function ExerciseLibraryPage() {
                           <div className="flex flex-wrap gap-1 mt-1">
                             {ex.muscle_group && (
                               <span className="label-caps inline-block px-1.5 py-0.5 rounded-sm bg-surface-2 text-fg-subtle">
-                                {ex.muscle_group}
+                                {muscleGroupLabel(ex.muscle_group, t)}
                               </span>
                             )}
                             <LoadTypeBadge loadType={ex.load_type} />

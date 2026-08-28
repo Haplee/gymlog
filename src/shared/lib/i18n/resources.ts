@@ -285,6 +285,23 @@ export const resources = {
             'Prueba a cambiar algo: rango de repeticiones, tempo o una variante del ejercicio.',
         },
       },
+      /* Nombres de los grupos musculares para MOSTRAR.
+         El valor guardado en `exercises.muscle_group` es el literal español
+         («Bíceps»), lo pone el trigger `autoclassify_muscle_group` y no se
+         traduce: lo que se traduce es la etiqueta, en `muscleGroupLabel`. */
+      muscleGroups: {
+        pecho: 'Pecho',
+        espalda: 'Espalda',
+        hombro: 'Hombro',
+        pierna: 'Pierna',
+        gluteo: 'Glúteo',
+        biceps: 'Bíceps',
+        triceps: 'Tríceps',
+        antebrazo: 'Antebrazo',
+        core: 'Core',
+        cardio: 'Cardio',
+        otro: 'Otro',
+      },
       muscleMap: {
         title: 'Mapa muscular',
         front: 'Frente',
@@ -725,6 +742,10 @@ export const resources = {
         new_exercise: 'Nuevo ejercicio',
         exercise_name_placeholder: 'Nombre del ejercicio',
         secondary_muscles: 'Músculos secundarios',
+        /* Cabeceras del desplegable de ejercicios. «Recientes» es un montón,
+           no un grupo muscular, así que tiene clave propia. */
+        group_recent: 'Recientes',
+        group_suggested: '{{group}} — Sugerido',
         bodyweight_exercise: 'Ejercicio de peso corporal',
         name_required: 'El nombre es requerido',
         bodyweight_hint: 'Peso corporal: {{weight}}. El kg que introduzcas se suma como lastre.',
@@ -1419,6 +1440,19 @@ export const resources = {
             'Try changing something: rep range, tempo, or a variation of the exercise.',
         },
       },
+      muscleGroups: {
+        pecho: 'Chest',
+        espalda: 'Back',
+        hombro: 'Shoulders',
+        pierna: 'Legs',
+        gluteo: 'Glutes',
+        biceps: 'Biceps',
+        triceps: 'Triceps',
+        antebrazo: 'Forearms',
+        core: 'Core',
+        cardio: 'Cardio',
+        otro: 'Other',
+      },
       muscleMap: {
         title: 'Muscle map',
         front: 'Front',
@@ -1855,6 +1889,8 @@ export const resources = {
         new_exercise: 'New exercise',
         exercise_name_placeholder: 'Exercise name',
         secondary_muscles: 'Secondary muscles',
+        group_recent: 'Recent',
+        group_suggested: '{{group}} — Suggested',
         bodyweight_exercise: 'Bodyweight exercise',
         name_required: 'Name is required',
         bodyweight_hint: 'Body weight: {{weight}}. Any kg you enter is added as external load.',

@@ -1,6 +1,7 @@
 import { m } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import type { MuscleGroupStatus } from '@features/stats/utils/fatigueAnalysis';
+import { muscleGroupLabel } from '@shared/lib/muscleGroupLabel';
 import { SectionLabel } from './SectionLabel';
 
 export function MuscleRecovery({ muscleRecovery }: { muscleRecovery: MuscleGroupStatus[] }) {
@@ -43,7 +44,7 @@ export function MuscleRecovery({ muscleRecovery }: { muscleRecovery: MuscleGroup
               >
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full" style={{ backgroundColor: colors.dot }} />
-                  <span className="text-sm font-medium text-fg">{name}</span>
+                  <span className="text-sm font-medium text-fg">{muscleGroupLabel(name, t)}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-fg-subtle">
