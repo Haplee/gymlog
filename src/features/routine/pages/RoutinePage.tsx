@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useShallow } from 'zustand/react/shallow';
 import { toast } from 'sonner';
 import { useAuthStore } from '@features/auth/stores/authStore';
-import { useRoutineStore, dayLabels } from '@features/routine/stores/routineStore';
+import { useRoutineStore, dayLabels, localDay } from '@features/routine/stores/routineStore';
 import { useRoutineSessionStore } from '@features/routine/stores/routineSessionStore';
 import { useProgressionStore } from '@features/routine/stores/progressionStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
@@ -30,19 +30,24 @@ import { EmptyState } from '@shared/components/EmptyStates';
 import { CoachSuggestionBanner } from '@features/coach/components/CoachSuggestionBanner';
 import { ExerciseSelector } from '@shared/components/ExerciseSelector';
 import { useRoutineTransfer } from '@features/routine/hooks/useRoutineTransfer';
-import { Printer, Share, Upload } from '@shared/components/icons';
+import { Printer, Share, Upload, Calendar } from '@shared/components/icons';
+import { formatShortDay } from '@shared/lib/formatDate';
 
 const DAYS = Object.keys(dayLabels) as DayOfWeek[];
 
 export function RoutinePage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const user = useAuthStore((s) => s.user);
   const routines = useRoutineStore((s) => s.routines);
   const activeRoutineId = useRoutineStore((s) => s.activeRoutineId);
+  // Suscripcion (y no `getState`) para que la tarjeta repinte al programar.
+  const schedule = useRoutineStore((s) => s.schedule);
   const {
     setActiveRoutine,
+    scheduleRoutine,
+    unscheduleRoutine,
     addRoutine,
     cloneRoutine,
     deleteRoutine,
@@ -58,6 +63,8 @@ export function RoutinePage() {
   } = useRoutineStore(
     useShallow((s) => ({
       setActiveRoutine: s.setActiveRoutine,
+      scheduleRoutine: s.scheduleRoutine,
+      unscheduleRoutine: s.unscheduleRoutine,
       addRoutine: s.addRoutine,
       cloneRoutine: s.cloneRoutine,
       deleteRoutine: s.deleteRoutine,
@@ -97,6 +104,9 @@ export function RoutinePage() {
 
   const [selectedDay, setSelectedDay] = useState<DayOfWeek>(getDayName());
   const [showCreate, setShowCreate] = useState(false);
+  /** Rutina cuyo calendario se esta editando, o null si el dialogo esta cerrado. */
+  const [schedulingId, setSchedulingId] = useState<string | null>(null);
+  const [scheduleDraft, setScheduleDraft] = useState('');
   const [newRoutineName, setNewRoutineName] = useState('');
   const [newRoutineDesc, setNewRoutineDesc] = useState('');
   const [showExercisePicker, setShowExercisePicker] = useState(false);
@@ -149,6 +159,21 @@ export function RoutinePage() {
   const editingExercise = editingIndex != null ? (dayExercises[editingIndex] ?? null) : null;
   const movedFrom = sourceDay !== null && sourceDay !== selectedDay ? sourceDay : null;
 
+  /**
+   * Siguiente cambio del calendario: la fecha futura mas cercana que no sea la
+   * rutina que ya esta activa. Es lo unico del calendario que interesa cuando
+   * no se esta eligiendo rutina.
+   */
+  const nextScheduled = (() => {
+    const today = localDay();
+    const upcoming = Object.entries(schedule)
+      .filter(([id, date]) => date > today && id !== activeRoutineId)
+      .sort((a, b) => a[1].localeCompare(b[1]))[0];
+    if (!upcoming) return null;
+    const routine = routines.find((r) => r.id === upcoming[0]);
+    return routine ? { name: routine.name, date: upcoming[1] } : null;
+  })();
+
   // El guardado remoto fallaba en silencio: la rutina quedaba solo en local y
   // desaparecía en la siguiente carga. Ahora se avisa al usuario.
   const persistRoutines = useCallback(async () => {
@@ -178,6 +203,30 @@ export function RoutinePage() {
   const handleSelectRoutine = (routineId: string) => {
     setActiveRoutine(routineId);
     void persistRoutines();
+  };
+
+  const openScheduler = (e: React.MouseEvent, routineId: string) => {
+    e.stopPropagation();
+    setScheduleDraft(schedule[routineId] ?? '');
+    setSchedulingId(routineId);
+  };
+
+  const handleSaveSchedule = () => {
+    if (!schedulingId || !scheduleDraft) return;
+    scheduleRoutine(schedulingId, scheduleDraft);
+    setSchedulingId(null);
+    void persistRoutines();
+    toast.success(
+      t('routine.schedule_saved', { date: formatShortDay(scheduleDraft, i18n.language) }),
+    );
+  };
+
+  const handleClearSchedule = () => {
+    if (!schedulingId) return;
+    unscheduleRoutine(schedulingId);
+    setSchedulingId(null);
+    void persistRoutines();
+    toast.success(t('routine.schedule_cleared'));
   };
 
   const handleUseAsTemplate = (e: React.MouseEvent, routineId: string) => {
@@ -424,11 +473,28 @@ export function RoutinePage() {
                     {t('routine.predefined')}
                   </span>
                 )}
+                {schedule[routine.id] && (
+                  <span className="label-caps inline-flex items-center gap-1 px-1.5 py-0.5 mb-2 ml-1 rounded-pill bg-surface-3 text-accent">
+                    <Calendar className="w-3 h-3" aria-hidden="true" />
+                    {t('routine.starts_on', {
+                      date: formatShortDay(schedule[routine.id], i18n.language),
+                    })}
+                  </span>
+                )}
                 <div className="flex justify-between items-center gap-3">
                   <div className="min-w-0">
                     <div className="text-data font-display font-bold text-fg">{routine.name}</div>
                     <div className="text-xs mt-1 text-fg-subtle">{routine.description}</div>
                   </div>
+                  <button
+                    type="button"
+                    onClick={(e) => openScheduler(e, routine.id)}
+                    aria-label={t('routine.schedule_action', { name: routine.name })}
+                    title={t('routine.schedule_short')}
+                    className="flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-pill bg-surface-2 text-fg-muted active:scale-[0.98] transition-transform"
+                  >
+                    <Calendar className="w-4 h-4" aria-hidden="true" />
+                  </button>
                   {!routine.isCustom && (
                     <button
                       type="button"
@@ -662,6 +728,18 @@ export function RoutinePage() {
               contenido, flotando en medio del vacío de la pantalla: parecía el
               siguiente paso, no el último recurso. Separado por una línea y con
               aire, se lee como pie de página. */}
+          {nextScheduled && (
+            <div className="mt-6 p-3 rounded-card glass-1 flex items-center gap-2.5">
+              <Calendar className="w-4 h-4 flex-shrink-0 text-accent" aria-hidden="true" />
+              <div className="text-xs text-fg-subtle">
+                {t('routine.next_scheduled', {
+                  name: nextScheduled.name,
+                  date: formatShortDay(nextScheduled.date, i18n.language),
+                })}
+              </div>
+            </div>
+          )}
+
           {activeRoutine?.isCustom && (
             <>
               <div className="hairline-separator mt-10" />
@@ -675,6 +753,60 @@ export function RoutinePage() {
             </>
           )}
         </>
+      )}
+
+      {schedulingId && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+          <div className="rounded-card p-4 w-full max-w-sm bg-surface border border-line">
+            <div className="text-data font-display font-bold text-fg">
+              {t('routine.schedule_title')}
+            </div>
+            <p className="text-xs mt-1 mb-4 text-fg-subtle">{t('routine.schedule_help')}</p>
+
+            <label
+              htmlFor="routine-schedule-date"
+              className="label-caps block mb-1.5 text-fg-muted"
+            >
+              {t('routine.schedule_date_label')}
+            </label>
+            <input
+              id="routine-schedule-date"
+              type="date"
+              value={scheduleDraft}
+              min={localDay()}
+              onChange={(e) => setScheduleDraft(e.target.value)}
+              className="w-full p-2.5 rounded-sm text-sm mb-4 bg-surface-2 border border-line-strong text-fg focus:border-accent outline-none"
+            />
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setSchedulingId(null)}
+                className="flex-1 min-h-11 rounded-pill text-sm bg-surface-2 text-fg-muted"
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveSchedule}
+                disabled={!scheduleDraft}
+                className="flex-1 min-h-11 rounded-sm text-sm font-display font-bold uppercase tracking-[0.08em] bg-accent text-accent-fg disabled:opacity-50"
+              >
+                {t('common.save')}
+              </button>
+            </div>
+
+            {schedule[schedulingId] && (
+              <button
+                type="button"
+                onClick={handleClearSchedule}
+                className="w-full mt-2 min-h-11 rounded-pill text-sm text-error"
+              >
+                {t('routine.schedule_clear')}
+              </button>
+            )}
+          </div>
+        </div>
       )}
 
       {showCreate && (

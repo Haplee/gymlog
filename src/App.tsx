@@ -17,6 +17,7 @@ import { fetchWorkouts } from '@shared/api/queries';
 import { calculateCurrentStreak } from '@features/stats/utils/kpiCalculations';
 import { getAccentPreset } from '@shared/constants/accents';
 import { useWorkoutReminder } from '@features/routine/hooks/useWorkoutReminder';
+import { useScheduledRoutine } from '@features/routine/hooks/useScheduledRoutine';
 import { useFatigueSuggestion } from '@features/stats/hooks/useFatigueSuggestion';
 import { getRoutineReminderDays } from '@features/routine/lib/routineReminders';
 import { useBackgroundNotifications } from '@shared/hooks/useBackgroundNotifications';
@@ -356,6 +357,8 @@ function AppRoutes() {
   useBackgroundNotifications(user?.id ?? null, getRoutineReminderDays);
   useWorkoutOutboxSync();
   useWidgetSync();
+  // Calendario de rutinas: el bloque programado entra solo al llegar su fecha.
+  useScheduledRoutine();
 
   // Inicializar tema al arrancar
   useEffect(() => {

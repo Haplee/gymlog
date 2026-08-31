@@ -13,6 +13,8 @@ import {
   shiftWeekPlan,
   identityWeekMap,
   weekStartOf,
+  dueScheduleEntry,
+  localDay,
   type DayOfWeek,
   type Routine,
 } from '../routineStore';
@@ -470,5 +472,181 @@ describe('plan de la semana en el store', () => {
     await useRoutineStore.getState().loadFromDb(USUARIO);
 
     expect(useRoutineStore.getState().getWeekPlan()?.map.friday).toBe('monday');
+  });
+});
+
+/**
+ * Calendario de rutinas: la regla que decide qué bloque toca hoy.
+ *
+ * Los dos casos que dan sentido a todo el diseño son el retraso (se abre la app
+ * el 5, no el 1) y la aplicación única (cambiar de rutina a mano el día 2 no lo
+ * puede revertir el siguiente arranque).
+ */
+describe('dueScheduleEntry', () => {
+  const SCHEDULE = { a: '2026-09-01', b: '2026-11-01' };
+
+  it('no devuelve nada mientras no venza ninguna fecha', () => {
+    expect(dueScheduleEntry(SCHEDULE, '2026-08-31', null)).toBeNull();
+  });
+
+  it('activa el bloque el día exacto', () => {
+    expect(dueScheduleEntry(SCHEDULE, '2026-09-01', null)).toEqual({
+      routineId: 'a',
+      date: '2026-09-01',
+    });
+  });
+
+  it('entra igual aunque la app se abra días más tarde', () => {
+    expect(dueScheduleEntry(SCHEDULE, '2026-09-05', null)).toEqual({
+      routineId: 'a',
+      date: '2026-09-01',
+    });
+  });
+
+  it('con dos fechas vencidas manda la más reciente, no la primera', () => {
+    expect(dueScheduleEntry(SCHEDULE, '2026-12-20', null)).toEqual({
+      routineId: 'b',
+      date: '2026-11-01',
+    });
+  });
+
+  it('no repite una entrada ya aplicada', () => {
+    expect(dueScheduleEntry(SCHEDULE, '2026-09-10', '2026-09-01')).toBeNull();
+  });
+
+  it('sí aplica la siguiente aunque la anterior ya se aplicara', () => {
+    expect(dueScheduleEntry(SCHEDULE, '2026-11-02', '2026-09-01')).toEqual({
+      routineId: 'b',
+      date: '2026-11-01',
+    });
+  });
+
+  it('desempata por id para no depender del orden de las claves', () => {
+    const empate = { zeta: '2026-09-01', alfa: '2026-09-01' };
+    expect(dueScheduleEntry(empate, '2026-09-02', null)?.routineId).toBe('alfa');
+  });
+});
+
+describe('applyDueSchedule', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    mockFrom.mockReset();
+    useRoutineStore.setState({
+      routines: [...PREDEFINED_ROUTINES, customRoutine('pretemporada'), customRoutine('actual')],
+      activeRoutineId: 'actual',
+      activeRoutineUpdatedAt: null,
+      schedule: {},
+      scheduleUpdatedAt: null,
+      lastScheduledApply: null,
+    });
+  });
+
+  /** Ayer en formato local, para programar algo ya vencido sin tocar el reloj. */
+  function ayer(): string {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return localDay(d);
+  }
+
+  it('cambia la rutina activa cuando la fecha ya pasó', () => {
+    useRoutineStore.setState({ schedule: { pretemporada: ayer() } });
+
+    const activada = useRoutineStore.getState().applyDueSchedule();
+
+    expect(activada?.id).toBe('pretemporada');
+    expect(useRoutineStore.getState().activeRoutineId).toBe('pretemporada');
+  });
+
+  it('no toca nada si la fecha aún no ha llegado', () => {
+    useRoutineStore.setState({ schedule: { pretemporada: '2099-01-01' } });
+
+    expect(useRoutineStore.getState().applyDueSchedule()).toBeNull();
+    expect(useRoutineStore.getState().activeRoutineId).toBe('actual');
+  });
+
+  it('no revierte un cambio manual posterior', () => {
+    useRoutineStore.setState({ schedule: { pretemporada: ayer() } });
+    useRoutineStore.getState().applyDueSchedule();
+
+    // El usuario decide volver a la anterior a mitad de bloque.
+    useRoutineStore.getState().setActiveRoutine('actual');
+    // Segunda comprobación (volver del segundo plano, reinicio…).
+    expect(useRoutineStore.getState().applyDueSchedule()).toBeNull();
+    expect(useRoutineStore.getState().activeRoutineId).toBe('actual');
+  });
+
+  it('consume la entrada aunque la rutina programada ya no exista', () => {
+    useRoutineStore.setState({ schedule: { borrada: ayer() } });
+
+    expect(useRoutineStore.getState().applyDueSchedule()).toBeNull();
+    expect(useRoutineStore.getState().lastScheduledApply).toBe(ayer());
+  });
+
+  it('borrar una rutina la saca del calendario', () => {
+    useRoutineStore.setState({ schedule: { pretemporada: '2099-01-01' } });
+
+    useRoutineStore.getState().deleteRoutine('pretemporada');
+
+    expect(useRoutineStore.getState().schedule).toEqual({});
+  });
+});
+
+/**
+ * El calendario tiene que viajar entre dispositivos: programarlo en el portátil
+ * y que el móvil lo aplique es justo el caso de uso.
+ */
+describe('loadFromDb — calendario', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    mockFrom.mockReset();
+    useRoutineStore.setState({
+      routines: [...PREDEFINED_ROUTINES, customRoutine('pretemporada')],
+      schedule: {},
+      scheduleUpdatedAt: null,
+      lastScheduledApply: null,
+      hydrated: false,
+    });
+  });
+
+  it('adopta el calendario remoto cuando es más reciente', async () => {
+    mockRemoteContainer({
+      routines: [customRoutine('pretemporada')],
+      schedule: { pretemporada: '2026-09-01' },
+      scheduleUpdatedAt: '2026-08-31T10:00:00.000Z',
+    });
+
+    await useRoutineStore.getState().loadFromDb('user-1');
+
+    expect(useRoutineStore.getState().schedule).toEqual({ pretemporada: '2026-09-01' });
+  });
+
+  it('conserva el calendario local si el remoto es anterior', async () => {
+    useRoutineStore.setState({
+      schedule: { pretemporada: '2026-09-15' },
+      scheduleUpdatedAt: '2026-08-31T12:00:00.000Z',
+    });
+    mockRemoteContainer({
+      routines: [customRoutine('pretemporada')],
+      schedule: { pretemporada: '2026-09-01' },
+      scheduleUpdatedAt: '2026-08-31T10:00:00.000Z',
+    });
+
+    await useRoutineStore.getState().loadFromDb('user-1');
+
+    expect(useRoutineStore.getState().schedule).toEqual({ pretemporada: '2026-09-15' });
+  });
+
+  it('se queda con la aplicación más reciente para no repetir un bloque', async () => {
+    useRoutineStore.setState({ lastScheduledApply: null });
+    mockRemoteContainer({
+      routines: [customRoutine('pretemporada')],
+      schedule: { pretemporada: '2026-09-01' },
+      scheduleUpdatedAt: '2026-09-01T08:00:00.000Z',
+      lastScheduledApply: '2026-09-01',
+    });
+
+    await useRoutineStore.getState().loadFromDb('user-1');
+
+    expect(useRoutineStore.getState().lastScheduledApply).toBe('2026-09-01');
   });
 });

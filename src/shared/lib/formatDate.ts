@@ -7,3 +7,15 @@ export function formatDisplayDate(input: Date | string): string {
   const d = input instanceof Date ? input : new Date(input);
   return d.toLocaleDateString('es');
 }
+
+/**
+ * Fecha de calendario (yyyy-mm-dd) en formato corto: «1 sep».
+ *
+ * Se parte a mano en vez de `new Date('2026-09-01')`: esa cadena la interpreta
+ * el motor como UTC, y al pintarla en hora local salia el dia anterior.
+ */
+export function formatShortDay(day: string, locale = 'es'): string {
+  const [y, m, d] = day.split('-').map(Number);
+  if (!y || !m || !d) return day;
+  return new Date(y, m - 1, d).toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+}

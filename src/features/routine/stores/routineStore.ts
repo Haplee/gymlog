@@ -98,6 +98,53 @@ export function weekStartOf(date: Date): string {
   return `${d.getFullYear()}-${mm}-${dd}`;
 }
 
+/**
+ * Hoy en yyyy-mm-dd y en hora local, igual que `weekStartOf`.
+ *
+ * Las fechas del calendario son dias naturales de quien entrena, no instantes
+ * UTC: con `toISOString()` un bloque programado para el 1 de septiembre se
+ * activaria el 31 de agosto por la noche en España.
+ */
+export function localDay(date: Date = new Date()): string {
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${mm}-${dd}`;
+}
+
+/**
+ * Que entrada del calendario toca aplicar hoy, o null si ninguna.
+ *
+ * `schedule` va del id de la rutina a la fecha (yyyy-mm-dd local) en la que esa
+ * rutina pasa a ser la activa. Dos decisiones dan toda la semantica:
+ *
+ * - **Vale la mas reciente ya vencida**, no la de hoy exacto. Si el bloque
+ *   empezaba el 1 y no se abre la app hasta el 5, el 5 entra igual. Y con
+ *   septiembre y octubre programados, quien vuelva en noviembre entra en el de
+ *   octubre, no en el de septiembre.
+ * - **Cada entrada se aplica una sola vez** (`lastApplied`). Sin esa marca,
+ *   cambiar de rutina a mano el dia 2 no serviria de nada: el arranque
+ *   siguiente volveria a imponer la programada.
+ */
+export function dueScheduleEntry(
+  schedule: Record<string, string>,
+  today: string,
+  lastApplied: string | null,
+): { routineId: string; date: string } | null {
+  let best: { routineId: string; date: string } | null = null;
+
+  for (const [routineId, date] of Object.entries(schedule)) {
+    if (date > today) continue;
+    if (lastApplied !== null && date <= lastApplied) continue;
+    // El desempate por id evita que dos rutinas con la misma fecha dependan
+    // del orden de las claves del objeto.
+    if (!best || date > best.date || (date === best.date && routineId < best.routineId)) {
+      best = { routineId, date };
+    }
+  }
+
+  return best;
+}
+
 /** Semana sin reorganizar: cada dia muestra lo suyo. */
 export function identityWeekMap(): Record<DayOfWeek, DayOfWeek | null> {
   return {
@@ -181,6 +228,19 @@ interface RoutineStore {
   /** Reorganizacion de la semana en curso; null = la rutina va tal cual. */
   weekPlan: WeekPlan | null;
   weekPlanUpdatedAt: string | null;
+  /**
+   * Calendario de rutinas: id de rutina -> fecha (yyyy-mm-dd local) en la que
+   * pasa a ser la activa.
+   *
+   * Vive fuera de `Routine` a proposito. La fecha es del plan de quien entrena,
+   * no de la rutina: compartir o importar una rutina no debe arrastrar el
+   * calendario de nadie. Ademas asi tambien se puede programar una plantilla,
+   * que no se persiste como rutina propia.
+   */
+  schedule: Record<string, string>;
+  scheduleUpdatedAt: string | null;
+  /** Fecha de la ultima entrada ya aplicada. Ver `dueScheduleEntry`. */
+  lastScheduledApply: string | null;
   lastBackup: string | null;
   loading: boolean;
   /**
@@ -195,6 +255,17 @@ interface RoutineStore {
   deleteRoutine: (id: string) => void;
   cloneRoutine: (sourceId: string, name?: string) => string | null;
   setActiveRoutine: (id: string | null) => void;
+
+  /** Programa `routineId` para activarse el dia `date` (yyyy-mm-dd local). */
+  scheduleRoutine: (routineId: string, date: string) => void;
+  unscheduleRoutine: (routineId: string) => void;
+  /**
+   * Aplica el calendario si toca y devuelve la rutina que se ha activado, o
+   * null. Idempotente: la segunda llamada del mismo dia no hace nada.
+   */
+  applyDueSchedule: () => Routine | null;
+  /** Fecha programada de una rutina, o null. */
+  getScheduledDate: (routineId: string) => string | null;
 
   moveRoutineDay: (from: DayOfWeek, to: DayOfWeek) => void;
   resetWeekPlan: () => void;
@@ -897,6 +968,9 @@ export const useRoutineStore = create<RoutineStore>()(
       activeRoutineUpdatedAt: null,
       weekPlan: null,
       weekPlanUpdatedAt: null,
+      schedule: {},
+      scheduleUpdatedAt: null,
+      lastScheduledApply: null,
       lastBackup: null,
       loading: false,
       hydrated: false,
@@ -916,10 +990,18 @@ export const useRoutineStore = create<RoutineStore>()(
       },
 
       deleteRoutine: (id) => {
-        const { routines, activeRoutineId, activeRoutineUpdatedAt } = get();
+        const { routines, activeRoutineId, activeRoutineUpdatedAt, schedule, scheduleUpdatedAt } =
+          get();
         const clearsActive = activeRoutineId === id;
+        // Una fecha que apunta a una rutina borrada no activaria nada y ademas
+        // taparia a la entrada anterior del calendario.
+        const wasScheduled = id in schedule;
+        const nextSchedule = { ...schedule };
+        delete nextSchedule[id];
         set({
           routines: routines.filter((r) => r.id !== id),
+          schedule: nextSchedule,
+          scheduleUpdatedAt: wasScheduled ? new Date().toISOString() : scheduleUpdatedAt,
           activeRoutineId: clearsActive ? null : activeRoutineId,
           // Quedarse sin rutina activa también es una decisión de este
           // dispositivo: se sella para que no la revierta un remoto anterior.
@@ -951,6 +1033,40 @@ export const useRoutineStore = create<RoutineStore>()(
 
       setActiveRoutine: (id) =>
         set({ activeRoutineId: id, activeRoutineUpdatedAt: new Date().toISOString() }),
+
+      scheduleRoutine: (routineId, date) =>
+        set((state) => ({
+          schedule: { ...state.schedule, [routineId]: date },
+          scheduleUpdatedAt: new Date().toISOString(),
+        })),
+
+      unscheduleRoutine: (routineId) =>
+        set((state) => {
+          if (!(routineId in state.schedule)) return state;
+          const next = { ...state.schedule };
+          delete next[routineId];
+          return { ...state, schedule: next, scheduleUpdatedAt: new Date().toISOString() };
+        }),
+
+      getScheduledDate: (routineId) => get().schedule[routineId] ?? null,
+
+      applyDueSchedule: () => {
+        const { schedule, lastScheduledApply, routines, activeRoutineId } = get();
+        const due = dueScheduleEntry(schedule, localDay(), lastScheduledApply);
+        if (!due) return null;
+
+        // Se sella la entrada aunque no se llegue a activar nada: si no, una
+        // fecha vencida que no se puede aplicar se reintentaria en cada
+        // arranque, y la rutina programada volveria a imponerse despues de que
+        // el usuario cambiase a mano.
+        set({ lastScheduledApply: due.date, scheduleUpdatedAt: new Date().toISOString() });
+
+        const routine = routines.find((r) => r.id === due.routineId) ?? null;
+        if (!routine || routine.id === activeRoutineId) return null;
+
+        get().setActiveRoutine(routine.id);
+        return routine;
+      },
 
       getActiveRoutine: () => {
         const { routines, activeRoutineId } = get();
@@ -1032,6 +1148,9 @@ export const useRoutineStore = create<RoutineStore>()(
             activeRoutineId,
             activeRoutineUpdatedAt,
             weekPlanUpdatedAt,
+            schedule,
+            scheduleUpdatedAt,
+            lastScheduledApply,
             lastBackup,
           } = get();
           // Solo viaja el plan si sigue siendo el de esta semana: subir uno
@@ -1051,6 +1170,9 @@ export const useRoutineStore = create<RoutineStore>()(
                 activeRoutineUpdatedAt,
                 weekPlan,
                 weekPlanUpdatedAt,
+                schedule,
+                scheduleUpdatedAt,
+                lastScheduledApply,
                 lastBackup,
               },
               updated_at: new Date().toISOString(),
@@ -1097,6 +1219,9 @@ export const useRoutineStore = create<RoutineStore>()(
           activeRoutineUpdatedAt?: string | null;
           weekPlan?: WeekPlan | null;
           weekPlanUpdatedAt?: string | null;
+          schedule?: Record<string, string> | null;
+          scheduleUpdatedAt?: string | null;
+          lastScheduledApply?: string | null;
           lastBackup?: string | null;
         } | null;
 
@@ -1151,8 +1276,27 @@ export const useRoutineStore = create<RoutineStore>()(
             remotePlanStamp !== null &&
             (localPlanStamp === null || remotePlanStamp > localPlanStamp);
 
+          // El calendario se sincroniza con la misma regla que la rutina
+          // activa: gana la marca mas reciente. `lastScheduledApply` es la
+          // excepcion y se queda con la fecha mayor de las dos: si el movil ya
+          // aplico el bloque de septiembre, el portatil no tiene que volver a
+          // imponerlo cuando el usuario ya haya cambiado de rutina a mano.
+          const localSchedStamp = get().scheduleUpdatedAt;
+          const remoteSchedStamp = container.scheduleUpdatedAt ?? null;
+          const takeRemoteSchedule =
+            remoteSchedStamp !== null &&
+            (localSchedStamp === null || remoteSchedStamp > localSchedStamp);
+          const localApplied = get().lastScheduledApply;
+          const remoteApplied = container.lastScheduledApply ?? null;
+
           set({
             routines: mergedRoutines,
+            schedule: takeRemoteSchedule ? (container.schedule ?? {}) : get().schedule,
+            scheduleUpdatedAt: takeRemoteSchedule ? remoteSchedStamp : localSchedStamp,
+            lastScheduledApply:
+              localApplied === null || (remoteApplied !== null && remoteApplied > localApplied)
+                ? remoteApplied
+                : localApplied,
             weekPlan: takeRemotePlan
               ? remotePlanIsCurrent
                 ? remotePlan
@@ -1207,6 +1351,9 @@ export const useRoutineStore = create<RoutineStore>()(
         activeRoutineUpdatedAt: state.activeRoutineUpdatedAt,
         weekPlan: state.weekPlan,
         weekPlanUpdatedAt: state.weekPlanUpdatedAt,
+        schedule: state.schedule,
+        scheduleUpdatedAt: state.scheduleUpdatedAt,
+        lastScheduledApply: state.lastScheduledApply,
         lastBackup: state.lastBackup,
       }),
       /**
