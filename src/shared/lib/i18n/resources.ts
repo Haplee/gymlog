@@ -34,6 +34,7 @@ export const resources = {
         // ancho del panel entero, y allí el anglicismo desentonaba entre
         // "Biblioteca de ejercicios", "Mis medidas" y "Guía de uso".
         stats: 'Estadísticas',
+        progress: 'Progreso',
         settings: 'Ajustes',
         menu: 'Menú',
         menu_close: 'Cerrar menú',
@@ -218,6 +219,8 @@ export const resources = {
         confidence_low: 'Poca evidencia',
         confidence_medium: 'Evidencia media',
         confidence_high: 'Buena evidencia',
+        volume_weekly_sets_one: '{{count}} serie esta semana',
+        volume_weekly_sets_other: '{{count}} series esta semana',
         action: {
           increase: 'Sube la carga',
           hold: 'Mantén la carga',
@@ -327,6 +330,7 @@ export const resources = {
       userStats: {
         page_title: 'Mis Estadísticas',
         page_subtitle: 'Análisis completo de tu progreso',
+        what_now: 'Qué hacer ahora',
         global_summary: 'Resumen global',
         cardio_total_time: 'Tiempo total de cardio',
         recovery_rested: 'Recuperado',
@@ -771,6 +775,12 @@ export const resources = {
         load_type_bodyweight_loaded: 'Con lastre',
         rpe: 'RPE',
         rpe_label: 'Esfuerzo percibido (RPE)',
+        rpe_optional: '· opcional',
+        rpe_option: 'RPE {{value}}',
+        rpe_help:
+          'Del 6 (muy fácil) al 10 (no podías con una más). Marcarlo es lo que permite ajustar tu carga y avisarte de cuándo descargar.',
+        context_hide: 'Ocultar el contexto',
+        context_show: 'Ver la última sesión',
         set_type_label: 'Tipo de serie',
         set_type_normal: 'Normal',
         set_type_dropset: 'Drop set',
@@ -789,6 +799,11 @@ export const resources = {
         plates_available: 'Discos de mi gimnasio',
         plates_available_none: 'ninguno',
         plates_available_help: 'Marca los discos que tienes. Se recuerdan para la próxima vez.',
+        equipment_steps: 'Saltos de mancuerna y máquina',
+        equipment_steps_help:
+          'Los discos solo describen la barra. Estos son los saltos mínimos del resto del material, y con ellos la sugerencia de carga deja de proponer pesos que no puedes montar.',
+        dumbbell_step: 'Mancuerna (kg)',
+        machine_step: 'Máquina (kg)',
         e1rm: '1RM estimado',
         last_session: 'Última sesión',
         copy: 'Copiar',
@@ -910,9 +925,14 @@ export const resources = {
         session_how_to: 'Cómo hacerlo',
         session_recommended_weight: 'Peso recomendado',
         session_no_recommendation:
-          'Aún no hay historial para recomendar un peso. Este ejercicio se mostrará aquí pero no se registrará en el autocompletado.',
+          'Aún no hay historial para recomendar un peso. Escribe tú las series y la próxima vez te propongo carga.',
         session_no_advice:
-          'Sin historial no puedo autocompletar esta rutina. Registra una sesión a mano y la próxima se completará sola.',
+          'No hay ninguna serie con peso ni tiempo. Rellena al menos una antes de terminar.',
+        session_log: 'Lo que has hecho',
+        session_add_set: 'Añadir serie',
+        session_remove_set: 'Quitar la serie {{n}}',
+        session_reps_of_set: 'Repeticiones de la serie {{n}}',
+        session_weight_of_set: 'Peso de la serie {{n}}',
       },
       measurements: {
         title: 'Medidas corporales',
@@ -1220,6 +1240,7 @@ export const resources = {
         routines: 'Routines',
         cardio: 'Cardio',
         stats: 'Stats',
+        progress: 'Progress',
         settings: 'Settings',
         menu: 'Menu',
         menu_close: 'Close menu',
@@ -1400,6 +1421,8 @@ export const resources = {
         confidence_low: 'Little evidence',
         confidence_medium: 'Some evidence',
         confidence_high: 'Solid evidence',
+        volume_weekly_sets_one: '{{count}} set this week',
+        volume_weekly_sets_other: '{{count}} sets this week',
         action: {
           increase: 'Add load',
           hold: 'Hold the load',
@@ -1500,6 +1523,7 @@ export const resources = {
       userStats: {
         page_title: 'My Stats',
         page_subtitle: 'Full analysis of your progress',
+        what_now: 'What to do now',
         global_summary: 'Global summary',
         cardio_total_time: 'Total cardio time',
         recovery_rested: 'Recovered',
@@ -1938,6 +1962,12 @@ export const resources = {
         load_type_bodyweight_loaded: 'Weighted',
         rpe: 'RPE',
         rpe_label: 'Rate of perceived exertion (RPE)',
+        rpe_optional: '· optional',
+        rpe_option: 'RPE {{value}}',
+        rpe_help:
+          'From 6 (very easy) to 10 (no more reps in you). Logging it is what lets the app tune your load and tell you when to deload.',
+        context_hide: 'Hide context',
+        context_show: 'Show last session',
         set_type_label: 'Set type',
         set_type_normal: 'Normal',
         set_type_dropset: 'Drop set',
@@ -1956,6 +1986,11 @@ export const resources = {
         plates_available: 'Plates at my gym',
         plates_available_none: 'none',
         plates_available_help: 'Tick the plates you have. They are remembered for next time.',
+        equipment_steps: 'Dumbbell and machine steps',
+        equipment_steps_help:
+          'Plates only describe the barbell. These are the smallest jumps on the rest of the equipment, so load suggestions stop proposing weights you cannot load.',
+        dumbbell_step: 'Dumbbell (kg)',
+        machine_step: 'Machine (kg)',
         e1rm: 'Est. 1RM',
         last_session: 'Last session',
         copy: 'Copy',
@@ -2075,9 +2110,14 @@ export const resources = {
         session_how_to: 'How to do it',
         session_recommended_weight: 'Recommended weight',
         session_no_recommendation:
-          'Not enough history to recommend a weight yet. This exercise will show here but will not be logged automatically.',
+          'Not enough history to recommend a weight yet. Type the sets yourself and next time you get a load.',
         session_no_advice:
-          'Without history I cannot auto-complete this routine. Log one session by hand and the next one will complete itself.',
+          'No set has a weight or a time yet. Fill in at least one before finishing.',
+        session_log: 'What you actually did',
+        session_add_set: 'Add set',
+        session_remove_set: 'Remove set {{n}}',
+        session_reps_of_set: 'Reps of set {{n}}',
+        session_weight_of_set: 'Weight of set {{n}}',
       },
       measurements: {
         title: 'Body measurements',
