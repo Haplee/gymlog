@@ -826,16 +826,31 @@ export const PREDEFINED_ROUTINES: Routine[] = [
     // huérfanas las copias que la gente tenga guardadas.
     name: 'Pivote — 5 días',
     description:
-      'Cinco días pensados para un pivote: fuerza en los básicos, un día entero de bisagra de cadera y olímpicos programados a 2 repeticiones. Deja el fin de semana libre para partido.',
+      'Cinco días con la carga de más a menos: lunes y miércoles se llevan lo pesado y el viernes se queda en activación, para llegar al partido con piernas. Pensada para un pivote que entrena con el equipo entre semana.',
     isCustom: false,
     createdAt: new Date().toISOString(),
     days: {
+      // La semana va de más a menos a propósito. El fin de semana es el partido,
+      // así que la fatiga se acumula al principio y se drena hacia el viernes,
+      // en vez de repartirse plana y llegar al sábado con las piernas gastadas.
+      //
+      // Las semanas de tres entrenos con el equipo se recorta volumen accesorio
+      // (búlgara, gemelos), nunca los básicos ni la parcial: el trabajo pesado
+      // es el que sostiene el bloque.
+      //
       // El día de bisagra va suelto a mitad de semana en vez de repartido como
       // accesorio. Es el patrón que sostiene el bloqueo y el contacto del
       // pivote, y como accesorio al final de una sesión nunca recibe carga real.
       monday: {
-        name: 'Inferior — Fuerza',
+        name: 'Inferior — Potencia y fuerza',
         exercises: [
+          {
+            name: 'Power Clean',
+            sets: 5,
+            reps: '2',
+            notes:
+              'Lo primero del día más fresco de la semana. Máximo 3 repeticiones por serie: por encima de ahí deja de entrenar potencia, la barra se frena y solo queda el riesgo.',
+          },
           {
             name: 'Sentadilla',
             sets: 4,
@@ -847,7 +862,7 @@ export const PREDEFINED_ROUTINES: Routine[] = [
             sets: 3,
             reps: '3',
             notes:
-              '90-100%+ del 1RM. Solo el cuarto superior del recorrido. Sobrecarga el SNC con cargas que no puedes manejar en completa.',
+              '90-100%+ del 1RM. Solo el cuarto superior del recorrido. Siempre después de la sentadilla completa y nunca al fallo: el lunes ya viene cargado de Power Clean y sentadilla.',
           },
           {
             name: 'Sentadilla búlgara',
@@ -889,8 +904,15 @@ export const PREDEFINED_ROUTINES: Routine[] = [
         ],
       },
       wednesday: {
-        name: 'Bisagra — Cadena posterior',
+        name: 'Bisagra — Cadena posterior y salto',
         exercises: [
+          {
+            name: 'Salto al cajón',
+            sets: 4,
+            reps: '5',
+            notes:
+              'Antes del peso muerto, nunca después: se salta para saltar alto, no para acabar cansado. Baja andando.',
+          },
           {
             name: 'Peso muerto',
             sets: 4,
@@ -899,6 +921,17 @@ export const PREDEFINED_ROUTINES: Routine[] = [
               'Deja 3 repeticiones en recámara. Si vienes de no entrenar el patrón, las dos primeras semanas haz peso muerto rumano ligero y céntrate en la técnica.',
           },
           { name: 'Hip thrust', sets: 3, reps: '10' },
+          // Dos series bastan: la dosis baja consigue la misma adaptación en
+          // fuerza excéntrica y arquitectura del isquio que la dosis alta, y
+          // con mucha mejor adherencia. Va el miércoles porque son 72 h justas
+          // hasta el partido, que es lo que tarda en irse la agujeta.
+          {
+            name: 'Curl nórdico',
+            sets: 2,
+            reps: '5',
+            notes:
+              'Baja todo lo despacio que aguantes y frena con el isquio, no con la cadera. Las primeras semanas ayúdate con una goma: llega antes la adherencia que el heroísmo.',
+          },
           { name: 'Curl femoral tumbado', sets: 3, reps: '12' },
           { name: 'Rueda abdominal', sets: 3, reps: '8' },
         ],
@@ -922,30 +955,40 @@ export const PREDEFINED_ROUTINES: Routine[] = [
           },
         ],
       },
+      // El viernes no es un día de descanso disfrazado: es una activación con
+      // dosis. Un estímulo corto y pesado 24 h antes del partido mejora el
+      // salto y el sprint del día siguiente sin coste de recuperación; lo que
+      // no funciona es entrenar la víspera como un día normal de fuerza. De ahí
+      // las dos series de tres y ninguna más.
       friday: {
-        name: 'Potencia y salto',
+        name: 'Activación — Víspera de partido',
         exercises: [
           {
-            name: 'Power Clean',
-            sets: 5,
-            reps: '2',
+            name: 'Sentadilla',
+            sets: 2,
+            reps: '3',
             notes:
-              'Máximo 3 repeticiones por serie. Por encima de ahí deja de entrenar potencia: la barra se frena y solo queda el riesgo.',
+              'Al 85% y con intención rápida. Seis repeticiones en todo el día: esto activa, no entrena. Si la barra se frena o las piernas vienen pesadas del jueves, cambia a sentadilla con salto sin carga.',
           },
           {
             name: 'Lanzamiento de balón medicinal',
-            sets: 4,
+            sets: 3,
             reps: '5 sobre cabeza + 5 por lado',
-            notes: 'Pies plantados, máxima intención.',
+            notes:
+              'Pies plantados, máxima intención y poco volumen. Despierta el sistema nervioso sin dejar fatiga para el sábado.',
           },
           {
-            name: 'Salto al cajón',
-            sets: 4,
-            reps: '5',
-            notes:
-              'Baja andando. Si la rodilla molesta con el impacto, empieza solo con aterrizajes desde 20 cm aguantando 2 segundos.',
+            name: 'Leñador en polea',
+            sets: 3,
+            reps: '10 por lado',
+            notes: 'Carga ligera y gesto rápido. Aquí no se busca carga, se busca velocidad.',
           },
-          { name: 'Leñador en polea', sets: 3, reps: '10 por lado' },
+          {
+            name: 'Rotación externa con goma',
+            sets: 2,
+            reps: '15 por brazo',
+            notes: 'Prevención del hombro que lanza. Es lo único que no se salta nunca.',
+          },
         ],
       },
       saturday: { name: 'Partido o descanso', exercises: [] },
