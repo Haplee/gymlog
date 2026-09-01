@@ -206,11 +206,10 @@ export const WorkoutSetList = memo(function WorkoutSetList({
     pickedIndex !== null && pickedIndex < sets.length ? pickedIndex : sets.length - 1;
   const active = sets[activeIndex];
   const error = setErrors[activeIndex];
-  const hasDetails = !!(
-    active.notes ||
-    active.rpe ||
-    (active.setType && active.setType !== 'normal')
-  );
+  // El RPE ya no cuenta aquí: se marca en su propia fila, a la vista, así que
+  // encender el botón de «Nota serie» por él señalaba a un panel donde ya no
+  // está.
+  const hasDetails = !!(active.notes || (active.setType && active.setType !== 'normal'));
 
   const shownWeight = localWeight ?? displayWeight(active.weight, convert);
 
@@ -401,6 +400,49 @@ export const WorkoutSetList = memo(function WorkoutSetList({
       {error && <div className="mt-2 text-xs text-error">{error}</div>}
       {previousHint && <div className="mt-1.5 text-xs text-fg-muted">{previousHint}</div>}
 
+      {/* Esfuerzo percibido, a la vista y no dentro del panel de «Nota serie».
+          Es la única señal que enciende la autorregulación —sin ella el motor se
+          niega a decidir y todo el mundo cae al respaldo de doble progresión, y
+          la descarga no llega a proponerse nunca— y estaba detrás de un botón
+          que anunciaba otra cosa. Sigue siendo opcional: se toca si se quiere. */}
+      {modo !== 'time' && (
+        <div className="mt-3">
+          <div className="label-caps mb-1.5 text-fg-subtle">
+            {t('workout.rpe_label')}
+            <span className="ml-1.5 normal-case tracking-normal text-fg-subtle">
+              {t('workout.rpe_optional')}
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-1.5" role="group" aria-label={t('workout.rpe_label')}>
+            {RPE_OPTIONS.map((value) => {
+              const on = active.rpe === value;
+              return (
+                <button
+                  type="button"
+                  key={value}
+                  onClick={() => {
+                    void impact(ImpactStyle.Light);
+                    updateSet(activeIndex, { rpe: on ? '' : value });
+                  }}
+                  aria-pressed={on}
+                  aria-label={t('workout.rpe_option', { value })}
+                  className={`min-h-11 min-w-11 rounded-sm border px-2 text-sm font-medium transition-colors ${
+                    on
+                      ? 'border-accent bg-accent text-accent-fg'
+                      : 'border-line bg-surface text-fg-muted'
+                  }`}
+                >
+                  {value}
+                </button>
+              );
+            })}
+          </div>
+          {/* Qué significa el número, en una línea: «RPE 8» no le dice nada a
+              quien no viene de la sala de fuerza. */}
+          <p className="mt-1.5 text-xs text-fg-subtle">{t('workout.rpe_help')}</p>
+        </div>
+      )}
+
       {modo === 'time' && (
         // El cronómetro escribe en el campo de segundos, no guarda por su
         // cuenta: el usuario sigue pudiendo corregir el número antes de
@@ -472,32 +514,6 @@ export const WorkoutSetList = memo(function WorkoutSetList({
             onChange={(e) => updateSet(activeIndex, { notes: e.target.value.slice(0, 500) })}
             className="w-full glass-2 rounded-card px-2 py-2 text-xs text-fg outline-none"
           />
-          <div>
-            <div className="label-caps mb-1.5 text-fg-subtle">{t('workout.rpe_label')}</div>
-            <div className="flex flex-wrap gap-1.5">
-              {RPE_OPTIONS.map((value) => {
-                const on = active.rpe === value;
-                return (
-                  <button
-                    type="button"
-                    key={value}
-                    onClick={() => {
-                      void impact(ImpactStyle.Light);
-                      updateSet(activeIndex, { rpe: on ? '' : value });
-                    }}
-                    aria-pressed={on}
-                    className={`min-h-11 min-w-11 rounded-sm border px-2 text-sm font-medium ${
-                      on
-                        ? 'border-accent bg-accent text-accent-fg'
-                        : 'border-line bg-surface text-fg-muted'
-                    }`}
-                  >
-                    {value}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
           <div>
             <div className="label-caps mb-1.5 text-fg-subtle">{t('workout.set_type_label')}</div>
             <div className="flex flex-wrap gap-1.5">

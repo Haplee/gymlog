@@ -14,6 +14,23 @@ export interface SessionSet {
   id: string;
   reps: string;
   weight: string;
+  /**
+   * Esfuerzo percibido (RPE) de la serie, 6–10. Vacío = no lo marcó.
+   *
+   * Antes esta pantalla mandaba `rpe: ''` siempre, así que quien entrenaba por
+   * rutina no registraba esfuerzo nunca. Sin esfuerzo el motor se niega a
+   * autorregular y la descarga no llega a proponerse jamás, por mucho que el
+   * volumen suba: `suggestDeload` exige ver el RIR cayendo.
+   */
+  rpe: string;
+  /**
+   * El usuario ha escrito el peso a mano.
+   *
+   * Lo que sugiere el motor se precarga solo, pero no puede pisar una
+   * corrección: si alguien baja de 82,5 a 80 porque hoy no salía, guardar 82,5
+   * sería guardar la recomendación en vez del entrenamiento.
+   */
+  weightTouched?: boolean;
   /** Segundos aguantados. Vacío en una serie de repeticiones. */
   durationSeconds: string;
 }
@@ -73,6 +90,18 @@ interface RoutineSessionState {
   updateSet: (exerciseIndex: number, setIndex: number, data: Partial<SessionSet>) => void;
   removeSet: (exerciseIndex: number, setIndex: number) => void;
   /**
+   * Escribe el peso recomendado en las series que el usuario no haya tocado.
+   *
+   * Antes esto no existía y el relleno ocurría al pulsar «Completar»: se
+   * machacaban **todas** las series con la recomendación y se guardaba eso, así
+   * que el historial recogía lo que la app propuso y no lo que se levantó. Con
+   * el peso ya escrito en la fila, quien haga otra cosa lo corrige y su
+   * corrección manda.
+   */
+  prefillAdvisedWeight: (exerciseName: string, weight: string) => void;
+  /** Marca el mismo RPE en todas las series de un ejercicio. */
+  setExerciseRpe: (exerciseIndex: number, rpe: string) => void;
+  /**
    * Reemplaza la lista de ejercicios. La usa la sesión de rutina en su modo
    * de autocompletado para rellenar el peso recomendado en cada serie antes
    * de `finish`, sin que el usuario tenga que teclear nada.
@@ -96,6 +125,7 @@ const makeSet = (reps = '', weight = '', durationSeconds = ''): SessionSet => ({
   id: crypto.randomUUID(),
   reps,
   weight,
+  rpe: '',
   durationSeconds,
 });
 
@@ -175,7 +205,7 @@ function toOutboxSets(sets: SessionSet[], toKg: (w: number) => number): OutboxSe
       weight: peso,
       is_warmup: false,
       notes: '',
-      rpe: '',
+      rpe: s.rpe ?? '',
       set_type: 'normal',
       ...(segundos != null ? { duration_seconds: segundos } : {}),
     };
@@ -267,6 +297,33 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
           if (i !== exerciseIndex) return ex;
           return { ...ex, sets: ex.sets.filter((_, j) => j !== setIndex) };
         });
+        set({ exercises });
+      },
+
+      prefillAdvisedWeight: (exerciseName, weight) => {
+        const key = normalizeExerciseName(exerciseName);
+        let cambia = false;
+        const exercises = get().exercises.map((ex) => {
+          if (normalizeExerciseName(ex.name) !== key) return ex;
+          // Un ejercicio por tiempo no lleva peso recomendado: su carga, si la
+          // hay, es el lastre que escriba el usuario.
+          if (ex.mode === 'time') return ex;
+          const sets = ex.sets.map((s) => {
+            if (s.weightTouched || s.weight === weight) return s;
+            cambia = true;
+            return { ...s, weight };
+          });
+          return cambia ? { ...ex, sets } : ex;
+        });
+        // Sin cambios no se llama a `set`: esto lo dispara un efecto por
+        // ejercicio y re-renderizar en bucle sería el resultado.
+        if (cambia) set({ exercises });
+      },
+
+      setExerciseRpe: (exerciseIndex, rpe) => {
+        const exercises = get().exercises.map((ex, i) =>
+          i === exerciseIndex ? { ...ex, sets: ex.sets.map((s) => ({ ...s, rpe })) } : ex,
+        );
         set({ exercises });
       },
 

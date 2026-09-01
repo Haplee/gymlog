@@ -8,8 +8,7 @@ import { useRoutineSessionStore } from '@features/routine/stores/routineSessionS
 import { useProgressionStore } from '@features/routine/stores/progressionStore';
 import { useWeight } from '@shared/hooks/useWeight';
 import { impact, notificationHaptic, ImpactStyle, NotificationType } from '@shared/lib/haptics';
-import { smallestLoadStep } from '@shared/lib/loadStep';
-import { useSettingsStore } from '@shared/stores/settingsStore';
+import { loadStepFromSettings } from '@shared/hooks/useLoadStep';
 import { celebrate } from '@shared/lib/celebration';
 import { fetchExerciseLibrary } from '@shared/api/queries';
 import { weightToInput } from '@shared/lib/weight';
@@ -41,11 +40,11 @@ export function RoutineSession({ userId, exercises }: Props) {
   const dayName = useRoutineSessionStore((s) => s.dayName);
   const sessionExercises = useRoutineSessionStore((s) => s.exercises);
   const saving = useRoutineSessionStore((s) => s.saving);
-  const { discard, setExercises, finish } = useRoutineSessionStore(
+  const { discard, finish, prefillAdvisedWeight } = useRoutineSessionStore(
     useShallow((s) => ({
       discard: s.discard,
-      setExercises: s.setExercises,
       finish: s.finish,
+      prefillAdvisedWeight: s.prefillAdvisedWeight,
     })),
   );
 
@@ -77,14 +76,28 @@ export function RoutineSession({ userId, exercises }: Props) {
     void impact(ImpactStyle.Light);
   }, []);
 
-  // Recomendación de cada ejercicio, reportada por su tarjeta: al pulsar
-  // «Completar» se rellena el peso en todas las series sin que el usuario
-  // teclee nada. El ref evita que el flujo dependa del estado de React.
+  /**
+   * Recomendación de cada ejercicio, reportada por su tarjeta.
+   *
+   * Antes se guardaba para machacar con ella **todas** las series al pulsar
+   * «Completar», y lo que acababa en el historial era la propuesta de la app en
+   * vez del entrenamiento. Ahora se escribe en la fila en cuanto llega, donde se
+   * ve y se puede corregir: seguir sin teclear nada es igual de rápido, pero lo
+   * que se guarda es lo que hay en la fila.
+   */
   const adviceByName = useRef(new Map<string, ExerciseAdvice>());
-  const registerAdvice = useCallback((name: string, advice: ExerciseAdvice | null) => {
-    if (advice) adviceByName.current.set(normalizeName(name), advice);
-    else adviceByName.current.delete(normalizeName(name));
-  }, []);
+  const registerAdvice = useCallback(
+    (name: string, advice: ExerciseAdvice | null) => {
+      const key = normalizeName(name);
+      if (!advice) {
+        adviceByName.current.delete(key);
+        return;
+      }
+      adviceByName.current.set(key, advice);
+      prefillAdvisedWeight(name, weightToInput(advice.suggestion.weight, weightUnit));
+    },
+    [prefillAdvisedWeight, weightUnit],
+  );
 
   // Fichas de la biblioteca (propios + públicos): aportan la descripción de la
   // forma/ejecución por ejercicio. Reutiliza la caché de la pantalla Biblioteca.
@@ -112,20 +125,10 @@ export function RoutineSession({ userId, exercises }: Props) {
   );
 
   const handleFinish = async () => {
-    // Autocompletado: se rellena el peso recomendado en todas las series de los
-    // ejercicios que tienen recomendación. Los que no la tienen (sin historial)
-    // se muestran informativos pero se quedan fuera del registro.
-    const withWeights = sessionExercises.map((ex) => {
-      // Un ejercicio por tiempo no recibe peso recomendado: el motor de
-      // autorregulación solo mira series de repeticiones, así que su consejo
-      // aquí sería el de otro ejercicio o ninguno. La plancha se registra con
-      // sus segundos y, si acaso, el lastre que escriba el usuario.
-      if (ex.mode === 'time') return ex;
-      const advice = adviceByName.current.get(normalizeName(ex.name));
-      if (!advice) return ex;
-      const weight = weightToInput(advice.suggestion.weight, weightUnit);
-      return { ...ex, sets: ex.sets.map((s) => ({ ...s, weight })) };
-    });
+    // Lo que se guarda es lo que hay en las filas: ya vienen precargadas con el
+    // objetivo del plan y el peso recomendado, y con lo que el usuario haya
+    // corregido encima. Aquí no se reescribe nada.
+    const withWeights = sessionExercises;
 
     // Hay algo que registrar si alguna serie tiene peso **o** duración. Antes
     // solo se miraba el peso, y una sesión de solo planchas —que no lleva
@@ -139,7 +142,6 @@ export function RoutineSession({ userId, exercises }: Props) {
       return;
     }
 
-    setExercises(withWeights);
     const result = await finish(userId, resolveExerciseId, toKg);
 
     if (result.error) {
@@ -152,8 +154,6 @@ export function RoutineSession({ userId, exercises }: Props) {
     // Progresión automática: con la sesión ya guardada, avanza el ciclo de cada
     // ejercicio con su mejor serie. El store lo persiste y sincroniza solo.
     const progression = useProgressionStore.getState();
-    // El escalón sale de los discos declarados en Ajustes, no de un 2,5 kg fijo.
-    const loadStepKg = smallestLoadStep(useSettingsStore.getState().availablePlatesKg);
     for (const ex of withWeights) {
       const valid = ex.sets
         .map((s) => ({ reps: Number(s.reps), weight: toKg(Number(s.weight)) }))
@@ -174,7 +174,9 @@ export function RoutineSession({ userId, exercises }: Props) {
           repMin,
           repMax,
           bodyweight: isBodyweightLoad(catalog?.load_type),
-          incrementKg: loadStepKg,
+          // El escalón es del ejercicio, no de la sesión: la sentadilla salta lo
+          // que den los discos y la polea lo que salte su columna de placas.
+          incrementKg: loadStepFromSettings(catalog?.equipment),
         },
       );
     }
@@ -213,11 +215,15 @@ export function RoutineSession({ userId, exercises }: Props) {
 
       <div className="space-y-3">
         {groupPlanExercises(sessionExercises).map((grupo) => {
-          const tarjetas = grupo.exercises.map((ex) => (
+          const tarjetas = grupo.exercises.map((ex, i) => (
             <SessionExerciseCard
               key={ex.name}
               userId={userId}
               exercise={ex}
+              // `indices` guarda la posición original en la sesión, que es lo
+              // que direccionan las acciones del store. El índice dentro del
+              // grupo no sirve: una superserie agrupa ejercicios salteados.
+              exerciseIndex={grupo.indices[i]}
               catalog={catalogByName.get(normalizeName(ex.name))}
               libraryExercise={libraryByName.get(normalizeName(ex.name))}
               weightUnit={weightUnit}

@@ -79,6 +79,69 @@ describe('useRoutineSessionStore', () => {
     consoleErrorSpy.mockRestore();
   });
 
+  describe('registrar lo que pasó, no el plan', () => {
+    it('prefillAdvisedWeight escribe el peso recomendado en las filas vacías', () => {
+      const store = useRoutineSessionStore.getState();
+      store.start(routine, 'monday', dayRoutine);
+      store.prefillAdvisedWeight('Press banca', '82.5');
+
+      const { exercises } = useRoutineSessionStore.getState();
+      expect(exercises[0].sets.map((s) => s.weight)).toEqual(['82.5', '82.5']);
+      // No toca los demás ejercicios.
+      expect(exercises[1].sets[0].weight).toBe('');
+    });
+
+    it('no pisa un peso que el usuario ya ha corregido', () => {
+      const store = useRoutineSessionStore.getState();
+      store.start(routine, 'monday', dayRoutine);
+      // El usuario baja la primera serie: hoy no salía.
+      store.updateSet(0, 0, { weight: '75', weightTouched: true });
+      store.prefillAdvisedWeight('Press banca', '82.5');
+
+      const { exercises } = useRoutineSessionStore.getState();
+      expect(exercises[0].sets[0].weight).toBe('75');
+      // La que no tocó sí recibe la recomendación.
+      expect(exercises[0].sets[1].weight).toBe('82.5');
+    });
+
+    it('guarda las repeticiones de cada fila, no el objetivo del plan', async () => {
+      const store = useRoutineSessionStore.getState();
+      store.start(routine, 'monday', dayRoutine);
+      // El plan pide 8-10 en las dos series; se cumplió la primera y la segunda
+      // se quedó corta, que es lo que el motor necesita ver para no subir peso.
+      store.updateSet(0, 0, { reps: '10', weight: '80' });
+      store.updateSet(0, 1, { reps: '7', weight: '80' });
+
+      await useRoutineSessionStore.getState().finish('user-1', () => 'catalog-id', identity);
+
+      const sets = (mockRpc.mock.calls[0][1] as { p_sets: { reps: number }[] }).p_sets;
+      expect(sets.map((s) => s.reps)).toEqual([10, 7]);
+    });
+
+    it('el RPE marcado llega al payload', async () => {
+      const store = useRoutineSessionStore.getState();
+      store.start(routine, 'monday', dayRoutine);
+      fillExercise(0, '8', '80');
+      store.setExerciseRpe(0, '9');
+
+      await useRoutineSessionStore.getState().finish('user-1', () => 'catalog-id', identity);
+
+      const sets = (mockRpc.mock.calls[0][1] as { p_sets: { rpe: string }[] }).p_sets;
+      expect(sets.every((s) => s.rpe === '9')).toBe(true);
+    });
+
+    it('sin RPE marcado el payload lo deja vacío, como antes', async () => {
+      const store = useRoutineSessionStore.getState();
+      store.start(routine, 'monday', dayRoutine);
+      fillExercise(0, '8', '80');
+
+      await useRoutineSessionStore.getState().finish('user-1', () => 'catalog-id', identity);
+
+      const sets = (mockRpc.mock.calls[0][1] as { p_sets: { rpe: string }[] }).p_sets;
+      expect(sets.every((s) => s.rpe === '')).toBe(true);
+    });
+  });
+
   it('start crea una fila de serie por cada serie objetivo', () => {
     useRoutineSessionStore.getState().start(routine, 'monday', dayRoutine);
     const { exercises, startedAt } = useRoutineSessionStore.getState();
