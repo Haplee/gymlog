@@ -2,6 +2,39 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.12.0](https://github.com/Haplee/gymlog/compare/v5.10.1...v5.12.0) (2026-09-01)
+
+### Features
+
+- **bd:** aplicar la migración de series por tiempo y regenerar tipos ([0f98d19](https://github.com/Haplee/gymlog/commit/0f98d1924eb0ee1508666d6978508f8badb3de45))
+- **bd:** permitir series por tiempo en workout_sets ([dc0ad04](https://github.com/Haplee/gymlog/commit/dc0ad04dda3f8ba229368c696300a45d7037d166))
+- **biblioteca:** filtrar por equipamiento con opciones adaptativas ([22b1405](https://github.com/Haplee/gymlog/commit/22b1405c4d48320a8c856ac179601d955943b0be))
+- **entreno:** registrar series por tiempo con cronómetro ([262d3b8](https://github.com/Haplee/gymlog/commit/262d3b8b1b865efdb31ee545f1bebb29feb34c72))
+- **historial:** importar entrenamientos desde Strong, Hevy y FitNotes ([d6d24bb](https://github.com/Haplee/gymlog/commit/d6d24bb37971a6634db75af8f91100bcf5f2e679))
+- **i18n:** textos de los cambios de sugerencias y de la pasada de UX ([571345b](https://github.com/Haplee/gymlog/commit/571345b38af64e58a25fb6ba09fc1f5c6b16e67b))
+- importar peso de Apple Health y compartir/imprimir rutinas ([d6d2b0a](https://github.com/Haplee/gymlog/commit/d6d2b0a9da382a3972fda3e55e96e0e4ea440874))
+- mantener la pantalla encendida mientras se entrena ([a111af7](https://github.com/Haplee/gymlog/commit/a111af74cfcd53a6c0b869c13f78d3bb69184a52))
+- **progresion:** objetivos por lado que suben de dos en dos ([bfd13be](https://github.com/Haplee/gymlog/commit/bfd13be5dd043e1f2fe9d1e2e3f6a648bc54f7a6))
+- **progresion:** techo de repeticiones en peso corporal ([bca612c](https://github.com/Haplee/gymlog/commit/bca612c4c590ef28fc76454f252ea473841752f7))
+- **rutina:** registrar lo que se ha hecho, no lo que estaba planeado ([e401f3d](https://github.com/Haplee/gymlog/commit/e401f3d39e9c0984f26b062c780f18b73f764032))
+- **rutinas:** activar la rutina programada al llegar su fecha ([4b9846f](https://github.com/Haplee/gymlog/commit/4b9846ffdf238f9ac9dc5650f6b9c5da186db659))
+- **rutinas:** encadenar ejercicios en superserie ([9493c34](https://github.com/Haplee/gymlog/commit/9493c34eea087bfc46771af2ab8792d3c100e544))
+- **rutinas:** permitir planificar un ejercicio por tiempo y por lado ([6788043](https://github.com/Haplee/gymlog/commit/67880431f09b00f29a6e142e8e19a4a283d9440c))
+- **rutinas:** reordenar la semana del pivote de más a menos carga ([cd55c2d](https://github.com/Haplee/gymlog/commit/cd55c2d807a4dab03948edad9546ce9e511d6a11))
+- **sugerencias:** escalón de carga según el material del ejercicio ([7764638](https://github.com/Haplee/gymlog/commit/776463846ec8b2751dc8061d9d7eab6dddfcf95d))
+- **ux:** poner delante lo accionable y quitar ruido de la pantalla de entreno ([f5e818f](https://github.com/Haplee/gymlog/commit/f5e818f4a7d510d517dc7fa8f796b52a885b9207))
+
+### Bug Fixes
+
+- **buscador:** permitir desplazar la lista de ejercicios con el dedo ([45158e8](https://github.com/Haplee/gymlog/commit/45158e857fe75c2414225a0f31a71a48d6affb5f))
+- **ci:** fijar el entorno de Supabase en los tests ([ef1f770](https://github.com/Haplee/gymlog/commit/ef1f77095c68dfbc6f2d41dcff04a81e12c63efc))
+- **datos:** traer el RIR también por el camino de respaldo ([05d00c5](https://github.com/Haplee/gymlog/commit/05d00c5e55d054cb7f398d1dc68df0ea2963612a))
+- **entreno:** arreglar lo que solo se vio recorriendo la APK ([6c6a59f](https://github.com/Haplee/gymlog/commit/6c6a59fe6ee8f2442fe7d2a055318c3f6843e86c))
+- **i18n:** traducir los nombres de los grupos musculares ([fa17cd7](https://github.com/Haplee/gymlog/commit/fa17cd7b56dca4881a6e66fd2029f29248aea87c))
+- **i18n:** traducir también el equipamiento de los ejercicios ([06e0ab3](https://github.com/Haplee/gymlog/commit/06e0ab340561f883c02595391d3099a393ac791f))
+- **mapa-muscular:** que el estado se vea también en tema claro ([961e855](https://github.com/Haplee/gymlog/commit/961e855f986b788277d86dde485dc9339dcd611a))
+- **sugerencias:** igualar la recomendación de estadísticas con las otras dos ([ecd472b](https://github.com/Haplee/gymlog/commit/ecd472b315423890fc205f230c16f64b0d3a319c))
+
 ### [5.10.1](https://github.com/Haplee/gymlog/compare/v5.10.0...v5.10.1) (2026-08-25)
 
 ### Bug Fixes
