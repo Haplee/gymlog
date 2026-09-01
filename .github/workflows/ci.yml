@@ -44,7 +44,7 @@ jobs:
         run: npm run test:coverage
 
       - name: Upload Coverage Report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: coverage-report
@@ -81,7 +81,7 @@ jobs:
         run: node scripts/check-bundle-secrets.mjs dist
 
       - name: Upload Build Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: build-dist
           path: dist/
