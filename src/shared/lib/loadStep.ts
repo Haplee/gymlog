@@ -119,3 +119,87 @@ export function backOffLoad(base: number, ratio: number, stepKg: number): number
   const reduced = roundToStep(base * (1 - ratio), step);
   return Math.max(step, reduced);
 }
+
+/* ------------------------------------------------------------------ */
+/* Escalón por tipo de material                                        */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Escalón de una mancuerna, en kg.
+ *
+ * Las mancuernas de un gimnasio vienen de dos en dos kilos en el rango bajo y
+ * de dos y medio hacia arriba; las regulables saltan lo que pese su disco más
+ * fino. Dos kilos es el paso más común y el más conservador de los dos.
+ */
+export const DEFAULT_DUMBBELL_STEP_KG = 2;
+
+/**
+ * Escalón de una máquina de placas, en kg.
+ *
+ * Aquí los discos del usuario no pintan nada: el salto lo marca la columna de
+ * placas, que en la mayoría de máquinas va de cinco en cinco.
+ */
+export const DEFAULT_MACHINE_STEP_KG = 5;
+
+/** Familias de material que tienen un escalón propio. */
+export type EquipmentFamily = 'barbell' | 'dumbbell' | 'machine' | 'other';
+
+/**
+ * Familia de material a partir del texto libre de `exercises.equipment`.
+ *
+ * El catálogo viene de ExerciseDB y trae cadenas sin normalizar («leverage
+ * machine», «smith machine», «body weight»), además de lo que escriba a mano
+ * quien se cree un ejercicio. Se clasifica por palabras clave y lo que no
+ * encaje cae en `other`, que conserva el comportamiento de siempre.
+ */
+export function equipmentFamily(equipment: string | null | undefined): EquipmentFamily {
+  const e = (equipment ?? '').toLowerCase();
+  if (!e) return 'other';
+  // El multipower lleva barra y discos: mismo escalón que la barra libre.
+  if (/barbell|barra|smith|multipower|ez|olymp/.test(e)) return 'barbell';
+  if (/dumbbell|mancuerna/.test(e)) return 'dumbbell';
+  if (/machine|maquina|máquina|cable|polea|leverage|sled|stack|placas/.test(e)) return 'machine';
+  return 'other';
+}
+
+export interface ExerciseStepOptions {
+  /** Discos declarados en Ajustes. Solo se usan en barra. */
+  platesKg?: readonly number[] | null;
+  /** Salto entre mancuernas del gimnasio. */
+  dumbbellStepKg?: number;
+  /** Salto entre placas de las máquinas. */
+  machineStepKg?: number;
+}
+
+/**
+ * Escalón mínimo montable para un ejercicio concreto.
+ *
+ * Antes esto era `smallestLoadStep(discos)` en los cuatro sitios que lo piden,
+ * es decir: **el doble del disco más fino, siempre**. Eso es correcto en barra
+ * y falso en todo lo demás. Con discos de 1,25 en Ajustes, unas elevaciones
+ * laterales con mancuerna recibían un escalón de 2,5 kg —que no existe si las
+ * mancuernas van de dos en dos— y una prensa de placas, lo mismo: la máquina
+ * salta de cinco en cinco y da igual lo que haya en el rack de discos.
+ *
+ * En peso corporal el escalón es el del lastre, que sí sale de los discos.
+ */
+export function loadStepForExercise(
+  equipment: string | null | undefined,
+  opts: ExerciseStepOptions = {},
+): number {
+  switch (equipmentFamily(equipment)) {
+    case 'dumbbell':
+      return opts.dumbbellStepKg && opts.dumbbellStepKg > 0
+        ? opts.dumbbellStepKg
+        : DEFAULT_DUMBBELL_STEP_KG;
+    case 'machine':
+      return opts.machineStepKg && opts.machineStepKg > 0
+        ? opts.machineStepKg
+        : DEFAULT_MACHINE_STEP_KG;
+    // Barra y desconocido comparten el criterio de siempre: el disco más fino
+    // va por pares. Para lo desconocido es lo conservador, porque es lo que la
+    // app venía haciendo con todo.
+    default:
+      return smallestLoadStep(opts.platesKg);
+  }
+}

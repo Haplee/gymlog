@@ -1,8 +1,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchExerciseSessions, fetchRecentMuscleSets } from '@shared/api/queries';
-import { useSettingsStore } from '@shared/stores/settingsStore';
-import { smallestLoadStep } from '@shared/lib/loadStep';
+import { useLoadStep } from '@shared/hooks/useLoadStep';
 import {
   useWearableDaily,
   useWearableSleep,
@@ -40,6 +39,12 @@ export interface ExerciseAdviceOptions {
   perSide?: boolean;
   /** Grupo muscular del ejercicio, para medir el volumen semanal que acumula. */
   muscleGroup?: string;
+  /**
+   * Material del ejercicio (`exercises.equipment`). Decide el escalón mínimo:
+   * una mancuerna no salta lo mismo que una barra, y una máquina de placas no
+   * salta lo que digan los discos del usuario.
+   */
+  equipment?: string | null;
 }
 
 export function useExerciseAdvice(
@@ -66,8 +71,9 @@ export function useExerciseAdvice(
   const { data: sleep } = useWearableSleep();
   const readiness = useMemo(() => computeReadiness(daily, sleep), [daily, sleep]);
 
-  const plates = useSettingsStore((s) => s.availablePlatesKg);
-  const stepKg = useMemo(() => smallestLoadStep(plates), [plates]);
+  const stepFor = useLoadStep();
+  const equipment = opts.equipment ?? null;
+  const stepKg = useMemo(() => stepFor(equipment), [stepFor, equipment]);
   const muscleGroup = opts.muscleGroup;
   const volume = useMemo(
     () => (muscleGroup ? buildVolumeContext(muscleSets, muscleGroup) : null),

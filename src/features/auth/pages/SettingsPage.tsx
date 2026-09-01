@@ -102,6 +102,10 @@ export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
     setAutoFillWeights,
     keepScreenAwake,
     setKeepScreenAwake,
+    dumbbellStepKg,
+    setDumbbellStepKg,
+    machineStepKg,
+    setMachineStepKg,
   } = useSettingsStore(
     useShallow((s) => ({
       biometricEnabled: s.biometricEnabled,
@@ -110,6 +114,10 @@ export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
       setNotificationsEnabled: s.setNotificationsEnabled,
       trainingReminders: s.trainingReminders,
       setTrainingReminders: s.setTrainingReminders,
+      dumbbellStepKg: s.dumbbellStepKg,
+      setDumbbellStepKg: s.setDumbbellStepKg,
+      machineStepKg: s.machineStepKg,
+      setMachineStepKg: s.setMachineStepKg,
       restAutoStart: s.restAutoStart,
       setRestAutoStart: s.setRestAutoStart,
       restDuration: s.restDuration,
@@ -604,6 +612,43 @@ export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
                 {t('workout.plates_available_help')}
               </div>
               <PlatesPicker />
+            </div>
+
+            {/* Mancuernas y máquinas no las describen los discos: una sala con
+                discos de 1,25 puede tener las mancuernas de dos en dos y la
+                prensa de cinco en cinco. Sin esto, la sugerencia de carga
+                proponía pesos que no se pueden montar en ese material. */}
+            <div className="px-4 py-3.5">
+              <div className="text-base text-fg">{t('workout.equipment_steps')}</div>
+              <div className="text-xs mb-2.5 text-fg-subtle">
+                {t('workout.equipment_steps_help')}
+              </div>
+              <div className="flex gap-3">
+                <label className="flex-1">
+                  <span className="label-caps text-fg-subtle">{t('workout.dumbbell_step')}</span>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    min="0.5"
+                    step="0.5"
+                    value={dumbbellStepKg}
+                    onChange={(e) => setDumbbellStepKg(Number(e.target.value))}
+                    className="mt-1 w-full min-h-11 rounded-sm bg-surface-2 border border-line px-3 text-base text-fg tabular outline-none focus:border-accent"
+                  />
+                </label>
+                <label className="flex-1">
+                  <span className="label-caps text-fg-subtle">{t('workout.machine_step')}</span>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    min="0.5"
+                    step="0.5"
+                    value={machineStepKg}
+                    onChange={(e) => setMachineStepKg(Number(e.target.value))}
+                    className="mt-1 w-full min-h-11 rounded-sm bg-surface-2 border border-line px-3 text-base text-fg tabular outline-none focus:border-accent"
+                  />
+                </label>
+              </div>
             </div>
 
             {restAutoStart && (

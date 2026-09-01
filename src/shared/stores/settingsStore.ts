@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { Capacitor } from '@capacitor/core';
 import { DEFAULT_ACCENT, getAccentPreset, type AccentId } from '@shared/constants/accents';
 import { DEFAULT_PLATES_KG } from '@shared/lib/plates';
+import { DEFAULT_DUMBBELL_STEP_KG, DEFAULT_MACHINE_STEP_KG } from '@shared/lib/loadStep';
 
 /** Tema elegido por el usuario: 'system' sigue al modo claro/oscuro del sistema. */
 export type Theme = 'dark' | 'light' | 'system';
@@ -61,6 +62,13 @@ interface SettingsState {
    * asume el juego olímpico estándar y propone discos que no existen en su sala.
    */
   availablePlatesKg: number[];
+  /**
+   * Salto entre las mancuernas del gimnasio, en kg. Los discos no lo describen:
+   * una sala con discos de 1,25 puede tener mancuernas de dos en dos.
+   */
+  dumbbellStepKg: number;
+  /** Salto entre las placas de las máquinas, en kg. */
+  machineStepKg: number;
   setBiometricEnabled: (enabled: boolean) => void;
   setNotificationsEnabled: (enabled: boolean) => void;
   setTrainingReminders: (enabled: boolean) => void;
@@ -83,6 +91,8 @@ interface SettingsState {
   setAccentColor: (accent: AccentId) => void;
   setAppIcon: (icon: AccentId) => void;
   setAvailablePlatesKg: (plates: number[]) => void;
+  setDumbbellStepKg: (step: number) => void;
+  setMachineStepKg: (step: number) => void;
   applyTheme: () => void;
 }
 
@@ -108,6 +118,8 @@ export const useSettingsStore = create<SettingsState>()(
       accentColor: DEFAULT_ACCENT,
       appIcon: DEFAULT_ACCENT,
       availablePlatesKg: [...DEFAULT_PLATES_KG],
+      dumbbellStepKg: DEFAULT_DUMBBELL_STEP_KG,
+      machineStepKg: DEFAULT_MACHINE_STEP_KG,
 
       setBiometricEnabled: (biometricEnabled) => set({ biometricEnabled }),
 
@@ -176,6 +188,16 @@ export const useSettingsStore = create<SettingsState>()(
       // en ese orden y así no depende de cómo los haya ido tocando el usuario.
       setAvailablePlatesKg: (plates) =>
         set({ availablePlatesKg: [...new Set(plates)].sort((a, b) => b - a) }),
+
+      // Un escalón de 0 o negativo dejaría la progresión sin salto montable y
+      // el motor devolvería siempre «por carga no toca». Se ignora en vez de
+      // guardarlo: es un valor que no significa nada.
+      setDumbbellStepKg: (step) => {
+        if (Number.isFinite(step) && step > 0) set({ dumbbellStepKg: step });
+      },
+      setMachineStepKg: (step) => {
+        if (Number.isFinite(step) && step > 0) set({ machineStepKg: step });
+      },
 
       applyTheme: () => {
         const { theme, systemDark, accentColor } = get();
