@@ -1,11 +1,17 @@
 import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   useWearableDaily,
   useWearableSleep,
 } from '@features/wearables/hooks/useWearableConnections';
 import { computeReadiness } from '@features/wearables/utils/readiness';
-import { useSettingsStore } from '@shared/stores/settingsStore';
-import { smallestLoadStep } from '@shared/lib/loadStep';
+import { useAuthStore } from '@features/auth/stores/authStore';
+import { useRoutineStore } from '@features/routine/stores/routineStore';
+import { fetchExercises } from '@shared/api/queries';
+import { resolveExerciseRepRange } from '@shared/lib/exerciseTargets';
+import { normalizeExerciseName } from '@shared/lib/progressionCycle';
+import { isBodyweightLoad } from '@shared/lib/loadType';
+import { useLoadStep } from '@shared/hooks/useLoadStep';
 import type { AutoRegSession, LoadSuggestion, StallResult } from '../utils/autoregulation';
 import { buildLoadAdvice } from '../utils/loadAdvisor';
 import { buildVolumeContext, type VolumeContext, type VolumeSet } from '../utils/trainingLoad';
@@ -57,17 +63,63 @@ function toSessions(sets: SetLike[]): AutoRegSession[] {
  * entrenador IA apagado, que es la condición de que la app no pierda nada por
  * no activarlo.
  *
+ * **El contexto por ejercicio se resuelve aquí igual que en la pantalla de
+ * entreno**, y ese «igual» es el arreglo: hasta ahora este hook llamaba a
+ * `buildLoadAdvice` sin rango de reps, sin modalidad de carga y sin «por lado»,
+ * mientras `useExerciseAdvice` sí los pasaba. El mismo ejercicio con el mismo
+ * historial recomendaba 82,5 kg × 6 en la pantalla de entreno y 80 kg × 7 en
+ * estadísticas; en peso corporal era peor, porque sin la bandera `bodyweight`
+ * esta pantalla mandaba «sube a 82,5 kg» en unas dominadas. Ver
+ * `suggestionParity.test.ts`.
+ *
  * Va memoizado sobre `sets` porque recalcularlo en cada render de una pantalla
  * con tantos gráficos se nota, aunque la aritmética en sí sea trivial.
  */
 export function useAutoregulation(sets: SetLike[], limit = 3): ExerciseAdvice[] {
   const { data: daily } = useWearableDaily();
   const { data: sleep } = useWearableSleep();
-  const plates = useSettingsStore((s) => s.availablePlatesKg);
+  const user = useAuthStore((s) => s.user);
+  const stepFor = useLoadStep();
+
+  // Catálogo: aporta la modalidad de carga y el material de cada ejercicio.
+  // Misma clave que WorkoutPage y RoutinePage, así que normalmente ya está en
+  // caché y esto no dispara ninguna petición.
+  const { data: catalog = [] } = useQuery({
+    queryKey: ['exercises', user?.id],
+    queryFn: () => fetchExercises(user?.id),
+    enabled: !!user?.id,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  // La rutina activa aporta el rango de reps objetivo y el «por lado». Se leen
+  // las piezas que la hacen cambiar, no el getter: con `getActiveRoutine()` el
+  // hook se quedaría con una rutina obsoleta (mismo motivo que en
+  // `useExerciseRepRange`).
+  const routines = useRoutineStore((s) => s.routines);
+  const activeRoutineId = useRoutineStore((s) => s.activeRoutineId);
+  const routine = useMemo(
+    () => routines.find((r) => r.id === activeRoutineId) ?? null,
+    [routines, activeRoutineId],
+  );
+
+  const catalogByName = useMemo(
+    () => new Map(catalog.map((e) => [normalizeExerciseName(e.name), e])),
+    [catalog],
+  );
+
+  /** ¿La rutina programa este ejercicio por lado? */
+  const perSideByName = useMemo(() => {
+    const map = new Map<string, boolean>();
+    for (const day of Object.values(routine?.days ?? {})) {
+      for (const ex of day?.exercises ?? []) {
+        map.set(normalizeExerciseName(ex.name), ex.perSide === true);
+      }
+    }
+    return map;
+  }, [routine]);
 
   // Sin wearable esto es null y las sugerencias salen intactas.
   const readiness = useMemo(() => computeReadiness(daily, sleep), [daily, sleep]);
-  const stepKg = useMemo(() => smallestLoadStep(plates), [plates]);
 
   return useMemo(() => {
     const byExercise = new Map<string, SetLike[]>();
@@ -94,9 +146,21 @@ export function useAutoregulation(sets: SetLike[], limit = 3): ExerciseAdvice[] 
       const muscleGroup = exerciseSets.find((s) => s.exercise?.muscle_group)?.exercise
         ?.muscle_group;
       const volume = muscleGroup ? buildVolumeContext(volumeSets, muscleGroup) : null;
-      // Misma cadena que `useExerciseAdvice`, y por el mismo sitio: si las dos
+      const key = normalizeExerciseName(exercise);
+      const ficha = catalogByName.get(key);
+      const { repMin, repMax } = resolveExerciseRepRange(exercise, routine);
+      // Misma cadena y **mismos parámetros** que `useExerciseAdvice`: si las dos
       // pantallas no comparten compositor acaban recomendando cosas distintas.
-      const advised = buildLoadAdvice({ sessions, stepKg, volume, readiness });
+      const advised = buildLoadAdvice({
+        sessions,
+        repMin,
+        repMax,
+        bodyweight: isBodyweightLoad(ficha?.load_type),
+        perSide: perSideByName.get(key) === true,
+        stepKg: stepFor(ficha?.equipment),
+        volume,
+        readiness,
+      });
       if (!advised) continue;
       advice.push({ exercise, ...advised });
     }
@@ -119,5 +183,5 @@ export function useAutoregulation(sets: SetLike[], limit = 3): ExerciseAdvice[] 
           b.suggestion.confidence.localeCompare(a.suggestion.confidence),
       )
       .slice(0, limit);
-  }, [sets, readiness, limit, stepKg]);
+  }, [sets, readiness, limit, stepFor, catalogByName, perSideByName, routine]);
 }

@@ -7,9 +7,16 @@
  * segunda pasaba el rango de reps objetivo y la primera caía al [8, 12] por
  * defecto de `suggestProgression`.
  *
- * Lo que se comprueba aquí es que ambos caminos resuelven el mismo rango y, con
+ * Lo que se comprueba aquí es que los caminos resuelven el mismo rango y, con
  * él, la misma sugerencia. No se comprueban las reglas del motor: de eso ya se
  * ocupa `autoregulation.test.ts`.
+ *
+ * **Hay un tercer consumidor**, y quedó fuera de este test cuando se escribió:
+ * `useAutoregulation`, el de la pantalla de estadísticas. Llamaba al compositor
+ * sin rango, sin modalidad de carga y sin «por lado», así que volvía a divergir
+ * exactamente igual que el bug original —80 kg × 7 frente a 82,5 kg × 6— y en
+ * peso corporal recomendaba subir la carga de unas dominadas. Los casos de
+ * «estadísticas» de abajo son su regresión.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -80,6 +87,16 @@ const desdeRutina = (
   bodyweight = false,
 ) => suggestFor(sessions, name, { explicitTargetReps: targetReps, bodyweight });
 
+/**
+ * La pantalla de estadísticas, reducida a su esencia.
+ *
+ * Solo conoce el nombre del ejercicio (viene de agrupar series sueltas), igual
+ * que la de entreno: resuelve el rango contra la rutina activa y la modalidad
+ * de carga contra el catálogo. Es lo que hace hoy `useAutoregulation`.
+ */
+const desdeStats = (sessions: AutoRegSession[], name: string, bodyweight = false) =>
+  suggestFor(sessions, name, { bodyweight });
+
 describe('paridad de sugerencia entre pantallas', () => {
   it('Remo con barra: el caso que divergía (80 × 11 vs 82,5)', () => {
     // Historial real del usuario: 80 kg × 6, 6, 6, 10 el 6-ago. Sin RIR ni RPE,
@@ -148,6 +165,60 @@ describe('paridad de sugerencia entre pantallas', () => {
     expect(desdeInicio(sessions, 'Curl bíceps barra')).toEqual(
       suggestFor(sessions, 'Curl bíceps barra', { explicitTargetReps: undefined }),
     );
+  });
+
+  it('estadísticas coincide con las otras dos (remo con barra)', () => {
+    const sessions: AutoRegSession[] = [
+      {
+        date: '2026-08-11T18:00:00Z',
+        sets: [
+          { weight: 80, reps: 6, rir: 2 },
+          { weight: 80, reps: 6, rir: 2 },
+          { weight: 80, reps: 6, rir: 2 },
+        ],
+      },
+      {
+        date: '2026-08-18T18:00:00Z',
+        sets: [
+          { weight: 80, reps: 6, rir: 2 },
+          { weight: 80, reps: 6, rir: 2 },
+          { weight: 80, reps: 6, rir: 2 },
+        ],
+      },
+    ];
+
+    const stats = desdeStats(sessions, 'Remo con barra');
+    expect(stats).toEqual(desdeInicio(sessions, 'Remo con barra'));
+    expect(stats).toEqual(desdeRutina(sessions, 'Remo con barra', '6'));
+    // Y es «subir carga», no el «mantén y suma una repetición» que salía cuando
+    // esta pantalla se quedaba sin rango.
+    expect(stats?.action).toBe('increase');
+  });
+
+  it('estadísticas no manda subir la carga de unas dominadas', () => {
+    // 78 kg = peso corporal + lastre. Sin la bandera `bodyweight`, el motor lo
+    // trataba como carga externa y proponía 82,5 kg.
+    const sessions: AutoRegSession[] = [
+      {
+        date: '2026-08-11T18:00:00Z',
+        sets: [
+          { weight: 78, reps: 10, rir: 4 },
+          { weight: 78, reps: 10, rir: 4 },
+        ],
+      },
+      {
+        date: '2026-08-18T18:00:00Z',
+        sets: [
+          { weight: 78, reps: 10, rir: 4 },
+          { weight: 78, reps: 10, rir: 4 },
+        ],
+      },
+    ];
+
+    const stats = desdeStats(sessions, 'Dominadas', true);
+    expect(stats).toEqual(desdeInicio(sessions, 'Dominadas', true));
+    expect(stats?.weight).toBe(78);
+    expect(stats?.action).not.toBe('increase');
   });
 
   it('sin historial utilizable ninguna pantalla inventa una sugerencia', () => {
