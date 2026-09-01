@@ -63,7 +63,11 @@ const legacyFetchWorkoutsWithSets = async (
   const { data: allSets, error: setsError } = await supabase
     .from('workout_sets')
     .select(
-      'id, weight, reps, set_num, exercise_id, workout_id, created_at, notes, is_warmup, rpe, exercise:exercises(name, muscle_group), workout:workouts(started_at)',
+      // `rir` va aquí porque la RPC lo devuelve desde
+      // 20260805120000_get_workouts_with_sets_include_rir: sin él, el respaldo
+      // servía series con menos señal de esfuerzo que el camino principal, y la
+      // autorregulación salía distinta según por qué rama se hubiera entrado.
+      'id, weight, reps, set_num, exercise_id, workout_id, created_at, notes, is_warmup, rpe, rir, exercise:exercises(name, muscle_group), workout:workouts(started_at)',
     )
     .in('workout_id', ids)
     .order('created_at', { ascending: false });

@@ -17,7 +17,7 @@
   <p>
     <img src="https://img.shields.io/github/actions/workflow/status/Haplee/gymlog/android-build.yml?style=flat-square&label=Android%20Build&logo=github" />
     <img src="https://img.shields.io/github/actions/workflow/status/Haplee/gymlog/ci.yml?style=flat-square&label=CI&logo=vitest" />
-    <img src="https://img.shields.io/badge/tests-577%20passing-ffd93d?style=flat-square&logo=vitest&logoColor=0a0a0b" />
+    <img src="https://img.shields.io/badge/tests-866%20passing-ffd93d?style=flat-square&logo=vitest&logoColor=0a0a0b" />
     <img src="https://img.shields.io/github/last-commit/Haplee/gymlog?style=flat-square&label=Last%20commit&logo=git" />
     <img src="https://img.shields.io/github/repo-size/Haplee/gymlog?style=flat-square&label=Size&logo=files" />
     <img src="https://img.shields.io/github/license/Haplee/gymlog?style=flat-square&label=License&logo=opensourceinitiative" />
