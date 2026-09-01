@@ -215,6 +215,26 @@ export function shiftWeekPlan(
   return next;
 }
 
+/**
+ * Reparte las rutinas en visibles y ocultas.
+ *
+ * Vive aqui fuera y no dentro del store porque hacen falta en los dos sitios:
+ * los getters del store y el `useMemo` de la pantalla, que necesita depender de
+ * `routines` y `hiddenRoutineIds` para repintar. Con la logica en un solo sitio
+ * no hay dos filtrados que puedan separarse.
+ */
+export function splitRoutinesByHidden(
+  routines: Routine[],
+  hiddenIds: string[],
+): { visible: Routine[]; hidden: Routine[] } {
+  if (hiddenIds.length === 0) return { visible: routines, hidden: [] };
+  const ocultas = new Set(hiddenIds);
+  const visible: Routine[] = [];
+  const hidden: Routine[] = [];
+  for (const r of routines) (ocultas.has(r.id) ? hidden : visible).push(r);
+  return { visible, hidden };
+}
+
 interface RoutineStore {
   routines: Routine[];
   activeRoutineId: string | null;
@@ -241,6 +261,20 @@ interface RoutineStore {
   scheduleUpdatedAt: string | null;
   /** Fecha de la ultima entrada ya aplicada. Ver `dueScheduleEntry`. */
   lastScheduledApply: string | null;
+  /**
+   * Plantillas que esta persona no quiere ver en el selector.
+   *
+   * Es estado de quien entrena, no de la rutina: el catalogo sigue completo
+   * para todo el mundo y ocultar no borra nada. Se guardan ids y no rutinas,
+   * asi una plantilla que cambie de contenido en una version futura sigue
+   * oculta, que es lo que espera quien la escondio.
+   *
+   * No toca ni a la rutina activa ni al calendario: los dos resuelven por id
+   * contra `routines`, que nunca se filtra. Ocultar la rutina que se esta
+   * usando no interrumpe nada.
+   */
+  hiddenRoutineIds: string[];
+  hiddenRoutinesUpdatedAt: string | null;
   lastBackup: string | null;
   loading: boolean;
   /**
@@ -266,6 +300,14 @@ interface RoutineStore {
   applyDueSchedule: () => Routine | null;
   /** Fecha programada de una rutina, o null. */
   getScheduledDate: (routineId: string) => string | null;
+
+  /** Saca `id` del selector. Reversible con `unhideRoutine`. */
+  hideRoutine: (id: string) => void;
+  unhideRoutine: (id: string) => void;
+  /** Las que se ven en el selector: todas menos las ocultas. */
+  getVisibleRoutines: () => Routine[];
+  /** Las escondidas, para poder recuperarlas desde la propia pantalla. */
+  getHiddenRoutines: () => Routine[];
 
   moveRoutineDay: (from: DayOfWeek, to: DayOfWeek) => void;
   resetWeekPlan: () => void;
@@ -1013,6 +1055,8 @@ export const useRoutineStore = create<RoutineStore>()(
       weekPlanUpdatedAt: null,
       schedule: {},
       scheduleUpdatedAt: null,
+      hiddenRoutineIds: [],
+      hiddenRoutinesUpdatedAt: null,
       lastScheduledApply: null,
       lastBackup: null,
       loading: false,
@@ -1033,18 +1077,31 @@ export const useRoutineStore = create<RoutineStore>()(
       },
 
       deleteRoutine: (id) => {
-        const { routines, activeRoutineId, activeRoutineUpdatedAt, schedule, scheduleUpdatedAt } =
-          get();
+        const {
+          routines,
+          activeRoutineId,
+          activeRoutineUpdatedAt,
+          schedule,
+          scheduleUpdatedAt,
+          hiddenRoutineIds,
+          hiddenRoutinesUpdatedAt,
+        } = get();
         const clearsActive = activeRoutineId === id;
         // Una fecha que apunta a una rutina borrada no activaria nada y ademas
         // taparia a la entrada anterior del calendario.
         const wasScheduled = id in schedule;
         const nextSchedule = { ...schedule };
         delete nextSchedule[id];
+        // Un id oculto que ya no existe solo es basura que viaja en cada
+        // sincronizacion. Si la rutina vuelve (se reimporta con el mismo id),
+        // vuelve visible: es lo menos sorprendente.
+        const wasHidden = hiddenRoutineIds.includes(id);
         set({
           routines: routines.filter((r) => r.id !== id),
           schedule: nextSchedule,
           scheduleUpdatedAt: wasScheduled ? new Date().toISOString() : scheduleUpdatedAt,
+          hiddenRoutineIds: wasHidden ? hiddenRoutineIds.filter((h) => h !== id) : hiddenRoutineIds,
+          hiddenRoutinesUpdatedAt: wasHidden ? new Date().toISOString() : hiddenRoutinesUpdatedAt,
           activeRoutineId: clearsActive ? null : activeRoutineId,
           // Quedarse sin rutina activa también es una decisión de este
           // dispositivo: se sella para que no la revierta un remoto anterior.
@@ -1092,6 +1149,36 @@ export const useRoutineStore = create<RoutineStore>()(
         }),
 
       getScheduledDate: (routineId) => get().schedule[routineId] ?? null,
+
+      hideRoutine: (id) =>
+        set((state) => {
+          if (state.hiddenRoutineIds.includes(id)) return state;
+          return {
+            ...state,
+            hiddenRoutineIds: [...state.hiddenRoutineIds, id],
+            hiddenRoutinesUpdatedAt: new Date().toISOString(),
+          };
+        }),
+
+      unhideRoutine: (id) =>
+        set((state) => {
+          if (!state.hiddenRoutineIds.includes(id)) return state;
+          return {
+            ...state,
+            hiddenRoutineIds: state.hiddenRoutineIds.filter((h) => h !== id),
+            hiddenRoutinesUpdatedAt: new Date().toISOString(),
+          };
+        }),
+
+      getVisibleRoutines: () => {
+        const { routines, hiddenRoutineIds } = get();
+        return splitRoutinesByHidden(routines, hiddenRoutineIds).visible;
+      },
+
+      getHiddenRoutines: () => {
+        const { routines, hiddenRoutineIds } = get();
+        return splitRoutinesByHidden(routines, hiddenRoutineIds).hidden;
+      },
 
       applyDueSchedule: () => {
         const { schedule, lastScheduledApply, routines, activeRoutineId } = get();
@@ -1193,6 +1280,8 @@ export const useRoutineStore = create<RoutineStore>()(
             weekPlanUpdatedAt,
             schedule,
             scheduleUpdatedAt,
+            hiddenRoutineIds,
+            hiddenRoutinesUpdatedAt,
             lastScheduledApply,
             lastBackup,
           } = get();
@@ -1215,6 +1304,8 @@ export const useRoutineStore = create<RoutineStore>()(
                 weekPlanUpdatedAt,
                 schedule,
                 scheduleUpdatedAt,
+                hiddenRoutineIds,
+                hiddenRoutinesUpdatedAt,
                 lastScheduledApply,
                 lastBackup,
               },
@@ -1264,6 +1355,8 @@ export const useRoutineStore = create<RoutineStore>()(
           weekPlanUpdatedAt?: string | null;
           schedule?: Record<string, string> | null;
           scheduleUpdatedAt?: string | null;
+          hiddenRoutineIds?: string[] | null;
+          hiddenRoutinesUpdatedAt?: string | null;
           lastScheduledApply?: string | null;
           lastBackup?: string | null;
         } | null;
@@ -1329,6 +1422,16 @@ export const useRoutineStore = create<RoutineStore>()(
           const takeRemoteSchedule =
             remoteSchedStamp !== null &&
             (localSchedStamp === null || remoteSchedStamp > localSchedStamp);
+          // Mismo criterio que el calendario: gana la marca mas reciente,
+          // venga del dispositivo que venga. Si el remoto no trae marca son
+          // datos de una version anterior al ocultar, y entonces manda lo local
+          // para no resucitar plantillas que ya se escondieron aqui.
+          const localHiddenStamp = get().hiddenRoutinesUpdatedAt;
+          const remoteHiddenStamp = container.hiddenRoutinesUpdatedAt ?? null;
+          const takeRemoteHidden =
+            remoteHiddenStamp !== null &&
+            (localHiddenStamp === null || remoteHiddenStamp > localHiddenStamp);
+
           const localApplied = get().lastScheduledApply;
           const remoteApplied = container.lastScheduledApply ?? null;
 
@@ -1336,6 +1439,10 @@ export const useRoutineStore = create<RoutineStore>()(
             routines: mergedRoutines,
             schedule: takeRemoteSchedule ? (container.schedule ?? {}) : get().schedule,
             scheduleUpdatedAt: takeRemoteSchedule ? remoteSchedStamp : localSchedStamp,
+            hiddenRoutineIds: takeRemoteHidden
+              ? (container.hiddenRoutineIds ?? [])
+              : get().hiddenRoutineIds,
+            hiddenRoutinesUpdatedAt: takeRemoteHidden ? remoteHiddenStamp : localHiddenStamp,
             lastScheduledApply:
               localApplied === null || (remoteApplied !== null && remoteApplied > localApplied)
                 ? remoteApplied
@@ -1396,6 +1503,8 @@ export const useRoutineStore = create<RoutineStore>()(
         weekPlanUpdatedAt: state.weekPlanUpdatedAt,
         schedule: state.schedule,
         scheduleUpdatedAt: state.scheduleUpdatedAt,
+        hiddenRoutineIds: state.hiddenRoutineIds,
+        hiddenRoutinesUpdatedAt: state.hiddenRoutinesUpdatedAt,
         lastScheduledApply: state.lastScheduledApply,
         lastBackup: state.lastBackup,
       }),

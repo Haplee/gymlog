@@ -15,6 +15,7 @@ import {
   weekStartOf,
   dueScheduleEntry,
   localDay,
+  splitRoutinesByHidden,
   type DayOfWeek,
   type Routine,
 } from '../routineStore';
@@ -648,5 +649,125 @@ describe('loadFromDb — calendario', () => {
     await useRoutineStore.getState().loadFromDb('user-1');
 
     expect(useRoutineStore.getState().lastScheduledApply).toBe('2026-09-01');
+  });
+});
+
+describe('ocultar plantillas del selector', () => {
+  const USER = 'user-1';
+
+  beforeEach(() => {
+    localStorage.clear();
+    mockFrom.mockReset();
+    useRoutineStore.setState({
+      routines: [...PREDEFINED_ROUTINES, customRoutine('mia')],
+      hiddenRoutineIds: [],
+      hiddenRoutinesUpdatedAt: null,
+      activeRoutineId: null,
+      activeRoutineUpdatedAt: null,
+      schedule: {},
+      scheduleUpdatedAt: null,
+      hydrated: false,
+    });
+  });
+
+  it('saca la rutina del selector pero no de la lista real', () => {
+    const total = useRoutineStore.getState().routines.length;
+
+    useRoutineStore.getState().hideRoutine('ppl');
+
+    const s = useRoutineStore.getState();
+    expect(s.getVisibleRoutines().map((r) => r.id)).not.toContain('ppl');
+    // La lista completa se queda intacta: es lo que hace que la rutina activa
+    // y el calendario sigan resolviendo por id.
+    expect(s.routines).toHaveLength(total);
+    expect(s.routines.map((r) => r.id)).toContain('ppl');
+  });
+
+  it('ocultar la rutina activa no la interrumpe', () => {
+    useRoutineStore.getState().setActiveRoutine('franvi');
+
+    useRoutineStore.getState().hideRoutine('franvi');
+
+    expect(useRoutineStore.getState().getActiveRoutine()?.id).toBe('franvi');
+  });
+
+  it('es reversible y no duplica ids', () => {
+    const store = useRoutineStore.getState();
+    store.hideRoutine('ppl');
+    store.hideRoutine('ppl');
+    expect(useRoutineStore.getState().hiddenRoutineIds).toEqual(['ppl']);
+
+    useRoutineStore.getState().unhideRoutine('ppl');
+    expect(useRoutineStore.getState().hiddenRoutineIds).toEqual([]);
+    expect(
+      useRoutineStore
+        .getState()
+        .getVisibleRoutines()
+        .map((r) => r.id),
+    ).toContain('ppl');
+  });
+
+  it('splitRoutinesByHidden reparte en un solo recorrido y conserva el orden', () => {
+    const rs = [customRoutine('a'), customRoutine('b'), customRoutine('c')];
+
+    const { visible, hidden } = splitRoutinesByHidden(rs, ['b']);
+
+    expect(visible.map((r) => r.id)).toEqual(['a', 'c']);
+    expect(hidden.map((r) => r.id)).toEqual(['b']);
+  });
+
+  it('sin ocultas devuelve la misma referencia: no repinta de balde', () => {
+    const rs = [customRoutine('a')];
+
+    expect(splitRoutinesByHidden(rs, []).visible).toBe(rs);
+  });
+
+  it('getHiddenRoutines devuelve las escondidas para poder recuperarlas', () => {
+    useRoutineStore.getState().hideRoutine('ppl');
+    useRoutineStore.getState().hideRoutine('hipertrofia');
+
+    expect(
+      useRoutineStore
+        .getState()
+        .getHiddenRoutines()
+        .map((r) => r.id),
+    ).toEqual(['ppl', 'hipertrofia']);
+  });
+
+  it('borrar una rutina propia se lleva su id oculto', () => {
+    useRoutineStore.getState().hideRoutine('mia');
+
+    useRoutineStore.getState().deleteRoutine('mia');
+
+    expect(useRoutineStore.getState().hiddenRoutineIds).toEqual([]);
+  });
+
+  it('adopta la lista remota cuando su marca es más reciente', async () => {
+    useRoutineStore.setState({
+      hiddenRoutineIds: ['ppl'],
+      hiddenRoutinesUpdatedAt: '2026-08-10T09:00:00.000Z',
+    });
+    mockRemoteContainer({
+      routines: [customRoutine('mia')],
+      hiddenRoutineIds: ['hipertrofia', '531'],
+      hiddenRoutinesUpdatedAt: '2026-08-14T12:30:00.000Z',
+    });
+
+    await useRoutineStore.getState().loadFromDb(USER);
+
+    expect(useRoutineStore.getState().hiddenRoutineIds).toEqual(['hipertrofia', '531']);
+    expect(useRoutineStore.getState().hiddenRoutinesUpdatedAt).toBe('2026-08-14T12:30:00.000Z');
+  });
+
+  it('sin marca remota manda lo local: no resucita lo que ya se escondió aquí', async () => {
+    useRoutineStore.setState({
+      hiddenRoutineIds: ['ppl'],
+      hiddenRoutinesUpdatedAt: '2026-08-14T18:00:00.000Z',
+    });
+    mockRemoteContainer({ routines: [customRoutine('mia')] });
+
+    await useRoutineStore.getState().loadFromDb(USER);
+
+    expect(useRoutineStore.getState().hiddenRoutineIds).toEqual(['ppl']);
   });
 });

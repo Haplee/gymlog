@@ -1,11 +1,16 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useShallow } from 'zustand/react/shallow';
 import { toast } from 'sonner';
 import { useAuthStore } from '@features/auth/stores/authStore';
-import { useRoutineStore, dayLabels, localDay } from '@features/routine/stores/routineStore';
+import {
+  useRoutineStore,
+  dayLabels,
+  localDay,
+  splitRoutinesByHidden,
+} from '@features/routine/stores/routineStore';
 import { useRoutineSessionStore } from '@features/routine/stores/routineSessionStore';
 import { useProgressionStore } from '@features/routine/stores/progressionStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
@@ -30,7 +35,7 @@ import { EmptyState } from '@shared/components/EmptyStates';
 import { CoachSuggestionBanner } from '@features/coach/components/CoachSuggestionBanner';
 import { ExerciseSelector } from '@shared/components/ExerciseSelector';
 import { useRoutineTransfer } from '@features/routine/hooks/useRoutineTransfer';
-import { Printer, Share, Upload, Calendar } from '@shared/components/icons';
+import { Printer, Share, Upload, Calendar, Eye, EyeOff } from '@shared/components/icons';
 import { formatShortDay } from '@shared/lib/formatDate';
 
 const DAYS = Object.keys(dayLabels) as DayOfWeek[];
@@ -44,10 +49,13 @@ export function RoutinePage() {
   const activeRoutineId = useRoutineStore((s) => s.activeRoutineId);
   // Suscripcion (y no `getState`) para que la tarjeta repinte al programar.
   const schedule = useRoutineStore((s) => s.schedule);
+  const hiddenRoutineIds = useRoutineStore((s) => s.hiddenRoutineIds);
   const {
     setActiveRoutine,
     scheduleRoutine,
     unscheduleRoutine,
+    hideRoutine,
+    unhideRoutine,
     addRoutine,
     cloneRoutine,
     deleteRoutine,
@@ -65,6 +73,8 @@ export function RoutinePage() {
       setActiveRoutine: s.setActiveRoutine,
       scheduleRoutine: s.scheduleRoutine,
       unscheduleRoutine: s.unscheduleRoutine,
+      hideRoutine: s.hideRoutine,
+      unhideRoutine: s.unhideRoutine,
       addRoutine: s.addRoutine,
       cloneRoutine: s.cloneRoutine,
       deleteRoutine: s.deleteRoutine,
@@ -104,6 +114,7 @@ export function RoutinePage() {
 
   const [selectedDay, setSelectedDay] = useState<DayOfWeek>(getDayName());
   const [showCreate, setShowCreate] = useState(false);
+  const [showHidden, setShowHidden] = useState(false);
   /** Rutina cuyo calendario se esta editando, o null si el dialogo esta cerrado. */
   const [schedulingId, setSchedulingId] = useState<string | null>(null);
   const [scheduleDraft, setScheduleDraft] = useState('');
@@ -442,6 +453,14 @@ export function RoutinePage() {
     [buildPrefills, startSession],
   );
 
+  // El selector solo pinta las visibles. `routines` se queda entera en el store
+  // a proposito: la rutina activa y el calendario resuelven por id contra ella,
+  // asi que ocultar una plantilla nunca rompe lo que ya estaba en marcha.
+  const { visible: routinesVisibles, hidden: routinesOcultas } = useMemo(
+    () => splitRoutinesByHidden(routines, hiddenRoutineIds),
+    [routines, hiddenRoutineIds],
+  );
+
   return (
     <Layout>
       {/* Solo aparece si se ha llegado aquí desde «Aplicar» en el entrenador. */}
@@ -454,7 +473,7 @@ export function RoutinePage() {
           <SectionHeader title={t('routine.select')} />
 
           <div className="space-y-3">
-            {routines.map((routine) => (
+            {routinesVisibles.map((routine) => (
               <div
                 key={routine.id}
                 role="button"
@@ -481,33 +500,101 @@ export function RoutinePage() {
                     })}
                   </span>
                 )}
-                <div className="flex justify-between items-center gap-3">
-                  <div className="min-w-0">
+                {/* Las predefinidas llevan tres controles y el de plantilla es
+                    ancho: si comparten linea con el texto, el nombre parte en
+                    dos y la descripcion queda estrangulada bajo los botones.
+                    Por eso ahi el texto se queda la fila entera (basis-full) y
+                    los controles bajan debajo. Las personalizadas solo tienen
+                    dos iconos y caben al lado sin apreturas. */}
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className={`min-w-0 flex-1 ${routine.isCustom ? '' : 'basis-full'}`}>
                     <div className="text-data font-display font-bold text-fg">{routine.name}</div>
                     <div className="text-xs mt-1 text-fg-subtle">{routine.description}</div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={(e) => openScheduler(e, routine.id)}
-                    aria-label={t('routine.schedule_action', { name: routine.name })}
-                    title={t('routine.schedule_short')}
-                    className="flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-pill bg-surface-2 text-fg-muted active:scale-[0.98] transition-transform"
-                  >
-                    <Calendar className="w-4 h-4" aria-hidden="true" />
-                  </button>
-                  {!routine.isCustom && (
+                  <div className="flex items-center gap-2 ml-auto">
                     <button
                       type="button"
-                      onClick={(e) => handleUseAsTemplate(e, routine.id)}
-                      className="flex-shrink-0 min-h-11 label-caps px-3 py-1.5 rounded-pill bg-surface-2 text-accent active:scale-[0.98] transition-transform"
+                      onClick={(e) => openScheduler(e, routine.id)}
+                      aria-label={t('routine.schedule_action', { name: routine.name })}
+                      title={t('routine.schedule_short')}
+                      className="flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-pill bg-surface-2 text-fg-muted active:scale-[0.98] transition-transform"
                     >
-                      {t('routine.use_template')}
+                      <Calendar className="w-4 h-4" aria-hidden="true" />
                     </button>
-                  )}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        hideRoutine(routine.id);
+                      }}
+                      aria-label={t('routine.hide_action', { name: routine.name })}
+                      title={t('routine.hide_short')}
+                      className="flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-pill bg-surface-2 text-fg-muted active:scale-[0.98] transition-transform"
+                    >
+                      <EyeOff className="w-4 h-4" aria-hidden="true" />
+                    </button>
+                    {!routine.isCustom && (
+                      <button
+                        type="button"
+                        onClick={(e) => handleUseAsTemplate(e, routine.id)}
+                        className="flex-shrink-0 min-h-11 label-caps px-3 py-1.5 rounded-pill bg-surface-2 text-accent active:scale-[0.98] transition-transform"
+                      >
+                        {t('routine.use_template')}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
           </div>
+
+          {/* Ocultar tiene que poder deshacerse desde el mismo sitio: si la
+              vuelta atras viviera en Ajustes, esconder una plantilla seria un
+              viaje de ida para quien no supiera donde buscar. */}
+          {routinesOcultas.length > 0 && (
+            <div className="mt-5">
+              <button
+                type="button"
+                onClick={() => setShowHidden((v) => !v)}
+                aria-expanded={showHidden}
+                className="w-full min-h-11 flex items-center justify-center gap-2 rounded-pill text-xs bg-surface-2 text-fg-muted active:scale-[0.98] transition-transform"
+              >
+                <Eye className="w-4 h-4" aria-hidden="true" />
+                {showHidden
+                  ? t('routine.hidden_collapse')
+                  : t('routine.hidden_show', { count: routinesOcultas.length })}
+              </button>
+
+              {showHidden && (
+                <div className="mt-3 space-y-2">
+                  <p className="text-xs text-fg-subtle">{t('routine.hidden_hint')}</p>
+                  {routinesOcultas.map((routine) => (
+                    <div
+                      key={routine.id}
+                      className="p-3 rounded-card bg-surface border border-line flex justify-between items-center gap-3"
+                    >
+                      <div className="min-w-0">
+                        <div className="text-sm font-display font-bold text-fg-muted truncate">
+                          {routine.name}
+                        </div>
+                        <div className="text-xs mt-0.5 text-fg-subtle truncate">
+                          {routine.description}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => unhideRoutine(routine.id)}
+                        aria-label={t('routine.unhide_action', { name: routine.name })}
+                        className="flex-shrink-0 min-h-11 label-caps px-3 py-1.5 rounded-pill bg-surface-2 text-accent active:scale-[0.98] transition-transform"
+                      >
+                        {t('routine.unhide_short')}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           <button
             type="button"
