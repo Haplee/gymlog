@@ -362,6 +362,24 @@ export function UserStatsPage() {
       />
 
       <div className="space-y-5">
+        {/* ── Qué hacer ahora ──
+            Va lo primero, y antes iba en los puestos 13 y 14 de quince
+            secciones: la descarga y la próxima sesión son lo único de esta
+            pantalla sobre lo que se puede actuar hoy, y estaban por detrás de
+            los logros, las medidas, el wearable y cinco gráficos. El resumen y
+            los gráficos siguen debajo, que es donde se consultan. */}
+        {(nextSessionAdvice.length > 0 || deloadSuggestion?.recommended) && (
+          <section className="space-y-3">
+            <SectionLabel>{t('userStats.what_now')}</SectionLabel>
+            {deloadSuggestion?.recommended && <DeloadCard suggestion={deloadSuggestion} />}
+            <div className="space-y-2">
+              {nextSessionAdvice.map((advice) => (
+                <NextSessionCard key={advice.exercise} advice={advice} />
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* ── Hero KPIs ── */}
         <section className="space-y-3">
           <SectionLabel>{t('userStats.global_summary')}</SectionLabel>
@@ -600,23 +618,14 @@ export function UserStatsPage() {
         <MuscleMap recovery={muscleRecovery} />
         <MuscleRecovery muscleRecovery={muscleRecovery} />
 
-        {/* ── Descarga (motor determinista, sin IA ni red) ── */}
-        {deloadSuggestion && (
+        {/* ── Descarga, cuando no toca ──
+            Se conserva a propósito: saber que el entrenador vigila el volumen y
+            el esfuerzo vale, pero no vale el primer pantallazo. Cuando sí toca,
+            sube arriba con lo accionable. */}
+        {deloadSuggestion && !deloadSuggestion.recommended && (
           <section className="space-y-3">
             <SectionLabel>{t('coach.kind.deload')}</SectionLabel>
             <DeloadCard suggestion={deloadSuggestion} />
-          </section>
-        )}
-
-        {/* ── Próxima sesión (motor determinista, sin IA ni red) ── */}
-        {nextSessionAdvice.length > 0 && (
-          <section className="space-y-3">
-            <SectionLabel>{t('coach.next_session')}</SectionLabel>
-            <div className="space-y-2">
-              {nextSessionAdvice.map((advice) => (
-                <NextSessionCard key={advice.exercise} advice={advice} />
-              ))}
-            </div>
           </section>
         )}
 

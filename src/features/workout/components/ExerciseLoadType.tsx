@@ -37,8 +37,14 @@ function markConfirmed(id: string): void {
 
 /**
  * Mini-selector de modalidad de carga del ejercicio activo. La primera vez que
- * se usa un ejercicio se muestra como pregunta destacada; después queda como
- * un selector compacto para cambiarla. Persiste en `exercises.load_type`.
+ * se usa un ejercicio se muestra como pregunta destacada; después **se pliega a
+ * un chip** que dice la modalidad vigente y se abre al tocarlo. Persiste en
+ * `exercises.load_type`.
+ *
+ * Lo de plegarlo es de la pasada de UX: es un ajuste que se decide una vez por
+ * ejercicio y ocupaba tres botones fijos por encima de las series, en la
+ * pantalla que más se abre y justo donde hay que teclear. La pregunta sigue
+ * saliendo entera la primera vez, que es cuando hay algo que decidir.
  */
 export function ExerciseLoadType({
   exerciseId,
@@ -54,6 +60,8 @@ export function ExerciseLoadType({
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [firstUse, setFirstUse] = useState(() => !readConfirmed().has(exerciseId));
+  /** Selector desplegado. Ya confirmado, se abre solo si el usuario lo pide. */
+  const [open, setOpen] = useState(false);
 
   const mutation = useMutation({
     mutationFn: (next: LoadType) => updateExerciseLoadType(exerciseId, next),
@@ -71,7 +79,31 @@ export function ExerciseLoadType({
       setFirstUse(false);
     }
     if (next !== loadType) mutation.mutate(next);
+    setOpen(false);
   };
+
+  const desplegado = firstUse || open;
+
+  // Ya contestado y sin desplegar: una línea que dice qué modalidad está puesta
+  // y se abre al tocarla.
+  if (!desplegado) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="label-caps mb-3 flex min-h-11 items-center gap-2 rounded-sm bg-surface-2 px-3 text-fg-muted transition-colors active:bg-hover"
+      >
+        {loadType === 'external' ? (
+          <EquipmentIcon equipment={equipment} className="h-4 w-4 flex-shrink-0" />
+        ) : loadType === 'bodyweight' ? (
+          <Man className="h-4 w-4 flex-shrink-0 text-accent" aria-hidden="true" />
+        ) : (
+          <Backpack className="h-4 w-4 flex-shrink-0 text-accent" aria-hidden="true" />
+        )}
+        {t(`workout.load_type_${loadType}`)}
+      </button>
+    );
+  }
 
   return (
     <div

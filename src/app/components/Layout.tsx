@@ -11,6 +11,7 @@ import {
   IconDumbbell,
   IconFlame,
   IconHistory,
+  IconChart,
   IconHome,
   IconMenu,
   IconPulse,
@@ -61,6 +62,8 @@ const preloadChunk = (path: string) => {
     import('@features/cardio/pages/CardioPage');
   } else if (path === '/stats') {
     import('@features/stats/pages/StatsPage');
+  } else if (path === '/user-stats') {
+    import('@features/stats/pages/UserStatsPage');
   } else if (path === '/history') {
     import('@features/stats/pages/HistoryPage');
   } else if (path === '/settings') {
@@ -156,11 +159,17 @@ export function Layout({ children }: LayoutProps) {
   });
   const streak = calculateCurrentStreak(streakWorkouts);
 
-  // Cuatro pestañas: lo que se usa a diario entrenando. El resto (estadísticas,
-  // ajustes, biblioteca, medidas…) vive en el cajón que abre la hamburguesa.
+  // Cinco pestañas: lo que se usa a diario entrenando. El resto (ajustes,
+  // biblioteca, entrenador, wearables…) vive en el cajón de la hamburguesa.
+  //
+  // «Progreso» entra en la barra porque detrás está lo único de la app sobre lo
+  // que se puede actuar hoy —qué peso toca en la próxima sesión y si conviene
+  // descargar— y estaba a dos toques, dentro de un menú, y luego a quince
+  // secciones de scroll. Ese contenido ya abre la pantalla; esto le da la puerta.
   const tabs = [
     { path: '/', Icon: IconHome, label: t('nav.home'), badge: trainBadge },
     { path: '/routines', Icon: IconDumbbell, label: t('nav.routines'), badge: false },
+    { path: '/user-stats', Icon: IconChart, label: t('nav.progress'), badge: false },
     { path: '/history', Icon: IconHistory, label: t('history.title'), badge: false },
     // El punto de «cardio en marcha» vivía en el cajón, de cuando cardio no
     // tenía pestaña propia. Ahora la tiene, así que el aviso va donde está el
@@ -182,7 +191,9 @@ export function Layout({ children }: LayoutProps) {
     if (!user?.id) return;
     const idle = window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 1500));
     const handle = idle(() => {
-      ['/', '/routines', '/cardio', '/stats', '/history', '/settings'].forEach(preloadChunk);
+      ['/', '/routines', '/cardio', '/user-stats', '/stats', '/history', '/settings'].forEach(
+        preloadChunk,
+      );
     });
     return () => {
       (window.cancelIdleCallback ?? window.clearTimeout)(handle as number);
@@ -373,8 +384,13 @@ export function Layout({ children }: LayoutProps) {
                   />
                 )}
               </span>
+              {/* Con cuatro pestañas cada una medía ~97 px; con cinco caen a
+                  ~78 px en un móvil de 390 y a ~72 en uno de 360, que es
+                  justamente el ancho al que «Estadísticas» se partía en dos
+                  líneas. El rótulo se fija en una sola línea y se aprieta un
+                  punto la tipografía para que «HISTORIAL» entre entero. */}
               <span
-                className={`label-caps transition-colors ${
+                className={`label-caps whitespace-nowrap text-[0.625rem] tracking-[0.06em] transition-colors ${
                   isActive ? 'text-accent' : 'text-fg-subtle'
                 }`}
               >

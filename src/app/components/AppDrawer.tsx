@@ -8,7 +8,6 @@ import {
   IconChart,
   IconDumbbell,
   IconGear,
-  IconRuler,
   IconSearch,
   IconStar,
   IconWatch,
@@ -63,7 +62,10 @@ export function AppDrawer({ onClose, onOpenSearch, unreadCount }: AppDrawerProps
       links: [
         { to: '/stats', Icon: IconChart, label: t('nav.stats') },
         { to: '/exercises', Icon: IconDumbbell, label: t('library.title') },
-        { to: '/user-stats', Icon: IconRuler, label: t('settings.my_measurements') },
+        // «Progreso» (/user-stats) salió de aquí: ahora tiene pestaña propia, y
+        // duplicar el destino en el cajón es la misma redundancia que se quitó
+        // con cardio. Además la fila lo llamaba «Mis medidas», que era el
+        // nombre de una sección de esa página, no de la página.
       ],
     },
     {

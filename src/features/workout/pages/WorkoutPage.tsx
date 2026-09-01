@@ -12,8 +12,9 @@ import { useAuthStore } from '@features/auth/stores/authStore';
 import { useWorkoutStore } from '@features/workout/stores/workoutStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
 import { useWeight } from '@shared/hooks/useWeight';
+import { formatWeightInput } from '@shared/lib/weight';
 import { calcular1RM } from '@shared/lib/brzycki';
-import { smallestLoadStep } from '@shared/lib/loadStep';
+import { loadStepFromSettings } from '@shared/hooks/useLoadStep';
 import { useRoutineStore } from '@features/routine/stores/routineStore';
 import { useRestTimerStore } from '@features/workout/stores/restTimerStore';
 import { Layout } from '@app/components/Layout';
@@ -72,7 +73,7 @@ import { impact, notificationHaptic, ImpactStyle, NotificationType } from '@shar
 import { celebrate } from '@shared/lib/celebration';
 import { playSuccessChime } from '@shared/lib/alarm';
 import { devError } from '@shared/lib/devtools';
-import { Calculator, Trophy } from '@shared/components/icons';
+import { Calculator, ChevronDown, Trophy } from '@shared/components/icons';
 
 const containerVariants = {
   hidden: { opacity: 0, y: 12 },
@@ -244,6 +245,33 @@ export function WorkoutPage() {
   // Último entreno completo: solo cuando no hay sesión en curso, para ofrecer
   // "Repetir último entreno" como acción rápida.
   const isIdle = sets.length === 0 && !startedAt;
+
+  /**
+   * ¿Hay ya alguna serie dada por hecha en esta sesión?
+   *
+   * Es lo que separa «estoy decidiendo el peso» de «estoy registrando»: en el
+   * primer caso el contexto (última sesión + recomendación) es lo que hay que
+   * ver; en el segundo, el teclado.
+   */
+  const haySerieHecha = sets.some((s) => s.completed);
+
+  /**
+   * Si el contexto está desplegado.
+   *
+   * Va **derivado** y no en un efecto: por defecto abierto mientras no haya una
+   * serie hecha y plegado en cuanto la hay, con lo que el cambio de ejercicio lo
+   * reabre solo (otra decisión de peso, otra clave). Lo único que se guarda es
+   * la decisión explícita del usuario, y solo vale para el ejercicio en el que
+   * la tomó.
+   */
+  const [contextoManual, setContextoManual] = useState<{ ex: string | null; abierto: boolean }>({
+    ex: null,
+    abierto: true,
+  });
+  const contextoAbierto =
+    contextoManual.ex === (activeExerciseId ?? null) ? contextoManual.abierto : !haySerieHecha;
+  const abrirContexto = (abierto: boolean) =>
+    setContextoManual({ ex: activeExerciseId ?? null, abierto });
   const { data: lastWorkoutPage } = useQuery({
     queryKey: ['lastWorkoutFull', user?.id],
     queryFn: () => fetchWorkoutsPaginated(user?.id ?? '', null, 1),
@@ -314,6 +342,7 @@ export function WorkoutPage() {
     repMax,
     bodyweight: isBodyweightExercise,
     muscleGroup: selectedExercise?.muscle_group ?? undefined,
+    equipment: selectedExercise?.equipment ?? null,
   });
 
   // Mantener el store al día con el contexto de peso corporal del ejercicio activo.
@@ -481,7 +510,7 @@ export function WorkoutPage() {
       );
       // El escalón sale de los discos que el usuario tiene en su gimnasio: 2,5 kg
       // fijos proponían pesos que en su sala no se pueden montar.
-      const loadStepKg = smallestLoadStep(useSettingsStore.getState().availablePlatesKg);
+      const loadStepKg = loadStepFromSettings(selectedExercise?.equipment);
       useProgressionStore.getState().recordSession(
         name,
         { ...top, sessionReps: valid.map((s) => s.reps) },
@@ -806,27 +835,61 @@ export function WorkoutPage() {
           onSaveNote={handleSaveNote}
           onDeleteNote={handleDeleteNote}
         >
-          {activeExerciseId && (
-            <LastSessionCard
-              userId={user.id}
-              exerciseId={activeExerciseId}
-              onCopySets={handleCopySets}
-            />
-          )}
+          {/* Contexto para decidir el peso: qué se hizo la última vez y qué
+              recomienda el motor.
+              Se pliega solo en cuanto hay una serie hecha. No es que estorbe
+              —es justo lo que hay que ver antes de la primera— sino que después
+              ya no se decide nada: el peso está en la barra y lo que se necesita
+              en pantalla es el teclado, que con estas dos tarjetas desplegadas
+              quedaba por debajo de todo. Se vuelve a abrir tocando el resumen. */}
+          {activeExerciseId &&
+            (contextoAbierto ? (
+              <>
+                <LastSessionCard
+                  userId={user.id}
+                  exerciseId={activeExerciseId}
+                  onCopySets={handleCopySets}
+                />
 
-          {/* Autorregulación (motor determinista, sin IA ni red). Va aquí porque
-              es el momento en que se decide qué peso poner en la barra. */}
-          {exerciseAdvice && (
-            <div className="mt-3">
-              <NextSessionCard
-                advice={{
-                  ...exerciseAdvice,
-                  exercise: selectedExercise?.name ?? customExerciseName ?? '',
-                }}
-                onApply={handleApplyAdvice}
-              />
-            </div>
-          )}
+                {exerciseAdvice && (
+                  <div className="mt-3">
+                    <NextSessionCard
+                      advice={{
+                        ...exerciseAdvice,
+                        exercise: selectedExercise?.name ?? customExerciseName ?? '',
+                      }}
+                      onApply={handleApplyAdvice}
+                    />
+                  </div>
+                )}
+
+                {haySerieHecha && (
+                  <button
+                    type="button"
+                    onClick={() => abrirContexto(false)}
+                    className="label-caps mt-2 flex min-h-11 w-full items-center justify-center gap-1.5 text-fg-subtle active:opacity-60"
+                  >
+                    <ChevronDown className="h-3.5 w-3.5 rotate-180" aria-hidden="true" />
+                    {t('workout.context_hide')}
+                  </button>
+                )}
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => abrirContexto(true)}
+                className="flex min-h-11 w-full items-center justify-between gap-2 rounded-sm bg-surface-2 px-3 text-left active:bg-hover"
+              >
+                <span className="label-caps text-fg-muted">
+                  {exerciseAdvice
+                    ? `${t('coach.next_label')} · ${formatWeightInput(
+                        convert(exerciseAdvice.suggestion.weight),
+                      )} ${weightUnit} × ${exerciseAdvice.suggestion.reps}`
+                    : t('workout.context_show')}
+                </span>
+                <ChevronDown className="h-4 w-4 flex-shrink-0 text-fg-subtle" aria-hidden="true" />
+              </button>
+            ))}
         </ExercisePicker>
       )}
 

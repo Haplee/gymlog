@@ -3,7 +3,7 @@ import type { ExerciseAdvice } from '../hooks/useAutoregulation';
 import type { LoadSuggestion } from '../utils/autoregulation';
 import { useWeight } from '@shared/hooks/useWeight';
 import { formatWeightInput } from '@shared/lib/weight';
-import { AlertTriangle, Minus, TrendDown, TrendUp } from '@shared/components/icons';
+import { AlertTriangle, ChartBar, Minus, TrendDown, TrendUp } from '@shared/components/icons';
 
 const ACTION_ICON = {
   increase: TrendUp,
@@ -26,7 +26,7 @@ export function NextSessionCard({
 }) {
   const { t } = useTranslation();
   const { unit: weightUnit, convert } = useWeight();
-  const { exercise, suggestion, stall } = advice;
+  const { exercise, suggestion, stall, volume } = advice;
   const Icon = ACTION_ICON[suggestion.action];
 
   const tone =
@@ -56,6 +56,21 @@ export function NextSessionCard({
         ? 'text-error'
         : 'text-fg-muted';
 
+  // Cuánta evidencia sostiene la sugerencia. El motor lo calculaba desde
+  // siempre y no lo pintaba nadie, así que un cálculo hecho sobre una sesión
+  // sin esfuerzo registrado se leía igual de firme que uno sobre cuatro con RPE.
+  const confidenceTone =
+    suggestion.confidence === 'high'
+      ? 'text-success'
+      : suggestion.confidence === 'medium'
+        ? 'text-fg-muted'
+        : 'text-warning';
+
+  // El contexto de volumen tampoco se pintaba en ninguna parte: solo se notaba
+  // cuando frenaba una subida, y en silencio. El caso «pocas series semanales»
+  // no llegaba nunca al usuario, porque ese no frena nada y su motivo se perdía.
+  const volumeNote = volume?.reasonKey ? t(volume.reasonKey) : null;
+
   return (
     <article className="glass-2 rounded-card p-4">
       <header className="flex items-start justify-between gap-3">
@@ -81,6 +96,19 @@ export function NextSessionCard({
       </div>
 
       <p className="mt-2 text-xs text-fg-muted">{t(suggestion.reasonKey)}</p>
+
+      <p className={`label-caps mt-2 ${confidenceTone}`}>
+        {t(`coach.confidence_${suggestion.confidence}`)}
+      </p>
+
+      {volumeNote && volume && (
+        <p className="mt-2 flex gap-1.5 rounded-sm bg-surface-2 p-2 text-xs text-fg-muted">
+          <ChartBar className="h-3.5 w-3.5 flex-shrink-0 text-accent" aria-hidden="true" />
+          <span>
+            {t('coach.volume_weekly_sets', { count: volume.acuteSets })} · {volumeNote}
+          </span>
+        </p>
+      )}
 
       {stall?.stalled && (
         <p className="mt-2 flex gap-1.5 rounded-sm bg-surface-2 p-2 text-xs text-fg-muted">
