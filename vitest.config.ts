@@ -32,5 +32,18 @@ export default defineConfig({
   test: {
     exclude: ['**/e2e/**', '**/node_modules/**', '**/dist/**'],
     alias: aliases,
+    /**
+     * Valores de relleno para que la suite no dependa del `.env` de cada
+     * máquina. Los tests que hablan con Supabase mockean el módulo, pero
+     * `supabase.ts` construye el cliente al importarse y `createClient` exige
+     * una URL válida: cualquier fichero que lo arrastre por la cadena de
+     * imports reventaba con «supabaseUrl is required» donde no hubiera `.env`.
+     * Apuntan a localhost a propósito: si un test se saltara el mock e hiciera
+     * red de verdad, falla en vez de tocar un proyecto real.
+     */
+    env: {
+      VITE_SUPABASE_URL: 'http://localhost:54321',
+      VITE_SUPABASE_KEY: 'clave-de-test',
+    },
   },
 });
