@@ -361,7 +361,7 @@ export function Layout({ children }: LayoutProps) {
                 }
               }}
               aria-current={isActive ? 'page' : undefined}
-              className="flex flex-1 flex-col items-center justify-center gap-1 relative transition-opacity active:opacity-60"
+              className="flex min-w-0 flex-1 flex-col items-center justify-center gap-1 relative transition-opacity active:opacity-60"
             >
               {isActive && (
                 <m.div
@@ -387,10 +387,26 @@ export function Layout({ children }: LayoutProps) {
               {/* Con cuatro pestañas cada una medía ~97 px; con cinco caen a
                   ~78 px en un móvil de 390 y a ~72 en uno de 360, que es
                   justamente el ancho al que «Estadísticas» se partía en dos
-                  líneas. El rótulo se fija en una sola línea y se aprieta un
-                  punto la tipografía para que «HISTORIAL» entre entero. */}
+                  líneas.
+
+                  El rótulo va en una línea, pero eso solo no basta: el WebView
+                  de Android aplica el tamaño de letra del sistema, y con la
+                  fuente al 130 % «PROGRESO» e «HISTORIAL» crecían fuera de su
+                  celda y se leían pegados —«PROGRESOHISTORIAL»— porque nada les
+                  impedía desbordar. Se arregla por los dos lados: la celda puede
+                  encogerse (`min-w-0`) y el texto se recorta dentro de ella
+                  (`truncate`) en vez de invadir la vecina, y la tipografía parte
+                  de un cuerpo menor y sin apenas interletraje para que a escalas
+                  normales y grandes entre entero sin llegar a recortarse.
+
+                  Sin `label-caps` a propósito: esa clase fija `font-size` y
+                  `letter-spacing` de suyo y gana a las utilidades, así que el
+                  «apretar un punto la tipografía» de antes no llegaba a
+                  aplicarse nunca —el rótulo seguía saliendo a 11 px con 0.1em—
+                  y por eso no había margen que valiera. Aquí las mayúsculas y
+                  la negrita se piden a mano. */}
               <span
-                className={`label-caps whitespace-nowrap text-[0.625rem] tracking-[0.06em] transition-colors ${
+                className={`block max-w-full truncate text-center font-bold uppercase leading-[1.1] text-[0.5625rem] tracking-[0.02em] transition-colors ${
                   isActive ? 'text-accent' : 'text-fg-subtle'
                 }`}
               >
