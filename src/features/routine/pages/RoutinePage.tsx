@@ -476,7 +476,13 @@ export function RoutinePage() {
 
       {sessionActive && user ? (
         <RoutineSession userId={user.id} exercises={exercises} />
-      ) : !activeRoutineId || eligiendo ? (
+      ) : /* Se decide con la rutina ya resuelta, no con el id: si el id apunta a
+             una rutina que ya no esta —borrada, reimportada con otro id, o
+             perdida en una sincronizacion— la pantalla entraba igualmente en la
+             rama de «hay rutina activa» y pintaba una cabecera sin nombre, sin
+             plan del dia y sin manera de elegir otra. Sin rutina de verdad, lo
+             que toca es el selector. */
+      !activeRoutine || eligiendo ? (
         <>
           <SectionHeader title={t('routine.select')} />
 
@@ -484,7 +490,7 @@ export function RoutinePage() {
               ella. Antes «Cambiar» la desactivaba en el acto: quien entraba por
               curiosidad y volvia atras se quedaba sin rutina y sin plan del
               dia, y si ademas estaba oculta ya no salia en esta lista. */}
-          {activeRoutineId && (
+          {activeRoutine && (
             <button
               type="button"
               onClick={() => setEligiendo(false)}
