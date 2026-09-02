@@ -19,7 +19,7 @@ vi.mock('react-i18next', () => ({
 
 vi.mock('@shared/lib/haptics', () => ({
   impact: vi.fn(),
-  ImpactStyle: { Light: 'LIGHT' },
+  ImpactStyle: { Light: 'LIGHT', Medium: 'MEDIUM', Heavy: 'HEAVY' },
 }));
 
 const LB_PER_KG = 2.20462;
@@ -166,7 +166,7 @@ describe('WorkoutSetList', () => {
     expect(updater({ 0: 'Inválido', 1: 'Otro' })).toEqual({ 1: 'Otro' });
   });
 
-  it('solo pinta el error de la serie que se está editando', async () => {
+  it('señala la serie con error aunque no sea la que se está editando', async () => {
     const user = userEvent.setup();
     setup({
       sets: [
@@ -176,14 +176,45 @@ describe('WorkoutSetList', () => {
       setErrors: { 0: 'Inválido' },
     });
 
-    // Se abre la última serie, que no tiene error.
-    expect(screen.queryByText('Inválido')).not.toBeInTheDocument();
+    // Se abre la última serie, que no tiene error. La rota es la otra, y antes
+    // no se veía por ningún lado: Guardar no hacía nada y nadie decía por qué.
     expect(repsInput(2)).not.toHaveClass('border-error');
+    const filaRota = screen.getByRole('button', { name: 'workout.edit_set 1' });
+    expect(filaRota).toHaveAttribute('aria-invalid', 'true');
+    expect(filaRota).toHaveTextContent('Inválido');
 
-    // Al volver a la primera, sí.
-    await user.click(screen.getByRole('button', { name: 'workout.edit_set 1' }));
+    // Y al abrirla, el error también sale bajo el campo grande.
+    await user.click(filaRota);
     expect(screen.getByText('Inválido')).toBeInTheDocument();
     expect(repsInput(1)).toHaveClass('border-error');
+  });
+
+  it('no marca como hecha una serie sin repeticiones ni segundos', async () => {
+    const user = userEvent.setup();
+    const { updateSet, setSetErrors, onCommitSet } = setup({
+      sets: [{ id: 'a', reps: '', weight: '125' }],
+    });
+
+    await user.click(screen.getByLabelText('workout.complete_set'));
+
+    // Ni se completa ni se abre la siguiente: eso dejaba un «125 kg × 0» que
+    // luego frenaba el guardado del entreno entero.
+    expect(updateSet).not.toHaveBeenCalled();
+    expect(onCommitSet).not.toHaveBeenCalled();
+    expect(setSetErrors).toHaveBeenCalled();
+  });
+
+  it('marca la serie por tiempo aunque no lleve repeticiones', async () => {
+    const user = userEvent.setup();
+    const { updateSet, onCommitSet } = setup({
+      sets: [{ id: 'a', reps: '', weight: '0', durationSeconds: '45' }],
+      loggingMode: 'time',
+    });
+
+    await user.click(screen.getByLabelText('workout.complete_set'));
+
+    expect(updateSet).toHaveBeenCalledWith(0, { completed: true });
+    expect(onCommitSet).toHaveBeenCalled();
   });
 
   it('borra la serie que se está editando por su índice', async () => {

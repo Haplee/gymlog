@@ -337,6 +337,14 @@ const dayNames: Record<number, DayOfWeek> = {
   6: 'saturday',
 };
 
+/**
+ * Nombres de los días **para uso interno**, no para pintar.
+ *
+ * Lo que ve el usuario sale de `routine.days.*` en i18n: estos literales se
+ * colaban en pantalla y dejaban «LUN MAR MIÉ» con la app en inglés. Aquí siguen
+ * porque `Object.keys` de este objeto es lo que fija el orden de la semana
+ * (lunes primero, no domingo) y porque los usan sitios sin acceso a `t`.
+ */
 export const dayLabels: Record<DayOfWeek, string> = {
   monday: 'Lunes',
   tuesday: 'Martes',

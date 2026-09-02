@@ -67,13 +67,18 @@ describe('useWorkoutStore', () => {
     expect(state.startedAt).toBeNull();
   });
 
-    it('debería añadir una serie con valores por defecto', () => {
-      const { addSet } = useWorkoutStore.getState();
-      addSet();
-      const state = useWorkoutStore.getState();
-      expect(state.sets).toHaveLength(1);
-      expect(state.sets[0]).toMatchObject({ reps: '', weight: '', isWarmup: false, completed: false });
+  it('debería añadir una serie con valores por defecto', () => {
+    const { addSet } = useWorkoutStore.getState();
+    addSet();
+    const state = useWorkoutStore.getState();
+    expect(state.sets).toHaveLength(1);
+    expect(state.sets[0]).toMatchObject({
+      reps: '',
+      weight: '',
+      isWarmup: false,
+      completed: false,
     });
+  });
 
   it('debería añadir una serie copiando la anterior', () => {
     const store = useWorkoutStore.getState();
@@ -141,7 +146,7 @@ describe('useWorkoutStore', () => {
   describe('saveWorkout', () => {
     it('debería rechazar si no hay ejercicio activo ni nombre custom', async () => {
       const result = await useWorkoutStore.getState().saveWorkout('user-1');
-      expect(result.error?.message).toBe('Selecciona un ejercicio');
+      expect(result.error?.message).toBe('workout.errors.pick_exercise');
       expect(result.success).toBe(false);
     });
 
@@ -149,7 +154,7 @@ describe('useWorkoutStore', () => {
       const store = useWorkoutStore.getState();
       store.setActiveExercise('ex-1');
       const result = await store.saveWorkout('user-1');
-      expect(result.error?.message).toBe('Añade reps y kg válidas');
+      expect(result.error?.message).toBe('workout.errors.no_valid_sets');
       expect(result.success).toBe(false);
     });
 
@@ -305,8 +310,50 @@ describe('useWorkoutStore', () => {
       const result = await store.saveWorkout('user-1', { onlyCompleted: true });
 
       expect(result.success).toBe(false);
-      expect(result.error?.message).toBe('Añade reps y kg válidas');
+      expect(result.error?.message).toBe('workout.errors.no_valid_sets');
       expect(mockRpc).not.toHaveBeenCalled();
+    });
+
+    it('no guarda la serie heredada que la app abre sola', async () => {
+      const store = useWorkoutStore.getState();
+      store.setActiveExercise('ex-1');
+      store.updateSet(0, { reps: '10', weight: '100' });
+      // Cerrar una serie abre la siguiente heredando peso y reps: esa fila no
+      // la ha hecho nadie y no puede acabar en el entreno.
+      store.addSet();
+
+      const result = await useWorkoutStore.getState().saveWorkout('user-1');
+
+      expect(result.success).toBe(true);
+      const pSets = mockRpc.mock.calls[0][1].p_sets as { set_num: number }[];
+      expect(pSets).toHaveLength(1);
+    });
+
+    it('guarda la serie heredada en cuanto el usuario la toca', async () => {
+      const store = useWorkoutStore.getState();
+      store.setActiveExercise('ex-1');
+      store.updateSet(0, { reps: '10', weight: '100' });
+      store.addSet();
+      useWorkoutStore.getState().updateSet(1, { reps: '8' });
+
+      const result = await useWorkoutStore.getState().saveWorkout('user-1');
+
+      expect(result.success).toBe(true);
+      const pSets = mockRpc.mock.calls[0][1].p_sets as { set_num: number; reps: number }[];
+      expect(pSets).toHaveLength(2);
+      expect(pSets[1]).toMatchObject({ reps: 8 });
+    });
+
+    it('marcar el ✓ no convierte la heredada en una serie propia', async () => {
+      const store = useWorkoutStore.getState();
+      store.setActiveExercise('ex-1');
+      store.updateSet(0, { reps: '10', weight: '100' });
+      store.addSet();
+      // `completed` no es un dato escrito por el usuario: si solo se marca el
+      // ✓ sobre la fila heredada, sigue siendo de la app.
+      useWorkoutStore.getState().updateSet(1, { completed: true });
+
+      expect(useWorkoutStore.getState().sets[1].autofilled).toBe(true);
     });
   });
 });

@@ -91,17 +91,18 @@ const containerVariants = {
  * quedó atrás, y solo se vio recorriendo el entreno entero en la APK.
  *
  * Es la misma regla que el `CHECK workout_sets_measured` de la base de datos,
- * puesta aquí para que el usuario vea un mensaje en su idioma en vez de un error
- * de Postgres.
+ * puesta aquí para que el usuario vea un mensaje entendible en vez de un error
+ * de Postgres. Los `message` son claves de i18n, no frases: el schema vive a
+ * nivel de módulo y no alcanza a `t`, así que traduce quien los pinta.
  */
 const setSchema = z
   .object({
     reps: z.string().optional().default(''),
     durationSeconds: z.string().optional().default(''),
-    weight: z.coerce.number().nonnegative('El peso no puede ser negativo'),
+    weight: z.coerce.number().nonnegative('workout.errors.weight_negative'),
   })
   .refine((s) => Number(s.reps) > 0 || Number(s.durationSeconds) > 0, {
-    message: 'Añade repeticiones o segundos',
+    message: 'workout.errors.needs_measure',
   });
 
 /** ¿La fila tiene algo escrito? Una en blanco se salta, no se marca en rojo. */
@@ -189,6 +190,8 @@ export function WorkoutPage() {
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [setErrors, setSetErrors] = useState<Record<number, string>>({});
+  /** Serie que la lista debe abrir por orden de la pantalla (guardado fallido). */
+  const [focusSet, setFocusSet] = useState<{ index: number; nonce: number } | null>(null);
   const [showRating, setShowRating] = useState(false);
   const [showPlates, setShowPlates] = useState(false);
   const [saveDialog, setSaveDialog] = useState<{
@@ -460,7 +463,7 @@ export function WorkoutPage() {
       if (filaEnBlanco(s)) return;
       const validation = setSchema.safeParse(s);
       if (!validation.success) {
-        newErrors[i] = validation.error.errors[0]?.message || 'Inválido';
+        newErrors[i] = validation.error.errors[0]?.message || 'workout.errors.invalid_set';
       } else {
         hasValid = true;
       }
@@ -468,8 +471,23 @@ export function WorkoutPage() {
 
     setSetErrors(newErrors);
 
-    if (Object.keys(newErrors).length > 0) {
+    const failed = Object.keys(newErrors).map(Number);
+    if (failed.length > 0) {
       void notificationHaptic(NotificationType.Error);
+      // El error de cada fila solo se pintaba en la serie que estuviera abierta,
+      // así que si la rota era otra el botón no hacía nada y no lo decía nadie:
+      // parecía que Guardar estuviese muerto. Ahora se nombran las series.
+      setMessage(
+        t('workout.errors.sets_incomplete', {
+          count: failed.length,
+          numbers: failed.map((i) => i + 1).join(', '),
+        }),
+      );
+      setMessageTone('error');
+      // Y se abre la primera que falla, para que el campo grande muestre ya
+      // la serie que hay que arreglar. El contador hace que dos intentos
+      // seguidos sobre la misma serie vuelvan a abrirla.
+      setFocusSet((prev) => ({ index: failed[0], nonce: (prev?.nonce ?? 0) + 1 }));
       return;
     }
     if (!hasValid) {
@@ -525,9 +543,12 @@ export function WorkoutPage() {
     };
 
     if (result.error) {
-      setMessage(result.error.message);
+      // El store manda claves de i18n; `t` devuelve el texto tal cual si lo que
+      // llega es el mensaje de un error de red, así que sirve para los dos.
+      const texto = t(result.error.message);
+      setMessage(texto);
       setMessageTone('error');
-      toast.error(result.error.message);
+      toast.error(texto);
     } else if (result.queued) {
       // Guardado offline: se sincronizará al volver la conexión.
       recordProgression();
@@ -658,6 +679,8 @@ export function WorkoutPage() {
           rpe: '',
           setType: 'normal' as const,
           completed: false,
+          // Copiadas a propósito por el usuario: son suyas desde el minuto uno.
+          autofilled: false,
         })),
       );
       void impact(ImpactStyle.Light);
@@ -946,6 +969,7 @@ export function WorkoutPage() {
               convertToKg={convertToKg}
               loggingMode={loggingMode}
               onLoggingModeChange={setLoggingMode}
+              focusSet={focusSet}
             />
 
             {/* Chips de la maqueta: calculadora de discos, 1RM estimado y notas

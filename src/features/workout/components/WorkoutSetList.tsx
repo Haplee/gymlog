@@ -1,4 +1,4 @@
-import { memo, useCallback, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { m } from 'framer-motion';
 import { impact, ImpactStyle } from '@shared/lib/haptics';
@@ -26,6 +26,17 @@ interface SetData {
 function formatoTiempo(segundos: number): string {
   if (segundos < 60) return `${segundos} s`;
   return `${Math.floor(segundos / 60)}:${String(segundos % 60).padStart(2, '0')}`;
+}
+
+/**
+ * ¿La serie mide algo? Repeticiones o segundos, uno de los dos.
+ *
+ * Es la misma regla que `setSchema` en la pantalla y que el
+ * `CHECK workout_sets_measured` de la base de datos, aplicada ya al marcar el ✓
+ * para que nunca llegue a la lista una serie que el guardado va a rechazar.
+ */
+function midePorAlgo(s: SetData): boolean {
+  return Number(s.reps) > 0 || Number(s.durationSeconds) > 0;
 }
 
 /** Lo que se lee en la fila de una serie ya anotada. */
@@ -63,6 +74,8 @@ interface LoggedSetRowProps {
   convert: (kg: number) => number;
   label: string;
   warmupLabel: string;
+  /** Esta serie es la que impide guardar. Sin esto el fallo era invisible. */
+  errorText?: string;
 }
 
 /**
@@ -79,18 +92,22 @@ const LoggedSetRow = memo(function LoggedSetRow({
   convert,
   label,
   warmupLabel,
+  errorText,
 }: LoggedSetRowProps) {
   return (
     <button
       type="button"
       onClick={() => onSelect(i)}
       aria-label={`${label} ${i + 1}`}
+      aria-invalid={errorText ? true : undefined}
       className={`w-full hairline-separator flex min-h-11 items-center gap-3 py-3 text-left transition-opacity active:opacity-60 ${
-        isPR ? 'border-l-2 border-l-accent pl-3' : ''
+        errorText ? 'border-l-2 border-l-error pl-3' : isPR ? 'border-l-2 border-l-accent pl-3' : ''
       }`}
     >
       <span
-        className={`flex items-center gap-1.5 tabular text-base ${isPR ? 'text-accent' : 'text-fg-subtle'}`}
+        className={`flex items-center gap-1.5 tabular text-base ${
+          errorText ? 'text-error' : isPR ? 'text-accent' : 'text-fg-subtle'
+        }`}
       >
         {i + 1}
         {s.completed && <Check className="h-3.5 w-3.5 text-success" strokeWidth={3} />}
@@ -109,9 +126,11 @@ const LoggedSetRow = memo(function LoggedSetRow({
       )}
 
       <span
-        className={`ml-auto tabular text-base font-medium ${isPR ? 'text-accent' : 'text-fg-muted'}`}
+        className={`ml-auto tabular text-base font-medium ${
+          errorText ? 'text-error' : isPR ? 'text-accent' : 'text-fg-muted'
+        }`}
       >
-        {resumenSerie(s, weightUnit, displayWeight(s.weight, convert))}
+        {errorText ? errorText : resumenSerie(s, weightUnit, displayWeight(s.weight, convert))}
       </span>
     </button>
   );
@@ -141,6 +160,11 @@ interface WorkoutSetListProps {
    */
   loggingMode: 'reps' | 'time';
   onLoggingModeChange: (mode: 'reps' | 'time') => void;
+  /**
+   * Serie que la pantalla pide abrir (la primera que falla al guardar). El
+   * `nonce` distingue dos peticiones seguidas sobre la misma serie.
+   */
+  focusSet?: { index: number; nonce: number } | null;
 }
 
 /**
@@ -172,6 +196,7 @@ export const WorkoutSetList = memo(function WorkoutSetList({
   convertToKg,
   loggingMode,
   onLoggingModeChange,
+  focusSet,
 }: WorkoutSetListProps) {
   const { t } = useTranslation();
   // `null` significa «la última serie», que es lo que hay que abrir al entrar y
@@ -189,6 +214,15 @@ export const WorkoutSetList = memo(function WorkoutSetList({
     setLocalWeight(null);
     setShowDetails(false);
   }, []);
+
+  // La pantalla manda abrir la serie que falla al guardar.
+  const focusIndex = focusSet?.index;
+  const focusNonce = focusSet?.nonce;
+  useEffect(() => {
+    if (focusIndex != null) onSelect(focusIndex);
+    // `focusNonce` es lo que hace que dos guardados seguidos vuelvan a abrirla.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusNonce]);
 
   const onClearError = useCallback(
     (index: number) =>
@@ -378,6 +412,17 @@ export const WorkoutSetList = memo(function WorkoutSetList({
           <button
             type="button"
             onClick={() => {
+              // Una serie sin repeticiones ni segundos no es una serie hecha.
+              // Marcarla dejaba en la lista un «125 kg × 0» que luego frenaba
+              // el guardado del entreno entero, y el aviso llegaba al final.
+              if (!midePorAlgo(active)) {
+                void impact(ImpactStyle.Heavy);
+                setSetErrors((prev) => ({
+                  ...prev,
+                  [activeIndex]: 'workout.errors.needs_measure',
+                }));
+                return;
+              }
               void impact(ImpactStyle.Medium);
               // El ✓ significa «serie hecha»: se marca como completada y, si
               // aplica, arranca el descanso (lo decide onCommitSet).
@@ -397,7 +442,7 @@ export const WorkoutSetList = memo(function WorkoutSetList({
         )}
       </div>
 
-      {error && <div className="mt-2 text-xs text-error">{error}</div>}
+      {error && <div className="mt-2 text-xs text-error">{t(error)}</div>}
       {previousHint && <div className="mt-1.5 text-xs text-fg-muted">{previousHint}</div>}
 
       {/* Esfuerzo percibido, a la vista y no dentro del panel de «Nota serie».
@@ -557,6 +602,7 @@ export const WorkoutSetList = memo(function WorkoutSetList({
               convert={convert}
               label={t('workout.edit_set')}
               warmupLabel={t('workout.warmup')}
+              errorText={setErrors[i] ? t(setErrors[i]) : undefined}
             />
           ),
         )}

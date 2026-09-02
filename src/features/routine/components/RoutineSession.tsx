@@ -146,7 +146,9 @@ export function RoutineSession({ userId, exercises }: Props) {
 
     if (result.error) {
       void notificationHaptic(NotificationType.Error);
-      toast.error(result.error.message);
+      // El store manda claves de i18n, no frases: antes salía en español con la
+      // app en inglés.
+      toast.error(t(result.error.message));
       return;
     }
     if (!result.success) return;
@@ -193,6 +195,11 @@ export function RoutineSession({ userId, exercises }: Props) {
     void notificationHaptic(NotificationType.Success);
     celebrate();
     toast.success(result.queued ? t('routine.session_saved_offline') : t('routine.session_saved'));
+    // Las series a medias no entran en el entreno. Antes se caían sin decir
+    // nada y la única forma de notarlo era mirar el historial.
+    if (result.droppedSets > 0) {
+      toast.warning(t('routine.session_dropped_sets', { count: result.droppedSets }));
+    }
     navigate('/history');
   };
 

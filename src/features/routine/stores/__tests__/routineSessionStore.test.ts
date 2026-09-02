@@ -118,6 +118,39 @@ describe('useRoutineSessionStore', () => {
       expect(sets.map((s) => s.reps)).toEqual([10, 7]);
     });
 
+    it('cuenta las series a medias que se quedan fuera', async () => {
+      const store = useRoutineSessionStore.getState();
+      store.start(routine, 'monday', dayRoutine);
+      store.updateSet(0, 0, { reps: '10', weight: '80' });
+      // Peso escrito y reps borradas: el usuario estaba en esa serie, pero no
+      // se guarda. Antes se caía sin decir nada y solo se veía en el historial.
+      store.updateSet(0, 1, { reps: '', weight: '80' });
+
+      const result = await useRoutineSessionStore
+        .getState()
+        .finish('user-1', () => 'catalog-id', identity);
+
+      expect(result.success).toBe(true);
+      expect(result.droppedSets).toBe(1);
+      const sets = (mockRpc.mock.calls[0][1] as { p_sets: unknown[] }).p_sets;
+      expect(sets).toHaveLength(1);
+    });
+
+    it('no avisa por las series del plan que no se llegaron a hacer', async () => {
+      const store = useRoutineSessionStore.getState();
+      store.start(routine, 'monday', dayRoutine);
+      store.updateSet(0, 0, { reps: '10', weight: '80' });
+      // La segunda fila conserva las reps que precarga el plan y ningún peso:
+      // planear cuatro series y hacer tres es lo normal, no una pérdida.
+
+      const result = await useRoutineSessionStore
+        .getState()
+        .finish('user-1', () => 'catalog-id', identity);
+
+      expect(result.success).toBe(true);
+      expect(result.droppedSets).toBe(0);
+    });
+
     it('el RPE marcado llega al payload', async () => {
       const store = useRoutineSessionStore.getState();
       store.start(routine, 'monday', dayRoutine);

@@ -115,6 +115,13 @@ export function RoutinePage() {
   const [selectedDay, setSelectedDay] = useState<DayOfWeek>(getDayName());
   const [showCreate, setShowCreate] = useState(false);
   const [showHidden, setShowHidden] = useState(false);
+  /**
+   * Se esta mirando el selector teniendo ya una rutina activa.
+   *
+   * Es estado de la pantalla, no del entrenamiento: «Cambiar» abre la lista,
+   * pero la rutina no se pierde hasta elegir otra.
+   */
+  const [eligiendo, setEligiendo] = useState(false);
   /** Rutina cuyo calendario se esta editando, o null si el dialogo esta cerrado. */
   const [schedulingId, setSchedulingId] = useState<string | null>(null);
   const [scheduleDraft, setScheduleDraft] = useState('');
@@ -202,7 +209,7 @@ export function RoutinePage() {
     setShowMovePicker(false);
     setSelectedDay(to);
     void persistRoutines();
-    toast.success(t('routine.move_done', { day: dayLabels[to] }));
+    toast.success(t('routine.move_done', { day: t(`routine.days.${to}`) }));
   };
 
   const handleRestoreWeek = () => {
@@ -213,6 +220,7 @@ export function RoutinePage() {
 
   const handleSelectRoutine = (routineId: string) => {
     setActiveRoutine(routineId);
+    setEligiendo(false);
     void persistRoutines();
   };
 
@@ -468,9 +476,23 @@ export function RoutinePage() {
 
       {sessionActive && user ? (
         <RoutineSession userId={user.id} exercises={exercises} />
-      ) : !activeRoutineId ? (
+      ) : !activeRoutineId || eligiendo ? (
         <>
           <SectionHeader title={t('routine.select')} />
+
+          {/* Con una rutina ya activa, entrar aqui es mirar, no renunciar a
+              ella. Antes «Cambiar» la desactivaba en el acto: quien entraba por
+              curiosidad y volvia atras se quedaba sin rutina y sin plan del
+              dia, y si ademas estaba oculta ya no salia en esta lista. */}
+          {activeRoutineId && (
+            <button
+              type="button"
+              onClick={() => setEligiendo(false)}
+              className="w-full min-h-11 mb-3 label-caps rounded-pill bg-surface-2 text-fg-muted active:scale-[0.98] transition-transform"
+            >
+              {t('routine.keep_current')}
+            </button>
+          )}
 
           <div className="space-y-3">
             {routinesVisibles.map((routine) => (
@@ -526,6 +548,17 @@ export function RoutinePage() {
                       onClick={(e) => {
                         e.stopPropagation();
                         hideRoutine(routine.id);
+                        // El icono no lleva texto y la rutina desaparece: sin
+                        // este aviso, quien no supiera qué hacía el ojo se
+                        // quedaba creyendo que la había borrado. El deshacer
+                        // cubre además el toque de más sobre una lista que se
+                        // recoloca bajo el dedo.
+                        toast(t('routine.hidden_done', { name: routine.name }), {
+                          action: {
+                            label: t('routine.hidden_undo'),
+                            onClick: () => unhideRoutine(routine.id),
+                          },
+                        });
                       }}
                       aria-label={t('routine.hide_action', { name: routine.name })}
                       title={t('routine.hide_short')}
@@ -577,6 +610,18 @@ export function RoutinePage() {
                         <div className="text-sm font-display font-bold text-fg-muted truncate">
                           {routine.name}
                         </div>
+                        {/* Una rutina escondida y programada sigue entrando
+                            sola el dia que le toque: el calendario resuelve por
+                            id y no mira lo oculto. Sin esta marca, el cambio
+                            llegaba sin ningun aviso previo. */}
+                        {schedule[routine.id] && (
+                          <span className="label-caps inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-pill bg-surface-3 text-accent">
+                            <Calendar className="w-3 h-3" aria-hidden="true" />
+                            {t('routine.starts_on', {
+                              date: formatShortDay(schedule[routine.id], i18n.language),
+                            })}
+                          </span>
+                        )}
                         <div className="text-xs mt-0.5 text-fg-subtle truncate">
                           {routine.description}
                         </div>
@@ -654,7 +699,7 @@ export function RoutinePage() {
             </div>
             <button
               type="button"
-              onClick={() => setActiveRoutine(null)}
+              onClick={() => setEligiendo(true)}
               className="label-caps min-h-11 flex-shrink-0 px-3 py-1.5 rounded-pill bg-surface-2 text-fg-muted"
             >
               {t('routine.change')}
@@ -716,7 +761,7 @@ export function RoutinePage() {
                   onClick={() => setSelectedDay(day)}
                   className="relative"
                 >
-                  {dayLabels[day].slice(0, 3)}
+                  {t(`routine.days.${day}`).slice(0, 3)}
                   {shifted && (
                     <span
                       aria-hidden
@@ -733,10 +778,10 @@ export function RoutinePage() {
           <div className="rounded-card p-3 bg-surface border border-line">
             <div className="hairline-separator flex justify-between items-center gap-2 pb-2 mb-3">
               <div className="min-w-0">
-                <div className="label-caps text-fg-subtle">{dayLabels[selectedDay]}</div>
+                <div className="label-caps text-fg-subtle">{t(`routine.days.${selectedDay}`)}</div>
                 {movedFrom && (
                   <div className="text-xs mt-0.5 text-accent">
-                    {t('routine.moved_from', { day: dayLabels[movedFrom] })}
+                    {t('routine.moved_from', { day: t(`routine.days.${movedFrom}`) })}
                   </div>
                 )}
               </div>
@@ -986,7 +1031,7 @@ export function RoutinePage() {
                   onClick={() => handleMoveDay(day)}
                   className="w-full min-h-12 px-3 py-2 rounded-md flex items-center justify-between gap-3 text-left bg-surface-2 border border-line active:scale-[0.99] transition-transform"
                 >
-                  <span className="text-sm font-medium text-fg">{dayLabels[day]}</span>
+                  <span className="text-sm font-medium text-fg">{t(`routine.days.${day}`)}</span>
                   <span className="text-xs truncate text-fg-subtle">
                     {busy ? target?.name : t('routine.move_free')}
                   </span>

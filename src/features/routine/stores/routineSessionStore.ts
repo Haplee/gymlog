@@ -63,6 +63,13 @@ export interface RoutineSessionResult {
   queued?: boolean;
   /** Nº de ejercicios con al menos una serie válida que se han registrado. */
   savedExercises: number;
+  /**
+   * Series escritas que se han quedado fuera por estar a medias.
+   *
+   * Se descartaban en silencio: quien anotaba cuatro series y dejaba una sin
+   * peso guardaba tres y no se enteraba hasta mirar el historial.
+   */
+  droppedSets: number;
 }
 
 interface RoutineSessionState {
@@ -192,6 +199,18 @@ function isValidSet(s: SessionSet): boolean {
   }
   if (!s.weight.trim() || !Number.isFinite(weight) || weight < 0) return false;
   return true;
+}
+
+/**
+ * ¿Esta fila la estaba usando el usuario?
+ *
+ * No vale mirar las repeticiones: el plan las precarga con su objetivo, así que
+ * las filas nacen con un número puesto y quedarse cortas de series —planear
+ * cuatro y hacer tres— es lo normal, no una pérdida. Lo que delata una serie de
+ * verdad es el peso o los segundos, que solo aparecen si alguien los escribe.
+ */
+function pareceIntencionada(s: SessionSet): boolean {
+  return !!(s.weight.trim() || (s.durationSeconds ?? '').trim());
 }
 
 function toOutboxSets(sets: SessionSet[], toKg: (w: number) => number): OutboxSet[] {
@@ -334,13 +353,20 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
       finish: async (userId, resolveExerciseId, toKg) => {
         const { exercises, startedAt, saving } = get();
         if (saving) {
-          return { error: null, success: false, savedExercises: 0 };
+          return { error: null, success: false, savedExercises: 0, droppedSets: 0 };
         }
 
         // Solo se registran los ejercicios que el usuario realmente ha hecho.
         // `clientId` es la clave de idempotencia de cada ejercicio: se genera una
         // sola vez y viaja igual en el intento directo y en el outbox, para que un
         // reenvío tras perder la respuesta no vuelva a escribir el mismo entreno.
+        // Series a medias que se van a quedar fuera. Se cuentan antes de
+        // filtrar para poder decirlo, en vez de perderlas sin ruido.
+        const droppedSets = exercises.reduce(
+          (n, ex) => n + ex.sets.filter((s) => pareceIntencionada(s) && !isValidSet(s)).length,
+          0,
+        );
+
         const done = exercises
           .map((ex) => ({
             name: ex.name,
@@ -351,9 +377,10 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
 
         if (!done.length) {
           return {
-            error: new Error('Registra al menos una serie con reps y kg'),
+            error: new Error('routine.errors.session_no_sets'),
             success: false,
             savedExercises: 0,
+            droppedSets,
           };
         }
 
@@ -388,7 +415,7 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
         const finishQueued = async (savedExercises: number) => {
           set({ ...emptySession });
           void useOutboxStore.getState().refresh();
-          return { error: null, success: true, queued: true, savedExercises };
+          return { error: null, success: true, queued: true, savedExercises, droppedSets };
         };
 
         let saved = 0;
@@ -408,7 +435,7 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
           if (outcome.status === 'error') {
             set({ saving: false });
             devError('[RoutineSession] finish:', outcome.error.message);
-            return { error: outcome.error, success: false, savedExercises: saved };
+            return { error: outcome.error, success: false, savedExercises: saved, droppedSets };
           }
 
           if (outcome.status === 'queued') {
@@ -423,7 +450,7 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
         }
 
         set({ ...emptySession });
-        return { error: null, success: true, savedExercises: saved };
+        return { error: null, success: true, savedExercises: saved, droppedSets };
       },
     }),
     {

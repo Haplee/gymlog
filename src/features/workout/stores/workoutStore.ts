@@ -35,6 +35,14 @@ const SetDataSchema = z.object({
   // Marcar con ✓. Solo importa durante la sesión: al guardar decide qué series
   // se incluyen si el usuario elige «solo completadas». No se persiste en BD.
   completed: z.boolean().optional().default(false),
+  /**
+   * La fila la creó la app al cerrar la serie anterior, no la escribió nadie.
+   *
+   * Nace heredando peso y reps, así que con «guardar todas» se colaba en el
+   * entreno una serie que el usuario nunca hizo. Se apaga en cuanto se toca
+   * cualquier campo, que es la señal de que ya es suya. No se persiste en BD.
+   */
+  autofilled: z.boolean().optional().default(false),
 });
 
 type SetData = z.infer<typeof SetDataSchema>;
@@ -92,7 +100,19 @@ const makeSet = (
   rpe,
   setType: 'normal',
   completed: false,
+  autofilled: false,
 });
+
+/** Campos cuya edición convierte una fila heredada en una fila del usuario. */
+const TOUCH_FIELDS = [
+  'reps',
+  'weight',
+  'durationSeconds',
+  'rpe',
+  'notes',
+  'isWarmup',
+  'setType',
+] as const satisfies readonly (keyof SetData)[];
 
 /** Segundos válidos de la serie, o `null` si no se mide en tiempo. */
 export function segundosDeSerie(s: { durationSeconds?: string }): number | null {
@@ -155,14 +175,24 @@ export const useWorkoutStore = create<WorkoutState>()(
 
       addSet: () => {
         const last = get().sets.at(-1);
-        set({ sets: [...get().sets, last ? makeSet(last.reps, last.weight) : makeSet()] });
+        // Heredada = puesta por la app. Si alguien la toca deja de serlo, y si
+        // no, no se guarda: ver `autofilled` en el schema.
+        set({
+          sets: [
+            ...get().sets,
+            last ? { ...makeSet(last.reps, last.weight), autofilled: true } : makeSet(),
+          ],
+        });
       },
 
       setSets: (newSets: SetData[]) => set({ sets: newSets }),
 
       updateSet: (index: number, data: Partial<SetData>) => {
         const newSets = [...get().sets];
-        newSets[index] = { ...newSets[index], ...data };
+        // Cualquier edición hace suya la fila heredada. `completed` no cuenta:
+        // marcar el ✓ no es escribir un dato.
+        const tocada = TOUCH_FIELDS.some((k) => k in data);
+        newSets[index] = { ...newSets[index], ...data, ...(tocada ? { autofilled: false } : {}) };
         set({ sets: newSets });
       },
 
@@ -186,8 +216,11 @@ export const useWorkoutStore = create<WorkoutState>()(
           bodyWeightKg,
         } = get();
 
+        // Los errores viajan como clave de i18n, no como frase: el store no
+        // tiene `t` y la pantalla sí. Antes salían en español con la app en
+        // inglés.
         if (!activeExerciseId && !customExerciseName.trim()) {
-          return { error: new Error('Selecciona un ejercicio'), success: false };
+          return { error: new Error('workout.errors.pick_exercise'), success: false };
         }
 
         const validSets = setData
@@ -213,9 +246,13 @@ export const useWorkoutStore = create<WorkoutState>()(
             if (!s.isWarmup && weight === 0) return false;
             return true;
           })
+          // La fila que la app dejó abierta al cerrar la anterior no es una
+          // serie hecha: sin `onlyCompleted` se guardaba igual y añadía al
+          // entreno una repetición de la última serie que nadie hizo.
+          .filter((s) => !(s.autofilled && !s.completed))
           .filter((s) => (opts?.onlyCompleted ? s.completed : true));
         if (!validSets.length)
-          return { error: new Error('Añade reps y kg válidas'), success: false };
+          return { error: new Error('workout.errors.no_valid_sets'), success: false };
 
         const startedAt = get().startedAt || new Date().toISOString();
         const finishedAt = new Date().toISOString();
