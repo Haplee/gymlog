@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.13.0](https://github.com/Haplee/gymlog/compare/v5.12.0...v5.13.0) (2026-09-02)
+
+### Features
+
+- **rutinas:** ocultar plantillas del selector sin borrarlas ([648cfa0](https://github.com/Haplee/gymlog/commit/648cfa00125e08a6d39d30bc3792db57ebc0d5a6))
+
+### Bug Fixes
+
+- **deps:** cerrar las 11 alertas abiertas de Dependabot ([1c0ba4e](https://github.com/Haplee/gymlog/commit/1c0ba4e4d11621b3e556d3d039ffc5b497b53574))
+- **entreno:** no dejar marcar series sin medida ni fallar en silencio ([4a67d55](https://github.com/Haplee/gymlog/commit/4a67d5514f1f6f298644823260d679bcd4f1a093))
+
 ## [5.12.0](https://github.com/Haplee/gymlog/compare/v5.10.1...v5.12.0) (2026-09-01)
 
 ### Features
