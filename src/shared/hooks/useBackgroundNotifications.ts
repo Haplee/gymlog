@@ -17,10 +17,11 @@ import { registerPushNotifications } from '@shared/lib/push';
 /**
  * Gestión de notificaciones background:
  *
- * 1. Alarmas nativas (funcionan con app cerrada):
- *    - Racha: diaria a las 20:00 — salta a mañana si ya entrenó hoy.
- *    - Rutina: semanal a las 18:30 — salta a la semana siguiente si ya entrenó hoy.
- *    - Resumen semanal: lunes 09:00 — texto genérico.
+ * 1. Alarmas nativas (funcionan con app cerrada), a las horas que elija el
+ *    usuario en Ajustes → Recordatorios:
+ *    - Racha: diaria — no se programa si ya entrenó hoy.
+ *    - Rutina: semanal por día de rutina — el día de hoy se omite si ya entrenó.
+ *    - Resumen semanal: día y hora configurables, texto genérico.
  *
  * 2. Reconciliación (reconcileReminders): decide "¿toca avisar hoy?" según si el
  *    usuario ya ha entrenado. Se dispara al abrir la app, al reanudarla
@@ -86,7 +87,14 @@ export function useBackgroundNotifications(
           const dateStr = now.toISOString().split('T')[0];
           const streakKey = `streak_notif_${dateStr}`;
 
-          if (now.getHours() >= 20 && !localStorage.getItem(streakKey)) {
+          // La hora la elige el usuario; antes estaba a fuego a las 20:00 y en
+          // web el aviso llegaba a una hora distinta de la que decían Ajustes.
+          const streakTime = useSettingsStore.getState().reminderTimes.streak;
+          const afterStreakHour =
+            now.getHours() > streakTime.hour ||
+            (now.getHours() === streakTime.hour && now.getMinutes() >= streakTime.minute);
+
+          if (afterStreakHour && !localStorage.getItem(streakKey)) {
             const atRisk = await checkStreakAtRisk(userId);
             if (atRisk) {
               const { notify, getStreakReminderCopy } = await import('@shared/lib/notifications');
@@ -95,6 +103,7 @@ export function useBackgroundNotifications(
                 body: copy.body,
                 icon: '/icon-192x192.webp',
                 url: '/',
+                type: 'streak',
               });
               localStorage.setItem(streakKey, 'true');
             }

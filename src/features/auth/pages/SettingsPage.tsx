@@ -19,7 +19,8 @@ import {
   requestExactAlarms,
   hasOsNotificationPermission,
 } from '@shared/lib/notifications';
-import { reconcileReminders } from '@shared/lib/reminderReconcile';
+import { applyReminderTimes, reconcileReminders } from '@shared/lib/reminderReconcile';
+import { ReminderSettings } from '@features/auth/components/ReminderSettings';
 import { getRoutineReminderDays } from '@features/routine/lib/routineReminders';
 import { registerPushNotifications, unregisterPushToken } from '@shared/lib/push';
 import { useUpdateProfileCache } from '@features/auth/hooks/useProfile';
@@ -144,6 +145,8 @@ export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   /** `null` = aún sin comprobar; no pintar la fila hasta saberlo. */
   const [exactAlarmsGranted, setExactAlarmsGranted] = useState<boolean | null>(null);
+  /** El sistema tiene el permiso denegado: nada de lo programado va a llegar. */
+  const [osBlocked, setOsBlocked] = useState(false);
   // La preferencia de guardado vive en localStorage (igual que la modalidad de
   // carga), no en el store: aquí solo se refleja para poder cambiarla.
   const [saveScope, setSaveScopeState] = useState<SaveScope | null>(() => readSaveScope());
@@ -255,7 +258,12 @@ export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
   useEffect(() => {
     if (!isNative()) return;
 
-    const refresh = () => void canScheduleExactAlarms().then(setExactAlarmsGranted);
+    const refresh = () => {
+      void canScheduleExactAlarms().then(setExactAlarmsGranted);
+      // Se re-comprueba al volver a la app: el usuario puede haber revocado el
+      // permiso desde los ajustes del sistema con la app abierta.
+      void hasOsNotificationPermission().then((granted) => setOsBlocked(!granted));
+    };
     refresh();
 
     const handle = CapApp.addListener('appStateChange', ({ isActive }) => {
@@ -275,6 +283,12 @@ export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
       if (user) await reconcileReminders(user.id, getRoutineReminderDays());
       toast.success(t('settings.exact_alarms_on'));
     }
+  };
+
+  // Cambiar la hora en el store no toca las alarmas ya inscritas en Android:
+  // hay que cancelarlas y reprogramarlas, que es lo que hace applyReminderTimes.
+  const handleReminderTimesChanged = () => {
+    if (user) void applyReminderTimes(user.id, getRoutineReminderDays());
   };
 
   const handleBiometricToggle = async () => {
@@ -710,6 +724,15 @@ export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
               }
               divider={isNative()}
             />
+            {/* Decirlo en vez de dejar el toggle apagado sin explicación: el
+                usuario cree que lo tiene activado y no le llega nada. */}
+            {isNative() && osBlocked && (
+              <SettingRow
+                label={t('settings.notifications_blocked')}
+                desc={t('settings.notifications_blocked_action')}
+                control={null}
+              />
+            )}
             {/* Solo si el sistema nos está degradando la alarma a inexacta: si
                 está concedido no hay nada que pedir y la fila sobra. */}
             {isNative() && exactAlarmsGranted === false && (
@@ -743,6 +766,10 @@ export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
             )}
           </div>
         </section>
+
+        {/* Horas de los avisos: solo tiene sentido si las notificaciones están
+            encendidas, si no serían ajustes de algo que no va a sonar. */}
+        {notificationsEnabled && <ReminderSettings onTimesChanged={handleReminderTimesChanged} />}
 
         {coachSection}
 

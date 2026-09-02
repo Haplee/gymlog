@@ -5,6 +5,7 @@ import {
   syncRoutineReminders,
   scheduleStreakReminder,
   cancelStreakReminder,
+  scheduleWeeklySummaryReminder,
   type ReminderDay,
 } from '@shared/lib/notifications';
 import { checkStreakAtRisk } from '@shared/lib/streakChecker';
@@ -86,4 +87,21 @@ export async function reconcileReminders(
   // La cola no debe romperse si una ejecución falla.
   queue = run.catch(() => undefined);
   return run;
+}
+
+/**
+ * Reprograma TODO lo recurrente tras cambiar una hora en Ajustes.
+ *
+ * Cambiar la hora en el store no toca las alarmas que Android ya tiene
+ * inscritas: seguirían sonando a la hora vieja hasta que se cancelen por id y
+ * se vuelvan a programar. `reconcileReminders` cubre rutina y racha; el resumen
+ * semanal se programa por su cuenta, así que sin esta función un cambio de día
+ * u hora del resumen no llegaba nunca al sistema operativo.
+ */
+export async function applyReminderTimes(
+  userId: string,
+  routineDays: ReminderDay[],
+): Promise<void> {
+  await reconcileReminders(userId, routineDays);
+  await scheduleWeeklySummaryReminder();
 }

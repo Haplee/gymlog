@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Widget «Entreno de hoy» (4x2).
+
+    Los colores del acento (título, botón) los pinta TodayWidgetProvider con el
+    que el usuario haya elegido en la app: los literales de aquí son solo el
+    valor por defecto para la vista previa del selector de widgets.
+
+    La etiqueta de frescura no es decorativa: los datos llegan por
+    SharedPreferences y solo se refrescan cuando el usuario abre la app, así que
+    sin ella el widget aparentaría estar al día siempre.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/today_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/widget_bg"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/today_caption"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/widget_today_caption"
+        android:textColor="#BDBDBD"
+        android:textStyle="bold"
+        android:textSize="12sp"
+        android:letterSpacing="0.06"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <TextView
+        android:id="@+id/today_routine"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="@string/widget_today_rest"
+        android:textColor="#FFD93D"
+        android:textStyle="bold"
+        android:textSize="22sp"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:includeFontPadding="false" />
+
+    <!-- Empuja el pie al fondo: con nombres de rutina de una o dos líneas el
+         botón se quedaba bailando a media altura. -->
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/today_updated"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/widget_no_data"
+            android:textColor="#9A9A9A"
+            android:textSize="11sp"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/today_cta"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="88dp"
+            android:minHeight="44dp"
+            android:gravity="center"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:background="@drawable/ic_widget_fab_bg"
+            android:text="@string/widget_today_start"
+            android:textColor="#241C00"
+            android:textStyle="bold"
+            android:textSize="13sp"
+            android:includeFontPadding="false" />
+    </LinearLayout>
+
+</LinearLayout>

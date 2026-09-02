@@ -4,6 +4,16 @@ import { Capacitor } from '@capacitor/core';
 import { DEFAULT_ACCENT, getAccentPreset, type AccentId } from '@shared/constants/accents';
 import { DEFAULT_PLATES_KG } from '@shared/lib/plates';
 import { DEFAULT_DUMBBELL_STEP_KG, DEFAULT_MACHINE_STEP_KG } from '@shared/lib/loadStep';
+import {
+  DEFAULT_QUIET_HOURS,
+  DEFAULT_REMINDER_TIMES,
+  normalizeTime,
+  normalizeWeekly,
+  type QuietHours,
+  type ReminderTime,
+  type ReminderTimes,
+  type WeeklyReminderTime,
+} from '@shared/lib/reminderTimes';
 
 /** Tema elegido por el usuario: 'system' sigue al modo claro/oscuro del sistema. */
 export type Theme = 'dark' | 'light' | 'system';
@@ -26,6 +36,14 @@ interface SettingsState {
   biometricEnabled: boolean;
   notificationsEnabled: boolean;
   trainingReminders: boolean;
+  /**
+   * A qué hora suena cada aviso recurrente. Antes eran constantes de módulo en
+   * notifications.ts; ahora las elige el usuario y `reconcileReminders` las
+   * lleva al sistema operativo.
+   */
+  reminderTimes: ReminderTimes;
+  /** Rango en el que no se emite ningún aviso (puede cruzar la medianoche). */
+  quietHours: QuietHours;
   sound: boolean;
   language: string;
   theme: Theme;
@@ -72,6 +90,10 @@ interface SettingsState {
   setBiometricEnabled: (enabled: boolean) => void;
   setNotificationsEnabled: (enabled: boolean) => void;
   setTrainingReminders: (enabled: boolean) => void;
+  setRoutineReminderTime: (time: ReminderTime) => void;
+  setStreakReminderTime: (time: ReminderTime) => void;
+  setSummaryReminderTime: (time: WeeklyReminderTime) => void;
+  setQuietHours: (quiet: Partial<QuietHours>) => void;
   setSound: (sound: boolean) => void;
   setLanguage: (lang: string) => void;
   setTheme: (theme: Theme) => void;
@@ -102,6 +124,8 @@ export const useSettingsStore = create<SettingsState>()(
       biometricEnabled: false,
       notificationsEnabled: true,
       trainingReminders: true,
+      reminderTimes: DEFAULT_REMINDER_TIMES,
+      quietHours: DEFAULT_QUIET_HOURS,
       sound: true,
       language: 'es',
       theme: 'dark',
@@ -133,6 +157,46 @@ export const useSettingsStore = create<SettingsState>()(
       },
 
       setTrainingReminders: (trainingReminders) => set({ trainingReminders }),
+
+      // Las horas se normalizan al entrar, no al usarse: así lo que queda
+      // persistido siempre es válido y quien lo lee (notifications.ts) no tiene
+      // que defenderse de un 25:70 escrito por una versión anterior.
+      setRoutineReminderTime: (time) =>
+        set((state) => ({
+          reminderTimes: {
+            ...state.reminderTimes,
+            routine: normalizeTime(time, DEFAULT_REMINDER_TIMES.routine),
+          },
+        })),
+
+      setStreakReminderTime: (time) =>
+        set((state) => ({
+          reminderTimes: {
+            ...state.reminderTimes,
+            streak: normalizeTime(time, DEFAULT_REMINDER_TIMES.streak),
+          },
+        })),
+
+      setSummaryReminderTime: (time) =>
+        set((state) => ({
+          reminderTimes: {
+            ...state.reminderTimes,
+            summary: normalizeWeekly(time, DEFAULT_REMINDER_TIMES.summary),
+          },
+        })),
+
+      setQuietHours: (quiet) =>
+        set((state) => {
+          const merged = { ...state.quietHours, ...quiet };
+          return {
+            quietHours: {
+              enabled: merged.enabled,
+              start: normalizeTime(merged.start, DEFAULT_QUIET_HOURS.start),
+              end: normalizeTime(merged.end, DEFAULT_QUIET_HOURS.end),
+            },
+          };
+        }),
+
       setSound: (sound) => set({ sound }),
 
       setLanguage: (language) => {
@@ -251,6 +315,19 @@ export const useSettingsStore = create<SettingsState>()(
       // antes de que la sincronización con la DB termine.
       onRehydrateStorage: () => (state) => {
         if (!state) return;
+        // Un estado guardado por una versión anterior no trae estas claves, y
+        // el merge de `persist` es superficial: sin esto quedarían `undefined`
+        // y la programación de avisos fallaría al leer `.hour`.
+        state.reminderTimes = {
+          routine: normalizeTime(state.reminderTimes?.routine, DEFAULT_REMINDER_TIMES.routine),
+          streak: normalizeTime(state.reminderTimes?.streak, DEFAULT_REMINDER_TIMES.streak),
+          summary: normalizeWeekly(state.reminderTimes?.summary, DEFAULT_REMINDER_TIMES.summary),
+        };
+        state.quietHours = {
+          enabled: state.quietHours?.enabled ?? DEFAULT_QUIET_HOURS.enabled,
+          start: normalizeTime(state.quietHours?.start, DEFAULT_QUIET_HOURS.start),
+          end: normalizeTime(state.quietHours?.end, DEFAULT_QUIET_HOURS.end),
+        };
         if (state.notificationsEnabled) localStorage.removeItem('notif_disabled');
         else localStorage.setItem('notif_disabled', 'true');
       },

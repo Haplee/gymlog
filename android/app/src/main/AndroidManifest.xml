@@ -397,6 +397,24 @@
                 android:resource="@xml/streak_widget_info" />
         </receiver>
 
+        <!-- ACTION_DATE_CHANGED es lo que hace que el widget pase al día
+             siguiente sin que nadie abra la app: sin esto seguiría mostrando la
+             rutina de ayer hasta la próxima apertura. -->
+        <receiver
+            android:name=".TodayWidgetProvider"
+            android:exported="false"
+            android:label="@string/widget_today_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.DATE_CHANGED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/today_widget_info" />
+        </receiver>
+
         <receiver android:name="com.capacitorjs.plugins.localnotifications.LocalNotificationRestoreReceiver" android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />

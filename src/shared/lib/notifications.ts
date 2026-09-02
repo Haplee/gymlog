@@ -2,7 +2,9 @@ import { Capacitor } from '@capacitor/core';
 import { LocalNotifications, type Weekday } from '@capacitor/local-notifications';
 import { toast } from 'sonner';
 import { devError, devLog } from '@shared/lib/devtools';
-import { useNotificationsStore } from '@shared/stores/notificationsStore';
+import { useNotificationsStore, type NotificationType } from '@shared/stores/notificationsStore';
+import { useSettingsStore } from '@shared/stores/settingsStore';
+import { formatTime, isWithinQuietHours } from '@shared/lib/reminderTimes';
 
 export const isNative = (): boolean => Capacitor.isNativePlatform();
 
@@ -42,38 +44,15 @@ const CHANNELS = [
   },
 ];
 
-/** Hora local del recordatorio de rutina */
-const REMINDER_HOUR = 18;
-const REMINDER_MINUTE = 30;
+/* Las horas de los avisos las elige el usuario (Ajustes → Recordatorios) y
+   viven en `settingsStore.reminderTimes`. Antes eran constantes aquí mismo, así
+   que quien entrenaba por la mañana recibía el recordatorio once horas tarde.
+   Se leen en cada programación: `reconcileReminders` ya se ejecuta al guardar
+   ajustes, así que un cambio llega al sistema operativo sin reiniciar nada. */
+const reminderTimes = () => useSettingsStore.getState().reminderTimes;
 
-/** Hora de la alerta de racha en peligro */
-const STREAK_HOUR = 20;
-const STREAK_MINUTE = 0;
-
-/** Hora del resumen semanal (lunes) */
-const SUMMARY_HOUR = 9;
-const SUMMARY_MINUTE = 0;
-
-/**
- * Próxima fecha (>= ahora) para un weekday Capacitor (1=domingo … 7=sábado) a
- * la hora indicada. Si `skipToday` es true, o si hoy es ese weekday pero la hora
- * ya pasó, devuelve la ocurrencia de la semana siguiente. Se usa como punto de
- * inicio de una alarma repetitiva (`at` + `every`) para poder saltar el aviso de
- * hoy sin destruir la recurrencia semanal.
- */
-function nextWeekdayDate(weekday: number, hour: number, minute: number, skipToday = false): Date {
-  const now = new Date();
-  const todayWeekday = now.getDay() + 1; // JS getDay 0=domingo → Capacitor 1=domingo
-  const target = new Date(now);
-  target.setHours(hour, minute, 0, 0);
-
-  let deltaDays = (weekday - todayWeekday + 7) % 7;
-  if (deltaDays === 0 && (skipToday || target.getTime() <= now.getTime())) {
-    deltaDays = 7;
-  }
-  target.setDate(target.getDate() + deltaDays);
-  return target;
-}
+/** ¿Estamos ahora dentro del rango de silencio elegido por el usuario? */
+const inQuietHours = (): boolean => isWithinQuietHours(useSettingsStore.getState().quietHours);
 
 /**
  * Solo permite navegar a URLs http(s) del propio origen.
@@ -194,13 +173,23 @@ export async function canNotifyAsync(): Promise<boolean> {
 
 export async function notify(
   title: string,
-  options: NotificationOptions & { url?: string; id?: number },
+  options: NotificationOptions & { url?: string; id?: number; type?: NotificationType },
 ): Promise<void> {
   if (!(await canNotifyAsync())) return;
 
   // Registro local para la pantalla de Notificaciones. Se apunta aquí porque
   // esta función es el embudo único de los avisos inmediatos.
-  useNotificationsStore.getState().add(title, options.body ?? '');
+  useNotificationsStore
+    .getState()
+    .add(title, options.body ?? '', { type: options.type, url: options.url });
+
+  // Rango de silencio: se apunta en el historial pero no se levanta ningún
+  // aviso del sistema. Suprimirlo también del historial escondería algo que sí
+  // ocurrió; el silencio es sobre el ruido, no sobre el registro.
+  if (inQuietHours()) {
+    devLog('[Notifications] Silenciado por el rango de silencio:', title);
+    return;
+  }
 
   if (!isNative()) {
     try {
@@ -405,29 +394,34 @@ export async function syncRoutineReminders(
     if (days.length === 0) return;
 
     const todayWeekday = new Date().getDay() + 1;
+    const { hour, minute } = reminderTimes().routine;
 
     await LocalNotifications.schedule({
-      notifications: days.map(({ weekday, routineName }) => {
-        // Si ya entrenó hoy, el aviso del día se salta a la semana siguiente:
-        // así no dice "hoy toca entrenar" cuando ya se ha entrenado, pero la
-        // recurrencia semanal se mantiene intacta.
-        const skipToday = trainedToday && weekday === todayWeekday;
-        const at = nextWeekdayDate(weekday, REMINDER_HOUR, REMINDER_MINUTE, skipToday);
-        const copy = getRoutineReminderCopy(routineName);
-        return {
-          id: NOTIF_IDS.ROUTINE_REMINDER_BASE + weekday,
-          title: copy.title,
-          body: copy.body,
-          channelId: 'reminders',
-          extra: { url: '/' },
-          schedule: {
-            at,
-            every: 'week' as const,
-            allowWhileIdle: true,
-            repeats: true,
-          },
-        };
-      }),
+      notifications: days
+        // Si ya entrenó hoy, el aviso de hoy no se programa: decir "hoy toca
+        // entrenar" a quien acaba de entrenar es ruido. Con `on` no se puede
+        // saltar una sola repetición, así que el día se omite entero y vuelve
+        // en la siguiente reconciliación (que corre al abrir la app y al
+        // volver a primer plano, o sea a más tardar mañana).
+        .filter(({ weekday }) => !(trainedToday && weekday === todayWeekday))
+        .map(({ weekday, routineName }) => {
+          const copy = getRoutineReminderCopy(routineName);
+          return {
+            id: NOTIF_IDS.ROUTINE_REMINDER_BASE + weekday,
+            title: copy.title,
+            body: copy.body,
+            channelId: 'reminders',
+            extra: { url: '/', type: 'routine' },
+            schedule: {
+              // `on` declara la intención civil ("los martes a las 18:30") en
+              // vez de un instante que hay que recalcular. Es lo que ya usaba
+              // el resumen semanal, y no arrastra la duda del cambio de hora.
+              on: { weekday: weekday as Weekday, hour, minute },
+              allowWhileIdle: true,
+              repeats: true,
+            },
+          };
+        }),
     });
     devLog(
       '[Notifications] Recordatorios sincronizados:',
@@ -452,16 +446,15 @@ export async function scheduleStreakReminder(trainedToday = false): Promise<void
   try {
     await LocalNotifications.cancel({ notifications: [{ id: NOTIF_IDS.STREAK_DAILY }] });
 
-    // Calcular próximo trigger: hoy a las 20:00; se salta a mañana si ya pasó la
-    // hora o si ya se ha entrenado hoy (así no avisa "¿hoy no entrenas?" tras
-    // haber entrenado, y la serie diaria sigue viva para los próximos días).
-    const now = new Date();
-    const trigger = new Date(now);
-    trigger.setHours(STREAK_HOUR, STREAK_MINUTE, 0, 0);
-    if (trainedToday || trigger.getTime() <= now.getTime()) {
-      trigger.setDate(trigger.getDate() + 1);
+    // Ya entrenó hoy: no se programa nada. La serie diaria vuelve en la próxima
+    // reconciliación, igual que el recordatorio de rutina — `on` no permite
+    // saltarse una repetición suelta.
+    if (trainedToday) {
+      devLog('[Notifications] Racha: ya entrenó hoy, no se programa');
+      return;
     }
 
+    const { hour, minute } = reminderTimes().streak;
     const copy = getStreakReminderCopy();
     await LocalNotifications.schedule({
       notifications: [
@@ -470,17 +463,17 @@ export async function scheduleStreakReminder(trainedToday = false): Promise<void
           title: copy.title,
           body: copy.body,
           channelId: 'reminders',
-          extra: { url: '/' },
+          extra: { url: '/', type: 'streak' },
           schedule: {
-            at: trigger,
-            every: 'day',
+            // Sin `weekday`, `on` significa "todos los días a esta hora".
+            on: { hour, minute },
             allowWhileIdle: true,
             repeats: true,
           },
         },
       ],
     });
-    devLog('[Notifications] Racha diaria programada a las', STREAK_HOUR + ':' + STREAK_MINUTE);
+    devLog('[Notifications] Racha diaria programada a las', formatTime({ hour, minute }));
   } catch (e) {
     devError('[Notifications] Error programando racha:', e);
   }
@@ -510,7 +503,7 @@ export async function scheduleWeeklySummaryReminder(): Promise<void> {
     await LocalNotifications.cancel({ notifications: [{ id: NOTIF_IDS.WEEKLY_SUMMARY }] });
 
     // Capacitor weekday: 1=domingo, 2=lunes ... 7=sábado
-    const MONDAY: Weekday = 2;
+    const { weekday, hour, minute } = reminderTimes().summary;
     const copy = getWeeklySummaryCopy();
 
     await LocalNotifications.schedule({
@@ -520,9 +513,9 @@ export async function scheduleWeeklySummaryReminder(): Promise<void> {
           title: copy.title,
           body: copy.body,
           channelId: 'reminders',
-          extra: { url: '/stats' },
+          extra: { url: '/stats', type: 'summary' },
           schedule: {
-            on: { weekday: MONDAY, hour: SUMMARY_HOUR, minute: SUMMARY_MINUTE },
+            on: { weekday: weekday as Weekday, hour, minute },
             allowWhileIdle: true,
             repeats: true,
           },
@@ -530,8 +523,9 @@ export async function scheduleWeeklySummaryReminder(): Promise<void> {
       ],
     });
     devLog(
-      '[Notifications] Resumen semanal programado: lunes',
-      SUMMARY_HOUR + ':' + SUMMARY_MINUTE,
+      '[Notifications] Resumen semanal programado: día',
+      weekday,
+      formatTime({ hour, minute }),
     );
   } catch (e) {
     devError('[Notifications] Error programando resumen semanal:', e);

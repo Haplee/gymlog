@@ -8,6 +8,7 @@ import { devError } from '@shared/lib/devtools';
 import { saveWorkoutOrQueue } from '@shared/lib/saveWorkout';
 import { useOutboxStore } from '@shared/stores/outboxStore';
 import { reconcileReminders } from '@shared/lib/reminderReconcile';
+import { notifyNewRecords } from '@shared/lib/prNotification';
 import { getRoutineReminderDays } from '@features/routine/lib/routineReminders';
 import { queryClient } from '@app/queryClient';
 import { toLocalDateKey } from '@shared/lib/dateKeys';
@@ -332,6 +333,13 @@ export const useWorkoutStore = create<WorkoutState>()(
           void useOutboxStore.getState().refresh();
           return { error: null, success: true, queued: true };
         }
+
+        // Récords: solo cuando el entreno ha llegado al servidor. Los calcula un
+        // trigger allí, así que con el entreno en la cola de salida todavía no
+        // existe ninguno. No se espera: la enhorabuena no debe retrasar el
+        // cierre de la pantalla.
+        void notifyNewRecords(userId, startedAt);
+
         return { error: null, success: true };
       },
 

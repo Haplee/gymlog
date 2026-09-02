@@ -12,7 +12,8 @@ import { supabase } from '@shared/lib/supabase';
 import { useQueryClient } from '@tanstack/react-query';
 import { flushWorkoutOutbox } from '@shared/lib/workoutOutbox';
 import { useOutboxStore } from '@shared/stores/outboxStore';
-import { updateWidget } from '@shared/lib/widget';
+import { buildWeekPlan, updateWidget } from '@shared/lib/widget';
+import { toLocalDateKey } from '@shared/lib/dateKeys';
 import { fetchWorkouts } from '@shared/api/queries';
 import { calculateCurrentStreak } from '@features/stats/utils/kpiCalculations';
 import { getAccentPreset } from '@shared/constants/accents';
@@ -307,7 +308,21 @@ function useWidgetSync() {
           : [];
         // El widget vive sobre fondo oscuro: usamos el preset oscuro del acento.
         const preset = getAccentPreset(accentColor).dark;
-        await updateWidget(streak, names.slice(0, 2).join(', '), preset.primary, preset.fg);
+
+        // Si el entreno más reciente es de hoy, el widget no debe empujar a
+        // entrenar otra vez.
+        const trainedToday =
+          !!last?.started_at &&
+          toLocalDateKey(new Date(last.started_at)) === toLocalDateKey(new Date());
+
+        await updateWidget({
+          streak,
+          lastLabel: names.slice(0, 2).join(', '),
+          accent: preset.primary,
+          fg: preset.fg,
+          weekPlan: buildWeekPlan(getRoutineReminderDays()),
+          trainedToday,
+        });
       } catch (err) {
         // El widget es accesorio: que falle no puede tumbar la app. Pero
         // tragarse el error dejaba sin rastro un fallo de red o del plugin.

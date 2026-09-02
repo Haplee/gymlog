@@ -6,7 +6,12 @@ interface ScheduledNotification {
   id: number;
   title: string;
   body: string;
-  schedule: { at: Date; every?: string; repeats?: boolean };
+  schedule: {
+    at?: Date;
+    every?: string;
+    repeats?: boolean;
+    on?: { weekday?: number; hour?: number; minute?: number };
+  };
 }
 type ScheduleArg = { notifications: ScheduledNotification[] };
 
@@ -42,6 +47,8 @@ vi.stubGlobal('localStorage', {
 });
 
 const { syncRoutineReminders, notify } = await import('@shared/lib/notifications');
+const { useSettingsStore } = await import('@shared/stores/settingsStore');
+const { DEFAULT_REMINDER_TIMES } = await import('@shared/lib/reminderTimes');
 
 const DAYS = [
   { weekday: 2, routineName: 'Push' },
@@ -53,6 +60,9 @@ beforeEach(() => {
   cap.isNativePlatform.mockReturnValue(true);
   plugin.checkPermissions.mockResolvedValue({ display: 'granted' });
   localStorage.clear();
+  // Las horas son estado compartido entre tests: sin esto, el que las cambia
+  // contamina a los siguientes.
+  useSettingsStore.setState({ reminderTimes: DEFAULT_REMINDER_TIMES });
 });
 
 describe('syncRoutineReminders', () => {
@@ -78,11 +88,50 @@ describe('syncRoutineReminders', () => {
     expect(plugin.schedule).not.toHaveBeenCalled();
   });
 
-  it('un día ya entrenado se reprograma a la semana siguiente, no a hoy', async () => {
+  it('el día ya entrenado no se programa: decirle "hoy toca" a quien ya entrenó es ruido', async () => {
+    // Con `on` no se puede saltar una repetición suelta, así que el día se
+    // omite entero y vuelve en la siguiente reconciliación.
     const todayWeekday = new Date().getDay() + 1;
-    await syncRoutineReminders([{ weekday: todayWeekday, routineName: 'Hoy' }], true);
-    const at = scheduleArg(0).notifications[0]!.schedule.at;
-    expect(at.getTime()).toBeGreaterThan(Date.now() + 6 * 24 * 3600 * 1000);
+    const otroDia = (todayWeekday % 7) + 1;
+
+    await syncRoutineReminders(
+      [
+        { weekday: todayWeekday, routineName: 'Hoy' },
+        { weekday: otroDia, routineName: 'Otro' },
+      ],
+      true,
+    );
+
+    const programados = scheduleArg(0).notifications;
+    expect(programados).toHaveLength(1);
+    expect(programados[0]!.schedule.on?.weekday).toBe(otroDia);
+  });
+
+  it('programa con `on` y no con una fecha absoluta', async () => {
+    // `on` declara la intención civil ("los martes a las 18:30"); una fecha
+    // absoluta habría que recalcularla y arrastra la duda del cambio de hora.
+    await syncRoutineReminders(DAYS);
+    for (const n of scheduleArg(0).notifications) {
+      expect(n.schedule.on).toBeDefined();
+      expect(n.schedule.at).toBeUndefined();
+      expect(n.schedule.repeats).toBe(true);
+    }
+  });
+
+  it('usa la hora elegida por el usuario, no una constante', async () => {
+    useSettingsStore.getState().setRoutineReminderTime({ hour: 7, minute: 5 });
+    await syncRoutineReminders(DAYS);
+
+    const primera = scheduleArg(0).notifications[0]!.schedule.on;
+    expect(primera).toMatchObject({ hour: 7, minute: 5 });
+
+    // El weekday sigue siendo el del día de rutina, no el de hoy.
+    expect(scheduleArg(0).notifications[0]!.schedule.on?.weekday).toBe(DAYS[0]!.weekday);
+  });
+
+  it('por defecto mantiene las 18:30 que había a fuego', async () => {
+    await syncRoutineReminders(DAYS);
+    expect(scheduleArg(0).notifications[0]!.schedule.on).toMatchObject({ hour: 18, minute: 30 });
   });
 });
 

@@ -13,4 +13,10 @@
     <string name="widget_no_data">Empieza hoy</string>
     <string name="widget_label">Racha GymLog</string>
     <string name="widget_add_content">Nuevo entreno</string>
+    <string name="widget_today_caption">HOY TOCA</string>
+    <string name="widget_today_rest">Descanso</string>
+    <string name="widget_today_done">Entreno hecho</string>
+    <string name="widget_today_start">Empezar</string>
+    <string name="widget_today_label">Entreno de hoy</string>
+    <string name="widget_updated_at">Actualizado %1$s</string>
 </resources>
