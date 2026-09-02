@@ -223,6 +223,17 @@ export function shiftWeekPlan(
  * `routines` y `hiddenRoutineIds` para repintar. Con la logica en un solo sitio
  * no hay dos filtrados que puedan separarse.
  */
+/**
+ * El id de rutina activa, o `null` si esa rutina ya no esta entre las que hay.
+ *
+ * Una seleccion huerfana no se ve como error: la pantalla no encuentra la
+ * rutina, no ensena plan del dia y tampoco ofrece elegir otra.
+ */
+export function activeIdOrNull(id: string | null, routines: Routine[]): string | null {
+  if (!id) return null;
+  return routines.some((r) => r.id === id) ? id : null;
+}
+
 export function splitRoutinesByHidden(
   routines: Routine[],
   hiddenIds: string[],
@@ -1461,9 +1472,19 @@ export const useRoutineStore = create<RoutineStore>()(
                 : null
               : (get().getWeekPlan() ?? null),
             weekPlanUpdatedAt: takeRemotePlan ? remotePlanStamp : localPlanStamp,
-            activeRoutineId: takeRemoteActive
-              ? (container.activeRoutineId ?? null)
-              : (get().activeRoutineId ?? container.activeRoutineId ?? null),
+            // Lo elegido tiene que existir de verdad. La rama remota ya lo
+            // comprobaba (`remoteActiveExists`), pero la local no: un id que
+            // apunta a una rutina borrada desde otro dispositivo se conservaba
+            // aqui, se volvia a subir en el siguiente guardado y dejaba la
+            // cuenta sin rutina activa en todas partes, sin manera de notar por
+            // que. Si no existe se suelta el id; la marca no se toca, para no
+            // pisar una eleccion legitima que venga despues de otro sitio.
+            activeRoutineId: activeIdOrNull(
+              takeRemoteActive
+                ? (container.activeRoutineId ?? null)
+                : (get().activeRoutineId ?? container.activeRoutineId ?? null),
+              mergedRoutines,
+            ),
             // Adoptar también la marca evita que la siguiente carga vuelva a
             // considerar «nueva» la misma selección remota una y otra vez.
             activeRoutineUpdatedAt: takeRemoteActive ? remoteStamp : localStamp,

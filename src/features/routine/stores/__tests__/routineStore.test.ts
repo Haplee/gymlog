@@ -16,6 +16,7 @@ import {
   dueScheduleEntry,
   localDay,
   splitRoutinesByHidden,
+  activeIdOrNull,
   type DayOfWeek,
   type Routine,
 } from '../routineStore';
@@ -705,6 +706,21 @@ describe('ocultar plantillas del selector', () => {
         .getVisibleRoutines()
         .map((r) => r.id),
     ).toContain('ppl');
+  });
+
+  it('activeIdOrNull suelta el id de una rutina que ya no esta', () => {
+    const rs = [customRoutine('a'), customRoutine('b')];
+
+    // La rutina se borro desde otro dispositivo: el id se queda huerfano y la
+    // pantalla se quedaba sin rutina activa y sin selector.
+    expect(activeIdOrNull('borrada', rs)).toBeNull();
+    expect(activeIdOrNull(null, rs)).toBeNull();
+  });
+
+  it('activeIdOrNull conserva el id cuando la rutina existe', () => {
+    const rs = [customRoutine('a'), customRoutine('b')];
+
+    expect(activeIdOrNull('b', rs)).toBe('b');
   });
 
   it('splitRoutinesByHidden reparte en un solo recorrido y conserva el orden', () => {
