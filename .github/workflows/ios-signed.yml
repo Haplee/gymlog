@@ -123,7 +123,7 @@ jobs:
           echo "IPA_PATH=$RUNNER_TEMP/GymLog-adhoc-v${VERSION}.ipa" >> "$GITHUB_ENV"
 
       - name: Upload signed IPA
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: GymLog-ipa-adhoc
           path: ${{ env.IPA_PATH }}
