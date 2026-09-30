@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.14.0](https://github.com/Haplee/gymlog/compare/v5.13.0...v5.14.0) (2026-09-30)
+
+### Features
+
+- **avisos:** horas configurables, historial navegable y widget de hoy ([b6ced69](https://github.com/Haplee/gymlog/commit/b6ced69dc010c3a0a8b825f811cc4fc42f02cc25))
+- **entreno:** el plan de la serie deja de ser una frase y dice por que ([1b5a30f](https://github.com/Haplee/gymlog/commit/1b5a30fde70582126af22293f2f0c97c6b101a68))
+
+### Bug Fixes
+
+- **android:** anclar el jvmTarget de Kotlin al 21 que ya usaba Java ([105f329](https://github.com/Haplee/gymlog/commit/105f3294e921ceae73afb668008605055a1402d8))
+- **inicio:** no pintar la segunda linea de 'Repetir' cuando la sesion no tiene nombre ([2ca7cd9](https://github.com/Haplee/gymlog/commit/2ca7cd9035f0c4f7d6c1a538fde93c51de4a755f))
+- **nav:** que los rótulos de la barra no se pisen con la fuente grande ([be37154](https://github.com/Haplee/gymlog/commit/be37154dc144800a529b72aff348a083466f3396))
+- **rutinas:** no quedarse en tierra de nadie si la rutina activa no existe ([b11309e](https://github.com/Haplee/gymlog/commit/b11309e639c50bac60e813d61d4b1655d417722f))
+- **rutinas:** soltar la rutina activa cuando su id ya no existe ([04dd88d](https://github.com/Haplee/gymlog/commit/04dd88d7c598c32eeb9dea1bbf07a4d8dc5fca92))
+- **supabase:** alinear el nombre de la migración con la versión aplicada ([9aad6cb](https://github.com/Haplee/gymlog/commit/9aad6cba9f0e098b54f920648062cde215762bff))
+
 ## [5.13.0](https://github.com/Haplee/gymlog/compare/v5.12.0...v5.13.0) (2026-09-02)
 
 ### Features
