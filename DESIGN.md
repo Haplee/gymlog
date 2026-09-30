@@ -31,11 +31,12 @@ tokens:
 # GymLog — sistema visual "FitBody"
 
 > **Fuente de verdad: `src/shared/styles/tokens.css`.** Este documento no define
-> valores: los describe. Los hex del front matter y los pasos de la escala
-> tipográfica son un espejo para poder leer el sistema de un vistazo; el sitio
-> donde se edita es el CSS. `src/index.css` es el puente: su bloque `@theme
-inline` convierte cada `--token` en una utilidad Tailwind (`--bg-surface` →
-> `bg-surface`, `--text-tertiary` → `text-fg-subtle`, `--border-interactive` →
+> valores: los describe. El front matter de arriba no lleva ni un color, cuerpo
+> ni radio precisamente por eso —es un índice de ficheros, no un espejo—: si
+> alguien lee aquí un `#cbf24c` y ese valor cambia en el CSS, no hay nada que le
+> avise. `src/index.css` es el puente: su bloque `@theme inline` convierte cada
+> `--token` en una utilidad Tailwind (`--bg-surface` → `bg-surface`,
+> `--text-tertiary` → `text-fg-subtle`, `--border-interactive` →
 > `border-line-interactive`).
 
 ## Overview
