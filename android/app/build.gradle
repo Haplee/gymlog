@@ -69,6 +69,18 @@ android {
     }
 }
 
+// Kotlin sacaba su jvmTarget del JDK en ejecucion, no de `compileOptions`, y el
+// 2.1.10 aún no conoce el 25: cae de vuelta a 24 mientras Java se queda en 21,
+// y Gradle para la build con «Inconsistent JVM-target compatibility». Con un
+// JDK 21 en el equipo pasaba desapercibido. Se ancla a 21 para que las dos
+// piezas coincidan venga el JDK que venga, que es justo lo que quiere
+// `compileOptions`.
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21
+    }
+}
+
 repositories {
     flatDir{
         dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
