@@ -181,7 +181,7 @@ export function Layout({ children }: LayoutProps) {
   );
 
   // Cinco pestañas: lo que se usa a diario entrenando. El resto (ajustes,
-  // biblioteca, entrenador, wearables…) vive en el cajón de la hamburguesa.
+  // biblioteca, wearables…) vive en el cajón de la hamburguesa.
   //
   // «Progreso» entra en la barra porque detrás está lo único de la app sobre lo
   // que se puede actuar hoy —qué peso toca en la próxima sesión y si conviene
@@ -445,11 +445,13 @@ export function Layout({ children }: LayoutProps) {
                   aplicarse nunca —el rótulo seguía saliendo a 11 px con 0.1em—
                   y por eso no había margen que valiera. Aquí las mayúsculas y
                   la negrita se piden a mano, y el cuerpo sale de la escala
-                  nombrada (`text-2xs`) en vez de un 9 px sueltos: cuando la barra
-                  tenía cinco pestañas el rotor kilométrico no daba más, pero
-                  ahora que son cuatro los rótulos caben de sobra y el cuerpo
-                  vuelve a la escala. Interletraje al 0 y `leading-none`, que es lo
-                  que deja el texto en una línea dentro de la celda. */}
+                  nombrada (`text-2xs`, 10 px) en vez de un 9 px medido a ojo.
+                  Con cinco pestañas y el rótulo más largo de la app
+                  («Progreso», ocho caracteres) la celda sale a unos 78 px, y a
+                  10 px de versalita el texto entra de sobra: el 9 px que había
+                  era la holgura de no haber medido. Interletraje al 0 y
+                  `leading-none`, que es lo que deja el rótulo en una línea
+                  dentro de la celda. */}
               <span
                 className={`block max-w-full truncate text-center font-bold uppercase leading-none tracking-normal text-2xs transition-colors ${
                   isActive ? 'text-accent' : 'text-fg-subtle'

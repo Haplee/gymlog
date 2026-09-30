@@ -22,8 +22,10 @@ import {
  * aquí, junto a las rutas que nunca tuvieron entrada propia en la barra inferior
  * (biblioteca, medidas, wearables y guía).
  *
- * Desde la decisión de dejar la barra inferior en cuatro pestañas (inicio,
- * rutinas, historial y cardio), Estadísticas y Ajustes también viven aquí.
+ * La barra inferior se quedó con lo que se usa entrenando (inicio, rutinas,
+ * progreso, historial y cardio), así que Estadísticas y Ajustes viven aquí.
+ * Ojo con las dos que se llaman parecido: `/stats` son las estadísticas
+ * globales y `/user-stats` es «Progreso», que sí tiene pestaña propia.
  *
  * **Nada de lo que hay aquí está en la barra inferior ni en la cabecera.** Un
  * cajón que repite los destinos que ya tienes a un dedo de distancia solo añade
