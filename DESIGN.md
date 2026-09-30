@@ -5,58 +5,27 @@ description: >-
   GymLog — PWA y app Android de registro de entrenamiento. Sistema "FitBody":
   oscuro por defecto con modo claro completo, acento que elige el usuario entre
   24 presets, y material de 3 capas SIN backdrop-filter. Mobile-first, AAC.
-colors:
-  # ── ESPEJO DE LECTURA, NO DE EDICIÓN ───────────────────────────────
-  # La fuente de verdad es src/shared/styles/tokens.css. Estos valores están
-  # aquí para que un agente pueda leer el sistema entero sin abrir el CSS.
-  # Si un número de aquí discrepa del de tokens.css, gana tokens.css, y este
-  # bloque hay que corregirlo. NO se edita un color en un componente.
-  canvas: '#0a0a0b'
-  surface: '#26262b'
-  surface-2: '#313137'
-  surface-3: '#3c3c42'
-  text-primary: '#e5e2e3'
-  text-secondary: '#c6c6cb'
-  text-tertiary: '#ababb0'
-  accent-default: '#ffd93d'
-  success: '#51df9c'
-  warning: '#ffd60a'
-  error: '#ffb4ab'
-  info: '#0a84ff'
-  border-interactive: '#91919b'
-typography:
-  display:
-    fontFamily: Space Grotesk
-    fontSize: 32px
-    fontWeight: 700
-    lineHeight: 1
-    letterSpacing: -0.03em
-    fontFeature: "'tnum' 1"
-  body:
-    fontFamily: Inter
-    fontSize: 14px
-    fontWeight: 400
-    lineHeight: 1.5
-  label:
-    fontFamily: Inter
-    fontSize: 11px
-    fontWeight: 700
-    letterSpacing: 0.1em
-rounded:
-  sm: 8px
-  md: 12px
-  card: 18px
-  xl: 24px
-  pill: 999px
-spacing:
-  xs: 4px
-  sm: 8px
-  md: 12px
-  base: 16px
-  lg: 20px
-  xl: 24px
-  xxl: 32px
-  section: 40px
+# Este documento NO lleva los valores. La fuente de verdad son los ficheros de
+# abajo, y este fichero es el que explica para qué sirve cada uno. Duplicar aquí
+# los hex, los cuerpos o los radios solo serviría para que se quedaran
+# desfasados en silencio: nada obliga a que dos copias coincidan, y el que lea
+# el valor equivocado no se va a entera de comprobarlo.
+#
+#   src/shared/styles/tokens.css          → color, radio, espacio, elevación
+#   src/shared/constants/accents.ts       → los 24 pares de acento (es y dark)
+#   src/index.css                         → @theme, escala tipográfica, primitivas
+#   .claude/CLAUDE.md                     → reglas del proyecto, con las medidas
+#   openspec/changes/recalibrate-fitbody-hierarchy/ → presupuesto de jerarquía
+#
+# Para cambiar un valor se edita su fichero. Para cambiar una regla, aquí.
+tokens:
+  color: src/shared/styles/tokens.css
+  accents: src/shared/constants/accents.ts
+  typography: src/index.css
+  shape: src/shared/styles/tokens.css
+  spacing: src/shared/styles/tokens.css
+  elevation: src/shared/styles/tokens.css
+  rules: .claude/CLAUDE.md
 ---
 
 # GymLog — sistema visual "FitBody"
@@ -146,8 +115,9 @@ escala y rompe el ritmo en cuanto otro pantalla lo usa.
 | `text-2xl`                      | Un titular por pantalla, como mucho.                                     |
 | `text-display` / `display-huge` | Números protagonistas: un campo de KG o de reps. Uno por pantalla.       |
 
-`display-huge` se reserva para un contador y se mide a 4.5rem, que en un móvil de
-360px ocupa el ancho entero. No es un título grande: es un dato grande.
+`display-huge` se reserva para un contador. Es el paso más grande de la escala y
+en un móvil de 360 px ocupa el ancho entero, así que solo cabe uno por pantalla.
+No es un título grande: es un dato grande.
 
 ## Layout
 
@@ -209,7 +179,9 @@ bordes del móvil.
 
 ## Shapes
 
-`sm` 8px · `md` 12px · `card` 18px · `xl` 24px · `pill` 999px.
+Cinco pasos, con nombre y valor en `tokens.css`: `sm` · `md` · `card` · `xl` ·
+`pill`. El nombre es lo que se escribe en el componente (`rounded-card`,
+`rounded-pill`); el número no se escribe nunca a mano.
 
 - **Píldora en todo control**: botón, chip, switch, tab, input, FAB. Un
   interruptor cuadrado se lee como casilla, no como interruptor — lo que dice
