@@ -835,6 +835,7 @@ export function WorkoutPage() {
           isIdle={isIdle}
           exercises={todayRoutine.exercises}
           variants={containerVariants}
+          compact={haySerieHecha}
         />
       )}
 
@@ -970,29 +971,37 @@ export function WorkoutPage() {
             {/* Chips de la maqueta: calculadora de discos, 1RM estimado y notas
                 del ejercicio. Sustituyen a la cabecera con el récord suelto: la
                 misma información, pero pulsable y en su sitio. */}
+            {/* Ni el icono de la calculadora ni el del 1RM llevan acento. Los dos
+                son información —«esto se puede consultar»—, no la acción
+                principal, y competían con el ✓ de confirmar serie, que es lo
+                único que de verdad se pulsa entrenando. La regla del sistema es
+                un acento por pantalla: si dos cosas lo llevan, ninguna es
+                principal. */}
             <div className="mt-5 flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={() => setShowPlates(true)}
                 className="label-caps flex min-h-11 items-center gap-2 rounded-sm bg-surface-2 px-3 text-fg-muted transition-colors active:bg-hover"
               >
-                <Calculator className="h-4 w-4 text-accent" />
+                <Calculator className="h-4 w-4" aria-hidden="true" />
                 {t('workout.plates_calc_short')}
               </button>
               {bestEstimate && (
-                <span className="label-caps flex min-h-11 items-center gap-2 rounded-sm bg-surface-2 px-3 text-fg-muted">
-                  <Trophy className="h-4 w-4 text-accent" aria-hidden="true" />
+                <span className="label-caps flex min-h-11 items-center gap-2 rounded-sm bg-surface-2 text-fg-muted">
+                  <Trophy className="h-4 w-4" aria-hidden="true" />
                   {t('workout.e1rm')} {convert(bestEstimate.e1rm).toFixed(1)} {weightUnit}
                 </span>
               )}
             </div>
 
-            {/* Récords por banda de reps: no salen en la maqueta pero son datos
-                reales, así que se quedan debajo, en tono apagado. */}
+            {/* Récords por banda de reps. El récord actual tampoco lleva acento:
+                es un dato, no una acción, y en `text-fg` destaca igual de
+                bien —más, de hecho— que en `text-accent`, porque el acento ya no
+                tiene a seis cosas peleándoselo. */}
             {(currentPR || currentPRs.length > 1) && (
               <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
                 {currentPR && (
-                  <span className="label-caps text-accent">
+                  <span className="label-caps text-fg">
                     {t('workout.recent_pr')} {convert(Number(currentPR.weight)).toFixed(1)}{' '}
                     {weightUnit} × {currentPR.reps}
                   </span>

@@ -50,7 +50,16 @@ export function WorkoutSessionStats({
     totalVolume >= 1000 ? `${(totalVolume / 1000).toFixed(1)}t` : `${totalVolume}kg`;
 
   return (
-    <m.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="mb-4">
+    <m.div
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      /* `mb-10` y no `mb-4`. El sistema pide `--space-10` entre secciones y lo
+           explica mejor que nadie: tres bloques separados por 16px se leen como
+           una lista densa, separados por 40px se leen como tres cosas. Aquí
+           empieza el registro —la zona en la que se entrena— y lo que hay
+           encima es cronometría, que no es lo que miras mientras entrenas. */
+      className="mb-10"
+    >
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <span

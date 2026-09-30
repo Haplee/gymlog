@@ -75,7 +75,7 @@ export function ExercisePicker({
             <span className="min-w-0 flex-1 truncate text-sm font-medium text-fg">
               {exerciseName}
             </span>
-            <span className="label-caps flex-shrink-0 text-accent">{t('workout.change')}</span>
+            <span className="label-caps flex-shrink-0 text-fg-muted">{t('workout.change')}</span>
           </button>
 
           <button
@@ -154,22 +154,26 @@ export function ExercisePicker({
             exit={{ opacity: 0, height: 0 }}
             className="overflow-hidden"
           >
-            <div className="mt-3 glass-2 rounded-card p-3">
+            {/* El panel de notas era `glass-2` y dentro llevaba un `glass-1` en el
+                campo, más un `bg-surface-2` en cada nota: cristal dentro de
+                cristal, el mismo anidamiento que se quitó del buscador. Ahora el
+                panel no es una caja —el contador de notas y el campo ya la
+                delimitan— y solo el campo lleva superficie, porque es lo único
+                que se toca. El botón de guardar baja a secundario: estaba en
+                acento y eso lo convertía en un segundo primario en pantalla. */}
+            <div className="mt-3">
               {notes.length === 0 ? (
                 <div className="mb-2 text-xs text-fg-subtle">{t('workout.no_notes')}</div>
               ) : (
-                <div className="mb-3 max-h-24 space-y-2 overflow-y-auto">
+                <div className="mb-3 max-h-24 divide-y divide-line overflow-y-auto">
                   {notes.map((note) => (
-                    <div
-                      key={note.id}
-                      className="flex items-start justify-between gap-2 rounded bg-surface-2 p-2"
-                    >
+                    <div key={note.id} className="flex items-start justify-between gap-2 py-2">
                       <div className="text-xs text-fg">{note.note}</div>
                       <button
                         type="button"
                         onClick={() => onDeleteNote(note.id)}
                         aria-label={t('common.delete')}
-                        className="text-xs text-error"
+                        className="tap-44 -mr-2 -mt-2 flex-shrink-0 text-xs text-error"
                       >
                         ×
                       </button>
@@ -178,19 +182,22 @@ export function ExercisePicker({
                 </div>
               )}
               <div className="flex gap-2">
+                {/* El campo es la única superficie del panel: es lo único que se
+                    toca. Borde `line-interactive` por el 3:1 de WCAG 1.4.11, y
+                    píldora porque es un control. */}
                 <input
                   type="text"
                   placeholder={t('workout.new_note')}
                   value={noteText}
                   onChange={(e) => setNoteText(e.target.value)}
-                  className="flex-1 glass-1 rounded-card-2 p-2 text-xs text-fg outline-none"
+                  className="min-w-0 flex-1 rounded-pill border border-line-interactive bg-surface-2 px-3 py-2 text-xs text-fg outline-none transition-colors placeholder:text-fg-subtle focus:border-accent"
                 />
                 <button
                   type="button"
                   onClick={handleSaveNote}
                   disabled={!noteText.trim()}
                   aria-label={t('common.save')}
-                  className="flex h-11 w-11 items-center justify-center rounded-card bg-accent text-accent-fg disabled:opacity-50"
+                  className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-pill bg-surface-2 text-fg-muted transition-colors active:bg-hover disabled:opacity-40"
                 >
                   <Plus className="h-4 w-4" />
                 </button>
@@ -200,7 +207,10 @@ export function ExercisePicker({
         )}
       </AnimatePresence>
 
-      {children}
+      {/* Aire de sección antes de los hijos, que es donde empieza el registro.
+          40px, no 16: el nombre del ejercicio y el peso que vas a mover son
+          dos zonas distintas, no dos filas de la misma lista. */}
+      <div className="mt-10">{children}</div>
 
       <ConfirmDialog
         open={confirmDelete}

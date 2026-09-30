@@ -96,9 +96,9 @@ export function ExerciseLoadType({
         {loadType === 'external' ? (
           <EquipmentIcon equipment={equipment} className="h-4 w-4 flex-shrink-0" />
         ) : loadType === 'bodyweight' ? (
-          <Man className="h-4 w-4 flex-shrink-0 text-accent" aria-hidden="true" />
+          <Man className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
         ) : (
-          <Backpack className="h-4 w-4 flex-shrink-0 text-accent" aria-hidden="true" />
+          <Backpack className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
         )}
         {t(`workout.load_type_${loadType}`)}
       </button>

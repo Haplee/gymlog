@@ -106,7 +106,7 @@ const LoggedSetRow = memo(function LoggedSetRow({
     >
       <span
         className={`flex items-center gap-1.5 tabular text-base ${
-          errorText ? 'text-error' : isPR ? 'text-accent' : 'text-fg-subtle'
+          errorText ? 'text-error' : isPR ? 'text-success' : 'text-fg-subtle'
         }`}
       >
         {i + 1}
@@ -118,16 +118,27 @@ const LoggedSetRow = memo(function LoggedSetRow({
           {warmupLabel}
         </span>
       )}
-      {isPR && <span className="label-caps rounded-sm bg-accent px-2 py-1 text-accent-fg">PR</span>}
+      {/* El PR pasa de acento a `success`. Es un récord, no una acción, y con
+          el acento encima competía con el ✓ de confirmar serie por ser la misma
+          señal. `success` dice lo mismo —«esto es bueno»— en un color que no es
+          el de la acción, y además aguanta el peor caso: con acento rojo elegido
+          por el usuario, el acento ya no puede querer decir «récord». Es el
+          mismo motivo por el que existe la paleta semántica. */}
+      {isPR && (
+        <span className="label-caps rounded-sm bg-success/15 px-2 py-1 text-success">PR</span>
+      )}
+      {/* DROP, R-P y AMRAP no son buenos ni malos: marcan que la serie es de
+          otro tipo. No necesitan un color propio, y en `bg-surface-2` se leen
+          igual de rápido. */}
       {s.setType && s.setType !== 'normal' && (
-        <span className="label-caps rounded-sm bg-accent/15 px-2 py-1 text-accent">
+        <span className="label-caps rounded-sm bg-surface-2 px-2 py-1 text-fg-muted">
           {SET_TYPE_BADGE[s.setType]}
         </span>
       )}
 
       <span
         className={`ml-auto tabular text-base font-medium ${
-          errorText ? 'text-error' : isPR ? 'text-accent' : 'text-fg-muted'
+          errorText ? 'text-error' : isPR ? 'text-success' : 'text-fg-muted'
         }`}
       >
         {errorText ? errorText : resumenSerie(s, weightUnit, displayWeight(s.weight, convert))}
@@ -283,8 +294,14 @@ export const WorkoutSetList = memo(function WorkoutSetList({
   return (
     <div>
       <div className="flex items-baseline justify-between gap-3">
+        {/* Baja de `text-2xl` a `text-xl`. El sistema reserva `text-2xl` para
+            «un titular por pantalla» y `display-huge` para «un contador, un
+            dato grande». El peso que vas a levantar es el dato protagonista, y
+            estaba compitiendo con el nombre del ejercicio, que ocupaba el mismo
+            paso. Ahora lo más grande de la pantalla es el número que estás a
+            punto de mover. */}
         {exerciseName && (
-          <span className="text-2xl font-display font-bold tracking-tight text-fg truncate">
+          <span className="text-xl font-display font-semibold tracking-tight text-fg truncate">
             {exerciseName}
           </span>
         )}

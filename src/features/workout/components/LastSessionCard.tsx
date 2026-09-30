@@ -51,12 +51,18 @@ export function LastSessionCard({ userId, exerciseId, onCopySets }: LastSessionC
                   )}
                 </span>
               </div>
+              {/* «Copiar» era un `bg-accent` y con eso había dos botones
+                  primarios en la misma pantalla. Es una comodidad dentro de una
+                  tarjeta plegable, no la acción principal —esa es confirmar la
+                  serie—, así que pasa a secundario. El borde se queda en
+                  `line-interactive` porque sigue siendo un control y necesita
+                  el 3:1 de WCAG 1.4.11. */}
               <button
                 type="button"
                 onClick={() =>
                   onCopySets(lastSets.map((s) => ({ reps: s.reps, weight: s.weight })))
                 }
-                className="flex items-center gap-1 text-xs px-2 py-1 rounded-sm font-medium bg-accent text-accent-fg transition-transform active:scale-95"
+                className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-pill border border-line-interactive bg-surface-2 font-medium text-fg-muted transition-colors active:bg-hover"
               >
                 <CopySuccess className="w-3 h-3" />
                 {t('workout.copy')}
