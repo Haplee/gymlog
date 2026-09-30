@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { m, AnimatePresence } from 'framer-motion';
@@ -19,8 +19,6 @@ interface ExercisePickerProps {
   onDeleteExercise: () => void;
   onSaveNote: (text: string) => void;
   onDeleteNote: (noteId: string) => void;
-  /** Referencias que solo tienen sentido con ejercicio elegido (última sesión, autorregulación). */
-  children?: ReactNode;
 }
 
 /**
@@ -45,7 +43,6 @@ export function ExercisePicker({
   onDeleteExercise,
   onSaveNote,
   onDeleteNote,
-  children,
 }: ExercisePickerProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -207,10 +204,12 @@ export function ExercisePicker({
         )}
       </AnimatePresence>
 
-      {/* Aire de sección antes de los hijos, que es donde empieza el registro.
-          40px, no 16: el nombre del ejercicio y el peso que vas a mover son
-          dos zonas distintas, no dos filas de la misma lista. */}
-      <div className="mt-10">{children}</div>
+      {/* Antes aquí iban los hijos —el contexto de la última sesión y la
+          recomendación del motor— y quedaban entre el selector y el listado de
+          series. En el emulador se veía: al elegir ejercicio había que pasar
+          por dos tarjetas para llegar al peso. Lo que haces va encima de lo que
+          consultas, así que el contexto se renderiza en `WorkoutPage`, debajo
+          del registro, y este componente ya no tiene hijos. */}
 
       <ConfirmDialog
         open={confirmDelete}

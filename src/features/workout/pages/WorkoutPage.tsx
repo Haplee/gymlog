@@ -797,6 +797,73 @@ export function WorkoutPage() {
     [queryClient, setActiveExercise, t],
   );
 
+  /**
+   * Contexto para decidir el peso: qué se hizo la última vez y qué recomienda
+   * el motor.
+   *
+   * Va **debajo** del registro, no encima. Estaba dentro de `ExercisePicker`,
+   * o sea antes del tipo de carga y del listado de series, y en el emulador se
+   * veía el problema sin instrumentación: eligiendo ejercicio había que pasar
+   * por dos tarjetas para llegar al campo de peso. Es decir, lo que haces
+   * estaba debajo de lo que consultas.
+   *
+   * El orden importa menos de lo que parece porque el contexto se pliega solo
+   * en cuanto hay una serie hecha, pero justo antes de la primera serie —el
+   * momento en que el contexto es más útil— es cuando las dos tarjetas están
+   * desplegadas. Bajarlas hace que ese momento siga siendo el bueno sin que el
+   * registro quede escondido detrás de dos tarjetas.   */
+  const bloqueContexto = activeExerciseId && (
+    <div className="mt-10">
+      {contextoAbierto ? (
+        <>
+          <LastSessionCard
+            userId={user?.id ?? ''}
+            exerciseId={activeExerciseId}
+            onCopySets={handleCopySets}
+          />
+
+          {exerciseAdvice && (
+            <div className="mt-3">
+              <NextSessionCard
+                advice={{
+                  ...exerciseAdvice,
+                  exercise: selectedExercise?.name ?? customExerciseName ?? '',
+                }}
+                onApply={handleApplyAdvice}
+              />
+            </div>
+          )}
+
+          {haySerieHecha && (
+            <button
+              type="button"
+              onClick={() => abrirContexto(false)}
+              className="label-caps mt-2 flex min-h-11 w-full items-center justify-center gap-1.5 text-fg-subtle active:opacity-60"
+            >
+              <ChevronDown className="h-3.5 w-3.5 rotate-180" aria-hidden="true" />
+              {t('workout.context_hide')}
+            </button>
+          )}
+        </>
+      ) : (
+        <button
+          type="button"
+          onClick={() => abrirContexto(true)}
+          className="flex min-h-11 w-full items-center justify-between gap-2 rounded-pill bg-surface-2 px-4 text-left transition-colors active:bg-hover"
+        >
+          <span className="label-caps text-fg-muted">
+            {exerciseAdvice
+              ? `${t('coach.next_label')} · ${formatWeightInput(
+                  convert(exerciseAdvice.suggestion.weight),
+                )} ${weightUnit} × ${exerciseAdvice.suggestion.reps}`
+              : t('workout.context_show')}
+          </span>
+          <ChevronDown className="h-4 w-4 flex-shrink-0 text-fg-subtle" aria-hidden="true" />
+        </button>
+      )}
+    </div>
+  );
+
   return (
     <Layout>
       <AnimatePresence>
@@ -853,63 +920,7 @@ export function WorkoutPage() {
           onDeleteExercise={() => selectedExercise && handleDeleteExercise(selectedExercise.id)}
           onSaveNote={handleSaveNote}
           onDeleteNote={handleDeleteNote}
-        >
-          {/* Contexto para decidir el peso: qué se hizo la última vez y qué
-              recomienda el motor.
-              Se pliega solo en cuanto hay una serie hecha. No es que estorbe
-              —es justo lo que hay que ver antes de la primera— sino que después
-              ya no se decide nada: el peso está en la barra y lo que se necesita
-              en pantalla es el teclado, que con estas dos tarjetas desplegadas
-              quedaba por debajo de todo. Se vuelve a abrir tocando el resumen. */}
-          {activeExerciseId &&
-            (contextoAbierto ? (
-              <>
-                <LastSessionCard
-                  userId={user.id}
-                  exerciseId={activeExerciseId}
-                  onCopySets={handleCopySets}
-                />
-
-                {exerciseAdvice && (
-                  <div className="mt-3">
-                    <NextSessionCard
-                      advice={{
-                        ...exerciseAdvice,
-                        exercise: selectedExercise?.name ?? customExerciseName ?? '',
-                      }}
-                      onApply={handleApplyAdvice}
-                    />
-                  </div>
-                )}
-
-                {haySerieHecha && (
-                  <button
-                    type="button"
-                    onClick={() => abrirContexto(false)}
-                    className="label-caps mt-2 flex min-h-11 w-full items-center justify-center gap-1.5 text-fg-subtle active:opacity-60"
-                  >
-                    <ChevronDown className="h-3.5 w-3.5 rotate-180" aria-hidden="true" />
-                    {t('workout.context_hide')}
-                  </button>
-                )}
-              </>
-            ) : (
-              <button
-                type="button"
-                onClick={() => abrirContexto(true)}
-                className="flex min-h-11 w-full items-center justify-between gap-2 rounded-sm bg-surface-2 px-3 text-left active:bg-hover"
-              >
-                <span className="label-caps text-fg-muted">
-                  {exerciseAdvice
-                    ? `${t('coach.next_label')} · ${formatWeightInput(
-                        convert(exerciseAdvice.suggestion.weight),
-                      )} ${weightUnit} × ${exerciseAdvice.suggestion.reps}`
-                    : t('workout.context_show')}
-                </span>
-                <ChevronDown className="h-4 w-4 flex-shrink-0 text-fg-subtle" aria-hidden="true" />
-              </button>
-            ))}
-        </ExercisePicker>
+        />
       )}
 
       <m.div
@@ -968,11 +979,12 @@ export function WorkoutPage() {
               focusSet={focusSet}
             />
 
-            {/* Chips de la maqueta: calculadora de discos, 1RM estimado y notas
-                del ejercicio. Sustituyen a la cabecera con el récord suelto: la
-                misma información, pero pulsable y en su sitio. */}
-            {/* Ni el icono de la calculadora ni el del 1RM llevan acento. Los dos
-                son información —«esto se puede consultar»—, no la acción
+            {/* Chips de la maqueta: calculadora de discos y 1RM estimado.
+                Sustituyen a la cabecera con el récord suelto: la misma
+                información, pero pulsable y en su sitio.
+
+                Ni el icono de la calculadora ni el del 1RM llevan acento. Los
+                dos son información —«esto se puede consultar»—, no la acción
                 principal, y competían con el ✓ de confirmar serie, que es lo
                 único que de verdad se pulsa entrenando. La regla del sistema es
                 un acento por pantalla: si dos cosas lo llevan, ninguna es
@@ -1023,6 +1035,10 @@ export function WorkoutPage() {
           </>
         )}
       </m.div>
+
+      {/* El contexto, ahora debajo del registro y no encima. Lo que haces va
+          antes que lo que consultas. */}
+      {bloqueContexto}
 
       {sets.length > 0 && (
         <WorkoutActionBar
