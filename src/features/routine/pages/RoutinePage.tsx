@@ -32,7 +32,6 @@ import { RoutineExerciseEditor } from '@features/routine/components/RoutineExerc
 import { RoutineSession } from '@features/routine/components/RoutineSession';
 import { Chip, SectionHeader, BottomSheet, ConfirmDialog } from '@shared/components/ui';
 import { EmptyState } from '@shared/components/EmptyStates';
-import { CoachSuggestionBanner } from '@features/coach/components/CoachSuggestionBanner';
 import { ExerciseSelector } from '@shared/components/ExerciseSelector';
 import { useRoutineTransfer } from '@features/routine/hooks/useRoutineTransfer';
 import { Printer, Share, Upload, Calendar, Eye, EyeOff } from '@shared/components/icons';
@@ -471,9 +470,6 @@ export function RoutinePage() {
 
   return (
     <Layout>
-      {/* Solo aparece si se ha llegado aquí desde «Aplicar» en el entrenador. */}
-      <CoachSuggestionBanner />
-
       {sessionActive && user ? (
         <RoutineSession userId={user.id} exercises={exercises} />
       ) : /* Se decide con la rutina ya resuelta, no con el id: si el id apunta a

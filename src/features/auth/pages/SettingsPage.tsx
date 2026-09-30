@@ -81,7 +81,7 @@ function MenuRow({
   );
 }
 
-export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
+export function SettingsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
@@ -770,8 +770,6 @@ export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
         {/* Horas de los avisos: solo tiene sentido si las notificaciones están
             encendidas, si no serían ajustes de algo que no va a sonar. */}
         {notificationsEnabled && <ReminderSettings onTimesChanged={handleReminderTimesChanged} />}
-
-        {coachSection}
 
         {/* Datos */}
         <section>

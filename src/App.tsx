@@ -47,15 +47,6 @@ const HistoryPage = lazy(() =>
 const SettingsPage = lazy(() =>
   import('@features/auth/pages/SettingsPage').then((m) => ({ default: m.SettingsPage })),
 );
-// La sección del entrenador se inyecta en Ajustes desde aquí: `auth` no debe
-// importar de `coach` —cerraba una dependencia circular— pero esta capa sí
-// puede conocer a las dos. Sigue siendo `lazy` para no arrastrar el store del
-// coach al bundle de entrada.
-const CoachSettingsSection = lazy(() =>
-  import('@features/coach/components/CoachSettingsSection').then((m) => ({
-    default: m.CoachSettingsSection,
-  })),
-);
 const RoutinePage = lazy(() =>
   import('@features/routine/pages/RoutinePage').then((m) => ({ default: m.RoutinePage })),
 );
@@ -78,12 +69,6 @@ const NotificationsPage = lazy(() =>
 );
 const GuidePage = lazy(() =>
   import('@features/guide/pages/GuidePage').then((m) => ({ default: m.GuidePage })),
-);
-const CoachPage = lazy(() =>
-  import('@features/coach/pages/CoachPage').then((m) => ({ default: m.CoachPage })),
-);
-const CoachMemoryPage = lazy(() =>
-  import('@features/coach/pages/CoachMemoryPage').then((m) => ({ default: m.CoachMemoryPage })),
 );
 const FitBodyShowcasePage = lazy(() =>
   import('@features/fitbody/pages/FitBodyShowcasePage').then((m) => ({
@@ -170,7 +155,7 @@ function AnimatedRoutes() {
         path="/settings"
         element={
           <ProtectedRoute>
-            <SettingsPage coachSection={<CoachSettingsSection />} />
+            <SettingsPage />
           </ProtectedRoute>
         }
       />
@@ -219,22 +204,6 @@ function AnimatedRoutes() {
         element={
           <ProtectedRoute>
             <GuidePage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/coach"
-        element={
-          <ProtectedRoute>
-            <CoachPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/coach/memory"
-        element={
-          <ProtectedRoute>
-            <CoachMemoryPage />
           </ProtectedRoute>
         }
       />

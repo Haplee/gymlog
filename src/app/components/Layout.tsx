@@ -64,8 +64,6 @@ const PAGE_HEADER_ROUTES = [
   '/wearables',
   '/user-stats',
   '/settings',
-  '/coach',
-  '/coach/memory',
 ];
 
 const preloadChunk = (path: string) => {

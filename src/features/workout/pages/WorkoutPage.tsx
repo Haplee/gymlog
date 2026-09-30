@@ -40,8 +40,6 @@ import { SessionRatingSheet } from '@features/workout/components/SessionRatingSh
 import { WorkoutActionBar } from '@features/workout/components/WorkoutActionBar';
 import { LastSessionCard } from '@features/workout/components/LastSessionCard';
 import { HealthMetricsCard } from '@features/wearables/components/HealthMetricsCard';
-import { CoachSuggestionBanner } from '@features/coach/components/CoachSuggestionBanner';
-import { CoachHomeCard } from '@features/coach/components/CoachHomeCard';
 import { NextSessionCard } from '@features/stats/components/NextSessionCard';
 import { useExerciseAdvice } from '@features/stats/hooks/useExerciseAdvice';
 import { useExerciseRepRange } from '@shared/hooks/useExerciseRepRange';
@@ -805,9 +803,6 @@ export function WorkoutPage() {
         {completed && <WorkoutSavedCard summary={completed} onDismiss={() => setCompleted(null)} />}
       </AnimatePresence>
 
-      {/* Solo aparece si se ha llegado aquí desde «Aplicar» en el entrenador. */}
-      <CoachSuggestionBanner />
-
       {/* Con sesión en marcha la pantalla es para entrenar: el recordatorio
           semanal de peso puede esperar a que se guarde. La tarjeta de salud del
           wearable ya era solo-reposo por el mismo motivo. */}
@@ -1049,11 +1044,6 @@ export function WorkoutPage() {
       </AnimatePresence>
 
       <RestTimer />
-
-      {/* Atajo al entrenador IA, solo en reposo: con la sesión en marcha la
-          pantalla es para anotar series, no para irse a otra pantalla. Se
-          esconde solo si el entrenador está apagado. */}
-      {isIdle && <CoachHomeCard />}
 
       {/* Resumen de salud del wearable (glanceable), debajo del temporizador de
           descanso. Solo en reposo y si hay datos. Pulsable -> detalle en /wearables. */}

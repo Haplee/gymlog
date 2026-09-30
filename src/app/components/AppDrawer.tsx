@@ -9,7 +9,6 @@ import {
   IconDumbbell,
   IconGear,
   IconSearch,
-  IconStar,
   IconWatch,
   X,
 } from '@shared/components/icons';
@@ -21,7 +20,7 @@ import {
  * wordmark + usuario, así que la lupa, la campana y la pestaña de historial se
  * quedaron sin sitio. En vez de eliminarlas —serían funcionalidad perdida— viven
  * aquí, junto a las rutas que nunca tuvieron entrada propia en la barra inferior
- * (biblioteca, medidas, wearables, guía, entrenador).
+ * (biblioteca, medidas, wearables y guía).
  *
  * Desde la decisión de dejar la barra inferior en cuatro pestañas (inicio,
  * rutinas, historial y cardio), Estadísticas y Ajustes también viven aquí.
@@ -71,7 +70,6 @@ export function AppDrawer({ onClose, onOpenSearch, unreadCount }: AppDrawerProps
     {
       title: t('nav.group_more'),
       links: [
-        { to: '/coach', Icon: IconStar, label: t('coach.page_title') },
         { to: '/wearables', Icon: IconWatch, label: t('settings.wearables') },
         { to: '/guide', Icon: IconBook, label: t('guide.title') },
       ],

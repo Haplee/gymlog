@@ -16,9 +16,6 @@ const ROUTES = [
   { path: '/wearables', match: /login|wearables|\/$/ },
   { path: '/notifications', match: /login|notifications|\/$/ },
   { path: '/guide', match: /login|guide|\/$/ },
-  { path: '/coach', match: /login|coach|\/$/ },
-  // Dos segmentos: comprueba que el emparejado no se queda en /coach.
-  { path: '/coach/memory', match: /login|coach\/memory|\/$/ },
   { path: '/fitbody', match: /login|fitbody|\/$/ },
 ];
 
