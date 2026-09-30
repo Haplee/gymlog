@@ -4,14 +4,12 @@ import { createPortal } from 'react-dom';
 import { Xmark } from '@shared/components/icons';
 import { useTranslation } from 'react-i18next';
 import { registerBackAction } from '@shared/lib/backHandler';
-import { Capacitor } from '@capacitor/core';
 
-// backdrop-filter provoca jank en el WebView de Android de gama media/baja al
-// animar la apertura/cierre; ahí se sustituye por un fondo más opaco.
-const IS_ANDROID = Capacitor.getPlatform() === 'android';
-const BACKDROP_STYLE = IS_ANDROID
-  ? { backgroundColor: 'rgba(0,0,0,0.6)' }
-  : { backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' };
+// El velo del diálogo es opaco y liso, sin desenfoque. CLAUDE.md lo prohíbe
+// explícitamente: backdrop-filter da jank en el WebView de Android de gama
+// media al animar la apertura, que es justo cuando se nota. El panel sí usa el
+// material de vidrio, que se pinta una sola vez y no se recompone al mover. El
+// mismo velo que Modal, para que no se note si uno abre el otro encima.
 
 interface BottomSheetProps {
   open: boolean;
@@ -83,8 +81,7 @@ export function BottomSheet({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={onClose}
-            className="fixed inset-0 z-[var(--z-modal)]"
-            style={BACKDROP_STYLE}
+            className="fixed inset-0 z-[var(--z-modal)] bg-black/60"
             aria-hidden="true"
           />
 

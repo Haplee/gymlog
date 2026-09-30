@@ -444,9 +444,14 @@ export function Layout({ children }: LayoutProps) {
                   «apretar un punto la tipografía» de antes no llegaba a
                   aplicarse nunca —el rótulo seguía saliendo a 11 px con 0.1em—
                   y por eso no había margen que valiera. Aquí las mayúsculas y
-                  la negrita se piden a mano. */}
+                  la negrita se piden a mano, y el cuerpo sale de la escala
+                  nombrada (`text-2xs`) en vez de un 9 px sueltos: cuando la barra
+                  tenía cinco pestañas el rotor kilométrico no daba más, pero
+                  ahora que son cuatro los rótulos caben de sobra y el cuerpo
+                  vuelve a la escala. Interletraje al 0 y `leading-none`, que es lo
+                  que deja el texto en una línea dentro de la celda. */}
               <span
-                className={`block max-w-full truncate text-center font-bold uppercase leading-[1.1] text-[0.5625rem] tracking-[0.02em] transition-colors ${
+                className={`block max-w-full truncate text-center font-bold uppercase leading-none tracking-normal text-2xs transition-colors ${
                   isActive ? 'text-accent' : 'text-fg-subtle'
                 }`}
               >

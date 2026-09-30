@@ -55,13 +55,7 @@ export function ExerciseRow({
         >
           <span className="text-base font-medium">{exercise.name}</span>
           {isOwn && (
-            <span
-              className="text-2xs px-1.5 py-0.5 rounded-sm font-medium ml-2 flex-shrink-0"
-              style={{
-                backgroundColor: 'rgba(200,255,0,0.1)',
-                color: 'var(--interactive-primary)',
-              }}
-            >
+            <span className="rounded-pill bg-accent/10 px-2 py-0.5 text-2xs font-semibold text-accent ml-2 flex-shrink-0">
               {t('workout.custom_badge')}
             </span>
           )}

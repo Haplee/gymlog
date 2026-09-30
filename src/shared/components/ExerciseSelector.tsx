@@ -286,7 +286,7 @@ export function ExerciseSelector({
   const dropdownStyle: React.CSSProperties = {
     backgroundColor: 'var(--bg-surface-3)',
     border: '1px solid var(--border-default)',
-    boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
+    boxShadow: 'var(--shadow-lg)',
     // `100dvh` y no `100vh`: en Android el teclado encoge el viewport dinámico,
     // que es justo lo que hay que descontar para que la lista no acabe debajo.
     // El suelo de 160px evita que con el teclado abierto quede un hueco inútil.
