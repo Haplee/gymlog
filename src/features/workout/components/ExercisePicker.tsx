@@ -70,7 +70,7 @@ export function ExercisePicker({
           <button
             type="button"
             onClick={() => setExpanded(true)}
-            className="flex min-h-11 flex-1 items-center gap-2 glass-2 rounded-card px-3 text-left transition-colors active:bg-hover"
+            className="flex min-h-11 flex-1 items-center gap-2 rounded-card border border-line bg-surface-2 px-3 text-left transition-colors active:bg-hover"
           >
             <span className="min-w-0 flex-1 truncate text-sm font-medium text-fg">
               {exerciseName}
@@ -107,7 +107,15 @@ export function ExercisePicker({
           )}
         </div>
       ) : (
-        <div className="glass-2 rounded-card p-4 shadow-card">
+        /* Sin panel alrededor. Aquí se apilaban tres materiales: el
+           `glass-2` de fuera, el `bg-surface-2` del input y el `glass-1` del
+           botón de biblioteca —cristal dentro de cristal— y encima el
+           `shadow-card` se sumaba al `box-shadow` que `glass-2` ya trae, o sea
+           dos sombras en la misma caja. El buscador ya es una superficie con
+           fondo y borde: ponerle un marco alrededor solo añade una caja que
+           no aporta nada. Y la biblioteca, que es la salida secundaria, baja
+           a texto y deja de competir con el campo por el mismo ancho. */
+        <div>
           <ExerciseSelector
             userId={userId}
             onSelect={(id) => {
@@ -120,9 +128,9 @@ export function ExercisePicker({
           <button
             type="button"
             onClick={() => navigate('/exercises')}
-            className="mt-2 flex w-full items-center justify-center gap-1.5 glass-1 rounded-card-2 px-2 py-2 text-xs text-fg-muted transition-colors active:bg-hover"
+            className="flex min-h-11 w-full items-center gap-1.5 px-1 pt-1 text-left text-xs text-fg-subtle transition-colors active:text-fg-muted"
           >
-            <BookOpen className="h-3.5 w-3.5" />
+            <BookOpen className="h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />
             {t('library.open')}
           </button>
 
@@ -130,7 +138,7 @@ export function ExercisePicker({
             <button
               type="button"
               onClick={() => setExpanded(false)}
-              className="mt-2 min-h-11 w-full text-xs text-fg-subtle"
+              className="flex min-h-11 w-full items-center justify-center text-xs text-fg-subtle"
             >
               {t('common.close')}
             </button>
