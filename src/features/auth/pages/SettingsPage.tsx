@@ -6,7 +6,14 @@ import { useAuthStore } from '@features/auth/stores/authStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
 import { isWakeLockSupported } from '@shared/hooks/useWakeLock';
 import { Layout } from '@app/components/Layout';
-import { NavRow, PlatesPicker, SectionHeader, SettingRow, Toggle } from '@shared/components/ui';
+import {
+  NavRow,
+  PlatesPicker,
+  SectionHeader,
+  SegmentedControl,
+  SettingRow,
+  Toggle,
+} from '@shared/components/ui';
 import { PreferencesSection } from '@features/auth/components/PreferencesSection';
 import { supabase } from '@shared/lib/supabase';
 import { App as CapApp } from '@capacitor/app';
@@ -587,33 +594,23 @@ export function SettingsPage() {
             <div className="px-4 py-3.5">
               <div className="text-base text-fg">{t('settings.save_scope')}</div>
               <div className="text-xs mb-2.5 text-fg-subtle">{t('settings.save_scope_desc')}</div>
-              <div className="flex gap-1.5" role="group" aria-label={t('settings.save_scope')}>
-                {(
-                  [
-                    { value: null, label: t('settings.save_scope_ask') },
-                    { value: 'all', label: t('settings.save_scope_all') },
-                    { value: 'completed-only', label: t('settings.save_scope_completed') },
-                  ] as const
-                ).map(({ value, label }) => (
-                  <button
-                    type="button"
-                    key={value ?? 'ask'}
-                    onClick={() => {
-                      if (value === null) clearSaveScope();
-                      else writeSaveScope(value);
-                      setSaveScopeState(value);
-                    }}
-                    aria-pressed={saveScope === value}
-                    className={`flex-1 min-h-11 rounded-sm px-2 text-2xs font-medium leading-tight cursor-pointer border transition-colors ${
-                      saveScope === value
-                        ? 'bg-accent text-accent-fg border-accent'
-                        : 'bg-surface-2 text-fg-muted border-line'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
+              <SegmentedControl
+                size="md"
+                className="w-full"
+                ariaLabel={t('settings.save_scope')}
+                value={saveScope ?? 'ask'}
+                onChange={(next) => {
+                  const value = next === 'ask' ? null : (next as SaveScope);
+                  if (value === null) clearSaveScope();
+                  else writeSaveScope(value);
+                  setSaveScopeState(value);
+                }}
+                options={[
+                  { value: 'ask', label: t('settings.save_scope_ask') },
+                  { value: 'all', label: t('settings.save_scope_all') },
+                  { value: 'completed-only', label: t('settings.save_scope_completed') },
+                ]}
+              />
             </div>
 
             {/* Discos del gimnasio. Estaba solo dentro de la calculadora, donde
@@ -671,23 +668,17 @@ export function SettingsPage() {
                 <div className="text-xs mb-2.5 text-fg-subtle">
                   {t('settings.rest_duration_desc')}
                 </div>
-                <div className="flex gap-1.5">
-                  {[60, 90, 120, 180].map((seconds) => (
-                    <button
-                      type="button"
-                      key={seconds}
-                      onClick={() => setRestDuration(seconds)}
-                      aria-pressed={restDuration === seconds}
-                      className={`flex-1 min-h-11 rounded-sm text-sm font-display font-bold tabular border transition-colors ${
-                        restDuration === seconds
-                          ? 'bg-accent text-accent-fg border-accent'
-                          : 'bg-surface-2 text-fg-muted border-line'
-                      }`}
-                    >
-                      {seconds < 120 ? `${seconds}s` : `${seconds / 60}min`}
-                    </button>
-                  ))}
-                </div>
+                <SegmentedControl
+                  size="md"
+                  className="w-full"
+                  ariaLabel={t('settings.rest_duration')}
+                  value={String(restDuration)}
+                  onChange={(next) => setRestDuration(Number(next))}
+                  options={[60, 90, 120, 180].map((seconds) => ({
+                    value: String(seconds),
+                    label: seconds < 120 ? `${seconds}s` : `${seconds / 60}min`,
+                  }))}
+                />
 
                 <div className="hairline-separator mt-4" />
                 <div className="pt-3.5 flex items-center justify-between gap-3">
