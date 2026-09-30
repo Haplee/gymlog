@@ -103,7 +103,7 @@
     "sharp": "^0.35.3",
     "standard-version": "^9.5.0",
     "tailwindcss": "^4.2.2",
-    "typescript": "~5.7.3",
+    "typescript": "~7.0.2",
     "typescript-eslint": "^8.58.0",
     "vite": "^6.2.0",
     "vitest": "^4.1.3"
