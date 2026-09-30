@@ -19,7 +19,7 @@ const FABComponent = ({ icon, label, className = '', ...props }: FABProps) => (
   <button
     type="button"
     className={`fixed right-4 z-(--z-floating) inline-flex items-center justify-center gap-2 min-h-12 rounded-pill bg-accent text-accent-fg shadow-fab cursor-pointer active:scale-95 transition-transform duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-canvas ${
-      label ? 'px-4' : 'w-12'
+      label ? 'px-5' : 'w-12'
     } ${className}`}
     style={{
       bottom:
@@ -28,7 +28,7 @@ const FABComponent = ({ icon, label, className = '', ...props }: FABProps) => (
     {...props}
   >
     {icon}
-    {label && <span className="label-caps">{label}</span>}
+    {label && <span className="text-sm font-semibold">{label}</span>}
   </button>
 );
 

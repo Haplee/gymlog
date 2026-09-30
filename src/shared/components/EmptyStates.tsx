@@ -1,19 +1,25 @@
 import { m } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { Calendar, ChartBar, CheckSquare, Dumbbell, Sparkles } from '@shared/components/icons';
+import { Calendar, ChartBar, CheckSquare, Dumbbell } from '@shared/components/icons';
 
-const containerVariants = {
-  hidden: { opacity: 0, y: 20 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: { staggerChildren: 0.1 },
-  },
-};
-
+/**
+ * Estado vacío: icono + título + una línea que dice qué hacer + un botón.
+ *
+ * El orden y el peso son los que seprograms de los sistemas que lo hacen bien
+ * (Geist, Polaris): el icono es pequeño y decorativo, el texto hace el trabajo
+ * y solo hay UN botón. Antes esto ocupaba un círculo de 96px con un icono de
+ * 48px, un `Sparkles` latiendo en bucle infinito al lado y un CTA en `rounded-sm`
+ * de 8px mientras el resto de la app iba en píldora: la pantalla más vacía de
+ * la app era la más ruidosa.
+ *
+ * Dos reglas más que vienen del mismo sitio y que se notan:
+ *   · la descripción NO repite el título. Si dice «aún no hay historial», sobra.
+ *   · el CTA es verbo + sustantivo y dice a dónde lleva. «Empezar» no dice nada;
+ *     «Registrar entrenamiento» sí.
+ */
 const itemVariants = {
-  hidden: { opacity: 0, scale: 0.9 },
-  show: { opacity: 1, scale: 1 },
+  hidden: { opacity: 0, y: 8 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.24 } },
 };
 
 interface EmptyStateProps {
@@ -49,29 +55,25 @@ export function EmptyState({
 
   return (
     <m.div
-      variants={containerVariants}
       initial="hidden"
       animate="show"
-      className="flex flex-col items-center justify-center py-16 px-6 text-center"
+      variants={{ show: { transition: { staggerChildren: 0.06 } } }}
+      className="flex flex-col items-center text-center py-12 px-6"
     >
-      <m.div variants={itemVariants} className="relative mb-6">
-        <div className="w-24 h-24 rounded-full flex items-center justify-center bg-surface-2">
-          <Icon className="w-12 h-12 text-accent" />
-        </div>
-        <m.div
-          animate={{ scale: [1, 1.1, 1] }}
-          transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
-          className="absolute -top-1 -right-1"
-        >
-          <Sparkles className="w-6 h-6 text-accent" />
-        </m.div>
+      {/* 32px, no 48. A este tamaño el icono acompaña al texto; a 48 compite
+          con él. El círculo de fondo mantiene el aire sin gritar. */}
+      <m.div
+        variants={itemVariants}
+        className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-surface-2"
+      >
+        <Icon className="h-8 w-8 text-accent" />
       </m.div>
 
-      <m.h3 variants={itemVariants} className="text-xl font-bold mb-2 text-fg">
+      <m.h3 variants={itemVariants} className="font-display text-lg font-bold text-fg max-w-xs">
         {title}
       </m.h3>
 
-      <m.p variants={itemVariants} className="text-sm max-w-xs mb-6 text-fg-muted">
+      <m.p variants={itemVariants} className="text-base text-fg-muted max-w-xs mt-2">
         {desc}
       </m.p>
 
@@ -79,7 +81,7 @@ export function EmptyState({
         <m.button
           variants={itemVariants}
           onClick={action.onClick}
-          className="px-5 py-2.5 rounded-sm text-sm font-semibold bg-accent text-accent-fg shadow-btn-accent transition-transform active:scale-[0.97]"
+          className="mt-6 inline-flex min-h-11 items-center justify-center rounded-pill bg-accent px-6 text-base font-semibold text-accent-fg shadow-btn-accent transition-transform active:scale-95"
         >
           {action.label}
         </m.button>

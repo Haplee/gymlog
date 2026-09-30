@@ -29,19 +29,19 @@ export function SettingRow({
 }) {
   return (
     <div
-      className={`flex items-center justify-between gap-3 px-4 py-3.5 ${
+      className={`flex items-center justify-between gap-3 px-4 py-3.5 min-h-11 ${
         divider ? 'hairline-separator' : ''
       }`}
     >
       <div className="flex items-center gap-3 min-w-0">
         {icon && (
-          <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-accent text-accent-fg">
+          <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-surface-3 text-fg-muted">
             {icon}
           </span>
         )}
         <div className="min-w-0">
           <div className="text-base text-fg">{label}</div>
-          {desc && <div className="text-xs mt-0.5 text-fg-subtle">{desc}</div>}
+          {desc && <div className="text-sm mt-0.5 text-fg-subtle">{desc}</div>}
         </div>
       </div>
       <div className="flex-shrink-0">{control}</div>

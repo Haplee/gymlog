@@ -53,6 +53,21 @@ const prefetchPageData = (path: string, userId: string) => {
   }
 };
 
+// Rutas cuyo contenido empieza por un `PageHeader` con titular propio. El
+// wordmark de la cabecera baja de tono en ellas para no poner dos titulares
+// en la primera línea. Lista de rutas, no de componentes: `Layout` no importa
+// las páginas (van lazy-loaded) y no debe empezar a hacerlo.
+const PAGE_HEADER_ROUTES = [
+  '/notifications',
+  '/exercises',
+  '/guide',
+  '/wearables',
+  '/user-stats',
+  '/settings',
+  '/coach',
+  '/coach/memory',
+];
+
 const preloadChunk = (path: string) => {
   if (path === '/') {
     import('@features/workout/pages/WorkoutPage');
@@ -159,6 +174,14 @@ export function Layout({ children }: LayoutProps) {
   });
   const streak = calculateCurrentStreak(streakWorkouts);
 
+  // Estas rutas abren con un `PageHeader` propio, así que el wordmark de la
+  // cabecera baja de tono para no duplicar el titular. La lista está aquí, en
+  // el chrome, y no al revés porque es una decisión de composición de pantalla
+  // completa: si la página añadiera su cabecera, quien lo sabría es el Layout.
+  const hasPageHeader = PAGE_HEADER_ROUTES.some(
+    (p) => location.pathname === p || location.pathname.startsWith(`${p}/`),
+  );
+
   // Cinco pestañas: lo que se usa a diario entrenando. El resto (ajustes,
   // biblioteca, entrenador, wearables…) vive en el cajón de la hamburguesa.
   //
@@ -236,7 +259,7 @@ export function Layout({ children }: LayoutProps) {
               type="button"
               onClick={() => setMenuOpen(true)}
               aria-label={t('nav.menu')}
-              className="relative flex h-11 w-11 items-center justify-center text-fg active:opacity-60"
+              className="relative flex h-11 w-11 items-center justify-center text-fg-muted active:opacity-60"
             >
               <IconMenu className="h-6 w-6" />
               {unreadCount > 0 && (
@@ -247,8 +270,19 @@ export function Layout({ children }: LayoutProps) {
             <span className="h-11 w-11" />
           )}
 
-          <span className="flex-1 text-center font-display text-lg font-bold tracking-tight text-fg">
-            GYM<span className="text-accent">LOG</span>
+          {/* El wordmark se apaga —no desaparece— en las pantallas que ya traen
+              su propio `PageHeader` justo debajo. Con los dos a la vez había dos
+              titulares compitiendo por la primera línea de todas las pantallas
+              de sección, y el que perdía era siempre el que decía dónde
+              estás. Aquí la cabecera sigue marcando la app y deja el sitio al
+              contenido. */}
+          <span
+            className={`flex-1 text-center font-display text-lg font-bold tracking-tight transition-colors ${
+              hasPageHeader ? 'text-fg-subtle' : 'text-fg'
+            }`}
+            aria-hidden={hasPageHeader}
+          >
+            GYM<span className={hasPageHeader ? '' : 'text-accent'}>LOG</span>
           </span>
 
           {/* Racha en vez del acceso a Ajustes: el engranaje vive en el menú
@@ -260,10 +294,10 @@ export function Layout({ children }: LayoutProps) {
             <Link
               to="/stats"
               aria-label={t('nav.streak_days', { count: streak })}
-              className="flex h-11 min-w-11 items-center justify-center gap-1 px-2 text-fg active:opacity-60"
+              className="flex h-11 min-w-11 items-center justify-center gap-1 px-2 text-fg-muted active:opacity-60"
             >
               <IconFlame className="h-4 w-4 text-accent" />
-              <span className="font-display text-base font-bold tabular leading-none">
+              <span className="font-display text-base font-bold tabular leading-none text-fg">
                 {streak}
               </span>
             </Link>
@@ -336,9 +370,14 @@ export function Layout({ children }: LayoutProps) {
         />
       </div>
 
-      {/* Barra inferior de la referencia visual: fondo del lienzo, filete
-          superior, icono + rótulo por pestaña y una barrita de acento sobre la
-          activa. Se mantiene la altura y el safe-area de siempre. */}
+      {/* Barra inferior: icono + rótulo por pestaña. El estado activo se marca
+          UNA vez —el rótulo en acento— y no tres (barrita de acento arriba,
+          icono en acento y rótulo en acento). Con cinco pestañas, tres señales
+          a la vez no refuerzan la posición: la dicen las tres, y compiten con el
+          contenido de la pantalla, que es donde el acento tiene que trabajar.
+
+          La barrita se conserva, pero neutra: define el límite superior de la
+          barra y no repite el estado que ya dice el color. */}
       <nav
         className="glass-3 glass-flush glass-flush-t flex flex-shrink-0 relative z-10"
         style={{
@@ -366,11 +405,14 @@ export function Layout({ children }: LayoutProps) {
               {isActive && (
                 <m.div
                   layoutId="activeTabBar"
-                  className="absolute top-0 h-0.5 w-7 rounded-pill bg-accent"
+                  className="absolute top-0 h-0.5 w-7 rounded-pill bg-line-strong"
                   transition={{ type: 'spring', stiffness: 500, damping: 32 }}
                 />
               )}
               <span className="relative">
+                {/* Icono y rótulo comparten color: el activo se lee en los dos
+                    sitios, el inactivo también, y no hay tres estados posibles
+                    que tener que memorizar. */}
                 <Icon
                   className={`h-5 w-5 transition-colors ${
                     isActive ? 'text-accent' : 'text-fg-subtle'
