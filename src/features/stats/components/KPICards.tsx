@@ -202,22 +202,16 @@ export const KPICard = memo(function KPICard({
 
         {/* Subtitle + badges */}
         <div className="mt-2 flex items-center gap-2 flex-wrap">
-          {subtitle && <span className="text-xs text-fg-subtle">{subtitle}</span>}
+          {subtitle && <span className="text-sm text-fg-subtle">{subtitle}</span>}
           {trend !== undefined && (
             <m.span
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="text-2xs font-semibold px-1.5 py-0.5 rounded-sm flex items-center gap-0.5"
-              style={{
-                backgroundColor: trend >= 0 ? 'rgba(48,209,88,0.15)' : 'rgba(255,69,58,0.15)',
-                color: trend >= 0 ? 'var(--success)' : 'var(--error)',
-              }}
+              className={`flex items-center gap-1 rounded-pill px-2 py-0.5 text-xs font-semibold ${
+                trend >= 0 ? 'bg-success/15 text-success' : 'bg-error/15 text-error'
+              }`}
             >
-              {trend >= 0 ? (
-                <TrendUp className="w-2.5 h-2.5" />
-              ) : (
-                <TrendDown className="w-2.5 h-2.5" />
-              )}
+              {trend >= 0 ? <TrendUp className="w-3 h-3" /> : <TrendDown className="w-3 h-3" />}
               {Math.abs(trend)}%
             </m.span>
           )}
@@ -225,11 +219,7 @@ export const KPICard = memo(function KPICard({
             <m.span
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="text-2xs font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-sm"
-              style={{
-                backgroundColor: 'rgba(48,209,88,0.15)',
-                color: 'var(--success)',
-              }}
+              className="rounded-pill bg-success/15 px-2 py-0.5 text-xs font-semibold text-success"
             >
               {t('stats.new_badge')}
             </m.span>

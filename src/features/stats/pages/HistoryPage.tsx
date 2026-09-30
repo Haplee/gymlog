@@ -328,7 +328,7 @@ export function HistoryPage() {
                             <span className="text-sm font-semibold text-fg">
                               {item.data.title || t('history.gym_session')}
                             </span>
-                            <span className="text-2xs px-1.5 py-0.5 rounded-sm font-bold bg-surface-2 text-fg-muted">
+                            <span className="rounded-pill bg-surface-2 px-2 py-0.5 text-2xs font-semibold text-fg-muted">
                               {t('cardio.health_source')}
                             </span>
                           </div>
@@ -363,7 +363,7 @@ export function HistoryPage() {
                               <span className="text-sm font-semibold text-fg">
                                 {CARDIO_LABELS[item.data.type]}
                               </span>
-                              <span className="text-2xs px-1.5 py-0.5 rounded-sm font-bold bg-error/10 text-error">
+                              <span className="rounded-pill bg-error/10 px-2 py-0.5 text-2xs font-semibold text-error">
                                 {t('stats.cardio_badge')}
                               </span>
                             </div>

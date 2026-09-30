@@ -75,12 +75,12 @@ export function ExerciseRow({
                       : `${s.reps ?? 0} ${t('workout.reps').toLowerCase()}`}
                   </span>
                   {s.is_warmup && (
-                    <span className="text-2xs px-1.5 py-0.5 rounded-sm font-bold uppercase bg-warning/15 text-warning">
+                    <span className="rounded-pill bg-warning/15 px-2 py-0.5 text-2xs font-semibold uppercase text-warning">
                       W
                     </span>
                   )}
                   {typeof s.rpe === 'number' && (
-                    <span className="text-2xs px-1.5 py-0.5 rounded-sm font-bold bg-surface-3 text-fg-muted">
+                    <span className="rounded-pill bg-surface-3 px-2 py-0.5 text-2xs font-semibold text-fg-muted">
                       RPE {s.rpe}
                     </span>
                   )}

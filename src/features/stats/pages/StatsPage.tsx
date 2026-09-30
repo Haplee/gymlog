@@ -21,7 +21,7 @@ import {
 } from '@shared/api/queries';
 import { calcular1RM } from '@shared/lib/brzycki';
 import { onlyRepSets } from '@shared/lib/setShape';
-import { Skeleton } from '@shared/components/ui';
+import { Skeleton, SegmentedControl } from '@shared/components/ui';
 import { KPICard } from '../components/KPICards';
 import { StatsSummary } from '../components/StatsSummary';
 import { CardioStatsSection } from '../components/CardioStatsSection';
@@ -458,7 +458,7 @@ export function StatsPage() {
                 </span>
                 <div className="flex h-28 w-full items-end">
                   <div
-                    className={`w-full rounded-sm ${i === todayIndex ? 'bg-accent' : 'bg-surface-2'}`}
+                    className={`w-full rounded-pill ${i === todayIndex ? 'bg-accent' : 'bg-surface-2'}`}
                     // Proporcional al día más cargado, con un mínimo visible para
                     // que un día flojo no desaparezca del todo.
                     style={{
@@ -570,26 +570,18 @@ export function StatsPage() {
                   {t('stats.weekly_volume')}
                 </span>
               </div>
-              <div className="flex gap-1">
-                {periodButtons.map((p) => (
-                  <button
-                    type="button"
-                    key={p}
-                    onClick={() => setPeriodFilter(p)}
-                    className="text-2xs px-2 py-1 rounded-sm transition-colors font-medium"
-                    style={
-                      periodFilter === p
-                        ? {
-                            backgroundColor: 'var(--interactive-primary)',
-                            color: 'var(--interactive-primary-fg)',
-                          }
-                        : { backgroundColor: 'var(--bg-surface-2)', color: 'var(--text-tertiary)' }
-                    }
-                  >
-                    {PERIOD_LABELS[p]}
-                  </button>
-                ))}
-              </div>
+              {/* Filtro de periodo: cuatro opciones excluyentes que caben en
+                  una píldora, así que es un `SegmentedControl`. Antes eran
+                  cuatro `<button>` de 10px con esquinas de 8px y el color de
+                  fondo puesto a mano por `style`, pegados al borde derecho de
+                  una tarjeta: el grupo se leía como cuatro etiquetas sueltas y
+                  no como un selector. */}
+              <SegmentedControl
+                options={periodButtons.map((p) => ({ value: p, label: PERIOD_LABELS[p] }))}
+                value={periodFilter}
+                onChange={setPeriodFilter}
+                ariaLabel={t('stats.weekly_volume')}
+              />
             </div>
             <Suspense fallback={<ChartFallback />}>
               <VolumeChart data={weeklyVolumeData} view={chartView} onViewChange={setChartView} />

@@ -18,6 +18,7 @@ import {
   Area,
 } from 'recharts';
 import { CHART_COLORS } from '../constants';
+import { SegmentedControl } from '@shared/components/ui';
 
 export function MuscleGroupChart({ data }: { data: { name: string; value: number }[] }) {
   const { formatVol } = useWeight();
@@ -96,25 +97,21 @@ export function VolumeChart({
 
   return (
     <div>
-      <div className="flex items-center justify-end mb-3 gap-1">
-        {(['bar', 'area'] as ChartView[]).map((v) => (
-          <button
-            type="button"
-            key={v}
-            onClick={() => onViewChange(v)}
-            className="text-2xs px-2 py-1 rounded-sm transition-colors font-medium uppercase tracking-wide"
-            style={
-              view === v
-                ? {
-                    backgroundColor: 'var(--interactive-primary)',
-                    color: 'var(--interactive-primary-fg)',
-                  }
-                : { backgroundColor: 'var(--bg-surface-2)', color: 'var(--text-tertiary)' }
-            }
-          >
-            {v === 'bar' ? 'Barras' : 'Área'}
-          </button>
-        ))}
+      {/* Barras / Área. Son dos opciones y cabe una en una píldora, así que va
+          con `SegmentedControl` en vez de con dos `<button>` made a mano: el
+          control trae `role="radiogroup"`, `aria-checked` y anillo de foco, y
+          the forma pasa a ser la misma que la del resto de selectores de la app
+          en vez de un rectángulo de 8px con versalitas de 10px. */}
+      <div className="mb-3 flex items-center justify-end">
+        <SegmentedControl
+          options={[
+            { value: 'bar', label: 'Barras' },
+            { value: 'area', label: 'Área' },
+          ]}
+          value={view}
+          onChange={onViewChange}
+          ariaLabel="Tipo de gráfico"
+        />
       </div>
       <div className="h-[160px]">
         <ResponsiveContainer width="100%" height="100%">

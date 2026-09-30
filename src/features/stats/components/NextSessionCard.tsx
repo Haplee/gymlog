@@ -86,24 +86,24 @@ export function NextSessionCard({
       {/* De dónde se viene y a dónde se va, con el delta de carga. */}
       <div className="mt-3 flex flex-wrap items-center gap-1.5">
         {/* El pasado con los datos del pasado: `baseReps`, no las sugeridas. */}
-        <span className="label-caps rounded-sm bg-surface-2 px-2 py-1 text-fg-muted">
+        <span className="rounded-pill bg-surface-2 px-2.5 py-1 text-xs font-medium text-fg-muted">
           {t('coach.last_label')} · {weightDisplay(suggestion.baseWeight)} × {suggestion.baseReps}
         </span>
-        <span className="label-caps rounded-sm bg-accent/15 px-2 py-1 text-accent">
+        <span className="rounded-pill bg-accent/15 px-2.5 py-1 text-xs font-semibold text-accent">
           {t('coach.next_label')} · {weightDisplay(suggestion.weight)} × {suggestion.reps}
         </span>
         <span className={`label-caps tabular ${deltaTone}`}>{deltaLabel}</span>
       </div>
 
-      <p className="mt-2 text-xs text-fg-muted">{t(suggestion.reasonKey)}</p>
+      <p className="mt-2 text-sm text-fg-muted">{t(suggestion.reasonKey)}</p>
 
-      <p className={`label-caps mt-2 ${confidenceTone}`}>
+      <p className={`mt-2 text-xs font-semibold ${confidenceTone}`}>
         {t(`coach.confidence_${suggestion.confidence}`)}
       </p>
 
       {volumeNote && volume && (
-        <p className="mt-2 flex gap-1.5 rounded-sm bg-surface-2 p-2 text-xs text-fg-muted">
-          <ChartBar className="h-3.5 w-3.5 flex-shrink-0 text-accent" aria-hidden="true" />
+        <p className="mt-2 flex gap-1.5 rounded-card bg-surface-2 p-2.5 text-sm text-fg-muted">
+          <ChartBar className="h-4 w-4 flex-shrink-0 text-accent" aria-hidden="true" />
           <span>
             {t('coach.volume_weekly_sets', { count: volume.acuteSets })} · {volumeNote}
           </span>
@@ -111,8 +111,8 @@ export function NextSessionCard({
       )}
 
       {stall?.stalled && (
-        <p className="mt-2 flex gap-1.5 rounded-sm bg-surface-2 p-2 text-xs text-fg-muted">
-          <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0 text-warning" aria-hidden="true" />
+        <p className="mt-2 flex gap-1.5 rounded-card bg-surface-2 p-2.5 text-sm text-fg-muted">
+          <AlertTriangle className="h-4 w-4 flex-shrink-0 text-warning" aria-hidden="true" />
           <span>{t(`coach.stall.cause_${stall.causeKey}`)}</span>
         </p>
       )}
@@ -121,7 +121,7 @@ export function NextSessionCard({
         <button
           type="button"
           onClick={() => onApply(suggestion)}
-          className="mt-3 w-full min-h-11 rounded-sm bg-accent px-3 text-sm font-semibold text-accent-fg transition-transform active:scale-[0.98]"
+          className="mt-3 flex min-h-11 w-full items-center justify-center rounded-pill bg-accent px-4 text-base font-semibold text-accent-fg transition-transform active:scale-95"
         >
           {t('workout.apply')}
         </button>

@@ -2,12 +2,20 @@ import { memo } from 'react';
 import type { ReactNode } from 'react';
 
 type ChipVariant = 'filter' | 'day';
+type ChipSize = 'sm' | 'md';
 
 interface ChipProps {
   children: ReactNode;
   selected?: boolean;
   onClick?: () => void;
   variant?: ChipVariant;
+  /**
+   * `sm` (36px) para una fila densa de filtros donde caben muchos; `md`
+   * (44px) para el resto, que es el suelo táctil de CLAUDE.md. Por defecto `sm`
+   * para no cambiar la geometría de los selectores de días y las filas de
+   * filtros que ya estaban medidos así.
+   */
+  size?: ChipSize;
   disabled?: boolean;
   className?: string;
 }
@@ -30,13 +38,14 @@ const ChipComponent = ({
   selected = false,
   onClick,
   variant = 'filter',
+  size = 'sm',
   disabled = false,
   className = '',
 }: ChipProps) => {
   const base =
     variant === 'day'
       ? 'w-11 h-11 shrink-0 items-center justify-center text-sm'
-      : 'min-h-9 px-3.5 items-center gap-1.5 text-sm';
+      : `${size === 'md' ? 'min-h-11 px-4' : 'min-h-9 px-3.5'} items-center gap-1.5 text-sm`;
   return (
     <button
       type="button"

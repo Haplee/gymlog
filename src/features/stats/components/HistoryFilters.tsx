@@ -64,13 +64,25 @@ export function HistoryFilters({
     'flex min-h-12 items-center gap-2 glass-2 rounded-card px-3 text-left text-sm font-medium text-fg transition-colors active:bg-hover';
   const optionIconClass = 'h-4 w-4 flex-shrink-0 text-accent';
 
+  // Un solo patrón de "botón secundario en una fila de herramientas": píldora,
+  // surface-2 y el mismo `active:scale-95` que usa `Button`. Antes convivían
+  // en esta fila tres formas distintas —píldora en los dos de navegación,
+  // `rounded-card` en los de exportar e importar— y todas se estiraban con
+  // `hover:scale-[1.02]`, que en táctil no llega a dispararse y en puntero
+  // empuja a los vecinos mientras comprueban si el cursor está encima.
+  const toolbarClass =
+    'flex items-center gap-1.5 px-3.5 min-h-11 rounded-pill bg-surface-2 text-fg text-sm font-semibold transition-transform active:scale-95 cursor-pointer';
+
   return (
-    <div className="mb-3 space-y-2">
-      {/* Segmented control de vista — píldora deslizante */}
+    <div className="mb-4 space-y-3">
+      {/* Segmented control de vista — píldora deslizante. Era `rounded-sm` desde
+          la etapa Stitch, y quedaba un rectángulo de esquinas de 8px pegado
+          justo encima de una fila de píldoras: la forma decía que era otra
+          cosa cuando es el mismo control. */}
       <div
         role="tablist"
         aria-label={t('history.view_label')}
-        className="flex p-1 rounded-sm bg-surface border border-line"
+        className="flex p-1 rounded-pill bg-surface-2"
       >
         {(
           [
@@ -88,14 +100,14 @@ export function HistoryFilters({
               role="tab"
               aria-selected={active}
               onClick={() => onView(v.id)}
-              className={`relative flex-1 py-2.5 text-xs font-semibold rounded-sm transition-colors ${
+              className={`relative flex-1 min-h-9 py-1 px-2 text-sm font-semibold rounded-pill transition-colors ${
                 active ? 'text-accent-fg' : 'text-fg-muted active:text-fg'
               }`}
             >
               {active && (
                 <m.div
                   layoutId="historyViewPill"
-                  className="absolute inset-0 rounded-sm bg-accent shadow-btn-accent"
+                  className="absolute inset-0 rounded-pill bg-accent"
                   transition={{ type: 'spring', stiffness: 500, damping: 35 }}
                 />
               )}
@@ -112,20 +124,12 @@ export function HistoryFilters({
             dos filas seguidas y ninguna forma de distinguir estado de destino.
             Ahora van neutros con el icono en acento, que es como este mismo
             fichero pinta el resto de sus filas de navegación (`optionClass`). */}
-        <button
-          type="button"
-          onClick={() => onOpenStats()}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-pill font-semibold text-sm transition-all hover:scale-[1.02] active:scale-[0.98] bg-surface-2 text-fg"
-        >
+        <button type="button" onClick={() => onOpenStats()} className={toolbarClass}>
           <ChartBar className="w-4 h-4 text-accent" />
           {t('stats.title')}
         </button>
 
-        <button
-          type="button"
-          onClick={() => onOpenUserStats()}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-pill font-semibold text-sm transition-all hover:scale-[1.02] active:scale-[0.98] bg-surface-2 text-fg"
-        >
+        <button type="button" onClick={() => onOpenUserStats()} className={toolbarClass}>
           <IconUser className="w-4 h-4 text-accent" />
           {t('history.my_stats')}
         </button>
@@ -138,12 +142,13 @@ export function HistoryFilters({
               onChange={(e) => onSearchText(e.target.value)}
               placeholder={t('history.search_placeholder')}
               aria-label={t('history.search_placeholder')}
-              className="flex-1 min-w-[10rem] glass-2 rounded-card text-fg text-base p-2 outline-none"
+              className="flex-1 min-w-40 min-h-11 rounded-pill border border-line-interactive bg-surface-2 px-4 text-base text-fg outline-none"
             />
             <select
               value={filterExercise}
               onChange={(e) => onFilterExercise(e.target.value)}
-              className="glass-2 rounded-card text-fg-muted text-base p-2 cursor-pointer transition-all hover:scale-[1.02]"
+              aria-label={t('history.filter_all')}
+              className="min-h-11 rounded-pill border border-line-interactive bg-surface-2 px-4 text-base text-fg-muted cursor-pointer"
             >
               <option value="">{t('history.filter_all')}</option>
               {exercises.map((ex) => (
@@ -152,20 +157,16 @@ export function HistoryFilters({
                 </option>
               ))}
             </select>
-            <button
-              type="button"
-              onClick={() => setExportOpen(true)}
-              className="flex items-center gap-1.5 glass-2 rounded-card text-accent text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
-            >
-              <Download className="w-4 h-4" />
+            {/* Exportar e importar van neutros como el resto de la fila. Antes
+                «Exportar» era el único con el texto en acento de toda la barra,
+                y por eso parecía la acción principal del Historial, que no lo
+                es: la acción principal de la app está en la pestaña de Inicio. */}
+            <button type="button" onClick={() => setExportOpen(true)} className={toolbarClass}>
+              <Download className="w-4 h-4 text-fg-subtle" />
               {t('history.export_btn')}
             </button>
-            <button
-              type="button"
-              onClick={() => setImportOpen(true)}
-              className="flex items-center gap-1.5 glass-2 rounded-card text-fg-muted text-base px-3 py-2 cursor-pointer font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
-            >
-              <Upload className="w-4 h-4" />
+            <button type="button" onClick={() => setImportOpen(true)} className={toolbarClass}>
+              <Upload className="w-4 h-4 text-fg-subtle" />
               {t('history.import_btn')}
             </button>
           </>

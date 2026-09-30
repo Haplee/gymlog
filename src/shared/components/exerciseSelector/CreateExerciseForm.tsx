@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Button } from '@shared/components/ui';
+import { Button, Chip } from '@shared/components/ui';
 import { MuscleGroupIcon } from '@shared/components/CardioIcons';
 import { MUSCLE_GROUPS, suggestMuscleGroup } from '@shared/constants/muscleGroups';
 import { muscleGroupLabel } from '@shared/lib/muscleGroupLabel';
@@ -70,27 +70,18 @@ export function CreateExerciseForm({
           const etiqueta = muscleGroupLabel(mg, t);
           return (
             <div key={mg} className="flex items-center">
-              <button
-                type="button"
-                onClick={() => onToggleSecondary(mg)}
-                aria-pressed={active}
-                className={`flex items-center gap-1 px-2.5 min-h-9 text-xs rounded-sm border transition-colors ${
-                  active
-                    ? 'bg-accent/15 text-accent border-accent'
-                    : 'bg-surface-2 text-fg-muted border-line'
-                }`}
-              >
-                <MuscleGroupIcon name={mg} className="w-3 h-3" />
+              <Chip size="md" selected={active} onClick={() => onToggleSecondary(mg)}>
+                <MuscleGroupIcon name={mg} className="w-3.5 h-3.5" />
                 {etiqueta}
                 {active && <span className="tabular-nums">· {secondaries[mg]}%</span>}
-              </button>
+              </Chip>
               {active && (
                 <span className="flex items-center ml-1">
                   <button
                     type="button"
                     onClick={() => onAdjustSecondary(mg, -10)}
                     aria-label={`${etiqueta} -10%`}
-                    className="flex h-11 w-11 items-center justify-center rounded-sm bg-surface-2 text-fg-muted"
+                    className="flex h-11 w-11 items-center justify-center rounded-pill bg-surface-2 text-fg-muted active:scale-95 transition-transform"
                   >
                     <Minus className="h-4 w-4" />
                   </button>
@@ -98,7 +89,7 @@ export function CreateExerciseForm({
                     type="button"
                     onClick={() => onAdjustSecondary(mg, 10)}
                     aria-label={`${etiqueta} +10%`}
-                    className="ml-0.5 flex h-11 w-11 items-center justify-center rounded-sm bg-surface-2 text-fg-muted"
+                    className="ml-0.5 flex h-11 w-11 items-center justify-center rounded-pill bg-surface-2 text-fg-muted active:scale-95 transition-transform"
                   >
                     <Plus className="h-4 w-4" />
                   </button>
