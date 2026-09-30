@@ -46,7 +46,17 @@ export function EmptyWorkoutState({ onAddSet, lastWorkout, onRepeatLast }: Empty
           <Repeat className="h-4 w-4 flex-shrink-0 text-fg-subtle" aria-hidden="true" />
           <span className="min-w-0 flex-1">
             <span className="block text-sm text-fg">{t('workout.repeat_last')}</span>
-            <span className="mt-0.5 block truncate text-xs text-fg-subtle">{lastWorkout.name}</span>
+            {/* `workouts.name` es nullable y en casi ninguna sesión viene puesto,
+                así que la línea solo se pinta cuando hay algo que decir. Antes
+                salía un `span` vacío con su `mt-0.5`, o sea una segunda línea de
+                alto sin nada, que es justo lo que hace que un bloque parezca
+                descuidado. No se sustituye por la fecha porque la tarjeta
+                «Última sesión», más abajo, ya la enseña. */}
+            {lastWorkout.name && (
+              <span className="mt-0.5 block truncate text-xs text-fg-subtle">
+                {lastWorkout.name}
+              </span>
+            )}
           </span>
         </button>
       )}
