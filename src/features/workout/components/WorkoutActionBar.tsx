@@ -54,7 +54,10 @@ export function WorkoutActionBar({
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
 
   return (
-    <div className="-mx-4 mt-3 px-4 pt-3 pb-3 bg-canvas border-t border-line">
+    // Sin `-mx-4`: la barra ya no va a sangre al pie de la pantalla, sino dentro
+    // del flujo, entre el registro y los chips de consulta. El separador de
+    // arriba es lo que la arranca del listado de series.
+    <div className="mt-3 border-t border-line pt-3">
       {message && (
         <div
           className="mb-2 text-center text-sm"

@@ -67,6 +67,20 @@ export function roundToStep(weight: number, step: number): number {
   return Math.round(Math.round(weight / step) * step * 100) / 100;
 }
 
+/**
+ * Baja al múltiplo del escalón anterior o igual, con 2 decimales.
+ *
+ * Existe para el calentamiento, y por eso va a la baja y no al más cercano: una
+ * serie de calentamiento nunca puede pesar más que la de trabajo. Redondeando al
+ * alza, un 80 % de 82,5 se convertiría en 80 —que ya es la serie real— y la
+ * instrucción sería absurda. Aquí el suelo garantiza que el calentamiento es
+ * siempre, como mucho, igual de pesado.
+ */
+export function floorToStep(weight: number, step: number): number {
+  if (!Number.isFinite(weight) || !Number.isFinite(step) || step <= 0) return weight;
+  return Math.floor(Math.floor(weight / step + Number.EPSILON) * step * 100) / 100;
+}
+
 export interface NextLoadOptions {
   /** Subida relativa buscada (por defecto `TARGET_INCREASE_RATIO`). */
   ratio?: number;

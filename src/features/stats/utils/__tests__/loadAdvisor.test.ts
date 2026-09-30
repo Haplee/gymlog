@@ -425,3 +425,117 @@ describe('progresión en peso corporal', () => {
     expect(advice.suggestion.sets).toBeUndefined();
   });
 });
+
+describe('escalera de calentamiento', () => {
+  it('son dos series, no una escalera larga', () => {
+    const advice = exigir(
+      buildLoadAdvice({
+        sessions: [sesion('2026-08-14', 80, [8, 8, 8]), sesion('2026-08-21', 80, [8, 8, 8])],
+        repMin: 8,
+        repMax: 10,
+      }),
+    );
+
+    // La evidencia (Ribeiro 2020) es de 1-2 series, y la revisión de 2025
+    // avisa de que las escaleras de 4-5 pasos son el protocolo de un test de
+    // 1RM, no el de un entrenamiento. Cuatro series aquí serían inventarse.
+    expect(advice.suggestion.warmup.length).toBeLessThanOrEqual(2);
+  });
+
+  it('la serie alta es la que pesa, y con pocas reps', () => {
+    const advice = exigir(
+      buildLoadAdvice({
+        sessions: [sesion('2026-08-14', 80, [8, 8, 8]), sesion('2026-08-21', 80, [8, 8, 8])],
+        repMin: 8,
+        repMax: 10,
+      }),
+    );
+
+    const [, alta] = advice.suggestion.warmup;
+    const trabajo = advice.suggestion.weight;
+    // ~80 % del peso de trabajo: Sousa 2024 encontró que calentar al 80 % dio
+    // más volumen total que al 60 % o al 40 %.
+    expect(alta.weight).toBeLessThan(trabajo);
+    expect(alta.weight).toBeGreaterThanOrEqual(trabajo * 0.7);
+    // 5 reps, no 8: la serie alta casi no cansa, solo prepara.
+    expect(alta.reps).toBeLessThan(advice.suggestion.warmup[0].reps);
+  });
+
+  it('el calentamiento nunca pesa lo que la serie de trabajo', () => {
+    const advice = exigir(
+      buildLoadAdvice({
+        sessions: [sesion('2026-08-14', 102.5, [6, 6, 6]), sesion('2026-08-21', 102.5, [6, 6, 6])],
+        repMin: 6,
+        repMax: 8,
+      }),
+    );
+
+    // El redondeo va hacia abajo a propósito: al alza, un 80 % de 82,5 se
+    // convertiría en 80 y la instrucción sería «haz 80 y luego 82,5».
+    for (const paso of advice.suggestion.warmup) {
+      expect(paso.weight).toBeLessThan(advice.suggestion.weight);
+    }
+  });
+
+  it('en cargas muy bajas se queda con la ligera y descarta la alta', () => {
+    const advice = exigir(
+      buildLoadAdvice({
+        sessions: [
+          sesion('2026-08-14', 7.5, [15, 15, 15]),
+          sesion('2026-08-21', 7.5, [15, 15, 15]),
+        ],
+        repMin: 12,
+        repMax: 20,
+        stepKg: 2.5,
+      }),
+    );
+
+    // A 7,5 kg el 80 % son 6 kg, que al bajar al escalón queda en 5: medio kilo
+    // por debajo de la serie real. Calentar a 5 para levantar 7,5 es teatro, así
+    // que esa serie se cae y solo queda la de preparación.
+    expect(advice.suggestion.warmup).toEqual([{ weight: 2.5, reps: 8 }]);
+  });
+
+  it('en peso corporal no escala un porcentaje del propio cuerpo', () => {
+    const advice = exigir(
+      buildLoadAdvice({
+        sessions: [sesion('2026-08-14', 70, [15, 15, 15]), sesion('2026-08-21', 70, [15, 15, 15])],
+        repMin: 12,
+        repMax: 20,
+        bodyweight: true,
+      }),
+    );
+
+    // Un «80 % de 70 kg» son 56 kg de lastre: no es un calentamiento, es otra
+    // exercise. En peso corporal se progresa por repeticiones.
+    expect(advice.suggestion.warmup).toEqual([]);
+  });
+
+  it('sigue al peso frenado, no al que pedía el motor antes de los frenos', () => {
+    // Seis sesiones sin mejorar: el motor pediría 102,5 kg, pero el freno de
+    // estancamiento largo retrocede a 90. La escalera tiene que construirse
+    // sobre 90, no sobre 102,5, o calentaría hacia una carga que ya no se pide.
+    const fechas = [
+      '2026-08-05',
+      '2026-08-08',
+      '2026-08-11',
+      '2026-08-14',
+      '2026-08-17',
+      '2026-08-20',
+    ];
+    const advice = exigir(
+      buildLoadAdvice({
+        sessions: fechas.map((d) => sesion(d, 100, [10, 10, 10])),
+        ...RANGO,
+      }),
+    );
+
+    expect(advice.suggestion.weight).toBe(90);
+    for (const paso of advice.suggestion.warmup) {
+      expect(paso.weight).toBeLessThan(90);
+    }
+    // Y ninguna serie de calentamiento puede pesar lo que el motor habría
+    // pedido antes del freno: eso es exactamente el fallo que se evita.
+    expect(Math.max(0, ...advice.suggestion.warmup.map((p) => p.weight))).toBeLessThan(102.5);
+  });
+});

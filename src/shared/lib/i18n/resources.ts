@@ -893,7 +893,12 @@ export const resources = {
           'Aún no hay historial para recomendar un peso. Escribe tú las series y la próxima vez te propongo carga.',
         session_no_advice:
           'No hay ninguna serie con peso ni tiempo. Rellena al menos una antes de terminar.',
-        session_log: 'Lo que has hecho',
+        session_plan_verb: 'Cómo hacerlo',
+        session_plan_body: 'Vas a hacer {{sets}} × {{reps}} a {{weight}} {{unit}}.',
+        session_warmup_caption: 'Las de arriba son de calentamiento: ve subiendo de una en una.',
+        session_no_warmup:
+          'Con este peso no hace falta calentamiento previo: coge la primera serie a ritmo.',
+        session_adjust_sets: 'Ajustar serie a serie',
         session_add_set: 'Añadir serie',
         session_remove_set: 'Quitar la serie {{n}}',
         session_reps_of_set: 'Repeticiones de la serie {{n}}',
@@ -2048,7 +2053,12 @@ export const resources = {
           'Not enough history to recommend a weight yet. Type the sets yourself and next time you get a load.',
         session_no_advice:
           'No set has a weight or a time yet. Fill in at least one before finishing.',
-        session_log: 'What you actually did',
+        session_plan_verb: 'How to do it',
+        session_plan_body: 'You are doing {{sets}} × {{reps}} at {{weight}} {{unit}}.',
+        session_warmup_caption: 'The ones above are warm-up sets: work through them one by one.',
+        session_no_warmup:
+          'At this weight no warm-up is needed: take the first set at a controlled pace.',
+        session_adjust_sets: 'Adjust set by set',
         session_add_set: 'Add set',
         session_remove_set: 'Remove set {{n}}',
         session_reps_of_set: 'Reps of set {{n}}',

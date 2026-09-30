@@ -20,6 +20,7 @@ import {
   MAX_INCREASE_RATIO,
   TARGET_INCREASE_RATIO,
   backOffLoad,
+  floorToStep,
   nextAchievableLoad,
 } from '@shared/lib/loadStep';
 import { format, startOfWeek } from 'date-fns';
@@ -110,6 +111,66 @@ export interface LoadSuggestion {
   reasonKey: string;
   /** Cuánta evidencia hay detrás: sesiones con esfuerzo registrado. */
   confidence: 'low' | 'medium' | 'high';
+  /**
+   * Escalera de calentamiento hasta el peso de trabajo. Vacía cuando no hace
+   * falta: en cargas muy bajas o en peso corporal, calentarse es teatro.
+   */
+  warmup: WarmupStep[];
+}
+
+/** Una serie de calentamiento por encima de la cual se entra a la de trabajo. */
+export interface WarmupStep {
+  weight: number;
+  reps: number;
+}
+
+/**
+ * Escalera de calentamiento específica del ejercicio, en porcentaje del **peso
+ * de trabajo**, no del 1RM.
+ *
+ * Los porcentajes salen de la literatura, no de ojo:
+ *
+ *  - **Ribeiro et al. 2020** (Int J Environ Res Public Health) compararon en
+ *    sentadilla y press banca un calentamiento progresivo de 2×6 al 40 % y al
+ *    80 % de la carga de trabajo frente a uno solo al 40 % o solo al 80 %. El
+ *    progresivo fue el mejor, y concluyeron explícitamente que calentar con pocas
+ *    reps y cargas bajas no basta.
+ *  - **Sousa et al. 2024** (PMID 39593476) midieron volumen total después de
+ *    calentar al 40, 60 u 80 % del 10RM. Ganó el 80 % con 5 reps, por encima
+ *    del 60 % y del 40 %: de ahí las pocas reps en la serie alta.
+ *  - La revisión de 2025 coincide: 1-2 series, y la que más carga es la que más
+ *    cuenta; la ligera ayuda pero es secundaria. Los estudios que solo usaron
+ *    1-2 series al 40-60 % no vieron ventaja.
+ *
+ * De ahí salen las tres decisiones que no son obvias: **son dos series, no
+ * cuatro** (una escalera larga es el protocolo de un test de 1RM, no el de un
+ * entrenamiento), la **alta es la importante** y va con pocas reps, y
+ * redondear va **hacia abajo** para que un calentamiento nunca pese lo que la
+ * serie de trabajo.
+ */
+export function buildWarmupRamp(workingWeight: number, stepKg?: number): WarmupStep[] {
+  const step = stepKg && stepKg > 0 ? stepKg : DEFAULT_LOAD_STEP_KG;
+  if (!Number.isFinite(workingWeight) || workingWeight <= 0) return [];
+
+  // Escalón: ~40 % con más reps, ~80 % con pocas. El orden es de menor a mayor
+  // porque es una escalera, no dos sugerencias sueltas.
+  const ligera = floorToStep(workingWeight * 0.4, step);
+  const alta = floorToStep(workingWeight * 0.8, step);
+
+  const ramp: WarmupStep[] = [];
+  // La ligera solo entra si pesa al menos un escalón menos que la de trabajo: si
+  // al bajar al escalón queda pegada a ella, ya no es un calentamiento.
+  if (ligera > 0 && workingWeight - ligera >= step) ramp.push({ weight: ligera, reps: 8 });
+  // La alta es la que la literatura marca como la importante, así que se exige
+  // algo más de margen: al menos dos escalones por debajo, para que siga
+  // siendo distinguible de la serie real.
+  if (alta > 0 && workingWeight - alta >= 2 * step) ramp.push({ weight: alta, reps: 5 });
+
+  // Nunca dos escalones idénticos: si el suelo de uno coincide con el otro, solo
+  // cuenta el más alto, que es el que la evidencia dice que importa.
+  if (ramp.length === 2 && ramp[0].weight === ramp[1].weight) ramp.shift();
+
+  return ramp;
 }
 
 export interface AutoRegOptions {
@@ -341,6 +402,12 @@ export function suggestNextLoad(
     deltaPct: baseWeight > 0 ? Math.round(((weight - baseWeight) / baseWeight) * 1000) / 10 : 0,
     reasonKey,
     confidence,
+    // La escalera de calentamiento la calcula `buildLoadAdvice` al final, y no
+    // aquí: los frenos de estancamiento, volumen y recuperación pueden bajar el
+    // peso de trabajo, y una escalera construida sobre el peso anterior al freno
+    // calentaría hacia una carga que ya no se va a pedir. Aquí solo se cumple el
+    // contrato del tipo.
+    warmup: [],
   });
 
   /** Sugerencia de peso corporal en el techo: más series, o lastrar. */
@@ -494,6 +561,8 @@ export function suggestFromLastSession(
     deltaPct: top.weight > 0 ? Math.round(((weight - top.weight) / top.weight) * 1000) / 10 : 0,
     reasonKey,
     confidence: 'low',
+    // La escalera la pone `buildLoadAdvice`, sobre el peso ya frenado.
+    warmup: [],
   });
 
   // Sin esfuerzo registrado este es el único camino, así que es el que decide de

@@ -26,6 +26,7 @@
 import {
   applyReadiness,
   applyStall,
+  buildWarmupRamp,
   detectStall,
   suggestFromLastSession,
   suggestNextLoad,
@@ -74,5 +75,18 @@ export function buildLoadAdvice(input: LoadAdviceInput): LoadAdvice | null {
   );
   if (!suggestion) return null;
 
-  return { suggestion, stall, volume: input.volume ?? null };
+  // La escalera de calentamiento se arma **aquí**, y no en el motor, por una
+  // razón concreta: es el primer sitio donde existe el peso definitivo. Los tres
+  // frenos de arriba pueden bajarlo, y calentar hacia el peso previo al freno
+  // sería calentar hacia una carga que la app ya no va a pedir. En peso corporal
+  // no se escala: el número del motor es el del propio cuerpo, y un «80 % de tu
+  // peso» es un lastre absurdo, no un calentamiento.
+  return {
+    suggestion: {
+      ...suggestion,
+      warmup: input.bodyweight ? [] : buildWarmupRamp(suggestion.weight, stepKg),
+    },
+    stall,
+    volume: input.volume ?? null,
+  };
 }

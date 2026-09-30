@@ -12,7 +12,6 @@ import { useAuthStore } from '@features/auth/stores/authStore';
 import { useWorkoutStore } from '@features/workout/stores/workoutStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
 import { useWeight } from '@shared/hooks/useWeight';
-import { formatWeightInput } from '@shared/lib/weight';
 import { calcular1RM } from '@shared/lib/brzycki';
 import { loadStepFromSettings } from '@shared/hooks/useLoadStep';
 import { useRoutineStore } from '@features/routine/stores/routineStore';
@@ -40,8 +39,6 @@ import { SessionRatingSheet } from '@features/workout/components/SessionRatingSh
 import { WorkoutActionBar } from '@features/workout/components/WorkoutActionBar';
 import { LastSessionCard } from '@features/workout/components/LastSessionCard';
 import { HealthMetricsCard } from '@features/wearables/components/HealthMetricsCard';
-import { NextSessionCard } from '@features/stats/components/NextSessionCard';
-import { useExerciseAdvice } from '@features/stats/hooks/useExerciseAdvice';
 import { useExerciseRepRange } from '@shared/hooks/useExerciseRepRange';
 import {
   readSaveScope,
@@ -50,7 +47,6 @@ import {
   type SaveScope,
 } from '@features/workout/lib/saveScopePreference';
 import { useProgressionStore } from '@features/routine/stores/progressionStore';
-import type { LoadSuggestion } from '@features/stats/utils/autoregulation';
 import { pickDaily, pickSleepFor } from '@features/wearables/utils/pickDaily';
 import {
   useWearableDaily,
@@ -331,20 +327,12 @@ export function WorkoutPage() {
   );
   const isBodyweightExercise = isBodyweightLoad(selectedExercise?.load_type);
 
-  // Sugerencia de carga del motor determinista para el ejercicio activo.
-  //
-  // El rango de reps objetivo va por el resolutor compartido, igual que en la
-  // sesión de rutina: sin él esta pantalla caía al [8, 12] por defecto de
-  // `suggestProgression` y recomendaba un peso distinto para el mismo ejercicio.
+  // Rango de reps objetivo del ejercicio activo, resuelto por el mismo hook que
+  // usa la sesión de rutina: sin él el motor cae al [8, 12] por defecto de
+  // `suggestProgression` y guardaría una serie con un rango distinto al que se
+  //Recommendó en la pantalla de rutina.
   const activeExerciseName = selectedExercise?.name || customExerciseName;
   const { repMin, repMax } = useExerciseRepRange(activeExerciseName);
-  const exerciseAdvice = useExerciseAdvice(user?.id, activeExerciseId ?? undefined, {
-    repMin,
-    repMax,
-    bodyweight: isBodyweightExercise,
-    muscleGroup: selectedExercise?.muscle_group ?? undefined,
-    equipment: selectedExercise?.equipment ?? null,
-  });
 
   // Mantener el store al día con el contexto de peso corporal del ejercicio activo.
   useEffect(() => {
@@ -705,24 +693,6 @@ export function WorkoutPage() {
     [sets, applyCopiedSets],
   );
 
-  // «Aplicar» de la tarjeta de sugerencia: rellena la serie en curso con el peso
-  // y reps recomendados (en kg, como guarda el store). Cada serie nueva hereda
-  // el valor de la anterior, así que basta con tocar la última.
-  const handleApplyAdvice = useCallback(
-    (suggestion: LoadSuggestion) => {
-      const weight = String(suggestion.weight);
-      const reps = String(suggestion.reps);
-      if (sets.length === 0) {
-        addSet();
-        updateSet(0, { weight, reps });
-      } else {
-        updateSet(sets.length - 1, { weight, reps });
-      }
-      void impact(ImpactStyle.Light);
-    },
-    [sets.length, addSet, updateSet],
-  );
-
   const handleSaveNote = useCallback(
     async (text: string) => {
       if (!user || !activeExerciseId || !text) return;
@@ -811,7 +781,12 @@ export function WorkoutPage() {
    * en cuanto hay una serie hecha, pero justo antes de la primera serie —el
    * momento en que el contexto es más útil— es cuando las dos tarjetas están
    * desplegadas. Bajarlas hace que ese momento siga siendo el bueno sin que el
-   * registro quede escondido detrás de dos tarjetas.   */
+   * registro quede escondido detrás de dos tarjetas.
+   *
+   * Aquí vive solo lo que se hizo la última vez. La recomendación de carga —
+   *peso, si hay que subir o bajar y el porqué— se cuenta en la pantalla de
+   * rutina, junto al plan del día: aquí estorba, porque quien está a media
+   * sesión ya sabe qué peso usó y solo necesita el dato para comparar. */
   const bloqueContexto = activeExerciseId && (
     <div className="mt-10">
       {contextoAbierto ? (
@@ -822,25 +797,13 @@ export function WorkoutPage() {
             onCopySets={handleCopySets}
           />
 
-          {exerciseAdvice && (
-            <div className="mt-3">
-              <NextSessionCard
-                advice={{
-                  ...exerciseAdvice,
-                  exercise: selectedExercise?.name ?? customExerciseName ?? '',
-                }}
-                onApply={handleApplyAdvice}
-              />
-            </div>
-          )}
-
           {haySerieHecha && (
             <button
               type="button"
               onClick={() => abrirContexto(false)}
               className="label-caps mt-2 flex min-h-11 w-full items-center justify-center gap-1.5 text-fg-subtle active:opacity-60"
             >
-              <ChevronDown className="h-3.5 w-3.5 rotate-180" aria-hidden="true" />
+              <ChevronDown className="h-3.5 h-3.5 rotate-180" aria-hidden="true" />
               {t('workout.context_hide')}
             </button>
           )}
@@ -851,13 +814,7 @@ export function WorkoutPage() {
           onClick={() => abrirContexto(true)}
           className="flex min-h-11 w-full items-center justify-between gap-2 rounded-pill bg-surface-2 px-4 text-left transition-colors active:bg-hover"
         >
-          <span className="label-caps text-fg-muted">
-            {exerciseAdvice
-              ? `${t('coach.next_label')} · ${formatWeightInput(
-                  convert(exerciseAdvice.suggestion.weight),
-                )} ${weightUnit} × ${exerciseAdvice.suggestion.reps}`
-              : t('workout.context_show')}
-          </span>
+          <span className="label-caps text-fg-muted">{t('workout.context_show')}</span>
           <ChevronDown className="h-4 w-4 flex-shrink-0 text-fg-subtle" aria-hidden="true" />
         </button>
       )}
@@ -979,6 +936,23 @@ export function WorkoutPage() {
               focusSet={focusSet}
             />
 
+            {/* La acción va antes que la referencia. Quien entrena no va a
+                buscar el registro de discos: va a confirmar la serie y guardar.
+                Los chips y los récords son consulta, y la consulta va detrás. */}
+            <WorkoutActionBar
+              message={message}
+              messageTone={messageTone}
+              saving={saving}
+              saveSuccess={saveSuccess}
+              canRemoveAll={sets.length > 1}
+              hasRating={sessionRating !== null}
+              hasNotes={!!sessionNotes}
+              onAddSet={handleAddSet}
+              onRemoveAll={removeAllSets}
+              onOpenRating={() => setShowRating(true)}
+              onSave={handleSave}
+            />
+
             {/* Chips de la maqueta: calculadora de discos y 1RM estimado.
                 Sustituyen a la cabecera con el récord suelto: la misma
                 información, pero pulsable y en su sitio.
@@ -1039,22 +1013,6 @@ export function WorkoutPage() {
       {/* El contexto, ahora debajo del registro y no encima. Lo que haces va
           antes que lo que consultas. */}
       {bloqueContexto}
-
-      {sets.length > 0 && (
-        <WorkoutActionBar
-          message={message}
-          messageTone={messageTone}
-          saving={saving}
-          saveSuccess={saveSuccess}
-          canRemoveAll={sets.length > 1}
-          hasRating={sessionRating !== null}
-          hasNotes={!!sessionNotes}
-          onAddSet={handleAddSet}
-          onRemoveAll={removeAllSets}
-          onOpenRating={() => setShowRating(true)}
-          onSave={handleSave}
-        />
-      )}
 
       <AnimatePresence>
         {showRating && (
