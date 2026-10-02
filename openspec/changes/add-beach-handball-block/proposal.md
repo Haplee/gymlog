@@ -20,18 +20,18 @@
 No es "el mismo balonmano pero en la playa". Tres reglas cambian el problema
 físico, y están verificadas contra el reglamento oficial de la IHF:
 
-| Regla | Valor | Por qué importa |
-|---|---|---|
-| Pista | **27 × 12 m**, no 40 × 20 | Un tercio del ancho. Cambios de dirección constantes |
-| Arena | **≥ 40 cm de profundidad** | Mayor coste energético y **menor impacto** ([Binnie 2013](https://pubmed.ncbi.nlm.nih.gov/23968257/)) |
-| Formato | **2 × 10 min, descanso 5 min** | Cada periodo se puntúa aparte; a igualdad, **gol de oro**. No hay empate |
-| Jugadores | 3 de campo + portero | 훨씬 poco espacio por jugador |
-| Contacto | **Ninguno** | Menor riesgo de colisión que el indoor |
-| Calzado | **Descalzo obligatorio** | Pie y tobillo cargan todo el trabajo |
-| Puntos | Normal 1; **de volea, con efecto, del portero y a 6 m son 2** | El acrobático puntúa el doble. Salta y gira |
+| Regla     | Valor                                                         | Por qué importa                                                                                       |
+| --------- | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Pista     | **27 × 12 m**, no 40 × 20                                     | Un tercio del ancho. Cambios de dirección constantes                                                  |
+| Arena     | **≥ 40 cm de profundidad**                                    | Mayor coste energético y **menor impacto** ([Binnie 2013](https://pubmed.ncbi.nlm.nih.gov/23968257/)) |
+| Formato   | **2 × 10 min, descanso 5 min**                                | Cada periodo se puntúa aparte; a igualdad, **gol de oro**. No hay empate                              |
+| Jugadores | 3 de campo + portero                                          | Un tercio del espacio por jugador                                                                     |
+| Contacto  | **Ninguno**                                                   | Menor riesgo de colisión que el indoor                                                                |
+| Calzado   | **Descalzo obligatorio**                                      | Pie y tobillo cargan todo el trabajo                                                                  |
+| Puntos    | Normal 1; **de volea, con efecto, del portero y a 6 m son 2** | El acrobático puntúa el doble. Salta y gira                                                           |
 
-*(Reglamento IHF de Balonmano Playa, ed. 3-oct-2021 y cambios en vigor desde el
-1-abr-2026; reglamento EHF Beach EURO 7.30.)*
+_(Reglamento IHF de Balonmano Playa, ed. 3-oct-2021 y cambios en vigor desde el
+1-abr-2026; reglamento EHF Beach EURO 7.30.)_
 
 ### Lo que tus datos dicen
 
@@ -46,28 +46,28 @@ que toca. No hay que tocarlo.
 
 **Lo que falta es la capa específica.** Reparto por patrón de movimiento:
 
-| Patrón | Series | Últ. 4 sem | Volumen | e1RM máx |
-|---|---|---|---|---|
-| Sin clasificar | 491 | **0** | 217.474 kg | 169,6 |
-| **Tirón** | 382 | 57 | 184.782 kg | 247,2 |
-| **Empuje** | 208 | 32 | 87.826 kg | 126,6 |
-| **Bisagra** | 95 | 31 | 70.017 kg | 153,4 |
-| Aislamiento | 104 | 13 | 65.343 kg | 163,6 |
-| Sentadilla | 132 | 23 | 56.793 kg | 146,3 |
-| Core | 64 | 12 | 24.366 kg | 253,4 |
-| **Pliometría** | **13** | **0** | 8.175 kg | 230,6 |
+| Patrón         | Series | Últ. 4 sem | Volumen    | e1RM máx |
+| -------------- | ------ | ---------- | ---------- | -------- |
+| Sin clasificar | 491    | **0**      | 217.474 kg | 169,6    |
+| **Tirón**      | 382    | 57         | 184.782 kg | 247,2    |
+| **Empuje**     | 208    | 32         | 87.826 kg  | 126,6    |
+| **Bisagra**    | 95     | 31         | 70.017 kg  | 153,4    |
+| Aislamiento    | 104    | 13         | 65.343 kg  | 163,6    |
+| Sentadilla     | 132    | 23         | 56.793 kg  | 146,3    |
+| Core           | 64     | 12         | 24.366 kg  | 253,4    |
+| **Pliometría** | **13** | **0**      | 8.175 kg   | 230,6    |
 
 Y por grupo muscular ponderado:
 
-| Grupo | Volumen | % |
-|---|---|---|
-| Espalda | 195.463 kg | 27,3 % |
-| Pierna | 170.484 kg | 23,9 % |
-| Pecho | 105.205 kg | 14,7 % |
-| Hombro | 70.322 kg | 9,8 % |
-| Bíceps | 48.267 kg | 6,8 % |
-| Glúteo | 39.859 kg | 5,6 % |
-| Tríceps | 36.635 kg | 5,1 % |
+| Grupo    | Volumen       | %         |
+| -------- | ------------- | --------- |
+| Espalda  | 195.463 kg    | 27,3 %    |
+| Pierna   | 170.484 kg    | 23,9 %    |
+| Pecho    | 105.205 kg    | 14,7 %    |
+| Hombro   | 70.322 kg     | 9,8 %     |
+| Bíceps   | 48.267 kg     | 6,8 %     |
+| Glúteo   | 39.859 kg     | 5,6 %     |
+| Tríceps  | 36.635 kg     | 5,1 %     |
 | **Core** | **35.221 kg** | **4,9 %** |
 
 **Tres ausencias que no salen en el volumen:**
@@ -97,12 +97,12 @@ Y por grupo muscular ponderado:
 
 ### Los cuatro riesgos concretos, con su epidemiology
 
-| Zona | Dato | Fuente |
-|---|---|---|
-| **Isquiotibiales** | 45 % de las lesiones musculares. Causa: aceleraciones, pivotes y fintas | [Martín-Guzón 2021](https://pmc.ncbi.nlm.nih.gov/articles/PMC8751175/) |
-| **Tobillo** | 34 % en hombres de nivel internacional; 50 % de los ligamentos afectados son peroneos | ídem |
-| **Hombro** | 15 % de lesiones, y **tercera en tiempo de recuperación** | [Aspetar](https://journal.aspetar.com/en/journals/volume-13-targeted-topic-sports-medicine-in-handball/injuries-in-handball) |
-| **Global playa** | Incidencia **baja**: 651 atletas, mayoría vuelve en 2 meses, rara vez cirugía | [Degenhardt 2025](https://pmc.ncbi.nlm.nih.gov/articles/PMC12323119/) |
+| Zona               | Dato                                                                                  | Fuente                                                                                                                       |
+| ------------------ | ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| **Isquiotibiales** | 45 % de las lesiones musculares. Causa: aceleraciones, pivotes y fintas               | [Martín-Guzón 2021](https://pmc.ncbi.nlm.nih.gov/articles/PMC8751175/)                                                       |
+| **Tobillo**        | 34 % en hombres de nivel internacional; 50 % de los ligamentos afectados son peroneos | ídem                                                                                                                         |
+| **Hombro**         | 15 % de lesiones, y **tercera en tiempo de recuperación**                             | [Aspetar](https://journal.aspetar.com/en/journals/volume-13-targeted-topic-sports-medicine-in-handball/injuries-in-handball) |
+| **Global playa**   | Incidencia **baja**: 651 atletas, mayoría vuelve en 2 meses, rara vez cirugía         | [Degenhardt 2025](https://pmc.ncbi.nlm.nih.gov/articles/PMC12323119/)                                                        |
 
 Tu isquiotibial trabajo actual: peso muerto rumiano (11 series), curl femoral
 tumbado (18), curl femoral sentado (9). **No hay ni un Nordic curl.** Es el
