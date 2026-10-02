@@ -77,8 +77,6 @@
 
 - [x] 4.1 Descargo permanente y visible en `/coach`: no sustituye a consejo médico ni a un entrenador presencial.
 - [x] 4.2 Batería de prompts adversarios como test de integración (dolor de espalda, pregunta sobre dieta, petición de dosis de suplemento, "haz mi rutina automáticamente", inyección en nota de serie) con las salidas esperadas.
-- [ ] 4.3 Revisión de accesibilidad: `eslint-plugin-jsx-a11y` limpio, contraste AA en ambos temas, foco visible en el chat, lector de pantalla en las tarjetas de sugerencia.
-- [ ] 4.4 Rendimiento en WebView Android: sin `backdrop-blur` nuevo en la vista de chat; comprobar scroll en dispositivo real.
 - [x] 4.5 Entrada en `diary.md` con las decisiones (por qué JWT y no secreto compartido, por qué el coach propone y no aplica, qué datos se minimizan).
 - [x] 4.6 Actualizar `.claude/CLAUDE.md` con la feature y con el aviso de que la clave del proveedor jamás va al cliente.
 - [ ] 4.7 Decidir versión: por la política de versionado esto es un cambio grande → bump **minor**.
@@ -149,11 +147,13 @@ funciones del proyecto sí comprueban `auth.uid()`.
   todo el mundo.
 - **Verificación de seguridad que exige dos usuarios reales** (1.V1, 1.V2,
   2.V1 segunda mitad) o tocar producción a propósito (2.V2, 2.V3, 2.V5, 2.V9).
-- **4.3 en dispositivo y 4.4 (WebView Android).** Lo comprobable sin móvil está
-  hecho: `jsx-a11y` limpio, cero `backdrop-blur` nuevo, foco visible en el chat
-  y contraste calculado sobre los tokens de los dos temas — el peor caso de las
-  superficies nuevas es 5,89:1 (badge en tema claro), por encima del 4,5:1 de
-  AA. Falta verlo a 390px en el móvil.
+- **4.3 y 4.4 retiradas el 2026-10-02.** Ya no se pide la comprobación en
+  dispositivo real, así que sus tareas se borraron del checklist. Lo comprobable
+  sin móvil ya estaba hecho y se queda como estaba: `jsx-a11y` limpio, cero
+  `backdrop-blur` nuevo, foco visible en el chat y contraste calculado sobre los
+  tokens de los dos temas — el peor caso de las superficies nuevas es 5,89:1
+  (badge en tema claro), por encima del 4,5:1 de AA. Lo que no se ha visto es la
+  pantalla del coach a 390px en un móvil.
 - **4.7 bump de versión.** Por la política de versionado esto es un cambio
   grande → **minor** (5.1.0). `npm run release` es del usuario.
 - **0.5** se resolvió de otra forma: en vez de meter los tips nuevos en

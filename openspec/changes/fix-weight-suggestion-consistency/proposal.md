@@ -36,6 +36,7 @@ Además, la tarjeta de sugerencia **miente al mostrar el pasado**: `NextSessionC
 
 ## Non-goals
 
-- Rediseñar la jerarquía visual de la pantalla de entreno (va en `redesign-workout-screen`).
+- Rediseñar la jerarquía visual de la pantalla de entreno. Ese rediseño se
+  descartó el 2026-10-02 y no está previsto en ningún cambio.
 - Arreglar el diálogo de confirmación de guardado (va en `improve-save-confirmation`).
 - Reactivar la autorregulación por esfuerzo pidiendo RIR/RPE al usuario.

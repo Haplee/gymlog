@@ -63,7 +63,8 @@ Al mismo tiempo hay dos deudas concretas que conviene resolver en el mismo movim
 ## Non-goals
 
 - **No se rediseña ninguna pantalla.** Cambia el material, no la disposición ni la
-  jerarquía. El rediseño de la pantalla de entreno es `redesign-workout-screen`, aparte.
+  jerarquía. El rediseño de la pantalla de entreno se descartó el 2026-10-02 y no
+  está previsto en ningún cambio.
 - **No se toca el modo claro como decisión de producto.** Se mantiene completo y se
   verifica en cada bloque; no se degrada a «tema secundario».
 - **No se cambia la paleta de acentos** ni se quitan opciones de `accents.ts`.
