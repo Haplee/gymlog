@@ -10,8 +10,8 @@ superserie. Sin esto, media sesión de accesorios se apunta mal o no se apunta.
 
 ### Requirement: Modo de registro por ejercicio
 
-El sistema DEBE permitir que cada ejercicio de una rutina declare cómo se
-registra: por repeticiones o por tiempo. La ausencia del campo DEBE leerse como
+El sistema SHALL permitir que cada ejercicio de una rutina declare cómo se
+registra: por repeticiones o por tiempo. La ausencia del campo SHALL leerse como
 «por repeticiones», de forma que ninguna rutina ni entrenamiento existente
 requiera migración de datos.
 
@@ -27,8 +27,8 @@ requiera migración de datos.
 
 ### Requirement: Series por tiempo
 
-El sistema DEBE permitir registrar una serie por su duración en segundos, con
-peso opcional, y DEBE conservar esa duración en el historial.
+El sistema SHALL permitir registrar una serie por su duración en segundos, con
+peso opcional, y SHALL conservar esa duración en el historial.
 
 #### Scenario: Una plancha se registra sin repeticiones
 
@@ -47,7 +47,7 @@ peso opcional, y DEBE conservar esa duración en el historial.
 
 ### Requirement: Las series por tiempo no contaminan las métricas de fuerza
 
-Una serie sin repeticiones NO DEBE participar en el volumen de fuerza, en la
+Una serie sin repeticiones NO SHALL participar en el volumen de fuerza, en la
 estimación de 1RM ni en las decisiones del motor de autorregulación.
 
 #### Scenario: El volumen ignora las series por tiempo
@@ -67,7 +67,7 @@ estimación de 1RM ni en las decisiones del motor de autorregulación.
 
 ### Requirement: Repeticiones por lado
 
-El sistema DEBE permitir marcar un ejercicio como unilateral. El usuario registra
+El sistema SHALL permitir marcar un ejercicio como unilateral. El usuario registra
 el **total** de repeticiones; el reparto por lado se deriva para mostrarlo y
 nunca se introduce a mano.
 
@@ -88,7 +88,7 @@ nunca se introduce a mano.
 
 ### Requirement: Superseries
 
-El sistema DEBE permitir encadenar ejercicios en un grupo y registrarlos de forma
+El sistema SHALL permitir encadenar ejercicios en un grupo y registrarlos de forma
 alterna, con un único descanso al cerrar el grupo.
 
 #### Scenario: El descanso llega al final del grupo
