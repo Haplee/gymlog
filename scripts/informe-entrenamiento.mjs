@@ -8,9 +8,11 @@ const env = Object.fromEntries(
   readFileSync('.env.local', 'utf8')
     .split('\n').filter(Boolean).map(l => { const i = l.indexOf('='); return [l.slice(0, i), l.slice(i + 1)]; }),
 );
+// La clave publicable va por defecto porque no es secreta (ya viaja en el bundle
+// de la app), pero se puede sobreescribir por entorno sin tocar el codigo.
 const sb = createClient(
-  'https://eoltmipoklizewxdpzfa.supabase.co',
-  'sb_publishable_C5dKsRG9DOpZjC5XihhsEA_P0rV4i93',
+  process.env.GYMLOG_SUPABASE_URL ?? 'https://eoltmipoklizewxdpzfa.supabase.co',
+  process.env.GYMLOG_SUPABASE_KEY ?? 'sb_publishable_C5dKsRG9DOpZjC5XihhsEA_P0rV4i93',
   { auth: { persistSession: false } },
 );
 const { data: s, error } = await sb.auth.signInWithPassword({
