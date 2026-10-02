@@ -1,0 +1,256 @@
+GymLog · informe de entrenamiento
+Generado 2026-10-02 · usuario f95d5098-47ef-4825-a5ff-8540cc3524f6
+Ventana: 2026-09-26 → 2026-04-08
+528 bloques · 1558 series · 13 por tiempo
+Volumen total: 714.776 kg  (Σ weight×reps de 1489 series con reps)
+
+==============================================================================
+1 · REPARTO POR PATRÓN DE MOVIMIENTO (movement)
+==============================================================================
+El campo movement es lataxonomía de la app. Pliometría = salto/aterrizaje.
+patrón         series  ult4sem     vol kg  e1RM max  última
+?                 491        0    217.474    169.56  2026-10-01
+Tirón             382       57    184.782     247.2  2026-09-28
+Empuje            208       32     87.826    126.62  2026-09-28
+Bisagra            95       31     70.017    153.37  2026-10-01
+Aislamiento       104       13     65.343    163.64  2026-09-24
+Sentadilla        132       23     56.793    146.32  2026-09-29
+Core               64       12     24.366    253.38  2026-09-24
+Pliometría         13        0       8175    230.63  2026-09-04
+
+==============================================================================
+2 · REPARTO POR GRUPO MUSCULAR (ponderado con exercise_muscles)
+==============================================================================
+Espalda             195.463 kg  (27.3%)
+Pierna              170.484 kg  (23.9%)
+Pecho               105.205 kg  (14.7%)
+Hombro               70.322 kg  (9.8%)
+Bíceps               48.267 kg  (6.8%)
+Glúteo               39.859 kg  (5.6%)
+Tríceps              36.635 kg  (5.1%)
+Core                 35.221 kg  (4.9%)
+Antebrazo            10.625 kg  (1.5%)
+Otro                   2695 kg  (0.4%)
+
+==============================================================================
+3 · TRABAJO CON PESO CORPORAL (bodyweight registrado en kg)
+==============================================================================
+ejercicio                         load                 series     reps  última
+Dominadas                         bodyweight               66      390  2026-09-22
+Fondos en paralelas               bodyweight               19      134  2026-09-08
+Rueda abdominal                   bodyweight               13      106  2026-09-02
+Salto al cajón                    bodyweight               13       65  2026-09-04
+Dominada cerradas                 bodyweight                9       37  2026-07-31
+Crunch abdominal                  bodyweight                6       63  2026-09-10
+
+Nota: el peso corporal se registra como kilos (weight = peso corporal), asi que
+      el volumen kg ya lo incluye. Solo falta lo que quedo sin rellenar.
+
+Ejercicios de bodyweight registrados en kg: 126 series · 795 reps
+Series con weight vacio: 0
+
+==============================================================================
+4 · PLIOMETRÍA
+==============================================================================
+
+Salto al cajón                          13       65  última 2026-09-04
+
+Total pliometría: 13 series · 2026-09-04
+
+==============================================================================
+5 · SERIES POR TIEMPO / ISOMÉTRICOS
+==============================================================================
+
+Plancha                                  9        5 min  última 2026-09-26
+Salto con gomas                          4        2 min  última 2026-09-24
+
+==============================================================================
+6 · TRABAJO UNILATERAL (is_bilateral = false)
+==============================================================================
+
+Curl bíceps mancuerna                   79     11.860 kg  última 2026-09-22
+Sentadilla búlgara                      45       9539 kg  última 2026-09-29
+Curl martillo                           25       4103 kg  última 2026-09-22
+Press Pallof                            24       4470 kg  última 2026-08-31
+Leñador en polea                        21       3945 kg  última 2026-09-24
+
+==============================================================================
+7 · CARDIO
+==============================================================================
+semana       tipo            ses    min      km    HR
+2026-05-25   elliptical        1     10     0.0      
+2026-07-20   walking           1     29     2.2    92
+2026-07-20   running           1     13     1.1   117
+2026-07-27   walking           4     53     2.7    95
+2026-07-27   running           3     87     3.7   123
+2026-08-03   walking           6    109     6.5    97
+2026-08-03   running           1     18     1.0   129
+2026-08-10   walking           7    162    11.3    98
+2026-08-17   walking           1     22     1.5   102
+2026-08-24   walking           1     16     1.4    98
+2026-08-24   running           1     30     0.8   113
+2026-08-31   walking           3     66     4.9   108
+2026-09-07   walking           1     29     2.1   100
+2026-09-14   walking           6    123     7.9   101
+2026-09-21   walking           2     29     1.7   102
+2026-09-21   cycling           4     58     0.4   104
+2026-09-28   cycling           1     11     0.0   107
+2026-09-28   walking           6    138     8.5   101
+
+Total cardio: 50 sesiones · 17 h · media 20 min
+Por tipo: walking 38 · elliptical 1 · cycling 5 · running 6
+
+==============================================================================
+8 · TOP 35 EJERCICIOS POR VOLUMEN TOTAL
+==============================================================================
+ejercicio                         mv          grupo      series  ult4s     vol kg    e1RM  última
+Sentadilla                        Sentadilla  Pierna         87     10     47.255  146.32  2026-09-29
+Gemelos de pie                    Aislamiento Pierna         43     10     45.888  163.64  2026-09-21
+Press banca                       Empuje      Pecho          94     14     44.054   115.2  2026-09-28
+Jalón al pecho                    Tirón       Espalda        44      8     43.330  192.22  2026-09-22
+Hip thrust                        Bisagra     Glúteo         45     12     39.859  153.37  2026-10-01
+Dominadas                         Tirón       Espalda        66     10     39.765   247.2  2026-09-22
+Face pull                         Tirón       Hombro         65     17     38.480   98.18  2026-09-28
+Remo con barra                    Tirón       Espalda        55      3     31.280     116  2026-09-09
+Jalón al pecho cerrado                        Espalda        33      0     27.960  169.56  2026-07-07
+Peso muerto                       Bisagra     Espalda        39     11     24.398     153  2026-10-01
+Press militar                     Empuje      Hombro         74     15     23.507   74.48  2026-09-28
+Sentadilla Parcial                            Pierna         40      0     23.163  115.24  2026-08-10
+Tríceps en poleas V                           Tríceps        39      3     21.830   81.82  2026-09-26
+Contractora                                   Pecho          35      0     21.361  127.06  2026-07-30
+Press Banca Parcial                           Pecho          35      0     19.300      90  2026-07-30
+Curl bíceps barra                 Tirón       Bíceps         45      0     14.405   54.01  2026-09-03
+Fondos en paralelas               Empuje      Pecho          19      3     13.630  126.62  2026-09-08
+Power Clean                                   Pierna         59      5     13.185   80.71  2026-09-24
+Pull Over                                     Espalda        33      0     12.010   65.45  2026-07-28
+Curl bíceps mancuerna             Tirón       Bíceps         79      9     11.860   24.23  2026-09-22
+Curl Bíceps maquina                           Bíceps         21      6     10.870   80.02  2026-09-22
+Rueda abdominal                   Core        Core           13      0     10.812     136  2026-09-02
+Crunch polea                                  Core           11      8     10.380     144  2026-10-01
+Curl femoral tumbado              Aislamiento Pierna         18      0     10.200      80  2026-08-31
+Sentadilla búlgara                Sentadilla  Pierna         45     13       9539      48  2026-09-29
+Salto al cajón                    Pliometría  Pierna         13      0       8175  230.63  2026-09-04
+Polea tras-nuca                               Tríceps        26      3       8020   46.67  2026-09-26
+Curl Bíceps barra+Antebrazos                  Antebrazo      21      0       6760   51.46  2026-07-10
+Jalones cueda                                 Espalda         6      0       6033  134.84  2026-05-04
+Curl femoral sentado                          Pierna          9      9       6000   93.33  2026-09-29
+Power Snatch                                  Hombro         20      0       5930   65.46  2026-07-23
+Peso muerto rumano                Bisagra     Espalda        11      8       5760     120  2026-09-23
+Crunch abdominal                  Core        Core            6      3       5139  253.38  2026-09-10
+Press Pallof                      Core        Core           24      0       4470    28.8  2026-08-31
+Curl martillo                     Tirón       Bíceps         25      7       4103   26.67  2026-09-22
+
+==============================================================================
+9 · RPE — cobertura real
+==============================================================================
+Series con RPE: 23 de 1502 (2%)
+2026-06-15  n=   2  medio=8.0
+2026-07-13  n=   3  medio=7.7
+2026-07-20  n=   1  medio=10.0
+2026-08-17  n=   1  medio=10.0
+2026-08-31  n=   9  medio=8.6
+2026-09-14  n=   2  medio=9.0
+2026-09-21  n=   2  medio=9.0
+2026-09-28  n=   3  medio=8.0
+
+Sesiones con rating (1-5): 5 de 528
+
+==============================================================================
+10 · CATÁLOGO DISPONIBLE (para saber qué puedes añadir)
+==============================================================================
+Nombre                              mv          grupo     load                veces
+Abducción de cadera                 Aislamiento Glúteo    external            0
+Antebrazo Polea                                 Antebrazo external            12
+Aperturas con mancuernas            Aislamiento Pecho     external            11
+Aperturas en polea                  Aislamiento Pecho     external            8
+Contractora                                     Pecho     external            35
+Crunch abdominal                    Core        Core      bodyweight          6
+Crunch polea                                    Core      external            11
+Curl bíceps barra                   Tirón       Bíceps    external            45
+Curl Bíceps barra sentado                       Bíceps    external            3
+Curl Bíceps barra+Antebrazos                    Antebrazo external            21
+Curl bíceps mancuerna               Tirón       Bíceps    external            79
+Curl Bíceps mancuerna                           Bíceps    external            0
+Curl Bíceps maquina                             Bíceps    external            21
+Curl Bíceps Polea Cuerda                        Bíceps    external            8
+Curl en polea baja                  Tirón       Bíceps    external            3
+Curl femoral de pie                 Aislamiento Pierna    external            0
+Curl femoral sentado                            Pierna    external            9
+Curl femoral tumbado                Aislamiento Pierna    external            18
+Curl martillo                       Tirón       Bíceps    external            25
+Curl martillo polea                             Bíceps    external            3
+Dominada cerradas                               Espalda   bodyweight          9
+Dominadas                           Tirón       Espalda   bodyweight          66
+Elevación de piernas                Core        Core      bodyweight          0
+Elevaciones frontales               Aislamiento Hombro    external            0
+Elevaciones laterales               Aislamiento Hombro    external            18
+Extensiones de cuádriceps           Aislamiento Pierna    external            6
+Face pull                           Tirón       Hombro    external            65
+Fondos en banco                     Empuje      Tríceps   bodyweight          0
+Fondos en paralelas                 Empuje      Pecho     bodyweight          19
+Gemelos de pie                      Aislamiento Pierna    external            43
+Gemelos sentado                     Aislamiento Pierna    external            0
+Hip thrust                          Bisagra     Glúteo    external            45
+Jalón al pecho                      Tirón       Espalda   external            44
+Jalón al pecho cerrado                          Espalda   external            33
+Jalones cueda                                   Espalda   external            6
+Kaz Press                                       Tríceps   external            3
+Lanzamiento balón                               Otro      external            34
+Lanzamiento con goma y peso                     Hombro    external            2
+Oblicuos                                        Core      external            2
+Pájaros                             Aislamiento Hombro    external            0
+Patada de tríceps                   Empuje      Tríceps   external            0
+Patada trasera en polea             Aislamiento Glúteo    external            0
+Peso muerto                         Bisagra     Espalda   external            39
+Peso muerto rumano                  Bisagra     Espalda   external            11
+Plancha                             Core        Core      bodyweight          0
+Polea tras-nuca                                 Tríceps   external            26
+Power Clean                                     Pierna    external            59
+Power Snatch                                    Hombro    external            20
+Prensa de piernas                   Sentadilla  Pierna    external            0
+Press Arnold                        Empuje      Hombro    external            0
+Press banca                         Empuje      Pecho     external            94
+Press banca declinado               Empuje      Pecho     external            0
+Press banca inclinado               Empuje      Pecho     external            12
+Press Banca mancuernas                          Pecho     external            3
+Press Banca Parcial                             Pecho     external            35
+Press con mancuernas                Empuje      Pecho     external            3
+Press francés                       Empuje      Tríceps   external            3
+Press militar                       Empuje      Hombro    external            74
+Press pallof gomas                              Core      external            7
+Pull Over                                       Espalda   external            33
+Remo con barra                      Tirón       Espalda   external            55
+Remo con mancuerna                  Tirón       Espalda   external            0
+Remo en polea baja                  Tirón       Espalda   external            0
+Remo unilateral                                 Espalda   external            4
+Rueda abdominal                     Core        Core      bodyweight          13
+Russian twist                       Core        Core      external            0
+Salto con gomas                                 Otro      bodyweight          0
+Sentadilla                          Sentadilla  Pierna    external            87
+Sentadilla búlgara                  Sentadilla  Pierna    external            45
+Sentadilla Parcial                              Pierna    external            40
+Tríceps en poleas Plano                         Tríceps   external            3
+Tríceps en poleas V                             Tríceps   external            39
+Tríceps polea                       Empuje      Tríceps   external            3
+Tríceps polea unilateral                        Tríceps   external            4
+Tríceps tras-nuca                               Tríceps   external            3
+Triviales                                       Pierna    external            3
+Zancadas                            Sentadilla  Pierna    external            0
+Burpees                             Pliometría  Cardio    bodyweight          0
+Clean and press                     Empuje      Hombro    external            0
+Elevación lateral unilateral        Aislamiento Hombro    external            0
+Leñador en polea                    Core        Core      external            21
+Peso muerto rumano a una pierna     Bisagra     Pierna    external            0
+Press de hombro a un brazo          Empuje      Hombro    external            0
+Press Pallof                        Core        Core      external            24
+Remo a una mano                     Tirón       Espalda   external            0
+Rotación externa con goma           Aislamiento Hombro    external            0
+Salto al cajón                      Pliometría  Pierna    bodyweight          13
+Salto al cajón lateral              Pliometría  Pierna    bodyweight          0
+Salto de longitud                   Pliometría  Pierna    bodyweight          0
+Salto en profundidad                Pliometría  Pierna    bodyweight          0
+Saltos skater                       Pliometría  Pierna    bodyweight          0
+Sentadilla con salto                Pliometría  Pierna    bodyweight          0
+Sentadilla frontal                  Sentadilla  Pierna    external            0
+Step-up con mancuerna               Sentadilla  Pierna    external            0
+Zancada caminando                   Sentadilla  Pierna    external            0
