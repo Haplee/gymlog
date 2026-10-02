@@ -6,8 +6,10 @@
 > Torneo oficial del circuito europeo E.H.F. (EBT). Categoría sénior, 36 equipos.
 > **Hoy:** 2026-10-02 → **12 semanas** hasta el torneo.
 > **Perfil del jugador:** defensa en el ala y en el centro, también de pivote.
-> **Estado físico:** contractura en la espalda y molestia de hombro o muñeca sin
-> precisar. La Fase 0 del plan es de salud, no de preparación. Ver `design.md` §10.
+> **Estado físico:** contractura en la espalda y molestia **en hombro y en
+> muñeca**, los dos a la vez. Sin valoración profesional declarada. La Fase 0 del
+> plan es de salud, no de preparación, y el plan no arranca la capa específica
+> hasta que tres zonas abren su puerta. Ver `design.md` §10.
 
 ---
 

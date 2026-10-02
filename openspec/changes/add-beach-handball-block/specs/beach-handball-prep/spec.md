@@ -112,6 +112,24 @@ trono bajo carga ni sprint repetido.
 - **THEN** el bloque declara qué estímulos se sacrifican y en qué orden, y ese
       orden protege la carga de fuerza ya acumulada
 
+#### Scenario: Cada zona afectada tiene su propia puerta
+
+- **WHEN** el atleta declara molestias en más de una articulación
+- **THEN** el bloque define un criterio de disposición por zona, con su propio
+      plan B, en vez de una única puerta que bloquea o desbloquea todo
+
+#### Scenario: El orden de sacrificio no incluye lo que ejecuta el torneo
+
+- **WHEN** el bloque recorta estímulos por falta de tiempo o por lesión
+- **THEN** la articulación que ejecuta la competición queda explícitamente
+      excluida del recorte, y la carga de fuerza ya acumulada queda excluida
+
+#### Scenario: La decisión de competir se toma antes del viaje
+
+- **WHEN** el bloque contempla retirada del torneo por lesión
+- **THEN** define criterios de entrada objetivos, una fecha de decisión anterior
+      al desplazamiento, y los registra antes de la semana de taper, no durante
+
 ### Requirement: El bloque no diagnostica ni sustituye a un profesional
 
 Un bloque de preparación que trate con una lesión activa DEBE declarar que no
@@ -130,6 +148,21 @@ lugar de modificarlo.
 - **WHEN** el bloque trata con una lesión activa
 - **THEN** enumera los síntomas que mandan detener el plan y no solo los que
       mandan ajustarlo
+
+#### Scenario: El plan sigue siendo utilizable sin la valoración descartada
+
+- **WHEN** el atleta decide no buscar valoración profesional y el
+      bloque continúa vigente
+- **THEN** el plan declara explícitamente qué queda fuera de su alcance, mantiene
+      la progresión conservadora y los criterios de parada, y no presenta la
+      ausencia de exploración como si el plan la sustituyera
+
+#### Scenario: El recorte por lesión baja la carga del gesto afectado
+
+- **WHEN** una articulación del gesto deportivo aparece afectada
+- **THEN** el bloque cuantifica el volumen histórico que carga esa articulación y
+      define la dosis de mantenimiento que la sustituye, en vez de eliminarla
+      sin alternativas
 
 ### Requirement: Las reservas del plan se declaran
 

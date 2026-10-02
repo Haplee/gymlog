@@ -69,13 +69,30 @@ ahí no está.
 
 Cinco días. El **Día 4 es intocable** (tirón + hombro). Los días 2 y 5 son nuevos.
 
+> **Aviso de lectura.** Esta es la estructura del microciclo *a partir de la
+> Fase 1*, cuando las tres puertas estén abiertas. En la Fase 0 el Día 2 no
+> existe, el Día 5 es solo andar, y el empuje del Día 4 cae a dosis de
+> mantenimiento. Ver §10.
+
 | Día | Foco | Contenido | Origen |
 |---|---|---|---|
 | **L · Bisagra** | Cadena posterior | Peso muerto o rumiano + **Nordic curl 3×6** + **Copenhagen 3×25 s/lado** + Palof | Añade excéntrico |
 | **M · Pliometría + COD** | **NUEVO** | Salto vertical, unilateral, drop, lateral, **COD reactivo 5-10 m** · 2 bloques, **<40 min** | Nuevo |
 | **X · Sentadilla** | Potencia de pierna | Sentadilla + **rotación en polea, side plank, dead bug** | Rota el core |
-| **J · Tirón + Hombro** | **PROTEGIDO** | Dominadas, jalón, remo, **face pull**, press militar | Sin cambios |
-| **S · Arena** | **NUEVO** | Shuttle 30 m sobre arena + manejo de balón + técnico | Nuevo |
+| **J · Tirón + Hombro** | **PROTEGIDO** | Dominadas, jalón, remo, **face pull** · press militar a mantenimiento | Tirón igual, empuje baja |
+| **S · Arena + Muñeca** | **NUEVO** | Shuttle 30 m sobre arena + **bloque de muñeca: extensión lenta, pronosupinación, volea** | Nuevo |
+
+**El bloque de muñeca se cuelga del día de arena a propósito.** El volea es el
+lanzamiento que puntúa el doble y el gesto que más carga la muñeca, así que
+tiene sentido que se practique donde ya estás en la superficie y con balón en la
+mano. Entrar con isométricos en la Fase 0, control en la Fase 1, y potencia en
+la Fase 3.
+
+**El empuje baja y no desaparece.** 206 series de empuje en el historial con
+hombro y muñeca molestando a la vez es un estímulo que las dos articulaciones
+están pagando sin haberlo pedido. Pasa a 3×6 de banco y 3×6 de militar como
+dosis de mantenimiento, en el rango que ya tolera la Fase 0, y **no crece hasta
+que la puerta del hombro y la de la muñeca estén abiertas las dos**.
 
 ## 4. Reglas de progresión
 
@@ -224,56 +241,108 @@ Cinco huecos reales. Ninguno se resuelve inventando, así que se documentan:
 
 ## 10. La restricción musculoesquelética
 
-El 2 de octubre el atleta informa de **una contractura en la espalda** y de una
-**molestia de hombro o muñeca** (sin precisar cuál de las dos). Es la información
-que más condiciona el bloque, y llegó después de haberlo escrito entero.
+El 2 de octubre el atleta informa de tres cosas a la vez: **una contractura en la
+espalda** y **molestia en hombro y en muñeca**. Además declara que **no va a
+valoración profesional**. Es la información que más condiciona el bloque, y llegó
+después de haberlo escrito entero.
 
 ### Por qué cambia el plan
 
-Una contractura lumbar no es una molestia más. Meter pliometría, drop jumps y
-sprint repetido sobre una espalda contracturada es la forma rápida de convertir una
-molestia de una semana en una de tres meses. Y el torneo es dentro de 12. Así que
-la **Fase 0 no es de preparación: es de salud**, y por eso existe.
+Tres sitios activos a 12 semanas de la competición es mucha carga para un solo
+atleta, y el que decide el plan no puede examinar a nadie. Dos consecuencias
+inmediatas:
 
-Por eso la Fase 0 no lleva pliometría, ni COD, ni Nordic curl cargado, ni
-cualquier trabajo que produzca movimiento de tronco bajo carga de alto impacto. Lleva
-isométricos, movilidad y trabajo de superficie en arena, que es lo único de la
-arena que se puede hacer sin forzar la espalda.
+**Primera: baja la carga de empuje.** El historial tiene **206 series de empuje**
+(press banca 94, press militar 74, fondos 19, aperturas 11 y 8) y **46 más de
+antebrazo** (curl martillo 25, curl barra+antebrazos 21). La extensión de muñeca
+es una de las tres musculaturas que más carga el press banca, y el press militar
+suma por encima del hombro. Con hombro y muñeca molestando a la vez, 206 series
+de empuje no es una dosis de mantenimiento, es un estímulo nuevo para una articulación
+que ya avisa. Baja a dosis de mantenimiento y deja de crecer.
 
-### La puerta de entrada
+**Segunda: la Fase 0 es de salud, no de preparación.** Meter pliometría, drop jumps
+y sprint repetido sobre una espalda contracturada es la forma rápida de convertir
+una molestia de una semana en una de tres meses. La Fase 0 no lleva pliometría, ni
+COD, ni Nordic curl cargado, ni empuje cargado. Lleva isométricos, movilidad y
+trabajo de superficie en arena, que es lo único de la arena que se puede hacer sin
+forzar la espalda.
 
-La Fase 1 espera a tres criterios, tres días seguidos:
+### Tres sitios, tres puertas
 
-| Criterio | Cómo se comprueba sin apparatus |
-|---|---|
-| Espalda | Rango completo de rotación y flexión de tronco sin dolor, y bisagra con carga sin dolor |
-| Hombro | Lanzar por encima de la cabeza a velocidad real, sin dolor |
-| Muñeca | Extensión de muñeca cargada sin dolor, y una sesión de manejo de balón sin molestia posterior |
+La puerta de entrada deja de ser una casilla y pasa a ser una por zona, con su
+plan B. La Fase 1 no espera a que todo esté bien: **empieza lo que esté
+verificado y aplaza lo que no**.
+
+| Zona | Criterio para pasar | Si no se cumple |
+|---|---|---|
+| **Espalda** | Rango completo de rotación y flexión de tronco sin dolor, y bisagra con carga sin dolor | Se sigue en Fase 0. Se aplaza Nordic, plio y COD. **La fuerza de bisagra no se toca nunca** |
+| **Hombro** | Lanzar por encima de la cabeza a velocidad real sin dolor, y 10 repeticiones de rotación externa con banda sin molestia | Se elimina el empuje por encima de la cabeza. Solo press en plano bajo y más rotación externa. El Face pull **nunca** se elimina |
+| **Muñeca** | Extensión de muñeca cargada sin dolor, y 20 voleas a velocidad sin molestia posterior | Nada de press ni curl de muñeca. Aparece trabajo isométrico de muñeca, que es lo que se puede hacer sin que duela |
+
+Los tres criterios tienen que estar **tres días seguidos**, no uno bueno entre
+malos. Un solo día sin dolor no es una puerta, es un día.
+
+### La muñeca, que es el caso distinto
+
+No es un añadido accesorio. En playa **el lanzamiento de volea puntúa el doble** y
+la muñeca soporta la extensión y la desviación radial en el momento del impacto.
+Es decir: la muñeca no es un requisito del torneo, es la articulación que más
+trabaja en los puntos que más valen.
+
+Y es la que peor se ha trabajado: `Antebrazo` es el grupo muscular con menos
+volumen de todo tu historial, **1,5 %**. Con 46 series de curl de antebrazo y nada
+de trabajo excéntrico ni de estabilización.
+
+Lo que se añade es un bloque de muñeca propio, que antes no existía en tu rutina:
+isométricos de extensión primero (es lo que mejor se tolera con sobrecarga), luego
+extensión-sincronizada lenta, pronosupinación y, más adelante, trabajo específico
+de volea con balón. En Fase 0 solo isométricos.
 
 ### El orden de sacrificio
 
-Si algo se cae, se cae en este orden:
+Cambia respecto al primer borrador, porque ahora hay tres sitios y la muñeca es
+precisamente lo que necesitas para jugar:
 
-> **Sprint repetido → COD → pliometría → excéntricos.** La fuerza base no se toca.
+> **Sprint repetido → COD → pliometría → excéntricos → empuje.**
+> **Y la muñeca nunca se sacrifica**, porque sin ella no se juega.
 
-El motivo es que la fuerza es lo que llevas 25 semanas construyendo y ya está
-pagada. El sprint repetido es lo que más rápido se recupera: 4 semanas de
-shuttle bastan para volver al nivel. Al revés, una lesión de espalda en la Fase 3
-te deja sin nada con lo que jugar el 26.
+La muñeca se queda porque es la articulación que ejecuta el torneo. El empuje es lo
+primero que se recorta, porque es lo más fácil de sustituir por trabajo isométrico
+y lo que menos devuelve en dos días de competición. La base de fuerza de bisagra
+y sentadilla sigue intacta en las cinco fases: son 25 semanas pagadas y son la
+plataforma desde la que se juega.
 
-### Lo que no puedo hacer desde aquí
+### El gate de decisión antes del torneo
 
-Diagnosticar, pertinence el tratamiento ni decirte que dos semanas de isométricos
-arreglan una contractura. Puedo decirte qué parte del plan depende de ella, y por qué la
-salto a pliometría en la semana 1 habría sido un error. **El resto lo decide
-alguien que te toque.** Por eso la acción número uno, antes de la semana 1, es
-una visita a un fisio, y no un test de salto.
+En la semana 10-11 hay que decidir si se juega, y el criterio es concreto:
 
-### Señales de parada
+- **Se juega** si hombro y muñeca permiten **lanzar a velocidad de partido sin
+  dolor y sin molestia a las 24 horas**, y la espalda permite 20 minutos de
+  partido simulado sin reagudización a la mañana siguiente.
+- **Se juega con el papel reducido** si la respuesta es sí con una de las dos
+  zonas pero no con las tres.
+- **No se juega** si la respuesta es no en hombro o muñeca. Dos días de partido
+  sobre un lanzamiento doloroso no es un riesgo asumible en un jugador que no tiene
+  otro objetivo esa temporada.
 
-Cualquiera de estas y el plan se para, no se adapta: dolor que baja por la pierna
-o entumecimiento, debilidad en pierna o mano, dolor nocturno, dolor al lanzar por
-encima de la cabeza, o contractura que no mejora en 7-10 días por sí sola.
+Esta decisión se toma **antes** de la semana 12, no el viernes 25 en el coche.
+
+### Lo que este plan puede y no puede hacer sin exploración
+
+Lo que sí hace: ordenar la carga, decidir qué se sacrifica antes, poner criterios de
+parada escritos y Adjustar la progresión al dolor que tú reportas.
+
+Lo que no hace, y conviene decirlo sin rodeos: **no detecta nada de lo que solo se
+ve en una exploración**. Un plan no distingue una contractura de un problema
+discal. Puede gestionar la carga con criterio y no puede sustituir un examen, y
+tampoco decidir por ti si el 26 te subes a la arena. Esa decisión es tuya y este
+documento no la toma por ti.
+
+Señales de parada, en `tasks.md`: dolor que baja por la pierna o entumecimiento,
+debilidad en pierna o mano, dolor nocturno, dolor al lanzar por encima de la cabeza,
+o contractura que no mejora en 7-10 días.
+
+---
 
 ## 11. Lo que este documento no puede prometer
 
