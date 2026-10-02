@@ -32,4 +32,5 @@ Esto explica con alta probabilidad los entrenos duplicados y fragmentados del hi
 
 - Cambiar qué series se guardan en cada rama (la semántica de `onlyCompleted` en `saveWorkout` se mantiene).
 - Eliminar el marcado de series completadas.
-- Rediseñar la barra de acciones (va en `redesign-workout-screen`).
+- Rediseñar la barra de acciones. Ese rediseño se descartó el 2026-10-02 y no
+  está previsto en ningún cambio.
