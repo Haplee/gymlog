@@ -90,8 +90,10 @@ obligatoria al principio).
 
 | Sem | Estructura | Objetivo |
 |---|---|---|
-| 1-2 | 1 × (6 × 30 m, 45 s recup.) | Aeróbica y adaptación a la superficie |
-| 3-4 | 2 × (6 × 30 m, 45 s) | **+12 %** respecto a la semana anterior. Solo dos semanas en este escalón |
+| **1** | **Solo andar y técnico en arena.** Cero sprint | La contractura no se carga. La superficie se adapata ya |
+| 2 | 1 × (4 × 30 m, 60 s recup.) | Primer contacto. Muy suave, aeróbico |
+| 3 | 1 × (6 × 30 m, 45 s recup.) | Aeróbica y adaptación a la superficie |
+| 4 | 2 × (6 × 30 m, 45 s) | **+12 %** respecto a la semana anterior. Solo dos semanas en este escalón |
 | 5-8 | 2 × (8 × 30 m, 40 s) | Aeróbica + velocidad. Mantener y consolidar |
 | 9-11 | 3 × (6 × 30 m, 30 s) | Velocidad pura, al 90-95 % |
 | 12 | **Fuera.** Nada de sprint | Taper |
@@ -114,25 +116,44 @@ error más caro que puedes cometer con 12 semanas por delante.
 
 | Fase | Sem | Fechas | Gym | Arena | Objetivo |
 |---|---|---|---|---|---|
-| **0 · Instrumentar** | 1 | 5-11 oct | 5 | 0 | Que los datos sirvan de algo |
-| **1 · Base específica** | 2-4 | 12 oct - 1 nov | 5 | 1-2 | Montar la capa que falta |
+| **0 · Salud** | 1-2 | 5-18 oct | 4 indoloro | 1 (solo andar) | Resolver la contractura. Que los datos sirvan de algo |
+| **1 · Base específica** | 3-4 | 19 oct - 1 nov | 5 | 1-2 | Montar la capa que falta |
 | **2 · Con el equipo** | 5-8 | 2-29 nov | 3 | 2 | Complementar, no competir |
 | **3 · Específico** | 9-11 | 30 nov - 20 dic | 2 | 2-3 | Arena y formato de partido |
 | **4 · Taper** | 12 | 21-27 dic | 2 | 0 | Bajar volumen, mantener intensidad |
 
-El equipo empieza hacia el 1 de noviembre, que cae justo en la frontera entre
-Fase 1 y Fase 2. **Esa fecha es una suposición**, no un dato confirmado: si el
-equipo arranca antes, la Fase 2 adelanta su recorte de volumen.
+**La Fase 0 existe por la contractura, no por el calendario.** Sin ella el bloque
+empezaba con pliometría el 5 de octubre. Con una contractura lumbar activa, saltar
+y acelerar es la peor respuesta posible. Ver sección 11.
+
+El equipo empieza hacia el 1 de noviembre, justo en la frontera entre Fase 1 y
+Fase 2. **Sigue sin estar decidido** (confirmado el 2-oct), así que el corte
+está puesto en el sitio que menos restringe. Si arranca antes, la Fase 2 adelanta
+su recorte de volumen; si arranca después, la Fase 1 se estira. El orden de las
+tareas de `tasks.md` está escrito para poder mover ese corte sin reescribir nada.
+
+El torneo son **2 días, sábado 26 y domingo 27**. La portada del PDF era la
+correcta y esto mejora el final: sales el domingo por la tarde con un día entero
+de recuperación y no juegas el lunes. El taper es más corto y más limpio que con
+tres jornadas.
 
 ## 6. volumen semanal
 
 | Fase | Tonelaje gym | Cambio |
 |---|---|---|
 | Línea base (sep) | 30,0 t/sem | — |
-| Fase 1 | 30-32 t/sem | +0-7 % |
+| Fase 0 | 20-24 t/sem | −20 a −33 %, por diseño: es la semana de la contractura |
+| Fase 1 | 30-32 t/sem | +25-40 % respecto a la Fase 0, pero **+0-7 % respecto a la línea base** |
 | Fase 2 | 27-29 t/sem | −7 % |
 | Fase 3 | 21-24 t/sem | −15 % |
 | Fase 4 | 12-15 t/sem | −40 % |
+
+La comparación que cuenta es siempre contra tu línea base de septiembre, no
+contra la fase anterior. La Fase 1 no "sube un 25 %": vuelve al nivel que ya
+tenías. La caída de la Fase 0 es intencionada y es la parte del plan que más
+me hace dudar, porque dos semanas sin cargar las piernas es tiempo que no vuelve. Se
+asume asumiendo que un fisio dice que la contractura no necesita más reposo que
+eso.
 
 **Ningún incremento supera el 10 % y ningún escalón dura más de dos semanas.**
 El recorte del 15 % en la Fase 3 está justificado: no es pérdida de forma, es el
@@ -201,7 +222,60 @@ Cinco huecos reales. Ninguno se resuelve inventando, así que se documentan:
    rompe 1001 de 1558 series. **No se toca código aquí**; queda anotado para
    quien escriba SQL nuevo.
 
-## 10. Lo que este documento no puede prometer
+## 10. La restricción musculoesquelética
+
+El 2 de octubre el atleta informa de **una contractura en la espalda** y de una
+**molestia de hombro o muñeca** (sin precisar cuál de las dos). Es la información
+que más condiciona el bloque, y llegó después de haberlo escrito entero.
+
+### Por qué cambia el plan
+
+Una contractura lumbar no es una molestia más. Meter pliometría, drop jumps y
+sprint repetido sobre una espalda contracturada es la forma rápida de convertir una
+molestia de una semana en una de tres meses. Y el torneo es dentro de 12. Así que
+la **Fase 0 no es de preparación: es de salud**, y por eso existe.
+
+Por eso la Fase 0 no lleva pliometría, ni COD, ni Nordic curl cargado, ni
+cualquier trabajo que produzca movimiento de tronco bajo carga de alto impacto. Lleva
+isométricos, movilidad y trabajo de superficie en arena, que es lo único de la
+arena que se puede hacer sin forzar la espalda.
+
+### La puerta de entrada
+
+La Fase 1 espera a tres criterios, tres días seguidos:
+
+| Criterio | Cómo se comprueba sin apparatus |
+|---|---|
+| Espalda | Rango completo de rotación y flexión de tronco sin dolor, y bisagra con carga sin dolor |
+| Hombro | Lanzar por encima de la cabeza a velocidad real, sin dolor |
+| Muñeca | Extensión de muñeca cargada sin dolor, y una sesión de manejo de balón sin molestia posterior |
+
+### El orden de sacrificio
+
+Si algo se cae, se cae en este orden:
+
+> **Sprint repetido → COD → pliometría → excéntricos.** La fuerza base no se toca.
+
+El motivo es que la fuerza es lo que llevas 25 semanas construyendo y ya está
+pagada. El sprint repetido es lo que más rápido se recupera: 4 semanas de
+shuttle bastan para volver al nivel. Al revés, una lesión de espalda en la Fase 3
+te deja sin nada con lo que jugar el 26.
+
+### Lo que no puedo hacer desde aquí
+
+Diagnosticar, pertinence el tratamiento ni decirte que dos semanas de isométricos
+arreglan una contractura. Puedo decirte qué parte del plan depende de ella, y por qué la
+salto a pliometría en la semana 1 habría sido un error. **El resto lo decide
+alguien que te toque.** Por eso la acción número uno, antes de la semana 1, es
+una visita a un fisio, y no un test de salto.
+
+### Señales de parada
+
+Cualquiera de estas y el plan se para, no se adapta: dolor que baja por la pierna
+o entumecimiento, debilidad en pierna o mano, dolor nocturno, dolor al lanzar por
+encima de la cabeza, o contractura que no mejora en 7-10 días por sí sola.
+
+## 11. Lo que este documento no puede prometer
 
 No puedo garantizar que llegues al torneo en pico. Con 25 semanas de historial,
 un solo jugador, sin datos de RPE y sin registro de superficie, esto es una

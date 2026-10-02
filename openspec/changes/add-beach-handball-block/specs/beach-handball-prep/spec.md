@@ -85,6 +85,52 @@ como cambios de código.
 - **THEN** el bloque documenta la limitación y no añade columnas ni altera
       consultas de la aplicación
 
+### Requirement: Un estímulo de riesgo activo bloquea la progresión
+
+Si el atleta declara una lesión o contractura activa, el bloque DEBE incluir una
+fase inicial de gestión de salud y DEVE condicionar el inicio de los estímulos de
+alto impacto a criterios de disposición explícitos y verificables sin aparato
+opcional. Ninguna fase de salud DEBE introducir pliometría, trabajo explosivo de
+trono bajo carga ni sprint repetido.
+
+#### Scenario: La fase inicial no empieza a saltar
+
+- **WHEN** el atleta informa de una contractura en la espalda antes de la semana 1
+- **THEN** la primera fase del bloque limita el trabajo a isométricos, movilidad y
+      trabajo de superficie sin impacto, y no incluye drop jumps ni shuttle
+
+#### Scenario: El avance tiene un criterio, no una fecha
+
+- **WHEN** el atleta se encuentra en la semana en la que correspondería iniciar
+      pliometría
+- **THEN** el bloque comprueba primero los criterios de disposición de tronco,
+      hombro y muñeca, y la fase se retrasa si no se cumplen
+
+#### Scenario: El recorte tiene un orden declarado
+
+- **WHEN** el tiempo disponible no permite completar todas las capas
+- **THEN** el bloque declara qué estímulos se sacrifican y en qué orden, y ese
+      orden protege la carga de fuerza ya acumulada
+
+### Requirement: El bloque no diagnostica ni sustituye a un profesional
+
+Un bloque de preparación que trate con una lesión activa DEBE declarar que no
+realiza diagnóstico ni prescripción, DEVE remitir a la valoración profesional
+como paso previo, y DEVE listar las señales que obligan a detener el plan en
+lugar de modificarlo.
+
+#### Scenario: La valoración profesional es el primer paso
+
+- **WHEN** el bloque documenta una lesión o contractura activa
+- **THEN** la primera tarea es una valoración profesional, anterior a cualquier
+      tarea de entrenamiento
+
+#### Scenario: Las señales de alarma están escritas
+
+- **WHEN** el bloque trata con una lesión activa
+- **THEN** enumera los síntomas que mandan detener el plan y no solo los que
+      mandan ajustarlo
+
 ### Requirement: Las reservas del plan se declaran
 
 Un bloque de preparación que dependa de información no disponible — fecha del

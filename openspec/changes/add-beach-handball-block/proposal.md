@@ -1,10 +1,13 @@
 # Propuesta · Bloque de preparación para balonmano playa
 
-> **Torneo:** Diego Carrasco Beach Handball Cup, **26-28 de diciembre de 2026**
-> Playa de la Ferrara, Torrox Costa (Málaga). Torneo oficial del circuito europeo
-> E.H.F. (EBT). Categoría sénior, 36 equipos.
+> **Torneo:** Diego Carrasco Beach Handball Cup, **sábado 26 y domingo 27 de
+> diciembre de 2026** (2 jornadas, confirmado el 2-oct; el PDF se contradecía y la
+> portada era la correcta). Playa de la Ferrara, Torrox Costa (Málaga).
+> Torneo oficial del circuito europeo E.H.F. (EBT). Categoría sénior, 36 equipos.
 > **Hoy:** 2026-10-02 → **12 semanas** hasta el torneo.
 > **Perfil del jugador:** defensa en el ala y en el centro, también de pivote.
+> **Estado físico:** contractura en la espalda y molestia de hombro o muñeca sin
+> precisar. La Fase 0 del plan es de salud, no de preparación. Ver `design.md` §10.
 
 ---
 

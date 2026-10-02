@@ -1,158 +1,202 @@
 # Tareas · Bloque de preparación para balonmano playa
 
-Torneo: **26-28 dic 2026**, Playa de la Ferrara, Torrox Costa (Málaga).
-Inicio: **lunes 5 de octubre de 2026.** 12 semanas.
+Torneo: **26-27 de diciembre de 2026 (sábado y domingo)**, Playa de la Ferrara,
+Torrox Costa (Málaga). Inicio: **lunes 5 de octubre.** 12 semanas.
 
-> **Antes de empezar, tres cosas que hay que confirmar** (no bloquean el bloque,
-> pero lo ajustan):
+> **Confirmado contigo:**
 >
-> 1. **¿26-27 o 26-28?** El PDF dice las dos cosas. La portada pone 26-27, el
->    cuerpo del documento pone 26-28. No es un detalle menor: el 26 es sábado y
->    el 27 domingo, pero el **28 es lunes**. Tres días con el tercero en día
->    laborable es un calendario raro para un torneo. Si son dos días, el
->    domingo por la tarde sales con la cabeza fresca. Si son tres, el lunes juegas
->    con dos días de referencia encima. **La Fase 4 está diseñada para 3 días y
->    aguanta los dos escenarios.**
-> 2. **¿Cuándo empieza el entrenamiento con el equipo de Torrox?** He supuesto
->    el 1 de noviembre. Si es antes, la Fase 2 adelanta su recorte de volumen.
-> 3. **¿Hay alguna lesión actual, aunque sea leve?** Isquiotibial, tobillo,
->    hombro o muñeca. Con 12 semanas de delante, una molestia manageable se
->    trabaja; una que aparece en la Fase 3 te deja sin margen.
+> 1. **Torneo de 2 días**, sábado 26 y domingo 27. La portada del PDF era la
+>    correcta. Esto es una buena noticia: sales el domingo por la tarde con un
+>    día entero de recuperación, y no juegas el lunes con dos días de referencia
+>    encima. El taper es más corto y más limpio que si fueran tres.
+> 2. **El inicio con el equipo sigue sin decidir.** He mantenido la hipótesis del
+>    1 de noviembre porque es la que menos restringe. La Fase 2 está pensada
+>    para moverse: si el equipo arranca antes, adelanta su recorte de volumen; si
+>    arranca después, te comes una semana más de trabajo individual antes de
+>    Drop. No hay que rehacer el plan, solo mover el corte.
+> 3. **Hombro o muñeca, y una contractura en la espalda.** Esto es lo que
+>    condiciona todo. Ver abajo.
 
 ---
 
-## Fase 0 · Instrumentar — sem 1 (5-11 oct)
+## Antes de la semana 1 · Salud
 
-El 1,5 % de RPE hace imposible dosificar nada. Esto va primero.
+Esto va **antes** de cualquier training. No es opcional.
 
-- [ ] Poner **RPE en el 100 % de las series de trabajo**. Es el único trabajo de
-      esta semana que no se puede recuperar luego.
-- [ ] Valorar **cada sesión** con el rating 1-5 de la app. Hoy hay 5 de 528.
-- [ ] Nordic curl **3×6** por pierna, con assistance si hace falta. En el día de
-      bisagra.
-- [ ] Copenhagen plank **3×25 s** por lado.
-- [ ] **Sesión M (pliometría), 2 bloques de 10 contactos.** Salto al cajón,
-      single-leg hop, drop jump. Cuentan los contactos, no las series.
-- [ ] Localizar arena accesible y hacer **una primera sesión de 30-40 min**,
-      solo técnica y manejo de balón, sin intensidad. Si no tienes arena
-      accesible, **este es el bloqueo real de todo el plan**: búscala antes del
-      12 de octubre.
-- [ ] Clasificar el patrón de movimiento de los **491 bloques sin clasificar**
-      (30 % de tu volumen histórico).
+- [ ] **Fisio. Esta es la acción de mayor valor de todo el plan.** Contractura
+      lumbar más una molestia de hombro o muñeca en alguien que va a competir
+      descalzo sobre 40 cm de arena dentro de 12 semanas. No te lo puedo
+      diagnosticar ni preservar desde aquí, y no lo voy a intentar. Lo que sí
+      puedo decir es que la contractura cambia la forma del plan por completo.
+- [ ] **Aclarar cuál de los dos es: hombro o muñeca.** Lo he marcado como "o" en
+      tu respuesta y no es lo mismo. Hombro cambia el volumen de empuje;
+      muñeca cambia el trabajo de manejo de balón y de lanzamiento. Dímelo y
+      afino la Fase 1.
+- [ ] Ojo a estas señales. Cualquiera de ellas y el plan se para, no se adapta:
+      - Dolor que baja por la pierna, o entumecimiento
+      - Debilidad en la pierna o en la mano
+      - Dolor nocturno o que no cede al parar
+      - Dolor al lanzar por encima de la cabeza
+      - Contractura que no mejora en 7-10 días por sí sola
 
-## Fase 1 · Base específica — sem 2-4 (12 oct - 1 nov)
+## Fase 0 · Salud e instrumentación — sem 1-2 (5-18 oct)
+
+**No hay pliometría ni sprint en estas dos semanas.** Con la espalda contracts
+no se empieza a saltar. Lo que sí se hace es lo que un fisio probablemente te
+va a pedir: isométricos, movilidad y control, y nada que irrite.
+
+### sem 1 (5-11 oct)
+- [ ] **Isométricos de tronco.** Placa de pared, plancha, prensa de pared. Todo
+      indoloro. Es lo único que tolera bien una contractura.
+- [ ] **Movilidad de hombro sin carga** si es el hombro, o de muñeca si es la
+      muñeca. Rango completo, sin mancuernas.
+- [ ] Nordic curl **en isometric o cerrado** o con assistance, si no molesta la
+      espalda. Si molesta, se espera a la semana 3. No es negociable: no
+      compensas un CORE lesionado con excéntricos de isquio.
+- [ ] Poner **RPE en el 100 % de las series de trabajo**. Sigue siendo el
+      1,5 % de antes, y ahora es más importante: sin esto no se dosifica nada.
+- [ ] Valorar **cada sesión** con el rating 1-5 de la app.
+- [ ] Clasificar el patrón de movimiento de los **491 bloques sin clasificar**.
+- [ ] **Arena, solo andar y técnica.** 30-40 min, sin intensidad. La contractura
+      no es una lesión de carga, es de contractura: caminar y tocar el balón en
+      arena es seguro y empieza la adaptación superficial que la evidencia pide
+      desde ya. **Esto es lo único de la arena que puedes hacer en la Fase 0.**
 
 ### sem 2 (12-18 oct)
-- [ ] Pliometría **2×15 contactos**. Añadir **COD reactivo**: 4 reps de 5 m con
-      4 cambios de dirección, reaccionando a un estímulo, no a un cono fijo.
-- [ ] Nordic 3×6. Arena 1×: **1 × (6×30 m, 45 s recup)** + técnico.
+- [ ] Repetir isométricos y movilidad. Progresión de volumen, no de
+      intensidad.
+- [ ] **Empezar a reintroducir fuerza en bisagra solo si la espalda va bien:**
+      peso muerto rumiano con carga baja, RPE 5-6. Si sigue molestando, se
+      repite semana.
+- [ ] Nordic curl 3×6 solo si en la semana 1 no dio problema.
+- [ ] Arena 1×, ahora **con algo de intensidad**: 1 × (4×30 m, 60 s recup).
+      Suave. Es la primera vez que tocas el sprint de todo el plan.
+
+### Puerta de entrada a la Fase 1
+
+La Fase 1 no se empieza hasta que se cumplan **las tres**, tres días seguidos:
+
+- [ ] **Espalda**: rango completo de rotación y flexión de tronco sin dolor, y
+      capacidad de hingear (bisagra con carga) sin dolor.
+- [ ] **Hombro**: lanzar por encima de la cabeza a velocidad real, sin dolor.
+- [ ] **Muñeca**: extensión de muñeca cargada sin dolor, y una sesión de manejo
+      de balón completa sin molestia posterior.
+
+Si a final de la semana 2 no están las tres, la Fase 1 se retrasa una semana y
+se recorta el sprint antes que la fuerza. El orden de sacrificio es siempre el
+mismo: **sprint → COD → pliometría → excéntricos**. La fuerza base se conserva
+siempre.
+
+## Fase 1 · Base específica — sem 3-4 (19 oct - 1 nov)
 
 ### sem 3 (19-25 oct)
-- [ ] Pliometría 2×20 contactos. COD 5 reps.
-- [ ] Nordic 3×7. Arena 1×: **2 × (6×30 m, 45 s)**.
-- [ ] **Side plank 3×30 s** por lado. Dead bug 3×10 por lado.
-- [ ] Cambiar la mitad de los crunch por rotación en polea.
+- [ ] Pliometría **2×12 contactos**. Vertical, unilateral, drop. Cuentan
+      contactos, no series.
+- [ ] **COD reactivo**: 4 reps de 5 m con 4 cambios de dirección, reaccionando a
+      un estímulo, no a un cono fijo.
+- [ ] Nordic 3×6. Arena 1×: **1 × (6×30 m, 45 s recup)** + técnico.
+- [ ] Red de seguridad de hombro: **Face pull tal cual estaba**, sin tocar. Es
+      tu mejor trabajo y además es lo que más falta te hace ahora.
 
 ### sem 4 (26 oct - 1 nov)
-- [ ] Pliometría 2×20 contactos, **añadir lateral bound y drop jump**.
-- [ ] Nordic 3×8. Arena 2×, la última antes de que arranque el equipo.
-- [ ] **Test y anotar los números:** contra-movimiento y T-test, **en arena y en
-      suelo**. Sin este dato no sabes si la arena te está aportando algo.
+- [ ] Pliometría 2×18 contactos. Añadir **lateral bound**.
+- [ ] Nordic 3×7. Arena 1-2×: **2 × (6×30 m, 45 s)**.
+- [ ] **Test y anotar los dos números:** contra-movimiento y T-test, **en arena y
+      en suelo**. Sin esto no sabes si la arena te aporta algo.
+- [ ] Última semana antes de que entre el equipo.
 
 ## Fase 2 · Con el equipo — sem 5-8 (2-29 nov)
 
-El equipo entra. Aquí **complementas, no compites**. Si el entrenador del club
-propone algo distinto, manda él.
+El equipo entra. Aquí **complementas, no compites**. Si el entrenador propone
+otra cosa, manda él.
 
 ### sem 5 (2-8 nov)
-- [ ] Bajar a **3 días de gym**. Pliometría a 2×15 contactos.
-- [ ] Arena 2×: 2 × (6×30 m, 45 s), **sin subir todavía**.
-- [ ] Nordic a 3×6. El equipo ya aporta carga en la cadena posterior.
+- [ ] Bajar a **3 días de gym**. Pliometría a 2×12 contactos.
+- [ ] Arena 2×: 2 × (6×30 m, 45 s). **Sin subir todavía.**
+- [ ] Nordic 3×6. El equipo ya carga la cadena posterior.
 
 ### sem 6 (9-15 nov)
-- [ ] Plio 2×15 contactos. Arena 2×: **2 × (8×30 m, 40 s)**. Primer escalón real.
-- [ ] Nordic 3×6. Dead bug 3×10.
+- [ ] Plio 2×12. Arena 2×: **2 × (8×30 m, 40 s)**. Primer escalón real.
+- [ ] Nordic 3×6. Dead bug 3×10 por lado.
 
 ### sem 7 (16-22 nov)
-- [ ] Sin cambios en el estímulo, consolidar.
-- [ ] Arena 2×: 2 × (8×30 m, 40 s).
+- [ ] Consolidar sin subir el estímulo. Arena 2×: 2 × (8×30 m, 40 s).
 - [ ] **Simulación de partido**: 1 × 20 min en arena, 2 bloques de 10.
 
 ### sem 8 (23-29 nov)
 - [ ] Arena 2×: 2 × (8×30 m, 40 s).
-- [ ] **Simulación completa**: 2 × (2×10 min, 5 min descanso). Con las reglas
-      del torneo: 3 de campo, gol de oro, de volea vale 2.
+- [ ] **Simulación completa**: 2 × (2×10 min, 5 min descanso), con reglas de
+      torneo: 3 de campo, gol de oro, de volea vale 2.
 
 ## Fase 3 · Específico — sem 9-11 (30 nov - 20 dic)
 
 ### sem 9 (30 nov - 6 dic)
-- [ ] **Gym a 2 días.** Pliometría a 1×10 contactos, calidad pura.
+- [ ] **Gym a 2 días.** Pliometría 1×10 contactos, calidad pura.
 - [ ] Arena 2-3×: **3 × (6×30 m, 30 s)**. Velocidad, menos volumen.
-- [ ] Nordic 2×5. Menos volumen, se mantiene el estímulo.
+- [ ] Nordic 2×5.
 
 ### sem 10 (7-13 dic)
 - [ ] Gym 2 días, **−15 % de volumen, intensidad igual**.
 - [ ] Arena 2-3×: 3 × (6×30 m, 30 s).
-- [ ] **Simulación completa en condiciones de torneo.** Repetir en días
-      distintos, no siempre el mismo día de la semana.
+- [ ] **Simulación completa** en condiciones de torneo. En días distintos, no
+      siempre el mismo día de la semana.
 
 ### sem 11 (14-20 dic)
 - [ ] **Última semana en la que se admite un estímulo nuevo. A partir de aquí,
       nada.** Ni siquiera "solo una vez".
-- [ ] Gym 2 días, lightest. Arena 2×: 2 × (6×30 m, 30 s) — baja volumen, sube
-      el porcentaje.
-- [ ] Confirmar **horas, pista y convocatoria** del torneo.
-- [ ] **Primera noche en Málaga.** El viaje en Nochebuena (viernes 25) es
-      Malo; llegar el sábado a primera hora es peor todavía. Salir el
-      sábado por la mañana si se puede.
+- [ ] Gym 2 días, lightest. Arena 2×: 2 × (6×30 m, 30 s).
+- [ ] **Primera noche en Málaga.** Viajar en Nochebuena (viernes 25) es malo;
+      salir el sábado por la mañana, con el torneo el mismo día, es peor. Sal el
+      jueves 24 o el viernes 25 temprano si puedes.
+- [ ] **Entrena el hombro y la muñeca en condiciones de frío.** En Málaga en
+      diciembre: 15-18 °C y viento. Lanzar de volea con el hombro frío y con
+      muñeca es otra cosa. Si el hombro es el que molesta, esta es la sesión que
+      más riesgo tiene deAggravarla.
 
-## Fase 4 · Taper y torneo — sem 12-13 (21-28 dic)
+## Fase 4 · Taper y torneo — sem 12 (21-27 dic)
 
-Taper de 10-14 días. Baja el volumen, **mantén la intensidad**.
+Con 2 días de torneo el taper es más corto. 10-14 días de volumen bajo, con la
+competición dentro.
 
-### sem 12 (21-27 dic)
 - [ ] Volumen a **12-15 t/semana** (−40 %). El total en kg cae; es lo que toca.
 - [ ] Mantener **80-85 % de carga** en las series que quedan. **Nunca al fallo.**
 - [ ] Pliometría 1×6 contactos, o directamente nada.
-- [ ] **Sin Nordic.** Ya está la excitación residual.
-- [ ] **Viernes 25:** viaje a Málaga + **reconocimiento de arena en condiciones
-      reales**. Esto es sesión, no descanso. Frío y viento el 26.
+- [ ] **Sin Nordic.** La excitación residual no se negocia.
+- [ ] **Viernes 25:** si no has salido antes, viaje + **reconocimiento de arena en
+      condiciones reales**. Esto es sesión, no descanso.
 - [ ] **Sábado 26:** partido día 1.
 - [ ] **Domingo 27:** partido día 2.
-- [ ] **8 h de sueño** como objetivo, no como aspiración. La deuda de sueño es
-      la forma más rápida de perder el taper.
-
-### sem 13 (lunes 28)
-- [ ] Si el torneo es de 3 días: **partido día 3, en lunes**. Entrar en ese
-      tercer partido sin haber entrenado nada los dos días previos es correcto
-      y también es lo que va a doler.
-- [ ] Carbohidratos, hidratación, nada de estímulo nuevo.
+- [ ] **8 h de sueño** como objetivo. La deuda de sueño es la forma más rápida
+      de perder el taper.
+- [ ] **Lunes 28 y martes 29:**yped ya está. Come, hidrata, no hagas nada. Volver
+      a entrenar a partir del miércoles como máximo.
 
 ---
 
 ## Fuera de la preparación
 
-Estas no son tareas de entrenamiento. Son deuda que el análisis destapó:
+Deuda que el análisis destapó, no tareas de entrenamiento:
 
 - [ ] **491 bloques (30 % del volumen) sin patrón de movimiento.** Ninguno es de
-      las últimas 4 semanas, así que se está arreglando solo. Cuando termines,
-      el análisis por patrón será fiable.
+      las últimas 4 semanas, así que se está arreglando solo.
 - [ ] **Trampa latente en `is_public`.** De los 60 ejercicios del catálogo
       compartido, solo 15 tienen `is_public = true`. La app no sufre el problema
       porque su RPC filtra por `user_id IS NULL`
-      (`20260724000001_exercises_rpc_equipment.sql:31`). **Pero cualquier SQL
-      nuevo que filtre por `is_public` esconde 45 ejercicios y rompe 1001 de
-      1558 series.** No se toca código aquí; queda anotado para quien escriba
-      consultas.
-- [ ] El bodyweight se registra como kilos. Dominadas, crunch abdominal y salto
-      al cajón aparecen con carga porque se apunta el peso corporal. Funciona,
-      pero hace que "volumen sin carga externa" dé cero y sea imposible
-      distinguir trabajo corporal de trabajo con carga real.
+      (`20260724000001_exercises_rpc_equipment.sql:31`). Pero cualquier SQL nuevo
+      que filtre por `is_public` esconde 45 ejercicios y rompe 1001 de 1558
+      series. No se toca código aquí; queda anotado para quien escriba consultas.
+- [ ] El bodyweight se registra como kilos: 126 series (795 reps). El registro
+      está limpio, lo que falla es el criterio de consulta.
 
 ## Lo que este plan no puede arreglar
 
 - Si el equipo de Torrox hace su propia preparación física, la Fase 2 tiene que
   seguir lo que diga su entrenador. Este bloque no lo sustituye.
+- **Con una contractura activa, la Fase 0 puede durar 3 semanas en vez de 2.** El
+  plan está cortado para que quepa, pero si se alarga, lo que se recorta es el
+  sprint repetido, no la fuerza. Es la decisión correcta porque la fuerza es la
+  que ya tienes construida y el sprint es lo que más fácil se gana.
 - 12 semanas permiten construir la capa que falta, **no** crear una reserva
   nueva. El Face pull, las dominadas y el bloque de fuerza que ya tienes son la
-  base sobre la que se monta todo lo demás. Ese trabajo no se toca.
+  base. Ese trabajo no se toca en ninguna fase, y en la Fase 0 el hombro es lo
+  primero que se cuida.
