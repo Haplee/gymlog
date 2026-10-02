@@ -1,6 +1,6 @@
 // Informe de entrenamiento desde Supabase para un usuario de GymLog.
 // Uso:  node scripts/informe-entrenamiento.mjs
-// Credenciales: .env.local (GYMLOG_EMAIL, GYMLOG_PASSWORD) — nunca al repo.
+// Credenciales: .env.local — nunca al repo (esta en .gitignore).
 import { createClient } from '@supabase/supabase-js';
 import { readFileSync, writeFileSync } from 'node:fs';
 
@@ -8,11 +8,22 @@ const env = Object.fromEntries(
   readFileSync('.env.local', 'utf8')
     .split('\n').filter(Boolean).map(l => { const i = l.indexOf('='); return [l.slice(0, i), l.slice(i + 1)]; }),
 );
-// La clave publicable va por defecto porque no es secreta (ya viaja en el bundle
-// de la app), pero se puede sobreescribir por entorno sin tocar el codigo.
+// .env.local manda, pero lo que venga de verdad en el entorno tiene prioridad.
+Object.assign(process.env, env);
+
+// URL y clave van SIEMPRE por entorno. No se hardcodean: aunque la clave
+// publishable no sea secreta (ya viaja en el bundle de la app), dejarla escrita
+// en un fichero versionado es una invitacion a que alguien la trague un dia sin
+// mirar. Fallar si falta es preferible a inventar un valor por defecto.
+for (const k of ['GYMLOG_SUPABASE_URL', 'GYMLOG_SUPABASE_KEY']) {
+  if (!process.env[k]) {
+    console.error(`Falta ${k}. Anadelo a .env.local y vuelve a lanzar.`);
+    process.exit(1);
+  }
+}
 const sb = createClient(
-  process.env.GYMLOG_SUPABASE_URL ?? 'https://eoltmipoklizewxdpzfa.supabase.co',
-  process.env.GYMLOG_SUPABASE_KEY ?? 'sb_publishable_C5dKsRG9DOpZjC5XihhsEA_P0rV4i93',
+  process.env.GYMLOG_SUPABASE_URL,
+  process.env.GYMLOG_SUPABASE_KEY,
   { auth: { persistSession: false } },
 );
 const { data: s, error } = await sb.auth.signInWithPassword({
