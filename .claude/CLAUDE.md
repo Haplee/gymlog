@@ -33,7 +33,7 @@ GitHub Actions.
 - **Backend:** Supabase (auth, Postgres, RPC) · **Validación:** Zod
 - **Móvil:** Capacitor 8 (Android/iOS) + vite-plugin-pwa
 - **Tests:** Vitest + Testing Library + MSW (unit) · Playwright (e2e en `e2e/`)
-- **Calidad:** ESLint 9 + Prettier + husky + lint-staged · commitizen (conventional commits)
+- **Calidad:** ESLint 9 + Prettier + husky + lint-staged · conventional commits
 
 ## Comandos esenciales
 
@@ -49,7 +49,6 @@ npm run build:android    # build + npx cap sync android
 npm run open:android     # abrir Android Studio
 npm run gen:types        # regenerar src/types/database.types.ts desde Supabase
 npm run analyze          # build con visualizador de bundle
-npm run commit           # commitizen (conventional commits) — interactivo, para el usuario
 npm run release          # standard-version — lo usa el usuario
 ```
 
@@ -161,8 +160,8 @@ src/
 - **Strings de usuario via i18next** — nada de texto literal en JSX.
 - Stores Zustand por feature, co-locados en `features/<x>/stores/`.
 - Conventional commits (`feat:`, `fix:`, `refactor:`, `style:`, `chore:`, `docs:`).
-  `npm run commit` (commitizen) es interactivo: un agente usa `git commit -F -` con
-  un heredoc. Explica en el cuerpo **por qué**, no solo qué.
+  Se escriben a mano (`git commit -F -` con un heredoc si hace falta). Explica en el
+  cuerpo **por qué**, no solo qué.
 - No commits directos a `main`: ramas `feat/`, `fix/`, `docs/` (o `release/vX.Y.Z`).
 - husky + lint-staged ejecutan eslint+prettier en cada commit — no los saltes.
 - `eslint-plugin-jsx-a11y` activo: respeta aria-\*, roles y contraste WCAG AA.
