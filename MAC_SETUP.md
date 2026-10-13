@@ -9,14 +9,13 @@
 
 ## 1. Qué instalar
 
-| Programa        | Para qué                                                           | Cómo se instala                                                                                                                                                                   |
-| --------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Xcode**       | Compilar, firmar y ejecutar la app iOS                             | App Store (gratis)                                                                                                                                                                |
-| **CocoaPods**   | Gestor de dependencias nativas que usa el proyecto iOS (`Podfile`) | `sudo gem install cocoapods` en Terminal                                                                                                                                          |
-| **Node.js 18+** | Igual que en Windows: `npm run build`, `npx cap ...`               | [nodejs.org](https://nodejs.org) o `brew install node`                                                                                                                            |
-| **Apple ID**    | Firmar la app en tu iPhone                                         | Uno normal (gratis) sirve para desarrollo local; de pago (99 $/año, Apple Developer Program) hace falta solo para TestFlight/App Store o para que la firma no caduque cada 7 días |
+| Programa        | Para qué                                             | Cómo se instala                                                                                                                                                                   |
+| --------------- | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Xcode**       | Compilar, firmar y ejecutar la app iOS               | App Store (gratis)                                                                                                                                                                |
+| **Node.js 18+** | Igual que en Windows: `npm run build`, `npx cap ...` | [nodejs.org](https://nodejs.org) o `brew install node`                                                                                                                            |
+| **Apple ID**    | Firmar la app en tu iPhone                           | Uno normal (gratis) sirve para desarrollo local; de pago (99 $/año, Apple Developer Program) hace falta solo para TestFlight/App Store o para que la firma no caduque cada 7 días |
 
-No hace falta instalar Android Studio, Java ni nada de Android en el Mac — eso ya está resuelto en Windows.
+No hace falta instalar Android Studio, Java ni nada de Android en el Mac — eso ya está resuelto en Windows. Tampoco **CocoaPods**: desde `@sentry/capacitor` 4.4.0 el SDK de iOS ya no publica `podspec`, así que el proyecto se genera con **Swift Package Manager** (el default de Capacitor 8).
 
 ## 2. Clonar el repo y traer las dependencias
 
@@ -35,7 +34,7 @@ scripts que los inyectan en el proyecto Xcode generado.
 
 ```bash
 npm run build
-npx cap add ios --packagemanager CocoaPods   # genera ios/, solo la primera vez
+npx cap add ios   # genera ios/, solo la primera vez (SPM; ver nota de sentry 4.4.0)
 npx cap sync ios
 
 cp ios-custom/BiometricPlugin.swift ios-custom/BiometricPlugin.m ios/App/App/
