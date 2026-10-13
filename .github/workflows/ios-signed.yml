@@ -34,9 +34,10 @@ jobs:
           VITE_SUPABASE_KEY: ${{ secrets.VITE_SUPABASE_KEY }}
         run: npm run build
       - name: Add iOS platform (if missing)
+        # SPM (default de Cap 8): @sentry/capacitor 4.4.0 ya no publica podspec.
         run: |
           if [ ! -d "ios" ]; then
-            npx cap add ios --packagemanager CocoaPods
+            npx cap add ios
           fi
       - name: Sync Capacitor
         run: npx cap sync ios
@@ -53,9 +54,6 @@ jobs:
           for f in ios/App/App/Assets.xcassets/AppIcon.appiconset/*.png; do
             cp ios-custom/AppIcon-1024.png "$f"
           done
-      - name: Install CocoaPods
-        run: cd ios/App && pod install
-
       - name: Import signing assets
         env:
           CERT_B64: ${{ secrets.IOS_DIST_CERT_P12_BASE64 }}
@@ -101,7 +99,7 @@ jobs:
 
           cd ios/App
           xcodebuild \
-            -workspace App.xcworkspace \
+            -project App.xcodeproj \
             -scheme App \
             -configuration Release \
             -sdk iphoneos \

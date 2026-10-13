@@ -1,7 +1,7 @@
 # `ios-custom/` — staging del nativo iOS
 
 El proyecto nativo `ios/` **no se versiona** (se genera con `npx cap add ios`, que
-requiere macOS + Xcode + CocoaPods). Esta carpeta es la **fuente de verdad** del
+requiere macOS + Xcode). Esta carpeta es la **fuente de verdad** del
 código nativo iOS custom y se inyecta en el `ios/` efímero:
 
 - `BiometricPlugin.swift` — plugin Capacitor de biometría (Face ID / Touch ID) con
@@ -19,20 +19,27 @@ código nativo iOS custom y se inyecta en el `ios/` efímero:
   `NSFaceIDUsageDescription` y los usage descriptions de HealthKit. Idempotente (`PlistBuddy`).
 - `add-plugin-to-target.rb` — registra los ficheros nativos en el target `App`
   del `.pbxproj` (el template usa file refs explícitas, no synchronized groups).
-  Requiere la gema `xcodeproj` (incluida con CocoaPods).
+  Requiere la gema `xcodeproj` (el CI la instala si falta).
 
 ## Qué hace el CI (`.github/workflows/ios-build.yml`)
 
 En runner `macos-latest`, **produce un IPA sin firmar** (Release, SDK `iphoneos`):
 
 1. `npm ci` + `npm run build` (con secrets Supabase del repo).
-2. `npx cap add ios --packagemanager CocoaPods` (genera `ios/`) + `npx cap sync ios`.
+2. `npx cap add ios` (genera `ios/` con **Swift Package Manager**) + `npx cap sync ios`.
 3. Copia plugins nativos + entitlements + icono; `add-plugin-to-target.rb` +
    `Info.plist.patch.sh`.
-4. `pod install` + `xcodebuild -configuration Release -sdk iphoneos
+4. `xcodebuild -project App.xcodeproj -configuration Release -sdk iphoneos
 CODE_SIGNING_ALLOWED=NO` con la versión de `package.json` (`MARKETING_VERSION`).
 5. Empaqueta `Payload/App.app` → `GymLog-unsigned-vX.Y.Z.ipa`, lo sube como
    artifact `GymLog-ipa-unsigned` y, en push de tag `v*`, lo adjunta a la release.
+
+> **Por qué SPM y no CocoaPods** (2026-10-13): `@sentry/capacitor` 4.4.0 dejó de
+> publicar `SentryCapacitor.podspec` — _"iOS consumers must use Swift Package
+> Manager"_ — y el paso `pod install` fallaba con «No podspec found for
+> SentryCapacitor». SPM es además el default de Capacitor 8 y todos los plugins
+> del proyecto traen `Package.swift`. Con SPM no hay `Podfile` ni
+> `App.xcworkspace`: se compila contra `App.xcodeproj`.
 
 ## Instalar el IPA (sin App Store, sin cuenta de pago)
 
@@ -53,7 +60,7 @@ dura 1 año y no hay límite de 3 apps.
 
 ```bash
 npm run build
-npx cap add ios --packagemanager CocoaPods   # genera ios/ (solo la primera vez)
+npx cap add ios   # genera ios/ (solo la primera vez; SPM, sin CocoaPods)
 npx cap sync ios
 cp ios-custom/BiometricPlugin.swift ios-custom/BiometricPlugin.m ios/App/App/
 cp ios-custom/HealthBridgePlugin.swift ios-custom/HealthBridgePlugin.m ios/App/App/

@@ -17,7 +17,7 @@ import LocalAuthentication
 /// va contra las guidelines de Apple, así que se mantiene el bloqueo con botón
 /// de reintento.
 ///
-/// Drop into ios/App/App/ (the CI workflow copies it automatically before pod install).
+/// Drop into ios/App/App/ (the CI workflow copies it automatically before the build).
 @objc(BiometricPlugin)
 public class BiometricPlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "BiometricPlugin"
