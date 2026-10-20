@@ -17,4 +17,5 @@ export { SectionHeader } from './SectionHeader';
 export { SettingRow } from './SettingRow';
 export { NavRow } from './NavRow';
 export { PlatesPicker } from './PlatesPicker';
+export { EquipmentStepsEditor } from './EquipmentStepsEditor';
 export { PageHeader } from './PageHeader';

@@ -4,7 +4,7 @@
 # EXPLÍCITAS (no synchronized groups), así que copiarlos al disco no basta: hay que
 # registrarlos en project.pbxproj o no se compilan.
 #
-# Requiere la gema `xcodeproj` (el CI la instala si falta).
+# Requiere la gema `xcodeproj` (viene con CocoaPods, preinstalado en macos-latest).
 # Uso: ruby ios-custom/add-plugin-to-target.rb [ios/App/App.xcodeproj]
 require 'xcodeproj'
 

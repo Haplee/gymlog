@@ -1,6 +1,23 @@
 import { useCallback } from 'react';
 import { useSettingsStore } from '@shared/stores/settingsStore';
-import { loadStepForExercise } from '@shared/lib/loadStep';
+import {
+  loadMovesForExercise,
+  loadStepForExercise,
+  type ExerciseLoadMoves,
+} from '@shared/lib/loadStep';
+
+/** Opciones de escalón que necesita el motor, sacadas del store. */
+export function settingsLoadOptions() {
+  const { availablePlatesKg, dumbbellStepsKg, machineStepsKg, dumbbellStepKg, machineStepKg } =
+    useSettingsStore.getState();
+  return {
+    platesKg: availablePlatesKg,
+    dumbbellStepsKg,
+    machineStepsKg,
+    dumbbellStepKg,
+    machineStepKg,
+  };
+}
 
 /**
  * Escalón mínimo montable por ejercicio, según su material y el gimnasio del
@@ -17,12 +34,39 @@ import { loadStepForExercise } from '@shared/lib/loadStep';
  */
 export function useLoadStep(): (equipment: string | null | undefined) => number {
   const platesKg = useSettingsStore((s) => s.availablePlatesKg);
+  const dumbbellStepsKg = useSettingsStore((s) => s.dumbbellStepsKg);
+  const machineStepsKg = useSettingsStore((s) => s.machineStepsKg);
   const dumbbellStepKg = useSettingsStore((s) => s.dumbbellStepKg);
   const machineStepKg = useSettingsStore((s) => s.machineStepKg);
 
   return useCallback(
-    (equipment) => loadStepForExercise(equipment, { platesKg, dumbbellStepKg, machineStepKg }),
-    [platesKg, dumbbellStepKg, machineStepKg],
+    (equipment) =>
+      loadStepForExercise(equipment, {
+        platesKg,
+        dumbbellStepsKg,
+        machineStepsKg,
+        dumbbellStepKg,
+        machineStepKg,
+      }),
+    [platesKg, dumbbellStepsKg, machineStepsKg, dumbbellStepKg, machineStepKg],
+  );
+}
+
+/**
+ * Movimiento por la escalera real del material, por ejercicio.
+ *
+ * Es el hermano de `useLoadStep`: aquel dice *cuánto* es un salto, este dice *a
+ * qué peso* se sube o se baja. Con tabla vacía devuelve `{}` y el motor sigue
+ * con múltiplos, así que no rompe nada.
+ */
+export function useLoadMoves(): (equipment: string | null | undefined) => ExerciseLoadMoves {
+  const platesKg = useSettingsStore((s) => s.availablePlatesKg);
+  const dumbbellStepsKg = useSettingsStore((s) => s.dumbbellStepsKg);
+  const machineStepsKg = useSettingsStore((s) => s.machineStepsKg);
+
+  return useCallback(
+    (equipment) => loadMovesForExercise(equipment, { platesKg, dumbbellStepsKg, machineStepsKg }),
+    [platesKg, dumbbellStepsKg, machineStepsKg],
   );
 }
 
@@ -34,10 +78,10 @@ export function useLoadStep(): (equipment: string | null | undefined) => number 
  * antes con los discos.
  */
 export function loadStepFromSettings(equipment: string | null | undefined): number {
-  const { availablePlatesKg, dumbbellStepKg, machineStepKg } = useSettingsStore.getState();
-  return loadStepForExercise(equipment, {
-    platesKg: availablePlatesKg,
-    dumbbellStepKg,
-    machineStepKg,
-  });
+  return loadStepForExercise(equipment, settingsLoadOptions());
+}
+
+/** Movimiento por la escalera real, fuera de React. */
+export function loadMovesFromSettings(equipment: string | null | undefined): ExerciseLoadMoves {
+  return loadMovesForExercise(equipment, settingsLoadOptions());
 }

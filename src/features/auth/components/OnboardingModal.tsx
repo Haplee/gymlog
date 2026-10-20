@@ -70,11 +70,12 @@ export function OnboardingModal({ user, onComplete }: OnboardingModalProps) {
                   type="button"
                   key={g}
                   onClick={() => setData({ ...data, goal: g })}
-                  className={`rounded-pill border p-3 text-sm transition-colors ${
+                  className={`p-3 rounded-md border text-sm transition-all ${
                     data.goal === g
-                      ? 'border-accent bg-accent/10 text-accent'
+                      ? 'border-accent text-accent'
                       : 'bg-surface-2 border-line text-fg-muted'
                   }`}
+                  style={data.goal === g ? { backgroundColor: 'rgba(200,255,0,0.1)' } : {}}
                 >
                   {t(`onboarding.goal_${g}`)}
                 </button>

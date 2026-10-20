@@ -7,10 +7,10 @@ import { useSettingsStore } from '@shared/stores/settingsStore';
 import { isWakeLockSupported } from '@shared/hooks/useWakeLock';
 import { Layout } from '@app/components/Layout';
 import {
+  EquipmentStepsEditor,
   NavRow,
   PlatesPicker,
   SectionHeader,
-  SegmentedControl,
   SettingRow,
   Toggle,
 } from '@shared/components/ui';
@@ -88,7 +88,7 @@ function MenuRow({
   );
 }
 
-export function SettingsPage() {
+export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
@@ -110,10 +110,6 @@ export function SettingsPage() {
     setAutoFillWeights,
     keepScreenAwake,
     setKeepScreenAwake,
-    dumbbellStepKg,
-    setDumbbellStepKg,
-    machineStepKg,
-    setMachineStepKg,
   } = useSettingsStore(
     useShallow((s) => ({
       biometricEnabled: s.biometricEnabled,
@@ -122,10 +118,6 @@ export function SettingsPage() {
       setNotificationsEnabled: s.setNotificationsEnabled,
       trainingReminders: s.trainingReminders,
       setTrainingReminders: s.setTrainingReminders,
-      dumbbellStepKg: s.dumbbellStepKg,
-      setDumbbellStepKg: s.setDumbbellStepKg,
-      machineStepKg: s.machineStepKg,
-      setMachineStepKg: s.setMachineStepKg,
       restAutoStart: s.restAutoStart,
       setRestAutoStart: s.setRestAutoStart,
       restDuration: s.restDuration,
@@ -594,23 +586,33 @@ export function SettingsPage() {
             <div className="px-4 py-3.5">
               <div className="text-base text-fg">{t('settings.save_scope')}</div>
               <div className="text-xs mb-2.5 text-fg-subtle">{t('settings.save_scope_desc')}</div>
-              <SegmentedControl
-                size="md"
-                className="w-full"
-                ariaLabel={t('settings.save_scope')}
-                value={saveScope ?? 'ask'}
-                onChange={(next) => {
-                  const value = next === 'ask' ? null : (next as SaveScope);
-                  if (value === null) clearSaveScope();
-                  else writeSaveScope(value);
-                  setSaveScopeState(value);
-                }}
-                options={[
-                  { value: 'ask', label: t('settings.save_scope_ask') },
-                  { value: 'all', label: t('settings.save_scope_all') },
-                  { value: 'completed-only', label: t('settings.save_scope_completed') },
-                ]}
-              />
+              <div className="flex gap-1.5" role="group" aria-label={t('settings.save_scope')}>
+                {(
+                  [
+                    { value: null, label: t('settings.save_scope_ask') },
+                    { value: 'all', label: t('settings.save_scope_all') },
+                    { value: 'completed-only', label: t('settings.save_scope_completed') },
+                  ] as const
+                ).map(({ value, label }) => (
+                  <button
+                    type="button"
+                    key={value ?? 'ask'}
+                    onClick={() => {
+                      if (value === null) clearSaveScope();
+                      else writeSaveScope(value);
+                      setSaveScopeState(value);
+                    }}
+                    aria-pressed={saveScope === value}
+                    className={`flex-1 min-h-11 rounded-sm px-2 text-2xs font-medium leading-tight cursor-pointer border transition-colors ${
+                      saveScope === value
+                        ? 'bg-accent text-accent-fg border-accent'
+                        : 'bg-surface-2 text-fg-muted border-line'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Discos del gimnasio. Estaba solo dentro de la calculadora, donde
@@ -634,31 +636,15 @@ export function SettingsPage() {
               <div className="text-xs mb-2.5 text-fg-subtle">
                 {t('workout.equipment_steps_help')}
               </div>
-              <div className="flex gap-3">
-                <label className="flex-1">
-                  <span className="label-caps text-fg-subtle">{t('workout.dumbbell_step')}</span>
-                  <input
-                    type="number"
-                    inputMode="decimal"
-                    min="0.5"
-                    step="0.5"
-                    value={dumbbellStepKg}
-                    onChange={(e) => setDumbbellStepKg(Number(e.target.value))}
-                    className="mt-1 w-full min-h-11 rounded-sm bg-surface-2 border border-line px-3 text-base text-fg tabular outline-none focus:border-accent"
-                  />
-                </label>
-                <label className="flex-1">
-                  <span className="label-caps text-fg-subtle">{t('workout.machine_step')}</span>
-                  <input
-                    type="number"
-                    inputMode="decimal"
-                    min="0.5"
-                    step="0.5"
-                    value={machineStepKg}
-                    onChange={(e) => setMachineStepKg(Number(e.target.value))}
-                    className="mt-1 w-full min-h-11 rounded-sm bg-surface-2 border border-line px-3 text-base text-fg tabular outline-none focus:border-accent"
-                  />
-                </label>
+              <div className="space-y-4">
+                <div>
+                  <span className="label-caps text-fg-subtle">{t('workout.dumbbell_steps')}</span>
+                  <EquipmentStepsEditor family="dumbbell" className="mt-1.5" />
+                </div>
+                <div>
+                  <span className="label-caps text-fg-subtle">{t('workout.machine_steps')}</span>
+                  <EquipmentStepsEditor family="machine" className="mt-1.5" />
+                </div>
               </div>
             </div>
 
@@ -668,17 +654,23 @@ export function SettingsPage() {
                 <div className="text-xs mb-2.5 text-fg-subtle">
                   {t('settings.rest_duration_desc')}
                 </div>
-                <SegmentedControl
-                  size="md"
-                  className="w-full"
-                  ariaLabel={t('settings.rest_duration')}
-                  value={String(restDuration)}
-                  onChange={(next) => setRestDuration(Number(next))}
-                  options={[60, 90, 120, 180].map((seconds) => ({
-                    value: String(seconds),
-                    label: seconds < 120 ? `${seconds}s` : `${seconds / 60}min`,
-                  }))}
-                />
+                <div className="flex gap-1.5">
+                  {[60, 90, 120, 180].map((seconds) => (
+                    <button
+                      type="button"
+                      key={seconds}
+                      onClick={() => setRestDuration(seconds)}
+                      aria-pressed={restDuration === seconds}
+                      className={`flex-1 min-h-11 rounded-sm text-sm font-display font-bold tabular border transition-colors ${
+                        restDuration === seconds
+                          ? 'bg-accent text-accent-fg border-accent'
+                          : 'bg-surface-2 text-fg-muted border-line'
+                      }`}
+                    >
+                      {seconds < 120 ? `${seconds}s` : `${seconds / 60}min`}
+                    </button>
+                  ))}
+                </div>
 
                 <div className="hairline-separator mt-4" />
                 <div className="pt-3.5 flex items-center justify-between gap-3">
@@ -761,6 +753,8 @@ export function SettingsPage() {
         {/* Horas de los avisos: solo tiene sentido si las notificaciones están
             encendidas, si no serían ajustes de algo que no va a sonar. */}
         {notificationsEnabled && <ReminderSettings onTimesChanged={handleReminderTimesChanged} />}
+
+        {coachSection}
 
         {/* Datos */}
         <section>

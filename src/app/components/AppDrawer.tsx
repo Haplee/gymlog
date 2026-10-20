@@ -9,6 +9,7 @@ import {
   IconDumbbell,
   IconGear,
   IconSearch,
+  IconStar,
   IconWatch,
   X,
 } from '@shared/components/icons';
@@ -20,12 +21,10 @@ import {
  * wordmark + usuario, así que la lupa, la campana y la pestaña de historial se
  * quedaron sin sitio. En vez de eliminarlas —serían funcionalidad perdida— viven
  * aquí, junto a las rutas que nunca tuvieron entrada propia en la barra inferior
- * (biblioteca, medidas, wearables y guía).
+ * (biblioteca, medidas, wearables, guía, entrenador).
  *
- * La barra inferior se quedó con lo que se usa entrenando (inicio, rutinas,
- * progreso, historial y cardio), así que Estadísticas y Ajustes viven aquí.
- * Ojo con las dos que se llaman parecido: `/stats` son las estadísticas
- * globales y `/user-stats` es «Progreso», que sí tiene pestaña propia.
+ * Desde la decisión de dejar la barra inferior en cuatro pestañas (inicio,
+ * rutinas, historial y cardio), Estadísticas y Ajustes también viven aquí.
  *
  * **Nada de lo que hay aquí está en la barra inferior ni en la cabecera.** Un
  * cajón que repite los destinos que ya tienes a un dedo de distancia solo añade
@@ -72,6 +71,7 @@ export function AppDrawer({ onClose, onOpenSearch, unreadCount }: AppDrawerProps
     {
       title: t('nav.group_more'),
       links: [
+        { to: '/coach', Icon: IconStar, label: t('coach.page_title') },
         { to: '/wearables', Icon: IconWatch, label: t('settings.wearables') },
         { to: '/guide', Icon: IconBook, label: t('guide.title') },
       ],

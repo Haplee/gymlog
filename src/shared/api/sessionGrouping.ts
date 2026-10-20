@@ -9,6 +9,15 @@
 
 import { toLocalDateKey } from '@shared/lib/dateKeys';
 
+/**
+ * Cuántas sesiones hacia atrás mira el motor de autorregulación.
+ *
+ * Vive aquí, junto a la agrupación que la aplica, y no en cada pantalla: la
+ * sesión de rutina y la de progreso tienen que mirar la misma ventana o dan
+ * respuestas distintas para el mismo ejercicio.
+ */
+export const EXERCISE_SESSION_LIMIT = 8;
+
 /** Una sesión pasada de un ejercicio, con el esfuerzo que se registró. */
 export interface ExerciseSessionSets {
   started_at: string;

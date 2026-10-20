@@ -240,7 +240,7 @@
 
 ```
 [1] npm run build
-[2] npx cap add ios   # SPM (default de Cap 8); CocoaPods ya no vale con sentry 4.4.0
+[2] npx cap add ios --packagemanager CocoaPods
 [3] npx cap sync ios
 [4] Copiar plugins: cp ios-custom/*.swift ios-custom/*.m ios/App/App/
 [5] ruby add-plugin-to-target.rb

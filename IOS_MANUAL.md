@@ -163,7 +163,7 @@ en el iPhone hoy".
 
 ```bash
 npm run build
-npx cap add ios   # solo la primera vez, genera ios/ (SPM)
+npx cap add ios --packagemanager CocoaPods   # solo la primera vez, genera ios/
 npx cap sync ios
 cp ios-custom/BiometricPlugin.swift ios-custom/BiometricPlugin.m ios/App/App/
 cp ios-custom/HealthBridgePlugin.swift ios-custom/HealthBridgePlugin.m ios/App/App/
@@ -187,9 +187,10 @@ En Xcode:
    como destino en la barra superior de Xcode.
 4. Run (▶). La primera vez, en el iPhone: Ajustes → General → VPN y gestión de
    dispositivos → confiar en tu Apple ID/certificado.
-5. No hace falta CocoaPods: el proyecto se genera con Swift Package Manager
-   (default de Capacitor 8), porque `@sentry/capacitor` 4.4.0 ya no publica
-   `podspec`. El CI de iOS compila igual, contra `App.xcodeproj`.
+5. Requiere CocoaPods instalado (`sudo gem install cocoapods` si no lo tienes)
+   — `cap add ios --packagemanager CocoaPods` genera `Podfile`/`.xcworkspace`
+   en vez de Swift Package Manager, que es lo que espera el resto del
+   pipeline.
 
 Con Apple ID gratis, la app instalada así también caduca a los 7 días (hay que
 volver a darle a Run desde Xcode). Con cuenta de pago, un año.
@@ -222,4 +223,5 @@ volver a darle a Run desde Xcode). Con cuenta de pago, un año.
 En cuanto confirmes el camino (A, B o ambos), ejecuto el paso a paso de
 arriba sin volver a preguntar: disparo o reviso el workflow de CI si es el
 Camino A, o preparo/dejo listos los comandos exactos para pegar en tu Mac si
-es el Camino B (yo no puedo ejecutarlos desde este Windows — Xcode no corre aquí).
+es el Camino B (yo no puedo ejecutarlos desde este Windows — Xcode y
+CocoaPods no corren aquí).

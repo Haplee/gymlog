@@ -97,6 +97,3 @@ supabase/usuario_prueba.txt
 
 # capturas de UI para comparar antes/después
 .shots/
-
-# Salida de repomix (empaqueta el repo en un XML para LLMs) — artefacto local
-repomix-output.xml

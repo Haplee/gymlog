@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { App as CapApp } from '@capacitor/app';
 import { checkStreakAtRisk } from '@shared/lib/streakChecker';
 import { checkWeeklySummary } from '@shared/lib/weeklySummary';
@@ -35,6 +35,24 @@ export function useBackgroundNotifications(
   // llamador (AppRoutes): el hook vive en @shared y no debe depender de
   // stores de features.
 
+  // Contador que cambia al cruzar la medianoche. Va en el estado y no en una
+  // variable porque lo que tiene que provocar es un re-render: cruzar la
+  // medianoche con la app abierta no emite ningún evento de Capacitor, así que
+  // «¿he entrenado hoy?», el plan de la semana y el día que le toca a la rutina
+  // se quedaban con el estado de ayer hasta la próxima apertura —que puede no
+  // llegar antes de que suene la alarma.
+  const [dayTick, setDayTick] = useState(0);
+
+  useEffect(() => {
+    const now = new Date();
+    const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    const timer = setTimeout(
+      () => setDayTick((n) => n + 1),
+      nextMidnight.getTime() - now.getTime(),
+    );
+    return () => clearTimeout(timer);
+  }, [dayTick]);
+
   // Al arrancar (o al cambiar de usuario): sincronizar el flag de notificaciones
   // con la DB y reprogramar las alarmas nativas si procede. Sin esto, tras
   // reiniciar la app el toggle/localStorage quedaba desfasado y no se reprogramaba.
@@ -66,7 +84,7 @@ export function useBackgroundNotifications(
       void registerPushNotifications(userId);
       devLog('[Background] Alarmas nativas programadas');
     })();
-  }, [userId, getRoutineDays]);
+  }, [userId, getRoutineDays, dayTick]);
 
   // Check en foreground al abrir: reconciliar recordatorios (rutina + racha) con
   // el estado real de entrenamiento y disparar el resumen semanal si aplica.
@@ -125,5 +143,5 @@ export function useBackgroundNotifications(
     return () => {
       void handle.then((h) => h.remove());
     };
-  }, [userId, getRoutineDays]);
+  }, [userId, getRoutineDays, dayTick]);
 }

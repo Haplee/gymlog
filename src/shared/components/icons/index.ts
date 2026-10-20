@@ -144,6 +144,7 @@ export {
   IconCheckBadge,
   IconTimer,
   IconStar,
+  IconBrain,
   IconMale,
   IconFemale,
 } from './GymIcons';

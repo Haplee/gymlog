@@ -33,7 +33,7 @@ GitHub Actions.
 - **Backend:** Supabase (auth, Postgres, RPC) · **Validación:** Zod
 - **Móvil:** Capacitor 8 (Android/iOS) + vite-plugin-pwa
 - **Tests:** Vitest + Testing Library + MSW (unit) · Playwright (e2e en `e2e/`)
-- **Calidad:** ESLint 9 + Prettier + husky + lint-staged · conventional commits
+- **Calidad:** ESLint 9 + Prettier + husky + lint-staged · commitizen (conventional commits)
 
 ## Comandos esenciales
 
@@ -49,6 +49,7 @@ npm run build:android    # build + npx cap sync android
 npm run open:android     # abrir Android Studio
 npm run gen:types        # regenerar src/types/database.types.ts desde Supabase
 npm run analyze          # build con visualizador de bundle
+npm run commit           # commitizen (conventional commits) — interactivo, para el usuario
 npm run release          # standard-version — lo usa el usuario
 ```
 
@@ -61,6 +62,7 @@ src/
 ├── features/
 │   ├── auth/             # AuthPage, AuthCallback, SettingsPage, authStore
 │   ├── cardio/           # CardioPage, cardioStore (timer de sesión)
+│   ├── coach/            # entrenador IA opt-in (api/ components/ pages/ stores/ types/)
 │   ├── fitbody/          # FitBodyShowcasePage: escaparate del reskin (ruta /fitbody)
 │   ├── guide/            # GuidePage: guía de uso en la app (ruta /guide)
 │   ├── routine/          # RoutinePage, routineStore, useWorkoutReminder
@@ -84,7 +86,7 @@ src/
   `tsconfig.app.json` **y** `vite.config.ts`; si añades uno, sincroniza ambos.
 - Rutas: `/` (WorkoutPage), `/routines`, `/stats`, `/history`, `/settings`,
   `/cardio`, `/user-stats`, `/exercises`, `/wearables`, `/notifications`,
-  `/guide`, `/fitbody`, `/login`, `/auth/callback`.
+  `/guide`, `/coach`, `/coach/memory`, `/fitbody`, `/login`, `/auth/callback`.
 
 ## Sistema de diseño
 
@@ -160,8 +162,8 @@ src/
 - **Strings de usuario via i18next** — nada de texto literal en JSX.
 - Stores Zustand por feature, co-locados en `features/<x>/stores/`.
 - Conventional commits (`feat:`, `fix:`, `refactor:`, `style:`, `chore:`, `docs:`).
-  Se escriben a mano (`git commit -F -` con un heredoc si hace falta). Explica en el
-  cuerpo **por qué**, no solo qué.
+  `npm run commit` (commitizen) es interactivo: un agente usa `git commit -F -` con
+  un heredoc. Explica en el cuerpo **por qué**, no solo qué.
 - No commits directos a `main`: ramas `feat/`, `fix/`, `docs/` (o `release/vX.Y.Z`).
 - husky + lint-staged ejecutan eslint+prettier en cada commit — no los saltes.
 - `eslint-plugin-jsx-a11y` activo: respeta aria-\*, roles y contraste WCAG AA.
@@ -187,6 +189,25 @@ src/
 - Cambios de esquema BD → migración en `supabase/migrations/` (idempotente).
 - No instales nada global sin avisar.
 - `versiones/`, `coverage/`, `dev-dist/` están fuera de git (artefactos locales).
+
+## Entrenador IA — reglas duras
+
+- **La clave del proveedor JAMÁS va al cliente.** Vive solo en `Deno.env` de la
+  Edge Function `ai-coach`. Ningún `VITE_*` la toca.
+- **No copies la autorización de `send-push`** (secreto compartido
+  `x-send-secret`) en endpoints que llame la app: un secreto dentro del APK o
+  del bundle es público. `ai-coach` verifica el JWT y saca el `user_id` del
+  token, nunca del cuerpo de la petición.
+- Apagado por defecto (`profiles.ai_coach_enabled`). El servidor es la fuente de
+  verdad; el store del cliente es un espejo.
+- **El coach propone, el usuario aplica.** Nada modifica rutinas, pesos ni
+  series sin confirmación.
+- `supabase/functions/ai-coach/safety.ts` es post-filtro determinista: no lo
+  debilites apoyándote en que el prompt ya lo dice. Se midió que no basta.
+- La capa 0 (`features/stats/utils/autoregulation.ts`) no manda nada fuera del
+  dispositivo y debe seguir funcionando con el entrenador apagado.
+- **Nunca guardes claves en ficheros del repo** (es público). `.env.local` o
+  `supabase secrets set`.
 
 ## Contexto de desarrollo
 

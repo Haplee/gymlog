@@ -3,7 +3,13 @@ import { persist } from 'zustand/middleware';
 import { Capacitor } from '@capacitor/core';
 import { DEFAULT_ACCENT, getAccentPreset, type AccentId } from '@shared/constants/accents';
 import { DEFAULT_PLATES_KG } from '@shared/lib/plates';
-import { DEFAULT_DUMBBELL_STEP_KG, DEFAULT_MACHINE_STEP_KG } from '@shared/lib/loadStep';
+import {
+  DEFAULT_DUMBBELL_STEP_KG,
+  DEFAULT_MACHINE_STEP_KG,
+  normalizeSteps,
+  STARTER_DUMBBELL_STEPS_KG,
+  STARTER_MACHINE_STEPS_KG,
+} from '@shared/lib/loadStep';
 import {
   DEFAULT_QUIET_HOURS,
   DEFAULT_REMINDER_TIMES,
@@ -18,8 +24,13 @@ import {
 /** Tema elegido por el usuario: 'system' sigue al modo claro/oscuro del sistema. */
 export type Theme = 'dark' | 'light' | 'system';
 
-/** Color de chrome (status bar / theme-color) por tema; coincide con --bg-canvas. */
-const THEME_CHROME: Record<'dark' | 'light', string> = {
+/** Familia de material con escalera propia en Ajustes. */
+export type EquipmentFamilyKey = 'dumbbell' | 'machine';
+
+/** Color de chrome (status bar / theme-color) por tema; coincide con --bg-canvas. */ const THEME_CHROME: Record<
+  'dark' | 'light',
+  string
+> = {
   dark: '#0a0a0b',
   light: '#e9ebe8',
 };
@@ -83,10 +94,22 @@ interface SettingsState {
   /**
    * Salto entre las mancuernas del gimnasio, en kg. Los discos no lo describen:
    * una sala con discos de 1,25 puede tener mancuernas de dos en dos.
+   *
+   * Se conserva como respaldo de los ajustes guardados antes de que existiera la
+   * tabla de escalones; con tabla llena manda la tabla.
    */
   dumbbellStepKg: number;
-  /** Salto entre las placas de las máquinas, en kg. */
+  /** Salto entre las placas de las máquinas, en kg. Respaldo, igual que el anterior. */
   machineStepKg: number;
+  /**
+   * Escalera real de mancuernas de la sala, en kg.
+   *
+   * Vacía por defecto: sin tabla, la progresión se queda como estaba. Es
+   * deliberado — no se le inventa a nadie el material de su gimnasio.
+   */
+  dumbbellStepsKg: number[];
+  /** Escalera real de placas de máquina, en kg. Vacía por defecto. */
+  machineStepsKg: number[];
   setBiometricEnabled: (enabled: boolean) => void;
   setNotificationsEnabled: (enabled: boolean) => void;
   setTrainingReminders: (enabled: boolean) => void;
@@ -115,6 +138,10 @@ interface SettingsState {
   setAvailablePlatesKg: (plates: number[]) => void;
   setDumbbellStepKg: (step: number) => void;
   setMachineStepKg: (step: number) => void;
+  /** Añade un peldaño a la escalera real de la familia. */
+  addEquipmentStep: (family: EquipmentFamilyKey, stepKg: number) => void;
+  /** Quita un peldaño de la escalera real de la familia. */
+  removeEquipmentStep: (family: EquipmentFamilyKey, stepKg: number) => void;
   applyTheme: () => void;
 }
 
@@ -144,6 +171,8 @@ export const useSettingsStore = create<SettingsState>()(
       availablePlatesKg: [...DEFAULT_PLATES_KG],
       dumbbellStepKg: DEFAULT_DUMBBELL_STEP_KG,
       machineStepKg: DEFAULT_MACHINE_STEP_KG,
+      dumbbellStepsKg: [...STARTER_DUMBBELL_STEPS_KG],
+      machineStepsKg: [...STARTER_MACHINE_STEPS_KG],
 
       setBiometricEnabled: (biometricEnabled) => set({ biometricEnabled }),
 
@@ -263,6 +292,19 @@ export const useSettingsStore = create<SettingsState>()(
         if (Number.isFinite(step) && step > 0) set({ machineStepKg: step });
       },
 
+      // La tabla se guarda saneada: ordenada, sin repetidos y sin pesos que no
+      // signifiquen nada. Así lo que se pinta en Ajustes es exactamente lo que
+      // va a recorrer el motor de progresión.
+      addEquipmentStep: (family, stepKg) => {
+        if (!Number.isFinite(stepKg) || stepKg <= 0) return;
+        const key = family === 'dumbbell' ? 'dumbbellStepsKg' : 'machineStepsKg';
+        set({ [key]: normalizeSteps([...get()[key], stepKg]) });
+      },
+      removeEquipmentStep: (family, stepKg) => {
+        const key = family === 'dumbbell' ? 'dumbbellStepsKg' : 'machineStepsKg';
+        set({ [key]: get()[key].filter((s) => s !== stepKg) });
+      },
+
       applyTheme: () => {
         const { theme, systemDark, accentColor } = get();
         const resolved = resolveTheme(theme, systemDark);
@@ -328,6 +370,11 @@ export const useSettingsStore = create<SettingsState>()(
           start: normalizeTime(state.quietHours?.start, DEFAULT_QUIET_HOURS.start),
           end: normalizeTime(state.quietHours?.end, DEFAULT_QUIET_HOURS.end),
         };
+        // Las tablas de escalones también pueden venir de una versión anterior
+        // sin la clave, y el motor las recorre: saneadas aquí, nunca llega una
+        // tabla con basura a la progresión.
+        state.dumbbellStepsKg = normalizeSteps(state.dumbbellStepsKg);
+        state.machineStepsKg = normalizeSteps(state.machineStepsKg);
         if (state.notificationsEnabled) localStorage.removeItem('notif_disabled');
         else localStorage.setItem('notif_disabled', 'true');
       },

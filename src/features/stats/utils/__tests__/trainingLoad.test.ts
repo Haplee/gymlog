@@ -33,9 +33,10 @@ const subida: LoadSuggestion = {
   deltaPct: 2.5,
   reasonKey: 'coach.reason.ceiling',
   confidence: 'medium',
-  // La escalera la añade `buildLoadAdvice` sobre el peso ya frenado; aquí se
-  // parte de una sugerencia que aún no la tiene.
-  warmup: [],
+  warmup: [
+    { weight: 40, reps: 8 },
+    { weight: 80, reps: 5 },
+  ],
 };
 
 describe('buildVolumeContext', () => {

@@ -67,20 +67,6 @@ export function roundToStep(weight: number, step: number): number {
   return Math.round(Math.round(weight / step) * step * 100) / 100;
 }
 
-/**
- * Baja al múltiplo del escalón anterior o igual, con 2 decimales.
- *
- * Existe para el calentamiento, y por eso va a la baja y no al más cercano: una
- * serie de calentamiento nunca puede pesar más que la de trabajo. Redondeando al
- * alza, un 80 % de 82,5 se convertiría en 80 —que ya es la serie real— y la
- * instrucción sería absurda. Aquí el suelo garantiza que el calentamiento es
- * siempre, como mucho, igual de pesado.
- */
-export function floorToStep(weight: number, step: number): number {
-  if (!Number.isFinite(weight) || !Number.isFinite(step) || step <= 0) return weight;
-  return Math.floor(Math.floor(weight / step + Number.EPSILON) * step * 100) / 100;
-}
-
 export interface NextLoadOptions {
   /** Subida relativa buscada (por defecto `TARGET_INCREASE_RATIO`). */
   ratio?: number;
@@ -176,12 +162,87 @@ export function equipmentFamily(equipment: string | null | undefined): Equipment
   return 'other';
 }
 
+/* ------------------------------------------------------------------ */
+/* Escalones reales de la sala                                         */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Tabla de escalones reales de una familia de material.
+ *
+ * Un gimnasio no tiene *un* salto: tiene una escalera. Las mancuernas de la sala
+ * que motivó esto van de 0,5 y 2,5 hasta 30 y de 2,5 hasta 40, así que el salto
+ * no es constante y un único número no lo describe. Con un solo número el motor
+ * avanza a un múltiplo que puede no existir en la estantería; con la tabla
+ * avanza al siguiente peldaño de verdad.
+ */
+export const STARTER_DUMBBELL_STEPS_KG: readonly number[] = [];
+export const STARTER_MACHINE_STEPS_KG: readonly number[] = [];
+
+/**
+ * Sanea una tabla de escalones: fuera lo que no sea un peso usable, ordenada y
+ * sin repetidos.
+ *
+ * Se aplica en el store al rehidratar y al añadir, para que lo que se pinte y lo
+ * que consuma el motor sea siempre la misma tabla buena.
+ */
+export function normalizeSteps(steps: readonly number[] | null | undefined): number[] {
+  const usable = (steps ?? []).filter((s) => Number.isFinite(s) && s > 0);
+  return [...new Set(usable)].sort((a, b) => a - b);
+}
+
+/**
+ * Último peldaño de la tabla que no pasa de `weight`, o `undefined` si la tabla
+ * está vacía o todos los peldaños son mayores.
+ *
+ * Es lo que convierte «redondear a un múltiplo» en «redondear a algo que existe».
+ */
+export function stepAtOrBelow(
+  weight: number,
+  steps: readonly number[] | null | undefined,
+): number | undefined {
+  const table = steps ?? [];
+  let best: number | undefined;
+  for (const s of table) {
+    if (s <= weight && (best === undefined || s > best)) best = s;
+  }
+  return best;
+}
+
+/**
+ * Primer peldaño de la tabla por encima de `weight`, o `null` si no queda
+ * ninguno.
+ *
+ * `null` **no es un fallo**: significa que el gimnasio no tiene nada más pesado
+ * que esto, y entonces la única progresión honesta es sumar repeticiones.
+ */
+export function nextStepAbove(
+  weight: number,
+  steps: readonly number[] | null | undefined,
+): number | null {
+  const table = normalizeSteps(steps);
+  if (!Number.isFinite(weight)) return table[0] ?? null;
+  let best: number | null = null;
+  for (const s of table) {
+    if (s > weight && (best === null || s < best)) best = s;
+  }
+  return best;
+}
+
 export interface ExerciseStepOptions {
   /** Discos declarados en Ajustes. Solo se usan en barra. */
   platesKg?: readonly number[] | null;
-  /** Salto entre mancuernas del gimnasio. */
+  /** Escalones reales entre las mancuernas del gimnasio. */
+  dumbbellStepsKg?: readonly number[] | null;
+  /** Escalones reales entre las placas de las máquinas. */
+  machineStepsKg?: readonly number[] | null;
+  /**
+   * Salto suelto entre mancuernas, en kg.
+   *
+   * Se conserva como respaldo de las instalaciones y de los ajustes guardados
+   * antes de que existiera la tabla: si no hay tabla, manda este número.
+   */
   dumbbellStepKg?: number;
-  /** Salto entre placas de las máquinas. */
+  /** Salto suelto entre placas de las máquinas, en kg. Respaldo, igual que el anterior. */
   machineStepKg?: number;
 }
 
@@ -202,18 +263,69 @@ export function loadStepForExercise(
   opts: ExerciseStepOptions = {},
 ): number {
   switch (equipmentFamily(equipment)) {
-    case 'dumbbell':
+    case 'dumbbell': {
+      // Con tabla, el escalón es el peldaño más fino que exista (el salto mínimo
+      // real); nunca uno que no esté en la estantería.
+      const finest = normalizeSteps(opts.dumbbellStepsKg)[0];
+      if (finest) return finest;
       return opts.dumbbellStepKg && opts.dumbbellStepKg > 0
         ? opts.dumbbellStepKg
         : DEFAULT_DUMBBELL_STEP_KG;
-    case 'machine':
+    }
+    case 'machine': {
+      const finest = normalizeSteps(opts.machineStepsKg)[0];
+      if (finest) return finest;
       return opts.machineStepKg && opts.machineStepKg > 0
         ? opts.machineStepKg
         : DEFAULT_MACHINE_STEP_KG;
+    }
     // Barra y desconocido comparten el criterio de siempre: el disco más fino
     // va por pares. Para lo desconocido es lo conservador, porque es lo que la
     // app venía haciendo con todo.
     default:
       return smallestLoadStep(opts.platesKg);
   }
+}
+
+/* ------------------------------------------------------------------ */
+/* Movimiento por la escalera real                                     */
+/* ------------------------------------------------------------------ */
+
+export interface ExerciseLoadMoves {
+  /** Siguiente peldaño real por encima del peso dado, o `null` si no queda. */
+  nextUp?: (weight: number) => number | null;
+  /** Peldaño real en el que se aterriza al bajar, o `null` si no hay tabla. */
+  downTo?: (weight: number) => number | null;
+}
+
+/**
+ * Movimiento concreto por la escalera del material de un ejercicio.
+ *
+ * `nextUp` y `downTo` son lo que permite pasar de «sube un 2,5 %» a «sube a los
+ * 17,5, que es la mancuerna que sigue». Sin ellos el motor sigue funcionando con
+ * múltiplos, así que una tabla vacía no rompe nada: solo deja la progresión
+ * como estaba.
+ */
+export function loadMovesForExercise(
+  equipment: string | null | undefined,
+  opts: ExerciseStepOptions = {},
+): ExerciseLoadMoves {
+  const family = equipmentFamily(equipment);
+  const table =
+    family === 'dumbbell'
+      ? opts.dumbbellStepsKg
+      : family === 'machine'
+        ? opts.machineStepsKg
+        : null;
+  if (!table || normalizeSteps(table).length === 0) return {};
+
+  return {
+    nextUp: (weight) => nextStepAbove(weight, table),
+    // Al bajar se aterriza en el peldaño que no pasa del peso reducido: caer
+    // entre dos peldaños no es una opción.
+    downTo: (weight) => {
+      const landed = stepAtOrBelow(weight, normalizeSteps(table));
+      return landed ?? null;
+    },
+  };
 }

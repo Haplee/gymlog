@@ -30,8 +30,9 @@ import type { Exercise } from '@shared/lib/types';
 import { SortableExerciseList } from '@features/routine/components/SortableExerciseList';
 import { RoutineExerciseEditor } from '@features/routine/components/RoutineExerciseEditor';
 import { RoutineSession } from '@features/routine/components/RoutineSession';
-import { Button, Chip, SectionHeader, BottomSheet, ConfirmDialog } from '@shared/components/ui';
+import { Chip, SectionHeader, BottomSheet, ConfirmDialog } from '@shared/components/ui';
 import { EmptyState } from '@shared/components/EmptyStates';
+import { CoachSuggestionBanner } from '@features/coach/components/CoachSuggestionBanner';
 import { ExerciseSelector } from '@shared/components/ExerciseSelector';
 import { useRoutineTransfer } from '@features/routine/hooks/useRoutineTransfer';
 import { Printer, Share, Upload, Calendar, Eye, EyeOff } from '@shared/components/icons';
@@ -470,6 +471,9 @@ export function RoutinePage() {
 
   return (
     <Layout>
+      {/* Solo aparece si se ha llegado aquí desde «Aplicar» en el entrenador. */}
+      <CoachSuggestionBanner />
+
       {sessionActive && user ? (
         <RoutineSession userId={user.id} exercises={exercises} />
       ) : /* Se decide con la rutina ya resuelta, no con el id: si el id apunta a
@@ -643,14 +647,13 @@ export function RoutinePage() {
             </div>
           )}
 
-          <Button
+          <button
             type="button"
             onClick={() => setShowCreate(true)}
-            size="lg"
-            className="w-full mt-5 font-display font-bold uppercase tracking-[0.12em]"
+            className="w-full mt-5 min-h-12 rounded-pill text-sm font-display font-bold uppercase tracking-[0.12em] bg-accent text-accent-fg shadow-btn-accent active:scale-[0.98] transition-transform"
           >
             {t('routine.create_custom')}
-          </Button>
+          </button>
 
           {/* Recibir la rutina de alguien: entra como una más, nunca sustituye
               a las que ya hay. */}
@@ -850,14 +853,13 @@ export function RoutinePage() {
           </div>
 
           {activeRoutine && dayRoutine && dayExercises.length > 0 && (
-            <Button
+            <button
               type="button"
               onClick={() => handleStartSession(activeRoutine, selectedDay, dayRoutine)}
-              size="lg"
-              className="w-full mt-4 font-display font-bold uppercase tracking-[0.12em]"
+              className="w-full mt-4 min-h-12 rounded-pill text-sm font-display font-bold uppercase tracking-[0.12em] bg-accent text-accent-fg shadow-btn-accent active:scale-[0.98] transition-transform"
             >
               {t('routine.start_session')}
-            </Button>
+            </button>
           )}
 
           {/* Zona de peligro. Antes era un botón rojo suelto a 4 px del final del
@@ -922,14 +924,14 @@ export function RoutinePage() {
               >
                 {t('common.cancel')}
               </button>
-              <Button
+              <button
                 type="button"
                 onClick={handleSaveSchedule}
                 disabled={!scheduleDraft}
-                className="flex-1 font-display font-bold uppercase tracking-[0.08em]"
+                className="flex-1 min-h-11 rounded-sm text-sm font-display font-bold uppercase tracking-[0.08em] bg-accent text-accent-fg disabled:opacity-50"
               >
                 {t('common.save')}
-              </Button>
+              </button>
             </div>
 
             {schedule[schedulingId] && (
@@ -976,13 +978,13 @@ export function RoutinePage() {
               >
                 {t('common.cancel')}
               </button>
-              <Button
+              <button
                 type="button"
                 onClick={handleCreateRoutine}
-                className="flex-1 font-display font-bold uppercase tracking-[0.08em]"
+                className="flex-1 min-h-11 rounded-sm text-sm font-display font-bold uppercase tracking-[0.08em] bg-accent text-accent-fg"
               >
-                {t('routine.create')}
-              </Button>
+                {t('common.create')}
+              </button>
             </div>
           </div>
         </div>

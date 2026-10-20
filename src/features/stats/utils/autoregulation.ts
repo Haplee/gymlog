@@ -20,7 +20,6 @@ import {
   MAX_INCREASE_RATIO,
   TARGET_INCREASE_RATIO,
   backOffLoad,
-  floorToStep,
   nextAchievableLoad,
 } from '@shared/lib/loadStep';
 import { format, startOfWeek } from 'date-fns';
@@ -112,65 +111,24 @@ export interface LoadSuggestion {
   /** Cuánta evidencia hay detrás: sesiones con esfuerzo registrado. */
   confidence: 'low' | 'medium' | 'high';
   /**
-   * Escalera de calentamiento hasta el peso de trabajo. Vacía cuando no hace
-   * falta: en cargas muy bajas o en peso corporal, calentarse es teatro.
+   * Escalera de calentamiento hasta el peso de trabajo, de más ligero a más
+   * pesado, **sin** incluir el peso de trabajo.
+   *
+   * Va dentro de la sugerencia porque es parte de ella: «haz 3 × 8 a 82,5» sin
+   * decir por dónde se entra obliga a decidir el calentamiento a mano justo
+   * cuando menos cabeza libre hay. Los peldaños son proporciones del peso de
+   * trabajo redondeadas al escalón montable, así que la escalera es la misma
+   * que el motor ya conoce de la sala.
    */
   warmup: WarmupStep[];
 }
 
-/** Una serie de calentamiento por encima de la cual se entra a la de trabajo. */
+/** Un peldaño de la escalera de calentamiento. */
 export interface WarmupStep {
+  /** Peso en kg, ya redondeado al escalón montable. */
   weight: number;
+  /** Repeticiones de aproximación en ese peldaño. */
   reps: number;
-}
-
-/**
- * Escalera de calentamiento específica del ejercicio, en porcentaje del **peso
- * de trabajo**, no del 1RM.
- *
- * Los porcentajes salen de la literatura, no de ojo:
- *
- *  - **Ribeiro et al. 2020** (Int J Environ Res Public Health) compararon en
- *    sentadilla y press banca un calentamiento progresivo de 2×6 al 40 % y al
- *    80 % de la carga de trabajo frente a uno solo al 40 % o solo al 80 %. El
- *    progresivo fue el mejor, y concluyeron explícitamente que calentar con pocas
- *    reps y cargas bajas no basta.
- *  - **Sousa et al. 2024** (PMID 39593476) midieron volumen total después de
- *    calentar al 40, 60 u 80 % del 10RM. Ganó el 80 % con 5 reps, por encima
- *    del 60 % y del 40 %: de ahí las pocas reps en la serie alta.
- *  - La revisión de 2025 coincide: 1-2 series, y la que más carga es la que más
- *    cuenta; la ligera ayuda pero es secundaria. Los estudios que solo usaron
- *    1-2 series al 40-60 % no vieron ventaja.
- *
- * De ahí salen las tres decisiones que no son obvias: **son dos series, no
- * cuatro** (una escalera larga es el protocolo de un test de 1RM, no el de un
- * entrenamiento), la **alta es la importante** y va con pocas reps, y
- * redondear va **hacia abajo** para que un calentamiento nunca pese lo que la
- * serie de trabajo.
- */
-export function buildWarmupRamp(workingWeight: number, stepKg?: number): WarmupStep[] {
-  const step = stepKg && stepKg > 0 ? stepKg : DEFAULT_LOAD_STEP_KG;
-  if (!Number.isFinite(workingWeight) || workingWeight <= 0) return [];
-
-  // Escalón: ~40 % con más reps, ~80 % con pocas. El orden es de menor a mayor
-  // porque es una escalera, no dos sugerencias sueltas.
-  const ligera = floorToStep(workingWeight * 0.4, step);
-  const alta = floorToStep(workingWeight * 0.8, step);
-
-  const ramp: WarmupStep[] = [];
-  // La ligera solo entra si pesa al menos un escalón menos que la de trabajo: si
-  // al bajar al escalón queda pegada a ella, ya no es un calentamiento.
-  if (ligera > 0 && workingWeight - ligera >= step) ramp.push({ weight: ligera, reps: 8 });
-  // La alta es la que la literatura marca como la importante, así que se exige
-  // algo más de margen: al menos dos escalones por debajo, para que siga
-  // siendo distinguible de la serie real.
-  if (alta > 0 && workingWeight - alta >= 2 * step) ramp.push({ weight: alta, reps: 5 });
-
-  // Nunca dos escalones idénticos: si el suelo de uno coincide con el otro, solo
-  // cuenta el más alto, que es el que la evidencia dice que importa.
-  if (ramp.length === 2 && ramp[0].weight === ramp[1].weight) ramp.shift();
-
-  return ramp;
 }
 
 export interface AutoRegOptions {
@@ -402,11 +360,9 @@ export function suggestNextLoad(
     deltaPct: baseWeight > 0 ? Math.round(((weight - baseWeight) / baseWeight) * 1000) / 10 : 0,
     reasonKey,
     confidence,
-    // La escalera de calentamiento la calcula `buildLoadAdvice` al final, y no
-    // aquí: los frenos de estancamiento, volumen y recuperación pueden bajar el
-    // peso de trabajo, y una escalera construida sobre el peso anterior al freno
-    // calentaría hacia una carga que ya no se va a pedir. Aquí solo se cumple el
-    // contrato del tipo.
+    // La escalera la rellena `buildLoadAdvice` al final, cuando ya se sabe el
+    // peso definitivo: calcularla aquí la dejaría apuntando a un peso que los
+    // frenos posteriores pueden haber cambiado.
     warmup: [],
   });
 
@@ -561,7 +517,7 @@ export function suggestFromLastSession(
     deltaPct: top.weight > 0 ? Math.round(((weight - top.weight) / top.weight) * 1000) / 10 : 0,
     reasonKey,
     confidence: 'low',
-    // La escalera la pone `buildLoadAdvice`, sobre el peso ya frenado.
+    // La rellena `buildLoadAdvice` con el peso final; ver arriba.
     warmup: [],
   });
 
@@ -684,6 +640,52 @@ export function applyStall(
     deltaPct: 0,
     reasonKey: 'coach.reason.stall_hold',
   };
+}
+
+/* ------------------------------------------------------------------ */
+/* Escalera de calentamiento                                           */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Proporciones del peso de trabajo en las que se entra, de más ligero a más
+ * pesado, con las repeticiones de aproximación de cada peldaño.
+ *
+ * Dos peldaños y no tres: el motor no sabe qué ha comido el usuario ni cuánto
+ * lleva calentando, y una escalera larga finge una precisión que no tiene. Con
+ * una entrada al 40 % y otra al 80 % se pasa de «barra vacía» a «casi el peso de
+ * trabajo» sin inventar peldaños intermedios que nadie va a respetar al pie de
+ * la letra.
+ */
+const WARMUP_RAMP: readonly { ratio: number; reps: number }[] = [
+  { ratio: 0.4, reps: 8 },
+  { ratio: 0.8, reps: 5 },
+];
+
+/**
+ * Escalera de calentamiento hasta `workingWeight`, redondeada al escalón
+ * montable y sin repetir peldaños.
+ *
+ * El redondeo es lo que la hace usable: un 40 % de 82,5 son 33 kg, que no se
+ * montan con discos de 1,25 por pares. Redondear al peldaño deja 32,5, que sí.
+ * Se descartan los peldaños que caen por encima del peso de trabajo o que
+ * coinciden con otro: dos barras a la misma altura en el gráfico no dicen nada.
+ *
+ * Sin peso de trabajo (peso corporal) no hay escalera que dibujar.
+ */
+export function buildWarmupRamp(workingWeight: number, stepKg: number): WarmupStep[] {
+  if (!Number.isFinite(workingWeight) || workingWeight <= 0) return [];
+  const step = Number.isFinite(stepKg) && stepKg > 0 ? stepKg : DEFAULT_LOAD_STEP_KG;
+
+  const peldaños: WarmupStep[] = [];
+  for (const { ratio, reps } of WARMUP_RAMP) {
+    const weight = Math.round((workingWeight * ratio) / step) * step;
+    // El peldaño tiene que ser montable, quedarse por debajo del trabajo y no
+    // repetir el anterior.
+    if (weight <= 0 || weight >= workingWeight) continue;
+    if (peldaños.some((p) => p.weight === weight)) continue;
+    peldaños.push({ weight, reps });
+  }
+  return peldaños;
 }
 
 /* ------------------------------------------------------------------ */

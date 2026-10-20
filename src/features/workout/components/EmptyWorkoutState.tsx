@@ -8,74 +8,42 @@ interface EmptyWorkoutStateProps {
   onRepeatLast: () => void;
 }
 
-/**
- * Lo que ofrece el inicio cuando todavía no hay nada registrado.
- *
- * Tres revisiones, y las tres quitaron caja:
- *
- * 1. Era una isla: un círculo de 64 px con un «+», dos líneas de texto y dos
- *    píldoras centradas en el 42 % del alto. Se leía como la ilustración de un
- *    estado vacío, no como la lista de lo que puedes hacer.
- * 2. Luego fue un rótulo de sección y dos filas. El rótulo no lo pedía nadie:
- *    las listas de la app no se presentan, y con dos elementos metía una
- *    línea más entre el buscador y lo que ofrece. Las dos filas tampoco
- *    coincidían entre sí —una con borde y fondo, la otra sin nada— y esa
- *    asimetría se leía como descuido.
- * 3. Ahora son dos filas lisas separadas por un filete. Sin rótulo, sin bordes,
- *    sin fondos, sin iconos en recuadro. El dato de apoyo va en la segunda
- *    línea, que es donde ya se esperaba encontrarlo, y el acento no aparece
- *    porque la acción principal —el buscador de arriba— ya lo lleva.
- */
 export function EmptyWorkoutState({ onAddSet, lastWorkout, onRepeatLast }: EmptyWorkoutStateProps) {
   const { t } = useTranslation();
-  const canRepeat = !!lastWorkout && lastWorkout.sets.length > 0;
-
   return (
-    // `divide-y` en vez de un gap con bordes: un separador es un separador, y
-    // con `gap` había que dibujar la línea a mano en una de las dos filas.
-    // `pb-8` deja que el aire caiga al final, que es donde el vacío se lee como
-    // margen y no como falta; antes el bloque iba centrado en el 42 % del alto
-    // y ese hueco quedaba en medio, diciendo «esto es todo lo que hay».
-    <div className="flex flex-col divide-y divide-line pb-8">
-      {canRepeat && (
+    // `min-h` en vh, no relleno fijo: con relleno fijo (py-10) el bloque medía
+    // siempre lo mismo y la pantalla quedaba cargada arriba con 165 px muertos
+    // al final —el 20 % del alto—. Reservando una fracción del alto de la
+    // ventana, el hueco lo absorbe el propio vacío y el reparto queda
+    // equilibrado en cualquier pantalla, sin estirar ninguna tarjeta.
+    // Porcentaje y no píxeles porque el alto útil depende del dispositivo.
+    <div className="flex min-h-[42vh] flex-col items-center justify-center text-center py-10 px-2 gap-4">
+      <div className="w-16 h-16 rounded-full bg-surface-2 flex items-center justify-center">
+        <Plus className="w-7 h-7 text-accent" aria-hidden="true" />
+      </div>
+      <div>
+        <div className="text-base font-semibold text-fg">{t('workout.empty_sets')}</div>
+        <div className="text-sm text-fg-subtle mt-1">{t('workout.empty_hint')}</div>
+      </div>
+      <div className="flex flex-col items-stretch gap-2 w-full max-w-[16rem]">
         <button
           type="button"
-          onClick={onRepeatLast}
-          className="flex min-h-11 w-full items-center gap-3 py-2.5 text-left transition-opacity active:opacity-60"
+          onClick={onAddSet}
+          className="w-full py-3 rounded-pill bg-accent text-accent-fg font-semibold shadow-btn-accent active:scale-[0.98]"
         >
-          <Repeat className="h-4 w-4 flex-shrink-0 text-fg-subtle" aria-hidden="true" />
-          <span className="min-w-0 flex-1">
-            <span className="block text-sm text-fg">{t('workout.repeat_last')}</span>
-            {/* `workouts.name` es nullable y en casi ninguna sesión viene puesto,
-                así que la línea solo se pinta cuando hay algo que decir. Antes
-                salía un `span` vacío con su `mt-0.5`, o sea una segunda línea de
-                alto sin nada, que es justo lo que hace que un bloque parezca
-                descuidado. No se sustituye por la fecha porque la tarjeta
-                «Última sesión», más abajo, ya la enseña. */}
-            {lastWorkout.name && (
-              <span className="mt-0.5 block truncate text-xs text-fg-subtle">
-                {lastWorkout.name}
-              </span>
-            )}
-          </span>
+          {t('workout.add_set')}
         </button>
-      )}
-
-      {/* El camino manual. Sin fondo, sin borde y sin acento porque es la salida
-          para cuando el ejercicio no está en la biblioteca, no la vía normal. */}
-      <button
-        type="button"
-        onClick={onAddSet}
-        className="flex min-h-11 w-full items-center gap-3 py-2.5 text-left transition-opacity active:opacity-60"
-      >
-        <Plus className="h-4 w-4 flex-shrink-0 text-fg-subtle" aria-hidden="true" />
-        <span className="min-w-0 flex-1">
-          <span className="block text-sm text-fg-muted">{t('workout.add_set')}</span>
-          <span className="mt-0.5 block truncate text-xs text-fg-subtle">
-            {t('workout.add_set_hint')}
-          </span>
-        </span>
-      </button>
+        {lastWorkout && lastWorkout.sets.length > 0 && (
+          <button
+            type="button"
+            onClick={onRepeatLast}
+            className="w-full py-3 rounded-pill bg-surface-2 border border-line text-fg-muted flex items-center justify-center gap-1.5 transition-colors active:bg-hover"
+          >
+            <Repeat className="w-4 h-4" />
+            {t('workout.repeat_last')}
+          </button>
+        )}
+      </div>
     </div>
   );
 }

@@ -21,8 +21,8 @@ jobs:
   build:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
@@ -34,10 +34,9 @@ jobs:
           VITE_SUPABASE_KEY: ${{ secrets.VITE_SUPABASE_KEY }}
         run: npm run build
       - name: Add iOS platform (if missing)
-        # SPM (default de Cap 8): @sentry/capacitor 4.4.0 ya no publica podspec.
         run: |
           if [ ! -d "ios" ]; then
-            npx cap add ios
+            npx cap add ios --packagemanager CocoaPods
           fi
       - name: Sync Capacitor
         run: npx cap sync ios
@@ -54,6 +53,9 @@ jobs:
           for f in ios/App/App/Assets.xcassets/AppIcon.appiconset/*.png; do
             cp ios-custom/AppIcon-1024.png "$f"
           done
+      - name: Install CocoaPods
+        run: cd ios/App && pod install
+
       - name: Import signing assets
         env:
           CERT_B64: ${{ secrets.IOS_DIST_CERT_P12_BASE64 }}
@@ -99,7 +101,7 @@ jobs:
 
           cd ios/App
           xcodebuild \
-            -project App.xcodeproj \
+            -workspace App.xcworkspace \
             -scheme App \
             -configuration Release \
             -sdk iphoneos \
@@ -121,7 +123,7 @@ jobs:
           echo "IPA_PATH=$RUNNER_TEMP/GymLog-adhoc-v${VERSION}.ipa" >> "$GITHUB_ENV"
 
       - name: Upload signed IPA
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: GymLog-ipa-adhoc
           path: ${{ env.IPA_PATH }}

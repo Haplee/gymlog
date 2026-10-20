@@ -26,21 +26,21 @@ export function FatigueAnalysis({
       case 'recovering':
         return {
           color: 'var(--error)',
-          bgClass: 'bg-error/10',
+          bgColor: 'rgba(255, 69, 58, 0.1)',
           icon: XCircle,
           label: t('userStats.recovery_recovering'),
         };
       case 'partial':
         return {
           color: 'var(--warning)',
-          bgClass: 'bg-warning/10',
+          bgColor: 'rgba(255, 214, 10, 0.1)',
           icon: AlertTriangle,
           label: t('userStats.recovery_partial'),
         };
       case 'recovered':
         return {
           color: 'var(--success)',
-          bgClass: 'bg-success/10',
+          bgColor: 'rgba(48, 209, 88, 0.1)',
           icon: CheckCircle,
           label: t('userStats.recovery_rested'),
         };
@@ -79,7 +79,8 @@ export function FatigueAnalysis({
         <m.div
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="flex items-center gap-2 px-4 py-3 rounded-card mb-4 bg-warning/10"
+          className="flex items-center gap-2 px-4 py-3 rounded-card mb-4"
+          style={{ backgroundColor: 'rgba(255, 214, 10, 0.1)' }}
         >
           <AlertTriangle className="w-5 h-5 text-warning" />
           <div className="text-sm text-warning">
@@ -102,7 +103,8 @@ export function FatigueAnalysis({
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.05 }}
-              className={`flex items-center gap-3 p-2.5 rounded-card ${config.bgClass}`}
+              className="flex items-center gap-3 p-2.5 rounded-card"
+              style={{ backgroundColor: config.bgColor }}
             >
               {/* Icono anatómico con fondo coloreado */}
               <div

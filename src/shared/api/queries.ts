@@ -427,6 +427,12 @@ export interface LibraryExercise {
   is_compound: boolean | null;
   /** Modalidad de carga: 'external' | 'bodyweight' | 'bodyweight_loaded'. */
   load_type: string | null;
+  /**
+   * Si el ejercicio se hace con las dos partes a la vez (sentadilla) o una cada
+   * vez (zancada). La ficha de la biblioteca lo usa para no anunciar «por lado»
+   * donde no toca.
+   */
+  is_bilateral: boolean | null;
 }
 
 export const fetchExerciseLibrary = async (
@@ -435,7 +441,7 @@ export const fetchExerciseLibrary = async (
   let query = supabase
     .from('exercises')
     .select(
-      'id, name, muscle_group, muscle_detail, equipment, movement, description, media_url, is_compound, load_type',
+      'id, name, muscle_group, muscle_detail, equipment, movement, description, media_url, is_compound, load_type, is_bilateral',
     )
     .order('name');
   if (userId) {

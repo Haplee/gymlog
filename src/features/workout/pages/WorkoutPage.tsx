@@ -12,6 +12,7 @@ import { useAuthStore } from '@features/auth/stores/authStore';
 import { useWorkoutStore } from '@features/workout/stores/workoutStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
 import { useWeight } from '@shared/hooks/useWeight';
+import { formatWeightInput } from '@shared/lib/weight';
 import { calcular1RM } from '@shared/lib/brzycki';
 import { loadStepFromSettings } from '@shared/hooks/useLoadStep';
 import { useRoutineStore } from '@features/routine/stores/routineStore';
@@ -39,6 +40,10 @@ import { SessionRatingSheet } from '@features/workout/components/SessionRatingSh
 import { WorkoutActionBar } from '@features/workout/components/WorkoutActionBar';
 import { LastSessionCard } from '@features/workout/components/LastSessionCard';
 import { HealthMetricsCard } from '@features/wearables/components/HealthMetricsCard';
+import { CoachSuggestionBanner } from '@features/coach/components/CoachSuggestionBanner';
+import { CoachHomeCard } from '@features/coach/components/CoachHomeCard';
+import { NextSessionCard } from '@features/stats/components/NextSessionCard';
+import { useExerciseAdvice } from '@features/stats/hooks/useExerciseAdvice';
 import { useExerciseRepRange } from '@shared/hooks/useExerciseRepRange';
 import {
   readSaveScope,
@@ -47,6 +52,7 @@ import {
   type SaveScope,
 } from '@features/workout/lib/saveScopePreference';
 import { useProgressionStore } from '@features/routine/stores/progressionStore';
+import type { LoadSuggestion } from '@features/stats/utils/autoregulation';
 import { pickDaily, pickSleepFor } from '@features/wearables/utils/pickDaily';
 import {
   useWearableDaily,
@@ -327,12 +333,20 @@ export function WorkoutPage() {
   );
   const isBodyweightExercise = isBodyweightLoad(selectedExercise?.load_type);
 
-  // Rango de reps objetivo del ejercicio activo, resuelto por el mismo hook que
-  // usa la sesión de rutina: sin él el motor cae al [8, 12] por defecto de
-  // `suggestProgression` y guardaría una serie con un rango distinto al que se
-  //Recommendó en la pantalla de rutina.
+  // Sugerencia de carga del motor determinista para el ejercicio activo.
+  //
+  // El rango de reps objetivo va por el resolutor compartido, igual que en la
+  // sesión de rutina: sin él esta pantalla caía al [8, 12] por defecto de
+  // `suggestProgression` y recomendaba un peso distinto para el mismo ejercicio.
   const activeExerciseName = selectedExercise?.name || customExerciseName;
   const { repMin, repMax } = useExerciseRepRange(activeExerciseName);
+  const exerciseAdvice = useExerciseAdvice(user?.id, activeExerciseId ?? undefined, {
+    repMin,
+    repMax,
+    bodyweight: isBodyweightExercise,
+    muscleGroup: selectedExercise?.muscle_group ?? undefined,
+    equipment: selectedExercise?.equipment ?? null,
+  });
 
   // Mantener el store al día con el contexto de peso corporal del ejercicio activo.
   useEffect(() => {
@@ -693,6 +707,24 @@ export function WorkoutPage() {
     [sets, applyCopiedSets],
   );
 
+  // «Aplicar» de la tarjeta de sugerencia: rellena la serie en curso con el peso
+  // y reps recomendados (en kg, como guarda el store). Cada serie nueva hereda
+  // el valor de la anterior, así que basta con tocar la última.
+  const handleApplyAdvice = useCallback(
+    (suggestion: LoadSuggestion) => {
+      const weight = String(suggestion.weight);
+      const reps = String(suggestion.reps);
+      if (sets.length === 0) {
+        addSet();
+        updateSet(0, { weight, reps });
+      } else {
+        updateSet(sets.length - 1, { weight, reps });
+      }
+      void impact(ImpactStyle.Light);
+    },
+    [sets.length, addSet, updateSet],
+  );
+
   const handleSaveNote = useCallback(
     async (text: string) => {
       if (!user || !activeExerciseId || !text) return;
@@ -767,65 +799,14 @@ export function WorkoutPage() {
     [queryClient, setActiveExercise, t],
   );
 
-  /**
-   * Contexto para decidir el peso: qué se hizo la última vez y qué recomienda
-   * el motor.
-   *
-   * Va **debajo** del registro, no encima. Estaba dentro de `ExercisePicker`,
-   * o sea antes del tipo de carga y del listado de series, y en el emulador se
-   * veía el problema sin instrumentación: eligiendo ejercicio había que pasar
-   * por dos tarjetas para llegar al campo de peso. Es decir, lo que haces
-   * estaba debajo de lo que consultas.
-   *
-   * El orden importa menos de lo que parece porque el contexto se pliega solo
-   * en cuanto hay una serie hecha, pero justo antes de la primera serie —el
-   * momento en que el contexto es más útil— es cuando las dos tarjetas están
-   * desplegadas. Bajarlas hace que ese momento siga siendo el bueno sin que el
-   * registro quede escondido detrás de dos tarjetas.
-   *
-   * Aquí vive solo lo que se hizo la última vez. La recomendación de carga —
-   *peso, si hay que subir o bajar y el porqué— se cuenta en la pantalla de
-   * rutina, junto al plan del día: aquí estorba, porque quien está a media
-   * sesión ya sabe qué peso usó y solo necesita el dato para comparar. */
-  const bloqueContexto = activeExerciseId && (
-    <div className="mt-10">
-      {contextoAbierto ? (
-        <>
-          <LastSessionCard
-            userId={user?.id ?? ''}
-            exerciseId={activeExerciseId}
-            onCopySets={handleCopySets}
-          />
-
-          {haySerieHecha && (
-            <button
-              type="button"
-              onClick={() => abrirContexto(false)}
-              className="label-caps mt-2 flex min-h-11 w-full items-center justify-center gap-1.5 text-fg-subtle active:opacity-60"
-            >
-              <ChevronDown className="h-3.5 h-3.5 rotate-180" aria-hidden="true" />
-              {t('workout.context_hide')}
-            </button>
-          )}
-        </>
-      ) : (
-        <button
-          type="button"
-          onClick={() => abrirContexto(true)}
-          className="flex min-h-11 w-full items-center justify-between gap-2 rounded-pill bg-surface-2 px-4 text-left transition-colors active:bg-hover"
-        >
-          <span className="label-caps text-fg-muted">{t('workout.context_show')}</span>
-          <ChevronDown className="h-4 w-4 flex-shrink-0 text-fg-subtle" aria-hidden="true" />
-        </button>
-      )}
-    </div>
-  );
-
   return (
     <Layout>
       <AnimatePresence>
         {completed && <WorkoutSavedCard summary={completed} onDismiss={() => setCompleted(null)} />}
       </AnimatePresence>
+
+      {/* Solo aparece si se ha llegado aquí desde «Aplicar» en el entrenador. */}
+      <CoachSuggestionBanner />
 
       {/* Con sesión en marcha la pantalla es para entrenar: el recordatorio
           semanal de peso puede esperar a que se guarde. La tarjeta de salud del
@@ -859,7 +840,6 @@ export function WorkoutPage() {
           isIdle={isIdle}
           exercises={todayRoutine.exercises}
           variants={containerVariants}
-          compact={haySerieHecha}
         />
       )}
 
@@ -877,7 +857,63 @@ export function WorkoutPage() {
           onDeleteExercise={() => selectedExercise && handleDeleteExercise(selectedExercise.id)}
           onSaveNote={handleSaveNote}
           onDeleteNote={handleDeleteNote}
-        />
+        >
+          {/* Contexto para decidir el peso: qué se hizo la última vez y qué
+              recomienda el motor.
+              Se pliega solo en cuanto hay una serie hecha. No es que estorbe
+              —es justo lo que hay que ver antes de la primera— sino que después
+              ya no se decide nada: el peso está en la barra y lo que se necesita
+              en pantalla es el teclado, que con estas dos tarjetas desplegadas
+              quedaba por debajo de todo. Se vuelve a abrir tocando el resumen. */}
+          {activeExerciseId &&
+            (contextoAbierto ? (
+              <>
+                <LastSessionCard
+                  userId={user.id}
+                  exerciseId={activeExerciseId}
+                  onCopySets={handleCopySets}
+                />
+
+                {exerciseAdvice && (
+                  <div className="mt-3">
+                    <NextSessionCard
+                      advice={{
+                        ...exerciseAdvice,
+                        exercise: selectedExercise?.name ?? customExerciseName ?? '',
+                      }}
+                      onApply={handleApplyAdvice}
+                    />
+                  </div>
+                )}
+
+                {haySerieHecha && (
+                  <button
+                    type="button"
+                    onClick={() => abrirContexto(false)}
+                    className="label-caps mt-2 flex min-h-11 w-full items-center justify-center gap-1.5 text-fg-subtle active:opacity-60"
+                  >
+                    <ChevronDown className="h-3.5 w-3.5 rotate-180" aria-hidden="true" />
+                    {t('workout.context_hide')}
+                  </button>
+                )}
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => abrirContexto(true)}
+                className="flex min-h-11 w-full items-center justify-between gap-2 rounded-sm bg-surface-2 px-3 text-left active:bg-hover"
+              >
+                <span className="label-caps text-fg-muted">
+                  {exerciseAdvice
+                    ? `${t('coach.next_label')} · ${formatWeightInput(
+                        convert(exerciseAdvice.suggestion.weight),
+                      )} ${weightUnit} × ${exerciseAdvice.suggestion.reps}`
+                    : t('workout.context_show')}
+                </span>
+                <ChevronDown className="h-4 w-4 flex-shrink-0 text-fg-subtle" aria-hidden="true" />
+              </button>
+            ))}
+        </ExercisePicker>
       )}
 
       <m.div
@@ -936,58 +972,32 @@ export function WorkoutPage() {
               focusSet={focusSet}
             />
 
-            {/* La acción va antes que la referencia. Quien entrena no va a
-                buscar el registro de discos: va a confirmar la serie y guardar.
-                Los chips y los récords son consulta, y la consulta va detrás. */}
-            <WorkoutActionBar
-              message={message}
-              messageTone={messageTone}
-              saving={saving}
-              saveSuccess={saveSuccess}
-              canRemoveAll={sets.length > 1}
-              hasRating={sessionRating !== null}
-              hasNotes={!!sessionNotes}
-              onAddSet={handleAddSet}
-              onRemoveAll={removeAllSets}
-              onOpenRating={() => setShowRating(true)}
-              onSave={handleSave}
-            />
-
-            {/* Chips de la maqueta: calculadora de discos y 1RM estimado.
-                Sustituyen a la cabecera con el récord suelto: la misma
-                información, pero pulsable y en su sitio.
-
-                Ni el icono de la calculadora ni el del 1RM llevan acento. Los
-                dos son información —«esto se puede consultar»—, no la acción
-                principal, y competían con el ✓ de confirmar serie, que es lo
-                único que de verdad se pulsa entrenando. La regla del sistema es
-                un acento por pantalla: si dos cosas lo llevan, ninguna es
-                principal. */}
+            {/* Chips de la maqueta: calculadora de discos, 1RM estimado y notas
+                del ejercicio. Sustituyen a la cabecera con el récord suelto: la
+                misma información, pero pulsable y en su sitio. */}
             <div className="mt-5 flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={() => setShowPlates(true)}
                 className="label-caps flex min-h-11 items-center gap-2 rounded-sm bg-surface-2 px-3 text-fg-muted transition-colors active:bg-hover"
               >
-                <Calculator className="h-4 w-4" aria-hidden="true" />
+                <Calculator className="h-4 w-4 text-accent" />
                 {t('workout.plates_calc_short')}
               </button>
               {bestEstimate && (
-                <span className="label-caps flex min-h-11 items-center gap-2 rounded-sm bg-surface-2 text-fg-muted">
-                  <Trophy className="h-4 w-4" aria-hidden="true" />
+                <span className="label-caps flex min-h-11 items-center gap-2 rounded-sm bg-surface-2 px-3 text-fg-muted">
+                  <Trophy className="h-4 w-4 text-accent" aria-hidden="true" />
                   {t('workout.e1rm')} {convert(bestEstimate.e1rm).toFixed(1)} {weightUnit}
                 </span>
               )}
             </div>
 
-            {/* Récords por banda de reps. El récord actual tampoco lleva acento:
-                es un dato, no una acción, y en `text-fg` destaca igual de
-                bien —más, de hecho— que en `text-accent`, porque el acento ya no
-                tiene a seis cosas peleándoselo. */}
+            {/* Récords por banda de reps: no salen en la maqueta pero son datos
+                reales, así que se quedan debajo, en tono apagado. */}
             {(currentPR || currentPRs.length > 1) && (
               <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
                 {currentPR && (
-                  <span className="label-caps text-fg">
+                  <span className="label-caps text-accent">
                     {t('workout.recent_pr')} {convert(Number(currentPR.weight)).toFixed(1)}{' '}
                     {weightUnit} × {currentPR.reps}
                   </span>
@@ -1010,9 +1020,21 @@ export function WorkoutPage() {
         )}
       </m.div>
 
-      {/* El contexto, ahora debajo del registro y no encima. Lo que haces va
-          antes que lo que consultas. */}
-      {bloqueContexto}
+      {sets.length > 0 && (
+        <WorkoutActionBar
+          message={message}
+          messageTone={messageTone}
+          saving={saving}
+          saveSuccess={saveSuccess}
+          canRemoveAll={sets.length > 1}
+          hasRating={sessionRating !== null}
+          hasNotes={!!sessionNotes}
+          onAddSet={handleAddSet}
+          onRemoveAll={removeAllSets}
+          onOpenRating={() => setShowRating(true)}
+          onSave={handleSave}
+        />
+      )}
 
       <AnimatePresence>
         {showRating && (
@@ -1027,6 +1049,11 @@ export function WorkoutPage() {
       </AnimatePresence>
 
       <RestTimer />
+
+      {/* Atajo al entrenador IA, solo en reposo: con la sesión en marcha la
+          pantalla es para anotar series, no para irse a otra pantalla. Se
+          esconde solo si el entrenador está apagado. */}
+      {isIdle && <CoachHomeCard />}
 
       {/* Resumen de salud del wearable (glanceable), debajo del temporizador de
           descanso. Solo en reposo y si hay datos. Pulsable -> detalle en /wearables. */}

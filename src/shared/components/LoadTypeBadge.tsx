@@ -46,9 +46,9 @@ export function LoadTypeBadge({
 
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-pill px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide ${tone} ${className}`}
+      className={`label-caps inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 ${tone} ${className}`}
     >
-      <Icon className="h-3.5 w-3.5" />
+      <Icon className="h-3 w-3" />
       {label}
     </span>
   );

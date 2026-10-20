@@ -21,6 +21,11 @@ export function useWorkoutReminder() {
   // Mover un dia de esta semana tiene que reprogramar los avisos igual que
   // cambiar de rutina: si no, el recordatorio sigue sonando el dia vacio.
   const weekPlan = useRoutineStore((s) => s.weekPlan);
+  // El calendario tambien: una rutina programada cambia lo que se entrena ese
+  // dia aunque la rutina activa siga siendo la misma. Se lee ademas su marca de
+  // aplicacion, que es lo que dice si esa entrada ya se consumio.
+  const schedule = useRoutineStore((s) => s.schedule);
+  const lastScheduledApply = useRoutineStore((s) => s.lastScheduledApply);
   const trainingReminders = useSettingsStore((s) => s.trainingReminders);
 
   // ¿Ha entrenado hoy? Fuente única para decidir si mostrar el aviso inmediato.
@@ -39,7 +44,7 @@ export function useWorkoutReminder() {
   useEffect(() => {
     if (!user) return;
     void reconcileReminders(user.id, getRoutineReminderDays());
-  }, [user, routines, activeRoutineId, weekPlan]);
+  }, [user, routines, activeRoutineId, weekPlan, schedule, lastScheduledApply]);
 
   // Aviso inmediato al abrir la app si hoy toca rutina y aún no ha entrenado.
   //

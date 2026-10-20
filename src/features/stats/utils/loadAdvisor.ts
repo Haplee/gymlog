@@ -35,6 +35,7 @@ import {
   type StallResult,
 } from './autoregulation';
 import { applyVolumeContext, type VolumeContext } from './trainingLoad';
+import { DEFAULT_LOAD_STEP_KG } from '@shared/lib/loadStep';
 
 export interface LoadAdviceInput {
   sessions: AutoRegSession[];
@@ -75,18 +76,14 @@ export function buildLoadAdvice(input: LoadAdviceInput): LoadAdvice | null {
   );
   if (!suggestion) return null;
 
-  // La escalera de calentamiento se arma **aquí**, y no en el motor, por una
-  // razón concreta: es el primer sitio donde existe el peso definitivo. Los tres
-  // frenos de arriba pueden bajarlo, y calentar hacia el peso previo al freno
-  // sería calentar hacia una carga que la app ya no va a pedir. En peso corporal
-  // no se escala: el número del motor es el del propio cuerpo, y un «80 % de tu
-  // peso» es un lastre absurdo, no un calentamiento.
-  return {
-    suggestion: {
-      ...suggestion,
-      warmup: input.bodyweight ? [] : buildWarmupRamp(suggestion.weight, stepKg),
-    },
-    stall,
-    volume: input.volume ?? null,
+  // La escalera se calcula aquí y no dentro de cada constructor: es el único
+  // punto en el que ya se sabe el peso definitivo, después de todos los frenos.
+  // Las etapas intermedias devuelven `warmup: []` a propósito para no apuntar a
+  // un peso que el siguiente freno puede cambiar.
+  const final: LoadSuggestion = {
+    ...suggestion,
+    warmup: buildWarmupRamp(suggestion.weight, stepKg ?? DEFAULT_LOAD_STEP_KG),
   };
+
+  return { suggestion: final, stall, volume: input.volume ?? null };
 }

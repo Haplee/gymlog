@@ -43,9 +43,7 @@ android {
     }
     buildTypes {
         release {
-            if (keystoreProperties['STORE_FILE'] != null) {
-                signingConfig signingConfigs.release
-            }
+            signingConfig signingConfigs.release
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
@@ -68,18 +66,6 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_21
         targetCompatibility JavaVersion.VERSION_21
-    }
-}
-
-// Kotlin sacaba su jvmTarget del JDK en ejecucion, no de `compileOptions`, y el
-// 2.1.10 aún no conoce el 25: cae de vuelta a 24 mientras Java se queda en 21,
-// y Gradle para la build con «Inconsistent JVM-target compatibility». Con un
-// JDK 21 en el equipo pasaba desapercibido. Se ancla a 21 para que las dos
-// piezas coincidan venga el JDK que venga, que es justo lo que quiere
-// `compileOptions`.
-kotlin {
-    compilerOptions {
-        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21
     }
 }
 
@@ -120,47 +106,16 @@ if (file('google-services.json').exists()) {
 //
 // Antes se llamaba GymLog-FitBody.apk: resto del variante de prueba, cuando el
 // sufijo .fitbody estaba en defaultConfig y contaminaba también los release.
-//
-// Publicar exige el keystore de local.properties: un APK sin firmar no
-// actualiza la app ya instalada, así que por defecto el release FALLA en vez de
-// dejar un artefacto engañoso con nombre oficial. Si de verdad se quiere el APK
-// sin firmar (por ejemplo, para comprobar que R8 no rompe nada), se pide
-// explícitamente con -PallowUnsignedRelease=true y se copia con sufijo -unsigned.
 tasks.configureEach { task ->
     if (task.name == "assembleRelease") {
         task.doLast {
-            def isSigned = keystoreProperties['STORE_FILE'] != null
-            def allowUnsigned = project.hasProperty('allowUnsignedRelease')
-
-            if (!isSigned && !allowUnsigned) {
-                throw new GradleException(
-                    "assembleRelease sin keystore: no hay STORE_FILE en local.properties, " +
-                    "así que el APK saldría SIN FIRMAR y no podría publicarse. " +
-                    "Usa assembleDebug, configura el keystore, o añade " +
-                    "-PallowUnsignedRelease=true si de verdad quieres el APK sin firmar.")
-            }
-
-            def sourceName = isSigned
-                ? "app-release.apk"
-                : "app-release-unsigned.apk"
-            def targetName = isSigned
-                ? "GymLog-v${appVersionName}.apk"
-                : "GymLog-v${appVersionName}-unsigned.apk"
-            def apkFile = layout.buildDirectory.file("outputs/apk/release/${sourceName}").get().asFile
-
-            if (!apkFile.exists()) {
-                throw new GradleException(
-                    "No se encontró el APK release esperado (${sourceName}); " +
-                    "la compilación no se completó, no se copia nada a la raíz.")
-            }
-
+            def apkName = "GymLog-v${appVersionName}.apk"
             copy {
-                from apkFile
+                from layout.buildDirectory.file("outputs/apk/release/app-release.apk")
                 into "${rootDir}/.."
-                rename { targetName }
+                rename { apkName }
             }
-            logger.lifecycle(
-                "APK release (${isSigned ? 'firmado' : 'SIN FIRMAR'}) copiado a la raíz del repo: ${targetName}")
+            logger.lifecycle("APK release copiado a la raíz del repo: ${apkName}")
         }
     }
 }
