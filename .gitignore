@@ -97,3 +97,9 @@ supabase/usuario_prueba.txt
 
 # capturas de UI para comparar antes/después
 .shots/
+
+# volcado generado por repomix (9 MB, regenerable)
+repomix-output.xml
+
+# backups de datos de Supabase: pueden contener datos de usuario
+supabase/backups/
