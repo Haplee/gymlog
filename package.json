@@ -12,6 +12,7 @@
     "preview": "vite preview",
     "type-check": "tsc -b --force",
     "test": "vitest run",
+    "test:db": "node scripts/db-idempotency-test.mjs",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "analyze": "MODE=analyze npm run build",
@@ -20,6 +21,8 @@
     "commit": "git-cz",
     "gen:types": "node scripts/gen-types.mjs",
     "check:secrets": "node scripts/check-bundle-secrets.mjs dist",
+    "notices": "node scripts/generate-third-party-notices.mjs",
+    "check:notices": "node scripts/generate-third-party-notices.mjs --check",
     "build:android": "npm run build && npx cap sync android",
     "apk": "npm run build:android && node scripts/build-apk.mjs",
     "build:ios": "npm run build && npx cap sync ios",
@@ -46,7 +49,8 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@sentry/capacitor": "^4.2.0",
     "@sentry/react": "10.60.0",
-    "@supabase/supabase-js": "^2.102.1",
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.118.0",
     "@tanstack/react-query": "^5.96.2",
     "@tanstack/react-query-persist-client": "^5.101.0",
     "@tanstack/react-virtual": "^3.14.9",
@@ -132,5 +136,11 @@
     "exceljs": {
       "uuid": "^11.1.1"
     }
+  },
+  "allowScripts": {
+    "@sentry/capacitor": false,
+    "@sentry/cli@2.58.6": true,
+    "esbuild@0.25.12": true,
+    "msw@2.15.0": true
   }
 }

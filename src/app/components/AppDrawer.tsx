@@ -13,6 +13,7 @@ import {
   IconWatch,
   X,
 } from '@shared/components/icons';
+import { COACH_UI_ENABLED } from '@features/coach/lib/featureFlag';
 
 /**
  * Cajón de navegación que abre la hamburguesa de la cabecera.
@@ -71,7 +72,12 @@ export function AppDrawer({ onClose, onOpenSearch, unreadCount }: AppDrawerProps
     {
       title: t('nav.group_more'),
       links: [
-        { to: '/coach', Icon: IconStar, label: t('coach.page_title') },
+        // El entrenador se filtra, no se comenta: con el interruptor apagado
+        // (`VITE_AI_COACH_UI_ENABLED`) la fila no debe existir, ni siquiera como
+        // enlace muerto.
+        ...(COACH_UI_ENABLED
+          ? [{ to: '/coach', Icon: IconStar, label: t('coach.page_title') }]
+          : []),
         { to: '/wearables', Icon: IconWatch, label: t('settings.wearables') },
         { to: '/guide', Icon: IconBook, label: t('guide.title') },
       ],

@@ -15,6 +15,8 @@ import {
 } from '@shared/api/queries';
 import { SectionLabel } from './SectionLabel';
 import { Plus, Trash2 } from '@shared/components/icons';
+import { useHealthConsentGate } from '@features/privacy/hooks/useHealthConsentGate';
+import { HealthConsentDialog } from '@features/privacy/components/HealthConsentDialog';
 
 const MEASUREMENTS_KEY = (userId: string) => ['bodyMeasurements', userId];
 
@@ -22,6 +24,9 @@ export function BodyMeasurements({ userId }: { userId: string }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { unit, convert, convertFromDisplay } = useWeight();
+  // Peso y grasa corporal son datos de salud (art. 9 RGPD): antes de guardarlos
+  // se pide consentimiento explícito, aparte del permiso del sistema.
+  const healthConsent = useHealthConsentGate(userId);
 
   const [weightInput, setWeightInput] = useState('');
   const [bodyFatInput, setBodyFatInput] = useState('');
@@ -69,9 +74,11 @@ export function BodyMeasurements({ userId }: { userId: string }) {
     const hasBodyFat = Number.isFinite(bodyFat) && bodyFat > 0;
     if (!hasWeight && !hasBodyFat) return;
 
-    addMutation.mutate({
-      weight_kg: hasWeight ? convertFromDisplay(weightDisplay) : null,
-      body_fat_pct: hasBodyFat ? bodyFat : null,
+    healthConsent.requireConsent(() => {
+      addMutation.mutate({
+        weight_kg: hasWeight ? convertFromDisplay(weightDisplay) : null,
+        body_fat_pct: hasBodyFat ? bodyFat : null,
+      });
     });
   };
 
@@ -196,6 +203,12 @@ export function BodyMeasurements({ userId }: { userId: string }) {
           </div>
         )}
       </m.div>
+
+      <HealthConsentDialog
+        open={healthConsent.isDialogOpen}
+        onAccept={healthConsent.accept}
+        onCancel={healthConsent.cancel}
+      />
     </section>
   );
 }

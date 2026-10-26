@@ -54,6 +54,15 @@ export interface SessionExercise {
   targetDurationSeconds?: number;
   /** Grupo de superserie copiado del plan. Ver `RoutineExercise.supersetId`. */
   supersetId?: string;
+  /**
+   * Clave de idempotencia del guardado de este ejercicio.
+   *
+   * Se fija la primera vez que se intenta guardar y se persiste con la sesión:
+   * si el envío falla —o la app se cierra a mitad— el reintento manda la misma
+   * y el servidor reconoce el reenvío. Las sesiones guardadas por versiones
+   * anteriores no la traen y se les asigna al vuelo.
+   */
+  clientId?: string;
   sets: SessionSet[];
 }
 
@@ -176,8 +185,12 @@ function segundosDe(s: SessionSet): number | null {
 
 /** Repeticiones válidas de la serie, o `null` si no se miden. */
 function repsDe(s: SessionSet): number | null {
-  const n = Number(s.reps);
-  return s.reps.trim() && Number.isFinite(n) && n > 0 ? n : null;
+  // Mismo filtro que la RPC (`^\d+$`): un `10.5` heredado acababa con la serie
+  // descartada en el servidor sin que nadie se enterara.
+  const texto = s.reps.trim();
+  if (!/^\d+$/.test(texto)) return null;
+  const n = Number(texto);
+  return n > 0 && n <= 9999 ? n : null;
 }
 
 /**
@@ -327,12 +340,19 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
           // Un ejercicio por tiempo no lleva peso recomendado: su carga, si la
           // hay, es el lastre que escriba el usuario.
           if (ex.mode === 'time') return ex;
+          // El indicador es de este ejercicio, no de la llamada: con uno solo
+          // fuera del `map`, un segundo ejercicio con el mismo nombre (el mismo
+          // movimiento repetido en el día) se recreaba sin cambios y el `set`
+          // de abajo arrastraba un estado nuevo con las mismas series.
+          let cambioAqui = false;
           const sets = ex.sets.map((s) => {
             if (s.weightTouched || s.weight === weight) return s;
-            cambia = true;
+            cambioAqui = true;
             return { ...s, weight };
           });
-          return cambia ? { ...ex, sets } : ex;
+          if (!cambioAqui) return ex;
+          cambia = true;
+          return { ...ex, sets };
         });
         // Sin cambios no se llama a `set`: esto lo dispara un efecto por
         // ejercicio y re-renderizar en bucle sería el resultado.
@@ -357,21 +377,28 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
         }
 
         // Solo se registran los ejercicios que el usuario realmente ha hecho.
-        // `clientId` es la clave de idempotencia de cada ejercicio: se genera una
-        // sola vez y viaja igual en el intento directo y en el outbox, para que un
-        // reenvío tras perder la respuesta no vuelva a escribir el mismo entreno.
+        // `clientId` es la clave de idempotencia de cada ejercicio: se fija una
+        // sola vez, se persiste con la sesión y viaja igual en el intento directo
+        // y en el outbox. Un reenvío —por un fallo duro o por cerrar la app a
+        // mitad— manda la misma, así que el servidor no escribe dos veces los
+        // ejercicios que ya había guardado antes de fallar.
+        const withIds: (SessionExercise & { clientId: string })[] = exercises.map((ex) => ({
+          ...ex,
+          clientId: ex.clientId ?? crypto.randomUUID(),
+        }));
+
         // Series a medias que se van a quedar fuera. Se cuentan antes de
         // filtrar para poder decirlo, en vez de perderlas sin ruido.
-        const droppedSets = exercises.reduce(
+        const droppedSets = withIds.reduce(
           (n, ex) => n + ex.sets.filter((s) => pareceIntencionada(s) && !isValidSet(s)).length,
           0,
         );
 
-        const done = exercises
+        const done = withIds
           .map((ex) => ({
             name: ex.name,
             sets: toOutboxSets(ex.sets, toKg),
-            clientId: crypto.randomUUID(),
+            clientId: ex.clientId,
           }))
           .filter((ex) => ex.sets.length > 0);
 
@@ -387,7 +414,9 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
         const started = startedAt ?? new Date().toISOString();
         const finished = new Date().toISOString();
 
-        set({ saving: true });
+        // Las claves se guardan antes de la primera llamada de red: si el
+        // intento falla, el estado que queda para reintentar ya las lleva.
+        set({ exercises: withIds, saving: true });
 
         const notes =
           [get().routineName, get().dayName].filter(Boolean).join(' — ').trim() || undefined;
@@ -395,21 +424,31 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
         // El esquema guarda un `workout` por ejercicio: la sesión de rutina se
         // escribe como N entrenos que comparten started_at/finished_at, de modo
         // que el historial (que agrupa por día) los muestre como una sesión.
-        const enqueueRest = async (pending: typeof done) => {
+        // Devuelve cuántos no se pudieron encolar: un fallo de IndexedDB aquí
+        // (cuota, almacenamiento desalojado) antes reventaba `finish` con una
+        // promesa rechazada en vez de contarlo en la pantalla.
+        const enqueueRest = async (pending: typeof done): Promise<number> => {
+          let failed = 0;
           for (const ex of pending) {
-            await enqueueWorkout({
-              id: ex.clientId,
-              userId,
-              exerciseId: resolveExerciseId(ex.name),
-              customExerciseName: ex.name,
-              customMuscleGroup: DEFAULT_MUSCLE_GROUP,
-              startedAt: started,
-              finishedAt: finished,
-              sets: ex.sets,
-              notes,
-              createdAt: new Date().toISOString(),
-            });
+            try {
+              await enqueueWorkout({
+                id: ex.clientId,
+                userId,
+                exerciseId: resolveExerciseId(ex.name),
+                customExerciseName: ex.name,
+                customMuscleGroup: DEFAULT_MUSCLE_GROUP,
+                startedAt: started,
+                finishedAt: finished,
+                sets: ex.sets,
+                notes,
+                createdAt: new Date().toISOString(),
+              });
+            } catch (err) {
+              failed += 1;
+              devError('[RoutineSession] no se pudo encolar:', err);
+            }
           }
+          return failed;
         };
 
         const finishQueued = async (savedExercises: number) => {
@@ -442,7 +481,18 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
             // Este ya está en la cola; faltan los que ni se han intentado. El
             // corte va en `i + 1` justamente por eso: encolar desde `i` lo
             // metería dos veces.
-            await enqueueRest(done.slice(i + 1));
+            const failed = await enqueueRest(done.slice(i + 1));
+            if (failed > 0) {
+              // La sesión sigue en el store con sus `clientId`: reintentar la
+              // reencola con los mismos ids y el servidor dedupe por ellos.
+              set({ saving: false });
+              return {
+                error: new Error('workout.errors.queue_failed'),
+                success: false,
+                savedExercises: saved,
+                droppedSets,
+              };
+            }
             return finishQueued(done.length);
           }
 

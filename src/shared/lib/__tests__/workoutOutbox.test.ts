@@ -49,6 +49,14 @@ describe('isNetworkError', () => {
       true,
     );
   });
+
+  it('no trata como offline un navigator que no expone onLine', () => {
+    // En Node, `navigator` existe pero no tiene `onLine`. Leerlo como «sin
+    // conexión» convertiría cualquier fallo en una entrada de la cola offline.
+    vi.stubGlobal('navigator', {});
+    expect(isNetworkError(new Error('violates check constraint'))).toBe(false);
+    expect(isNetworkError(new Error('Failed to fetch'))).toBe(true);
+  });
 });
 
 // Helpers de los tests de persistencia: importan el módulo "fresco" para que su
@@ -199,6 +207,67 @@ describe('workoutOutbox — persistencia y flush', () => {
     expect(rpcMock.mock.calls.every((c) => c[1].p_client_id === 'entrada-estable')).toBe(true);
   });
 
+  // La cola vive en IndexedDB, pero el `dbPromise` y el estado del flush viven en
+  // el módulo. Al reabrir la app se recarga el módulo: lo pendiente tiene que
+  // releerse con su `id` original, que es justo la clave de idempotencia que el
+  // servidor necesita para reconocer el reenvío.
+  it('tras reiniciar la app, la cola pendiente se reenvía con su clave original', async () => {
+    const antes = await loadOutbox();
+    await antes.enqueueWorkout(makeEntry({ id: 'cola-tras-reinicio' }));
+
+    // Mismo IndexedDB, módulo nuevo: es lo que pasa al recargar la app.
+    vi.resetModules();
+    const despues = await loadOutbox();
+    rpcMock.mockResolvedValue({ error: null });
+
+    expect(await despues.countPendingWorkouts()).toBe(1);
+    expect(await despues.flushWorkoutOutbox()).toBe(1);
+    expect(rpcMock.mock.calls[0][1].p_client_id).toBe('cola-tras-reinicio');
+    expect(await despues.countPendingWorkouts()).toBe(0);
+  });
+
+  // Respuesta perdida: el servidor escribió el entreno y el cliente solo vio un
+  // fallo de red. La entrada se queda en la cola con su id; el reintento —aquí
+  // tras reiniciar— tiene que mandar la MISMA clave, o el servidor no puede
+  // deduplicar. Lo que cambia entre intentos es el backoff, nunca la clave.
+  it('respuesta perdida: el reintento tras reiniciar manda la misma clave y deja una sola entrada', async () => {
+    const antes = await loadOutbox();
+    rpcMock.mockRejectedValueOnce(new Error('Failed to fetch'));
+    await antes.enqueueWorkout(makeEntry({ id: 'respuesta-perdida' }));
+    expect(await antes.flushWorkoutOutbox()).toBe(0);
+
+    vi.resetModules();
+    const despues = await loadOutbox();
+    const [pendiente] = await despues.getPendingWorkouts();
+    expect(pendiente.id).toBe('respuesta-perdida');
+    expect(pendiente.retryCount).toBe(1);
+
+    // El paso del tiempo es lo único que habilita el reintento.
+    await despues.enqueueWorkout({ ...pendiente, nextAttemptAt: undefined });
+    rpcMock.mockResolvedValue({ error: null });
+    expect(await despues.flushWorkoutOutbox()).toBe(1);
+
+    expect(rpcMock.mock.calls.map((c) => c[1].p_client_id)).toEqual([
+      'respuesta-perdida',
+      'respuesta-perdida',
+    ]);
+    // Una entrada, no dos: el fallo no reencoló ni duplicó nada.
+    expect(await despues.countPendingWorkouts()).toBe(0);
+  });
+
+  // E. Replay repetido: lo ya sincronizado sale de la cola y no se reenvía.
+  it('un replay posterior no reenvía lo que ya se sincronizó', async () => {
+    const { enqueueWorkout, flushWorkoutOutbox, countPendingWorkouts } = await loadOutbox();
+    rpcMock.mockResolvedValue({ error: null });
+
+    await enqueueWorkout(makeEntry({ id: 'una-sola-vez' }));
+    expect(await flushWorkoutOutbox()).toBe(1);
+    expect(await flushWorkoutOutbox()).toBe(0);
+
+    expect(rpcMock).toHaveBeenCalledTimes(1);
+    expect(await countPendingWorkouts()).toBe(0);
+  });
+
   it('error de red: conserva la entrada para reintentar y para el flush', async () => {
     const { enqueueWorkout, flushWorkoutOutbox, countPendingWorkouts } = await loadOutbox();
     rpcMock.mockResolvedValue({ error: new Error('Failed to fetch') });
@@ -236,6 +305,24 @@ describe('workoutOutbox — persistencia y flush', () => {
     // Irrecuperable, pero no se borra: se marca como fallida.
     expect(await countPendingWorkouts()).toBe(1);
     expect((await getPendingWorkouts())[0].failed).toBe(true);
+  });
+
+  it('un conflicto de idempotencia se marca fallido sin gastar reintentos', async () => {
+    const { enqueueWorkout, flushWorkoutOutbox, countPendingWorkouts, getPendingWorkouts } =
+      await loadOutbox();
+    // La misma clave con otro contenido es un rechazo definitivo: reintentarla
+    // solo repetiría el error y retrasaría el aviso.
+    rpcMock.mockResolvedValue({ error: new Error('idempotency_conflict') });
+
+    await enqueueWorkout(makeEntry({ id: 'clave-reutilizada' }));
+    const flushed = await flushWorkoutOutbox();
+
+    expect(flushed).toBe(0);
+    expect(await countPendingWorkouts()).toBe(1);
+    const [pendiente] = await getPendingWorkouts();
+    expect(pendiente.failed).toBe(true);
+    expect(pendiente.retryCount ?? 0).toBe(0);
+    expect(rpcMock).toHaveBeenCalledTimes(1);
   });
 
   it('error de red incrementa retryCount y conserva la entrada', async () => {

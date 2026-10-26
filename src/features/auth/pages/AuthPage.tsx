@@ -43,6 +43,15 @@ export function AuthPage() {
   const [username, setUsername] = useState('');
   const [isRevealing, setIsRevealing] = useState(false);
   const [animKey, setAnimKey] = useState(0);
+  /**
+   * Declaración de edad y aceptación de los documentos en el registro.
+   *
+   * Es una declaración, no una verificación: la app no pide documento. Aun así
+   * sirve para dos cosas —deja constancia de que se informó y evita que el
+   * formulario de alta se envíe sin haber visto los enlaces— y es lo que exige
+   * la LOPDGDD para el umbral de 14 años.
+   */
+  const [ageAccepted, setAgeAccepted] = useState(false);
   const { t } = useTranslation();
   const signIn = useAuthStore((s) => s.signIn);
   const signUp = useAuthStore((s) => s.signUp);
@@ -82,6 +91,11 @@ export function AuthPage() {
 
     if (isSignUp && username.length < 3) {
       setError(t('auth.error_username_short'));
+      return;
+    }
+
+    if (isSignUp && !ageAccepted) {
+      setError(t('auth.error_age'));
       return;
     }
 
@@ -261,6 +275,39 @@ export function AuthPage() {
             </m.div>
           )}
 
+          {isSignUp && (
+            <m.div variants={rise} className="flex items-start gap-2.5">
+              <input
+                id="auth-age-consent"
+                type="checkbox"
+                checked={ageAccepted}
+                onChange={(e) => setAgeAccepted(e.target.checked)}
+                aria-label={t('auth.age_confirm_label')}
+                aria-describedby="auth-age-consent-desc"
+                className="mt-0.5 size-4 flex-shrink-0 accent-accent"
+              />
+              <span id="auth-age-consent-desc" className="text-xs leading-relaxed text-fg-muted">
+                {t('auth.age_confirm')}{' '}
+                <button
+                  type="button"
+                  onClick={() => navigate('/legal/privacy')}
+                  className="text-accent underline underline-offset-2"
+                >
+                  {t('auth.privacy_link')}
+                </button>{' '}
+                {t('auth.and')}{' '}
+                <button
+                  type="button"
+                  onClick={() => navigate('/legal/terms')}
+                  className="text-accent underline underline-offset-2"
+                >
+                  {t('auth.terms_link')}
+                </button>
+                .
+              </span>
+            </m.div>
+          )}
+
           <m.div variants={rise}>
             <Button
               type="submit"
@@ -303,6 +350,30 @@ export function AuthPage() {
             {isSignUp ? t('auth.switch_login') : t('auth.switch_signup')}
           </button>
         </m.div>
+
+        {/* En el registro los enlaces ya están en la casilla de edad; aquí solo
+            hacen falta para quien ya tiene cuenta y quiere releerlos. */}
+        {!isSignUp && (
+          <m.div
+            variants={rise}
+            className="flex items-center justify-center gap-4 text-xs text-fg-subtle"
+          >
+            <button
+              type="button"
+              onClick={() => navigate('/legal/privacy')}
+              className="min-h-11 px-1 underline-offset-2 hover:text-fg-muted hover:underline"
+            >
+              {t('auth.privacy_link')}
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/legal/terms')}
+              className="min-h-11 px-1 underline-offset-2 hover:text-fg-muted hover:underline"
+            >
+              {t('auth.terms_link')}
+            </button>
+          </m.div>
+        )}
       </m.div>
 
       <m.footer

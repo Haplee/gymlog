@@ -2,6 +2,11 @@ import { openDB, type IDBPDatabase } from 'idb';
 import { supabase } from './supabase';
 import { devError, devLog } from './devtools';
 import { resolveOrCreateExercise } from './resolveOrCreateExercise';
+import { isNetworkError } from './networkError';
+import { isIdempotencyConflict } from './idempotency';
+
+// Se reexporta para no romper a quien ya lo importaba desde aquí.
+export { isNetworkError } from './networkError';
 
 const DB_NAME = 'gymlog-outbox';
 const STORE = 'workouts';
@@ -11,11 +16,22 @@ const STORE = 'workouts';
 let dbPromise: Promise<IDBPDatabase> | null = null;
 function getDb(): Promise<IDBPDatabase> {
   if (!dbPromise) {
-    dbPromise = openDB(DB_NAME, 1, {
+    // Un fallo de apertura NO se cachea. El navegador puede desalojar el
+    // almacenamiento (presión de cuota, «borrar datos del sitio», modo privado)
+    // o negarlo un momento y permitirlo después; guardar el rechazo dejaba la
+    // cola inservible hasta recargar la app aunque el almacenamiento volviera.
+    // Cada uso reintenta abrir; el siguiente que funcione se queda cacheado.
+    const attempt = openDB(DB_NAME, 1, {
       upgrade(db) {
         db.createObjectStore(STORE, { keyPath: 'id' });
       },
+    }).catch((err) => {
+      // Solo se limpia si este intento sigue siendo el cacheado: si otro ya
+      // abrió después, no se le tira el suyo.
+      if (dbPromise === attempt) dbPromise = null;
+      throw err;
     });
+    dbPromise = attempt;
   }
   return dbPromise;
 }
@@ -65,27 +81,6 @@ export interface OutboxWorkout {
   failed?: boolean;
 }
 
-/** Heurística: ¿el error parece de red (sin conexión / fetch fallido)? */
-export function isNetworkError(err: unknown): boolean {
-  if (typeof navigator !== 'undefined' && !navigator.onLine) return true;
-  // Un error con código SQLSTATE o PGRST es una respuesta real del servidor
-  // (la petición llegó): no es de red aunque el mensaje mencione 'fetch'.
-  if (typeof err === 'object' && err !== null && 'code' in err) {
-    const code = (err as { code: unknown }).code;
-    if (typeof code === 'string' && (/^[0-9A-Z]{5}$/.test(code) || code.startsWith('PGRST'))) {
-      return false;
-    }
-  }
-  const msg = (err instanceof Error ? err.message : String(err ?? '')).toLowerCase();
-  return (
-    msg.includes('failed to fetch') ||
-    msg.includes('network') ||
-    msg.includes('fetch') ||
-    msg.includes('timeout') ||
-    msg.includes('offline')
-  );
-}
-
 export async function enqueueWorkout(entry: OutboxWorkout): Promise<void> {
   await (await getDb()).put(STORE, entry);
 }
@@ -95,7 +90,16 @@ export async function getPendingWorkouts(): Promise<OutboxWorkout[]> {
 }
 
 export async function countPendingWorkouts(): Promise<number> {
-  return (await getDb()).count(STORE);
+  try {
+    return await (await getDb()).count(STORE);
+  } catch (err) {
+    // Es el número del indicador de la interfaz, no una operación que el
+    // usuario haya pedido: si el almacenamiento no está disponible no se puede
+    // saber cuántos hay, y reventar por eso no arregla nada. El flush lo
+    // reintenta en el próximo arranque/`online`.
+    devError('[workoutOutbox] no se pudo contar la cola:', err);
+    return 0;
+  }
 }
 
 async function removeWorkout(id: string): Promise<void> {
@@ -149,10 +153,20 @@ export function flushWorkoutOutbox(): Promise<number> {
   }
 
   const run = (async () => {
-    let total = await drainOutbox();
-    if (rerunRequested) {
-      rerunRequested = false;
-      total += await drainOutbox();
+    let total = 0;
+    try {
+      total = await drainOutbox();
+      if (rerunRequested) {
+        rerunRequested = false;
+        total += await drainOutbox();
+      }
+    } catch (err) {
+      // Abrir/leer IndexedDB puede fallar (desalojo, cuota, modo privado). Esto
+      // corre solo al arrancar y en `online`: no hay nadie esperando para
+      // contarlo, y una promesa rechazada aquí sería un error no capturado en
+      // cada arranque. Lo ya sincronizado se devuelve; lo pendiente sigue en la
+      // cola y se reintenta en la siguiente pasada.
+      devError('[workoutOutbox] flush falló:', err);
     }
     return total;
   })().finally(() => {
@@ -212,6 +226,14 @@ async function drainOutbox(): Promise<number> {
       await removeWorkout(w.id);
       flushed += 1;
     } catch (err) {
+      // La misma clave con otro contenido nunca va a mejorar reintentando: el
+      // servidor la rechaza por contrato. Se conserva como fallida para no
+      // perder el entreno, pero se deja de gastar reintentos.
+      if (isIdempotencyConflict(err)) {
+        await markFailed(w, 'conflicto de idempotencia');
+        continue;
+      }
+
       const attempt = (w.retryCount ?? 0) + 1;
       w.retryCount = attempt;
 

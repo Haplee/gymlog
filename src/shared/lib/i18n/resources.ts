@@ -398,6 +398,12 @@ export const resources = {
         weight: 'Peso',
         body_hint:
           'Se usan para estimar el volumen en los ejercicios de peso corporal. Puedes cambiarlas cuando quieras en Mis medidas.',
+        health_consent:
+          'Acepto que GymLog trate mi peso como dato de salud para calcular el volumen de los ejercicios de peso corporal. Si no lo marcas, el peso no se guarda y puedes añadirlo más tarde desde Mis medidas.',
+        age_confirm: 'Confirmo que tengo 14 años o más y acepto la',
+        age_required:
+          'Debes confirmar que tienes 14 años o más y aceptar las condiciones para continuar.',
+        save_error: 'No se pudo guardar el perfil. Inténtalo de nuevo.',
       },
       notifications: {
         title: 'Notificaciones',
@@ -655,6 +661,15 @@ export const resources = {
         notif_on: 'Notificaciones activadas',
         notif_denied: 'No se concedieron permisos de notificación',
         notif_denied_browser: 'Permiso de notificaciones denegado en el navegador',
+        privacy: 'Privacidad y datos',
+        privacy_policy: 'Política de privacidad',
+        terms: 'Condiciones del servicio',
+        third_party_notices: 'Licencias de terceros',
+        export_data: 'Descargar mis datos',
+        export_data_desc: 'Copia completa de tu cuenta en JSON',
+        delete_account: 'Eliminar mi cuenta',
+        delete_account_desc: 'Borra la cuenta y todos sus datos',
+        delete_account_hint: 'El borrado es inmediato. Antes puedes descargar una copia.',
       },
       wearables: {
         title: 'Dispositivos',
@@ -764,6 +779,9 @@ export const resources = {
           invalid_set: 'Serie incompleta',
           pick_exercise: 'Elige un ejercicio antes de guardar',
           no_valid_sets: 'Añade reps y kg válidas',
+          queue_failed: 'No se pudo guardar ni dejar pendiente. Inténtalo de nuevo',
+          idempotency_conflict:
+            'Este guardado ya se registró con otro contenido. Recarga el historial antes de volver a intentarlo',
           sets_incomplete_one: 'La serie {{numbers}} está sin terminar',
           sets_incomplete_other: 'Las series {{numbers}} están sin terminar',
         },
@@ -1191,6 +1209,9 @@ export const resources = {
         import_skipped_rows_one: '1 fila no es de fuerza (cardio) y no se importará.',
         import_skipped_rows_other: '{{count}} filas no son de fuerza (cardio) y no se importarán.',
         import_duplicates_skipped: '({{count}} duplicadas saltadas)',
+        import_conflict:
+          'La importación entra en conflicto con una operación anterior. No se ha cambiado nada.',
+        import_failed: '({{count}} no se pudieron importar)',
         series_plural: 'series',
         search_placeholder: 'Buscar ejercicio o nota…',
         export_json: 'Exportar JSON',
@@ -1247,6 +1268,33 @@ export const resources = {
         error_password_invalid: 'Contraseña no válida',
         wait_seconds: 'Espera {{seconds}} s',
         or: 'o',
+        age_confirm: 'Declaro que tengo 14 años o más y acepto la',
+        privacy_link: 'política de privacidad',
+        and: 'y las',
+        terms_link: 'condiciones del servicio',
+        age_confirm_label:
+          'Declaro que tengo 14 años o más y acepto la política de privacidad y las condiciones del servicio',
+        error_age:
+          'Debes confirmar que tienes 14 años o más y aceptar la política de privacidad y las condiciones',
+      },
+      privacy: {
+        export_ok: 'Copia descargada',
+        export_error: 'No se pudo generar la copia',
+        export_incomplete: 'Copia generada, pero faltan secciones: {{tables}}',
+        delete_title: '¿Eliminar tu cuenta?',
+        delete_body:
+          'Se borrarán tu perfil, entrenos, medidas, datos de salud y dispositivos conectados. La cuenta {{email}} no se puede recuperar. Si quieres conservar una copia, cancela y descárgala antes.',
+        delete_confirm: 'Eliminar cuenta',
+        deleting: 'Eliminando…',
+        delete_ok: 'Cuenta eliminada',
+        delete_error: 'No se pudo eliminar la cuenta. Inténtalo más tarde.',
+        health_consent_title: 'Datos de salud',
+        health_consent_body:
+          'Vas a guardar datos de salud: peso, grasa corporal, medidas, frecuencia cardiaca, sueño o sesiones importadas de tu móvil. Los guardamos en tu cuenta para mostrarte tu progreso y sincronizarlos entre dispositivos.',
+        health_consent_note:
+          'Puedes seguir usando el resto de la app sin aceptarlo. Si cambias de idea, puedes dejar de usar estas funciones y solicitar el borrado de tus datos desde Ajustes.',
+        health_consent_accept: 'Acepto y continúo',
+        health_consent_cancel: 'Ahora no',
       },
       achievements: {
         title: 'Logros',
@@ -1653,6 +1701,11 @@ export const resources = {
         weight: 'Weight',
         body_hint:
           'Used to estimate volume on bodyweight exercises. You can change them any time in My measurements.',
+        health_consent:
+          'I agree that GymLog may process my weight as health data to calculate volume for bodyweight exercises. If you leave this unchecked, weight is not saved and you can add it later from My measurements.',
+        age_confirm: 'I confirm that I am 14 or older and accept the',
+        age_required: 'You must confirm that you are 14 or older and accept the terms to continue.',
+        save_error: 'Could not save your profile. Try again.',
       },
       notifications: {
         title: 'Notifications',
@@ -1909,6 +1962,15 @@ export const resources = {
         notif_on: 'Notifications enabled',
         notif_denied: 'Notification permission not granted',
         notif_denied_browser: 'Notification permission denied by the browser',
+        privacy: 'Privacy & data',
+        privacy_policy: 'Privacy policy',
+        terms: 'Terms of service',
+        third_party_notices: 'Third-party licences',
+        export_data: 'Download my data',
+        export_data_desc: 'Complete copy of your account as JSON',
+        delete_account: 'Delete my account',
+        delete_account_desc: 'Erases the account and all its data',
+        delete_account_hint: 'Deletion is immediate. You can download a copy first.',
       },
       wearables: {
         title: 'Devices',
@@ -2016,6 +2078,9 @@ export const resources = {
           invalid_set: 'Incomplete set',
           pick_exercise: 'Pick an exercise before saving',
           no_valid_sets: 'Add valid reps and weight',
+          queue_failed: 'Could not save it or queue it. Please try again',
+          idempotency_conflict:
+            'This save was already recorded with different content. Reload your history before trying again',
           sets_incomplete_one: 'Set {{numbers}} is unfinished',
           sets_incomplete_other: 'Sets {{numbers}} are unfinished',
         },
@@ -2440,6 +2505,9 @@ export const resources = {
         import_skipped_rows_other:
           '{{count}} rows are not strength sets (cardio) and will be skipped.',
         import_duplicates_skipped: '({{count}} duplicates skipped)',
+        import_conflict:
+          'The import conflicts with an earlier operation. Nothing has been changed.',
+        import_failed: '({{count}} could not be imported)',
         series_plural: 'sets',
         search_placeholder: 'Search exercise or note…',
         export_json: 'Export JSON',
@@ -2496,6 +2564,33 @@ export const resources = {
         error_password_invalid: 'Invalid password',
         wait_seconds: 'Wait {{seconds}}s',
         or: 'or',
+        age_confirm: 'I am 14 or older and I accept the',
+        privacy_link: 'privacy policy',
+        and: 'and the',
+        terms_link: 'terms of service',
+        age_confirm_label:
+          'I am 14 or older and I accept the privacy policy and the terms of service',
+        error_age:
+          'You must confirm that you are 14 or older and accept the privacy policy and the terms',
+      },
+      privacy: {
+        export_ok: 'Copy downloaded',
+        export_error: 'Could not build the copy',
+        export_incomplete: 'Copy created, but these sections are missing: {{tables}}',
+        delete_title: 'Delete your account?',
+        delete_body:
+          'Your profile, workouts, measurements, health data and connected devices will be erased. The account {{email}} cannot be recovered. If you want to keep a copy, cancel and download it first.',
+        delete_confirm: 'Delete account',
+        deleting: 'Deleting…',
+        delete_ok: 'Account deleted',
+        delete_error: 'Could not delete the account. Try again later.',
+        health_consent_title: 'Health data',
+        health_consent_body:
+          'You are about to save health data: weight, body fat, measurements, heart rate, sleep or sessions imported from your phone. We store it in your account to show your progress and sync it across devices.',
+        health_consent_note:
+          'You can keep using the rest of the app without accepting. If you change your mind, you can stop using these features and request deletion of your data in Settings.',
+        health_consent_accept: 'I accept and continue',
+        health_consent_cancel: 'Not now',
       },
       achievements: {
         title: 'Achievements',

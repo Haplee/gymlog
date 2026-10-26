@@ -183,11 +183,13 @@ export type Database = {
         Row: {
           avg_hr: number | null;
           calories: number | null;
+          client_id: string | null;
           created_at: string;
           distance: number | null;
           duration: number;
           external_id: string | null;
           id: string;
+          idempotency_hash: string | null;
           max_hr: number | null;
           notes: string | null;
           source: string;
@@ -198,11 +200,13 @@ export type Database = {
         Insert: {
           avg_hr?: number | null;
           calories?: number | null;
+          client_id?: string | null;
           created_at?: string;
           distance?: number | null;
           duration: number;
           external_id?: string | null;
           id?: string;
+          idempotency_hash?: string | null;
           max_hr?: number | null;
           notes?: string | null;
           source?: string;
@@ -213,11 +217,13 @@ export type Database = {
         Update: {
           avg_hr?: number | null;
           calories?: number | null;
+          client_id?: string | null;
           created_at?: string;
           distance?: number | null;
           duration?: number;
           external_id?: string | null;
           id?: string;
+          idempotency_hash?: string | null;
           max_hr?: number | null;
           notes?: string | null;
           source?: string;
@@ -1092,6 +1098,10 @@ export type Database = {
         Args: { p_cursor?: string; p_limit?: number; p_user_id: string };
         Returns: Json;
       };
+      import_history_workouts: {
+        Args: { p_import_id: string; p_user_id: string; p_workouts: Json };
+        Returns: number;
+      };
       import_health_sessions: {
         Args: { p_rows: Json; p_user_id: string };
         Returns: number;
@@ -1101,6 +1111,19 @@ export type Database = {
         Returns: number;
       };
       pr_rep_band: { Args: { p_reps: number }; Returns: number };
+      save_cardio_session: {
+        Args: {
+          p_calories?: number | null;
+          p_client_id: string;
+          p_distance?: number | null;
+          p_duration: number;
+          p_notes?: string | null;
+          p_started_at: string;
+          p_type: string;
+          p_user_id: string;
+        };
+        Returns: string;
+      };
       save_workout_with_sets: {
         Args: {
           p_client_id?: string;

@@ -317,10 +317,10 @@ describe('useRoutineSessionStore', () => {
     fillExercise(0, '10', '60');
     fillExercise(1, '8', '40');
 
-    // El primer ejercicio se guarda; el segundo revienta por red.
+    // El primer ejercicio se guarda; el segundo revienta por red en todos sus
+    // reintentos (el guardado reintenta la red, no un error del servidor).
     mockRpc.mockImplementationOnce((() => Promise.resolve({ data: null, error: null })) as never);
-    mockRpc.mockImplementationOnce((() =>
-      Promise.reject(new TypeError('Failed to fetch'))) as never);
+    mockRpc.mockRejectedValue(new TypeError('Failed to fetch'));
 
     const result = await useRoutineSessionStore
       .getState()
@@ -331,6 +331,42 @@ describe('useRoutineSessionStore', () => {
     expect(result.savedExercises).toBe(2);
     expect(mockEnqueue).toHaveBeenCalledTimes(1);
     expect(mockEnqueue.mock.calls[0][0]).toMatchObject({ customExerciseName: 'Press militar' });
+  });
+
+  it('si el outbox no puede guardar el resto, devuelve error y conserva la sesión', async () => {
+    const tresEjercicios = {
+      ...dayRoutine,
+      exercises: [
+        { name: 'Press banca', sets: 1, reps: '8' },
+        { name: 'Press militar', sets: 1, reps: '8' },
+        { name: 'Fondos', sets: 1, reps: '8' },
+      ],
+    } as DayRoutine;
+
+    useRoutineSessionStore.getState().start(routine, 'monday', tresEjercicios);
+    fillExercise(0, '10', '60');
+    fillExercise(1, '8', '40');
+    fillExercise(2, '8', '20');
+
+    // El primero se guarda; el segundo cae por red (en todos sus reintentos) y
+    // sí entra en la cola; el tercero tampoco se guarda, y no se puede encolar
+    // (IndexedDB desalojado, cuota llena).
+    mockRpc.mockImplementationOnce((() => Promise.resolve({ data: null, error: null })) as never);
+    mockRpc.mockRejectedValue(new TypeError('Failed to fetch'));
+    mockEnqueue.mockResolvedValueOnce(undefined).mockRejectedValueOnce(new Error('cuota llena'));
+
+    const result = await useRoutineSessionStore
+      .getState()
+      .finish('user-1', () => 'catalog-id', identity);
+
+    // Antes esto era una promesa rechazada que nadie recogía; ahora es un
+    // resultado que la pantalla puede contar.
+    expect(result.success).toBe(false);
+    expect(result.error?.message).toBe('workout.errors.queue_failed');
+    expect(result.savedExercises).toBe(1);
+    // La sesión sigue ahí con sus clientId: reintentar no duplica nada.
+    expect(useRoutineSessionStore.getState().exercises).toHaveLength(3);
+    expect(useRoutineSessionStore.getState().startedAt).not.toBeNull();
   });
 });
 
@@ -529,5 +565,92 @@ describe('superseries en la sesión', () => {
 
     expect(result.error).toBeNull();
     expect(result.savedExercises).toBe(1);
+  });
+});
+
+/* --------------------------------------------------- idempotencia del envío --- */
+
+/** Un día con dos ejercicios repetidos, para el prefill por nombre. */
+const dayConRepetido: DayRoutine = {
+  name: 'Día repetido',
+  exercises: [
+    { name: 'Press banca', sets: 1, reps: '8' },
+    { name: 'Press banca', sets: 1, reps: '8' },
+  ],
+};
+
+const rutinaConRepetido = {
+  ...routine,
+  days: { monday: dayConRepetido },
+} as unknown as Routine;
+
+describe('idempotencia y prefill de la sesión', () => {
+  beforeEach(() => {
+    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    useRoutineSessionStore.getState().discard();
+    mockRpc.mockClear();
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: null,
+      count: null,
+      status: 200,
+      statusText: 'OK',
+    } as never);
+    mockEnqueue.mockClear();
+    mockResolve.mockClear();
+    mockResolve.mockResolvedValue('created-exercise-id');
+    Object.defineProperty(navigator, 'onLine', { configurable: true, value: true });
+  });
+
+  afterEach(() => {
+    consoleErrorSpy.mockRestore();
+  });
+
+  it('reutiliza las claves de idempotencia al reintentar tras un fallo', async () => {
+    useRoutineSessionStore.getState().start(routine, 'monday', dayRoutine);
+    fillExercise(0, '10', '60');
+    fillExercise(1, '8', '40');
+
+    // El primero se guarda; el segundo falla por algo que no es red (se conserva
+    // la sesión para reintentar).
+    mockRpc.mockImplementationOnce(() => Promise.resolve({ data: null, error: null }) as never);
+    mockRpc.mockImplementationOnce((() =>
+      Promise.reject(new Error('Database constraint violation'))) as never);
+
+    const primero = await useRoutineSessionStore
+      .getState()
+      .finish('user-1', () => 'catalog-id', identity);
+    expect(primero.success).toBe(false);
+    expect(primero.savedExercises).toBe(1);
+
+    // Las claves quedan en la sesión persistida: el reintento no las inventa.
+    const trasFallo = useRoutineSessionStore.getState().exercises;
+    expect(trasFallo.every((ex) => typeof ex.clientId === 'string' && ex.clientId)).toBe(true);
+
+    const reintento = await useRoutineSessionStore
+      .getState()
+      .finish('user-1', () => 'catalog-id', identity);
+    expect(reintento.success).toBe(true);
+
+    const claves = mockRpc.mock.calls.map((c) => (c[1] as { p_client_id: string }).p_client_id);
+    expect(claves).toHaveLength(4);
+    // Los dos ejercicios del reintento llevan exactamente las claves del primer
+    // intento: el que ya estaba escrito no se duplica en el servidor.
+    expect(claves.slice(2)).toEqual(claves.slice(0, 2));
+  });
+
+  it('el prefill no recrea el ejercicio que no cambia por otro que sí', () => {
+    useRoutineSessionStore.getState().start(rutinaConRepetido, 'monday', dayConRepetido);
+    // El segundo ya está en el peso recomendado; solo el primero tiene que cambiar.
+    useRoutineSessionStore.getState().updateSet(1, 0, { weight: '80' });
+
+    const antes = useRoutineSessionStore.getState().exercises;
+    useRoutineSessionStore.getState().prefillAdvisedWeight('Press banca', '80');
+    const despues = useRoutineSessionStore.getState().exercises;
+
+    expect(despues[0].sets[0].weight).toBe('80');
+    expect(despues[0]).not.toBe(antes[0]);
+    // Misma identidad: no se re-renderiza un ejercicio que no ha cambiado.
+    expect(despues[1]).toBe(antes[1]);
   });
 });

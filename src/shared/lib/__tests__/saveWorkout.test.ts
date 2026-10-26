@@ -84,6 +84,34 @@ describe('saveWorkoutOrQueue', () => {
     expect(enqueueMock).not.toHaveBeenCalled();
   });
 
+  it('un conflicto de idempotencia no se reintenta ni se encola', async () => {
+    rpcMock.mockResolvedValue({ error: new Error('idempotency_conflict') });
+
+    const outcome = await saveWorkoutOrQueue(INPUT);
+
+    expect(outcome).toEqual({
+      status: 'error',
+      error: new Error('workout.errors.idempotency_conflict'),
+    });
+    // Es un rechazo definitivo: reintentarlo daría el mismo resultado.
+    expect(rpcMock).toHaveBeenCalledTimes(1);
+    expect(enqueueMock).not.toHaveBeenCalled();
+  });
+
+  it('un fallo de red transitorio se reintenta con la misma clave', async () => {
+    rpcMock
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+      .mockResolvedValue({ error: null });
+
+    await expect(saveWorkoutOrQueue(INPUT)).resolves.toEqual({ status: 'saved' });
+
+    expect(rpcMock).toHaveBeenCalledTimes(3);
+    const claves = rpcMock.mock.calls.map((c) => c[1].p_client_id);
+    expect(new Set(claves)).toEqual(new Set(['cli-1']));
+    expect(enqueueMock).not.toHaveBeenCalled();
+  });
+
   it('resuelve el ejercicio por nombre cuando no viene id', async () => {
     resolveMock.mockResolvedValue('ex-creado');
     rpcMock.mockResolvedValue({ error: null });
@@ -95,6 +123,36 @@ describe('saveWorkoutOrQueue', () => {
       'save_workout_with_sets',
       expect.objectContaining({ p_exercise_id: 'ex-creado' }),
     );
+  });
+
+  // Si la cola local no se puede escribir (IndexedDB bloqueado, cuota llena),
+  // `saveWorkoutOrQueue` no puede lanzar: su contrato es devolver qué pasó, y
+  // los stores dan por hecho que nunca rechaza. Cuando rechazaba, el guardado
+  // quedaba con `saving: true` y un error sin dueño.
+  it('si encolar falla sin conexión, devuelve error en vez de lanzar', async () => {
+    vi.stubGlobal('navigator', { onLine: false });
+    enqueueMock.mockRejectedValueOnce(new Error('QuotaExceededError'));
+
+    const outcome = await saveWorkoutOrQueue(INPUT);
+
+    expect(outcome).toEqual({
+      status: 'error',
+      error: new Error('workout.errors.queue_failed'),
+    });
+  });
+
+  it('si encolar falla tras un fallo de red, devuelve error en vez de lanzar', async () => {
+    rpcMock.mockRejectedValue(new Error('Failed to fetch'));
+    enqueueMock.mockRejectedValueOnce(new Error('QuotaExceededError'));
+
+    const outcome = await saveWorkoutOrQueue(INPUT);
+
+    // No se guardó y tampoco quedó en la cola: es un fallo real que la pantalla
+    // tiene que poder contar.
+    expect(outcome).toEqual({
+      status: 'error',
+      error: new Error('workout.errors.queue_failed'),
+    });
   });
 
   it('sin ejercicio ni nombre resoluble devuelve error', async () => {

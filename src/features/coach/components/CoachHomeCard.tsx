@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useCoachStore } from '../stores/coachStore';
+import { COACH_UI_ENABLED } from '../lib/featureFlag';
 import { ChevronRight, Sparkles } from '@shared/components/icons';
 
 /**
@@ -23,6 +24,7 @@ export function CoachHomeCard() {
   const navigate = useNavigate();
   const enabled = useCoachStore((s) => s.enabled);
 
+  if (!COACH_UI_ENABLED) return null;
   if (!enabled) return null;
 
   return (

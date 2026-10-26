@@ -94,6 +94,25 @@ describe('advanceProgression', () => {
     expect(next.currentReps).toBe(16);
   });
 
+  it('en peso corporal por lado el objetivo sube de dos en dos', () => {
+    const next = advanceProgression(
+      base({ bodyweight: true, currentWeight: 0, currentReps: 16, repMax: 12 }),
+      { weight: 0, reps: 16 },
+      { perSide: true },
+    );
+    // 16 → 18 son 9 por lado; 17 serían 8,5 y no es un objetivo real.
+    expect(next.currentReps).toBe(18);
+  });
+
+  it('en peso corporal por lado corrige un objetivo impar heredado', () => {
+    const next = advanceProgression(
+      base({ bodyweight: true, currentWeight: 0, currentReps: 15, repMax: 12 }),
+      { weight: 0, reps: 15 },
+      { perSide: true },
+    );
+    expect(next.currentReps).toBe(16);
+  });
+
   it('programa la descarga al agotarse el contador', () => {
     let state = createInitialProgression(
       'Press banca',

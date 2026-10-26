@@ -91,6 +91,48 @@ export function isHeaderLine(firstCol: string): boolean {
   return headers.some((h) => lower.includes(h));
 }
 
+/**
+ * Rango mínimo y máximo de una colección de fechas ya normalizadas
+ * (`YYYY-MM-DD`). Es el tramo que se consulta a la base para deduplicar sin
+ * depender de la ventana de historial cargada en memoria.
+ *
+ * No valida: cada importador entrega las fechas que va a escribir de verdad.
+ * Las vacías se ignoran. Sin ninguna fecha devuelve null.
+ */
+export function collectDateRange(
+  dates: Iterable<string | null | undefined>,
+): { from: string; to: string } | null {
+  let from: string | null = null;
+  let to: string | null = null;
+  for (const date of dates) {
+    if (!date) continue;
+    if (!from || date < from) from = date;
+    if (!to || date > to) to = date;
+  }
+  return from && to ? { from, to } : null;
+}
+
+/**
+ * Rango de fechas que menciona un CSV propio, para pedir a la base solo las
+ * claves de ese tramo en vez de confiar en la ventana de historial cargada.
+ *
+ * Mira todas las celdas con `parseImportDate`: es un superconjunto de las fechas
+ * que usará el importador (las filas sin fecha heredan la última vista), así que
+ * el rango nunca se queda corto. Si el fichero no trae ninguna fecha legible
+ * devuelve null y el import sigue con lo que ya tenga en memoria.
+ */
+export function collectCsvDateRange(lines: string[]): { from: string; to: string } | null {
+  const dates: string[] = [];
+  for (const line of lines) {
+    if (line.length > 1000) continue;
+    for (const cell of tokenizeCsvLine(line)) {
+      const date = parseImportDate(cell);
+      if (date) dates.push(date);
+    }
+  }
+  return collectDateRange(dates);
+}
+
 /** Clave de dedupe: fecha + ejercicio + set_num (normalizado a minúsculas). */
 export function makeDedupKey(date: string, exercise: string, setNum: number): string {
   return `${date}|${exercise.trim().toLowerCase()}|${setNum}`;
@@ -131,7 +173,10 @@ export interface DedupCandidate {
  * (fecha, ejercicio, set_num). Simula la asignación de set_num por contador
  * para los formatos que no lo traen explicito (Excel/CSV).
  */
-export function estimateDedupSkips(candidates: DedupCandidate[], existingKeys: Set<string>): number {
+export function estimateDedupSkips(
+  candidates: DedupCandidate[],
+  existingKeys: Set<string>,
+): number {
   const seen = new Set(existingKeys);
   const counters = new Map<string, number>();
   let skips = 0;

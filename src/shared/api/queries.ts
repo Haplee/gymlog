@@ -3,7 +3,7 @@ import { devError, devWarn } from '@shared/lib/devtools';
 import { parseRemoteWorkouts } from './schemas';
 import { groupSetsBySession } from './sessionGrouping';
 import type { ExerciseSessionSets } from './sessionGrouping';
-import { toLocalDateKey } from '@shared/lib/dateKeys';
+import { shiftDateKey, toLocalDateKey } from '@shared/lib/dateKeys';
 import type {
   WorkoutWithSets,
   WorkoutSetWithDetails,
@@ -135,6 +135,75 @@ export const fetchRecentSets = async (
     devError('fetchRecentSets error:', err);
     throw err;
   }
+};
+
+/** Clave de dedupe de una serie ya guardada: fecha + ejercicio + set_num. */
+export interface ExistingSetKey {
+  date: string;
+  exercise: string;
+  setNum: number;
+}
+
+/** Relación embebida: el tipo generado puede traerla como objeto o como array. */
+function firstEmbedded<T>(value: T | T[] | null | undefined): T | null {
+  if (!value) return null;
+  return Array.isArray(value) ? (value[0] ?? null) : value;
+}
+
+/**
+ * Claves (fecha, ejercicio, set_num) de las series ya guardadas entre dos
+ * fechas, ambas incluidas y en formato YYYY-MM-DD.
+ *
+ * Existe para que importar un CSV antiguo no dependa de la ventana de historial
+ * cargada en memoria (`fetchWorkouts` trae 1000 entrenos): por debajo de ese
+ * corte el dedupe no veía nada y una reimportación duplicaba series.
+ *
+ * El rango se ensancha un día por cada lado porque `started_at` es timestamptz y
+ * la clave se arma con la parte UTC: un desfase de zona nunca debe dejar fuera
+ * una serie que existe. Traer de más solo añade claves que no coinciden.
+ *
+ * Pagina de 1000 en 1000: PostgREST corta las respuestas en `db-max-rows`, y un
+ * import de varios años supera ese tope.
+ */
+export const fetchExistingSetKeysBetween = async (
+  userId: string,
+  fromDate: string,
+  toDate: string,
+): Promise<ExistingSetKey[]> => {
+  const PAGE_SIZE = 1000;
+  const from = shiftDateKey(fromDate, -1);
+  const to = shiftDateKey(toDate, 2); // exclusivo: incluye el día siguiente
+  const keys: ExistingSetKey[] = [];
+
+  for (let offset = 0; ; offset += PAGE_SIZE) {
+    const { data, error } = await supabase
+      .from('workout_sets')
+      .select('set_num, exercise:exercises!inner(name), workout:workouts!inner(started_at)')
+      .eq('workout.user_id', userId)
+      .gte('workout.started_at', `${from}T00:00:00Z`)
+      .lt('workout.started_at', `${to}T00:00:00Z`)
+      .order('id')
+      .range(offset, offset + PAGE_SIZE - 1);
+
+    if (error) throw error;
+
+    const rows = (data ?? []) as unknown as {
+      set_num: number;
+      exercise: { name: string | null } | { name: string | null }[] | null;
+      workout: { started_at: string | null } | { started_at: string | null }[] | null;
+    }[];
+
+    for (const row of rows) {
+      const date = firstEmbedded(row.workout)?.started_at?.split('T')[0];
+      const name = firstEmbedded(row.exercise)?.name;
+      if (!date || !name) continue;
+      keys.push({ date, exercise: name, setNum: row.set_num });
+    }
+
+    if (rows.length < PAGE_SIZE) break;
+  }
+
+  return keys;
 };
 
 export const fetchExercises = async (userId: string | undefined): Promise<Exercise[]> => {
@@ -520,18 +589,35 @@ export const fetchBodyMeasurements = async (userId: string): Promise<BodyMeasure
   return (data as BodyMeasurement[]) || [];
 };
 
+/**
+ * Anota las medidas de hoy.
+ *
+ * Upsert por `(user_id, date)`, no insert: la tabla tiene `UNIQUE (user_id, date)`
+ * y apuntar la grasa después del peso —o corregir cualquiera de los dos— chocaba
+ * con esa restricción y la pantalla solo podía decir «no se pudo guardar».
+ *
+ * Solo viajan los campos escritos: anotar la grasa no borra el peso que ya
+ * estaba en la fila del día.
+ *
+ * La fecha es local, igual que en `upsertTodayWeight`. Con `toISOString()` quien
+ * se pesaba antes de las 2:00 en España guardaba el día anterior.
+ */
 export const addBodyMeasurement = async (
   userId: string,
   values: { weight_kg: number | null; body_fat_pct: number | null },
 ): Promise<BodyMeasurement> => {
+  const payload: {
+    user_id: string;
+    date: string;
+    weight_kg?: number;
+    body_fat_pct?: number;
+  } = { user_id: userId, date: toLocalDateKey(new Date()) };
+  if (values.weight_kg != null) payload.weight_kg = values.weight_kg;
+  if (values.body_fat_pct != null) payload.body_fat_pct = values.body_fat_pct;
+
   const { data, error } = await supabase
     .from('body_measurements')
-    .insert({
-      user_id: userId,
-      date: new Date().toISOString().split('T')[0],
-      weight_kg: values.weight_kg,
-      body_fat_pct: values.body_fat_pct,
-    })
+    .upsert(payload, { onConflict: 'user_id,date' })
     .select('id, user_id, date, weight_kg, body_fat_pct, muscle_mass_kg, notes, created_at')
     .single();
   if (error) throw error;

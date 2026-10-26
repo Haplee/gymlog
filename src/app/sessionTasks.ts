@@ -12,6 +12,7 @@
 // el respaldo de rutinas y lo perdería al cerrar sesión sin enterarse.
 
 import { registerSignOutTask } from '@shared/lib/sessionLifecycle';
+import { unregisterPushToken } from '@shared/lib/push';
 import { useRoutineStore } from '@features/routine/stores/routineStore';
 import { useProgressionStore } from '@features/routine/stores/progressionStore';
 import { useWorkoutStore } from '@features/workout/stores/workoutStore';
@@ -51,4 +52,51 @@ registerSignOutTask({
   phase: 'cleanup',
   name: 'workout:clearPersistedState',
   run: () => useWorkoutStore.getState().clearPersistedState(),
+});
+
+/**
+ * Token push del dispositivo. Va en `pre-signout` porque la fila se borra en el
+ * servidor y hace falta la sesión. Antes solo se limpiaba al apagar el toggle
+ * de notificaciones: quien cerraba sesión dejaba su token vivo y podía seguir
+ * recibiendo avisos de una cuenta a la que ya no entra.
+ */
+registerSignOutTask({
+  phase: 'pre-signout',
+  name: 'push:unregister',
+  requiresUser: true,
+  run: async (userId) => {
+    await unregisterPushToken(userId ?? undefined);
+  },
+});
+
+/**
+ * Caché persistida de TanStack Query (IndexedDB). Contiene entrenos, medidas y
+ * salud: es la copia offline de la cuenta. `queryClient.clear()` vacía la
+ * memoria, pero no el disco; sin esto, los datos seguían ahí después de salir.
+ */
+registerSignOutTask({
+  phase: 'cleanup',
+  name: 'cache:clearPersistedQueries',
+  run: async () => {
+    // Import dinámico: `queryPersister` abre IndexedDB al cargarse y este
+    // módulo se importa en contextos sin `indexedDB` (tests, arranque en frío).
+    const { idbPersister } = await import('@app/queryPersister');
+    await idbPersister.removeClient();
+  },
+});
+
+/**
+ * Cachés del service worker (solo web). Guardan respuestas de la API y el
+ * bundle; se borran al cerrar sesión para que el siguiente usuario del mismo
+ * dispositivo no herede nada. En nativo no hay SW registrado y `caches` no
+ * existe.
+ */
+registerSignOutTask({
+  phase: 'cleanup',
+  name: 'cache:clearServiceWorker',
+  run: async () => {
+    if (typeof caches === 'undefined') return;
+    const keys = await caches.keys();
+    await Promise.all(keys.map((key) => caches.delete(key)));
+  },
 });

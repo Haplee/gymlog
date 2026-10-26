@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { toLocalDateKey } from '../dateKeys';
+import { shiftDateKey, toLocalDateKey } from '../dateKeys';
 
 describe('toLocalDateKey', () => {
   it('formatea como YYYY-MM-DD en hora local', () => {
@@ -24,5 +24,23 @@ describe('toLocalDateKey', () => {
   it('maneja el último día del año', () => {
     const d = new Date(2026, 11, 31, 12, 0);
     expect(toLocalDateKey(d)).toBe('2026-12-31');
+  });
+});
+
+describe('shiftDateKey', () => {
+  it('suma y resta días cruzando meses y años', () => {
+    expect(shiftDateKey('2026-01-05', -1)).toBe('2026-01-04');
+    expect(shiftDateKey('2026-01-31', 1)).toBe('2026-02-01');
+    expect(shiftDateKey('2026-12-31', 1)).toBe('2027-01-01');
+    expect(shiftDateKey('2024-02-28', 1)).toBe('2024-02-29'); // bisiesto
+  });
+
+  it('no depende de la zona horaria del equipo', () => {
+    // Se opera en UTC: en cualquier zona debe devolver el mismo día.
+    expect(shiftDateKey('2026-03-29', 1)).toBe('2026-03-30');
+  });
+
+  it('con una fecha inválida devuelve la entrada sin romper', () => {
+    expect(shiftDateKey('no-es-fecha', 1)).toBe('no-es-fecha');
   });
 });

@@ -12,7 +12,9 @@
 
 import { supabase } from './supabase';
 import { resolveOrCreateExercise } from './resolveOrCreateExercise';
-import { enqueueWorkout, isNetworkError, type OutboxSet } from './workoutOutbox';
+import { enqueueWorkout, type OutboxSet } from './workoutOutbox';
+import { isNetworkError } from './networkError';
+import { isIdempotencyConflict, retryOnNetwork } from './idempotency';
 
 export interface SaveWorkoutInput {
   /**
@@ -44,23 +46,31 @@ export type SaveWorkoutOutcome =
 
 /** ¿El navegador dice que no hay red? En SSR/tests sin `navigator`, se asume que sí. */
 function isOffline(): boolean {
-  return typeof navigator !== 'undefined' && !navigator.onLine;
+  return typeof navigator !== 'undefined' && navigator.onLine === false;
 }
 
 async function queue(input: SaveWorkoutInput): Promise<SaveWorkoutOutcome> {
-  await enqueueWorkout({
-    id: input.clientId,
-    userId: input.userId,
-    exerciseId: input.exerciseId,
-    customExerciseName: input.customExerciseName.trim(),
-    customMuscleGroup: input.customMuscleGroup,
-    startedAt: input.startedAt,
-    finishedAt: input.finishedAt,
-    sets: input.sets,
-    notes: input.notes,
-    rating: input.rating,
-    createdAt: new Date().toISOString(),
-  });
+  try {
+    await enqueueWorkout({
+      id: input.clientId,
+      userId: input.userId,
+      exerciseId: input.exerciseId,
+      customExerciseName: input.customExerciseName.trim(),
+      customMuscleGroup: input.customMuscleGroup,
+      startedAt: input.startedAt,
+      finishedAt: input.finishedAt,
+      sets: input.sets,
+      notes: input.notes,
+      rating: input.rating,
+      createdAt: new Date().toISOString(),
+    });
+  } catch {
+    // La cola local también puede fallar (IndexedDB bloqueado, cuota llena).
+    // Esta función promete no lanzar nunca: quien la llama deja el guardado en
+    // curso si el `await` revienta, y aquí además no queda nada guardado. Se
+    // devuelve un fallo real para que la pantalla lo pueda contar.
+    return { status: 'error', error: new Error('workout.errors.queue_failed') };
+  }
   return { status: 'queued' };
 }
 
@@ -87,20 +97,31 @@ export async function saveWorkoutOrQueue(input: SaveWorkoutInput): Promise<SaveW
       return { status: 'error', error: new Error('Selecciona un ejercicio') };
     }
 
-    const { error } = await supabase.rpc('save_workout_with_sets', {
-      p_user_id: input.userId,
-      p_exercise_id: exerciseId,
-      p_started_at: input.startedAt,
-      p_finished_at: input.finishedAt,
-      p_sets: input.sets,
-      p_notes: input.notes,
-      p_rating: input.rating ?? undefined,
-      p_client_id: input.clientId,
+    await retryOnNetwork(async () => {
+      const { error } = await supabase.rpc('save_workout_with_sets', {
+        p_user_id: input.userId,
+        p_exercise_id: exerciseId,
+        p_started_at: input.startedAt,
+        p_finished_at: input.finishedAt,
+        p_sets: input.sets,
+        p_notes: input.notes,
+        p_rating: input.rating ?? undefined,
+        p_client_id: input.clientId,
+      });
+      // Supabase devuelve los errores en el resultado, no lanzándolos. Se
+      // relanza para que el reintento y la clasificación vean el error real.
+      if (error) throw error;
     });
-    if (error) throw error;
 
     return { status: 'saved' };
   } catch (err) {
+    // Una clave que ya existe con otro contenido es un fallo del cliente, no de
+    // red: reintentarla daría el mismo rechazo. Se dice tal cual en vez de
+    // fingir que se guardó.
+    if (isIdempotencyConflict(err)) {
+      return { status: 'error', error: new Error('workout.errors.idempotency_conflict') };
+    }
+
     // La red se cayó a mitad: el entreno se conserva en la cola. Si el servidor
     // llegó a escribirlo y solo se perdió la respuesta, el reenvío trae el
     // mismo `clientId` y no duplica nada.

@@ -88,7 +88,13 @@ function MenuRow({
   );
 }
 
-export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
+export function SettingsPage({
+  coachSection,
+  privacySection,
+}: {
+  coachSection?: ReactNode;
+  privacySection?: ReactNode;
+}) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
@@ -770,6 +776,8 @@ export function SettingsPage({ coachSection }: { coachSection?: ReactNode }) {
         </section>
 
         {/* Cuenta */}
+        {privacySection}
+
         <section>
           <SectionHeader title={t('settings.account')} />
           <div className="glass-2 rounded-card overflow-hidden">

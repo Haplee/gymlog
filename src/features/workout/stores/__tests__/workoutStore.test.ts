@@ -23,7 +23,7 @@ vi.mock('@shared/lib/resolveOrCreateExercise', () => ({
   resolveOrCreateExercise: vi.fn().mockResolvedValue('test-exercise-id'),
 }));
 
-import { useWorkoutStore } from '../workoutStore';
+import { useWorkoutStore, repsDeSerie } from '../workoutStore';
 import { supabase } from '@shared/lib/supabase';
 import { resolveOrCreateExercise } from '@shared/lib/resolveOrCreateExercise';
 
@@ -354,6 +354,70 @@ describe('useWorkoutStore', () => {
       useWorkoutStore.getState().updateSet(1, { completed: true });
 
       expect(useWorkoutStore.getState().sets[1].autofilled).toBe(true);
+    });
+
+    it('reutiliza la clave de idempotencia al reintentar tras un fallo', async () => {
+      // Fallo real (no de red): el entreno no se encola y el estado se conserva
+      // para reintentar. Ese reintento tiene que llevar la MISMA clave o el
+      // servidor no puede saber que es el mismo envío.
+      mockRpc.mockRejectedValueOnce(new Error('Database constraint violation'));
+      const store = useWorkoutStore.getState();
+      store.setActiveExercise('ex-1');
+      store.updateSet(0, { reps: '10', weight: '100' });
+
+      const first = await store.saveWorkout('user-1');
+      expect(first.success).toBe(false);
+
+      const second = await useWorkoutStore.getState().saveWorkout('user-1');
+      expect(second.success).toBe(true);
+
+      const [primerEnvio, reintento] = mockRpc.mock.calls;
+      expect(primerEnvio[1].p_client_id).toBeTruthy();
+      expect(reintento[1].p_client_id).toBe(primerEnvio[1].p_client_id);
+    });
+
+    it('estrena clave de idempotencia en la sesión siguiente', async () => {
+      const store = useWorkoutStore.getState();
+      store.setActiveExercise('ex-1');
+      store.updateSet(0, { reps: '10', weight: '100' });
+      await store.saveWorkout('user-1');
+
+      const next = useWorkoutStore.getState();
+      next.setActiveExercise('ex-1');
+      next.updateSet(0, { reps: '8', weight: '90' });
+      await useWorkoutStore.getState().saveWorkout('user-1');
+
+      const [primera, segunda] = mockRpc.mock.calls;
+      expect(segunda[1].p_client_id).not.toBe(primera[1].p_client_id);
+    });
+
+    it('no manda series con repeticiones no enteras', async () => {
+      const store = useWorkoutStore.getState();
+      store.setActiveExercise('ex-1');
+      store.updateSet(0, { reps: '10', weight: '100' });
+      store.addSet();
+      // Dato viejo persistido: la RPC lo descarta en silencio (su filtro es
+      // `^\d+$`), así que se filtra aquí para no guardar una serie de menos.
+      store.updateSet(1, { reps: '10.5', weight: '100' });
+
+      const result = await useWorkoutStore.getState().saveWorkout('user-1');
+
+      expect(result.success).toBe(true);
+      const pSets = mockRpc.mock.calls[0][1].p_sets as { set_num: number }[];
+      expect(pSets).toHaveLength(1);
+    });
+  });
+
+  describe('repsDeSerie', () => {
+    it('solo acepta enteros positivos, como el filtro de la RPC', () => {
+      expect(repsDeSerie({ reps: '10' })).toBe(10);
+      expect(repsDeSerie({ reps: ' 8 ' })).toBe(8);
+      expect(repsDeSerie({ reps: '10.5' })).toBeNull();
+      expect(repsDeSerie({ reps: '1e3' })).toBeNull();
+      expect(repsDeSerie({ reps: '0' })).toBeNull();
+      expect(repsDeSerie({ reps: '-5' })).toBeNull();
+      expect(repsDeSerie({ reps: '' })).toBeNull();
+      expect(repsDeSerie({})).toBeNull();
     });
   });
 });

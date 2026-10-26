@@ -12,6 +12,7 @@
  */
 
 import { suggestProgression } from './progression';
+import { nextRepTarget } from './perSide';
 
 /** Sesiones de carga entre descargas. Con el valor por defecto: 3 de carga y
  * la 4ª de descarga, el ciclo mensual típico. */
@@ -37,6 +38,11 @@ export interface ProgressionConfig extends DeloadConfig {
   incrementKg?: number;
   /** En peso corporal no se sube carga: solo repeticiones. */
   bodyweight?: boolean;
+  /**
+   * El plan se escribe por lado, así que el objetivo de reps sube de dos en dos
+   * (16 → 18). Ver `shared/lib/perSide.ts`.
+   */
+  perSide?: boolean;
 }
 
 export interface ProgressionState {
@@ -180,7 +186,7 @@ export function createInitialProgression(
 export function advanceProgression(
   state: ProgressionState,
   outcome: ProgressionSessionOutcome,
-  config: DeloadConfig = {},
+  config: ProgressionConfig = {},
 ): ProgressionState {
   const cycleLength = cycleLengthOf(config);
   const now = new Date().toISOString();
@@ -210,7 +216,10 @@ export function advanceProgression(
 
   if (state.bodyweight) {
     nextWeight = state.currentWeight ?? outcome.weight;
-    nextReps = (state.currentReps ?? outcome.reps) + 1;
+    // El paso de reps es el de `perSide`: en un ejercicio por lado, sumar 1
+    // pondría una repetición en una pierna y no en la otra (16 → 17 son 8 y 9).
+    // Antes esto tenía su propio `+ 1` y no coincidía con el motor.
+    nextReps = nextRepTarget(state.currentReps ?? outcome.reps, config);
   } else {
     const prog = suggestProgression([{ weight: outcome.weight, reps: outcome.reps }], {
       repMin: state.repMin,

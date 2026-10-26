@@ -13,6 +13,7 @@ import { useWorkoutStore } from '@features/workout/stores/workoutStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
 import { useWeight } from '@shared/hooks/useWeight';
 import { formatWeightInput } from '@shared/lib/weight';
+import { toLocalDateKey } from '@shared/lib/dateKeys';
 import { calcular1RM } from '@shared/lib/brzycki';
 import { loadStepFromSettings } from '@shared/hooks/useLoadStep';
 import { useRoutineStore } from '@features/routine/stores/routineStore';
@@ -328,7 +329,9 @@ export function WorkoutPage() {
     staleTime: 1000 * 60 * 30,
   });
   const currentBodyWeight = useMemo(
-    () => bodyWeightAtDate(bodyMeasurements, new Date().toISOString().split('T')[0]),
+    // Fecha local: con la de UTC, entrenar de madrugada usaba el peso de ayer
+    // aunque el de hoy ya estuviera apuntado.
+    () => bodyWeightAtDate(bodyMeasurements, toLocalDateKey(new Date())),
     [bodyMeasurements],
   );
   const isBodyweightExercise = isBodyweightLoad(selectedExercise?.load_type);

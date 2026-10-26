@@ -19,6 +19,8 @@ import {
   requestAggregatorPermission,
 } from '../api/healthAggregator';
 import { Dumbbell, HeartPulse } from '@shared/components/icons';
+import { useHealthConsentGate } from '@features/privacy/hooks/useHealthConsentGate';
+import { HealthConsentDialog } from '@features/privacy/components/HealthConsentDialog';
 
 export function WearablesPage() {
   const { t } = useTranslation();
@@ -36,6 +38,11 @@ export function WearablesPage() {
   const strength = useWearableStore((s) => s.strength);
   const [aggregatorAvailable, setAggregatorAvailable] = useState(false);
   const [aggregatorGranted, setAggregatorGranted] = useState(false);
+  // Permiso del sistema y consentimiento del RGPD son cosas distintas: el
+  // primero lo da Health Connect/Salud para leer, el segundo lo da el usuario
+  // para que GymLog trate esos datos. Se pide el segundo antes de abrir el
+  // diálogo del primero, no después.
+  const healthConsent = useHealthConsentGate(user?.id);
 
   useEffect(() => {
     if (!user) navigate('/login');
@@ -50,14 +57,18 @@ export function WearablesPage() {
   const aggregatorTarget =
     Capacitor.getPlatform() === 'ios' ? t('wearables.health_aggregator') : 'Health Connect';
 
-  const handleGrantAggregator = async () => {
-    const granted = await requestAggregatorPermission();
-    setAggregatorGranted(granted);
-    if (granted) {
-      await runSync();
-    } else {
-      toast.error(t('wearables.permission_needed'));
-    }
+  const handleGrantAggregator = () => {
+    healthConsent.requireConsent(() => {
+      void (async () => {
+        const granted = await requestAggregatorPermission();
+        setAggregatorGranted(granted);
+        if (granted) {
+          await runSync();
+        } else {
+          toast.error(t('wearables.permission_needed'));
+        }
+      })();
+    });
   };
 
   return (
@@ -83,7 +94,7 @@ export function WearablesPage() {
             icon={<HeartPulse size={22} />}
             hint={t('wearables.amazfit_hint', { target: aggregatorTarget })}
             primaryLabel={t('wearables.grant_permission')}
-            onPrimary={() => void handleGrantAggregator()}
+            onPrimary={handleGrantAggregator}
             secondaryLabel={t('wearables.sync_now')}
             onSecondary={() => void runSync()}
             busy={isSyncing}
@@ -137,6 +148,12 @@ export function WearablesPage() {
           </div>
         </div>
       </div>
+
+      <HealthConsentDialog
+        open={healthConsent.isDialogOpen}
+        onAccept={healthConsent.accept}
+        onCancel={healthConsent.cancel}
+      />
     </Layout>
   );
 }

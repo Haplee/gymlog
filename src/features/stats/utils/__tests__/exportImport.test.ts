@@ -8,6 +8,8 @@ import {
   buildExportJson,
   makeDedupKey,
   buildExistingDedupKeys,
+  collectCsvDateRange,
+  collectDateRange,
   estimateDedupSkips,
 } from '../exportImport';
 
@@ -156,6 +158,61 @@ describe('buildExistingDedupKeys', () => {
       { started_at: '2026-06-20T10:00:00Z', sets: [{ set_num: 1, exercise: null }] },
     ]);
     expect(keys.size).toBe(0);
+  });
+});
+
+describe('collectCsvDateRange', () => {
+  it('devuelve la fecha mínima y la máxima del fichero', () => {
+    expect(
+      collectCsvDateRange([
+        'Fecha,Ejercicio,Repeticiones,Peso',
+        '2024-03-09,Sentadilla,5,100',
+        '2024-01-05,Press,8,60',
+      ]),
+    ).toEqual({ from: '2024-01-05', to: '2024-03-09' });
+  });
+
+  it('entiende los formatos que acepta el importador', () => {
+    expect(collectCsvDateRange(['05/01/2024,Sentadilla,5,100'])).toEqual({
+      from: '2024-01-05',
+      to: '2024-01-05',
+    });
+  });
+
+  it('sin fechas legibles devuelve null (se sigue con la ventana en memoria)', () => {
+    expect(collectCsvDateRange(['Pecho', 'Sentadilla,100,5'])).toBeNull();
+    expect(collectCsvDateRange([])).toBeNull();
+  });
+
+  it('ignora líneas anormalmente largas, como el importador', () => {
+    // La fecha de la línea gigante no debe ensanchar el rango: el importador
+    // también la descarta, así que no hay nada que deduplicar ahí.
+    const gigante = `2099-12-31,Sentadilla,5,${'x'.repeat(1100)}`;
+    expect(collectCsvDateRange(['2024-01-01,Sentadilla,5,100', gigante])).toEqual({
+      from: '2024-01-01',
+      to: '2024-01-01',
+    });
+  });
+});
+
+describe('collectDateRange', () => {
+  it('devuelve mínimo y máximo de fechas ya normalizadas', () => {
+    expect(collectDateRange(['2024-03-09', '2024-01-05', '2024-02-01'])).toEqual({
+      from: '2024-01-05',
+      to: '2024-03-09',
+    });
+  });
+
+  it('ignora huecos y valores vacíos', () => {
+    expect(collectDateRange([null, undefined, '', '2024-01-05'])).toEqual({
+      from: '2024-01-05',
+      to: '2024-01-05',
+    });
+  });
+
+  it('sin fechas devuelve null', () => {
+    expect(collectDateRange([])).toBeNull();
+    expect(collectDateRange([null, ''])).toBeNull();
   });
 });
 

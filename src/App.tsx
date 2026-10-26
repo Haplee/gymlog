@@ -28,6 +28,7 @@ import { initPredictiveBack, syncBackState } from '@shared/lib/backHandler';
 import { devLog, devError } from '@shared/lib/devtools';
 import { ErrorBoundary } from '@shared/components/ErrorBoundary';
 import { track } from '@vercel/analytics';
+import { COACH_UI_ENABLED } from '@features/coach/lib/featureFlag';
 
 const loadMotionFeatures = () => import('@shared/lib/motionFeatures').then((mod) => mod.default);
 
@@ -55,6 +56,17 @@ const CoachSettingsSection = lazy(() =>
   import('@features/coach/components/CoachSettingsSection').then((m) => ({
     default: m.CoachSettingsSection,
   })),
+);
+// Igual que el entrenador: `auth` no importa `privacy`; la capa de aplicación
+// inyecta la sección. El bloque de privacidad necesita `useAuthStore`, así que
+// meterlo dentro de `auth` habría sido una dependencia circular más.
+const PrivacySection = lazy(() =>
+  import('@features/privacy/components/PrivacySection').then((m) => ({
+    default: m.PrivacySection,
+  })),
+);
+const LegalPage = lazy(() =>
+  import('@features/privacy/pages/LegalPage').then((m) => ({ default: m.LegalPage })),
 );
 const RoutinePage = lazy(() =>
   import('@features/routine/pages/RoutinePage').then((m) => ({ default: m.RoutinePage })),
@@ -170,7 +182,10 @@ function AnimatedRoutes() {
         path="/settings"
         element={
           <ProtectedRoute>
-            <SettingsPage coachSection={<CoachSettingsSection />} />
+            <SettingsPage
+              coachSection={COACH_UI_ENABLED ? <CoachSettingsSection /> : undefined}
+              privacySection={<PrivacySection />}
+            />
           </ProtectedRoute>
         }
       />
@@ -225,17 +240,25 @@ function AnimatedRoutes() {
       <Route
         path="/coach"
         element={
-          <ProtectedRoute>
-            <CoachPage />
-          </ProtectedRoute>
+          COACH_UI_ENABLED ? (
+            <ProtectedRoute>
+              <CoachPage />
+            </ProtectedRoute>
+          ) : (
+            <Navigate to="/" replace />
+          )
         }
       />
       <Route
         path="/coach/memory"
         element={
-          <ProtectedRoute>
-            <CoachMemoryPage />
-          </ProtectedRoute>
+          COACH_UI_ENABLED ? (
+            <ProtectedRoute>
+              <CoachMemoryPage />
+            </ProtectedRoute>
+          ) : (
+            <Navigate to="/" replace />
+          )
         }
       />
       <Route
@@ -246,6 +269,7 @@ function AnimatedRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route path="/legal/:doc" element={<LegalPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

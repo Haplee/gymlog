@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { App as CapApp } from '@capacitor/app';
 import { checkStreakAtRisk } from '@shared/lib/streakChecker';
+import { toLocalDateKey } from '@shared/lib/dateKeys';
 import { checkWeeklySummary } from '@shared/lib/weeklySummary';
 import {
   isNative,
@@ -102,7 +103,9 @@ export function useBackgroundNotifications(
         // Check de racha para web (que no tiene alarmas nativas)
         if (!isNative()) {
           const now = new Date();
-          const dateStr = now.toISOString().split('T')[0];
+          // Clave del día local: con la fecha UTC el «una vez al día» cambiaba a
+          // las 2:00 y el aviso podía salir dos veces en la misma madrugada.
+          const dateStr = toLocalDateKey(now);
           const streakKey = `streak_notif_${dateStr}`;
 
           // La hora la elige el usuario; antes estaba a fuego a las 20:00 y en

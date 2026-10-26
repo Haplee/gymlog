@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
 import { devError } from '@shared/lib/devtools';
+import { hasHealthConsent } from '@features/privacy/consent/healthConsent';
 import { isAggregatorAvailable, syncAggregator } from '../api/healthAggregator';
 import { useWearableStore } from '../stores/wearableStore';
 import { useWearableConnections } from './useWearableConnections';
@@ -57,6 +58,11 @@ export function useWearableSync() {
   const runSync = useCallback(
     async (opts: { silent?: boolean } = {}) => {
       if (!userId || useWearableStore.getState().isSyncing) return;
+      // El permiso del sistema no caduca, pero el consentimiento del RGPD puede
+      // faltar (otro dispositivo, almacenamiento borrado, versión retirada). Sin
+      // él no se lee ni se vuelca nada, ni siquiera en la sincronización
+      // silenciosa del arranque.
+      if (!hasHealthConsent(userId)) return;
       const aggregator = await isAggregatorAvailable();
       if (!aggregator) return;
 

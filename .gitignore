@@ -103,3 +103,6 @@ repomix-output.xml
 
 # backups de datos de Supabase: pueden contener datos de usuario
 supabase/backups/
+
+# Exportaciones locales con datos personales (GymLog y Google Health)
+exports/gym-log-full-export/

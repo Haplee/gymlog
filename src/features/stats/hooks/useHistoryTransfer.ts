@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -14,8 +14,14 @@ import {
 import { useCardioStore, CARDIO_LABELS } from '@features/cardio/stores/cardioStore';
 import { supabase } from '@shared/lib/supabase';
 import { devError } from '@shared/lib/devtools';
-import { fetchExercises, insertMissingWeights } from '@shared/api/queries';
+import {
+  fetchExercises,
+  fetchExistingSetKeysBetween,
+  insertMissingWeights,
+} from '@shared/api/queries';
 import { onlyRepSets } from '@shared/lib/setShape';
+import { toLocalDateKey } from '@shared/lib/dateKeys';
+import { isIdempotencyConflict, retryOnNetwork } from '@shared/lib/idempotency';
 import { DEFAULT_MUSCLE_GROUP } from '@shared/constants/muscleGroups';
 import type { WorkoutWithSets } from '@shared/lib/types';
 import {
@@ -25,10 +31,13 @@ import {
   isHeaderLine,
   buildExportJson,
   buildExistingDedupKeys,
+  collectCsvDateRange,
+  collectDateRange,
   estimateDedupSkips,
   makeDedupKey,
   type DedupCandidate,
 } from '../utils/exportImport';
+import { withImportLock } from '../utils/importLock';
 import {
   exportAllToXlsx,
   arrayBufferToBase64,
@@ -50,6 +59,7 @@ import {
   type PesoImportado,
 } from '../utils/importAppleHealth';
 import { applyExcelImport } from '../utils/applyExcelImport';
+import { deriveImportKey, newImportId } from '../utils/importIdentity';
 
 /**
  * Exportacion e importacion del historial (XLSX, JSON y CSV).
@@ -121,6 +131,30 @@ function previewJsonImport(importedWorkouts: unknown, existingKeys: Set<string>)
   };
 }
 
+/**
+ * Claves ya guardadas en el tramo de fechas de un fichero.
+ *
+ * Es lo que hace el dedupe independiente de la ventana de `fetchWorkouts`
+ * (1000 entrenos): un CSV/Excel/JSON más antiguo que esa ventana no vería nada
+ * y una reimportación duplicaría series. Si la consulta falla se degrada a la
+ * ventana en memoria —peor cobertura, pero abortar perdería la importación— y
+ * el fallo queda en consola, no se convierte en un éxito silencioso.
+ */
+async function loadRangeKeys(
+  userId: string,
+  range: { from: string; to: string } | null,
+): Promise<Set<string>> {
+  const keys = new Set<string>();
+  if (!range) return keys;
+  try {
+    const rows = await fetchExistingSetKeysBetween(userId, range.from, range.to);
+    for (const row of rows) keys.add(makeDedupKey(row.date, row.exercise, row.setNum));
+  } catch (err) {
+    devError('No se pudieron leer las claves existentes del rango', err);
+  }
+  return keys;
+}
+
 export function useHistoryTransfer({
   workouts,
   refetchSets,
@@ -141,6 +175,28 @@ export function useHistoryTransfer({
 
   const [pendingImport, setPendingImport] = useState<PendingImport | null>(null);
   const existingKeys = useMemo(() => buildExistingDedupKeys(workouts), [workouts]);
+  /**
+   * Claves que este mismo hook ya ha insertado. `existingKeys` sale de las props
+   * y `refetchWorkouts` es asíncrono: una segunda importación seguida decide con
+   * un `workouts` viejo. La base se vuelve a consultar por rango al empezar,
+   * pero este set cubre también el caso de que esa consulta no traiga nada.
+   */
+  const importedKeysRef = useRef<Set<string>>(new Set());
+
+  /**
+   * Semilla de dedupe de una importación: la ventana cargada, lo que ya insertó
+   * este hook y las claves reales del rango del fichero. Se construye dentro del
+   * turno de importación para que la segunda operación vea lo de la primera.
+   */
+  const buildDedupeSeed = async (
+    userId: string,
+    range: { from: string; to: string } | null,
+  ): Promise<Set<string>> => {
+    const keys = new Set(existingKeys);
+    for (const key of importedKeysRef.current) keys.add(key);
+    for (const key of await loadRangeKeys(userId, range)) keys.add(key);
+    return keys;
+  };
 
   const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
@@ -311,87 +367,150 @@ export function useHistoryTransfer({
     e.target.value = '';
   };
 
-  const runJsonImport = async (importedWorkouts: unknown[]) => {
+  const runJsonImport = async (importedWorkouts: unknown[], importId: string) => {
     if (!user) return;
+    const userId = user.id;
     try {
       toast.info(t('history.loading_data'));
-      const exerciseList = await fetchExercises(user.id);
-      const resolveExerciseId = async (name: string): Promise<string | null> => {
-        const clean = (name || '').trim();
-        if (clean.length < 2) return null;
-        const existing = exerciseList.find((ex) => ex?.name?.toLowerCase() === clean.toLowerCase());
-        if (existing?.id) return existing.id;
-        const { data: newEx, error } = await supabase
-          .from('exercises')
-          .insert({ name: clean, user_id: user.id, muscle_group: DEFAULT_MUSCLE_GROUP })
-          .select('id, name')
-          .single();
-        if (error || !newEx) return null;
-        exerciseList.push({
-          id: newEx.id,
-          name: clean,
-          muscle_group: DEFAULT_MUSCLE_GROUP,
-          muscle_detail: null,
-          equipment: 'Gimnasio',
-          movement: null,
-          is_bilateral: true,
-          is_bodyweight: false,
-          load_type: 'external',
-          is_compound: false,
-          is_public: false,
-          description: null,
-          media_url: null,
-          user_id: user.id,
-          created_at: '',
-        });
-        return newEx.id;
-      };
 
-      // Dedupe por (fecha, ejercicio, set_num): lo ya existente se salta y se
-      // acumula en el mismo set para no re-importar duplicados intra-archivo.
-      const dedupeKeys = new Set(existingKeys);
-      let workoutsImported = 0;
-      let skipped = 0;
-
-      // Se valida una sola vez, aquí: a partir de este punto las series ya son
-      // números dentro de rango y no hace falta volver a desconfiar de ellas.
+      // Se valida una sola vez, fuera del turno. El rango de fechas sale de los
+      // mismos `started_at` que luego usa el dedupe, así que la consulta cubre
+      // exactamente las fechas que el importador va a escribir.
       const { workouts: parsedWorkouts } = parseImportedWorkouts(importedWorkouts);
 
-      for (const { startedAt, finishedAt, date, byExercise } of parsedWorkouts) {
-        let savedAny = false;
-        for (const [exName, exSets] of byExercise) {
-          const exerciseId = await resolveExerciseId(exName);
-          if (!exerciseId) continue;
-          const setsPayload = exSets
-            .map((s, i) => ({
-              set_num: s.set_num ?? i + 1,
-              reps: s.reps,
-              weight: s.weight,
-              is_warmup: s.is_warmup,
-              notes: s.notes,
-              rpe: s.rpe,
-            }))
-            .filter((s) => {
-              const key = makeDedupKey(date, exName, s.set_num);
-              if (dedupeKeys.has(key)) {
-                skipped++;
-                return false;
-              }
-              dedupeKeys.add(key);
-              return true;
-            });
-          if (!setsPayload.length) continue;
-          const { error } = await supabase.rpc('save_workout_with_sets', {
-            p_user_id: user.id,
-            p_exercise_id: exerciseId,
-            p_started_at: startedAt,
-            p_finished_at: finishedAt,
-            p_sets: setsPayload,
+      const { workoutsImported, skipped, failed } = await withImportLock(async () => {
+        const exerciseList = await fetchExercises(userId);
+        const resolveExerciseId = async (name: string): Promise<string | null> => {
+          const clean = (name || '').trim();
+          if (clean.length < 2) return null;
+          const existing = exerciseList.find(
+            (ex) => ex?.name?.toLowerCase() === clean.toLowerCase(),
+          );
+          if (existing?.id) return existing.id;
+          const { data: newEx, error } = await supabase
+            .from('exercises')
+            .insert({ name: clean, user_id: userId, muscle_group: DEFAULT_MUSCLE_GROUP })
+            .select('id, name')
+            .single();
+          if (error || !newEx) return null;
+          exerciseList.push({
+            id: newEx.id,
+            name: clean,
+            muscle_group: DEFAULT_MUSCLE_GROUP,
+            muscle_detail: null,
+            equipment: 'Gimnasio',
+            movement: null,
+            is_bilateral: true,
+            is_bodyweight: false,
+            load_type: 'external',
+            is_compound: false,
+            is_public: false,
+            description: null,
+            media_url: null,
+            user_id: userId,
+            created_at: '',
           });
-          if (!error) savedAny = true;
+          return newEx.id;
+        };
+
+        // El JSON es incremental (varios ejercicios por día), no una
+        // restauración: se deduplica igual que CSV y Excel, pero contra el rango
+        // real del fichero para no depender de la ventana de 1000 entrenos. Lo
+        // ya existente se salta y se acumula en el mismo set para no reimportar
+        // duplicados intra-archivo.
+        const dedupeKeys = await buildDedupeSeed(
+          userId,
+          collectDateRange(parsedWorkouts.map((w) => w.date)),
+        );
+        let skipped = 0;
+        let failed = 0;
+        const pendingKeys: string[] = [];
+        const workoutIndexes = new Set<number>();
+        const payload: {
+          started_at: string;
+          finished_at: string;
+          exercise_id: string;
+          sets: {
+            set_num: number;
+            reps: number;
+            weight: number;
+            is_warmup: boolean;
+            notes: string;
+            rpe: string;
+          }[];
+        }[] = [];
+
+        // `for...of` y no `forEach`: el cuerpo resuelve o crea ejercicios y eso
+        // es asíncrono. Dentro de un callback de `forEach` el `await` no
+        // compila y el orden de las series dejaría de ser el del fichero.
+        for (const [workoutIndex, workout] of parsedWorkouts.entries()) {
+          for (const [exName, exSets] of workout.byExercise) {
+            // Primero se descartan las series que ya existen; solo después se
+            // resuelve o crea el ejercicio. Si todas eran duplicadas, el nombre
+            // no debe aparecer en el catálogo ni abrirse un entreno.
+            const setsPayload = exSets
+              .map((s, i) => ({
+                set_num: s.set_num ?? i + 1,
+                reps: s.reps,
+                weight: s.weight,
+                is_warmup: s.is_warmup,
+                notes: s.notes,
+                rpe: s.rpe,
+              }))
+              .filter((s) => {
+                const key = makeDedupKey(workout.date, exName, s.set_num);
+                if (dedupeKeys.has(key)) {
+                  skipped++;
+                  return false;
+                }
+                dedupeKeys.add(key);
+                return true;
+              });
+            if (!setsPayload.length) continue;
+
+            const exerciseId = await resolveExerciseId(exName);
+            if (!exerciseId) {
+              failed += setsPayload.length;
+              continue;
+            }
+
+            payload.push({
+              started_at: workout.startedAt,
+              finished_at: workout.finishedAt,
+              exercise_id: exerciseId,
+              sets: setsPayload,
+            });
+            workoutIndexes.add(workoutIndex);
+            for (const s of setsPayload) {
+              pendingKeys.push(makeDedupKey(workout.date, exName, s.set_num));
+            }
+          }
         }
-        if (savedAny) workoutsImported++;
-      }
+
+        if (payload.length === 0) {
+          return { workoutsImported: 0, skipped, failed };
+        }
+
+        // Una sola RPC para todo el fichero: o entra el lote completo o no entra
+        // nada. La clave de cada entreno la deriva el servidor del `importId`
+        // (creado antes de la primera escritura y reutilizado por los reintentos
+        // de red), así que una respuesta perdida no duplica y una importación
+        // manual nueva no se confunde con esta.
+        await retryOnNetwork(async () => {
+          const { error } = await supabase.rpc('import_history_workouts', {
+            p_user_id: userId,
+            p_import_id: importId,
+            p_workouts: payload,
+          });
+          if (error) throw error;
+        });
+
+        // Solo lo que llegó a guardarse: si la RPC falla no se marca nada y un
+        // reintento debe volver a intentar esas series.
+        for (const key of pendingKeys) importedKeysRef.current.add(key);
+
+        return { workoutsImported: workoutIndexes.size, skipped, failed };
+      });
 
       refetchSets();
       refetchWorkouts();
@@ -399,22 +518,38 @@ export function useHistoryTransfer({
       queryClient.invalidateQueries({ queryKey: ['personalRecords'], refetchType: 'all' });
       let message = t('history.import_success', { count: workoutsImported });
       if (skipped > 0) message += ` ${t('history.import_duplicates_skipped', { count: skipped })}`;
+      if (failed > 0) message += ` ${t('history.import_failed', { count: failed })}`;
       if (workoutsImported > 0) toast.success(message);
-      else toast.error(t('history.import_none'));
+      else toast.error(message);
     } catch (err) {
       devError('Error import JSON', err);
-      toast.error(t('history.import_error'));
+      // Un conflicto de idempotencia es definitivo: repetir la misma clave con
+      // otra carga no lo arregla y no debe parecer un fallo de red.
+      toast.error(
+        isIdempotencyConflict(err) ? t('history.import_conflict') : t('history.import_error'),
+      );
     }
   };
 
-  const runExcelImport = async (parsed: ParsedImport) => {
+  const runExcelImport = async (parsed: ParsedImport, importId: string) => {
     if (!user) return;
+    const userId = user.id;
     try {
       toast.info(t('history.loading_data'));
-      const result = await applyExcelImport(user.id, parsed, existingKeys);
+      const result = await withImportLock(async () => {
+        const seed = await buildDedupeSeed(
+          userId,
+          collectDateRange(parsed.strength.map((s) => s.date)),
+        );
+        const applied = await applyExcelImport(userId, parsed, seed, importId);
+        // El set local cubre la siguiente importación aunque el refetch aún no
+        // haya traído las series recién escritas.
+        for (const key of applied.importedKeys) importedKeysRef.current.add(key);
+        return applied;
+      });
       for (const routine of parsed.routines) addRoutine(routine);
-      if (parsed.routines.length > 0) void saveRoutinesToDb(user.id);
-      void syncCardio(user.id);
+      if (parsed.routines.length > 0) void saveRoutinesToDb(userId);
+      void syncCardio(userId);
       refetchSets();
       refetchWorkouts();
       queryClient.invalidateQueries({ queryKey: ['workoutsAndSets'], refetchType: 'all' });
@@ -426,6 +561,7 @@ export function useHistoryTransfer({
       });
       if (result.skipped > 0)
         message += ` ${t('history.import_duplicates_skipped', { count: result.skipped })}`;
+      if (result.failed > 0) message += ` ${t('history.import_failed', { count: result.failed })}`;
       toast.success(message);
     } catch (err) {
       devError('Error import xlsx', err);
@@ -497,9 +633,13 @@ export function useHistoryTransfer({
     const pending = pendingImport;
     setPendingImport(null);
     if (!pending || !user) return;
-    if (pending.kind === 'json') await runJsonImport(pending.workouts);
+    // Identidad de la operación manual: se crea una vez, antes de la primera
+    // escritura. Los reintentos de red del mismo envío la reutilizan; confirmar
+    // otra importación genera otra, aunque el fichero sea el mismo.
+    const importId = newImportId();
+    if (pending.kind === 'json') await runJsonImport(pending.workouts, importId);
     else if (pending.kind === 'health') await runHealthImport(pending.weights);
-    else await runExcelImport(pending.parsed);
+    else await runExcelImport(pending.parsed, importId);
   };
 
   const cancelImport = () => setPendingImport(null);
@@ -634,144 +774,199 @@ export function useHistoryTransfer({
           }
         };
 
-        let imported = 0;
-        const errors: string[] = [];
-        const dateWorkoutMap: Record<string, string> = {};
-        const exerciseSetCounts: Record<string, number> = {};
-        const dedupeCsvKeys = new Set(existingKeys);
-        let skippedCsv = 0;
-        let currentDate = new Date().toISOString().split('T')[0];
+        // El turno se toma antes de leer las claves existentes y se suelta al
+        // insertar la última serie: dos pestañas importando a la vez no pueden
+        // decidir con la misma foto y escribir lo mismo.
+        //
+        // La identidad de esta importación manual se crea antes de la primera
+        // escritura. Las claves de cada día se derivan de ella: un reintento de
+        // red conserva la clave y una importación nueva usa otra identidad.
+        const importId = newImportId();
+        const runImport = async () => {
+          let imported = 0;
+          const errors: string[] = [];
+          const exerciseSetCounts: Record<string, number> = {};
 
-        for (let i = 0; i < lines.length; i++) {
-          const lineNum = i + 1;
-          const line = lines[i];
+          // Un día = un entreno = una transacción de servidor. Antes el entreno
+          // se creaba con un INSERT y cada serie con otro: si la red se cortaba
+          // a mitad, el día quedaba incompleto y el reintento lo duplicaba.
+          const setsByDate = new Map<
+            string,
+            { exercise_id: string; set_num: number; reps: number; weight: number }[]
+          >();
+          const keysByDate = new Map<string, string[]>();
 
-          if (line.length > 1000) continue;
+          // Claves ya existentes: la ventana de historial cargada, lo importado
+          // por este hook y el tramo de fechas del propio fichero. Lo último es lo
+          // que hace el dedupe independiente de `fetchWorkouts` (1000 entrenos):
+          // un CSV más antiguo que esa ventana no veía nada y duplicaba series.
+          const dedupeCsvKeys = await buildDedupeSeed(user.id, collectCsvDateRange(lines));
 
-          const cols = tokenizeCsvLine(line);
-          while (cols.length < 5) cols.push('');
+          let skippedCsv = 0;
+          let currentDate = toLocalDateKey(new Date());
 
-          const firstCol = cols[0].replace(/^"|"$/g, '').trim();
-          const secondCol = cols[1]?.replace(/^"|"$/g, '').trim() || '';
-          const thirdCol = cols[2]?.replace(/^"|"$/g, '').trim() || '';
-          const fourthCol = cols[3]?.replace(/^"|"$/g, '').trim() || '';
+          for (let i = 0; i < lines.length; i++) {
+            const lineNum = i + 1;
+            const line = lines[i];
 
-          if (firstCol.toLowerCase() === 'fecha') {
-            continue;
-          }
+            if (line.length > 1000) continue;
 
-          const dateFromSecondOrThird = parseDate(secondCol) || parseDate(thirdCol);
-          if (isHeaderLine(firstCol) && dateFromSecondOrThird) {
-            currentDate = dateFromSecondOrThird;
-            continue;
-          }
+            const cols = tokenizeCsvLine(line);
+            while (cols.length < 5) cols.push('');
 
-          if (!firstCol || firstCol.length < 2) continue;
+            const firstCol = cols[0].replace(/^"|"$/g, '').trim();
+            const secondCol = cols[1]?.replace(/^"|"$/g, '').trim() || '';
+            const thirdCol = cols[2]?.replace(/^"|"$/g, '').trim() || '';
+            const fourthCol = cols[3]?.replace(/^"|"$/g, '').trim() || '';
 
-          const skipPhrases = [
-            'no hay registros',
-            'sin registros',
-            'sin datos',
-            'descanso',
-            'libre',
-          ];
-          if (
-            skipPhrases.some(
-              (p) => secondCol.toLowerCase().includes(p) || firstCol.toLowerCase().includes(p),
-            )
-          )
-            continue;
-
-          const dateFromFirstCol = parseDate(firstCol);
-
-          let parsedDate = currentDate;
-          let exerciseName = '';
-          let reps = 10;
-          let weight = 0;
-          const setNum = 1;
-          const isNewFormat = false;
-
-          if (dateFromFirstCol && cols.length >= 4) {
-            parsedDate = dateFromFirstCol;
-            currentDate = parsedDate;
-            exerciseName = secondCol;
-            reps = parseNumber(thirdCol) || 10;
-            weight = parseNumber(fourthCol) || 0;
-          } else {
-            exerciseName = firstCol;
-            weight = parseNumber(secondCol) || parseNumber(thirdCol) || 0;
-            reps = parseNumber(thirdCol) || parseNumber(fourthCol) || 10;
-          }
-
-          if (weight === null || weight === 0) continue;
-
-          if (!dateWorkoutMap[parsedDate]) {
-            const { data: workoutData, error: woError } = await supabase
-              .from('workouts')
-              .insert({ user_id: user.id, started_at: parsedDate })
-              .select('id')
-              .single();
-
-            if (woError || !workoutData) {
-              errors.push(`Fila ${lineNum}: Error creando entrenamiento`);
+            if (firstCol.toLowerCase() === 'fecha') {
               continue;
             }
 
-            dateWorkoutMap[parsedDate] = workoutData.id;
+            const dateFromSecondOrThird = parseDate(secondCol) || parseDate(thirdCol);
+            if (isHeaderLine(firstCol) && dateFromSecondOrThird) {
+              currentDate = dateFromSecondOrThird;
+              continue;
+            }
+
+            if (!firstCol || firstCol.length < 2) continue;
+
+            const skipPhrases = [
+              'no hay registros',
+              'sin registros',
+              'sin datos',
+              'descanso',
+              'libre',
+            ];
+            if (
+              skipPhrases.some(
+                (p) => secondCol.toLowerCase().includes(p) || firstCol.toLowerCase().includes(p),
+              )
+            )
+              continue;
+
+            const dateFromFirstCol = parseDate(firstCol);
+
+            let parsedDate = currentDate;
+            let exerciseName = '';
+            let reps = 10;
+            let weight = 0;
+            const setNum = 1;
+            const isNewFormat = false;
+
+            if (dateFromFirstCol && cols.length >= 4) {
+              parsedDate = dateFromFirstCol;
+              currentDate = parsedDate;
+              exerciseName = secondCol;
+              reps = parseNumber(thirdCol) || 10;
+              weight = parseNumber(fourthCol) || 0;
+            } else {
+              exerciseName = firstCol;
+              weight = parseNumber(secondCol) || parseNumber(thirdCol) || 0;
+              reps = parseNumber(thirdCol) || parseNumber(fourthCol) || 10;
+            }
+
+            if (weight === null || weight === 0) continue;
+
+            // El contador y el dedupe van ANTES de resolver el ejercicio: una fila
+            // que se va a descartar por duplicada no debe crear nada en el
+            // catálogo. Con el orden inverso, reimportar un CSV dejaba un
+            // ejercicio nuevo y sin series por cada nombre descartado.
+            let finalSetNum = setNum;
+            if (!isNewFormat) {
+              // Misma clave que `estimateDedupSkips`: por nombre y fecha, para
+              // poder decidir sin haber resuelto aún el id del catálogo.
+              const counterKey = `${parsedDate}|${exerciseName.trim().toLowerCase()}`;
+              exerciseSetCounts[counterKey] = (exerciseSetCounts[counterKey] || 0) + 1;
+              finalSetNum = exerciseSetCounts[counterKey];
+            }
+
+            const dedupeKey = makeDedupKey(parsedDate, exerciseName, finalSetNum);
+            if (dedupeCsvKeys.has(dedupeKey)) {
+              skippedCsv++;
+              continue;
+            }
+            dedupeCsvKeys.add(dedupeKey);
+
+            const exerciseId = await getExerciseId(exerciseName);
+
+            if (!exerciseId) {
+              errors.push(`Fila ${lineNum}: "${exerciseName}" no se pudo crear`);
+              continue;
+            }
+
+            // El entreno del día se crea al final, con todas sus series ya
+            // validadas y resueltas. Antes se creaba al ver la primera fila:
+            // reimportar el mismo CSV dejaba un entreno vacío por fecha, porque
+            // todas las series se saltaban después.
+            const daySets = setsByDate.get(parsedDate) ?? [];
+            daySets.push({
+              exercise_id: exerciseId,
+              set_num: finalSetNum,
+              reps,
+              weight,
+            });
+            setsByDate.set(parsedDate, daySets);
+
+            const dayKeys = keysByDate.get(parsedDate) ?? [];
+            dayKeys.push(dedupeKey);
+            keysByDate.set(parsedDate, dayKeys);
           }
 
-          const exerciseId = await getExerciseId(exerciseName);
-
-          if (!exerciseId) {
-            errors.push(`Fila ${lineNum}: "${exerciseName}" no se pudo crear`);
-            continue;
+          // Una transacción por fecha. La clave se deriva del id de la
+          // importación y no cambia entre reintentos de red: si el lote llegó a
+          // entrar, el servidor devuelve el mismo entreno en vez de duplicarlo.
+          for (const [date, daySets] of setsByDate) {
+            const clientId = deriveImportKey(importId, `workout:${date}`);
+            try {
+              await retryOnNetwork(async () => {
+                const { error } = await supabase.rpc('save_workout_with_sets', {
+                  p_user_id: user.id,
+                  p_exercise_id: null,
+                  p_started_at: date,
+                  p_finished_at: null,
+                  p_sets: daySets,
+                  p_notes: null,
+                  p_rating: null,
+                  p_client_id: clientId,
+                });
+                if (error) throw error;
+              });
+              imported += daySets.length;
+              // Solo cuenta como importada si el lote se guardó: si la RPC
+              // falla, un reintento debe volver a intentar esas series.
+              for (const key of keysByDate.get(date) ?? []) importedKeysRef.current.add(key);
+            } catch (err) {
+              // Un error por serie del día: el resumen cuenta series que no se
+              // importaron, y un día entero perdido no debe parecer una sola.
+              for (let i = 0; i < daySets.length; i++) {
+                errors.push(`Fecha ${date}: no se pudo guardar`);
+              }
+              devError(`Error importando CSV del ${date}:`, err);
+            }
           }
 
-          let finalSetNum = setNum;
-          if (!isNewFormat) {
-            const key = `${parsedDate}_${exerciseId}`;
-            exerciseSetCounts[key] = (exerciseSetCounts[key] || 0) + 1;
-            finalSetNum = exerciseSetCounts[key];
+          if (imported > 0) {
+            await refetchSets();
+            await refetchWorkouts();
           }
 
-          const dedupeKey = makeDedupKey(parsedDate, exerciseName, finalSetNum);
-          if (dedupeCsvKeys.has(dedupeKey)) {
-            skippedCsv++;
-            continue;
-          }
-          dedupeCsvKeys.add(dedupeKey);
+          let message =
+            imported > 0
+              ? t('history.import_success', { count: imported })
+              : t('history.import_none');
 
-          const { error: insertError } = await supabase.from('workout_sets').insert({
-            workout_id: dateWorkoutMap[parsedDate],
-            exercise_id: exerciseId,
-            weight: weight,
-            reps: reps,
-            set_num: finalSetNum,
-          });
+          if (skippedCsv > 0)
+            message += ` ${t('history.import_duplicates_skipped', { count: skippedCsv })}`;
 
-          if (insertError) continue;
+          if (errors.length > 0)
+            message += ` ${t('history.import_skipped', { count: errors.length })}`;
 
-          imported++;
-        }
+          if (imported > 0) toast.success(message);
+          else toast.error(message);
+        };
 
-        if (imported > 0) {
-          await refetchSets();
-          await refetchWorkouts();
-        }
-
-        let message =
-          imported > 0
-            ? t('history.import_success', { count: imported })
-            : t('history.import_none');
-
-        if (skippedCsv > 0)
-          message += ` ${t('history.import_duplicates_skipped', { count: skippedCsv })}`;
-
-        if (errors.length > 0)
-          message += ` ${t('history.import_skipped', { count: errors.length })}`;
-
-        if (imported > 0) toast.success(message);
-        else toast.error(message);
+        await withImportLock(runImport);
       } catch (err) {
         devError('Import error:', err);
         toast.error(t('history.import_unexpected'));

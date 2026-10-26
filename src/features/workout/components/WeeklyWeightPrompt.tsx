@@ -7,6 +7,8 @@ import { fetchBodyMeasurements, upsertTodayWeight } from '@shared/api/queries';
 import { toLocalDateKey } from '@shared/lib/dateKeys';
 import { isWeightPromptDue } from '@features/workout/utils/bodyweight';
 import { Scale, X } from '@shared/components/icons';
+import { useHealthConsentGate } from '@features/privacy/hooks/useHealthConsentGate';
+import { HealthConsentDialog } from '@features/privacy/components/HealthConsentDialog';
 
 const DISMISS_KEY = 'gymlog-weight-prompt-dismissed';
 
@@ -32,6 +34,9 @@ export function WeeklyWeightPrompt() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
+  // El peso es un dato de salud: este atajo escribe en la misma tabla que
+  // Medidas y pasa por la misma puerta de consentimiento.
+  const healthConsent = useHealthConsentGate(user?.id);
   const [value, setValue] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [dismissedThisWeek, setDismissedThisWeek] = useState(
@@ -71,7 +76,7 @@ export function WeeklyWeightPrompt() {
       return;
     }
     setError(null);
-    saveMutation.mutate(kg);
+    healthConsent.requireConsent(() => saveMutation.mutate(kg));
   };
 
   return (
@@ -131,6 +136,11 @@ export function WeeklyWeightPrompt() {
           <X className="w-4 h-4" />
         </button>
       </div>
+      <HealthConsentDialog
+        open={healthConsent.isDialogOpen}
+        onAccept={healthConsent.accept}
+        onCancel={healthConsent.cancel}
+      />
     </m.div>
   );
 }

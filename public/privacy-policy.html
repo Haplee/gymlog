@@ -4,54 +4,174 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Política de Privacidad — GymLog</title>
+  <link rel="canonical" href="https://app.gymlog.dpdns.org/privacy-policy.html" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <style>
-    body { font-family: system-ui, sans-serif; max-width: 760px; margin: 2rem auto; padding: 0 1rem; color: #e0e0e0; background: #0a0a0b; line-height: 1.6; }
-    h1 { color: #ffd93d; } h2 { color: #e6c02f; margin-top: 2rem; }
-    a { color: #ffd93d; } p, li { margin: 0.5rem 0; }
-    footer { margin-top: 3rem; font-size: 0.85rem; color: #666; }
+    :root { color-scheme: dark; }
+    body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; max-width: 780px; margin: 2rem auto; padding: 0 1.25rem 4rem; color: #e6e6e8; background: #0a0a0b; line-height: 1.65; }
+    h1 { color: #ffd93d; line-height: 1.2; }
+    h2 { color: #e6c02f; margin-top: 2.25rem; line-height: 1.3; }
+    h3 { color: #e6e6e8; margin-top: 1.5rem; font-size: 1rem; }
+    a { color: #ffd93d; }
+    p, li { margin: 0.55rem 0; }
+    ul { padding-left: 1.3rem; }
+    table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.92rem; }
+    th, td { border: 1px solid #3a3a40; padding: 0.55rem 0.65rem; text-align: left; vertical-align: top; }
+    th { background: #17171a; }
+    .note { background: #17171a; border-left: 3px solid #ffd93d; padding: 0.85rem 1rem; margin: 1.25rem 0; }
+    .pending { background: #2a1d0a; border-left: 3px solid #e6a02f; padding: 0.85rem 1rem; margin: 1.25rem 0; }
+    footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid #2a2a2e; font-size: 0.85rem; color: #9a9aa2; }
+    code { font-size: 0.9em; color: #cfcfd4; }
   </style>
 </head>
 <body>
   <h1>Política de Privacidad — GymLog</h1>
-  <p><strong>Última actualización:</strong> mayo de 2026</p>
-  <p>GymLog ("la app", "nosotros") es desarrollada por Francisco Vidal Mateo. Esta política describe qué datos se recopilan, cómo se usan y qué derechos tienes.</p>
+  <p><strong>Versión:</strong> 2.0 · <strong>Última actualización:</strong> 26 de octubre de 2026</p>
 
-  <h2>1. Datos que recopilamos</h2>
+  <p>Esta política explica qué datos personales trata GymLog, para qué, con qué base jurídica, durante cuánto tiempo y con quién se comparten. Sustituye por completo a la versión anterior (mayo de 2026), que no describía los datos de salud, los dispositivos conectados ni los proveedores que intervienen.</p>
+
+  <div class="note">
+    <strong>Lo esencial:</strong> tus entrenamientos, medidas y datos de salud son tuyos. No se venden ni se usan para publicidad. Puedes descargar una copia completa y borrar la cuenta desde Ajustes, sin escribir a nadie. El entrenador con IA está desactivado por defecto y solo funciona si lo activas expresamente.
+  </div>
+
+  <h2>1. Responsable del tratamiento</h2>
+  <p><strong>Responsable:</strong> Francisco Vidal Mateo, persona física.<br />
+  <strong>Contacto para privacidad:</strong> <a href="mailto:fvidalmateo@gmail.com">fvidalmateo@gmail.com</a></p>
+  <p>No hay delegado de protección de datos designado: por el tipo y volumen de tratamiento no concurre ninguno de los supuestos del art. 37 RGPD. Las consultas de privacidad se atienden en la dirección anterior.</p>
+
+  <h2>2. Qué datos tratamos</h2>
+
+  <h3>2.1. Cuenta y perfil</h3>
   <ul>
-    <li><strong>Datos de entrenamiento:</strong> ejercicios, series, repeticiones, pesos, notas y estadísticas de progreso introducidos voluntariamente por el usuario.</li>
-    <li><strong>Datos de cuenta:</strong> dirección de correo electrónico y contraseña cifrada (gestionados por Supabase).</li>
-    <li><strong>Datos biométricos:</strong> la app puede usar la huella dactilar o reconocimiento facial del dispositivo para autenticación local. Estos datos <strong>nunca salen del dispositivo</strong>; son gestionados exclusivamente por la API biométrica del sistema operativo Android.</li>
-    <li><strong>Notificaciones locales:</strong> la app programa recordatorios y temporizadores de descanso. No se envían datos fuera del dispositivo para este fin.</li>
+    <li><strong>Identificación:</strong> dirección de correo electrónico y contraseña. La contraseña se almacena como hash en Supabase Auth; GymLog nunca la recibe en claro ni la guarda. Si eliges «Continuar con Google», recibimos de Google tu identificador de cuenta y tu correo.</li>
+    <li><strong>Perfil:</strong> nombre, nombre de usuario, año de nacimiento, sexo, altura, peso, objetivo, días de entrenamiento por semana y equipamiento disponible, cuando los facilitas.</li>
+    <li><strong>Preferencias:</strong> idioma, tema, unidades, notificaciones y ajustes de la app.</li>
   </ul>
 
-  <h2>2. Cómo usamos los datos</h2>
+  <h3>2.2. Entrenamiento</h3>
   <ul>
-    <li>Sincronizar tu historial de entrenamientos entre dispositivos.</li>
-    <li>Mostrar estadísticas y progreso personalizados.</li>
-    <li>Autenticación segura en la app.</li>
-  </ul>
-  <p>No vendemos ni compartimos datos personales con terceros con fines publicitarios.</p>
-
-  <h2>3. Almacenamiento y seguridad</h2>
-  <p>Los datos se almacenan en Supabase (infraestructura PostgreSQL con Row Level Security). Toda la comunicación se realiza mediante HTTPS. Los datos biométricos permanecen en el dispositivo.</p>
-
-  <h2>4. Terceros</h2>
-  <ul>
-    <li><strong>Supabase</strong> — base de datos y autenticación. <a href="https://supabase.com/privacy" target="_blank">Política de privacidad de Supabase</a>.</li>
+    <li>Entrenamientos de fuerza: ejercicios, series, repeticiones, pesos, duración, notas y sensaciones (RIR/RPE) que introduces.</li>
+    <li>Rutinas, plantillas, objetivos por ejercicio, favoritos y notas de ejercicios.</li>
+    <li>Sesiones de cardio: tipo, duración, distancia, calorías, frecuencia cardiaca y notas.</li>
+    <li>Récords personales, progresión y estadísticas derivadas de lo anterior.</li>
   </ul>
 
-  <h2>5. Tus derechos</h2>
-  <p>Puedes solicitar la eliminación de tu cuenta y todos los datos asociados enviando un correo a <a href="mailto:fvidalmateo@gmail.com">fvidalmateo@gmail.com</a>. También puedes exportar tus datos desde la app.</p>
+  <h3>2.3. Datos de salud (categoría especial, art. 9 RGPD)</h3>
+  <p>Estos datos solo se tratan si usas las funciones correspondientes y aceptas el consentimiento explícito que la app te muestra antes del primer registro:</p>
+  <ul>
+    <li><strong>Medidas corporales:</strong> peso, grasa corporal, masa muscular y notas de fecha.</li>
+    <li><strong>Datos importados del móvil:</strong> pasos, distancia, calorías, frecuencia cardiaca en reposo, media y máxima, sueño (duración y fases) y sesiones de ejercicio, procedentes de <strong>Health Connect</strong> (Android) o <strong>Apple Salud</strong> (iOS) y, a través de ellos, de los dispositivos o apps que sincronices con esas plataformas (por ejemplo, un reloj o una báscula).</li>
+    <li><strong>Conexiones de dispositivos:</strong> identificadores de la conexión y estado de la sincronización.</li>
+  </ul>
+  <p>El permiso del sistema operativo para leer Health Connect o Salud es necesario, pero <strong>no es lo mismo</strong> que el consentimiento del RGPD: autoriza a leer, no define la finalidad ni la base jurídica. GymLog pide además un consentimiento explícito y separado, y puedes seguir usando el resto de la app si lo rechazas.</p>
 
-  <h2>6. Menores</h2>
-  <p>La app no está dirigida a menores de 13 años. No recopilamos datos de menores de forma consciente.</p>
+  <h3>2.4. Entrenador con IA (opcional y desactivado por defecto)</h3>
+  <p>El entrenador es una función experimental. En esta versión su interfaz está apagada por defecto; solo se muestra si el responsable la habilita. Si lo usas:</p>
+  <ul>
+    <li>Se envían al proveedor del modelo <strong>agregados y derivados</strong> de tus entrenamientos (volumen, progresión, adherencia, franja de edad, objetivo y equipamiento). No se envían tu correo, tu nombre, tu identificador de usuario, tu fecha exacta de nacimiento ni filas crudas de series.</li>
+    <li>Se guardan tus mensajes, la memoria del entrenador, las sugerencias, contadores de uso y trazas de consentimiento (qué evento y cuándo, sin contenido), para que la conversación tenga continuidad, aplicar cuotas y poder demostrar el consentimiento.</li>
+    <li>La salida es una sugerencia informativa, no un consejo médico. No hay decisiones automatizadas con efectos jurídicos.</li>
+  </ul>
+  <p>Proveedores del modelo: <strong>Groq</strong> como principal y <strong>NVIDIA NIM</strong> como respaldo, según la configuración del servicio. Puedes consultar el detalle en el apartado 6.</p>
 
-  <h2>7. Cambios en esta política</h2>
-  <p>Cualquier cambio se notificará actualizando la fecha de esta página. El uso continuado de la app tras los cambios implica la aceptación de la nueva política.</p>
+  <h3>2.5. Notificaciones y diagnóstico</h3>
+  <ul>
+    <li><strong>Push:</strong> si activas las notificaciones en la app móvil, guardamos un token del dispositivo y la plataforma. Sin ese token no se pueden enviar avisos remotos.</li>
+    <li><strong>Errores:</strong> si la app falla, se envía a Sentry un informe técnico (mensaje, traza, versión, dispositivo). La configuración desactiva el envío de datos personales por defecto; no se adjuntan el correo ni el contenido de tus entrenamientos.</li>
+    <li><strong>Analítica:</strong> en la versión web se usan Vercel Analytics y Cloudflare Web Analytics, que no emplean cookies publicitarias ni identificadores persistentes y ofrecen métricas agregadas de visitas y rendimiento.</li>
+    <li><strong>Tipografías e imágenes:</strong> la web carga tipografías de Google Fonts y las fichas de ejercicios cargan GIF desde el CDN de ExerciseDB. Son peticiones directas del navegador a esos servicios, que reciben la dirección IP y datos técnicos de la conexión.</li>
+  </ul>
 
-  <h2>8. Contacto</h2>
-  <p>Para cualquier consulta: <a href="mailto:fvidalmateo@gmail.com">fvidalmateo@gmail.com</a></p>
+  <h3>2.6. Datos que no tratamos</h3>
+  <p>No tratamos geolocalización, contactos, agenda, micrófono, cámara ni datos biométricos del dispositivo. El desbloqueo con huella o rostro ocurre en el sistema operativo: GymLog solo recibe «sí» o «no» y no accede a la plantilla biométrica.</p>
 
-  <footer>GymLog · Francisco Vidal Mateo · <a href="terms.html">Condiciones del Servicio</a> · <a href="https://app.gymlog.dpdns.org">app.gymlog.dpdns.org</a></footer>
+  <h2>3. Para qué y con qué base jurídica</h2>
+  <table>
+    <thead>
+      <tr><th>Finalidad</th><th>Base jurídica</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Crear y mantener la cuenta, sincronizar entrenamientos y rutinas entre dispositivos, prestar el servicio.</td><td>Ejecución de un contrato (art. 6.1.b RGPD).</td></tr>
+      <tr><td>Registrar y mostrar datos de salud (medidas, sueño, frecuencia cardiaca, sesiones importadas).</td><td>Consentimiento explícito (arts. 6.1.a y 9.2.a RGPD), prestado dentro de la app y revocable.</td></tr>
+      <tr><td>Entrenador con IA: generar sugerencias a partir de agregados de entrenamiento.</td><td>Consentimiento explícito (arts. 6.1.a y 9.2.a RGPD) al activarlo.</td></tr>
+      <tr><td>Enviar notificaciones y recordatorios.</td><td>Consentimiento (art. 6.1.a RGPD) al activar el permiso; las locales se ejecutan en el dispositivo.</td></tr>
+      <tr><td>Seguridad, prevención de abuso, límites de cuota y diagnóstico de errores.</td><td>Interés legítimo en mantener el servicio seguro y funcional (art. 6.1.f RGPD).</td></tr>
+      <tr><td>Analítica agregada sin cookies.</td><td>Interés legítimo en conocer el uso y mejorar el servicio (art. 6.1.f RGPD).</td></tr>
+      <tr><td>Atender derechos y reclamaciones.</td><td>Obligación legal (art. 6.1.c RGPD).</td></tr>
+    </tbody>
+  </table>
+  <p>Cuando la base es el consentimiento puedes retirarlo en cualquier momento, sin que ello afecte a la licitud del tratamiento previo. Retirar el consentimiento de salud no borra automáticamente los datos ya registrados: para eso está el borrado de cuenta o la eliminación de cada registro.</p>
+
+  <h2>4. Cuánto tiempo los conservamos</h2>
+  <ul>
+    <li><strong>Cuenta y datos asociados:</strong> mientras la cuenta exista. Si borras la cuenta, se eliminan de forma inmediata por cascada en la base de datos y se vacía el almacenamiento de avatares.</li>
+    <li><strong>Copias de seguridad del proveedor:</strong> pueden conservar copias cifradas durante la ventana de retención de su plan. No se usan para otras finalidades y se sobrescriben conforme a esa ventana.</li>
+    <li><strong>Entrenador:</strong> los mensajes y la memoria se conservan mientras la función esté activa. Al desactivarla, la app purga la memoria y el historial según su implementación; la cuenta conserva solo los contadores de uso necesarios para las cuotas.</li>
+    <li><strong>Tokens push:</strong> hasta que cierres sesión, desactives las notificaciones o borres la cuenta.</li>
+    <li><strong>Errores:</strong> según la retención configurada en Sentry (por defecto, 90 días).</li>
+    <li><strong>Datos locales:</strong> la caché offline (IndexedDB) se borra al cerrar sesión; las preferencias permanecen hasta que borres los datos del navegador o desinstales la app.</li>
+  </ul>
+
+  <h2>5. Quién puede acceder</h2>
+  <p>No se venden datos ni se ceden a terceros con fines publicitarios. Solo acceden los proveedores que prestan la infraestructura, como encargados del tratamiento, y el personal del responsable cuando sea imprescindible para atender una incidencia o un derecho:</p>
+  <table>
+    <thead>
+      <tr><th>Proveedor</th><th>Para qué</th><th>Dónde</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Supabase</td><td>Base de datos PostgreSQL, autenticación, almacenamiento de avatares y funciones de servidor.</td><td>Región del proyecto contratada por el responsable.</td></tr>
+      <tr><td>Vercel</td><td>Alojamiento de la versión web y analítica agregada.</td><td>EE. UU. y red global.</td></tr>
+      <tr><td>Cloudflare</td><td>CDN, DNS y analítica web sin cookies.</td><td>EE. UU. y red global.</td></tr>
+      <tr><td>Sentry</td><td>Registro de errores y fallos.</td><td>EE. UU.</td></tr>
+      <tr><td>Google</td><td>Inicio de sesión con Google y, en Android, entrega de notificaciones push mediante Firebase Cloud Messaging.</td><td>EE. UU.</td></tr>
+      <tr><td>Google Fonts</td><td>Tipografías de la web, la landing y el tutorial.</td><td>EE. UU. y red global.</td></tr>
+      <tr><td>ExerciseDB (AscendAPI)</td><td>Catálogo e imágenes de ejercicios; la app carga los GIF desde su CDN.</td><td>No consta en el repositorio.</td></tr>
+      <tr><td>Groq y NVIDIA</td><td>Inferencia del modelo, solo si el entrenador con IA está activado.</td><td>EE. UU.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="pending">
+    <strong>Transferencias internacionales.</strong> Varios de estos proveedores están establecidos fuera del Espacio Económico Europeo. Cuando el tratamiento implique una transferencia internacional, se aplicarán las garantías del capítulo V del RGPD (decisión de adecuación o cláusulas contractuales tipo) y una evaluación de las circunstancias concretas. La documentación contractual de cada proveedor está en revisión y se facilitará a quien la solicite en la dirección de contacto. No se afirma que todas las transferencias estén amparadas todavía por un instrumento verificado.
+  </div>
+
+  <h2>6. Entrenador con IA: qué sale y qué no</h2>
+  <p>El servidor construye el contexto con agregados calculados a partir de tus datos. El identificador de usuario, el correo, el nombre, el avatar, la fecha exacta de nacimiento y las series individuales no forman parte de lo que se envía al modelo. La edad viaja en franjas. Los registros técnicos de la función guardan contadores (modo, latencia, tokens, códigos de error), nunca el texto de la conversación.</p>
+  <p>Si el proveedor del modelo no ofrece un acuerdo de encargo del tratamiento adecuado, la función no debe habilitarse. En esta versión la interfaz está apagada por defecto precisamente por esa razón.</p>
+
+  <h2>7. Cookies, almacenamiento local y rastreo</h2>
+  <p>GymLog no usa cookies publicitarias ni de seguimiento entre sitios. Usa almacenamiento local del navegador o del WebView para:</p>
+  <ul>
+    <li>mantener la sesión iniciada (token de Supabase);</li>
+    <li>recordar preferencias (tema, idioma, unidades, última pantalla);</li>
+    <li>guardar una caché de tus datos para que la app funcione sin conexión (IndexedDB, con caducidad de 24 horas);</li>
+    <li>recordar el consentimiento de salud y el descarte de avisos.</li>
+  </ul>
+  <p>La analítica de Vercel y Cloudflare es agregada y sin cookies. Por eso no se muestra un banner de cookies: no hay cookies no esenciales que consentir. Si en el futuro se añade publicidad o analítica con identificadores, se pedirá consentimiento previo.</p>
+
+  <h2>8. Tus derechos</h2>
+  <p>Puedes ejercer los derechos de acceso, rectificación, supresión, limitación, portabilidad y oposición, y retirar tu consentimiento, de estas formas:</p>
+  <ul>
+    <li><strong>Acceso y portabilidad:</strong> Ajustes → Privacidad y datos → «Descargar mis datos». Genera un JSON con el perfil, entrenos, series, ejercicios personalizados y sus grupos musculares, medidas, salud, dispositivos, rutinas y datos del entrenador. Los tokens push se incluyen redactados.</li>
+    <li><strong>Supresión:</strong> Ajustes → Privacidad y datos → «Eliminar mi cuenta». Borra la cuenta y los datos asociados. También puedes escribir al correo de contacto.</li>
+    <li><strong>Rectificación y limitación:</strong> puedes editar tu perfil y tus registros en la app, o escribir al correo de contacto.</li>
+    <li><strong>Reclamación:</strong> ante la Agencia Española de Protección de Datos (<a href="https://www.aepd.es" target="_blank" rel="noopener">aepd.es</a>), sin perjuicio de acudir antes al responsable.</li>
+  </ul>
+  <p>Responderemos en el plazo máximo de un mes, ampliable dos meses más en casos complejos. El ejercicio de estos derechos es gratuito.</p>
+
+  <h2>9. Menores de edad</h2>
+  <p>La app no está dirigida a menores de 14 años. En España, el consentimiento del menor solo es válido a partir de esa edad (art. 7 LOPDGDD); por debajo, se requiere el consentimiento del titular de la patria potestad o tutela. Al registrarte declaras tener 14 años o más. Si detectamos una cuenta de un menor de 14 sin autorización, la eliminaremos.</p>
+
+  <h2>10. Seguridad</h2>
+  <p>Las comunicaciones usan HTTPS. La base de datos aplica Row Level Security: cada usuario solo puede leer y escribir sus propias filas. Las contraseñas se almacenan con hash gestionado por Supabase Auth. El desbloqueo biométrico y el bloqueo de la app se ejecutan en el dispositivo. Ningún sistema es infalible; si se produce una brecha con riesgo para tus derechos, se notificará a la AEPD y, cuando proceda, a las personas afectadas.</p>
+
+  <h2>11. Cambios en esta política</h2>
+  <p>Los cambios se publicarán en esta página con una nueva versión y fecha. Si el cambio afecta a una finalidad basada en tu consentimiento, se te pedirá de nuevo antes de aplicarlo. No se entenderá aceptada una nueva finalidad por el mero uso continuado de la app.</p>
+
+  <h2>12. Contacto</h2>
+  <p>Para cualquier duda o solicitud: <a href="mailto:fvidalmateo@gmail.com">fvidalmateo@gmail.com</a>.</p>
+
+  <footer>
+    GymLog · Francisco Vidal Mateo · <a href="terms.html">Condiciones del Servicio</a> · <a href="third-party-notices.txt">Licencias de terceros</a> · <a href="https://app.gymlog.dpdns.org">app.gymlog.dpdns.org</a>
+  </footer>
 </body>
 </html>

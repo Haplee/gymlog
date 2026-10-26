@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { DEFAULT_MUSCLE_GROUP } from '@shared/constants/muscleGroups';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { createThrottledLocalStorage } from '@shared/lib/throttledStorage';
+import { createThrottledLocalStorage, flushThrottledStorage } from '@shared/lib/throttledStorage';
 import { z } from 'zod';
 import type { WorkoutWithSets } from '@shared/lib/types';
 import { devError } from '@shared/lib/devtools';
@@ -56,6 +56,16 @@ interface PersistedWorkout {
   startedAt: string | null;
   sessionNotes: string;
   sessionRating: number | null;
+  /**
+   * Clave de idempotencia del guardado en curso.
+   *
+   * Se genera en el primer intento y **se conserva si ese intento falla**: al
+   * reintentar tiene que viajar la misma, o el servidor no puede reconocer que
+   * ya escribió ese entreno. Antes se generaba dentro de `saveWorkout`, así que
+   * cada reintento traía una nueva y un fallo de red con la respuesta perdida
+   * acababa en dos entrenos idénticos en el historial.
+   */
+  clientId: string | null;
 }
 
 interface WorkoutState extends PersistedWorkout {
@@ -121,10 +131,19 @@ export function segundosDeSerie(s: { durationSeconds?: string }): number | null 
   return Number.isFinite(n) && n > 0 && n <= 3600 ? n : null;
 }
 
-/** Repeticiones válidas de la serie, o `null` si no se mide en repeticiones. */
+/**
+ * Repeticiones válidas de la serie, o `null` si no se mide en repeticiones.
+ *
+ * Solo enteros. La RPC filtra con `^\d+$` y descarta en silencio la serie que no
+ * encaje —incluida una con `10.5`, que `Number()` aceptaba—, así que validarlo
+ * aquí es la diferencia entre «no se guardó» y «se guardó un entreno al que le
+ * falta una serie».
+ */
 export function repsDeSerie(s: { reps?: string }): number | null {
-  const n = Number(s.reps);
-  return s.reps?.trim() && Number.isFinite(n) && n > 0 ? n : null;
+  const texto = s.reps?.trim() ?? '';
+  if (!/^\d+$/.test(texto)) return null;
+  const n = Number(texto);
+  return n > 0 && n <= 9999 ? n : null;
 }
 
 export const useWorkoutStore = create<WorkoutState>()(
@@ -137,6 +156,7 @@ export const useWorkoutStore = create<WorkoutState>()(
       startedAt: null,
       sessionNotes: '',
       sessionRating: null,
+      clientId: null,
       loading: false,
       error: null,
       bodyweightMode: false,
@@ -149,6 +169,8 @@ export const useWorkoutStore = create<WorkoutState>()(
         set({
           activeExerciseId: exerciseId,
           customExerciseName: '',
+          // Entreno nuevo: la clave de idempotencia del anterior no vale aquí.
+          clientId: null,
           sets: sortedSets.map((s) => {
             const rpeVal = (s as { rpe?: number | null }).rpe;
             return makeSet(
@@ -262,7 +284,13 @@ export const useWorkoutStore = create<WorkoutState>()(
         // Clave de idempotencia del envío. Se genera una vez y se reutiliza tanto
         // en el intento directo como en la entrada del outbox: si el RPC llegó a
         // escribirse y solo se perdió la respuesta, el reenvío no duplica nada.
-        const clientId = crypto.randomUUID();
+        // Se guarda en el estado (y se vuelca) **antes** de la red: si el
+        // intento falla o la app muere a mitad, el reintento manda la misma.
+        const clientId = get().clientId ?? crypto.randomUUID();
+        if (get().clientId !== clientId) {
+          set({ clientId });
+          flushThrottledStorage();
+        }
 
         // En modo peso corporal el kg introducido es lastre; el peso guardado es
         // (peso corporal vigente + lastre) para que volumen/PRs sean correctos.
@@ -299,6 +327,8 @@ export const useWorkoutStore = create<WorkoutState>()(
             startedAt: null,
             sessionNotes: '',
             sessionRating: null,
+            // Guardado (o encolado): la próxima sesión estrena clave.
+            clientId: null,
           });
 
         // Ya ha entrenado hoy: silencia los recordatorios de hoy al instante.
@@ -352,6 +382,7 @@ export const useWorkoutStore = create<WorkoutState>()(
           startedAt: null,
           sessionNotes: '',
           sessionRating: null,
+          clientId: null,
         }),
     }),
     {
@@ -367,6 +398,7 @@ export const useWorkoutStore = create<WorkoutState>()(
         startedAt: state.startedAt,
         sessionNotes: state.sessionNotes,
         sessionRating: state.sessionRating,
+        clientId: state.clientId,
       }),
     },
   ),

@@ -179,6 +179,9 @@ export function RoutineSession({ userId, exercises }: Props) {
           // El escalón es del ejercicio, no de la sesión: la sentadilla salta lo
           // que den los discos y la polea lo que salte su columna de placas.
           incrementKg: loadStepFromSettings(catalog?.equipment),
+          // Copiado del plan: en un ejercicio por lado el objetivo de reps sube
+          // de dos en dos (16 → 18), igual que en el resto del motor.
+          perSide: ex.perSide === true,
         },
       );
     }

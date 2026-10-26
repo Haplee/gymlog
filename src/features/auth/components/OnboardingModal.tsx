@@ -14,6 +14,7 @@ import {
 import { supabase } from '@shared/lib/supabase';
 import type { Profile } from '@shared/lib/types';
 import { RulerPicker } from './RulerPicker';
+import { grantHealthConsent, hasHealthConsent } from '@features/privacy/consent/healthConsent';
 
 const TOTAL_STEPS = 4;
 
@@ -33,6 +34,15 @@ export function OnboardingModal({ user, onComplete }: OnboardingModalProps) {
   const { t } = useTranslation();
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  // El peso es dato de salud (art. 9 RGPD). No se guarda por defecto: el
+  // formulario viene con 70 kg y sin esta casilla se habría registrado un dato
+  // de salud sin que el usuario lo hubiera decidido.
+  const [healthAccepted, setHealthAccepted] = useState(() => hasHealthConsent(user.id));
+  // Declaración de edad y aceptación de las condiciones. El registro por correo
+  // ya la pide; el alta con Google llega directamente aquí, así que esta es la
+  // puerta que cubre ese camino.
+  const [ageAccepted, setAgeAccepted] = useState(false);
 
   const [data, setData] = useState<Partial<Profile>>({
     goal: 'volume',
@@ -43,9 +53,26 @@ export function OnboardingModal({ user, onComplete }: OnboardingModalProps) {
   });
 
   const handleFinish = async () => {
+    if (!ageAccepted) {
+      setError(t('onboarding.age_required'));
+      return;
+    }
+    setError('');
     setSaving(true);
-    await supabase.from('profiles').update(data).eq('id', user.id);
+    const payload: Partial<Profile> = { ...data };
+    if (!healthAccepted) delete payload.weight_kg;
+    const { error } = await supabase.from('profiles').update(payload).eq('id', user.id);
     setSaving(false);
+    if (error) {
+      setError(t('onboarding.save_error'));
+      return;
+    }
+    // Solo se registra el consentimiento si el dato llegó a guardarse. Un
+    // consentimiento sin dato, o un dato sin consentimiento, serían ambos
+    // peores que no tener ninguno de los dos.
+    if (healthAccepted && payload.weight_kg !== undefined) {
+      grantHealthConsent(user.id);
+    }
     onComplete();
   };
 
@@ -171,6 +198,50 @@ export function OnboardingModal({ user, onComplete }: OnboardingModalProps) {
               onChange={(weight_kg) => setData({ ...data, weight_kg })}
             />
             <p className="text-xs text-fg-subtle">{t('onboarding.body_hint')}</p>
+            <label className="flex items-start gap-2 text-xs leading-relaxed text-fg-muted">
+              <input
+                type="checkbox"
+                checked={healthAccepted}
+                onChange={(event) => setHealthAccepted(event.target.checked)}
+                className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--interactive-primary)]"
+              />
+              <span>{t('onboarding.health_consent')}</span>
+            </label>
+            <label className="flex items-start gap-2 text-xs leading-relaxed text-fg-muted">
+              <input
+                type="checkbox"
+                checked={ageAccepted}
+                onChange={(event) => setAgeAccepted(event.target.checked)}
+                aria-describedby="onboarding-age-desc"
+                className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--interactive-primary)]"
+              />
+              <span id="onboarding-age-desc">
+                {t('onboarding.age_confirm')}{' '}
+                <a
+                  href="/legal/privacy"
+                  target="_blank"
+                  rel="noopener"
+                  className="text-accent underline underline-offset-2"
+                >
+                  {t('auth.privacy_link')}
+                </a>{' '}
+                {t('auth.and')}{' '}
+                <a
+                  href="/legal/terms"
+                  target="_blank"
+                  rel="noopener"
+                  className="text-accent underline underline-offset-2"
+                >
+                  {t('auth.terms_link')}
+                </a>
+                .
+              </span>
+            </label>
+            {error && (
+              <p role="alert" className="text-xs text-error">
+                {error}
+              </p>
+            )}
           </div>
         )}
 

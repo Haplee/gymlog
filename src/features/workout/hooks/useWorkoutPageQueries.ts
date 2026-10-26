@@ -7,6 +7,7 @@ import {
   fetchWorkoutsPaginated,
 } from '@shared/api/queries';
 import { bodyWeightAtDate } from '@features/workout/utils/bodyweight';
+import { toLocalDateKey } from '@shared/lib/dateKeys';
 import {
   useWearableDaily,
   useWearableSleep,
@@ -79,7 +80,9 @@ export function useWorkoutPageQueries({
     personalRecordsList,
     exerciseNotes,
     lastWorkout: lastWorkoutPage?.workouts[0],
-    currentBodyWeight: bodyWeightAtDate(bodyMeasurements, new Date().toISOString().split('T')[0]),
+    // Fecha local, no UTC: de madrugada `toISOString()` devuelve el día anterior
+    // y se usaba el peso de ayer teniendo el de hoy.
+    currentBodyWeight: bodyWeightAtDate(bodyMeasurements, toLocalDateKey(new Date())),
     wearableDaily,
     wearableSleep,
     hasWearableData: Boolean(wearableDaily?.length || wearableSleep?.length),

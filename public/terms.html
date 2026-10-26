@@ -7,54 +7,89 @@
   <link rel="canonical" href="https://app.gymlog.dpdns.org/terms.html" />
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <style>
-    body { font-family: system-ui, sans-serif; max-width: 760px; margin: 2rem auto; padding: 0 1rem; color: #e0e0e0; background: #0a0a0b; line-height: 1.6; }
-    h1 { color: #ffd93d; } h2 { color: #e6c02f; margin-top: 2rem; }
-    a { color: #ffd93d; } p, li { margin: 0.5rem 0; }
-    footer { margin-top: 3rem; font-size: 0.85rem; color: #666; }
+    :root { color-scheme: dark; }
+    body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; max-width: 780px; margin: 2rem auto; padding: 0 1.25rem 4rem; color: #e6e6e8; background: #0a0a0b; line-height: 1.65; }
+    h1 { color: #ffd93d; line-height: 1.2; }
+    h2 { color: #e6c02f; margin-top: 2.25rem; line-height: 1.3; }
+    a { color: #ffd93d; }
+    p, li { margin: 0.55rem 0; }
+    ul { padding-left: 1.3rem; }
+    .note { background: #17171a; border-left: 3px solid #ffd93d; padding: 0.85rem 1rem; margin: 1.25rem 0; }
+    .pending { background: #2a1d0a; border-left: 3px solid #e6a02f; padding: 0.85rem 1rem; margin: 1.25rem 0; }
+    footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid #2a2a2e; font-size: 0.85rem; color: #9a9aa2; }
   </style>
 </head>
 <body>
   <h1>Condiciones del Servicio — GymLog</h1>
-  <p><strong>Última actualización:</strong> julio de 2026</p>
-  <p>GymLog ("la app", "el servicio") es una aplicación gratuita de registro de entrenamientos desarrollada por Francisco Vidal Mateo ("el desarrollador"). Al usar la app aceptas estas condiciones; si no estás de acuerdo con ellas, no uses el servicio.</p>
+  <p><strong>Versión:</strong> 2.0 · <strong>Última actualización:</strong> 26 de octubre de 2026</p>
 
-  <h2>1. Descripción del servicio</h2>
-  <p>GymLog permite registrar entrenamientos de fuerza y cardio, crear rutinas y consultar estadísticas de progreso. Está disponible como aplicación web (PWA) y como app nativa para Android e iOS. El servicio es gratuito y sin publicidad.</p>
+  <p>Estas condiciones regulan el uso de GymLog, una aplicación de registro de entrenamientos disponible como web instalable (PWA) y como aplicación para Android e iOS. Al crear una cuenta o usar el servicio aceptas estas condiciones. Si no estás de acuerdo, no uses el servicio.</p>
 
-  <h2>2. Cuenta de usuario</h2>
+  <div class="note">
+    <strong>Resumen:</strong> GymLog es gratuito y sin publicidad. Sirve para registrar entrenamientos, no para diagnosticar ni tratar nada. Tus datos son tuyos: puedes descargarlos y borrar la cuenta desde Ajustes. El servicio se presta con medios razonables, pero no es un servicio crítico ni una garantía de resultados.
+  </div>
+
+  <h2>1. Quién presta el servicio</h2>
+  <p><strong>Prestador:</strong> Francisco Vidal Mateo, persona física.<br />
+  <strong>Contacto:</strong> <a href="mailto:fvidalmateo@gmail.com">fvidalmateo@gmail.com</a></p>
+
+  <div class="pending">
+    <strong>Información pendiente antes de la publicación definitiva.</strong> El art. 10 de la Ley 34/2002 (LSSI) exige indicar el nombre, NIF, domicilio y correo electrónico del prestador del servicio de la sociedad de la información. En este repositorio no constan el NIF ni el domicilio, y no se inventan. Deben completarse aquí y en el aviso legal antes de considerar esta versión publicable. Mientras falten, esta página es un borrador de trabajo, no un documento definitivo.
+  </div>
+
+  <h2>2. Descripción del servicio</h2>
+  <p>GymLog permite registrar entrenamientos de fuerza y cardio, crear rutinas, consultar estadísticas, importar datos de salud del dispositivo y, si se habilita, usar un entrenador con IA. El servicio es gratuito, no incluye compras ni suscripciones y no muestra publicidad.</p>
+  <p>El servicio depende de infraestructura de terceros (Supabase, Vercel, Cloudflare y, para notificaciones, Google). Las funciones pueden variar entre web, Android e iOS: por ejemplo, la importación de salud y las notificaciones push solo existen en la app móvil.</p>
+
+  <h2>3. Cuenta y seguridad</h2>
   <ul>
-    <li>Para sincronizar datos entre dispositivos necesitas una cuenta, creada con tu correo electrónico o mediante tu cuenta de Google.</li>
-    <li>Eres responsable de mantener la confidencialidad de tus credenciales y de la actividad realizada con tu cuenta.</li>
-    <li>Puedes eliminar tu cuenta y todos los datos asociados en cualquier momento, desde la app o escribiendo a <a href="mailto:fvidalmateo@gmail.com">fvidalmateo@gmail.com</a>.</li>
+    <li>Para sincronizar datos necesitas una cuenta con correo y contraseña o con Google.</li>
+    <li>Debes tener al menos 14 años. Si eres menor de esa edad, necesitas el consentimiento de quien ejerza la patria potestad o tutela.</li>
+    <li>Eres responsable de mantener la confidencialidad de tus credenciales y de la actividad de tu cuenta. Si detectas un acceso no autorizado, cambia la contraseña y contacta.</li>
+    <li>Puedes eliminar la cuenta y los datos asociados en Ajustes → Privacidad y datos, o escribiendo al correo de contacto. El borrado es inmediato y no se puede deshacer.</li>
+    <li>No se permite crear cuentas de forma automatizada ni suplantar a otra persona.</li>
   </ul>
 
-  <h2>3. Uso aceptable</h2>
-  <p>Te comprometes a no usar el servicio para fines ilegales, a no intentar acceder a datos de otros usuarios, y a no interferir con el funcionamiento de la app o de su infraestructura (por ejemplo, mediante ataques, scraping abusivo o ingeniería inversa de los servicios de backend).</p>
+  <h2>4. Uso aceptable</h2>
+  <p>Te comprometes a no usar el servicio para fines ilícitos, a no intentar acceder a datos de otras personas, a no interferir en su funcionamiento (ataques, scraping abusivo, sobrecarga deliberada) y a no eludir los límites técnicos o las medidas de seguridad. El acceso al código fuente no autoriza a operar una copia del servicio con la marca GymLog ni a usar sus datos de producción.</p>
 
-  <h2>4. Aviso de salud — no es consejo médico</h2>
-  <p>GymLog es una herramienta de registro. La información mostrada (estadísticas, volúmenes, récords, indicadores de fatiga) <strong>no constituye consejo médico, de fisioterapia ni de entrenamiento profesional</strong>. Consulta a un profesional sanitario antes de comenzar o modificar un programa de ejercicio, especialmente si tienes alguna condición médica. El ejercicio físico conlleva riesgos; lo practicas bajo tu propia responsabilidad.</p>
+  <h2>5. Salud: no es consejo médico</h2>
+  <p>GymLog es una herramienta de registro. Las estadísticas, volúmenes, récords, indicadores de fatiga y sugerencias —incluidas las del entrenador con IA— son información general y <strong>no constituyen consejo médico, de fisioterapia, de nutrición ni de entrenamiento profesional</strong>. No sustituyen la valoración de un profesional sanitario.</p>
+  <p>Consulta a un profesional antes de empezar o modificar un programa de ejercicio, especialmente si tienes una lesión, una condición médica o estás embarazada. El ejercicio físico conlleva riesgos y lo practicas bajo tu responsabilidad. Si sientes dolor, mareo o una señal de alarma, detente y busca atención sanitaria.</p>
+  <p>El entrenador con IA es una función experimental, desactivada por defecto y limitada por un filtro de seguridad. Puede equivocarse. No lo uses para decidir sobre una lesión o una condición médica.</p>
 
-  <h2>5. Tus datos</h2>
-  <p>El tratamiento de datos personales se rige por la <a href="privacy-policy.html">Política de Privacidad</a>. Los datos de entrenamiento que introduces te pertenecen: puedes exportarlos desde la app y solicitar su eliminación en cualquier momento.</p>
+  <h2>6. Tus datos y privacidad</h2>
+  <p>El tratamiento de datos personales se rige por la <a href="privacy-policy.html">Política de Privacidad</a>. Los datos que introduces te pertenecen. Puedes descargar una copia completa y solicitar el borrado desde Ajustes; también puedes escribir al correo de contacto.</p>
+  <p>Los datos de salud requieren un consentimiento explícito y separado, que la app pide antes del primer registro y que puedes rechazar sin dejar de usar el resto de la app.</p>
 
-  <h2>6. Propiedad intelectual</h2>
-  <p>El código fuente de GymLog está disponible públicamente en <a href="https://github.com/Haplee/gymlog" target="_blank" rel="noopener">GitHub</a> bajo su licencia correspondiente. El nombre, logotipo y diseño de GymLog pertenecen al desarrollador. El contenido que introduces (entrenamientos, notas) es tuyo.</p>
+  <h2>7. Contenido y propiedad intelectual</h2>
+  <p>El nombre, el logotipo y el diseño de GymLog pertenecen al prestador. El código fuente se publica en <a href="https://github.com/Haplee/gymlog" target="_blank" rel="noopener">GitHub</a> bajo las licencias que constan en el repositorio y en el fichero de <a href="third-party-notices.txt">licencias de terceros</a>. Esas licencias se aplican al código; no conceden derechos sobre la marca ni sobre los datos de otras personas.</p>
+  <p>El contenido que introduces (entrenamientos, notas, rutinas) sigue siendo tuyo. Solo lo tratamos para prestarte el servicio, con las finalidades descritas en la política de privacidad.</p>
 
-  <h2>7. Disponibilidad del servicio</h2>
-  <p>El servicio se ofrece "tal cual" y "según disponibilidad", sin garantías de ningún tipo. Al ser un proyecto gratuito, el desarrollador no garantiza la disponibilidad continua del servicio ni la ausencia de errores, y se reserva el derecho de modificar, suspender o discontinuar el servicio (total o parcialmente) en cualquier momento. En caso de discontinuación se intentará avisar con antelación razonable para que puedas exportar tus datos.</p>
+  <h2>8. Disponibilidad y cambios</h2>
+  <p>El servicio se presta con la diligencia razonable de un proyecto gratuito, pero no se garantiza que esté disponible de forma continua, libre de errores o inmune a pérdidas. Puede haber mantenimientos, límites de proveedores o interrupciones ajenas al prestador.</p>
+  <p>El prestador puede modificar, suspender o discontinuar el servicio, total o parcialmente. Si la discontinuación afecta a tus datos, se avisará con antelación razonable —cuando sea posible— y se mantendrá disponible la exportación durante ese periodo. No se eliminarán datos antes de que puedas descargarlos, salvo obligación legal o riesgo de seguridad.</p>
 
-  <h2>8. Limitación de responsabilidad</h2>
-  <p>En la máxima medida permitida por la ley, el desarrollador no será responsable de daños directos o indirectos derivados del uso o la imposibilidad de uso del servicio, incluyendo pérdida de datos, lesiones derivadas de la actividad física o decisiones tomadas a partir de la información mostrada por la app.</p>
+  <h2>9. Responsabilidad</h2>
+  <p>El prestador responde de los daños que cause por dolo o negligencia, conforme a la ley. Nada en estas condiciones limita los derechos que la normativa de consumidores y usuarios reconoce con carácter imperativo (Real Decreto Legislativo 1/2007), ni la responsabilidad por lesiones, muerte o daños derivados de una actuación dolosa o gravemente negligente.</p>
+  <p>En lo que la ley permita, no se responde de pérdidas indirectas, lucro cesante ni de decisiones tomadas a partir de la información de la app, incluidas las sugerencias del entrenador. Tampoco se responde de fallos de proveedores externos, de la red o del dispositivo, siempre que se hayan adoptado medidas razonables.</p>
+  <p>Como el servicio es gratuito, no existe una obligación de resultado ni un nivel de servicio contratado. Esto no rebaja las obligaciones legales de diligencia, seguridad y protección de datos.</p>
 
-  <h2>9. Suspensión</h2>
-  <p>El desarrollador puede suspender o cancelar cuentas que incumplan estas condiciones, en particular el apartado de uso aceptable.</p>
+  <h2>10. Suspensión de cuentas</h2>
+  <p>El prestador puede suspender o cancelar cuentas que incumplan estas condiciones, en particular el uso aceptable o la seguridad del servicio. Cuando sea posible, se informará del motivo y se permitirá el acceso a los propios datos antes del cierre, salvo riesgo para otras personas o obligación legal.</p>
 
-  <h2>10. Cambios en estas condiciones</h2>
-  <p>Estas condiciones pueden actualizarse; cualquier cambio se reflejará en la fecha de esta página. El uso continuado del servicio tras los cambios implica su aceptación.</p>
+  <h2>11. Cambios en las condiciones</h2>
+  <p>Los cambios se publicarán con una nueva versión y fecha. Los cambios sustanciales se avisarán dentro de la app con antelación razonable. Si el cambio afecta a una finalidad basada en consentimiento, se pedirá de nuevo; el uso continuado no convierte en aceptada una finalidad nueva.</p>
 
-  <h2>11. Ley aplicable y contacto</h2>
-  <p>Estas condiciones se rigen por la legislación española. Para cualquier consulta: <a href="mailto:fvidalmateo@gmail.com">fvidalmateo@gmail.com</a></p>
+  <h2>12. Ley aplicable y reclamaciones</h2>
+  <p>Estas condiciones se rigen por la legislación española. Si eres consumidor, puedes acudir a los juzgados y tribunales de tu domicilio y presentar una reclamación ante los organismos de consumo competentes. Antes de eso, puedes escribir a <a href="mailto:fvidalmateo@gmail.com">fvidalmateo@gmail.com</a> para intentar resolverlo.</p>
+  <p>Para cuestiones de privacidad puedes reclamar ante la Agencia Española de Protección de Datos (<a href="https://www.aepd.es" target="_blank" rel="noopener">aepd.es</a>).</p>
 
-  <footer>GymLog · Francisco Vidal Mateo · <a href="privacy-policy.html">Política de Privacidad</a> · <a href="https://app.gymlog.dpdns.org">app.gymlog.dpdns.org</a></footer>
+  <h2>13. Contacto</h2>
+  <p>Para cualquier consulta: <a href="mailto:fvidalmateo@gmail.com">fvidalmateo@gmail.com</a>.</p>
+
+  <footer>
+    GymLog · Francisco Vidal Mateo · <a href="privacy-policy.html">Política de Privacidad</a> · <a href="third-party-notices.txt">Licencias de terceros</a> · <a href="https://app.gymlog.dpdns.org">app.gymlog.dpdns.org</a>
+  </footer>
 </body>
 </html>

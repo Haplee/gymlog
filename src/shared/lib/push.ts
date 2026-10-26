@@ -81,17 +81,20 @@ export async function registerPushNotifications(userId: string): Promise<void> {
 }
 
 /** Elimina el token del dispositivo actual (p.ej. al desactivar notificaciones). */
-export async function unregisterPushToken(): Promise<void> {
+export async function unregisterPushToken(userId?: string): Promise<void> {
+  // Solo nativo: el token es del dispositivo. Si se borrase desde la web, se
+  // apagarían las notificaciones del móvil del mismo usuario sin tocar el móvil.
   if (!Capacitor.isNativePlatform()) return;
+  const owner = userId ?? _currentUserId;
   try {
     const { PushNotifications } = await import('@capacitor/push-notifications');
     // Intenta leer el token actual no es trivial sin re-registrar; borramos por
     // userId los tokens de esta plataforma como aproximación segura.
-    if (_currentUserId) {
+    if (owner) {
       await supabase
         .from('push_tokens')
         .delete()
-        .eq('user_id', _currentUserId)
+        .eq('user_id', owner)
         .eq('platform', Capacitor.getPlatform());
     }
     await PushNotifications.removeAllListeners();
