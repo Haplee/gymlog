@@ -130,11 +130,12 @@ export function RoutineSession({ userId, exercises }: Props) {
     // corregido encima. Aquí no se reescribe nada.
     const withWeights = sessionExercises;
 
-    // Hay algo que registrar si alguna serie tiene peso **o** duración. Antes
-    // solo se miraba el peso, y una sesión de solo planchas —que no lleva
-    // ninguno— se rechazaba diciendo que no había recomendaciones.
+    // Hay algo que registrar si alguna fila la escribió el usuario: peso,
+    // duración o una edición cualquiera. Las repeticiones del plan, solas, no
+    // cuentan: precargadas en las cuatro series de un 4×8, hacían creer que la
+    // sesión estaba hecha antes de empezar.
     const hayAlgoQueRegistrar = withWeights.some((ex) =>
-      ex.sets.some((s) => s.weight.trim() || s.durationSeconds.trim()),
+      ex.sets.some((s) => s.touched || s.weight.trim() || s.durationSeconds.trim()),
     );
     if (!hayAlgoQueRegistrar) {
       void notificationHaptic(NotificationType.Error);
@@ -154,18 +155,27 @@ export function RoutineSession({ userId, exercises }: Props) {
     if (!result.success) return;
 
     // Progresión automática: con la sesión ya guardada, avanza el ciclo de cada
-    // ejercicio con su mejor serie. El store lo persiste y sincroniza solo.
+    // ejercicio con su mejor serie. Solo los guardados en este intento: los que
+    // ya estaban de un intento anterior no pueden avanzar el ciclo otra vez.
     const progression = useProgressionStore.getState();
+    const savedNames = new Set(result.savedExerciseNames);
     for (const ex of withWeights) {
+      if (!savedNames.has(ex.name)) continue;
+      const catalog = catalogByName.get(normalizeName(ex.name));
+      const bodyweight = isBodyweightLoad(catalog?.load_type);
       const valid = ex.sets
+        // Las filas del plan que nadie tocó no se enviaron: tampoco progresan.
+        .filter((s) => s.touched || s.weight.trim() || s.durationSeconds.trim())
         .map((s) => ({ reps: Number(s.reps), weight: toKg(Number(s.weight)) }))
-        .filter((s) => Number.isFinite(s.weight) && Number.isFinite(s.reps) && s.reps > 0);
+        .filter((s) => Number.isFinite(s.weight) && Number.isFinite(s.reps) && s.reps > 0)
+        // Un 0 kg en un ejercicio con carga externa es una fila vacía, no una
+        // serie de 0 kg: proponer 0 la próxima vez sería peor que no proponer.
+        .filter((s) => bodyweight || s.weight > 0);
       if (valid.length === 0) continue;
       const top = valid.reduce((a, b) =>
         b.weight > a.weight || (b.weight === a.weight && b.reps > a.reps) ? b : a,
       );
       const { repMin, repMax } = parseRepRange(ex.targetReps);
-      const catalog = catalogByName.get(normalizeName(ex.name));
       // `sessionReps` va con todas las series, no solo la mejor: subir el peso
       // porque la primera serie llegó al techo es lo que hacía que la carga
       // creciera cada semana sin haber completado el esquema.
@@ -175,7 +185,7 @@ export function RoutineSession({ userId, exercises }: Props) {
         {
           repMin,
           repMax,
-          bodyweight: isBodyweightLoad(catalog?.load_type),
+          bodyweight,
           // El escalón es del ejercicio, no de la sesión: la sentadilla salta lo
           // que den los discos y la polea lo que salte su columna de placas.
           incrementKg: loadStepFromSettings(catalog?.equipment),

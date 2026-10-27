@@ -68,7 +68,7 @@ import {
   type WorkoutSummary,
 } from '@features/workout/components/WorkoutSavedCard';
 import type { ExerciseNote, PersonalRecord } from '@shared/lib/types';
-import { z } from 'zod';
+import { isSetRowIntended, selectSetsForSave } from '@features/workout/lib/setValidation';
 import { toast } from 'sonner';
 import { impact, notificationHaptic, ImpactStyle, NotificationType } from '@shared/lib/haptics';
 import { celebrate } from '@shared/lib/celebration';
@@ -80,37 +80,6 @@ const containerVariants = {
   hidden: { opacity: 0, y: 12 },
   show: { opacity: 1, y: 0 },
 };
-
-/**
- * Validación de la fila antes de guardar.
- *
- * **Una serie tiene que medir algo: repeticiones o segundos.** Antes solo
- * contemplaba repeticiones, así que una plancha de 48 s con 0 kg no llegaba
- * siquiera a validarse: se descartaba como fila en blanco y el guardado
- * respondía «añade al menos una serie válida» sobre una serie que estaba bien.
- * El store ya admitía las series por tiempo; esta comprobación de pantalla se
- * quedó atrás, y solo se vio recorriendo el entreno entero en la APK.
- *
- * Es la misma regla que el `CHECK workout_sets_measured` de la base de datos,
- * puesta aquí para que el usuario vea un mensaje entendible en vez de un error
- * de Postgres. Los `message` son claves de i18n, no frases: el schema vive a
- * nivel de módulo y no alcanza a `t`, así que traduce quien los pinta.
- */
-const setSchema = z
-  .object({
-    reps: z.string().optional().default(''),
-    durationSeconds: z.string().optional().default(''),
-    weight: z.coerce.number().nonnegative('workout.errors.weight_negative'),
-  })
-  .refine((s) => Number(s.reps) > 0 || Number(s.durationSeconds) > 0, {
-    message: 'workout.errors.needs_measure',
-  });
-
-/** ¿La fila tiene algo escrito? Una en blanco se salta, no se marca en rojo. */
-function filaEnBlanco(s: { reps: string; weight: string; durationSeconds?: string }): boolean {
-  const vacio = (v?: string) => v === '' || v === '0' || v === undefined;
-  return vacio(s.reps) && vacio(s.weight) && vacio(s.durationSeconds);
-}
 
 export function WorkoutPage() {
   const navigate = useNavigate();
@@ -378,38 +347,38 @@ export function WorkoutPage() {
   // Día de la semana para el titular «Rutina · Lunes».
   const weekdayName = useMemo(() => format(new Date(), 'EEEE', { locale: es }), []);
 
+  // Filas que el usuario ha escrito de verdad y que se pueden guardar. Los
+  // contadores de la pantalla salen de aquí y no del array crudo: una fila a
+  // medias no suma, y una mal escrita vuelve en `errors` para pintarla en rojo
+  // en vez de desaparecer al guardar.
+  const setSelection = useMemo(() => selectSetsForSave(sets), [sets]);
+
   // En modo peso corporal el kg introducido es lastre; el peso efectivo por rep
   // es (peso corporal vigente + lastre), igual que lo que se guarda en saveWorkout.
   const sessionVolume = useMemo(
     () =>
-      sets.reduce((sum, s) => {
-        const r = Number(s.reps) || 0;
-        const entered = Number(s.weight) || 0;
-        const w = isBodyweightExercise ? (currentBodyWeight ?? 0) + entered : entered;
-        return sum + r * w;
+      setSelection.selected.reduce((sum, s) => {
+        const w = isBodyweightExercise ? (currentBodyWeight ?? 0) + s.weightKg : s.weightKg;
+        return sum + (s.reps ?? 0) * w;
       }, 0),
-    [sets, isBodyweightExercise, currentBodyWeight],
+    [setSelection, isBodyweightExercise, currentBodyWeight],
   );
 
-  // En modo peso corporal una serie es válida solo con reps (el lastre es opcional).
-  const validSetCount = useMemo(
-    () => sets.filter((s) => s.reps && (isBodyweightExercise || s.weight)).length,
-    [sets, isBodyweightExercise],
-  );
+  const validSetCount = setSelection.selected.length;
 
   // Mejor 1RM estimado de la sesión (excluye calentamientos). Pesos en kg.
   const bestEstimate = useMemo(() => {
     let best: { weightKg: number; e1rm: number } | null = null;
-    for (const s of sets) {
-      if (s.isWarmup) continue;
-      const w = Number(s.weight);
-      const r = Number(s.reps);
-      if (!Number.isFinite(w) || !Number.isFinite(r) || w <= 0 || r <= 0) continue;
+    for (const s of setSelection.selected) {
+      if (sets[s.index]?.isWarmup) continue;
+      const w = s.weightKg;
+      const r = s.reps;
+      if (r == null || w <= 0) continue;
       const e1rm = calcular1RM(w, r);
       if (!best || e1rm > best.e1rm) best = { weightKg: w, e1rm };
     }
     return best;
-  }, [sets]);
+  }, [setSelection, sets]);
 
   const checkIsNewPR = useCallback(
     (weight: string, reps: string): boolean => {
@@ -439,9 +408,9 @@ export function WorkoutPage() {
     let scope = opts.scope;
     if (!scope) {
       const completedCount = sets.filter((s) => s.completed).length;
-      const pendingCount = sets.filter(
-        (s) => !s.completed && s.reps && (isBodyweightExercise || s.weight),
-      ).length;
+      // Pendientes = filas válidas sin ✓. Una fila mal escrita no entra aquí:
+      // se abre al guardar, con su motivo.
+      const pendingCount = setSelection.selected.filter((s) => !sets[s.index].completed).length;
       const decision = resolveSaveScope({
         completedCount,
         pendingCount,
@@ -456,25 +425,14 @@ export function WorkoutPage() {
 
     const onlyCompleted = scope === 'completed-only';
     setMessage('');
-    setSetErrors({});
 
-    const newErrors: Record<number, string> = {};
-    let hasValid = false;
+    // La misma función que usa el store: si aquí pasara una fila y allí no, el
+    // guardado diría «no hay series válidas» sobre lo que la pantalla dio por
+    // bueno. Eso era exactamente lo que pasaba con las series sin lastre.
+    const { selected, errors } = selectSetsForSave(sets, { onlyCompleted });
+    setSetErrors(errors);
 
-    sets.forEach((s, i) => {
-      if (onlyCompleted && !s.completed) return;
-      if (filaEnBlanco(s)) return;
-      const validation = setSchema.safeParse(s);
-      if (!validation.success) {
-        newErrors[i] = validation.error.errors[0]?.message || 'workout.errors.invalid_set';
-      } else {
-        hasValid = true;
-      }
-    });
-
-    setSetErrors(newErrors);
-
-    const failed = Object.keys(newErrors).map(Number);
+    const failed = Object.keys(errors).map(Number);
     if (failed.length > 0) {
       void notificationHaptic(NotificationType.Error);
       // El error de cada fila solo se pintaba en la serie que estuviera abierta,
@@ -493,7 +451,7 @@ export function WorkoutPage() {
       setFocusSet((prev) => ({ index: failed[0], nonce: (prev?.nonce ?? 0) + 1 }));
       return;
     }
-    if (!hasValid) {
+    if (!selected.length) {
       setMessage(t('workout.add_valid_set'));
       setMessageTone('error');
       return;
@@ -504,27 +462,39 @@ export function WorkoutPage() {
       ? Math.max(1, Math.round((Date.now() - new Date(startedAt).getTime()) / 60000))
       : 0;
     const summarySets = onlyCompleted
-      ? sets.filter((s) => s.completed && s.reps && (isBodyweightExercise || s.weight)).length
-      : validSetCount;
+      ? selected.filter((s) => sets[s.index].completed).length
+      : selected.length;
     const summaryVolume = `${convert(sessionVolume).toFixed(0)} ${weightUnit}`;
 
     setSaving(true);
-    const result = await saveWorkout(user.id, { onlyCompleted });
+    // Contexto explícito: el del store se actualiza en un efecto y puede ir un
+    // ejercicio por detrás justo al cambiar y guardar.
+    const result = await saveWorkout(user.id, {
+      onlyCompleted,
+      bodyweight: isBodyweightExercise,
+      bodyWeightKg: currentBodyWeight,
+    });
     setSaving(false);
+
+    // El store vuelve a validar sobre el estado más reciente. Si hay filas que
+    // no pasan, se abren aquí; nunca se guarda «lo que se pueda» en silencio.
+    if (result.setErrors && Object.keys(result.setErrors).length > 0) {
+      setSetErrors(result.setErrors);
+      const first = Number(Object.keys(result.setErrors)[0]);
+      setFocusSet((prev) => ({ index: first, nonce: (prev?.nonce ?? 0) + 1 }));
+    }
 
     // Progresión automática: con la sesión guardada (o encolada), avanza el
     // ciclo del ejercicio con su mejor serie. El peso del store está en kg.
     const recordProgression = () => {
       const name = selectedExercise?.name || customExerciseName.trim();
       if (!name) return;
-      const valid = sets
-        .map((s, i) => {
-          const reps = Number(s.reps);
-          const weight = Number(s.weight);
-          const include = (onlyCompleted ? s.completed : true) && !newErrors[i];
-          return { reps, weight, include };
-        })
-        .filter((s) => s.include && Number.isFinite(s.reps) && s.reps > 0);
+      const valid = selected
+        .filter((s) => s.reps != null && s.reps > 0)
+        // Una serie a 0 kg en un ejercicio con carga externa no dice nada del
+        // peso que toca la próxima vez: proponer 0 sería peor que no proponer.
+        .filter((s) => isBodyweightExercise || s.weightKg > 0)
+        .map((s) => ({ reps: s.reps as number, weight: s.weightKg }));
       if (valid.length === 0) return;
       const top = valid.reduce((a, b) =>
         b.weight > a.weight || (b.weight === a.weight && b.reps > a.reps) ? b : a,
@@ -585,13 +555,13 @@ export function WorkoutPage() {
       }
 
       let max1RM = 0;
-      sets.forEach((s, i) => {
-        if (onlyCompleted && !s.completed) return;
-        if (!newErrors[i] && s.weight && s.reps && checkIsNewPR(s.weight, s.reps)) {
-          const e1rm = Math.round(calcular1RM(Number(s.weight), Number(s.reps)));
-          if (e1rm > max1RM) max1RM = e1rm;
+      for (const s of selected) {
+        if (s.reps == null || s.weightKg <= 0) continue;
+        const e1rm = Math.round(calcular1RM(s.weightKg, s.reps));
+        if (e1rm > max1RM && checkIsNewPR(String(s.weightKg), String(s.reps))) {
+          max1RM = e1rm;
         }
-      });
+      }
 
       let prLabel: string | undefined;
       if (max1RM > 0) {
@@ -628,7 +598,9 @@ export function WorkoutPage() {
   const handleAddSet = useCallback(() => {
     void impact(ImpactStyle.Light);
     const lastSet = sets.at(-1);
-    const lastHasData = lastSet && lastSet.reps && lastSet.weight;
+    // Cuenta como serie hecha si el usuario la escribió, aunque no lleve peso
+    // (gemelos a una pierna, dominadas): antes ese caso no arrancaba descanso.
+    const lastHasData = lastSet ? isSetRowIntended(lastSet) : false;
     addSet();
     if (restAutoStart && lastHasData && !restTimerRunning && defaultRest > 0) {
       // Ejercicios compuestos descansan más (≈2×), capado a 10 min.

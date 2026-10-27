@@ -26,9 +26,11 @@ vi.mock('@shared/lib/resolveOrCreateExercise', () => ({
 import { useWorkoutStore, repsDeSerie } from '../workoutStore';
 import { supabase } from '@shared/lib/supabase';
 import { resolveOrCreateExercise } from '@shared/lib/resolveOrCreateExercise';
+import { enqueueWorkout } from '@shared/lib/workoutOutbox';
 
 const mockRpc = vi.mocked(supabase.rpc);
 const mockResolveExercise = vi.mocked(resolveOrCreateExercise);
+const mockEnqueue = vi.mocked(enqueueWorkout);
 
 // jsdom no define navigator.onLine → lo fijamos manualmente
 const DEFAULT_ONLINE = true;
@@ -56,6 +58,7 @@ describe('useWorkoutStore', () => {
     });
     mockResolveExercise.mockClear();
     mockResolveExercise.mockResolvedValue('test-exercise-id');
+    mockEnqueue.mockClear();
     Object.defineProperty(navigator, 'onLine', { configurable: true, value: DEFAULT_ONLINE });
   });
 
@@ -374,6 +377,9 @@ describe('useWorkoutStore', () => {
       const [primerEnvio, reintento] = mockRpc.mock.calls;
       expect(primerEnvio[1].p_client_id).toBeTruthy();
       expect(reintento[1].p_client_id).toBe(primerEnvio[1].p_client_id);
+      // La hora de cierre también forma parte de la huella: si cambiara, el
+      // servidor vería otro contenido con la misma clave y lo rechazaría.
+      expect(reintento[1].p_finished_at).toBe(primerEnvio[1].p_finished_at);
     });
 
     it('estrena clave de idempotencia en la sesión siguiente', async () => {
@@ -391,20 +397,139 @@ describe('useWorkoutStore', () => {
       expect(segunda[1].p_client_id).not.toBe(primera[1].p_client_id);
     });
 
-    it('no manda series con repeticiones no enteras', async () => {
+    it('rechaza la fila con repeticiones no enteras en vez de guardar una serie menos', async () => {
       const store = useWorkoutStore.getState();
       store.setActiveExercise('ex-1');
       store.updateSet(0, { reps: '10', weight: '100' });
       store.addSet();
       // Dato viejo persistido: la RPC lo descarta en silencio (su filtro es
-      // `^\d+$`), así que se filtra aquí para no guardar una serie de menos.
+      // `^\d+$`). Antes se enviaba igual y el entreno se guardaba sin esa serie;
+      // ahora se abre la fila para corregirla.
       store.updateSet(1, { reps: '10.5', weight: '100' });
 
       const result = await useWorkoutStore.getState().saveWorkout('user-1');
 
+      expect(result.success).toBe(false);
+      expect(result.error?.message).toBe('workout.errors.reps_invalid');
+      expect(result.setErrors).toEqual({ 1: 'workout.errors.reps_invalid' });
+      expect(mockRpc).not.toHaveBeenCalled();
+    });
+
+    it('guarda una serie de repeticiones sin peso como 0 kg', async () => {
+      const store = useWorkoutStore.getState();
+      store.setActiveExercise('ex-1');
+      // Gemelos de pie a una pierna: se escriben las reps y no hay lastre. Antes
+      // la pantalla la aceptaba y el store la tiraba, así que Guardar respondía
+      // «no hay series válidas» sobre una serie recién escrita.
+      store.updateSet(0, { reps: '15', weight: '' });
+
+      const result = await store.saveWorkout('user-1');
+
+      expect(result.error).toBeNull();
       expect(result.success).toBe(true);
-      const pSets = mockRpc.mock.calls[0][1].p_sets as { set_num: number }[];
-      expect(pSets).toHaveLength(1);
+      const pSets = mockRpc.mock.calls[0][1].p_sets as { reps: number; weight: number }[];
+      expect(pSets).toEqual([expect.objectContaining({ set_num: 1, reps: 15, weight: 0 })]);
+    });
+
+    it('registra una serie por tiempo sin reps y sin peso', async () => {
+      const store = useWorkoutStore.getState();
+      store.setActiveExercise('ex-1');
+      store.updateSet(0, { reps: '', weight: '', durationSeconds: '48' });
+
+      const result = await store.saveWorkout('user-1');
+
+      expect(result.success).toBe(true);
+      const pSets = mockRpc.mock.calls[0][1].p_sets as {
+        reps: number | null;
+        weight: number;
+        duration_seconds?: number;
+      }[];
+      expect(pSets[0]).toMatchObject({ reps: null, weight: 0, duration_seconds: 48 });
+    });
+
+    it('rechaza la fila con peso negativo indicando el motivo', async () => {
+      const store = useWorkoutStore.getState();
+      store.setActiveExercise('ex-1');
+      store.updateSet(0, { reps: '8', weight: '-5' });
+
+      const result = await store.saveWorkout('user-1');
+
+      expect(result.success).toBe(false);
+      expect(result.setErrors).toEqual({ 0: 'workout.errors.weight_negative' });
+      expect(mockRpc).not.toHaveBeenCalled();
+    });
+
+    it('estrena clave cuando el contenido cambia tras un fallo duro', async () => {
+      mockRpc.mockRejectedValueOnce(new Error('Database constraint violation'));
+      const store = useWorkoutStore.getState();
+      store.setActiveExercise('ex-1');
+      store.updateSet(0, { reps: '10', weight: '100' });
+
+      const first = await store.saveWorkout('user-1');
+      expect(first.success).toBe(false);
+      const claveOriginal = useWorkoutStore.getState().clientId;
+
+      // El usuario corrige el peso: la clave anterior identificaría otro
+      // contenido y el servidor la rechazaría para siempre.
+      useWorkoutStore.getState().updateSet(0, { weight: '90' });
+      const second = await useWorkoutStore.getState().saveWorkout('user-1');
+
+      expect(second.success).toBe(true);
+      const [primerEnvio, reintento] = mockRpc.mock.calls;
+      expect(reintento[1].p_client_id).not.toBe(claveOriginal);
+      expect(reintento[1].p_client_id).not.toBe(primerEnvio[1].p_client_id);
+    });
+
+    it('al encolar conserva la clave en la entrada del outbox y limpia la sesión', async () => {
+      Object.defineProperty(navigator, 'onLine', { configurable: true, value: false });
+      const store = useWorkoutStore.getState();
+      store.setActiveExercise('ex-1');
+      store.updateSet(0, { reps: '10', weight: '100' });
+
+      const result = await store.saveWorkout('user-1');
+
+      expect(result.queued).toBe(true);
+      const entrada = mockEnqueue.mock.calls[0][0];
+      expect(entrada.id).toMatch(/^[0-9a-f-]{36}$/);
+      expect(entrada.finishedAt).toBeTruthy();
+      // La sesión se cierra, pero la entrada ya lleva la identidad completa.
+      expect(useWorkoutStore.getState().clientId).toBeNull();
+      expect(useWorkoutStore.getState().finishedAt).toBeNull();
+    });
+
+    it('en modo peso corporal suma el peso vigente al lastre', async () => {
+      const store = useWorkoutStore.getState();
+      store.setActiveExercise('ex-1');
+      store.updateSet(0, { reps: '8', weight: '20' });
+
+      await store.saveWorkout('user-1', { bodyweight: true, bodyWeightKg: 80 });
+
+      const pSets = mockRpc.mock.calls[0][1].p_sets as { weight: number }[];
+      expect(pSets[0].weight).toBe(100);
+    });
+
+    it('el contexto explícito manda sobre el que quedó en el store', async () => {
+      const store = useWorkoutStore.getState();
+      // El efecto de la pantalla dejó el contexto del ejercicio anterior.
+      store.setBodyweightContext(true, 80);
+      store.setActiveExercise('ex-1');
+      store.updateSet(0, { reps: '10', weight: '60' });
+
+      await store.saveWorkout('user-1', { bodyweight: false, bodyWeightKg: null });
+
+      const pSets = mockRpc.mock.calls[0][1].p_sets as { weight: number }[];
+      expect(pSets[0].weight).toBe(60);
+    });
+
+    it('al guardar bien también limpia finishedAt y la huella', async () => {
+      const store = useWorkoutStore.getState();
+      store.setActiveExercise('ex-1');
+      store.updateSet(0, { reps: '10', weight: '100' });
+      await store.saveWorkout('user-1');
+
+      const state = useWorkoutStore.getState();
+      expect(state.finishedAt).toBeNull();
+      expect(state.saveFingerprint).toBeNull();
     });
   });
 

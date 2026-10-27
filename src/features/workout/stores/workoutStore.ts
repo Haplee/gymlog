@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import { DEFAULT_MUSCLE_GROUP } from '@shared/constants/muscleGroups';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { createThrottledLocalStorage, flushThrottledStorage } from '@shared/lib/throttledStorage';
-import { z } from 'zod';
 import type { WorkoutWithSets } from '@shared/lib/types';
 import { devError } from '@shared/lib/devtools';
 import { saveWorkoutOrQueue } from '@shared/lib/saveWorkout';
@@ -12,30 +11,37 @@ import { notifyNewRecords } from '@shared/lib/prNotification';
 import { getRoutineReminderDays } from '@features/routine/lib/routineReminders';
 import { queryClient } from '@app/queryClient';
 import { toLocalDateKey } from '@shared/lib/dateKeys';
+import {
+  parseDurationSeconds,
+  parseReps,
+  selectSetsForSave,
+} from '@features/workout/lib/setValidation';
 
-const SetDataSchema = z.object({
-  id: z.string().default(() => crypto.randomUUID()),
-  // Vacío en una serie por tiempo. La validación de «tiene que medir algo» no
-  // puede vivir aquí campo a campo: es una regla entre los dos, y se comprueba
-  // en `esSerieValida` justo antes de guardar.
-  reps: z.string().max(4, 'Max 9999').optional().default(''),
-  // Sin `min(1)`: una plancha sin lastre no lleva peso escrito, y exigirlo la
-  // descartaba antes de llegar a las reglas de abajo — el guardado respondia
-  // «anade reps y kg validas» sobre una serie de 48 segundos que estaba bien.
-  // No afloja nada: una serie de repeticiones sin peso sigue cayendo en la
-  // regla `weight === 0` unas lineas mas abajo, igual que siempre.
-  weight: z.string().max(6, 'Max 999999').optional().default(''),
+/**
+ * Forma de una fila del formulario. **No valida**: los límites de longitud de
+ * antes (`reps.max(4)`, `weight.max(6)`) descartaban la fila entera antes de
+ * llegar a ninguna comprobación, así que un peso en libras con decimales o un
+ * dato heredado largo se perdía sin decir nada. Qué se puede guardar lo decide
+ * `selectSetsForSave`.
+ */
+interface SetData {
+  id: string;
+  // Vacío en una serie por tiempo; la regla «tiene que medir algo» es conjunta
+  // y vive en `setValidation`.
+  reps: string;
+  // Sin mínimo: una serie sin lastre pesa 0 y es válida.
+  weight: string;
   /** Segundos aguantados, como texto. Vacío en una serie de repeticiones. */
-  durationSeconds: z.string().max(4).optional().default(''),
-  isWarmup: z.boolean().default(false),
-  notes: z.string().max(500).optional().default(''),
+  durationSeconds: string;
+  isWarmup: boolean;
+  notes: string;
   // RPE 1-10 como string ('' = sin valor). Validado a SMALLINT en la RPC.
-  rpe: z.string().max(2).optional().default(''),
+  rpe: string;
   // Tipo de serie avanzado. 'normal' por defecto.
-  setType: z.enum(['normal', 'dropset', 'rest_pause', 'amrap']).optional().default('normal'),
+  setType: 'normal' | 'dropset' | 'rest_pause' | 'amrap';
   // Marcar con ✓. Solo importa durante la sesión: al guardar decide qué series
   // se incluyen si el usuario elige «solo completadas». No se persiste en BD.
-  completed: z.boolean().optional().default(false),
+  completed: boolean;
   /**
    * La fila la creó la app al cerrar la serie anterior, no la escribió nadie.
    *
@@ -43,10 +49,8 @@ const SetDataSchema = z.object({
    * entreno una serie que el usuario nunca hizo. Se apaga en cuanto se toca
    * cualquier campo, que es la señal de que ya es suya. No se persiste en BD.
    */
-  autofilled: z.boolean().optional().default(false),
-});
-
-type SetData = z.infer<typeof SetDataSchema>;
+  autofilled: boolean;
+}
 
 interface PersistedWorkout {
   activeExerciseId: string | null;
@@ -66,6 +70,32 @@ interface PersistedWorkout {
    * acababa en dos entrenos idénticos en el historial.
    */
   clientId: string | null;
+  /**
+   * Hora de cierre del guardado en curso.
+   *
+   * Se fija en el primer intento y **se conserva si ese intento falla**: forma
+   * parte de la huella que el servidor guarda junto a `client_id`. Si cambiara
+   * en cada reintento, el mismo envío parecería otro contenido y el servidor lo
+   * rechazaría con `idempotency_conflict` para siempre. Es lo que dejaba una
+   * rutina a medias sin poder terminarse nunca.
+   */
+  finishedAt: string | null;
+  /**
+   * Huella del contenido que acompañó a `clientId`.
+   *
+   * Permite distinguir «reintento del mismo envío» (misma clave) de «el usuario
+   * corrigió el entreno después de un fallo» (clave nueva). Reutilizar la clave
+   * con otro contenido es justo lo que el servidor rechaza.
+   */
+  saveFingerprint: string | null;
+}
+
+interface SaveWorkoutResult {
+  error: Error | null;
+  success: boolean;
+  queued?: boolean;
+  /** Filas que impidieron el guardado, por índice. La pantalla las abre. */
+  setErrors?: Record<number, string>;
 }
 
 interface WorkoutState extends PersistedWorkout {
@@ -89,8 +119,21 @@ interface WorkoutState extends PersistedWorkout {
   removeAllSets: () => void;
   saveWorkout: (
     userId: string,
-    opts?: { onlyCompleted?: boolean },
-  ) => Promise<{ error: Error | null; success: boolean; queued?: boolean }>;
+    opts?: {
+      onlyCompleted?: boolean;
+      /**
+       * Contexto de peso corporal **explícito**.
+       *
+       * La pantalla lo calcula del ejercicio activo y lo pasa aquí. Antes solo
+       * se leía del store, que se actualiza en un efecto: al cambiar de
+       * ejercicio y guardar de inmediato podía seguir el valor del anterior, y
+       * el peso se guardaba como lastre (o como total) según el ejercicio
+       * equivocado.
+       */
+      bodyweight?: boolean;
+      bodyWeightKg?: number | null;
+    },
+  ) => Promise<SaveWorkoutResult>;
   clearPersistedState: () => void;
 }
 
@@ -127,23 +170,15 @@ const TOUCH_FIELDS = [
 
 /** Segundos válidos de la serie, o `null` si no se mide en tiempo. */
 export function segundosDeSerie(s: { durationSeconds?: string }): number | null {
-  const n = Number.parseInt(s.durationSeconds ?? '', 10);
-  return Number.isFinite(n) && n > 0 && n <= 3600 ? n : null;
+  return parseDurationSeconds(s.durationSeconds);
 }
 
 /**
  * Repeticiones válidas de la serie, o `null` si no se mide en repeticiones.
- *
- * Solo enteros. La RPC filtra con `^\d+$` y descarta en silencio la serie que no
- * encaje —incluida una con `10.5`, que `Number()` aceptaba—, así que validarlo
- * aquí es la diferencia entre «no se guardó» y «se guardó un entreno al que le
- * falta una serie».
+ * Delegado en la validación compartida para que no vuelvan a divergir.
  */
 export function repsDeSerie(s: { reps?: string }): number | null {
-  const texto = s.reps?.trim() ?? '';
-  if (!/^\d+$/.test(texto)) return null;
-  const n = Number(texto);
-  return n > 0 && n <= 9999 ? n : null;
+  return parseReps(s.reps);
 }
 
 export const useWorkoutStore = create<WorkoutState>()(
@@ -157,6 +192,8 @@ export const useWorkoutStore = create<WorkoutState>()(
       sessionNotes: '',
       sessionRating: null,
       clientId: null,
+      finishedAt: null,
+      saveFingerprint: null,
       loading: false,
       error: null,
       bodyweightMode: false,
@@ -171,6 +208,8 @@ export const useWorkoutStore = create<WorkoutState>()(
           customExerciseName: '',
           // Entreno nuevo: la clave de idempotencia del anterior no vale aquí.
           clientId: null,
+          finishedAt: null,
+          saveFingerprint: null,
           sets: sortedSets.map((s) => {
             const rpeVal = (s as { rpe?: number | null }).rpe;
             return makeSet(
@@ -227,7 +266,10 @@ export const useWorkoutStore = create<WorkoutState>()(
         set({ sets: [] });
       },
 
-      saveWorkout: async (userId: string, opts?: { onlyCompleted?: boolean }) => {
+      saveWorkout: async (
+        userId: string,
+        opts?: { onlyCompleted?: boolean; bodyweight?: boolean; bodyWeightKg?: number | null },
+      ) => {
         const {
           activeExerciseId,
           customExerciseName,
@@ -235,6 +277,7 @@ export const useWorkoutStore = create<WorkoutState>()(
           sets: setData,
           sessionNotes,
           sessionRating,
+          startedAt: storedStartedAt,
           bodyweightMode,
           bodyWeightKg,
         } = get();
@@ -246,77 +289,114 @@ export const useWorkoutStore = create<WorkoutState>()(
           return { error: new Error('workout.errors.pick_exercise'), success: false };
         }
 
-        const validSets = setData
-          .filter((s) => {
-            const result = SetDataSchema.safeParse(s);
-            if (!result.success) return false;
-
-            // Una serie tiene que medir algo: repeticiones o segundos. Es la
-            // misma regla que el `CHECK workout_sets_measured` de la BD, puesta
-            // aquí para que el usuario vea un mensaje en vez de un error de
-            // Postgres.
-            const segundos = segundosDeSerie(s);
-            const reps = repsDeSerie(s);
-            if (reps == null && segundos == null) return false;
-
-            const weight = Number(s.weight);
-            if (!Number.isFinite(weight) || weight < 0) return false;
-            // Una plancha sin lastre pesa 0 y sigue siendo una serie válida.
-            if (segundos != null && reps == null) return true;
-            // En modo peso corporal el kg introducido es lastre y puede ser 0.
-            if (bodyweightMode) return true;
-            // Allow weight=0 only on warmup sets (e.g. bodyweight warmup)
-            if (!s.isWarmup && weight === 0) return false;
-            return true;
-          })
-          // La fila que la app dejó abierta al cerrar la anterior no es una
-          // serie hecha: sin `onlyCompleted` se guardaba igual y añadía al
-          // entreno una repetición de la última serie que nadie hizo.
-          .filter((s) => !(s.autofilled && !s.completed))
-          .filter((s) => (opts?.onlyCompleted ? s.completed : true));
-        if (!validSets.length)
+        // Una sola regla para pantalla y store. Antes cada uno filtraba a su
+        // manera: la pantalla aceptaba reps sin peso y el store las tiraba, de
+        // modo que «Guardar» respondía «no hay series válidas» sobre la serie
+        // que el usuario acababa de escribir.
+        const { selected, errors } = selectSetsForSave(setData, {
+          onlyCompleted: opts?.onlyCompleted,
+        });
+        const failedRows = Object.keys(errors).map(Number);
+        if (failedRows.length > 0) {
+          devError('[WorkoutStore] series sin guardar', {
+            exerciseId: activeExerciseId,
+            rows: failedRows,
+            codes: failedRows.map((i) => errors[i]),
+          });
+          return {
+            error: new Error(errors[failedRows[0]]),
+            success: false,
+            setErrors: errors,
+          };
+        }
+        if (!selected.length) {
           return { error: new Error('workout.errors.no_valid_sets'), success: false };
+        }
 
-        const startedAt = get().startedAt || new Date().toISOString();
-        const finishedAt = new Date().toISOString();
+        // El contexto explícito manda: el del store se actualiza en un efecto y
+        // puede ir un ejercicio por detrás al guardar justo después de cambiar.
+        const bodyweight = opts?.bodyweight ?? bodyweightMode;
+        const effectiveBodyWeight =
+          opts?.bodyWeightKg !== undefined ? opts.bodyWeightKg : bodyWeightKg;
+
+        const startedAt = storedStartedAt || new Date().toISOString();
         const notes = sessionNotes.trim() || undefined;
         const rating = sessionRating ?? undefined;
-        // Clave de idempotencia del envío. Se genera una vez y se reutiliza tanto
-        // en el intento directo como en la entrada del outbox: si el RPC llegó a
-        // escribirse y solo se perdió la respuesta, el reenvío no duplica nada.
-        // Se guarda en el estado (y se vuelca) **antes** de la red: si el
-        // intento falla o la app muere a mitad, el reintento manda la misma.
-        const clientId = get().clientId ?? crypto.randomUUID();
-        if (get().clientId !== clientId) {
-          set({ clientId });
-          flushThrottledStorage();
-        }
 
         // En modo peso corporal el kg introducido es lastre; el peso guardado es
         // (peso corporal vigente + lastre) para que volumen/PRs sean correctos.
-        const effectiveWeight = (s: SetData): number => {
-          const entered = Number(s.weight) || 0;
-          return bodyweightMode ? (bodyWeightKg ?? 0) + entered : Number(s.weight);
-        };
-
-        const setsPayload = validSets.map((s, i) => {
-          const segundos = segundosDeSerie(s);
-          const reps = repsDeSerie(s);
+        const setsPayload = selected.map((s, i) => {
+          const source = setData[s.index];
           return {
             set_num: i + 1,
             // `null`, no `0`: es lo que separa «no se mide así» de «hizo cero».
-            reps,
-            weight: effectiveWeight(s),
-            is_warmup: !!s.isWarmup,
-            notes: s.notes?.trim() || '',
-            rpe: s.rpe?.trim() || '',
-            set_type: s.setType || 'normal',
+            reps: s.reps,
+            weight: bodyweight ? (effectiveBodyWeight ?? 0) + s.weightKg : s.weightKg,
+            is_warmup: !!source.isWarmup,
+            notes: source.notes?.trim() || '',
+            rpe: source.rpe?.trim() || '',
+            set_type: source.setType || 'normal',
             // Solo viaja si de verdad hay duración: la RPC ignora lo que no
             // parezca un entero positivo, pero mandar `undefined` es más claro
             // que mandar un campo vacío en cada serie de repeticiones.
-            ...(segundos != null ? { duration_seconds: segundos } : {}),
+            ...(s.durationSeconds != null ? { duration_seconds: s.durationSeconds } : {}),
           };
         });
+
+        // Huella del contenido, en el mismo espíritu que la del servidor: si el
+        // usuario corrige el entreno después de un fallo duro, la clave vieja
+        // ya no representa este envío y reutilizarla acabaría en
+        // `idempotency_conflict`. Si el contenido no cambia, la clave se
+        // conserva y el reintento es reconocido como el mismo guardado.
+        const fingerprint = JSON.stringify([
+          activeExerciseId,
+          customExerciseName.trim(),
+          startedAt,
+          setsPayload,
+          notes ?? '',
+          rating ?? null,
+        ]);
+
+        const previous = get();
+        let clientId = previous.clientId;
+        let finishedAt = previous.finishedAt;
+        let saveFingerprint = previous.saveFingerprint;
+        const contentChanged =
+          clientId != null && saveFingerprint != null && saveFingerprint !== fingerprint;
+
+        if (!clientId) {
+          clientId = crypto.randomUUID();
+          finishedAt = new Date().toISOString();
+          saveFingerprint = fingerprint;
+        } else if (contentChanged) {
+          // Fallo duro con el contenido ya corregido: envío nuevo. El anterior
+          // no llegó a escribirse (la RPC es atómica), así que no duplica nada.
+          clientId = crypto.randomUUID();
+          finishedAt = new Date().toISOString();
+          saveFingerprint = fingerprint;
+          devError('[WorkoutStore] contenido cambiado tras un fallo: nueva clave', {
+            exerciseId: activeExerciseId,
+            clientId,
+          });
+        } else {
+          // Sesión de una versión anterior: no hay huella con la que comparar.
+          // Se adopta la actual sin rotar, igual que hace el servidor al
+          // reencontrar una fila sin `idempotency_hash`.
+          saveFingerprint ??= fingerprint;
+          finishedAt ??= new Date().toISOString();
+        }
+
+        // La identidad se guarda (y se vuelca) **antes** de la red: si el
+        // intento falla o la app muere a mitad, el reintento manda la misma.
+        if (
+          previous.clientId !== clientId ||
+          previous.finishedAt !== finishedAt ||
+          previous.startedAt !== startedAt ||
+          previous.saveFingerprint !== saveFingerprint
+        ) {
+          set({ clientId, finishedAt, startedAt, saveFingerprint });
+          flushThrottledStorage();
+        }
 
         const resetState = () =>
           set({
@@ -329,6 +409,8 @@ export const useWorkoutStore = create<WorkoutState>()(
             sessionRating: null,
             // Guardado (o encolado): la próxima sesión estrena clave.
             clientId: null,
+            finishedAt: null,
+            saveFingerprint: null,
           });
 
         // Ya ha entrenado hoy: silencia los recordatorios de hoy al instante.
@@ -354,8 +436,17 @@ export const useWorkoutStore = create<WorkoutState>()(
         });
 
         if (outcome.status === 'error') {
-          devError('[WorkoutStore] saveWorkout:', outcome.error.message);
-          return { error: outcome.error, success: false };
+          devError('[WorkoutStore] saveWorkout falló', {
+            clientId,
+            exerciseId: activeExerciseId,
+            phase: 'rpc',
+            code: (outcome.error as { code?: string }).code ?? null,
+            message: outcome.error.message,
+          });
+          return {
+            error: new Error(outcome.error.message, { cause: outcome.error }),
+            success: false,
+          };
         }
 
         onSaved();
@@ -383,6 +474,8 @@ export const useWorkoutStore = create<WorkoutState>()(
           sessionNotes: '',
           sessionRating: null,
           clientId: null,
+          finishedAt: null,
+          saveFingerprint: null,
         }),
     }),
     {
@@ -399,6 +492,10 @@ export const useWorkoutStore = create<WorkoutState>()(
         sessionNotes: state.sessionNotes,
         sessionRating: state.sessionRating,
         clientId: state.clientId,
+        // Sin esto, un fallo de red perdía la hora de cierre y el reintento
+        // mandaba otra distinta: mismo `client_id`, huella distinta, conflicto.
+        finishedAt: state.finishedAt,
+        saveFingerprint: state.saveFingerprint,
       }),
     },
   ),

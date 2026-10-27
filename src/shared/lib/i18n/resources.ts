@@ -776,9 +776,12 @@ export const resources = {
         errors: {
           needs_measure: 'Añade repeticiones o segundos',
           weight_negative: 'El peso no puede ser negativo',
+          weight_invalid: 'El peso no es un número válido',
+          reps_invalid: 'Las repeticiones tienen que ser un número entero',
+          duration_invalid: 'Los segundos tienen que ser un número entero',
           invalid_set: 'Serie incompleta',
           pick_exercise: 'Elige un ejercicio antes de guardar',
-          no_valid_sets: 'Añade reps y kg válidas',
+          no_valid_sets: 'Añade al menos una serie',
           queue_failed: 'No se pudo guardar ni dejar pendiente. Inténtalo de nuevo',
           idempotency_conflict:
             'Este guardado ya se registró con otro contenido. Recarga el historial antes de volver a intentarlo',
@@ -994,9 +997,9 @@ export const resources = {
         session_dropped_sets_one: 'Una serie se quedó a medias y no se ha guardado',
         session_dropped_sets_other: '{{count}} series se quedaron a medias y no se han guardado',
         errors: {
-          session_no_sets: 'Registra al menos una serie con reps y kg',
+          session_no_sets: 'Registra al menos una serie',
         },
-        session_empty: 'Registra al menos una serie con reps y kg',
+        session_empty: 'Registra al menos una serie',
         session_how_to: 'Cómo hacerlo',
         session_recommended_weight: 'Peso recomendado',
         session_no_recommendation:
@@ -2075,9 +2078,12 @@ export const resources = {
         errors: {
           needs_measure: 'Add reps or seconds',
           weight_negative: 'Weight cannot be negative',
+          weight_invalid: 'Weight is not a valid number',
+          reps_invalid: 'Reps must be a whole number',
+          duration_invalid: 'Seconds must be a whole number',
           invalid_set: 'Incomplete set',
           pick_exercise: 'Pick an exercise before saving',
-          no_valid_sets: 'Add valid reps and weight',
+          no_valid_sets: 'Add at least one set',
           queue_failed: 'Could not save it or queue it. Please try again',
           idempotency_conflict:
             'This save was already recorded with different content. Reload your history before trying again',
@@ -2288,9 +2294,9 @@ export const resources = {
         session_dropped_sets_one: 'One set was left unfinished and was not saved',
         session_dropped_sets_other: '{{count}} sets were left unfinished and were not saved',
         errors: {
-          session_no_sets: 'Log at least one set with reps and weight',
+          session_no_sets: 'Log at least one set',
         },
-        session_empty: 'Log at least one set with reps and weight',
+        session_empty: 'Log at least one set',
         session_how_to: 'How to do it',
         session_recommended_weight: 'Recommended weight',
         session_no_recommendation:

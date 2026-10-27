@@ -9,6 +9,12 @@ import { normalizeExerciseName } from '@shared/lib/progressionCycle';
 import type { DayOfWeek, DayRoutine, Routine } from './routineStore';
 import { planDurationOf, planModeOf } from '../utils/planTarget';
 import { totalFromPerSide } from '@shared/lib/perSide';
+import {
+  parseDurationSeconds,
+  parseReps,
+  parseSetWeight,
+} from '@features/workout/lib/setValidation';
+import { isIdempotencyConflict } from '@shared/lib/idempotency';
 
 export interface SessionSet {
   id: string;
@@ -33,6 +39,16 @@ export interface SessionSet {
   weightTouched?: boolean;
   /** Segundos aguantados. Vacío en una serie de repeticiones. */
   durationSeconds: string;
+  /**
+   * El usuario ha editado esta fila (reps, peso o segundos).
+   *
+   * Las filas nacen del plan con las repeticiones objetivo ya puestas, así que
+   * tener repeticiones no significa haber hecho la serie. Sin esta marca,
+   * guardar una rutina de 4×8 a medio hacer registraba las cuatro series del
+   * plan aunque solo se hubiera tocado una. Las que se quedan con el objetivo
+   * intacto no se envían.
+   */
+  touched?: boolean;
 }
 
 export interface SessionExercise {
@@ -63,6 +79,17 @@ export interface SessionExercise {
    * anteriores no la traen y se les asigna al vuelo.
    */
   clientId?: string;
+  /**
+   * Este ejercicio ya está escrito en el servidor (o en la cola) en un intento
+   * anterior de terminar la sesión.
+   *
+   * Un fallo a mitad de `finish` dejaba la sesión entera pendiente, así que el
+   * reintento reenviaba también los ejercicios que ya se habían guardado. Con la
+   * misma clave y la misma huella el servidor lo tolera, pero si algo cambiaba
+   * —la hora de cierre, una corrección— respondía `idempotency_conflict` y la
+   * rutina no se podía terminar nunca. Marcarlos permite saltarlos.
+   */
+  savedAt?: string;
   sets: SessionSet[];
 }
 
@@ -79,6 +106,14 @@ export interface RoutineSessionResult {
    * peso guardaba tres y no se enteraba hasta mirar el historial.
    */
   droppedSets: number;
+  /**
+   * Nombres de los ejercicios escritos en el servidor **en este intento**.
+   *
+   * La progresión se registra solo para estos: incluir los que ya estaban
+   * guardados de un intento anterior avanzaría el ciclo dos veces por la misma
+   * sesión.
+   */
+  savedExerciseNames: string[];
 }
 
 interface RoutineSessionState {
@@ -87,6 +122,14 @@ interface RoutineSessionState {
   dayName: string;
   day: DayOfWeek | null;
   startedAt: string | null;
+  /**
+   * Hora de cierre congelada en el primer intento de `finish`.
+   *
+   * Forma parte de la huella que el servidor guarda con el `client_id`. Si se
+   * regenerara en cada reintento, el mismo envío parecería otro contenido y el
+   * servidor lo rechazaría con `idempotency_conflict`.
+   */
+  finishedAt: string | null;
   exercises: SessionExercise[];
   saving: boolean;
 
@@ -145,6 +188,12 @@ const makeSet = (reps = '', weight = '', durationSeconds = ''): SessionSet => ({
   durationSeconds,
 });
 
+/** Campos cuya edición convierten la fila del plan en una fila registrada. */
+const INTENT_FIELDS = ['reps', 'weight', 'durationSeconds'] as const;
+
+/** Campos que forman parte de lo guardado: cambiarlos invalida un guardado previo. */
+const CONTENT_FIELDS = [...INTENT_FIELDS, 'rpe'] as const;
+
 /**
  * Repeticiones objetivo de la plantilla como valor inicial de la fila.
  *
@@ -179,39 +228,24 @@ function objetivoDeReps(reps: string | undefined, perSide?: boolean): string {
 
 /** Segundos válidos de la serie, o `null` si no se mide en tiempo. */
 function segundosDe(s: SessionSet): number | null {
-  const n = Number.parseInt(s.durationSeconds ?? '', 10);
-  return Number.isFinite(n) && n > 0 && n <= 3600 ? n : null;
+  return parseDurationSeconds(s.durationSeconds);
 }
 
 /** Repeticiones válidas de la serie, o `null` si no se miden. */
 function repsDe(s: SessionSet): number | null {
-  // Mismo filtro que la RPC (`^\d+$`): un `10.5` heredado acababa con la serie
-  // descartada en el servidor sin que nadie se enterara.
-  const texto = s.reps.trim();
-  if (!/^\d+$/.test(texto)) return null;
-  const n = Number(texto);
-  return n > 0 && n <= 9999 ? n : null;
+  return parseReps(s.reps);
 }
 
 /**
  * Una serie cuenta si mide algo —repeticiones o segundos— y el peso es válido.
  *
- * Una plancha **sin lastre pesa 0 y vale**: exigirle un peso positivo dejaría
- * fuera justo el caso normal. En cambio una serie de repeticiones sin peso sigue
- * sin contar, que es como funcionaba antes.
+ * Una serie sin lastre pesa 0 y vale: exigirle un peso positivo dejaba fuera
+ * justo el caso normal de los ejercicios a peso corporal. El peso vacío no es
+ * un dato que falte, es «no hay lastre».
  */
 function isValidSet(s: SessionSet): boolean {
-  const segundos = segundosDe(s);
-  const reps = repsDe(s);
-  if (reps == null && segundos == null) return false;
-
-  const weight = Number(s.weight);
-  if (segundos != null && reps == null) {
-    // Sin peso escrito se entiende «sin lastre», no «serie inválida».
-    return !s.weight.trim() || (Number.isFinite(weight) && weight >= 0);
-  }
-  if (!s.weight.trim() || !Number.isFinite(weight) || weight < 0) return false;
-  return true;
+  if (repsDe(s) == null && segundosDe(s) == null) return false;
+  return parseSetWeight(s.weight) != null;
 }
 
 /**
@@ -220,28 +254,31 @@ function isValidSet(s: SessionSet): boolean {
  * No vale mirar las repeticiones: el plan las precarga con su objetivo, así que
  * las filas nacen con un número puesto y quedarse cortas de series —planear
  * cuatro y hacer tres— es lo normal, no una pérdida. Lo que delata una serie de
- * verdad es el peso o los segundos, que solo aparecen si alguien los escribe.
+ * verdad es que se haya editado (`touched`), o que tenga peso o segundos, que
+ * solo aparecen si alguien los escribe.
  */
 function pareceIntencionada(s: SessionSet): boolean {
-  return !!(s.weight.trim() || (s.durationSeconds ?? '').trim());
+  return !!(s.touched || s.weight.trim() || (s.durationSeconds ?? '').trim());
 }
 
 function toOutboxSets(sets: SessionSet[], toKg: (w: number) => number): OutboxSet[] {
-  return sets.filter(isValidSet).map((s, i) => {
-    const segundos = segundosDe(s);
-    const peso = s.weight.trim() ? toKg(Number(s.weight)) : 0;
-    return {
-      set_num: i + 1,
-      // `null`, no `0`: la BD distingue «no se mide así» de «hizo cero».
-      reps: repsDe(s),
-      weight: peso,
-      is_warmup: false,
-      notes: '',
-      rpe: s.rpe ?? '',
-      set_type: 'normal',
-      ...(segundos != null ? { duration_seconds: segundos } : {}),
-    };
-  });
+  return sets
+    .filter((s) => pareceIntencionada(s) && isValidSet(s))
+    .map((s, i) => {
+      const segundos = segundosDe(s);
+      const peso = parseSetWeight(s.weight) ?? 0;
+      return {
+        set_num: i + 1,
+        // `null`, no `0`: la BD distingue «no se mide así» de «hizo cero».
+        reps: repsDe(s),
+        weight: toKg(peso),
+        is_warmup: false,
+        notes: '',
+        rpe: s.rpe ?? '',
+        set_type: 'normal',
+        ...(segundos != null ? { duration_seconds: segundos } : {}),
+      };
+    });
 }
 
 const emptySession = {
@@ -250,6 +287,7 @@ const emptySession = {
   dayName: '',
   day: null,
   startedAt: null,
+  finishedAt: null,
   exercises: [] as SessionExercise[],
   saving: false,
 };
@@ -268,6 +306,7 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
           dayName: dayRoutine.name,
           day,
           startedAt: new Date().toISOString(),
+          finishedAt: null,
           saving: false,
           exercises: dayRoutine.exercises.map((ex) => {
             const modo = planModeOf(ex);
@@ -306,19 +345,34 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
             ...ex,
             sets: [
               ...ex.sets,
-              makeSet(last?.reps ?? '', last?.weight ?? '', last?.durationSeconds ?? ''),
+              // Una serie añadida a mano es del usuario desde el primer
+              // momento, aunque nazca copiando la anterior.
+              {
+                ...makeSet(last?.reps ?? '', last?.weight ?? '', last?.durationSeconds ?? ''),
+                touched: true,
+              },
             ],
+            // Si el ejercicio ya se guardó en un intento anterior, esta serie
+            // es una corrección: se guarda como entreno nuevo.
+            ...(ex.savedAt ? { savedAt: undefined, clientId: undefined } : {}),
           };
         });
         set({ exercises });
       },
 
       updateSet: (exerciseIndex, setIndex, data) => {
+        const cambiaContenido = CONTENT_FIELDS.some((k) => k in data);
+        const toca = INTENT_FIELDS.some((k) => k in data);
         const exercises = get().exercises.map((ex, i) => {
           if (i !== exerciseIndex) return ex;
           return {
             ...ex,
-            sets: ex.sets.map((s, j) => (j === setIndex ? { ...s, ...data } : s)),
+            sets: ex.sets.map((s, j) =>
+              j === setIndex ? { ...s, ...data, ...(toca ? { touched: true } : {}) } : s,
+            ),
+            // Corregir un ejercicio ya escrito no puede reutilizar su clave: el
+            // servidor la vería como el mismo envío con otro contenido.
+            ...(cambiaContenido && ex.savedAt ? { savedAt: undefined, clientId: undefined } : {}),
           };
         });
         set({ exercises });
@@ -327,7 +381,11 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
       removeSet: (exerciseIndex, setIndex) => {
         const exercises = get().exercises.map((ex, i) => {
           if (i !== exerciseIndex) return ex;
-          return { ...ex, sets: ex.sets.filter((_, j) => j !== setIndex) };
+          return {
+            ...ex,
+            sets: ex.sets.filter((_, j) => j !== setIndex),
+            ...(ex.savedAt ? { savedAt: undefined, clientId: undefined } : {}),
+          };
         });
         set({ exercises });
       },
@@ -352,7 +410,11 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
           });
           if (!cambioAqui) return ex;
           cambia = true;
-          return { ...ex, sets };
+          return {
+            ...ex,
+            sets,
+            ...(ex.savedAt ? { savedAt: undefined, clientId: undefined } : {}),
+          };
         });
         // Sin cambios no se llama a `set`: esto lo dispara un efecto por
         // ejercicio y re-renderizar en bucle sería el resultado.
@@ -361,7 +423,13 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
 
       setExerciseRpe: (exerciseIndex, rpe) => {
         const exercises = get().exercises.map((ex, i) =>
-          i === exerciseIndex ? { ...ex, sets: ex.sets.map((s) => ({ ...s, rpe })) } : ex,
+          i === exerciseIndex
+            ? {
+                ...ex,
+                sets: ex.sets.map((s) => ({ ...s, rpe })),
+                ...(ex.savedAt ? { savedAt: undefined, clientId: undefined } : {}),
+              }
+            : ex,
         );
         set({ exercises });
       },
@@ -371,9 +439,15 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
       discard: () => set({ ...emptySession }),
 
       finish: async (userId, resolveExerciseId, toKg) => {
-        const { exercises, startedAt, saving } = get();
+        const { exercises, startedAt, finishedAt, saving } = get();
         if (saving) {
-          return { error: null, success: false, savedExercises: 0, droppedSets: 0 };
+          return {
+            error: null,
+            success: false,
+            savedExercises: 0,
+            droppedSets: 0,
+            savedExerciseNames: [],
+          };
         }
 
         // Solo se registran los ejercicios que el usuario realmente ha hecho.
@@ -394,29 +468,49 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
           0,
         );
 
+        const alreadySaved = withIds.filter((ex) => ex.savedAt);
         const done = withIds
-          .map((ex) => ({
+          .map((ex, index) => ({
+            index,
             name: ex.name,
             sets: toOutboxSets(ex.sets, toKg),
             clientId: ex.clientId,
+            saved: !!ex.savedAt,
           }))
-          .filter((ex) => ex.sets.length > 0);
+          .filter((ex) => !ex.saved && ex.sets.length > 0);
 
         if (!done.length) {
+          if (alreadySaved.length > 0) {
+            // Todo lo que quedaba pendiente ya se escribió en un intento
+            // anterior: la sesión ha terminado, no hay nada que reenviar.
+            set({ ...emptySession });
+            return {
+              error: null,
+              success: true,
+              savedExercises: alreadySaved.length,
+              droppedSets,
+              savedExerciseNames: [],
+            };
+          }
           return {
             error: new Error('routine.errors.session_no_sets'),
             success: false,
             savedExercises: 0,
             droppedSets,
+            savedExerciseNames: [],
           };
         }
 
         const started = startedAt ?? new Date().toISOString();
-        const finished = new Date().toISOString();
+        // Congelada: forma parte de la huella del servidor. Regenerarla en cada
+        // reintento convertía el mismo envío en «otro contenido» y lo dejaba
+        // rechazado para siempre.
+        const finished = finishedAt ?? new Date().toISOString();
 
-        // Las claves se guardan antes de la primera llamada de red: si el
-        // intento falla, el estado que queda para reintentar ya las lleva.
-        set({ exercises: withIds, saving: true });
+        // Las claves y la hora de cierre se guardan antes de la primera llamada
+        // de red: si el intento falla, el estado que queda para reintentar ya
+        // las lleva.
+        set({ exercises: withIds, saving: true, startedAt: started, finishedAt: finished });
 
         const notes =
           [get().routineName, get().dayName].filter(Boolean).join(' — ').trim() || undefined;
@@ -445,19 +539,43 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
               });
             } catch (err) {
               failed += 1;
-              devError('[RoutineSession] no se pudo encolar:', err);
+              devError('[RoutineSession] no se pudo encolar:', {
+                clientId: ex.clientId,
+                exercise: ex.name,
+                phase: 'outbox',
+                error: err,
+              });
             }
           }
           return failed;
         };
 
-        const finishQueued = async (savedExercises: number) => {
+        const finishQueued = async (savedExercises: number, savedExerciseNames: string[]) => {
           set({ ...emptySession });
           void useOutboxStore.getState().refresh();
-          return { error: null, success: true, queued: true, savedExercises, droppedSets };
+          return {
+            error: null,
+            success: true,
+            queued: true,
+            savedExercises,
+            droppedSets,
+            savedExerciseNames,
+          };
         };
 
-        let saved = 0;
+        // Marca el ejercicio como escrito para que el próximo intento lo salte
+        // aunque el proceso muera justo después de esta respuesta.
+        const markSaved = (index: number) => {
+          set((state) => ({
+            exercises: state.exercises.map((ex, i) =>
+              i === index ? { ...ex, savedAt: new Date().toISOString() } : ex,
+            ),
+          }));
+        };
+
+        let saved = alreadySaved.length;
+        const savedExerciseNames: string[] = [];
+
         for (const [i, ex] of done.entries()) {
           const outcome = await saveWorkoutOrQueue({
             clientId: ex.clientId,
@@ -472,16 +590,51 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
           });
 
           if (outcome.status === 'error') {
+            // Clave ya usada con otro contenido. Con la hora de cierre
+            // congelada y los ya guardados saltados, la única forma de llegar
+            // aquí es que un intento anterior escribiera este ejercicio y el
+            // proceso muriera antes de marcarlo: el entreno existe. Bloquear la
+            // rutina para siempre por eso sería peor que darlo por bueno.
+            const conflict =
+              isIdempotencyConflict(outcome.error) ||
+              isIdempotencyConflict((outcome.error as { cause?: unknown }).cause);
+            if (conflict) {
+              devError('[RoutineSession] conflicto de idempotencia: ya estaba guardado', {
+                clientId: ex.clientId,
+                exercise: ex.name,
+                phase: 'rpc',
+                code: 'idempotency_conflict',
+              });
+              markSaved(ex.index);
+              saved += 1;
+              savedExerciseNames.push(ex.name);
+              continue;
+            }
+
             set({ saving: false });
-            devError('[RoutineSession] finish:', outcome.error.message);
-            return { error: outcome.error, success: false, savedExercises: saved, droppedSets };
+            devError('[RoutineSession] finish falló', {
+              clientId: ex.clientId,
+              exercise: ex.name,
+              phase: 'rpc',
+              code: (outcome.error as { code?: string }).code ?? null,
+              message: outcome.error.message,
+              sets: ex.sets.length,
+            });
+            return {
+              error: outcome.error,
+              success: false,
+              savedExercises: saved,
+              droppedSets,
+              savedExerciseNames,
+            };
           }
 
           if (outcome.status === 'queued') {
             // Este ya está en la cola; faltan los que ni se han intentado. El
             // corte va en `i + 1` justamente por eso: encolar desde `i` lo
             // metería dos veces.
-            const failed = await enqueueRest(done.slice(i + 1));
+            const rest = done.slice(i + 1);
+            const failed = await enqueueRest(rest);
             if (failed > 0) {
               // La sesión sigue en el store con sus `clientId`: reintentar la
               // reencola con los mismos ids y el servidor dedupe por ellos.
@@ -491,16 +644,29 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
                 success: false,
                 savedExercises: saved,
                 droppedSets,
+                savedExerciseNames,
               };
             }
-            return finishQueued(done.length);
+            return finishQueued(saved + 1 + rest.length, [
+              ...savedExerciseNames,
+              ex.name,
+              ...rest.map((r) => r.name),
+            ]);
           }
 
           saved += 1;
+          savedExerciseNames.push(ex.name);
+          markSaved(ex.index);
         }
 
         set({ ...emptySession });
-        return { error: null, success: true, savedExercises: saved, droppedSets };
+        return {
+          error: null,
+          success: true,
+          savedExercises: saved,
+          droppedSets,
+          savedExerciseNames,
+        };
       },
     }),
     {
@@ -512,6 +678,7 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
         dayName: s.dayName,
         day: s.day,
         startedAt: s.startedAt,
+        finishedAt: s.finishedAt,
         exercises: s.exercises,
       }),
     },

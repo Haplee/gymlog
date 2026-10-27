@@ -606,7 +606,7 @@ describe('idempotencia y prefill de la sesión', () => {
     consoleErrorSpy.mockRestore();
   });
 
-  it('reutiliza las claves de idempotencia al reintentar tras un fallo', async () => {
+  it('reutiliza las claves y salta los ejercicios ya guardados al reintentar', async () => {
     useRoutineSessionStore.getState().start(routine, 'monday', dayRoutine);
     fillExercise(0, '10', '60');
     fillExercise(1, '8', '40');
@@ -622,21 +622,104 @@ describe('idempotencia y prefill de la sesión', () => {
       .finish('user-1', () => 'catalog-id', identity);
     expect(primero.success).toBe(false);
     expect(primero.savedExercises).toBe(1);
+    expect(primero.savedExerciseNames).toEqual(['Press banca']);
 
-    // Las claves quedan en la sesión persistida: el reintento no las inventa.
+    // Las claves quedan en la sesión persistida y el guardado se marca para no
+    // reenviarlo: si volviera a viajar con otra hora de cierre, el servidor lo
+    // rechazaría por contenido distinto y la rutina no se podría terminar.
     const trasFallo = useRoutineSessionStore.getState().exercises;
     expect(trasFallo.every((ex) => typeof ex.clientId === 'string' && ex.clientId)).toBe(true);
+    expect(trasFallo[0].savedAt).toBeTruthy();
+    expect(trasFallo[1].savedAt).toBeUndefined();
+    expect(useRoutineSessionStore.getState().finishedAt).toBeTruthy();
+    const finishedAtPrimero = useRoutineSessionStore.getState().finishedAt;
 
     const reintento = await useRoutineSessionStore
       .getState()
       .finish('user-1', () => 'catalog-id', identity);
     expect(reintento.success).toBe(true);
+    expect(reintento.savedExerciseNames).toEqual(['Press militar']);
 
     const claves = mockRpc.mock.calls.map((c) => (c[1] as { p_client_id: string }).p_client_id);
-    expect(claves).toHaveLength(4);
-    // Los dos ejercicios del reintento llevan exactamente las claves del primer
-    // intento: el que ya estaba escrito no se duplica en el servidor.
-    expect(claves.slice(2)).toEqual(claves.slice(0, 2));
+    // Dos del primer intento + solo la del que faltaba.
+    expect(claves).toHaveLength(3);
+    // El reintento no reenvía el que ya estaba guardado y conserva la clave del
+    // que sí manda, además de la misma hora de cierre.
+    expect(claves[2]).toBe(claves[1]);
+    expect(claves[2]).not.toBe(claves[0]);
+    expect((mockRpc.mock.calls[2][1] as { p_finished_at: string }).p_finished_at).toBe(
+      finishedAtPrimero,
+    );
+  });
+
+  it('un conflicto de idempotencia se da por guardado en vez de bloquear la rutina', async () => {
+    useRoutineSessionStore.getState().start(routine, 'monday', dayRoutine);
+    fillExercise(0, '10', '60');
+    fillExercise(1, '8', '40');
+
+    mockRpc.mockImplementationOnce(() => Promise.resolve({ data: null, error: null }) as never);
+    // Un intento anterior llegó a escribir este ejercicio y el proceso murió
+    // antes de marcarlo: el servidor responde que la clave ya existe.
+    mockRpc.mockImplementationOnce((() =>
+      Promise.reject({
+        code: 'P0001',
+        message: 'idempotency_conflict: client_id ya usado con otro contenido',
+      })) as never);
+
+    const result = await useRoutineSessionStore
+      .getState()
+      .finish('user-1', () => 'catalog-id', identity);
+
+    expect(result.success).toBe(true);
+    expect(result.savedExercises).toBe(2);
+    expect(result.savedExerciseNames).toEqual(['Press banca', 'Press militar']);
+    expect(useRoutineSessionStore.getState().exercises).toHaveLength(0);
+  });
+
+  it('una serie de repeticiones sin peso se guarda como 0 kg', async () => {
+    useRoutineSessionStore.getState().start(routine, 'monday', dayRoutine);
+    useRoutineSessionStore.getState().updateSet(0, 0, { reps: '15', weight: '' });
+
+    const result = await useRoutineSessionStore
+      .getState()
+      .finish('user-1', () => 'catalog-id', identity);
+
+    expect(result.error).toBeNull();
+    expect(result.savedExercises).toBe(1);
+    const sets = (mockRpc.mock.calls[0][1] as { p_sets: { reps: number; weight: number }[] })
+      .p_sets;
+    expect(sets).toEqual([expect.objectContaining({ reps: 15, weight: 0 })]);
+  });
+
+  it('guardar una corrección de un ejercicio ya guardado estrena su clave', async () => {
+    useRoutineSessionStore.getState().start(routine, 'monday', dayRoutine);
+    fillExercise(0, '10', '60');
+    fillExercise(1, '8', '40');
+
+    mockRpc.mockImplementationOnce(() => Promise.resolve({ data: null, error: null }) as never);
+    mockRpc.mockImplementationOnce((() =>
+      Promise.reject(new Error('Database constraint violation'))) as never);
+    await useRoutineSessionStore.getState().finish('user-1', () => 'catalog-id', identity);
+
+    const antes = useRoutineSessionStore.getState().exercises[0];
+    expect(antes.savedAt).toBeTruthy();
+
+    // Corregir el peso del ejercicio ya escrito no puede reutilizar la clave:
+    // sería el mismo envío con otro contenido.
+    useRoutineSessionStore.getState().updateSet(0, 0, { weight: '55' });
+
+    const despues = useRoutineSessionStore.getState().exercises[0];
+    expect(despues.savedAt).toBeUndefined();
+    expect(despues.clientId).not.toBe(antes.clientId);
+
+    mockRpc.mockResolvedValue({ data: null, error: null } as never);
+    const result = await useRoutineSessionStore
+      .getState()
+      .finish('user-1', () => 'catalog-id', identity);
+
+    expect(result.success).toBe(true);
+    // Se reenvían los dos: el corregido como entreno nuevo y el que faltaba.
+    expect(result.savedExerciseNames).toEqual(['Press banca', 'Press militar']);
   });
 
   it('el prefill no recrea el ejercicio que no cambia por otro que sí', () => {

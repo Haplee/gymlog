@@ -15,6 +15,7 @@ import { resolveOrCreateExercise } from './resolveOrCreateExercise';
 import { enqueueWorkout, type OutboxSet } from './workoutOutbox';
 import { isNetworkError } from './networkError';
 import { isIdempotencyConflict, retryOnNetwork } from './idempotency';
+import { devError } from './devtools';
 
 export interface SaveWorkoutInput {
   /**
@@ -64,14 +65,35 @@ async function queue(input: SaveWorkoutInput): Promise<SaveWorkoutOutcome> {
       rating: input.rating,
       createdAt: new Date().toISOString(),
     });
-  } catch {
+  } catch (err) {
     // La cola local también puede fallar (IndexedDB bloqueado, cuota llena).
     // Esta función promete no lanzar nunca: quien la llama deja el guardado en
     // curso si el `await` revienta, y aquí además no queda nada guardado. Se
     // devuelve un fallo real para que la pantalla lo pueda contar.
-    return { status: 'error', error: new Error('workout.errors.queue_failed') };
+    devError('[saveWorkout] no se pudo encolar el entreno', {
+      clientId: input.clientId,
+      exerciseId: input.exerciseId,
+      phase: 'outbox',
+      error: err,
+    });
+    return { status: 'error', error: withCause('workout.errors.queue_failed', err) };
   }
   return { status: 'queued' };
+}
+
+/**
+ * Error con la causa original enganchada.
+ *
+ * La pantalla necesita el mensaje traducible, pero quien decide si un fallo es
+ * un conflicto de idempotencia necesita el error real del servidor. Antes se
+ * creaba un `Error` nuevo sin `cause`, así que el código P0001 se perdía por el
+ * camino y un conflicto parecía un fallo genérico.
+ */
+function withCause(message: string, cause: unknown): Error {
+  const error = new Error(message, { cause });
+  const code = (cause as { code?: unknown } | null)?.code;
+  if (typeof code === 'string') (error as Error & { code?: string }).code = code;
+  return error;
 }
 
 /**
@@ -119,7 +141,10 @@ export async function saveWorkoutOrQueue(input: SaveWorkoutInput): Promise<SaveW
     // red: reintentarla daría el mismo rechazo. Se dice tal cual en vez de
     // fingir que se guardó.
     if (isIdempotencyConflict(err)) {
-      return { status: 'error', error: new Error('workout.errors.idempotency_conflict') };
+      return {
+        status: 'error',
+        error: withCause('workout.errors.idempotency_conflict', err),
+      };
     }
 
     // La red se cayó a mitad: el entreno se conserva en la cola. Si el servidor
