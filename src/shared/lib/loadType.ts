@@ -22,6 +22,19 @@ export function isBodyweightLoad(loadType: string | null | undefined): boolean {
   return loadType === 'bodyweight' || loadType === 'bodyweight_loaded';
 }
 
+/**
+ * ¿La serie solo consta si se escribe un peso?
+ *
+ * Sí únicamente cuando el catálogo dice **carga externa**. Que el ejercicio no
+ * esté en la biblioteca (una plantilla que usa un nombre todavía sin ficha, o un
+ * ejercicio escrito a mano) no es lo mismo que saber que lleva kilos: ahí no hay
+ * nada que pedir y darlo por externo dejaba la rutina imposible de terminar con
+ * el plan entero delante.
+ */
+export function pideCargaExterna(loadType: string | null | undefined): boolean {
+  return loadType === 'external';
+}
+
 /** Modalidad por defecto a partir del equipamiento de ExerciseDB. */
 export function loadTypeFromEquipment(equipment: readonly string[]): LoadType {
   return equipment.some((e) => /body\s*weight/i.test(e)) ? 'bodyweight' : 'external';

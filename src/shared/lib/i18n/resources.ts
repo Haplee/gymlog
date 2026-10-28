@@ -1004,9 +1004,10 @@ export const resources = {
         session_how_to: 'Cómo hacerlo',
         session_recommended_weight: 'Peso recomendado',
         session_no_recommendation:
-          'Aún no hay historial para recomendar un peso. Escribe tú las series y la próxima vez te propongo carga.',
+          'Aún no hay historial para recomendar un peso. Si el ejercicio lleva carga, escríbela en «Ajustar serie a serie»; las repeticiones ya van puestas.',
         session_no_advice:
-          'No hay ninguna serie con peso ni tiempo. Rellena al menos una antes de terminar.',
+          'Escribe el peso de al menos una serie en «Ajustar serie a serie» antes de terminar.',
+        session_skipped_exercises: 'No se guardaron por no tener peso: {{names}}',
         session_log: 'Lo que has hecho',
         session_plan_verb: 'El plan',
         session_plan_body: 'Vas a hacer {{sets}} × {{reps}} a {{weight}} {{unit}}.',
@@ -2302,9 +2303,10 @@ export const resources = {
         session_how_to: 'How to do it',
         session_recommended_weight: 'Recommended weight',
         session_no_recommendation:
-          'Not enough history to recommend a weight yet. Type the sets yourself and next time you get a load.',
+          'Not enough history to recommend a weight yet. If the exercise takes load, enter it in “Adjust set by set”; the reps are already filled in.',
         session_no_advice:
-          'No set has a weight or a time yet. Fill in at least one before finishing.',
+          'Enter the weight of at least one set in “Adjust set by set” before finishing.',
+        session_skipped_exercises: 'Not saved because they had no weight: {{names}}',
         session_log: 'What you actually did',
         session_plan_verb: 'The plan',
         session_plan_body: "You'll do {{sets}} × {{reps}} at {{weight}} {{unit}}.",

@@ -4,7 +4,10 @@ import { useNavigate } from 'react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useShallow } from 'zustand/react/shallow';
 import { toast } from 'sonner';
-import { useRoutineSessionStore } from '@features/routine/stores/routineSessionStore';
+import {
+  useRoutineSessionStore,
+  registraLaSerie,
+} from '@features/routine/stores/routineSessionStore';
 import { useProgressionStore } from '@features/routine/stores/progressionStore';
 import { useWeight } from '@shared/hooks/useWeight';
 import { impact, notificationHaptic, ImpactStyle, NotificationType } from '@shared/lib/haptics';
@@ -13,7 +16,7 @@ import { celebrate } from '@shared/lib/celebration';
 import { fetchExerciseLibrary } from '@shared/api/queries';
 import { weightToInput } from '@shared/lib/weight';
 import { normalizeExerciseName, parseRepRange } from '@shared/lib/progressionCycle';
-import { isBodyweightLoad } from '@shared/lib/loadType';
+import { isBodyweightLoad, pideCargaExterna } from '@shared/lib/loadType';
 import type { Exercise } from '@shared/lib/types';
 import type { ExerciseAdvice } from '@features/stats/hooks/useAutoregulation';
 import { SessionExerciseCard } from './SessionExerciseCard';
@@ -124,18 +127,29 @@ export function RoutineSession({ userId, exercises }: Props) {
     [library],
   );
 
+  /**
+   * ¿Este ejercicio se mide sin carga? Todo menos la carga externa conocida:
+   * peso corporal, tiempo y los que no están en el catálogo, donde no consta
+   * que haya kilos que escribir (ver `pideCargaExterna`).
+   */
+  const sinCargaDe = useCallback(
+    (name: string) => !pideCargaExterna(catalogByName.get(normalizeName(name))?.load_type),
+    [catalogByName],
+  );
+
   const handleFinish = async () => {
     // Lo que se guarda es lo que hay en las filas: ya vienen precargadas con el
     // objetivo del plan y el peso recomendado, y con lo que el usuario haya
     // corregido encima. Aquí no se reescribe nada.
     const withWeights = sessionExercises;
 
-    // Hay algo que registrar si alguna fila la escribió el usuario: peso,
-    // duración o una edición cualquiera. Las repeticiones del plan, solas, no
-    // cuentan: precargadas en las cuatro series de un 4×8, hacían creer que la
-    // sesión estaba hecha antes de empezar.
+    // Hay algo que registrar si alguna fila es un registro de verdad. En un
+    // ejercicio con carga externa eso exige peso o edición —las repeticiones del
+    // plan, solas, no cuentan—; en peso corporal y en tiempo el plan ya es el
+    // registro. La misma regla filtra lo que se manda, para que la pantalla no
+    // deje terminar por algo que luego sí se guardaría (ni al revés).
     const hayAlgoQueRegistrar = withWeights.some((ex) =>
-      ex.sets.some((s) => s.touched || s.weight.trim() || s.durationSeconds.trim()),
+      ex.sets.some((s) => registraLaSerie(s, ex.mode === 'time' || sinCargaDe(ex.name))),
     );
     if (!hayAlgoQueRegistrar) {
       void notificationHaptic(NotificationType.Error);
@@ -143,7 +157,7 @@ export function RoutineSession({ userId, exercises }: Props) {
       return;
     }
 
-    const result = await finish(userId, resolveExerciseId, toKg);
+    const result = await finish(userId, resolveExerciseId, toKg, sinCargaDe);
 
     if (result.error) {
       void notificationHaptic(NotificationType.Error);
@@ -164,8 +178,9 @@ export function RoutineSession({ userId, exercises }: Props) {
       const catalog = catalogByName.get(normalizeName(ex.name));
       const bodyweight = isBodyweightLoad(catalog?.load_type);
       const valid = ex.sets
-        // Las filas del plan que nadie tocó no se enviaron: tampoco progresan.
-        .filter((s) => s.touched || s.weight.trim() || s.durationSeconds.trim())
+        // Las filas del plan que no se enviaron tampoco progresan: en carga
+        // externa hacen falta peso o edición, igual que al guardar.
+        .filter((s) => registraLaSerie(s, ex.mode === 'time' || bodyweight))
         .map((s) => ({ reps: Number(s.reps), weight: toKg(Number(s.weight)) }))
         .filter((s) => Number.isFinite(s.weight) && Number.isFinite(s.reps) && s.reps > 0)
         // Un 0 kg en un ejercicio con carga externa es una fila vacía, no una
@@ -208,6 +223,16 @@ export function RoutineSession({ userId, exercises }: Props) {
     void notificationHaptic(NotificationType.Success);
     celebrate();
     toast.success(result.queued ? t('routine.session_saved_offline') : t('routine.session_saved'));
+    // Un ejercicio con carga externa sin ningún peso escrito no se envía: no
+    // sabemos cuánto levantó y guardarlo como 0 kg envenenaría el volumen y la
+    // progresión. Antes se caía en silencio y el entreno aparecía a medias en el
+    // historial; ahora se dice cuáles faltan.
+    const sinRegistrar = withWeights
+      .filter((ex) => !ex.savedAt && !savedNames.has(ex.name))
+      .map((ex) => ex.name);
+    if (!result.queued && sinRegistrar.length > 0) {
+      toast.warning(t('routine.session_skipped_exercises', { names: sinRegistrar.join(', ') }));
+    }
     // Las series a medias no entran en el entreno. Antes se caían sin decir
     // nada y la única forma de notarlo era mirar el historial.
     if (result.droppedSets > 0) {

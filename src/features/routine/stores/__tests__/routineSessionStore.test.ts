@@ -151,6 +151,31 @@ describe('useRoutineSessionStore', () => {
       expect(result.droppedSets).toBe(0);
     });
 
+    it('una rutina a peso corporal se guarda tal cual, sin teclear nada', async () => {
+      const store = useRoutineSessionStore.getState();
+      store.start(routine, 'monday', dayRoutine);
+
+      // Press banca va a peso corporal: el plan ya trae las repeticiones y no
+      // hay lastre que escribir. Antes esta sesión no se podía terminar
+      // —«no hay ninguna serie con peso ni tiempo»— porque la fila del plan no
+      // contaba como registro; el usuario se quedaba sin nada que rellenar.
+      const result = await useRoutineSessionStore.getState().finish(
+        'user-1',
+        () => 'catalog-id',
+        identity,
+        (name) => name === 'Press banca',
+      );
+
+      expect(result.success).toBe(true);
+      expect(result.savedExerciseNames).toEqual(['Press banca']);
+      // El segundo ejercicio lleva barra y no tiene peso: no se inventa un 0 kg.
+      expect(mockRpc).toHaveBeenCalledTimes(1);
+      const sets = (mockRpc.mock.calls[0][1] as { p_sets: { reps: number; weight: number }[] })
+        .p_sets;
+      expect(sets.map((s) => s.reps)).toEqual([8, 8]);
+      expect(sets.every((s) => s.weight === 0)).toBe(true);
+    });
+
     it('el RPE marcado llega al payload', async () => {
       const store = useRoutineSessionStore.getState();
       store.start(routine, 'monday', dayRoutine);
@@ -448,6 +473,21 @@ describe('sesión de rutina con series por tiempo', () => {
     expect(sets[0].duration_seconds).toBe(52);
     expect(sets[1].duration_seconds).toBe(38);
     expect(sets[0].weight).toBe(0);
+  });
+
+  it('una plancha sin tocar registra los segundos del plan', async () => {
+    // En tiempo no hay peso que escribir: el plan ya trae los segundos, así que
+    // la fila es el registro. Sin esto, cerrar la sesión pedía «peso o tiempo»
+    // con el tiempo ya puesto delante.
+    useRoutineSessionStore.getState().start(rutinaConPlancha, 'monday', dayConPlancha);
+
+    await useRoutineSessionStore.getState().finish('u1', () => 'ex-plancha', identity);
+
+    const llamada = mockRpc.mock.calls.find(
+      (c) => (c[1] as { p_exercise_id?: string })?.p_exercise_id === 'ex-plancha',
+    );
+    const sets = (llamada?.[1] as { p_sets: Record<string, unknown>[] }).p_sets;
+    expect(sets.map((s) => s.duration_seconds)).toEqual([45, 45]);
   });
 
   it('una serie de repeticiones sigue guardándose sin duration_seconds', async () => {

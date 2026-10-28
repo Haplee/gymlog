@@ -172,11 +172,16 @@ interface RoutineSessionState {
    * al id del catálogo (propio o público); si devuelve null se crea como custom.
    * `toKg` convierte el peso tecleado (unidad de display) a kg, que es como lo
    * almacena la BD.
+   *
+   * `sinCarga` dice si un ejercicio no pide peso: peso corporal, tiempo y los
+   * que no están en el catálogo. Se resuelve en la pantalla porque el catálogo
+   * (`load_type`) no vive aquí.
    */
   finish: (
     userId: string,
     resolveExerciseId: (name: string) => string | null,
     toKg: (weight: number) => number,
+    sinCarga?: (name: string) => boolean,
   ) => Promise<RoutineSessionResult>;
 }
 
@@ -261,9 +266,31 @@ function pareceIntencionada(s: SessionSet): boolean {
   return !!(s.touched || s.weight.trim() || (s.durationSeconds ?? '').trim());
 }
 
-function toOutboxSets(sets: SessionSet[], toKg: (w: number) => number): OutboxSet[] {
+/**
+ * ¿Esta fila es un registro de lo que se hizo?
+ *
+ * En un ejercicio con carga externa la fila del plan es solo el plan: hasta que
+ * el usuario escribe el peso (o toca la fila) no consta que la haya hecho. Por
+ * eso `pareceIntencionada` no se fija en las repeticiones, que vienen
+ * precargadas del plan.
+ *
+ * En peso corporal y en tiempo no hay carga que escribir: el plan ya trae las
+ * repeticiones o los segundos, así que la fila válida **es** el registro. Sin
+ * esta excepción una rutina de dominadas o de planchas no se podía terminar
+ * nunca —no quedaba nada que teclear— y el cierre contestaba «no hay ninguna
+ * serie con peso ni tiempo» con el plan entero delante.
+ */
+export function registraLaSerie(s: SessionSet, noPidePeso: boolean): boolean {
+  return noPidePeso ? isValidSet(s) : pareceIntencionada(s);
+}
+
+function toOutboxSets(
+  sets: SessionSet[],
+  toKg: (w: number) => number,
+  noPidePeso: boolean,
+): OutboxSet[] {
   return sets
-    .filter((s) => pareceIntencionada(s) && isValidSet(s))
+    .filter((s) => registraLaSerie(s, noPidePeso) && isValidSet(s))
     .map((s, i) => {
       const segundos = segundosDe(s);
       const peso = parseSetWeight(s.weight) ?? 0;
@@ -438,7 +465,7 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
 
       discard: () => set({ ...emptySession }),
 
-      finish: async (userId, resolveExerciseId, toKg) => {
+      finish: async (userId, resolveExerciseId, toKg, sinCarga = () => false) => {
         const { exercises, startedAt, finishedAt, saving } = get();
         if (saving) {
           return {
@@ -473,7 +500,9 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
           .map((ex, index) => ({
             index,
             name: ex.name,
-            sets: toOutboxSets(ex.sets, toKg),
+            // Un ejercicio por tiempo no lleva peso aunque el catálogo diga que
+            // es de carga externa: lo que se mide son los segundos.
+            sets: toOutboxSets(ex.sets, toKg, ex.mode === 'time' || sinCarga(ex.name)),
             clientId: ex.clientId,
             saved: !!ex.savedAt,
           }))
