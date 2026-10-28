@@ -3,7 +3,7 @@
 // <GymLogLogo variant="icon" size="sm" />
 // <GymLogLogo variant="horizontal" />
 
-import React from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 export interface GymLogLogoProps {
   /**
@@ -19,6 +19,21 @@ export interface GymLogLogoProps {
   variant?: 'icon' | 'stacked' | 'horizontal';
   className?: string;
   style?: React.CSSProperties;
+  /**
+   * Play entrance animation on first mount (app init). Defaults to true.
+   */
+  animated?: boolean;
+  /**
+   * Play click/tap animation. If true and onClick provided or interactive, enables tap animation.
+   */
+  interactive?: boolean;
+  onClick?: (e: React.MouseEvent<HTMLElement>) => void;
+  /**
+   * aria-label for accessibility when interactive
+   */
+  'aria-label'?: string;
+  role?: string;
+  tabIndex?: number;
 }
 
 const SIZES = {
@@ -37,14 +52,101 @@ const textStyle: React.CSSProperties = {
   letterSpacing: '-0.03em',
 };
 
+const usePrefersReducedMotion = () => {
+  const [reduced, setReduced] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mql = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const handler = (e: MediaQueryListEvent) => setReduced(e.matches);
+    mql.addEventListener('change', handler);
+    return () => mql.removeEventListener('change', handler);
+  }, []);
+
+  return reduced;
+};
+
+let globalEntrancePlayed = false;
+
 const GymLogLogo: React.FC<GymLogLogoProps> = ({
   size = 'md',
   variant = 'stacked',
   className,
   style,
+  animated = true,
+  interactive = false,
+  onClick,
+  'aria-label': ariaLabel,
+  role,
+  tabIndex,
 }) => {
   const pixelSize = SIZES[size] || SIZES.md;
   const scale = pixelSize / SIZES.md;
+  const reducedMotion = usePrefersReducedMotion();
+
+  const initialShouldAnimate = animated && !reducedMotion && !globalEntrancePlayed;
+  const [entrancePlayed, setEntrancePlayed] = useState(!initialShouldAnimate);
+  const [tapActive, setTapActive] = useState(false);
+  const tapTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!initialShouldAnimate) {
+      return;
+    }
+    globalEntrancePlayed = true;
+    const t = window.setTimeout(() => setEntrancePlayed(true), 1100);
+    return () => window.clearTimeout(t);
+  }, [initialShouldAnimate]);
+
+  const triggerTap = useCallback(() => {
+    if (reducedMotion) return;
+    setTapActive(false);
+    // Force reflow/restart by toggling
+    requestAnimationFrame(() => {
+      setTapActive(true);
+      if (tapTimeoutRef.current) {
+        window.clearTimeout(tapTimeoutRef.current);
+      }
+      tapTimeoutRef.current = window.setTimeout(() => {
+        setTapActive(false);
+        tapTimeoutRef.current = null;
+      }, 600);
+    });
+  }, [reducedMotion]);
+
+  useEffect(() => {
+    return () => {
+      if (tapTimeoutRef.current) {
+        window.clearTimeout(tapTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent<HTMLElement>) => {
+      if (interactive || onClick) {
+        triggerTap();
+      }
+      onClick?.(e);
+    },
+    [interactive, onClick, triggerTap],
+  );
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLElement>) => {
+      if ((e.key === 'Enter' || e.key === ' ') && (interactive || onClick)) {
+        e.preventDefault();
+        triggerTap();
+        if (onClick) {
+          onClick(e as unknown as React.MouseEvent<HTMLElement>);
+        }
+      }
+    },
+    [interactive, onClick, triggerTap],
+  );
 
   const containerBaseStyle: React.CSSProperties = {
     display: 'inline-flex',
@@ -56,19 +158,41 @@ const GymLogLogo: React.FC<GymLogLogoProps> = ({
     overflow: 'hidden',
     userSelect: 'none',
     boxSizing: 'border-box',
+    position: 'relative',
     ...style,
   };
+
+  const isInteractive = interactive || !!onClick;
+  const interactiveProps: React.HTMLAttributes<HTMLElement> = isInteractive
+    ? {
+        role: role || 'button',
+        tabIndex: tabIndex ?? 0,
+        onClick: handleClick,
+        onKeyDown: handleKeyDown,
+        'aria-label': ariaLabel || 'GymLog',
+        style: { cursor: 'pointer', ...containerBaseStyle },
+      }
+    : { style: containerBaseStyle };
 
   if (variant === 'icon') {
     return (
       <div
-        className={className}
+        className={`${className || ''} ${!entrancePlayed && animated && !reducedMotion ? 'gymlog-logo-entrance' : ''} ${tapActive && !reducedMotion ? 'gymlog-logo-tap-press' : ''}`}
+        {...interactiveProps}
         style={{
-          ...containerBaseStyle,
+          ...(isInteractive ? (interactiveProps.style as React.CSSProperties) : containerBaseStyle),
           width: pixelSize,
           height: pixelSize,
         }}
       >
+        {!entrancePlayed && animated && !reducedMotion && (
+          <div className="gymlog-logo-shine-layer" />
+        )}
+        {!entrancePlayed && animated && !reducedMotion && (
+          <div className="gymlog-logo-glow-layer" />
+        )}
+        {tapActive && !reducedMotion && <div className="gymlog-logo-tap-shine" />}
+        {tapActive && !reducedMotion && <div className="gymlog-logo-tap-glow" />}
         <DumbbellIcon size={pixelSize * 0.75} />
       </div>
     );
@@ -78,15 +202,24 @@ const GymLogLogo: React.FC<GymLogLogoProps> = ({
     const finalSize = (BASE_SIZE - 20) * scale;
     return (
       <div
-        className={className}
+        className={`${className || ''} ${!entrancePlayed && animated && !reducedMotion ? 'gymlog-logo-entrance' : ''} ${tapActive && !reducedMotion ? 'gymlog-logo-tap-press' : ''}`}
+        {...interactiveProps}
         style={{
-          ...containerBaseStyle,
+          ...(isInteractive ? (interactiveProps.style as React.CSSProperties) : containerBaseStyle),
           width: finalSize,
           height: finalSize,
           flexDirection: 'column',
           padding: `${finalSize * 0.12}px`,
         }}
       >
+        {!entrancePlayed && animated && !reducedMotion && (
+          <div className="gymlog-logo-shine-layer" />
+        )}
+        {!entrancePlayed && animated && !reducedMotion && (
+          <div className="gymlog-logo-glow-layer" />
+        )}
+        {tapActive && !reducedMotion && <div className="gymlog-logo-tap-shine" />}
+        {tapActive && !reducedMotion && <div className="gymlog-logo-tap-glow" />}
         <div style={{ marginBottom: finalSize * 0.04 }}>
           <DumbbellIcon size={finalSize * 0.6} />
         </div>
@@ -106,21 +239,37 @@ const GymLogLogo: React.FC<GymLogLogoProps> = ({
   if (variant === 'horizontal') {
     return (
       <div
-        className={className}
+        className={`${className || ''}`}
         style={{
           display: 'inline-flex',
           alignItems: 'center',
           gap: `${pixelSize * 0.3}px`,
+          position: 'relative',
           ...style,
         }}
+        onClick={isInteractive ? handleClick : undefined}
+        role={isInteractive ? role || 'button' : undefined}
+        tabIndex={isInteractive ? (tabIndex ?? 0) : undefined}
+        onKeyDown={isInteractive ? handleKeyDown : undefined}
+        aria-label={isInteractive ? ariaLabel || 'GymLog' : undefined}
       >
         <div
+          className={`${!entrancePlayed && animated && !reducedMotion ? 'gymlog-logo-entrance' : ''} ${tapActive && !reducedMotion ? 'gymlog-logo-tap-press' : ''}`}
           style={{
             ...containerBaseStyle,
             width: pixelSize,
             height: pixelSize,
+            cursor: isInteractive ? 'pointer' : undefined,
           }}
         >
+          {!entrancePlayed && animated && !reducedMotion && (
+            <div className="gymlog-logo-shine-layer" />
+          )}
+          {!entrancePlayed && animated && !reducedMotion && (
+            <div className="gymlog-logo-glow-layer" />
+          )}
+          {tapActive && !reducedMotion && <div className="gymlog-logo-tap-shine" />}
+          {tapActive && !reducedMotion && <div className="gymlog-logo-tap-glow" />}
           <DumbbellIcon size={pixelSize * 0.72} />
         </div>
         <span

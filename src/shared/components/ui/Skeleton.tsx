@@ -43,8 +43,8 @@ export const Skeleton = memo(SkeletonComponent);
 export const PageSkeleton = memo(function PageSkeleton() {
   return (
     <div className="p-4 space-y-4 min-h-[80vh] flex flex-col">
-      <div className="flex flex-col items-center justify-center flex-1 py-10 opacity-40">
-        <GymLogLogo size="lg" variant="icon" className="animate-pulse mb-4" />
+      <div className="flex flex-col items-center justify-center flex-1 py-10 opacity-80">
+        <GymLogLogo size="lg" variant="icon" className="mb-4" animated interactive />
         <div className="skeleton h-6 w-32 rounded-card" />
       </div>
       <div className="space-y-4">

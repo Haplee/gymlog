@@ -5,7 +5,7 @@ import { useAuthStore } from '@features/auth/stores/authStore';
 import { AppLockGate } from '@features/auth/components/AppLockGate';
 import { useSettingsStore } from '@shared/stores/settingsStore';
 import { PermissionRequests } from '@app/components/PermissionRequests';
-import { PageSkeleton } from '@shared/components/ui';
+import { GymLogLogo } from '@shared/components/ui';
 import { OnboardingModal } from '@features/auth/components/OnboardingModal';
 import { App as CapApp } from '@capacitor/app';
 import { supabase } from '@shared/lib/supabase';
@@ -65,6 +65,11 @@ const PrivacySection = lazy(() =>
     default: m.PrivacySection,
   })),
 );
+const PrivacyCenterPage = lazy(() =>
+  import('@features/privacy/pages/PrivacyCenterPage').then((m) => ({
+    default: m.PrivacyCenterPage,
+  })),
+);
 const LegalPage = lazy(() =>
   import('@features/privacy/pages/LegalPage').then((m) => ({ default: m.LegalPage })),
 );
@@ -105,8 +110,8 @@ const FitBodyShowcasePage = lazy(() =>
 
 function Loading() {
   return (
-    <div className="min-h-dvh bg-canvas bg-canvas">
-      <PageSkeleton />
+    <div className="min-h-dvh bg-canvas flex items-center justify-center">
+      <GymLogLogo variant="icon" size="xl" animated interactive />
     </div>
   );
 }
@@ -186,6 +191,14 @@ function AnimatedRoutes() {
               coachSection={COACH_UI_ENABLED ? <CoachSettingsSection /> : undefined}
               privacySection={<PrivacySection />}
             />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings/privacy"
+        element={
+          <ProtectedRoute>
+            <PrivacyCenterPage />
           </ProtectedRoute>
         }
       />
@@ -279,11 +292,14 @@ function AnimatedRoutes() {
 function useWorkoutOutboxSync() {
   const queryClient = useQueryClient();
   const refresh = useOutboxStore((s) => s.refresh);
+  const userId = useAuthStore((s) => s.user?.id ?? null);
 
   useEffect(() => {
     let cancelled = false;
     const sync = async () => {
-      const flushed = await flushWorkoutOutbox();
+      // Solo la cola de la cuenta activa: sin esto, entrar con otra cuenta en
+      // el mismo dispositivo procesaba (y contaba) los entrenos de la anterior.
+      const flushed = await flushWorkoutOutbox(userId ?? undefined);
       if (cancelled) return;
       if (flushed > 0) {
         queryClient.invalidateQueries({ queryKey: ['workouts'], refetchType: 'all' });
@@ -291,7 +307,7 @@ function useWorkoutOutboxSync() {
         queryClient.invalidateQueries({ queryKey: ['workoutsAndSets'], refetchType: 'all' });
         queryClient.invalidateQueries({ queryKey: ['personalRecords'], refetchType: 'all' });
       }
-      void refresh();
+      void refresh(userId ?? undefined);
     };
     // Al volver a primer plano y con red se reintenta: si el evento `online`
     // llegó mientras la app estaba en segundo plano no lo escuchó nadie y el
@@ -299,7 +315,7 @@ function useWorkoutOutboxSync() {
     const onVisible = () => {
       if (document.visibilityState === 'visible' && navigator.onLine) void sync();
     };
-    void refresh();
+    void refresh(userId ?? undefined);
     void sync();
     const onOnline = () => void sync();
     window.addEventListener('online', onOnline);
@@ -309,7 +325,7 @@ function useWorkoutOutboxSync() {
       window.removeEventListener('online', onOnline);
       document.removeEventListener('visibilitychange', onVisible);
     };
-  }, [queryClient, refresh]);
+  }, [queryClient, refresh, userId]);
 }
 
 /** Mantiene el widget Android (racha + último entreno) al día. No-op en web/iOS. */

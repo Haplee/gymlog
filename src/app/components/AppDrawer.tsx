@@ -14,6 +14,7 @@ import {
   X,
 } from '@shared/components/icons';
 import { COACH_UI_ENABLED } from '@features/coach/lib/featureFlag';
+import { GymLogLogo } from '@shared/components/ui';
 
 /**
  * Cajón de navegación que abre la hamburguesa de la cabecera.
@@ -133,9 +134,14 @@ export function AppDrawer({ onClose, onOpenSearch, unreadCount }: AppDrawerProps
           className="flex items-center justify-between pl-4 pr-2"
           style={{ minHeight: 'var(--header-height)' }}
         >
-          <span className="font-display text-lg font-bold tracking-tight text-fg">
-            GYM<span className="text-accent">LOG</span>
-          </span>
+          <GymLogLogo
+            variant="horizontal"
+            size="sm"
+            animated
+            interactive
+            aria-label={t('app.title', { defaultValue: 'GymLog' })}
+            className="select-none"
+          />
           <button
             type="button"
             onClick={onClose}

@@ -29,6 +29,7 @@ import { useWearableSync } from '@features/wearables/hooks/useWearableSync';
 import { registerBackAction } from '@shared/lib/backHandler';
 import { useCardioStore } from '@features/cardio/stores/cardioStore';
 import { useTrainingWakeLock } from '@app/hooks/useTrainingWakeLock';
+import { GymLogLogo } from '@shared/components/ui';
 
 interface LayoutProps {
   children: ReactNode;
@@ -254,9 +255,16 @@ export function Layout({ children }: LayoutProps) {
             <span className="h-11 w-11" />
           )}
 
-          <span className="flex-1 text-center font-display text-lg font-bold tracking-tight text-fg">
-            GYM<span className="text-accent">LOG</span>
-          </span>
+          <div className="flex-1 flex justify-center">
+            <GymLogLogo
+              variant="horizontal"
+              size="sm"
+              animated
+              interactive
+              aria-label={t('app.title', { defaultValue: 'GymLog' })}
+              className="select-none"
+            />
+          </div>
 
           {/* Racha en vez del acceso a Ajustes: el engranaje vive en el menú
               hamburguesa, así que ese hueco puede llevar el dato que la app
