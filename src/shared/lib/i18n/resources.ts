@@ -783,6 +783,7 @@ export const resources = {
           pick_exercise: 'Elige un ejercicio antes de guardar',
           no_valid_sets: 'Añade al menos una serie',
           queue_failed: 'No se pudo guardar ni dejar pendiente. Inténtalo de nuevo',
+          save_failed: 'El servidor no ha aceptado el entreno. Inténtalo de nuevo',
           idempotency_conflict:
             'Este guardado ya se registró con otro contenido. Recarga el historial antes de volver a intentarlo',
           sets_incomplete_one: 'La serie {{numbers}} está sin terminar',
@@ -2085,6 +2086,7 @@ export const resources = {
           pick_exercise: 'Pick an exercise before saving',
           no_valid_sets: 'Add at least one set',
           queue_failed: 'Could not save it or queue it. Please try again',
+          save_failed: 'The server rejected the workout. Please try again',
           idempotency_conflict:
             'This save was already recorded with different content. Reload your history before trying again',
           sets_incomplete_one: 'Set {{numbers}} is unfinished',

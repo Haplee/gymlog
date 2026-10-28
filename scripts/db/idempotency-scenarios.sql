@@ -738,3 +738,55 @@ END;
 $test$;
 
 RESET ROLE;
+
+-- Campos numéricos vacíos en el JSON --------------------------------------
+-- La APK manda `rpe: ""` en todas las series. La huella casteaba ese `""` a
+-- numeric y abortaba el guardado entero con «invalid input syntax for type
+-- numeric». Un campo vacío significa «sin dato»: la serie se guarda y la
+-- huella coincide con la del mismo envío sin el campo, para que un reintento
+-- no parezca contenido distinto.
+SET request.jwt.claim.sub = '11111111-1111-4111-8111-111111111111';
+
+DO $test$
+DECLARE
+  v_id_vacio    uuid;
+  v_id_ausente  uuid;
+  v_hash_vacio  text;
+  v_hash_ausente text;
+BEGIN
+  SELECT public.save_workout_with_sets(
+    '11111111-1111-4111-8111-111111111111',
+    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    '2026-10-02T10:00:00Z',
+    '2026-10-02T11:00:00Z',
+    '[{"set_num":1,"reps":15,"weight":0,"is_warmup":false,"notes":"","rpe":"","set_type":"normal"}]'::jsonb,
+    NULL,
+    NULL,
+    'e0000000-0000-4000-8000-000000000010'
+  ) INTO v_id_vacio;
+
+  SELECT public.save_workout_with_sets(
+    '11111111-1111-4111-8111-111111111111',
+    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    '2026-10-02T10:00:00Z',
+    '2026-10-02T11:00:00Z',
+    '[{"set_num":1,"reps":15,"weight":0,"is_warmup":false,"notes":"","set_type":"normal"}]'::jsonb,
+    NULL,
+    NULL,
+    'e0000000-0000-4000-8000-000000000011'
+  ) INTO v_id_ausente;
+
+  SELECT idempotency_hash INTO v_hash_vacio
+    FROM public.workouts WHERE id = v_id_vacio;
+  SELECT idempotency_hash INTO v_hash_ausente
+    FROM public.workouts WHERE id = v_id_ausente;
+
+  ASSERT v_hash_vacio = v_hash_ausente,
+    'rpe vacío y rpe ausente tienen que dar la misma huella';
+  ASSERT (SELECT reps FROM public.workout_sets WHERE workout_id = v_id_vacio) = 15,
+    'la serie se tiene que escribir';
+  ASSERT (SELECT rpe FROM public.workout_sets WHERE workout_id = v_id_vacio) IS NULL,
+    'rpe vacío se guarda como NULL, no como 0';
+  RAISE NOTICE 'OK campos_numericos_vacios';
+END;
+$test$;

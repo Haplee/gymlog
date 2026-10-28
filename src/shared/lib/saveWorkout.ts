@@ -15,6 +15,7 @@ import { resolveOrCreateExercise } from './resolveOrCreateExercise';
 import { enqueueWorkout, type OutboxSet } from './workoutOutbox';
 import { isNetworkError } from './networkError';
 import { isIdempotencyConflict, retryOnNetwork } from './idempotency';
+import { toRpcSets } from './rpcSets';
 import { devError } from './devtools';
 
 export interface SaveWorkoutInput {
@@ -97,6 +98,29 @@ function withCause(message: string, cause: unknown): Error {
 }
 
 /**
+ * Rechazo del servidor convertido en `Error`.
+ *
+ * Supabase no lanza: devuelve el payload de PostgREST (`{ code, message }`),
+ * que no es una instancia de `Error`. Antes se sustituía por «Error guardando»,
+ * así que el motivo real (`invalid input syntax…`, RLS, un `CHECK`) se perdía y
+ * ni la pantalla ni el registro decían nada. Se conservan mensaje y código.
+ */
+function serverError(err: unknown): Error {
+  const detail = err as { message?: unknown; code?: unknown } | null;
+  const message =
+    typeof detail?.message === 'string' && detail.message.trim()
+      ? detail.message.trim()
+      : 'workout.errors.save_failed';
+
+  devError('[saveWorkout] el servidor rechazó el guardado', {
+    code: detail?.code,
+    message: detail?.message,
+  });
+
+  return withCause(message, err);
+}
+
+/**
  * Guarda un entreno de un ejercicio. Nunca lanza: el resultado dice qué pasó.
  *
  * Sin conexión encola directamente, sin gastar el intento. El ejercicio que no
@@ -125,7 +149,7 @@ export async function saveWorkoutOrQueue(input: SaveWorkoutInput): Promise<SaveW
         p_exercise_id: exerciseId,
         p_started_at: input.startedAt,
         p_finished_at: input.finishedAt,
-        p_sets: input.sets,
+        p_sets: toRpcSets(input.sets),
         p_notes: input.notes,
         p_rating: input.rating ?? undefined,
         p_client_id: input.clientId,
@@ -154,7 +178,7 @@ export async function saveWorkoutOrQueue(input: SaveWorkoutInput): Promise<SaveW
 
     return {
       status: 'error',
-      error: err instanceof Error ? err : new Error('Error guardando'),
+      error: err instanceof Error ? err : serverError(err),
     };
   }
 }

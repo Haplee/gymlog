@@ -66,6 +66,7 @@ const MIGRATIONS = [
   '20261016120000_exercises_with_usage_full_row.sql',
   '20261026120000_workout_idempotency_contract.sql',
   '20261026130000_import_integrity.sql',
+  '20261028120000_workout_hash_safe_casts.sql',
 ];
 
 const USER_A = '11111111-1111-4111-8111-111111111111';

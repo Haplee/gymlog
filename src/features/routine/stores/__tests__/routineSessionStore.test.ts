@@ -163,15 +163,18 @@ describe('useRoutineSessionStore', () => {
       expect(sets.every((s) => s.rpe === '9')).toBe(true);
     });
 
-    it('sin RPE marcado el payload lo deja vacío, como antes', async () => {
+    it('sin RPE marcado el campo no viaja', async () => {
       const store = useRoutineSessionStore.getState();
       store.start(routine, 'monday', dayRoutine);
       fillExercise(0, '8', '80');
 
       await useRoutineSessionStore.getState().finish('user-1', () => 'catalog-id', identity);
 
-      const sets = (mockRpc.mock.calls[0][1] as { p_sets: { rpe: string }[] }).p_sets;
-      expect(sets.every((s) => s.rpe === '')).toBe(true);
+      // El servidor castea `rpe` a numeric al calcular la huella de idempotencia
+      // y un `''` aborta el guardado entero. Sin esfuerzo marcado, la clave no
+      // existe: es «sin dato», no «vacío».
+      const sets = (mockRpc.mock.calls[0][1] as { p_sets: Record<string, unknown>[] }).p_sets;
+      expect(sets.every((s) => !('rpe' in s))).toBe(true);
     });
   });
 

@@ -57,6 +57,42 @@ describe('saveWorkoutOrQueue', () => {
     expect(enqueueMock).not.toHaveBeenCalled();
   });
 
+  // Avería real: el servidor castea `rpe` a numeric al calcular la huella de
+  // idempotencia y `''::numeric` aborta el guardado entero. El RPC no puede
+  // recibir el campo vacío.
+  it('no manda campos numéricos vacíos al RPC', async () => {
+    rpcMock.mockResolvedValue({ error: null });
+
+    await saveWorkoutOrQueue(INPUT);
+
+    const { p_sets } = rpcMock.mock.calls[0][1] as { p_sets: Record<string, unknown>[] };
+    expect(p_sets[0]).toEqual({
+      set_num: 1,
+      reps: 5,
+      weight: 120,
+      is_warmup: false,
+      notes: '',
+      set_type: 'normal',
+    });
+    expect('rpe' in p_sets[0]).toBe(false);
+  });
+
+  // Antes se sustituía por «Error guardando» y el motivo real se perdía: la
+  // pantalla no podía contar nada útil ni quedaba rastro del código.
+  it('conserva el mensaje y el código del rechazo del servidor', async () => {
+    rpcMock.mockResolvedValue({
+      error: { code: '22P02', message: 'invalid input syntax for type numeric' },
+    });
+
+    const outcome = await saveWorkoutOrQueue(INPUT);
+
+    expect(outcome.status).toBe('error');
+    if (outcome.status !== 'error') throw new Error('se esperaba un fallo');
+    expect(outcome.error.message).toBe('invalid input syntax for type numeric');
+    expect((outcome.error as Error & { code?: string }).code).toBe('22P02');
+    expect(enqueueMock).not.toHaveBeenCalled();
+  });
+
   it('sin conexión encola sin gastar el intento', async () => {
     vi.stubGlobal('navigator', { onLine: false });
 

@@ -2,6 +2,7 @@ import { openDB, type IDBPDatabase } from 'idb';
 import { supabase } from './supabase';
 import { devError, devLog } from './devtools';
 import { resolveOrCreateExercise } from './resolveOrCreateExercise';
+import { toRpcSets } from './rpcSets';
 import { isNetworkError } from './networkError';
 import { isIdempotencyConflict } from './idempotency';
 
@@ -213,7 +214,7 @@ async function drainOutbox(): Promise<number> {
         p_exercise_id: exerciseId,
         p_started_at: w.startedAt,
         p_finished_at: w.finishedAt,
-        p_sets: w.sets,
+        p_sets: toRpcSets(w.sets),
         p_notes: w.notes,
         p_rating: w.rating ?? undefined,
         // El id de la entrada es estable entre reintentos: si un envío anterior
