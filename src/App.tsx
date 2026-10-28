@@ -275,7 +275,7 @@ function AnimatedRoutes() {
   );
 }
 
-/** Sincroniza la cola offline de entrenos al arrancar y al recuperar conexión. */
+/** Sincroniza la cola offline de entrenos al arrancar, al recuperar conexión y al volver a la app. */
 function useWorkoutOutboxSync() {
   const queryClient = useQueryClient();
   const refresh = useOutboxStore((s) => s.refresh);
@@ -293,13 +293,21 @@ function useWorkoutOutboxSync() {
       }
       void refresh();
     };
+    // Al volver a primer plano y con red se reintenta: si el evento `online`
+    // llegó mientras la app estaba en segundo plano no lo escuchó nadie y el
+    // entreno se quedaba en cola hasta el siguiente arranque.
+    const onVisible = () => {
+      if (document.visibilityState === 'visible' && navigator.onLine) void sync();
+    };
     void refresh();
     void sync();
     const onOnline = () => void sync();
     window.addEventListener('online', onOnline);
+    document.addEventListener('visibilitychange', onVisible);
     return () => {
       cancelled = true;
       window.removeEventListener('online', onOnline);
+      document.removeEventListener('visibilitychange', onVisible);
     };
   }, [queryClient, refresh]);
 }

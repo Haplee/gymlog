@@ -76,11 +76,18 @@ function useOnlineStatus() {
   useEffect(() => {
     const on = () => setOnline(true);
     const off = () => setOnline(false);
+    // `online`/`offline` no siempre llegan: el WebView puede arrancar con
+    // `navigator.onLine` desfasado y, con la app en segundo plano, el evento se
+    // pierde. El aviso se quedaba fijo en «Sin conexión» con wifi de sobra hasta
+    // forzar el cierre, así que al volver a primer plano se vuelve a preguntar.
+    const releer = () => setOnline(navigator.onLine);
     window.addEventListener('online', on);
     window.addEventListener('offline', off);
+    document.addEventListener('visibilitychange', releer);
     return () => {
       window.removeEventListener('online', on);
       window.removeEventListener('offline', off);
+      document.removeEventListener('visibilitychange', releer);
     };
   }, []);
   return online;

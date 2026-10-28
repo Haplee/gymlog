@@ -777,8 +777,11 @@ export const resources = {
           needs_measure: 'Añade repeticiones o segundos',
           weight_negative: 'El peso no puede ser negativo',
           weight_invalid: 'El peso no es un número válido',
-          reps_invalid: 'Las repeticiones tienen que ser un número entero',
-          duration_invalid: 'Los segundos tienen que ser un número entero',
+          // El campo solo admite dígitos, así que «no es entero» no puede pasar:
+          // lo que llega aquí es un número fuera de rango. Decir «entero» sobre
+          // un 10000 recién tecleado no explicaba nada.
+          reps_invalid: 'Las repeticiones van de 1 a 9999',
+          duration_invalid: 'Los segundos van de 1 a 3600',
           invalid_set: 'Serie incompleta',
           pick_exercise: 'Elige un ejercicio antes de guardar',
           no_valid_sets: 'Añade al menos una serie',
@@ -2081,8 +2084,8 @@ export const resources = {
           needs_measure: 'Add reps or seconds',
           weight_negative: 'Weight cannot be negative',
           weight_invalid: 'Weight is not a valid number',
-          reps_invalid: 'Reps must be a whole number',
-          duration_invalid: 'Seconds must be a whole number',
+          reps_invalid: 'Reps must be between 1 and 9999',
+          duration_invalid: 'Seconds must be between 1 and 3600',
           invalid_set: 'Incomplete set',
           pick_exercise: 'Pick an exercise before saving',
           no_valid_sets: 'Add at least one set',
