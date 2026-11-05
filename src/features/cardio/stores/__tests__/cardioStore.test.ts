@@ -40,6 +40,7 @@ function mockSyncChain(
     data: [],
     error: null,
   },
+  deleteResult: { error: { message: string } | null } = { error: null },
 ) {
   const limit = vi.fn().mockResolvedValue(readResult);
   const order = vi.fn(() => ({ limit }));
@@ -47,10 +48,22 @@ function mockSyncChain(
   const select = vi.fn(() => ({ eq }));
   const upsertSelect = vi.fn().mockResolvedValue(pushResult);
   const upsert = vi.fn(() => ({ select: upsertSelect }));
+  const deleteEq = vi.fn().mockResolvedValue(deleteResult);
+  const del = vi.fn(() => ({ eq: deleteEq }));
   mockFrom.mockImplementation(
-    () => ({ select, upsert }) as unknown as ReturnType<typeof supabase.from>,
+    () => ({ select, upsert, delete: del }) as unknown as ReturnType<typeof supabase.from>,
   );
-  return { upsert };
+  return { upsert, del, deleteEq };
+}
+
+/** Cadena de deleteSession: .delete().eq() */
+function mockDeleteChain(result: { error: { message: string } | null }) {
+  const deleteEq = vi.fn().mockResolvedValue(result);
+  const del = vi.fn(() => ({ eq: deleteEq }));
+  mockFrom.mockImplementation(
+    () => ({ delete: del }) as unknown as ReturnType<typeof supabase.from>,
+  );
+  return { del, deleteEq };
 }
 
 function makeSession(overrides: Partial<CardioSession> = {}): CardioSession {
@@ -71,6 +84,7 @@ const initialState = {
   pausedAt: null,
   pausedDuration: 0,
   sessions: [] as CardioSession[],
+  pendingDeletes: [] as string[],
 };
 
 describe('useCardioStore', () => {
@@ -237,6 +251,87 @@ describe('useCardioStore', () => {
 
       expect(useCardioStore.getState().sessions).toHaveLength(1);
       expect(useCardioStore.getState().sessions[0].id).toBe('local-1');
+    });
+  });
+
+  describe('deleteSession — tombstone', () => {
+    it('quita la sesión de la lista y borra el tombstone al confirmar el servidor', async () => {
+      const { deleteEq } = mockDeleteChain({ error: null });
+      useCardioStore.setState({ sessions: [makeSession({ id: 's1' })] });
+
+      await useCardioStore.getState().deleteSession('s1', 'user-1');
+
+      expect(deleteEq).toHaveBeenCalledWith('id', 's1');
+      expect(useCardioStore.getState().sessions).toHaveLength(0);
+      expect(useCardioStore.getState().pendingDeletes).toEqual([]);
+    });
+
+    it('conserva el tombstone si el borrado remoto falla', async () => {
+      mockDeleteChain({ error: { message: 'boom' } });
+      useCardioStore.setState({ sessions: [makeSession({ id: 's1' })] });
+
+      await useCardioStore.getState().deleteSession('s1', 'user-1');
+
+      expect(useCardioStore.getState().sessions).toHaveLength(0);
+      expect(useCardioStore.getState().pendingDeletes).toEqual(['s1']);
+    });
+
+    it('sin usuario no llama a Supabase y deja el borrado pendiente', async () => {
+      useCardioStore.setState({ sessions: [makeSession({ id: 's1' })] });
+
+      await useCardioStore.getState().deleteSession('s1', null);
+
+      expect(mockFrom).not.toHaveBeenCalled();
+      expect(useCardioStore.getState().sessions).toHaveLength(0);
+      expect(useCardioStore.getState().pendingDeletes).toEqual(['s1']);
+    });
+  });
+
+  describe('syncFromRemote — tombstones', () => {
+    it('reintenta el borrado pendiente y no resucita la fila remota', async () => {
+      const { del, deleteEq } = mockSyncChain({
+        data: [
+          {
+            id: 's1',
+            type: 'running',
+            started_at: '2026-07-11T10:00:00.123+00:00',
+            duration: 600,
+          },
+        ],
+        error: null,
+      });
+      useCardioStore.setState({ pendingDeletes: ['s1'] });
+
+      await useCardioStore.getState().syncFromRemote('user-1');
+
+      expect(del).toHaveBeenCalled();
+      expect(deleteEq).toHaveBeenCalledWith('id', 's1');
+      expect(useCardioStore.getState().sessions).toHaveLength(0);
+      expect(useCardioStore.getState().pendingDeletes).toEqual([]);
+    });
+
+    it('mantiene el tombstone y oculta la fila si el reintento falla', async () => {
+      mockSyncChain(
+        {
+          data: [
+            {
+              id: 's1',
+              type: 'running',
+              started_at: '2026-07-11T10:00:00.123+00:00',
+              duration: 600,
+            },
+          ],
+          error: null,
+        },
+        { data: [], error: null },
+        { error: { message: 'sigue fallando' } },
+      );
+      useCardioStore.setState({ pendingDeletes: ['s1'] });
+
+      await useCardioStore.getState().syncFromRemote('user-1');
+
+      expect(useCardioStore.getState().sessions).toHaveLength(0);
+      expect(useCardioStore.getState().pendingDeletes).toEqual(['s1']);
     });
   });
 });

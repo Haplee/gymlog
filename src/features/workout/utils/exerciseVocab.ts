@@ -10,19 +10,6 @@
 
 import { DEFAULT_MUSCLE_GROUP } from '@shared/constants/muscleGroups';
 
-const BODY_PARTS: Record<string, string> = {
-  neck: 'cuello',
-  'lower arms': 'antebrazos',
-  shoulders: 'hombros',
-  cardio: 'cardio',
-  'upper arms': 'brazos',
-  chest: 'pecho',
-  'lower legs': 'gemelos',
-  back: 'espalda',
-  'upper legs': 'piernas',
-  waist: 'abdomen',
-};
-
 const EQUIPMENT: Record<string, string> = {
   'stepmill machine': 'escaladora',
   'elliptical machine': 'elíptica',
@@ -112,7 +99,6 @@ function lookup(map: Record<string, string>, value: string): string {
   return map[key] ?? value;
 }
 
-export const translateBodyPart = (v: string) => lookup(BODY_PARTS, v);
 export const translateEquipment = (v: string) => lookup(EQUIPMENT, v);
 export const translateMuscle = (v: string) => lookup(MUSCLES, v);
 

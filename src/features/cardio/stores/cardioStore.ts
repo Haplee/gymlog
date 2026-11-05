@@ -57,6 +57,12 @@ interface CardioState {
   pausedAt: string | null;
   pausedDuration: number;
   sessions: CardioSession[];
+  /**
+   * IDs de sesiones borradas en local cuyo DELETE remoto aún no se confirmó.
+   * Sobreviven al reinicio y se reintentan en `syncFromRemote`; mientras
+   * estén aquí, la fila remota no puede resucitar en el merge.
+   */
+  pendingDeletes: string[];
 
   startSession: (type: CardioType) => void;
   pauseSession: () => void;
@@ -72,10 +78,20 @@ interface CardioState {
   discardSession: () => void;
   deleteSession: (id: string, userId?: string | null) => Promise<void>;
   syncFromRemote: (userId: string) => Promise<void>;
+  /** Vacía sesiones y sesión en curso sin tocar el servidor. */
+  clearLocal: () => void;
   getElapsed: () => number;
   /** Igual que getElapsed pero en ms, para el cronómetro con décimas. */
   getElapsedMs: () => number;
 }
+
+/**
+ * Estado persistido. Las versiones intermedias guardaban el tombstone dentro
+ * de la sesión (`pendingDelete`), así que se admite al leer.
+ */
+type PersistedCardioState = Omit<Partial<CardioState>, 'sessions'> & {
+  sessions?: (CardioSession & { pendingDelete?: boolean })[];
+};
 
 // Evita pushes duplicados si syncFromRemote se invoca concurrentemente
 // (p.ej. doble navegación rápida): sin este guard, ambas llamadas leen las
@@ -92,6 +108,7 @@ export const useCardioStore = create<CardioState>()(
       pausedAt: null,
       pausedDuration: 0,
       sessions: [],
+      pendingDeletes: [],
 
       startSession: (type) => {
         set({
@@ -186,18 +203,71 @@ export const useCardioStore = create<CardioState>()(
         });
       },
 
+      clearLocal: () => {
+        set({
+          isActive: false,
+          isPaused: false,
+          activeType: null,
+          startedAt: null,
+          pausedAt: null,
+          pausedDuration: 0,
+          sessions: [],
+          pendingDeletes: [],
+        });
+      },
+
       deleteSession: async (id, userId) => {
-        set((state) => ({ sessions: state.sessions.filter((s) => s.id !== id) }));
-        if (userId) {
-          const { error } = await supabase.from('cardio_sessions').delete().eq('id', id);
-          if (error) devError('[CardioStore] delete failed:', error.message);
+        // Fuera de `sessions` en el acto: la UI y las estadísticas no deben
+        // ver una sesión borrada, aunque el DELETE remoto falle.
+        set((state) => ({
+          sessions: state.sessions.filter((s) => s.id !== id),
+          pendingDeletes: state.pendingDeletes.includes(id)
+            ? state.pendingDeletes
+            : [...state.pendingDeletes, id],
+        }));
+
+        // Sin usuario no se puede borrar en remoto ahora, pero el tombstone se
+        // queda: la próxima sync lo reintenta con la sesión ya iniciada.
+        if (!userId) return;
+
+        const { error } = await supabase.from('cardio_sessions').delete().eq('id', id);
+        if (error) {
+          // El tombstone se conserva para reintentar; si se descartara, la
+          // fila remota volvería a entrar en el siguiente merge.
+          devError('[CardioStore] delete failed:', error.message);
+          return;
         }
+        set((state) => ({ pendingDeletes: state.pendingDeletes.filter((p) => p !== id) }));
       },
 
       syncFromRemote: async (userId) => {
         if (syncInFlight) return;
         syncInFlight = true;
         try {
+          // Reintenta los borrados que quedaron pendientes. Si se descartara el
+          // tombstone sin reintentar, la fila seguiría en el servidor y el
+          // merge de abajo la devolvería a la lista.
+          const tombstones = get().pendingDeletes;
+          if (tombstones.length > 0) {
+            const failed: string[] = [];
+            for (const id of tombstones) {
+              const { error: delError } = await supabase
+                .from('cardio_sessions')
+                .delete()
+                .eq('id', id);
+              if (delError) {
+                devError('[CardioStore] retry delete failed:', delError.message);
+                failed.push(id);
+              }
+            }
+            set((state) => ({
+              // Conserva los que fallaron y los añadidos durante la sync.
+              pendingDeletes: state.pendingDeletes.filter(
+                (id) => !tombstones.includes(id) || failed.includes(id),
+              ),
+            }));
+          }
+
           const { data, error } = await supabase
             .from('cardio_sessions')
             .select(
@@ -278,8 +348,12 @@ export const useCardioStore = create<CardioState>()(
             }
           }
 
-          const merged = [...stillPending, ...remote];
-          merged.sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
+          // Un tombstone que sigue pendiente no puede volver desde el remoto,
+          // ni siquiera si el reintento de borrado falló otra vez.
+          const tombstoned = new Set([...tombstones, ...get().pendingDeletes]);
+          const merged = [...stillPending, ...remote.filter((s) => !tombstoned.has(s.id))].sort(
+            (a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime(),
+          );
           set({ sessions: merged });
         } finally {
           syncInFlight = false;
@@ -314,7 +388,26 @@ export const useCardioStore = create<CardioState>()(
         pausedAt: s.pausedAt,
         pausedDuration: s.pausedDuration,
         sessions: s.sessions,
+        pendingDeletes: s.pendingDeletes,
       }),
+      /**
+       * Versiones intermedias guardaban el tombstone dentro de la sesión
+       * (`pendingDelete`). Al rehidratar se mueve a `pendingDeletes` para que
+       * la sesión desaparezca de la UI y el borrado se reintente.
+       */
+      merge: (persisted, current) => {
+        // `Omit` de `sessions` evita que la intersección colapse al tipo
+        // `CardioSession[]` y pierda el campo legacy `pendingDelete`.
+        const saved = (persisted ?? {}) as PersistedCardioState;
+        const sessions = saved.sessions ?? [];
+        const legacy = sessions.filter((s) => s.pendingDelete).map((s) => s.id);
+        return {
+          ...current,
+          ...saved,
+          sessions: sessions.filter((s) => !s.pendingDelete),
+          pendingDeletes: [...new Set([...(saved.pendingDeletes ?? []), ...legacy])],
+        };
+      },
     },
   ),
 );

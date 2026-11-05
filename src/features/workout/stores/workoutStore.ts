@@ -11,11 +11,7 @@ import { notifyNewRecords } from '@shared/lib/prNotification';
 import { getRoutineReminderDays } from '@features/routine/lib/routineReminders';
 import { queryClient } from '@app/queryClient';
 import { toLocalDateKey } from '@shared/lib/dateKeys';
-import {
-  parseDurationSeconds,
-  parseReps,
-  selectSetsForSave,
-} from '@features/workout/lib/setValidation';
+import { parseReps, selectSetsForSave } from '@features/workout/lib/setValidation';
 
 /**
  * Forma de una fila del formulario. **No valida**: los límites de longitud de
@@ -168,11 +164,6 @@ const TOUCH_FIELDS = [
   'setType',
 ] as const satisfies readonly (keyof SetData)[];
 
-/** Segundos válidos de la serie, o `null` si no se mide en tiempo. */
-export function segundosDeSerie(s: { durationSeconds?: string }): number | null {
-  return parseDurationSeconds(s.durationSeconds);
-}
-
 /**
  * Repeticiones válidas de la serie, o `null` si no se mide en repeticiones.
  * Delegado en la validación compartida para que no vuelvan a divergir.
@@ -303,11 +294,21 @@ export const useWorkoutStore = create<WorkoutState>()(
             rows: failedRows,
             codes: failedRows.map((i) => errors[i]),
           });
-          return {
-            error: new Error(errors[failedRows[0]]),
-            success: false,
-            setErrors: errors,
-          };
+          // Filtramos el error de peso implausible: no bloqueamos el guardado
+          // automáticamente. El usuario debe confirmar explícitamente si quiere
+          // guardar un peso sobre el umbral.
+          const hasGenuineError =
+            failedRows.length > 1 ||
+            !failedRows.some((i) => errors[i] === 'workout.errors.implausible_weight');
+          if (hasGenuineError) {
+            return {
+              error: new Error(errors[failedRows[0]]),
+              success: false,
+              setErrors: errors,
+            };
+          }
+          // Si solo falla el error de peso implausible, continuamos con el guardado
+          // y dejamos que la pantalla muestre el aviso de confirmación.
         }
         if (!selected.length) {
           return { error: new Error('workout.errors.no_valid_sets'), success: false };
@@ -451,7 +452,7 @@ export const useWorkoutStore = create<WorkoutState>()(
 
         onSaved();
         if (outcome.status === 'queued') {
-          void useOutboxStore.getState().refresh();
+          void useOutboxStore.getState().refresh(userId);
           return { error: null, success: true, queued: true };
         }
 

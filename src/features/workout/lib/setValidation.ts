@@ -105,11 +105,44 @@ export function isSetRowIntended(s: ValidatableSet): boolean {
 }
 
 /**
+ * Muestra un aviso cuando el peso de una serie es sospechosamente alto,
+ * pero no lo bloquea: el usuario debe confirmar explícitamente si quiere
+ * guardar un dato fuera de rango. Esto evita guardados silenciosos de datos
+ * erróneos (p. ej. "480" cuando el usuario quiso "48").
+ *
+ * El mensaje es una clave de i18n; la pantalla decidirá si muestra un
+ * diálogo de confirmación o lo integra en el flujo de guardado.
+ */
+function maybeMarkImplausibleWeight(
+  i: number,
+  weightKg: number,
+  errors: Record<number, string>,
+): void {
+  if (isImplausibleSetWeight(weightKg)) {
+    // Solo pide confirmación si la fila no está ya marcada por otro error.
+    // Si ya tiene error, no saturar con mensajes adicionales.
+    if (!errors[i]) {
+      errors[i] = 'workout.errors.implausible_weight';
+    }
+  }
+}
+
+/**
  * Valida y selecciona las filas que se van a guardar.
  *
  * No descarta nada en silencio: una fila con datos pero mal formada vuelve en
  * `errors` para que la pantalla la abra y explique qué corregir. Las filas en
  * blanco y las heredadas sin confirmar se saltan sin error.
+ *
+ * Se integra la comprobación de pesos plausibles: si el peso supera el umbral
+ * de verosimilitud (400 kg), se marca un error para que la pantalla pida
+ * confirmación antes de guardar. El guardado sí permite sobrepasar el umbral
+ * cuando el usuario lo confirma.
+ *
+ * Antes cada uno filtraba a su manera: la pantalla aceptaba reps sin peso y el
+ * store las tiraba, de modo que «Guardar» respondía «no hay series válidas»
+ * sobre la serie que el usuario acababa de escribir. Esa es la avería que se
+ * veía en la APK al guardar gemelos de pie sin lastre.
  */
 export function selectSetsForSave(
   sets: readonly ValidatableSet[],
@@ -132,6 +165,9 @@ export function selectSetsForSave(
         : 'workout.errors.weight_invalid';
       return;
     }
+
+    // Comprobación de peso plausibil: avisa pero no bloquea.
+    maybeMarkImplausibleWeight(i, weightKg, errors);
 
     const reps = parseReps(repsText);
     const durationSeconds = parseDurationSeconds(durationText);
