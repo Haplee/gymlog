@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { defined } from '../../../test/assertions';
 
 /** Forma mínima de lo que el módulo pasa al plugin, para que el mock quede
     tipado y el typecheck pueda leer `mock.calls[n][0].notifications`. */
@@ -26,7 +27,7 @@ const plugin = vi.hoisted(() => ({
 
 /** Argumento de la llamada n a `schedule`, ya tipado. */
 const scheduleArg = (n: number): ScheduleArg =>
-  plugin.schedule.mock.calls[n]![0] as unknown as ScheduleArg;
+  defined(plugin.schedule.mock.calls[n])[0] as unknown as ScheduleArg;
 
 vi.mock('@capacitor/core', () => ({ Capacitor: cap }));
 vi.mock('@capacitor/local-notifications', () => ({ LocalNotifications: plugin }));
@@ -104,7 +105,7 @@ describe('syncRoutineReminders', () => {
 
     const programados = scheduleArg(0).notifications;
     expect(programados).toHaveLength(1);
-    expect(programados[0]!.schedule.on?.weekday).toBe(otroDia);
+    expect(defined(programados[0]).schedule.on?.weekday).toBe(otroDia);
   });
 
   it('programa con `on` y no con una fecha absoluta', async () => {
@@ -122,16 +123,21 @@ describe('syncRoutineReminders', () => {
     useSettingsStore.getState().setRoutineReminderTime({ hour: 7, minute: 5 });
     await syncRoutineReminders(DAYS);
 
-    const primera = scheduleArg(0).notifications[0]!.schedule.on;
+    const primera = defined(scheduleArg(0).notifications[0]).schedule.on;
     expect(primera).toMatchObject({ hour: 7, minute: 5 });
 
     // El weekday sigue siendo el del día de rutina, no el de hoy.
-    expect(scheduleArg(0).notifications[0]!.schedule.on?.weekday).toBe(DAYS[0]!.weekday);
+    expect(defined(scheduleArg(0).notifications[0]).schedule.on?.weekday).toBe(
+      defined(DAYS[0]).weekday,
+    );
   });
 
   it('por defecto mantiene las 18:30 que había a fuego', async () => {
     await syncRoutineReminders(DAYS);
-    expect(scheduleArg(0).notifications[0]!.schedule.on).toMatchObject({ hour: 18, minute: 30 });
+    expect(defined(scheduleArg(0).notifications[0]).schedule.on).toMatchObject({
+      hour: 18,
+      minute: 30,
+    });
   });
 });
 
@@ -141,11 +147,13 @@ describe('notify — ids de avisos inmediatos', () => {
     // al primero y el usuario solo veía uno.
     await notify('Uno', { body: 'a' });
     await notify('Dos', { body: 'b' });
-    expect(scheduleArg(0).notifications[0]!.id).not.toBe(scheduleArg(1).notifications[0]!.id);
+    expect(defined(scheduleArg(0).notifications[0]).id).not.toBe(
+      defined(scheduleArg(1).notifications[0]).id,
+    );
   });
 
   it('respeta un id explícito cuando el llamador lo indica', async () => {
     await notify('Fijo', { body: 'x', id: 123456 });
-    expect(scheduleArg(0).notifications[0]!.id).toBe(123456);
+    expect(defined(scheduleArg(0).notifications[0]).id).toBe(123456);
   });
 });
