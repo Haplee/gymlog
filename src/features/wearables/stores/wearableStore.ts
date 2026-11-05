@@ -12,6 +12,8 @@ interface WearableState {
   setSyncing: (v: boolean) => void;
   setSynced: (strength?: number) => void;
   setError: (msg: string | null) => void;
+  /** Olvida el estado de la última sincronización al cambiar de cuenta. */
+  clearLocal: () => void;
 }
 
 export const useWearableStore = create<WearableState>()(
@@ -30,6 +32,7 @@ export const useWearableStore = create<WearableState>()(
           strength,
         }),
       setError: (lastError) => set({ isSyncing: false, lastError }),
+      clearLocal: () => set({ isSyncing: false, lastSyncAt: null, lastError: null, strength: 0 }),
     }),
     {
       name: 'gymlog-wearables',

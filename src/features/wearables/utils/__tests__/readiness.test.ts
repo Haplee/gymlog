@@ -25,7 +25,11 @@ const daily = (daysAgo: number, restingHr: number | null): WearableDaily => ({
   created_at: new Date().toISOString(),
 });
 
-const sleep = (daysAgo: number, durationMin: number | null): WearableSleep => ({
+const sleep = (
+  daysAgo: number,
+  durationMin: number | null,
+  extra: Partial<WearableSleep> = {},
+): WearableSleep => ({
   id: `s${daysAgo}`,
   user_id: 'u1',
   date: dateKey(daysAgo),
@@ -37,6 +41,7 @@ const sleep = (daysAgo: number, durationMin: number | null): WearableSleep => ({
   awake_min: null,
   efficiency_pct: null,
   created_at: new Date().toISOString(),
+  ...extra,
 });
 
 /** Serie de días con la misma FC de reposo, de `from` a `to` días atrás. */
@@ -115,5 +120,45 @@ describe('computeReadiness', () => {
     expect(computeReadiness(undefined, list)).toEqual(
       computeReadiness(undefined, [...list].reverse()),
     );
+  });
+
+  it('frena la carga por deuda acumulada aunque la media reciente no sea baja', () => {
+    const nights = Array.from({ length: 14 }, (_, i) => sleep(i + 1, 420));
+    const r = computeReadiness(undefined, nights);
+    expect(nn(r).level).toBe('low');
+    expect(nn(r).holdLoad).toBe(true);
+    expect(nn(r).reasonKey).toBe('coach.readiness.low_sleep');
+    expect(nn(r).avgSleepMin).toBe(420);
+    expect(nn(r).sleepDebtMin).toBeGreaterThan(60);
+  });
+
+  it('la línea base EWMA aguanta un valor extremo aislado', () => {
+    const baseline = rhrRange(7, 25, 55).map((row, index) =>
+      index === 12 ? daily(25 - index, 95) : row,
+    );
+    const r = computeReadiness([...rhrRange(0, 6, 65), ...baseline], undefined);
+    expect(nn(r).level).toBe('low');
+    expect(nn(r).reasonKey).toBe('coach.readiness.high_rhr');
+    expect(nn(r).baselineRestingHr).toBe(55);
+    const rhrSignal = nn(r).signals.find((signal) => signal.key === 'restingHr');
+    expect(rhrSignal?.z).toBeGreaterThan(1.5);
+  });
+
+  it('expone score de descanso y consistencia cuando hay datos', () => {
+    const nights = [1, 2, 3].map((daysAgo) =>
+      sleep(daysAgo, 450, { efficiency_pct: 90, deep_min: 80, rem_min: 90 }),
+    );
+    const r = computeReadiness(undefined, nights);
+    expect(nn(r).restScore).toBeGreaterThan(0);
+    expect(nn(r).restScore).toBeLessThanOrEqual(100);
+    expect(nn(r).sleepConsistency).toBe(1);
+    expect(nn(r).signals.map((signal) => signal.key)).toEqual(
+      expect.arrayContaining(['sleep', 'rest', 'consistency']),
+    );
+  });
+
+  it('baja la confianza cuando el sueño no trae fases', () => {
+    const r = computeReadiness(undefined, [sleep(1, 450), sleep(2, 460), sleep(3, 440)]);
+    expect(nn(r).confidence).toBe('building');
   });
 });

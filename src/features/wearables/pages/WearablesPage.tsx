@@ -8,6 +8,7 @@ import { useAuthStore } from '@features/auth/stores/authStore';
 import { useSettingsStore } from '@shared/stores/settingsStore';
 import { ConnectionCard } from '../components/ConnectionCard';
 import { HealthMetricsCard } from '../components/HealthMetricsCard';
+import { RecoveryCard } from '../components/RecoveryCard';
 import { pickDaily, pickSleepFor } from '../utils/pickDaily';
 import { useWearableDaily, useWearableSleep } from '../hooks/useWearableConnections';
 import { useWearableSync } from '../hooks/useWearableSync';
@@ -120,7 +121,10 @@ export function WearablesPage() {
 
         {/* Resumen de datos */}
         {dailyList?.length || sleepList?.length ? (
-          <HealthMetricsCard daily={shownDay} sleep={pickSleepFor(shownDay, sleepList)} />
+          <>
+            <HealthMetricsCard daily={shownDay} sleep={pickSleepFor(shownDay, sleepList)} />
+            <RecoveryCard daily={dailyList} sleep={sleepList} />
+          </>
         ) : (
           <div className="rounded-card p-4 bg-surface border border-line-strong text-xs text-fg-subtle text-center">
             {t('wearables.no_data')}
