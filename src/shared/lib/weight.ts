@@ -1,4 +1,7 @@
-const KG_TO_LB = 2.20462;
+/** Una libra en kilos (definición exacta del sistema avoirdupois). */
+export const LB_TO_KG = 0.45359237;
+
+const KG_TO_LB = 1 / LB_TO_KG;
 
 export function kgToLb(kg: number): number {
   if (typeof kg !== 'number' || isNaN(kg)) return 0;
@@ -7,7 +10,7 @@ export function kgToLb(kg: number): number {
 
 export function lbToKg(lb: number): number {
   if (typeof lb !== 'number' || isNaN(lb)) return 0;
-  return lb / KG_TO_LB;
+  return lb * LB_TO_KG;
 }
 
 export function formatWeight(weightInKg: number, unit: 'kg' | 'lb', decimals = 1): string {

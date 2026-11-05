@@ -19,3 +19,4 @@ export { NavRow } from './NavRow';
 export { PlatesPicker } from './PlatesPicker';
 export { EquipmentStepsEditor } from './EquipmentStepsEditor';
 export { PageHeader } from './PageHeader';
+export { Progress } from './Progress';

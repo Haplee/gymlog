@@ -13,6 +13,7 @@
 
 import { suggestProgression } from './progression';
 import { nextRepTarget } from './perSide';
+import { roundToStep } from './loadStep';
 
 /** Sesiones de carga entre descargas. Con el valor por defecto: 3 de carga y
  * la 4ª de descarga, el ciclo mensual típico. */
@@ -108,10 +109,6 @@ export function parseRepRange(targetReps?: string): { repMin?: number; repMax?: 
   const repMin = nums[0];
   const repMax = nums.length > 1 ? nums[nums.length - 1] : repMin;
   return { repMin, repMax };
-}
-
-function roundToStep(weight: number, step: number): number {
-  return Math.round(Math.round(weight / step) * step * 100) / 100;
 }
 
 /**

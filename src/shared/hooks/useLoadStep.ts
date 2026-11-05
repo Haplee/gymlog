@@ -1,10 +1,6 @@
 import { useCallback } from 'react';
 import { useSettingsStore } from '@shared/stores/settingsStore';
-import {
-  loadMovesForExercise,
-  loadStepForExercise,
-  type ExerciseLoadMoves,
-} from '@shared/lib/loadStep';
+import { loadStepForExercise } from '@shared/lib/loadStep';
 
 /** Opciones de escalón que necesita el motor, sacadas del store. */
 export function settingsLoadOptions() {
@@ -53,24 +49,6 @@ export function useLoadStep(): (equipment: string | null | undefined) => number 
 }
 
 /**
- * Movimiento por la escalera real del material, por ejercicio.
- *
- * Es el hermano de `useLoadStep`: aquel dice *cuánto* es un salto, este dice *a
- * qué peso* se sube o se baja. Con tabla vacía devuelve `{}` y el motor sigue
- * con múltiplos, así que no rompe nada.
- */
-export function useLoadMoves(): (equipment: string | null | undefined) => ExerciseLoadMoves {
-  const platesKg = useSettingsStore((s) => s.availablePlatesKg);
-  const dumbbellStepsKg = useSettingsStore((s) => s.dumbbellStepsKg);
-  const machineStepsKg = useSettingsStore((s) => s.machineStepsKg);
-
-  return useCallback(
-    (equipment) => loadMovesForExercise(equipment, { platesKg, dumbbellStepsKg, machineStepsKg }),
-    [platesKg, dumbbellStepsKg, machineStepsKg],
-  );
-}
-
-/**
  * Misma resolución, fuera de React.
  *
  * La sesión de rutina la necesita dentro de `handleFinish`, que es un manejador
@@ -79,9 +57,4 @@ export function useLoadMoves(): (equipment: string | null | undefined) => Exerci
  */
 export function loadStepFromSettings(equipment: string | null | undefined): number {
   return loadStepForExercise(equipment, settingsLoadOptions());
-}
-
-/** Movimiento por la escalera real, fuera de React. */
-export function loadMovesFromSettings(equipment: string | null | undefined): ExerciseLoadMoves {
-  return loadMovesForExercise(equipment, settingsLoadOptions());
 }
