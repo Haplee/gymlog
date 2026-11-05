@@ -92,18 +92,6 @@ interface EmptyActionProps {
   action?: { label: string; onClick: () => void };
 }
 
-export function EmptyWorkout({ action }: EmptyActionProps) {
-  return <EmptyState type="workout" action={action} />;
-}
-
 export function EmptyHistory({ action }: EmptyActionProps) {
   return <EmptyState type="history" action={action} />;
-}
-
-export function EmptyStats({ action }: EmptyActionProps) {
-  return <EmptyState type="stats" action={action} />;
-}
-
-export function EmptyRoutine({ action }: EmptyActionProps) {
-  return <EmptyState type="routine" action={action} />;
 }
