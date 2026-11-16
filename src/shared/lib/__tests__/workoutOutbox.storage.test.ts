@@ -9,6 +9,9 @@
 //    guardó en ningún sitio), y también se recupera.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+/** Cuenta de pruebas: la cola siempre está acotada a una cuenta. */
+const TEST_USER_ID = 'test-user-123';
+
 const idb = vi.hoisted(() => ({ openDB: vi.fn() }));
 
 vi.mock('idb', () => ({ openDB: idb.openDB }));
@@ -26,7 +29,7 @@ function fakeDb(rows: unknown[] = []) {
 function entrada() {
   return {
     id: 'e-1',
-    userId: 'user-1',
+    userId: TEST_USER_ID,
     exerciseId: 'ex-1',
     customExerciseName: '',
     customMuscleGroup: '',
@@ -56,14 +59,14 @@ describe('workoutOutbox — almacenamiento no disponible', () => {
     const { countPendingWorkouts } = await cargarOutbox();
     idb.openDB
       .mockRejectedValueOnce(new Error('IndexedDB denegado'))
-      .mockResolvedValueOnce(fakeDb([{}, {}]));
+      .mockResolvedValueOnce(fakeDb([{ userId: TEST_USER_ID }, { userId: TEST_USER_ID }]));
 
     // Primer uso: no hay almacenamiento. El contador de la interfaz no revienta.
-    await expect(countPendingWorkouts()).resolves.toBe(0);
+    await expect(countPendingWorkouts(TEST_USER_ID)).resolves.toBe(0);
     expect(idb.openDB).toHaveBeenCalledTimes(1);
 
     // El almacenamiento vuelve (o el usuario concede permiso): se reintenta.
-    await expect(countPendingWorkouts()).resolves.toBe(2);
+    await expect(countPendingWorkouts(TEST_USER_ID)).resolves.toBe(2);
     expect(idb.openDB).toHaveBeenCalledTimes(2);
   });
 
@@ -71,8 +74,8 @@ describe('workoutOutbox — almacenamiento no disponible', () => {
     const { countPendingWorkouts } = await cargarOutbox();
     idb.openDB.mockResolvedValue(fakeDb([]));
 
-    await Promise.all([countPendingWorkouts(), countPendingWorkouts()]);
-    await countPendingWorkouts();
+    await Promise.all([countPendingWorkouts(TEST_USER_ID), countPendingWorkouts(TEST_USER_ID)]);
+    await countPendingWorkouts(TEST_USER_ID);
 
     expect(idb.openDB).toHaveBeenCalledTimes(1);
   });
@@ -82,8 +85,14 @@ describe('workoutOutbox — almacenamiento no disponible', () => {
     idb.openDB.mockRejectedValue(new Error('sin IndexedDB'));
 
     // Corre al arrancar y en `online`: nadie lo espera para contarlo.
-    await expect(flushWorkoutOutbox()).resolves.toBe(0);
-    expect(console.error).toHaveBeenCalled();
+    await expect(flushWorkoutOutbox(TEST_USER_ID)).resolves.toBe(0);
+    // Con usuario en sesión el flush sí abre la cola, así que el mock rechaza
+    // y el `catch` deja constancia del fallo de apertura.
+    expect(idb.openDB).toHaveBeenCalledTimes(1);
+    expect(console.error).toHaveBeenCalledWith(
+      expect.stringContaining('[workoutOutbox] flush falló:'),
+      expect.any(Error),
+    );
   });
 
   it('enqueueWorkout avisa del fallo y se recupera en el siguiente intento', async () => {

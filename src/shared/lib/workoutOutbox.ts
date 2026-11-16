@@ -86,13 +86,24 @@ export async function enqueueWorkout(entry: OutboxWorkout): Promise<void> {
   await (await getDb()).put(STORE, entry);
 }
 
-export async function getPendingWorkouts(): Promise<OutboxWorkout[]> {
-  return (await getDb()).getAll(STORE);
+/**
+ * Entradas de la cola de una cuenta.
+ *
+ * Sin `userId` no devuelve nada: la cola nunca puede quedar sin acotar por
+ * cuenta. Filtrar aquí, y no solo al pintar, es lo que impide que la cola de una
+ * cuenta se envíe desde otra: el `p_user_id` del RPC sale de la entrada, pero
+ * el flush también decide *qué* entradas procesa.
+ */
+export async function getPendingWorkouts(userId?: string): Promise<OutboxWorkout[]> {
+  if (!userId) return [];
+  const rows: OutboxWorkout[] = await (await getDb()).getAll(STORE);
+  return rows.filter((row) => row.userId === userId);
 }
 
-export async function countPendingWorkouts(): Promise<number> {
+export async function countPendingWorkouts(userId?: string): Promise<number> {
+  if (!userId) return 0;
   try {
-    return await (await getDb()).count(STORE);
+    return (await getPendingWorkouts(userId)).length;
   } catch (err) {
     // Es el número del indicador de la interfaz, no una operación que el
     // usuario haya pedido: si el almacenamiento no está disponible no se puede
@@ -105,6 +116,51 @@ export async function countPendingWorkouts(): Promise<number> {
 
 async function removeWorkout(id: string): Promise<void> {
   await (await getDb()).delete(STORE, id);
+}
+
+/**
+ * Descarta una entrada concreta. Devuelve `false` si no existía o si pertenece
+ * a otra cuenta: el `userId` no es decorativo, es la comprobación de propiedad
+ * antes de borrar datos locales.
+ */
+export async function discardPendingWorkout(id: string, userId?: string): Promise<boolean> {
+  const db = await getDb();
+  const entry = (await db.get(STORE, id)) as OutboxWorkout | undefined;
+  if (!entry) return false;
+  if (userId && entry.userId !== userId) return false;
+  await db.delete(STORE, id);
+  return true;
+}
+
+/**
+ * Vuelve a poner una entrada en circulación: le quita el estado fallido, el
+ * contador de reintentos y la espera del backoff. Solo actúa sobre entradas de
+ * la cuenta indicada.
+ */
+export async function retryPendingWorkout(id: string, userId?: string): Promise<boolean> {
+  const db = await getDb();
+  const entry = (await db.get(STORE, id)) as OutboxWorkout | undefined;
+  if (!entry) return false;
+  if (userId && entry.userId !== userId) return false;
+  await db.put(STORE, {
+    ...entry,
+    failed: false,
+    retryCount: 0,
+    nextAttemptAt: undefined,
+  });
+  return true;
+}
+
+/**
+ * Borra toda la cola de una cuenta. Es una acción explícita del usuario desde
+ * Privacidad y datos, no algo que ocurra al cerrar sesión: un entreno sin
+ * sincronizar no debe desaparecer por haber salido de la cuenta.
+ */
+export async function clearOutboxForUser(userId: string): Promise<number> {
+  const db = await getDb();
+  const entries = await getPendingWorkouts(userId);
+  await Promise.all(entries.map((entry) => db.delete(STORE, entry.id)));
+  return entries.length;
 }
 
 function retryDelay(attempt: number): number {
@@ -124,42 +180,56 @@ async function markFailed(w: OutboxWorkout, reason: string): Promise<void> {
   devError(`[workoutOutbox] entrada conservada como fallida (${reason}): ${w.id}`);
 }
 
-/** Flush en vuelo, si lo hay. Coalescer contra él evita envíos duplicados. */
-let inFlight: Promise<number> | null = null;
-/** Alguien pidió otro flush mientras este corría: se hace una pasada más. */
-let rerunRequested = false;
+/**
+ * Flush en vuelo por cuenta. Coalescer contra él evita envíos duplicados.
+ *
+ * La clave es el `userId`. Antes era una sola promesa global: si una cuenta
+ * estaba sincronizando y otra entraba en el dispositivo, la segunda llamada se
+ * enganchaba al flush de la primera y sus entrenos no se enviaban hasta el
+ * siguiente arranque. Separarlo por cuenta también impide que dos sesiones
+ * distintas procesen la misma entrada.
+ */
+const inFlight = new Map<string, Promise<number>>();
+/** Alguien pidió otro flush de la misma cuenta mientras este corría. */
+const rerunRequested = new Set<string>();
 
 /**
- * Intenta enviar todos los entrenos en cola. Devuelve cuántos se sincronizaron.
+ * Intenta enviar los entrenos en cola. Devuelve cuántos se sincronizaron.
  *
+ * - Exige `userId` y solo procesa entradas de esa cuenta. Sin usuario en
+ *   sesión no procesa nada.
  * - Cada entrada que falla se reintenta con backoff exponencial (`nextAttemptAt`)
  *   y un fallo en una **no** detiene el procesado de las demás.
  * - Al agotar MAX_RETRIES la entrada se marca como `failed` y **se conserva**:
  *   nunca se borra en silencio, ni por error de red ni por error del servidor
  *   (RLS/validación), para no perder el entreno del usuario.
- * - **Nunca corren dos flush a la vez.** Se dispara al arrancar la app y en el
- *   evento `online`, que el navegador puede emitir más de una vez seguida: dos
- *   pasadas simultáneas leen la misma cola y mandan los mismos entrenos. La
- *   clave de idempotencia del servidor evita que eso duplique datos, pero la
- *   petición repetida y el borrado por partida doble siguen sobrando.
+ * - **Nunca corren dos flush de la misma cuenta a la vez.** Se dispara al
+ *   arrancar la app y en el evento `online`, que el navegador puede emitir más
+ *   de una vez seguida: dos pasadas simultáneas leen la misma cola y mandan los
+ *   mismos entrenos. La clave de idempotencia del servidor evita que eso
+ *   duplique datos, pero la petición repetida y el borrado por partida doble
+ *   siguen sobrando.
  *
  * Las llamadas que lleguen durante un flush se enganchan al que ya corre y
  * provocan **una** pasada adicional al terminar, para no dejarse lo que se haya
  * encolado mientras tanto.
  */
-export function flushWorkoutOutbox(): Promise<number> {
-  if (inFlight) {
-    rerunRequested = true;
-    return inFlight;
+export function flushWorkoutOutbox(userId?: string): Promise<number> {
+  if (!userId) return Promise.resolve(0);
+  const key = userId;
+  const running = inFlight.get(key);
+  if (running) {
+    rerunRequested.add(key);
+    return running;
   }
 
   const run = (async () => {
     let total = 0;
     try {
-      total = await drainOutbox();
-      if (rerunRequested) {
-        rerunRequested = false;
-        total += await drainOutbox();
+      total = await drainOutbox(userId);
+      if (rerunRequested.has(key)) {
+        rerunRequested.delete(key);
+        total += await drainOutbox(userId);
       }
     } catch (err) {
       // Abrir/leer IndexedDB puede fallar (desalojo, cuota, modo privado). Esto
@@ -171,17 +241,17 @@ export function flushWorkoutOutbox(): Promise<number> {
     }
     return total;
   })().finally(() => {
-    inFlight = null;
-    rerunRequested = false;
+    inFlight.delete(key);
+    rerunRequested.delete(key);
   });
 
-  inFlight = run;
+  inFlight.set(key, run);
   return run;
 }
 
 /** Una pasada sobre la cola. No usar directamente: entra por `flushWorkoutOutbox`. */
-async function drainOutbox(): Promise<number> {
-  const pending = await getPendingWorkouts();
+async function drainOutbox(userId: string): Promise<number> {
+  const pending = await getPendingWorkouts(userId);
   if (!pending.length) return 0;
 
   const now = Date.now();

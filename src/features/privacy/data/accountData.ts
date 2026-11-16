@@ -135,6 +135,186 @@ function idOf(row: unknown): string | null {
   return typeof id === 'string' ? id : null;
 }
 
+// ---------------------------------------------------------------------------
+// Recuento y borrado por categorías
+// ---------------------------------------------------------------------------
+
+/**
+ * Categorías que el usuario puede borrar por separado.
+ *
+ * No son «tablas»: son cosas que la persona reconoce («mi historial», «mis
+ * medidas»). Una categoría puede tocar varias tablas y el orden importa.
+ *
+ * Lo que **no** entra aquí, a propósito:
+ * - `exercises`: los ejercicios personalizados pueden estar referenciados por
+ *   series guardadas (`ON DELETE RESTRICT`). Borrarlos en bloque fallaría o
+ *   rompería entrenos que el usuario ha decidido conservar.
+ * - La cuenta entera: tiene su propio flujo, con verificación en servidor.
+ */
+export const DATA_CATEGORY_TABLES = {
+  workouts: ['personal_records', 'workouts'],
+  measurements: ['body_measurements'],
+  cardio: ['cardio_sessions'],
+  health: ['health_sessions', 'wearable_daily', 'wearable_sleep', 'wearable_connections'],
+  routines: ['user_routines'],
+  exerciseMeta: [
+    'exercise_favorites',
+    'exercise_goals',
+    'exercise_notes',
+    'exercise_progression',
+    'progression_log',
+  ],
+  coach: [
+    'lift_analyses',
+    'ai_coach_memory',
+    'ai_coach_messages',
+    'ai_coach_suggestions',
+    'ai_coach_usage',
+    'ai_coach_audit',
+  ],
+  devices: ['push_tokens'],
+} as const satisfies Record<string, readonly string[]>;
+
+export type DataCategoryId = keyof typeof DATA_CATEGORY_TABLES;
+
+export const DATA_CATEGORY_IDS = Object.keys(DATA_CATEGORY_TABLES) as DataCategoryId[];
+
+export interface AccountCounts {
+  /** Filas por tabla. Una tabla que no existe no aparece. */
+  counts: Record<string, number>;
+  /** Tablas que fallaron al contar, con el motivo. */
+  errors: Record<string, string>;
+}
+
+/**
+ * Nombres de todos los ejercicios visibles para el usuario (catálogo público +
+ * los suyos). La exportación completa solo trae los ejercicios propios porque
+ * el catálogo no es dato del usuario; el CSV, en cambio, necesita poner nombre
+ * a cada serie y el id no le dice nada a quien lo abre.
+ */
+export async function fetchExerciseNames(): Promise<Record<string, string>> {
+  const rows = await drain(
+    (from, to) => db.from('exercises').select('id,name').range(from, to),
+    'exercises',
+  );
+  const names: Record<string, string> = {};
+  for (const row of rows) {
+    if (!row || typeof row !== 'object') continue;
+    const { id, name } = row as { id?: unknown; name?: unknown };
+    if (typeof id === 'string' && typeof name === 'string') names[id] = name;
+  }
+  return names;
+}
+
+interface CountResult {
+  count: number | null;
+  error: { message: string } | null;
+}
+
+interface CountQuery extends PromiseLike<CountResult> {
+  eq(column: string, value: unknown): CountQuery;
+}
+
+interface CountClient {
+  from(table: string): {
+    select(columns?: string, options?: { count?: 'exact'; head?: boolean }): CountQuery;
+  };
+}
+
+const countDb = supabase as unknown as CountClient;
+
+/**
+ * Cuenta las filas de cada tabla sin traerlas.
+ *
+ * `head: true` hace que PostgREST devuelva solo la cabecera con `Content-Range`:
+ * el centro puede enseñar «48 entrenos» sin descargar 48 entrenos ni sus series.
+ */
+export async function fetchAccountCounts(userId: string): Promise<AccountCounts> {
+  const counts: Record<string, number> = {};
+  const errors: Record<string, string> = {};
+
+  await Promise.all(
+    DATA_CATEGORY_IDS.map(async (category) => {
+      await Promise.all(
+        DATA_CATEGORY_TABLES[category].map(async (table) => {
+          const { count, error } = await countDb
+            .from(table)
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', userId);
+          if (error) {
+            // Una tabla opcional que ya no existe no es un fallo del recuento:
+            // es una función retirada. Solo se avisa de las obligatorias.
+            const optional = (OPTIONAL_USER_TABLES as readonly string[]).includes(table);
+            if (!optional) errors[table] = error.message;
+          } else {
+            counts[table] = count ?? 0;
+          }
+        }),
+      );
+    }),
+  );
+
+  return { counts, errors };
+}
+
+interface DeleteResult {
+  count: number | null;
+  error: { message: string } | null;
+}
+
+interface DeleteQuery extends PromiseLike<DeleteResult> {
+  eq(column: string, value: unknown): DeleteQuery;
+}
+
+interface DeleteClient {
+  from(table: string): {
+    delete(options?: { count?: 'exact' }): DeleteQuery;
+  };
+}
+
+const deleteDb = supabase as unknown as DeleteClient;
+
+export interface DeleteCategoryResult {
+  /** Filas borradas por tabla. `null` si esa tabla falló. */
+  deleted: Record<string, number | null>;
+  /** Tablas que no se pudieron borrar, con el motivo. */
+  errors: Record<string, string>;
+}
+
+/**
+ * Borra una categoría de datos del usuario en sesión.
+ *
+ * Va tabla por tabla y **no** se detiene en el primer fallo: si RLS impide
+ * tocar una tabla, el resto del borrado sigue y el resultado dice exactamente
+ * qué quedó sin borrar. Un «hecho» genérico con datos a medias es peor que un
+ * error explícito.
+ *
+ * La sesión del cliente solo puede borrar sus propias filas (`user_id =
+ * auth.uid()`); no hay `service_role` ni se acepta un id ajeno.
+ */
+export async function deleteDataCategory(
+  category: DataCategoryId,
+  userId: string,
+): Promise<DeleteCategoryResult> {
+  const deleted: Record<string, number | null> = {};
+  const errors: Record<string, string> = {};
+
+  for (const table of DATA_CATEGORY_TABLES[category]) {
+    const { count, error } = await deleteDb
+      .from(table)
+      .delete({ count: 'exact' })
+      .eq('user_id', userId);
+    if (error) {
+      deleted[table] = null;
+      errors[table] = error.message;
+    } else {
+      deleted[table] = count ?? 0;
+    }
+  }
+
+  return { deleted, errors };
+}
+
 /**
  * Lee todo lo del usuario. Lanza si falla una tabla obligatoria; las opcionales
  * se anotan y se sigue.
@@ -184,19 +364,60 @@ export async function fetchAccountSnapshot(user: User): Promise<AccountSnapshot>
 }
 
 /**
+ * Estado real del borrado de cuenta en el servidor.
+ *
+ * La Edge Function existía en el repositorio pero no estaba desplegada. La
+ * interfaz no puede prometer un botón que devuelve 404. Se comprueba con un
+ * `GET`: el código de la función responde `405 method_not_allowed` cuando está
+ * desplegada (solo acepta POST) y el gateway responde `404` cuando no existe.
+ * Es una petición sin cuerpo y sin efecto: no borra nada.
+ */
+export type AccountDeletionAvailability = 'available' | 'not-deployed' | 'unknown';
+
+export async function checkAccountDeletionAvailability(): Promise<AccountDeletionAvailability> {
+  try {
+    const { error } = await supabase.functions.invoke('delete-account', { method: 'GET' });
+    if (!error) return 'unknown';
+    const status = (error as { context?: { status?: number } }).context?.status;
+    if (status === 405) return 'available';
+    if (status === 404) return 'not-deployed';
+    return 'unknown';
+  } catch {
+    return 'unknown';
+  }
+}
+
+export interface AccountDeletionResult {
+  error: string | null;
+  /**
+   * `not-deployed` cuando la función no existe en el proyecto: no es un fallo
+   * transitorio y reintentar no va a arreglarlo. La interfaz lo dice tal cual
+   * en vez de culpar a la red.
+   */
+  reason?: 'not-deployed' | 'failed';
+}
+
+/**
  * Pide el borrado de la cuenta.
  *
  * El cliente no puede borrar su propia fila de `auth.users` (ni debe poder):
  * lo hace la Edge Function `delete-account` con `service_role`, después de
- * verificar el JWT de esta misma sesión.
+ * verificar el JWT de esta misma sesión. Si la función no está desplegada, esta
+ * llamada no borra nada y la interfaz debe ofrecer la vía alternativa.
  */
-export async function requestAccountDeletion(): Promise<{ error: string | null }> {
+export async function requestAccountDeletion(): Promise<AccountDeletionResult> {
   const { data, error } = await supabase.functions.invoke('delete-account', {
     method: 'POST',
   });
 
-  if (error) return { error: error.message };
+  if (error) {
+    const status = (error as { context?: { status?: number } }).context?.status;
+    return {
+      error: error.message,
+      reason: status === 404 ? 'not-deployed' : 'failed',
+    };
+  }
   const payload = data as { error?: string } | null;
-  if (payload?.error) return { error: payload.error };
+  if (payload?.error) return { error: payload.error, reason: 'failed' };
   return { error: null };
 }

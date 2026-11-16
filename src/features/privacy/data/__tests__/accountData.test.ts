@@ -126,11 +126,17 @@ describe('requestAccountDeletion', () => {
 
   it('devuelve el mensaje de error de la plataforma', async () => {
     mocks.invoke.mockResolvedValue({ data: null, error: { message: 'FunctionsHttpError' } });
-    await expect(requestAccountDeletion()).resolves.toEqual({ error: 'FunctionsHttpError' });
+    await expect(requestAccountDeletion()).resolves.toEqual({
+      error: 'FunctionsHttpError',
+      reason: 'failed',
+    });
   });
 
   it('devuelve el error del cuerpo si la función responde 200 con error', async () => {
     mocks.invoke.mockResolvedValue({ data: { error: 'delete_failed' }, error: null });
-    await expect(requestAccountDeletion()).resolves.toEqual({ error: 'delete_failed' });
+    await expect(requestAccountDeletion()).resolves.toEqual({
+      error: 'delete_failed',
+      reason: 'failed',
+    });
   });
 });

@@ -67,8 +67,6 @@ export const EXPORT_TABLE_ORDER = [
   'ai_coach_audit',
 ] as const;
 
-export type ExportTable = (typeof EXPORT_TABLE_ORDER)[number];
-
 /**
  * Quita el token del dispositivo de las filas de `push_tokens`.
  *
@@ -143,4 +141,171 @@ export function buildAccountExport(input: AccountExportInput): string {
 /** Nombre estable del fichero, con la fecha del día. */
 export function exportFileName(date: Date): string {
   return `gymlog-datos-${date.toISOString().slice(0, 10)}.json`;
+}
+
+// ---------------------------------------------------------------------------
+// CSV del historial
+// ---------------------------------------------------------------------------
+
+/**
+ * Escapa un campo según RFC 4180.
+ *
+ * Se entrecomilla también cuando hay `;`: Excel en español interpreta la coma
+ * como separador de columnas y el punto y coma como decimal, así que un texto
+ * con `;` sin comillas se parte en dos celdas al abrirlo.
+ */
+export function csvField(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  const text = typeof value === 'string' ? value : String(value);
+  if (!/[",;\n\r]/.test(text)) return text;
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
+function textOf(row: Record<string, unknown>, key: string): string {
+  const value = row[key];
+  return typeof value === 'string'
+    ? value
+    : value === null || value === undefined
+      ? ''
+      : String(value);
+}
+
+function numberOf(row: Record<string, unknown>, key: string): number | null {
+  const value = row[key];
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim() !== '' && Number.isFinite(Number(value))) {
+    return Number(value);
+  }
+  return null;
+}
+
+/** Cabecera del CSV. Cambiarla cambia el formato entregado al usuario. */
+export const WORKOUT_CSV_HEADER = [
+  'Inicio (ISO)',
+  'Entrenamiento',
+  'Ejercicio',
+  'Serie',
+  'Peso (kg)',
+  'Reps',
+  'RIR',
+  'RPE',
+  'Tipo',
+  'Calentamiento',
+  'Volumen (kg)',
+  'Notas de la serie',
+  'Notas del entreno',
+] as const;
+
+/**
+ * Historial de entrenos en CSV, una fila por serie.
+ *
+ * El JSON es completo pero no se abre en una hoja de cálculo. Este fichero sí:
+ * es la forma en la que alguien comprueba su progreso fuera de la app o lo
+ * lleva a su entrenador.
+ *
+ * - Los entrenos sin series **no se pierden**: salen como una fila con las
+ *   columnas de la serie vacías.
+ * - Las series se ordenan por `set_num` dentro de cada entreno, y los entrenos
+ *   por fecha de inicio. El orden de la consulta no decide el del fichero.
+ * - `exerciseNames` viene aparte porque la exportación completa solo incluye
+ *   los ejercicios propios: el catálogo público no es dato del usuario, pero
+ *   su nombre sí hace falta para leer el CSV.
+ */
+export function buildWorkoutCsv(
+  snapshot: AccountSnapshot,
+  exerciseNames: Record<string, string> = {},
+): string {
+  const rows = snapshot.tables;
+  const workouts = (Array.isArray(rows.workouts) ? rows.workouts : []) as Record<string, unknown>[];
+  const sets = (Array.isArray(rows.workout_sets) ? rows.workout_sets : []) as Record<
+    string,
+    unknown
+  >[];
+
+  // Los nombres propios del snapshot completan el mapa por si el llamador no
+  // pasó el catálogo (tests, exportaciones parciales).
+  const names: Record<string, string> = { ...exerciseNames };
+  for (const exercise of (rows.exercises ?? []) as Record<string, unknown>[]) {
+    const id = textOf(exercise, 'id');
+    const name = textOf(exercise, 'name');
+    if (id && name && !names[id]) names[id] = name;
+  }
+
+  const setsByWorkout = new Map<string, Record<string, unknown>[]>();
+  for (const set of sets) {
+    const workoutId = textOf(set, 'workout_id');
+    const list = setsByWorkout.get(workoutId) ?? [];
+    list.push(set);
+    setsByWorkout.set(workoutId, list);
+  }
+
+  const orderedWorkouts = [...workouts].sort((a, b) =>
+    textOf(a, 'started_at').localeCompare(textOf(b, 'started_at')),
+  );
+
+  const lines: string[] = [WORKOUT_CSV_HEADER.map((cell) => csvField(cell)).join(',')];
+
+  for (const workout of orderedWorkouts) {
+    const workoutId = textOf(workout, 'id');
+    const workoutSets = (setsByWorkout.get(workoutId) ?? []).sort(
+      (a, b) => (numberOf(a, 'set_num') ?? 0) - (numberOf(b, 'set_num') ?? 0),
+    );
+    const base = [textOf(workout, 'started_at'), textOf(workout, 'name')];
+
+    if (workoutSets.length === 0) {
+      lines.push(
+        [
+          ...base,
+          '', // ejercicio
+          '', // serie
+          '', // peso
+          '', // reps
+          '', // rir
+          '', // rpe
+          '', // tipo
+          '', // calentamiento
+          '', // volumen
+          '', // notas de la serie
+          textOf(workout, 'notes'),
+        ]
+          .map(csvField)
+          .join(','),
+      );
+      continue;
+    }
+
+    for (const set of workoutSets) {
+      const weight = numberOf(set, 'weight');
+      const reps = numberOf(set, 'reps');
+      const volume =
+        weight !== null && reps !== null ? Math.round(weight * reps * 100) / 100 : null;
+      lines.push(
+        [
+          ...base,
+          names[textOf(set, 'exercise_id')] ?? '',
+          numberOf(set, 'set_num') ?? '',
+          weight ?? '',
+          reps ?? '',
+          numberOf(set, 'rir') ?? '',
+          numberOf(set, 'rpe') ?? '',
+          textOf(set, 'set_type'),
+          set.is_warmup === true ? 'sí' : 'no',
+          volume ?? '',
+          textOf(set, 'notes'),
+          textOf(workout, 'notes'),
+        ]
+          .map(csvField)
+          .join(','),
+      );
+    }
+  }
+
+  // BOM: sin él, Excel en Windows abre el fichero en ANSI y destroza tildes y
+  // eñes («Press de banca» → «Press de banca» con caracteres raros).
+  return `\uFEFF${lines.join('\r\n')}\r\n`;
+}
+
+/** Nombre estable del CSV, con la fecha del día. */
+export function workoutCsvFileName(date: Date): string {
+  return `gymlog-entrenos-${date.toISOString().slice(0, 10)}.csv`;
 }

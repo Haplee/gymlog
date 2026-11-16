@@ -4,14 +4,26 @@ import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
 import { IDBFactory } from 'fake-indexeddb';
 import { isNetworkError, type OutboxWorkout } from '../workoutOutbox';
 
+/**
+ * Cuenta de pruebas. La cola está acotada a una cuenta: todas las entradas
+ * del fixture y todas las llamadas al flush llevan este `userId`.
+ */
+const TEST_USER_ID = 'test-user-123';
+
 // Mock de supabase controlable por test (hoisted para que vi.mock lo vea).
-const { rpcMock, fromMock } = vi.hoisted(() => ({
+const { rpcMock, fromMock, resolveExerciseMock } = vi.hoisted(() => ({
   rpcMock: vi.fn(),
   fromMock: vi.fn(),
+  resolveExerciseMock:
+    vi.fn<(userId: string, name: string, muscleGroup: string) => Promise<string>>(),
 }));
 
 vi.mock('../supabase', () => ({
   supabase: { rpc: rpcMock, from: fromMock },
+}));
+
+vi.mock('../resolveOrCreateExercise', () => ({
+  resolveOrCreateExercise: resolveExerciseMock,
 }));
 
 describe('isNetworkError', () => {
@@ -64,7 +76,7 @@ describe('isNetworkError', () => {
 function makeEntry(overrides: Partial<OutboxWorkout> = {}): OutboxWorkout {
   return {
     id: crypto.randomUUID(),
-    userId: 'user-1',
+    userId: TEST_USER_ID,
     exerciseId: 'ex-1',
     customExerciseName: '',
     customMuscleGroup: '',
@@ -97,6 +109,8 @@ describe('workoutOutbox — persistencia y flush', () => {
     vi.resetModules();
     rpcMock.mockReset();
     fromMock.mockReset();
+    resolveExerciseMock.mockReset();
+    resolveExerciseMock.mockResolvedValue('ex-custom');
     vi.stubGlobal('navigator', { onLine: true });
     // Los caminos de error logean via devError/devLog — silenciados para no
     // ensuciar la salida del runner con fallos esperados.
@@ -115,8 +129,8 @@ describe('workoutOutbox — persistencia y flush', () => {
 
     await enqueueWorkout(entry);
 
-    expect(await countPendingWorkouts()).toBe(1);
-    const pending = await getPendingWorkouts();
+    expect(await countPendingWorkouts(TEST_USER_ID)).toBe(1);
+    const pending = await getPendingWorkouts(TEST_USER_ID);
     expect(pending).toHaveLength(1);
     expect(pending[0].id).toBe(entry.id);
   });
@@ -128,17 +142,17 @@ describe('workoutOutbox — persistencia y flush', () => {
     await enqueueWorkout(makeEntry());
     await enqueueWorkout(makeEntry());
 
-    const flushed = await flushWorkoutOutbox();
+    const flushed = await flushWorkoutOutbox(TEST_USER_ID);
 
     expect(flushed).toBe(2);
     expect(rpcMock).toHaveBeenCalledWith(
       'save_workout_with_sets',
       expect.objectContaining({
-        p_user_id: 'user-1',
+        p_user_id: TEST_USER_ID,
         p_exercise_id: 'ex-1',
       }),
     );
-    expect(await countPendingWorkouts()).toBe(0);
+    expect(await countPendingWorkouts(TEST_USER_ID)).toBe(0);
   });
 
   // Regresión: `flushWorkoutOutbox` se dispara al arrancar y en el evento
@@ -154,12 +168,15 @@ describe('workoutOutbox — persistencia y flush', () => {
     await enqueueWorkout(makeEntry({ id: 'a' }));
     await enqueueWorkout(makeEntry({ id: 'b' }));
 
-    const [uno, dos] = await Promise.all([flushWorkoutOutbox(), flushWorkoutOutbox()]);
+    const [uno, dos] = await Promise.all([
+      flushWorkoutOutbox(TEST_USER_ID),
+      flushWorkoutOutbox(TEST_USER_ID),
+    ]);
 
     expect(rpcMock).toHaveBeenCalledTimes(2); // 2 entradas, no 4
     expect(uno).toBe(2);
     expect(dos).toBe(2); // la segunda se engancha al mismo flush
-    expect(await countPendingWorkouts()).toBe(0);
+    expect(await countPendingWorkouts(TEST_USER_ID)).toBe(0);
   });
 
   it('recoge lo encolado mientras el flush estaba en vuelo', async () => {
@@ -169,16 +186,16 @@ describe('workoutOutbox — persistencia y flush', () => {
     );
 
     await enqueueWorkout(makeEntry({ id: 'primera' }));
-    const enVuelo = flushWorkoutOutbox();
+    const enVuelo = flushWorkoutOutbox(TEST_USER_ID);
 
     // Entra un entreno nuevo y alguien pide otro flush: la pasada extra lo coge.
     await enqueueWorkout(makeEntry({ id: 'tardia' }));
-    const segunda = flushWorkoutOutbox();
+    const segunda = flushWorkoutOutbox(TEST_USER_ID);
 
     await Promise.all([enVuelo, segunda]);
 
     expect(rpcMock).toHaveBeenCalledTimes(2);
-    expect(await countPendingWorkouts()).toBe(0);
+    expect(await countPendingWorkouts(TEST_USER_ID)).toBe(0);
   });
 
   // Regresión: el servidor solo puede deduplicar si el reenvío trae la misma
@@ -190,9 +207,9 @@ describe('workoutOutbox — persistencia y flush', () => {
     // Primer intento: falla por red. La entrada se conserva con su id intacto.
     rpcMock.mockRejectedValueOnce(new Error('Failed to fetch'));
     await enqueueWorkout(makeEntry({ id: 'entrada-estable' }));
-    await flushWorkoutOutbox();
+    await flushWorkoutOutbox(TEST_USER_ID);
 
-    const pending = await getPendingWorkouts();
+    const pending = await getPendingWorkouts(TEST_USER_ID);
     expect(pending).toHaveLength(1);
     expect(pending[0].id).toBe('entrada-estable');
 
@@ -201,7 +218,7 @@ describe('workoutOutbox — persistencia y flush', () => {
     rpcMock.mockResolvedValue({ error: null });
     pending[0].nextAttemptAt = undefined;
     await enqueueWorkout(pending[0]);
-    await flushWorkoutOutbox();
+    await flushWorkoutOutbox(TEST_USER_ID);
 
     expect(rpcMock.mock.calls).toHaveLength(2);
     expect(rpcMock.mock.calls.every((c) => c[1].p_client_id === 'entrada-estable')).toBe(true);
@@ -220,10 +237,10 @@ describe('workoutOutbox — persistencia y flush', () => {
     const despues = await loadOutbox();
     rpcMock.mockResolvedValue({ error: null });
 
-    expect(await despues.countPendingWorkouts()).toBe(1);
-    expect(await despues.flushWorkoutOutbox()).toBe(1);
+    expect(await despues.countPendingWorkouts(TEST_USER_ID)).toBe(1);
+    expect(await despues.flushWorkoutOutbox(TEST_USER_ID)).toBe(1);
     expect(rpcMock.mock.calls[0][1].p_client_id).toBe('cola-tras-reinicio');
-    expect(await despues.countPendingWorkouts()).toBe(0);
+    expect(await despues.countPendingWorkouts(TEST_USER_ID)).toBe(0);
   });
 
   // Respuesta perdida: el servidor escribió el entreno y el cliente solo vio un
@@ -234,25 +251,25 @@ describe('workoutOutbox — persistencia y flush', () => {
     const antes = await loadOutbox();
     rpcMock.mockRejectedValueOnce(new Error('Failed to fetch'));
     await antes.enqueueWorkout(makeEntry({ id: 'respuesta-perdida' }));
-    expect(await antes.flushWorkoutOutbox()).toBe(0);
+    expect(await antes.flushWorkoutOutbox(TEST_USER_ID)).toBe(0);
 
     vi.resetModules();
     const despues = await loadOutbox();
-    const [pendiente] = await despues.getPendingWorkouts();
+    const [pendiente] = await despues.getPendingWorkouts(TEST_USER_ID);
     expect(pendiente.id).toBe('respuesta-perdida');
     expect(pendiente.retryCount).toBe(1);
 
     // El paso del tiempo es lo único que habilita el reintento.
     await despues.enqueueWorkout({ ...pendiente, nextAttemptAt: undefined });
     rpcMock.mockResolvedValue({ error: null });
-    expect(await despues.flushWorkoutOutbox()).toBe(1);
+    expect(await despues.flushWorkoutOutbox(TEST_USER_ID)).toBe(1);
 
     expect(rpcMock.mock.calls.map((c) => c[1].p_client_id)).toEqual([
       'respuesta-perdida',
       'respuesta-perdida',
     ]);
     // Una entrada, no dos: el fallo no reencoló ni duplicó nada.
-    expect(await despues.countPendingWorkouts()).toBe(0);
+    expect(await despues.countPendingWorkouts(TEST_USER_ID)).toBe(0);
   });
 
   // E. Replay repetido: lo ya sincronizado sale de la cola y no se reenvía.
@@ -261,11 +278,11 @@ describe('workoutOutbox — persistencia y flush', () => {
     rpcMock.mockResolvedValue({ error: null });
 
     await enqueueWorkout(makeEntry({ id: 'una-sola-vez' }));
-    expect(await flushWorkoutOutbox()).toBe(1);
-    expect(await flushWorkoutOutbox()).toBe(0);
+    expect(await flushWorkoutOutbox(TEST_USER_ID)).toBe(1);
+    expect(await flushWorkoutOutbox(TEST_USER_ID)).toBe(0);
 
     expect(rpcMock).toHaveBeenCalledTimes(1);
-    expect(await countPendingWorkouts()).toBe(0);
+    expect(await countPendingWorkouts(TEST_USER_ID)).toBe(0);
   });
 
   it('error de red: conserva la entrada para reintentar y para el flush', async () => {
@@ -273,10 +290,10 @@ describe('workoutOutbox — persistencia y flush', () => {
     rpcMock.mockResolvedValue({ error: new Error('Failed to fetch') });
 
     await enqueueWorkout(makeEntry());
-    const flushed = await flushWorkoutOutbox();
+    const flushed = await flushWorkoutOutbox(TEST_USER_ID);
 
     expect(flushed).toBe(0);
-    expect(await countPendingWorkouts()).toBe(1); // se conserva
+    expect(await countPendingWorkouts(TEST_USER_ID)).toBe(1); // se conserva
   });
 
   it('error de validación (no de red): conserva la entrada, no la borra en silencio', async () => {
@@ -285,12 +302,12 @@ describe('workoutOutbox — persistencia y flush', () => {
     rpcMock.mockResolvedValue({ error: new Error('violates check constraint') });
 
     await enqueueWorkout(makeEntry());
-    const flushed = await flushWorkoutOutbox();
+    const flushed = await flushWorkoutOutbox(TEST_USER_ID);
 
     expect(flushed).toBe(0);
     // No se pierde el entreno: se conserva y se reintentará con backoff.
-    expect(await countPendingWorkouts()).toBe(1);
-    expect((await getPendingWorkouts())[0].retryCount).toBe(1);
+    expect(await countPendingWorkouts(TEST_USER_ID)).toBe(1);
+    expect((await getPendingWorkouts(TEST_USER_ID))[0].retryCount).toBe(1);
   });
 
   it('entrada inválida sin ejercicio se conserva como fallida sin llamar al RPC', async () => {
@@ -298,13 +315,13 @@ describe('workoutOutbox — persistencia y flush', () => {
       await loadOutbox();
 
     await enqueueWorkout(makeEntry({ exerciseId: null, customExerciseName: '' }));
-    const flushed = await flushWorkoutOutbox();
+    const flushed = await flushWorkoutOutbox(TEST_USER_ID);
 
     expect(flushed).toBe(0);
     expect(rpcMock).not.toHaveBeenCalled();
     // Irrecuperable, pero no se borra: se marca como fallida.
-    expect(await countPendingWorkouts()).toBe(1);
-    expect((await getPendingWorkouts())[0].failed).toBe(true);
+    expect(await countPendingWorkouts(TEST_USER_ID)).toBe(1);
+    expect((await getPendingWorkouts(TEST_USER_ID))[0].failed).toBe(true);
   });
 
   it('un conflicto de idempotencia se marca fallido sin gastar reintentos', async () => {
@@ -315,11 +332,11 @@ describe('workoutOutbox — persistencia y flush', () => {
     rpcMock.mockResolvedValue({ error: new Error('idempotency_conflict') });
 
     await enqueueWorkout(makeEntry({ id: 'clave-reutilizada' }));
-    const flushed = await flushWorkoutOutbox();
+    const flushed = await flushWorkoutOutbox(TEST_USER_ID);
 
     expect(flushed).toBe(0);
-    expect(await countPendingWorkouts()).toBe(1);
-    const [pendiente] = await getPendingWorkouts();
+    expect(await countPendingWorkouts(TEST_USER_ID)).toBe(1);
+    const [pendiente] = await getPendingWorkouts(TEST_USER_ID);
     expect(pendiente.failed).toBe(true);
     expect(pendiente.retryCount ?? 0).toBe(0);
     expect(rpcMock).toHaveBeenCalledTimes(1);
@@ -330,9 +347,9 @@ describe('workoutOutbox — persistencia y flush', () => {
     rpcMock.mockResolvedValue({ error: new Error('Failed to fetch') });
 
     await enqueueWorkout(makeEntry({ id: 'retry-1' }));
-    await flushWorkoutOutbox();
+    await flushWorkoutOutbox(TEST_USER_ID);
 
-    const pending = await getPendingWorkouts();
+    const pending = await getPendingWorkouts(TEST_USER_ID);
     expect(pending).toHaveLength(1);
     expect(pending[0].retryCount).toBe(1);
   });
@@ -344,12 +361,12 @@ describe('workoutOutbox — persistencia y flush', () => {
 
     // retryCount 4 => este intento es el 5º (== MAX_RETRIES) y agota los reintentos.
     await enqueueWorkout(makeEntry({ id: 'maxed', retryCount: 4 }));
-    const flushed = await flushWorkoutOutbox();
+    const flushed = await flushWorkoutOutbox(TEST_USER_ID);
 
     expect(flushed).toBe(0);
     // No se borra: se conserva marcada como fallida para no perder el entreno.
-    expect(await countPendingWorkouts()).toBe(1);
-    expect((await getPendingWorkouts())[0].failed).toBe(true);
+    expect(await countPendingWorkouts(TEST_USER_ID)).toBe(1);
+    expect((await getPendingWorkouts(TEST_USER_ID))[0].failed).toBe(true);
   });
 
   it('una entrada fallida no se reintenta y no bloquea a las siguientes', async () => {
@@ -360,10 +377,10 @@ describe('workoutOutbox — persistencia y flush', () => {
     await enqueueWorkout(makeEntry({ id: 'ya-fallida', failed: true }));
     await enqueueWorkout(makeEntry({ id: 'ok' }));
 
-    const flushed = await flushWorkoutOutbox();
+    const flushed = await flushWorkoutOutbox(TEST_USER_ID);
 
     expect(flushed).toBe(1); // solo la buena; la fallida se salta sin llamar al RPC
-    expect(await countPendingWorkouts()).toBe(1); // queda la fallida conservada
+    expect(await countPendingWorkouts(TEST_USER_ID)).toBe(1); // queda la fallida conservada
   });
 
   it('un fallo de red en una entrada no impide procesar las demás (sin break)', async () => {
@@ -376,9 +393,94 @@ describe('workoutOutbox — persistencia y flush', () => {
     await enqueueWorkout(makeEntry({ id: 'falla-red' }));
     await enqueueWorkout(makeEntry({ id: 'sync-ok' }));
 
-    const flushed = await flushWorkoutOutbox();
+    const flushed = await flushWorkoutOutbox(TEST_USER_ID);
 
     expect(flushed).toBe(1); // la segunda sí se sincroniza pese al fallo de la primera
-    expect(await countPendingWorkouts()).toBe(1); // queda la de red, con reintento programado
+    expect(await countPendingWorkouts(TEST_USER_ID)).toBe(1); // queda la de red, con reintento programado
+  });
+
+  it('descarta una entrada solo si pertenece a la cuenta indicada', async () => {
+    const { enqueueWorkout, discardPendingWorkout, getPendingWorkouts } = await loadOutbox();
+    await enqueueWorkout(makeEntry({ id: 'descartable' }));
+
+    await expect(discardPendingWorkout('descartable', 'otra-cuenta')).resolves.toBe(false);
+    await expect(discardPendingWorkout('no-existe', TEST_USER_ID)).resolves.toBe(false);
+    await expect(discardPendingWorkout('descartable', TEST_USER_ID)).resolves.toBe(true);
+
+    expect(await getPendingWorkouts(TEST_USER_ID)).toEqual([]);
+  });
+
+  it('reintenta una entrada fallida y limpia su backoff', async () => {
+    const { enqueueWorkout, retryPendingWorkout, getPendingWorkouts } = await loadOutbox();
+    await enqueueWorkout(
+      makeEntry({
+        id: 'reintento-manual',
+        failed: true,
+        retryCount: 4,
+        nextAttemptAt: Date.now() + 60_000,
+      }),
+    );
+
+    await expect(retryPendingWorkout('reintento-manual', 'otra-cuenta')).resolves.toBe(false);
+    await expect(retryPendingWorkout('reintento-manual', TEST_USER_ID)).resolves.toBe(true);
+
+    const [pending] = await getPendingWorkouts(TEST_USER_ID);
+    expect(pending?.failed).toBe(false);
+    expect(pending?.retryCount).toBe(0);
+    expect(pending?.nextAttemptAt).toBeUndefined();
+  });
+
+  it('borra únicamente la cola de la cuenta solicitada', async () => {
+    const { enqueueWorkout, clearOutboxForUser, getPendingWorkouts } = await loadOutbox();
+    await enqueueWorkout(makeEntry({ id: 'mía-1', userId: TEST_USER_ID }));
+    await enqueueWorkout(makeEntry({ id: 'mía-2', userId: TEST_USER_ID }));
+    await enqueueWorkout(makeEntry({ id: 'otra', userId: 'user-2' }));
+
+    await expect(clearOutboxForUser(TEST_USER_ID)).resolves.toBe(2);
+
+    expect(await getPendingWorkouts(TEST_USER_ID)).toEqual([]);
+    expect((await getPendingWorkouts('user-2')).map((entry) => entry.id)).toEqual(['otra']);
+  });
+
+  it('resuelve un ejercicio personalizado antes de enviar el entrenamiento', async () => {
+    const { enqueueWorkout, flushWorkoutOutbox } = await loadOutbox();
+    rpcMock.mockResolvedValue({ error: null });
+    await enqueueWorkout(
+      makeEntry({
+        id: 'custom',
+        exerciseId: null,
+        customExerciseName: '  Press bespoke  ',
+        customMuscleGroup: 'Pecho',
+      }),
+    );
+
+    await expect(flushWorkoutOutbox(TEST_USER_ID)).resolves.toBe(1);
+
+    expect(resolveExerciseMock).toHaveBeenCalledWith(TEST_USER_ID, '  Press bespoke  ', 'Pecho');
+    expect(rpcMock).toHaveBeenCalledWith(
+      'save_workout_with_sets',
+      expect.objectContaining({ p_exercise_id: 'ex-custom' }),
+    );
+  });
+
+  it('no intenta enviar una entrada mientras espera su backoff', async () => {
+    const { enqueueWorkout, flushWorkoutOutbox, getPendingWorkouts } = await loadOutbox();
+    await enqueueWorkout(makeEntry({ id: 'en-backoff', nextAttemptAt: Date.now() + 60_000 }));
+
+    await expect(flushWorkoutOutbox(TEST_USER_ID)).resolves.toBe(0);
+
+    expect(rpcMock).not.toHaveBeenCalled();
+    expect((await getPendingWorkouts(TEST_USER_ID))[0]?.id).toBe('en-backoff');
+  });
+
+  it('no expone entradas sin una cuenta explícita', async () => {
+    const { enqueueWorkout, getPendingWorkouts, countPendingWorkouts, flushWorkoutOutbox } =
+      await loadOutbox();
+    await enqueueWorkout(makeEntry({ id: 'acotada' }));
+
+    await expect(getPendingWorkouts()).resolves.toEqual([]);
+    await expect(countPendingWorkouts()).resolves.toBe(0);
+    await expect(flushWorkoutOutbox()).resolves.toBe(0);
+    expect(rpcMock).not.toHaveBeenCalled();
   });
 });
