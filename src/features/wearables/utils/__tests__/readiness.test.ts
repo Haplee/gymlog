@@ -157,6 +157,19 @@ describe('computeReadiness', () => {
     );
   });
 
+  it('la consistencia usa las 28 noches más recientes, no las de mayor duración', () => {
+    // 30 noches: la más reciente duerme 5 h, las 27 siguientes 8 h y las dos más
+    // antiguas 15 h. La ventana trailing son las 28 noches más recientes.
+    const nights = [
+      sleep(1, 300),
+      ...Array.from({ length: 27 }, (_, index) => sleep(index + 2, 480)),
+      sleep(29, 900),
+      sleep(30, 900),
+    ];
+    const r = computeReadiness(undefined, nights);
+    expect(nn(r).sleepConsistency).toBeCloseTo(0.9295, 4);
+  });
+
   it('baja la confianza cuando el sueño no trae fases', () => {
     const r = computeReadiness(undefined, [sleep(1, 450), sleep(2, 460), sleep(3, 440)]);
     expect(nn(r).confidence).toBe('building');

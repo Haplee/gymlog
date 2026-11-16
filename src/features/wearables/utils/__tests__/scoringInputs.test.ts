@@ -87,14 +87,20 @@ describe('toSleepHoursSeries', () => {
 });
 
 describe('toNightlyHours', () => {
-  it('solo incluye noches con sueño y las ordena', () => {
+  it('conserva el orden cronológico y descarta las noches sin sueño', () => {
     expect(
       toNightlyHours([
-        sleep('2026-01-02', 480),
-        sleep('2026-01-01', null),
         sleep('2026-01-03', 420),
+        sleep('2026-01-01', null),
+        sleep('2026-01-02', 480),
       ]),
-    ).toEqual([7, 8]);
+    ).toEqual([8, 7]);
+  });
+
+  it('no depende del orden de entrada: el orden es temporal, no por valor', () => {
+    const nights = [sleep('2026-01-01', 420), sleep('2026-01-02', 480), sleep('2026-01-03', 360)];
+    expect(toNightlyHours(nights)).toEqual([7, 8, 6]);
+    expect(toNightlyHours([...nights].reverse())).toEqual([7, 8, 6]);
   });
 });
 

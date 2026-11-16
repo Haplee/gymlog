@@ -54,13 +54,18 @@ export function toSleepHoursSeries(sleep: readonly WearableSleep[]): ScoringSeri
   });
 }
 
-/** Horas de sueño de las noches con dato, para `sleepConsistency`. */
+/**
+ * Horas de sueño por noche, en orden cronológico ascendente (la más reciente al
+ * final): `sleepConsistency` recorta la ventana final y necesita orden temporal,
+ * no orden por valor.
+ */
 export function toNightlyHours(sleep: readonly WearableSleep[]): number[] {
   return sleep
+    .slice()
+    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
     .map((row) => positiveOrNull(row.duration_min))
     .filter((minutes): minutes is number => minutes !== null)
-    .map((minutes) => round1(minutes / 60))
-    .sort((a, b) => a - b);
+    .map((minutes) => round1(minutes / 60));
 }
 
 /** Última noche en la forma que espera `restFromTotals`. */
