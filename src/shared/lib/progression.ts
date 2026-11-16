@@ -6,7 +6,9 @@
  * al suelo del rango. Si no, se intenta sumar 1 repetición.
  */
 
+import { calculateFatiguePenalty, MAX_FATIGUE_PENALTY } from './fatigueCalculator';
 import { nextRepTarget } from './perSide';
+import type { FatigueContext } from './progressionCycle';
 
 export interface ProgressionInput {
   reps: number;
@@ -21,6 +23,8 @@ export interface ProgressionSuggestion {
   /** Repeticiones objetivo. */
   reps: number;
   action: ProgressionAction;
+  /** Penalización por fatiga aplicada, entre 0 y 0,10. */
+  fatigueApplied: number;
 }
 
 export interface ProgressionOptions {
@@ -33,6 +37,50 @@ export interface ProgressionOptions {
    * Ver `shared/lib/perSide.ts`.
    */
   perSide?: boolean;
+  /**
+   * Fatiga acumulada en la sesión. Si viene, la carga sugerida baja: un
+   * músculo que ya ha hecho series en la misma sesión llega fatigado al
+   * ejercicio y subir ahí cuesta más de lo que cuesta en fresco.
+   */
+  fatigueContext?: FatigueContext;
+  /** Penalización ya calculada para el contexto de fatiga. */
+  fatiguePenalty?: number;
+}
+
+function clampFatiguePenalty(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.min(MAX_FATIGUE_PENALTY, Math.max(0, value));
+}
+
+function fatiguePenaltyOf(opts: ProgressionOptions): number {
+  const explicit = opts.fatiguePenalty ?? opts.fatigueContext?.fatiguePenalty;
+  if (explicit !== undefined) return clampFatiguePenalty(explicit);
+
+  const ctx = opts.fatigueContext;
+  if (!ctx) return 0;
+  return clampFatiguePenalty(calculateFatiguePenalty(ctx.priorSets, ctx.sessionCount));
+}
+
+/**
+ * Baja la carga sugerida por la fatiga acumulada en la sesión.
+ *
+ * La penalización es un porcentaje del peso, redondeado a medio kilo (el paso
+ * con el que se montan los discos). Devuelve la sugerencia intacta cuando no
+ * hay contexto de fatiga o cuando la penalización resulta cero.
+ */
+export function adjustForFatigue(
+  suggestion: { weight: number; reps: number },
+  ctx?: FatigueContext,
+  fatiguePenalty?: number,
+): { weight: number; reps: number } {
+  if (!ctx && fatiguePenalty === undefined) return suggestion;
+  const penalty = clampFatiguePenalty(
+    fatiguePenalty ??
+      ctx?.fatiguePenalty ??
+      calculateFatiguePenalty(ctx?.priorSets ?? 0, ctx?.sessionCount),
+  );
+  if (penalty <= 0) return suggestion;
+  return { ...suggestion, weight: Math.round(suggestion.weight * (1 - penalty) * 2) / 2 };
 }
 
 export function suggestProgression(
@@ -54,12 +102,34 @@ export function suggestProgression(
   );
 
   if (top.reps >= repMax) {
-    return {
+    const suggestion: ProgressionSuggestion = {
       weight: Math.round((top.weight + inc) * 100) / 100,
       reps: repMin,
       action: 'increase-weight',
+      fatigueApplied: 0,
     };
+    return applyFatigue(suggestion, opts);
   }
 
-  return { weight: top.weight, reps: nextRepTarget(top.reps, opts), action: 'add-reps' };
+  const suggestion: ProgressionSuggestion = {
+    weight: top.weight,
+    reps: nextRepTarget(top.reps, opts),
+    action: 'add-reps',
+    fatigueApplied: 0,
+  };
+  return applyFatigue(suggestion, opts);
+}
+
+/** La fatiga baja el peso de la sugerencia sin tocar la acción que la explica. */
+function applyFatigue(
+  suggestion: ProgressionSuggestion,
+  opts: ProgressionOptions,
+): ProgressionSuggestion {
+  const fatiguePenalty = fatiguePenaltyOf(opts);
+  if (fatiguePenalty <= 0) return suggestion;
+  return {
+    ...suggestion,
+    ...adjustForFatigue(suggestion, opts.fatigueContext, fatiguePenalty),
+    fatigueApplied: fatiguePenalty,
+  };
 }

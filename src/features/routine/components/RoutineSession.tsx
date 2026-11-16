@@ -173,7 +173,19 @@ export function RoutineSession({ userId, exercises }: Props) {
     // ya estaban de un intento anterior no pueden avanzar el ciclo otra vez.
     const progression = useProgressionStore.getState();
     const savedNames = new Set(result.savedExerciseNames);
-    for (const ex of withWeights) {
+    const progressionSessionExercises = withWeights.map((ex) => {
+      const catalog = catalogByName.get(normalizeName(ex.name));
+      const bodyweight = isBodyweightLoad(catalog?.load_type);
+      const muscleGroup =
+        catalog?.muscle_group ??
+        libraryByName.get(normalizeName(ex.name))?.muscle_group ??
+        undefined;
+      const sets = ex.sets.filter((s) =>
+        registraLaSerie(s, ex.mode === 'time' || bodyweight),
+      ).length;
+      return { name: ex.name, muscleGroup, sets };
+    });
+    for (const [exerciseIndex, ex] of withWeights.entries()) {
       if (!savedNames.has(ex.name)) continue;
       const catalog = catalogByName.get(normalizeName(ex.name));
       const bodyweight = isBodyweightLoad(catalog?.load_type);
@@ -208,6 +220,8 @@ export function RoutineSession({ userId, exercises }: Props) {
           // de dos en dos (16 → 18), igual que en el resto del motor.
           perSide: ex.perSide === true,
         },
+        progressionSessionExercises,
+        exerciseIndex + 1,
       );
     }
     void progression.saveToDb(userId);

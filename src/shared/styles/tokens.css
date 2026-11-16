@@ -56,6 +56,12 @@
   --error: #ffb4ab;
   --info: #0a84ff;
 
+  /* ── Barra de progreso ────────────────────────────────────────────────────
+     El track es una superficie hundida propia (no --bg-surface-3: sobre las
+     capas de vidrio el contraste cambia) y el relleno sigue al acento. */
+  --progress-track: #3c3c42;
+  --progress-fill: var(--interactive-primary);
+
   /* ── Paleta de acentos (iconos KPI, badges) ────
      Paleta CATEGÓRICA: sirve para distinguir una métrica de otra, no para
      significar nada. Por eso no sigue al acento que elige el usuario — si
@@ -330,6 +336,10 @@
   --warning: #8a6100;
   --error: #ba1a1a; /* M3 error light */
 
+  /* ── Barra de progreso ─────────────────────────── */
+  --progress-track: #d8dcd7;
+  --progress-fill: var(--interactive-primary);
+
   /* ── Bordes (algo más marcados para definir cards sobre claro) ─── */
   --icon-bg-accent: rgb(var(--accent-rgb) / 0.12);
   --icon-bg-danger: rgba(186, 26, 26, 0.1);
@@ -379,3 +389,32 @@
 }
 
 /* Keyframes y clases de animación viven en index.css (fuente única). */
+
+progress {
+  -webkit-appearance: none;
+  appearance: none;
+  border: none;
+  background: var(--progress-track);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+progress::-webkit-progress-bar {
+  background: var(--progress-track);
+  border-radius: var(--radius-pill);
+}
+progress::-webkit-progress-value {
+  background: var(--progress-fill);
+  border-radius: var(--radius-pill);
+  transition: width 0.5s ease-out;
+}
+progress::-moz-progress-bar {
+  background: var(--progress-fill);
+  border-radius: var(--radius-pill);
+  transition: width 0.5s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  progress::-webkit-progress-value,
+  progress::-moz-progress-bar {
+    transition: none;
+  }
+}

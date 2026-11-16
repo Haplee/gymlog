@@ -12,8 +12,10 @@
  */
 
 import { suggestProgression } from './progression';
+import { calculateFatiguePenalty } from './fatigueCalculator';
 import { nextRepTarget } from './perSide';
 import { roundToStep } from './loadStep';
+import { getPriorSetsSameMuscle, type SessionExercise } from './sessionContext';
 
 /** Sesiones de carga entre descargas. Con el valor por defecto: 3 de carga y
  * la 4ª de descarga, el ciclo mensual típico. */
@@ -75,6 +77,8 @@ export interface ProgressionSessionOutcome {
   weight: number;
   /** Reps de la mejor serie. */
   reps: number;
+  /** Fatiga acumulada en la sesión hasta este ejercicio, si se conoce. */
+  fatigueContext?: FatigueContext;
   /**
    * Repeticiones de **todas** las series de trabajo de la sesión.
    *
@@ -184,9 +188,20 @@ export function advanceProgression(
   state: ProgressionState,
   outcome: ProgressionSessionOutcome,
   config: ProgressionConfig = {},
+  sessionExercises: SessionExercise[] = [],
+  exerciseOrder = 1,
 ): ProgressionState {
   const cycleLength = cycleLengthOf(config);
   const now = new Date().toISOString();
+  const priorSets = getPriorSetsSameMuscle(exerciseOrder, sessionExercises);
+  const fatiguePenalty = calculateFatiguePenalty(priorSets, state.sessionCount);
+  const fatigueContext: FatigueContext = {
+    ...(outcome.fatigueContext ?? {}),
+    priorSets,
+    fatiguePenalty,
+    sessionCount: state.sessionCount,
+    exerciseOrder,
+  };
 
   if (state.isDeloadWeek) {
     return {
@@ -222,6 +237,8 @@ export function advanceProgression(
       repMin: state.repMin,
       repMax: state.repMax,
       incrementKg: state.incrementKg,
+      fatigueContext,
+      fatiguePenalty,
     });
     nextWeight = prog ? prog.weight : outcome.weight;
     nextReps = prog ? prog.reps : outcome.reps;
@@ -277,4 +294,24 @@ export function suggestedPrefillWeight(
     return roundToStep(base * deloadFractionOf(config), state.incrementKg);
   }
   return state?.currentWeight ?? lastTopWeight;
+}
+
+/**
+ * Fatiga acumulada en la sesión hasta el ejercicio que se registra.
+ *
+ * `priorSetsSameMuscle` cuenta las series que ya se hicieron del mismo grupo
+ * muscular en esta sesión: es lo que decide si la carga sugerida tiene que
+ * bajar por fatiga. `sessionCount` son las sesiones de trabajo con el esquema;
+ * durante las dos primeras no se penaliza, porque aún no se sabe cómo
+ * responde ese grupo muscular a este volumen.
+ */
+export interface FatigueContext {
+  /** Series ya hechas del mismo grupo muscular en esta sesión. */
+  priorSets: number;
+  /** Fracción de carga retirada por fatiga, entre 0 y 0,10. */
+  fatiguePenalty: number;
+  /** Sesiones de trabajo con el esquema, para el ramp-up. */
+  sessionCount?: number;
+  /** Posición del ejercicio en la sesión, empezando en 1. */
+  exerciseOrder?: number;
 }
