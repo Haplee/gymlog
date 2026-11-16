@@ -9,7 +9,6 @@ export type Workout = Tables<'workouts'>;
 export type WorkoutSet = Tables<'workout_sets'>;
 export type PersonalRecord = Tables<'personal_records'>;
 export type ExerciseNote = Tables<'exercise_notes'>;
-export type UserRoutine = Tables<'user_routines'>;
 export type BodyMeasurement = Tables<'body_measurements'>;
 
 export type Equipment = 'barbell' | 'dumbbell' | 'machine' | 'bodyweight' | 'cable' | 'other';
@@ -26,15 +25,6 @@ export interface WorkoutWithSets extends Omit<
   started_at: string | null;
   ended_at: string | null;
   sets: WorkoutSetWithDetails[];
-}
-
-/** Tipo helper para datos de sets en el formulario */
-export interface SetFormData {
-  reps: string;
-  weight: string;
-  rpe?: string;
-  is_warmup?: boolean;
-  notes?: string;
 }
 
 /** Fila de músculo ponderado leída de la BD. */

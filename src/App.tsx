@@ -297,9 +297,10 @@ function useWorkoutOutboxSync() {
   useEffect(() => {
     let cancelled = false;
     const sync = async () => {
+      if (!userId) return;
       // Solo la cola de la cuenta activa: sin esto, entrar con otra cuenta en
       // el mismo dispositivo procesaba (y contaba) los entrenos de la anterior.
-      const flushed = await flushWorkoutOutbox(userId ?? undefined);
+      const flushed = await flushWorkoutOutbox(userId);
       if (cancelled) return;
       if (flushed > 0) {
         queryClient.invalidateQueries({ queryKey: ['workouts'], refetchType: 'all' });
@@ -307,7 +308,7 @@ function useWorkoutOutboxSync() {
         queryClient.invalidateQueries({ queryKey: ['workoutsAndSets'], refetchType: 'all' });
         queryClient.invalidateQueries({ queryKey: ['personalRecords'], refetchType: 'all' });
       }
-      void refresh(userId ?? undefined);
+      void refresh(userId);
     };
     // Al volver a primer plano y con red se reintenta: si el evento `online`
     // llegó mientras la app estaba en segundo plano no lo escuchó nadie y el
@@ -315,7 +316,7 @@ function useWorkoutOutboxSync() {
     const onVisible = () => {
       if (document.visibilityState === 'visible' && navigator.onLine) void sync();
     };
-    void refresh(userId ?? undefined);
+    void refresh(userId);
     void sync();
     const onOnline = () => void sync();
     window.addEventListener('online', onOnline);

@@ -88,33 +88,6 @@ export async function createCustomExercise(
   return { id: data.id, name: data.name };
 }
 
-export async function updateCustomExercise(
-  exerciseId: string,
-  input: CreateCustomExerciseInput,
-): Promise<void> {
-  const parsed = CreateCustomExerciseSchema.parse(input);
-  const loadType = resolveLoadType(parsed);
-  const { error } = await supabase
-    .from('exercises')
-    .update({
-      name: parsed.name,
-      muscle_group: parsed.muscle_group,
-      equipment: parsed.equipment,
-      is_compound: parsed.is_compound ?? false,
-      is_bodyweight: loadType !== 'external',
-      load_type: loadType,
-    })
-    .eq('id', exerciseId);
-  if (error) throw error;
-
-  await syncExerciseMuscles(
-    exerciseId,
-    parsed.muscle_group,
-    parsed.primary_weight,
-    parsed.secondaries,
-  );
-}
-
 /**
  * Cambia solo la modalidad de carga de un ejercicio (mini-selector en el
  * registro de series). Mantiene is_bodyweight coherente para compatibilidad.

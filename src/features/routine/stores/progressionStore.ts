@@ -1,7 +1,9 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { supabase } from '@shared/lib/supabase';
-import { devError } from '@shared/lib/devtools';
+import { devError, devLog } from '@shared/lib/devtools';
+import { calculateFatiguePenalty } from '@shared/lib/fatigueCalculator';
+import { getPriorSetsSameMuscle, type SessionExercise } from '@shared/lib/sessionContext';
 import {
   advanceProgression,
   createInitialProgression,
@@ -9,6 +11,7 @@ import {
   normalizeExerciseName,
   suggestedPrefillWeight,
   DEFAULT_DELOAD_CYCLE_LENGTH,
+  type FatigueContext,
   type ProgressionConfig,
   type ProgressionSessionOutcome,
   type ProgressionState,
@@ -24,11 +27,22 @@ export interface ProgressionLogEntry {
   createdAt: string;
 }
 
+export interface ProgressionSessionResult extends ProgressionState {
+  /** Penalización por fatiga aplicada en esta sesión. */
+  fatigueApplied: number;
+}
+
 interface ProgressionStore {
   /** Estado por ejercicio, indexado por nombre normalizado. */
   entries: Record<string, ProgressionState>;
   /** Eventos aún sin subir a `progression_log`. */
   pendingLogs: ProgressionLogEntry[];
+  /**
+   * Fatiga de la última sesión de cada ejercicio, indexada por nombre
+   * normalizado. Vive en el dispositivo: es un dato de la sesión en curso, no
+   * del historial, así que no se sube a la BD.
+   */
+  fatigueContexts: Record<string, FatigueContext>;
   /** Si ya se ha leído la BD en esta sesión (misma regla que routineStore). */
   hydrated: boolean;
   loading: boolean;
@@ -36,6 +50,8 @@ interface ProgressionStore {
   getState: (name: string) => ProgressionState | null;
   /** Peso (kg) a precargar en la próxima sesión del ejercicio. */
   prefillWeightFor: (name: string, lastTopWeight: number | null) => number | null;
+  /** Fatiga registrada en la última sesión del ejercicio, si la hubo. */
+  fatigueContextFor: (name: string) => FatigueContext | null;
   /**
    * Registra una sesión y avanza el ciclo del ejercicio. Crea el estado si es
    * la primera vez que se ve. Devuelve el estado resultante o `null` si la
@@ -43,9 +59,11 @@ interface ProgressionStore {
    */
   recordSession: (
     name: string,
-    outcome: ProgressionSessionOutcome,
+    input: ProgressionSessionOutcome,
     config?: ProgressionConfig,
-  ) => ProgressionState | null;
+    sessionExercises?: SessionExercise[],
+    exerciseOrder?: number,
+  ) => ProgressionSessionResult | null;
   /** Fuerza manualmente el inicio/fin de una semana de descarga. */
   setDeload: (name: string, enabled: boolean) => void;
   loadFromDb: (userId: string) => Promise<void>;
@@ -79,6 +97,7 @@ export const useProgressionStore = create<ProgressionStore>()(
     (set, get) => ({
       entries: {},
       pendingLogs: [],
+      fatigueContexts: {},
       hydrated: false,
       loading: false,
 
@@ -89,17 +108,22 @@ export const useProgressionStore = create<ProgressionStore>()(
         return suggestedPrefillWeight(state, lastTopWeight);
       },
 
-      recordSession: (name, outcome, config = {}) => {
-        if (
-          !Number.isFinite(outcome.weight) ||
-          !Number.isFinite(outcome.reps) ||
-          outcome.reps <= 0
-        ) {
+      fatigueContextFor: (name) => get().fatigueContexts[normalizeExerciseName(name)] ?? null,
+
+      recordSession: (name, input, config = {}, sessionExercises = [], exerciseOrder = 1) => {
+        if (!Number.isFinite(input.weight) || !Number.isFinite(input.reps) || input.reps <= 0) {
           return null;
         }
         const key = normalizeExerciseName(name);
         const { entries } = get();
         const existing = entries[key];
+        const sessionCount = existing?.sessionCount ?? 0;
+        const priorSets = getPriorSetsSameMuscle(exerciseOrder, sessionExercises);
+        const fatiguePenalty = calculateFatiguePenalty(priorSets, sessionCount);
+        const outcome: ProgressionSessionOutcome = {
+          ...input,
+          fatigueContext: { priorSets, fatiguePenalty, sessionCount },
+        };
         const prev =
           existing ??
           createInitialProgression(name, outcome, {
@@ -109,7 +133,7 @@ export const useProgressionStore = create<ProgressionStore>()(
             bodyweight: config.bodyweight,
             cycleLength: config.cycleLength,
           });
-        const next = advanceProgression(prev, outcome, config);
+        const next = advanceProgression(prev, outcome, config, sessionExercises, exerciseOrder);
         const event = existing ? deriveProgressionEvent(prev, next) : 'seed';
         const log: ProgressionLogEntry = {
           id: crypto.randomUUID(),
@@ -120,8 +144,30 @@ export const useProgressionStore = create<ProgressionStore>()(
           reps: next.currentReps ?? null,
           createdAt: new Date().toISOString(),
         };
-        set({ entries: { ...entries, [key]: next }, pendingLogs: [...get().pendingLogs, log] });
-        return next;
+        set({
+          entries: { ...entries, [key]: next },
+          pendingLogs: [...get().pendingLogs, log],
+          fatigueContexts: {
+            ...get().fatigueContexts,
+            [key]: { priorSets, fatiguePenalty, sessionCount },
+          },
+        });
+
+        if (outcome.sessionReps && outcome.sessionReps.length > 0) {
+          const avgAdherence =
+            outcome.sessionReps.reduce((a, b) => a + b, 0) /
+            outcome.sessionReps.length /
+            outcome.reps;
+          const rpeDelta = (avgAdherence - 1) * 10;
+          devLog('progression:telemetry', {
+            exercise: name,
+            adherenceRate: Math.round(avgAdherence * 100) / 100,
+            rpeDelta: Math.round(rpeDelta * 10) / 10,
+            fatiguePenalty,
+          });
+        }
+
+        return { ...next, fatigueApplied: fatiguePenalty };
       },
 
       setDeload: (name, enabled) => {
@@ -219,7 +265,7 @@ export const useProgressionStore = create<ProgressionStore>()(
         return true;
       },
 
-      reset: () => set({ entries: {}, pendingLogs: [], hydrated: false }),
+      reset: () => set({ entries: {}, pendingLogs: [], fatigueContexts: {}, hydrated: false }),
     }),
     {
       name: 'gymlog-progression',

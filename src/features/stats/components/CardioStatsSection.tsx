@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { m } from 'framer-motion';
 import { KPICard } from './KPICards';
 import { CardioTypeIcon } from '@shared/components/CardioIcons';
-import { formatSeconds } from '@features/stats/utils/statsData';
+import { formatDuration } from '@shared/lib/duration';
 import { CHART_COLORS } from '../constants';
 
 export interface CardioStats {
@@ -59,7 +59,7 @@ export function CardioStatsSection({ stats, breakdown, Label }: CardioStatsSecti
         />
         <KPICard
           title={t('stats.kpi_cardio_time')}
-          value={formatSeconds(stats.totalTimeWeek)}
+          value={formatDuration(stats.totalTimeWeek)}
           subtitle={t('stats.kpi_this_week')}
           icon="cardio-time"
         />
@@ -88,7 +88,7 @@ export function CardioStatsSection({ stats, breakdown, Label }: CardioStatsSecti
         <KPICard
           size="sm"
           title={t('stats.kpi_total_time')}
-          value={formatSeconds(stats.totalTimeAll)}
+          value={formatDuration(stats.totalTimeAll)}
           subtitle={t('stats.kpi_all_time')}
           icon="cardio-time"
         />
@@ -102,7 +102,7 @@ export function CardioStatsSection({ stats, breakdown, Label }: CardioStatsSecti
         <KPICard
           size="sm"
           title={t('stats.kpi_avg_duration')}
-          value={stats.avgDur > 0 ? formatSeconds(stats.avgDur) : '—'}
+          value={stats.avgDur > 0 ? formatDuration(stats.avgDur) : '—'}
           subtitle={t('stats.kpi_per_session')}
           icon="duration"
         />
@@ -149,7 +149,7 @@ export function CardioStatsSection({ stats, breakdown, Label }: CardioStatsSecti
                       <span className="text-sm text-fg-muted">{label}</span>
                     </div>
                     <span className="text-xs font-mono font-medium text-fg">
-                      {formatSeconds(duration)}
+                      {formatDuration(duration)}
                     </span>
                   </div>
                   <div className="h-1 rounded-full overflow-hidden bg-surface-2">

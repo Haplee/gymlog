@@ -10,11 +10,6 @@ export function calculateEstimated1RM(weight: number, reps: number): number {
   return calcular1RM(weight, reps);
 }
 
-export function calculateMaxWeight(sets: { weight: number }[]): number {
-  if (sets.length === 0) return 0;
-  return Math.max(...sets.map((s) => s.weight));
-}
-
 export function calculateSessionVolume(sets: { weight: number; reps: number }[]): number {
   return sets.reduce((sum, s) => sum + s.weight * s.reps, 0);
 }

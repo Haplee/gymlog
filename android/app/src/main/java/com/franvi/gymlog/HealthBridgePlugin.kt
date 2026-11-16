@@ -162,8 +162,7 @@ class HealthBridgePlugin : Plugin() {
         scope.launch {
             // Cada lectura va aislada. Con un try/catch común, un solo fallo
             // —típicamente la SecurityException de Health Connect al leer datos
-            // de otras apps en segundo plano— vaciaba TAMBIÉN diarios y entrenos,
-            // y la app lo mostraba como "no hay datos". Medido en dispositivo con
+            // de otras apps en segundo plano— vaciaba TAMBIÉN diarios y entrenos, y la app lo mostraba como "no hay datos". Medido en dispositivo con
             // la pantalla bloqueada: readAll entero a cero por el sueño.
             val errors = JSArray()
             val daily = section("daily", errors) { readDaily(client, startDate, endDate) }

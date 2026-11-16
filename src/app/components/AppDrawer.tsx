@@ -8,8 +8,10 @@ import {
   IconChart,
   IconDumbbell,
   IconGear,
+  IconHistory,
   IconSearch,
   IconStar,
+  IconTrophy,
   IconWatch,
   X,
 } from '@shared/components/icons';
@@ -20,17 +22,13 @@ import { GymLogLogo } from '@shared/components/ui';
  * Cajón de navegación que abre la hamburguesa de la cabecera.
  *
  * La cabecera de la referencia visual (`public/screens/*.png`) es hamburguesa +
- * wordmark + usuario, así que la lupa, la campana y la pestaña de historial se
- * quedaron sin sitio. En vez de eliminarlas —serían funcionalidad perdida— viven
- * aquí, junto a las rutas que nunca tuvieron entrada propia en la barra inferior
- * (biblioteca, medidas, wearables, guía, entrenador).
+ * wordmark + usuario, así que la lupa, la campana y la búsqueda se quedaron sin
+ * sitio. En vez de eliminarlas —serían funcionalidad perdida— viven aquí.
  *
- * Desde la decisión de dejar la barra inferior en cuatro pestañas (inicio,
- * rutinas, historial y cardio), Estadísticas y Ajustes también viven aquí.
- *
- * **Nada de lo que hay aquí está en la barra inferior ni en la cabecera.** Un
- * cajón que repite los destinos que ya tienes a un dedo de distancia solo añade
- * ruido.
+ * El cajón es el mapa completo de la app: están todos los destinos, con su
+ * rótulo y su icono, también los que la barra inferior ya tiene (Progreso,
+ * Historial). La barra inferior sirve para lo que se usa entrenando; el cajón,
+ * para encontrar.
  */
 interface AppDrawerProps {
   onClose: () => void;
@@ -64,10 +62,8 @@ export function AppDrawer({ onClose, onOpenSearch, unreadCount }: AppDrawerProps
       links: [
         { to: '/stats', Icon: IconChart, label: t('nav.stats') },
         { to: '/exercises', Icon: IconDumbbell, label: t('library.title') },
-        // «Progreso» (/user-stats) salió de aquí: ahora tiene pestaña propia, y
-        // duplicar el destino en el cajón es la misma redundancia que se quitó
-        // con cardio. Además la fila lo llamaba «Mis medidas», que era el
-        // nombre de una sección de esa página, no de la página.
+        { to: '/user-stats', label: t('nav.progress'), Icon: IconTrophy },
+        { to: '/history', label: t('nav.history'), Icon: IconHistory },
       ],
     },
     {

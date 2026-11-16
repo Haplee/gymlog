@@ -96,22 +96,21 @@ export default defineConfig(({ mode }) => {
           skipWaiting: true,
           globPatterns: ['**/*.{js,css,html,ico,png,svg,json,woff2}'],
           importScripts: ['sw-custom.js'],
-          runtimeCaching: [
-            {
-              urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
-              handler: 'NetworkFirst',
-              options: {
-                cacheName: 'supabase-api',
-                networkTimeoutSeconds: 10,
-                expiration: { maxEntries: 50, maxAgeSeconds: 60 },
-              },
-            },
-            // Nada de runtimeCaching para js/css/html/fuentes: `globPatterns` ya
-            // los precachea con revisión. Había un CacheFirst de 30 días sobre
-            // ellos y un StaleWhileRevalidate del html que ensombrecían el
-            // precache y podían servir un index.html viejo (apuntando a chunks
-            // viejos) tras publicar una versión.
-          ],
+          // Sin runtimeCaching, ni para la API ni para el shell.
+          //
+          // Había un NetworkFirst sobre `https://*.supabase.co/*` con 60 s de
+          // caché. Era una fuga entre cuentas: los entrenos y medidas de una
+          // sesión podían servirse desde el service worker a la siguiente, y
+          // ningún borrado al cerrar sesión alcanza a una respuesta que ya está
+          // en vuelo. La app ya tiene su propia copia offline (TanStack Query +
+          // IndexedDB) y la cola de guardado; el SW solo precachea el shell.
+          //
+          // Para js/css/html/fuentes tampoco: `globPatterns` ya los precachea
+          // con revisión. Había un CacheFirst de 30 días sobre ellos y un
+          // StaleWhileRevalidate del html que ensombrecían el precache y podían
+          // servir un index.html viejo (apuntando a chunks viejos) tras
+          // publicar una versión.
+          runtimeCaching: [],
         },
         devOptions: {
           // SW desactivado en dev: con HMR se regenera constantemente y dispara

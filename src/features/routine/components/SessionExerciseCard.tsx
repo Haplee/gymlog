@@ -12,6 +12,7 @@ import type { LibraryExercise } from '@shared/api/queries';
 import { useRoutineSessionStore, type SessionExercise } from '../stores/routineSessionStore';
 import { WorkTimer } from '@features/workout/components/WorkTimer';
 import { formatSegundos } from '@features/routine/utils/planTarget';
+import { RPE_OPTIONS } from '@shared/constants/rpe';
 import { perSideCount, totalFromPerSide } from '@shared/lib/perSide';
 import { muscleGroupLabel } from '@shared/lib/muscleGroupLabel';
 import { equipmentLabel } from '@shared/lib/equipmentLabel';
@@ -31,9 +32,6 @@ const ACTION_ICON = {
   reduce: TrendDown,
   hold: Minus,
 } as const;
-
-/** Valores de RPE que se ofrecen, los mismos que en la pantalla de entreno. */
-const RPE_OPTIONS = ['6', '7', '8', '9', '10'] as const;
 
 interface Props {
   userId: string;

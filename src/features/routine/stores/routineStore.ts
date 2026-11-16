@@ -336,6 +336,15 @@ interface RoutineStore {
   saveToDb: (userId: string) => Promise<boolean>;
   loadFromDb: (userId: string) => Promise<void>;
   checkAndBackup: (userId: string) => Promise<void>;
+  /**
+   * Devuelve el store a su estado inicial sin tocar el servidor.
+   *
+   * Se usa al cerrar sesión o al entrar con otra cuenta: las rutinas,
+   * el calendario y la selección son datos de quien entrenaba, no del
+   * dispositivo, y no deben sobrevivir a un cambio de cuenta. Las plantillas de
+   * `defaultRoutines` vuelven a estar visibles.
+   */
+  clearLocal: () => void;
 }
 
 const dayNames: Record<number, DayOfWeek> = {
@@ -381,9 +390,9 @@ export const PREDEFINED_ROUTINES: Routine[] = [
           { name: 'Press banca', sets: 4, reps: '8-10' },
           { name: 'Peso muerto', sets: 3, reps: '8-10' },
           { name: 'Press militar', sets: 3, reps: '10-12' },
-          { name: 'Remo unilateral', sets: 3, reps: '10-12' },
-          { name: ' curl bíceps', sets: 3, reps: '12-15' },
-          { name: 'Extensión tríceps', sets: 3, reps: '12-15' },
+          { name: 'Remo a una mano', sets: 3, reps: '10-12' },
+          { name: 'Curl bíceps mancuerna', sets: 3, reps: '12-15' },
+          { name: 'Press francés', sets: 3, reps: '12-15' },
         ],
       },
       tuesday: { name: 'Descanso', exercises: [] },
@@ -394,9 +403,9 @@ export const PREDEFINED_ROUTINES: Routine[] = [
           { name: 'Press banca', sets: 4, reps: '8-10' },
           { name: 'Peso muerto', sets: 3, reps: '8-10' },
           { name: 'Press militar', sets: 3, reps: '10-12' },
-          { name: 'Remo unilateral', sets: 3, reps: '10-12' },
-          { name: ' curl bíceps', sets: 3, reps: '12-15' },
-          { name: 'Extensión tríceps', sets: 3, reps: '12-15' },
+          { name: 'Remo a una mano', sets: 3, reps: '10-12' },
+          { name: 'Curl bíceps mancuerna', sets: 3, reps: '12-15' },
+          { name: 'Press francés', sets: 3, reps: '12-15' },
         ],
       },
       thursday: { name: 'Descanso', exercises: [] },
@@ -407,9 +416,9 @@ export const PREDEFINED_ROUTINES: Routine[] = [
           { name: 'Press banca', sets: 4, reps: '8-10' },
           { name: 'Peso muerto', sets: 3, reps: '8-10' },
           { name: 'Press militar', sets: 3, reps: '10-12' },
-          { name: 'Remo unilateral', sets: 3, reps: '10-12' },
-          { name: ' curl bíceps', sets: 3, reps: '12-15' },
-          { name: 'Extensión tríceps', sets: 3, reps: '12-15' },
+          { name: 'Remo a una mano', sets: 3, reps: '10-12' },
+          { name: 'Curl bíceps mancuerna', sets: 3, reps: '12-15' },
+          { name: 'Press francés', sets: 3, reps: '12-15' },
         ],
       },
       saturday: { name: 'Descanso', exercises: [] },
@@ -427,64 +436,64 @@ export const PREDEFINED_ROUTINES: Routine[] = [
         name: 'Push (Pecho + Hombro + Tríceps)',
         exercises: [
           { name: 'Press banca', sets: 4, reps: '8-10' },
-          { name: 'Press inclinado', sets: 3, reps: '8-10' },
+          { name: 'Press banca inclinado', sets: 3, reps: '8-10' },
           { name: 'Press militar', sets: 3, reps: '8-10' },
           { name: 'Elevaciones laterales', sets: 3, reps: '12-15' },
-          { name: 'Extensión tríceps', sets: 3, reps: '12-15' },
-          { name: 'Tríceps cuerda', sets: 3, reps: '12-15' },
+          { name: 'Press francés', sets: 3, reps: '12-15' },
+          { name: 'Tríceps polea', sets: 3, reps: '12-15' },
         ],
       },
       tuesday: {
         name: 'Pull (Espalda + Bíceps)',
         exercises: [
           { name: 'Peso muerto', sets: 4, reps: '6-8' },
-          { name: 'Remo unilateral', sets: 3, reps: '8-10' },
-          { name: 'Jalón abierto', sets: 3, reps: '8-10' },
-          { name: 'Remo de pie', sets: 3, reps: '10-12' },
-          { name: ' curl bíceps', sets: 3, reps: '10-12' },
-          { name: 'Martillo', sets: 3, reps: '12-15' },
+          { name: 'Remo a una mano', sets: 3, reps: '8-10' },
+          { name: 'Jalón al pecho', sets: 3, reps: '8-10' },
+          { name: 'Remo con barra', sets: 3, reps: '10-12' },
+          { name: 'Curl bíceps mancuerna', sets: 3, reps: '10-12' },
+          { name: 'Curl martillo', sets: 3, reps: '12-15' },
         ],
       },
       wednesday: {
         name: 'Legs (Piernas)',
         exercises: [
           { name: 'Sentadilla', sets: 4, reps: '8-10' },
-          { name: 'Prensa', sets: 3, reps: '10-12' },
-          { name: 'Femoral sentado', sets: 3, reps: '10-12' },
-          { name: 'Extensiones cuádriceps', sets: 3, reps: '12-15' },
-          { name: 'Elevación gemelos', sets: 4, reps: '15-20' },
+          { name: 'Prensa de piernas', sets: 3, reps: '10-12' },
+          { name: 'Curl femoral sentado', sets: 3, reps: '10-12' },
+          { name: 'Extensiones de cuádriceps', sets: 3, reps: '12-15' },
+          { name: 'Gemelos de pie', sets: 4, reps: '15-20' },
         ],
       },
       thursday: {
         name: 'Push (Pecho + Hombro + Tríceps)',
         exercises: [
           { name: 'Press banca', sets: 4, reps: '8-10' },
-          { name: 'Press inclinado', sets: 3, reps: '8-10' },
+          { name: 'Press banca inclinado', sets: 3, reps: '8-10' },
           { name: 'Press militar', sets: 3, reps: '8-10' },
           { name: 'Elevaciones laterales', sets: 3, reps: '12-15' },
-          { name: 'Extensión tríceps', sets: 3, reps: '12-15' },
-          { name: 'Tríceps cuerda', sets: 3, reps: '12-15' },
+          { name: 'Press francés', sets: 3, reps: '12-15' },
+          { name: 'Tríceps polea', sets: 3, reps: '12-15' },
         ],
       },
       friday: {
         name: 'Pull (Espalda + Bíceps)',
         exercises: [
           { name: 'Peso muerto', sets: 4, reps: '6-8' },
-          { name: 'Remo unilateral', sets: 3, reps: '8-10' },
-          { name: 'Jalón abierto', sets: 3, reps: '8-10' },
-          { name: 'Remo de pie', sets: 3, reps: '10-12' },
-          { name: ' curl bíceps', sets: 3, reps: '10-12' },
-          { name: 'Martillo', sets: 3, reps: '12-15' },
+          { name: 'Remo a una mano', sets: 3, reps: '8-10' },
+          { name: 'Jalón al pecho', sets: 3, reps: '8-10' },
+          { name: 'Remo con barra', sets: 3, reps: '10-12' },
+          { name: 'Curl bíceps mancuerna', sets: 3, reps: '10-12' },
+          { name: 'Curl martillo', sets: 3, reps: '12-15' },
         ],
       },
       saturday: {
         name: 'Legs (Piernas)',
         exercises: [
           { name: 'Sentadilla', sets: 4, reps: '8-10' },
-          { name: 'Prensa', sets: 3, reps: '10-12' },
-          { name: 'Femoral sentado', sets: 3, reps: '10-12' },
-          { name: 'Extensiones cuádriceps', sets: 3, reps: '12-15' },
-          { name: 'Elevación gemelos', sets: 4, reps: '15-20' },
+          { name: 'Prensa de piernas', sets: 3, reps: '10-12' },
+          { name: 'Curl femoral sentado', sets: 3, reps: '10-12' },
+          { name: 'Extensiones de cuádriceps', sets: 3, reps: '12-15' },
+          { name: 'Gemelos de pie', sets: 4, reps: '15-20' },
         ],
       },
       sunday: { name: 'Descanso', exercises: [] },
@@ -501,32 +510,32 @@ export const PREDEFINED_ROUTINES: Routine[] = [
         name: 'Pecho + Tríceps',
         exercises: [
           { name: 'Press banca', sets: 4, reps: '8-12' },
-          { name: 'Press inclinado', sets: 4, reps: '8-12' },
-          { name: 'Aperturas', sets: 3, reps: '12-15' },
-          { name: 'Press banca Decline', sets: 3, reps: '10-12' },
-          { name: 'Extensión tríceps', sets: 4, reps: '10-12' },
-          { name: 'Tríceps cuerda', sets: 3, reps: '12-15' },
+          { name: 'Press banca inclinado', sets: 4, reps: '8-12' },
+          { name: 'Aperturas con mancuernas', sets: 3, reps: '12-15' },
+          { name: 'Press banca declinado', sets: 3, reps: '10-12' },
+          { name: 'Press francés', sets: 4, reps: '10-12' },
+          { name: 'Tríceps polea', sets: 3, reps: '12-15' },
         ],
       },
       tuesday: {
         name: 'Espalda + Bíceps',
         exercises: [
           { name: 'Peso muerto', sets: 4, reps: '8-10' },
-          { name: 'Jalón abierto', sets: 4, reps: '8-12' },
-          { name: 'Remo unilateral', sets: 3, reps: '10-12' },
-          { name: 'Remo de pie', sets: 3, reps: '10-12' },
-          { name: ' curl bíceps', sets: 4, reps: '10-12' },
-          { name: 'Martillo', sets: 3, reps: '12-15' },
+          { name: 'Jalón al pecho', sets: 4, reps: '8-12' },
+          { name: 'Remo a una mano', sets: 3, reps: '10-12' },
+          { name: 'Remo con barra', sets: 3, reps: '10-12' },
+          { name: 'Curl bíceps mancuerna', sets: 4, reps: '10-12' },
+          { name: 'Curl martillo', sets: 3, reps: '12-15' },
         ],
       },
       wednesday: {
         name: 'Piernas',
         exercises: [
           { name: 'Sentadilla', sets: 4, reps: '8-12' },
-          { name: 'Prensa', sets: 4, reps: '10-12' },
-          { name: 'Femoral sentado', sets: 3, reps: '10-12' },
-          { name: 'Extensiones cuádriceps', sets: 3, reps: '12-15' },
-          { name: 'Elevación gemelos', sets: 4, reps: '15-20' },
+          { name: 'Prensa de piernas', sets: 4, reps: '10-12' },
+          { name: 'Curl femoral sentado', sets: 3, reps: '10-12' },
+          { name: 'Extensiones de cuádriceps', sets: 3, reps: '12-15' },
+          { name: 'Gemelos de pie', sets: 4, reps: '15-20' },
           { name: 'Peso muerto rumano', sets: 3, reps: '10-12' },
         ],
       },
@@ -537,7 +546,7 @@ export const PREDEFINED_ROUTINES: Routine[] = [
           { name: 'Elevaciones laterales', sets: 4, reps: '12-15' },
           { name: 'Elevaciones disco', sets: 3, reps: '12-15' },
           { name: 'Face pull', sets: 3, reps: '15-20' },
-          { name: 'Crunches', sets: 4, reps: '15-20' },
+          { name: 'Crunch abdominal', sets: 4, reps: '15-20' },
           { name: 'Plancha', sets: 3, reps: '30-60s' },
         ],
       },
@@ -545,11 +554,11 @@ export const PREDEFINED_ROUTINES: Routine[] = [
         name: 'Pecho + Espalda',
         exercises: [
           { name: 'Press banca', sets: 4, reps: '8-12' },
-          { name: 'Aperturas', sets: 3, reps: '12-15' },
-          { name: 'Jalón abierto', sets: 4, reps: '8-12' },
-          { name: 'Remo unilateral', sets: 3, reps: '10-12' },
-          { name: ' curl bíceps', sets: 3, reps: '10-12' },
-          { name: 'Extensión tríceps', sets: 3, reps: '12-15' },
+          { name: 'Aperturas con mancuernas', sets: 3, reps: '12-15' },
+          { name: 'Jalón al pecho', sets: 4, reps: '8-12' },
+          { name: 'Remo a una mano', sets: 3, reps: '10-12' },
+          { name: 'Curl bíceps mancuerna', sets: 3, reps: '10-12' },
+          { name: 'Press francés', sets: 3, reps: '12-15' },
         ],
       },
       saturday: { name: 'Descanso', exercises: [] },
@@ -568,7 +577,7 @@ export const PREDEFINED_ROUTINES: Routine[] = [
         exercises: [
           { name: 'Sentadilla', sets: 5, reps: '5' },
           { name: 'Press banca', sets: 5, reps: '5' },
-          { name: 'Remo de pie', sets: 5, reps: '5' },
+          { name: 'Remo con barra', sets: 5, reps: '5' },
         ],
       },
       tuesday: {
@@ -576,7 +585,7 @@ export const PREDEFINED_ROUTINES: Routine[] = [
         exercises: [
           { name: 'Peso muerto', sets: 5, reps: '5' },
           { name: 'Press militar', sets: 5, reps: '5' },
-          { name: 'Jalón abierto', sets: 5, reps: '5' },
+          { name: 'Jalón al pecho', sets: 5, reps: '5' },
         ],
       },
       wednesday: { name: 'Descanso', exercises: [] },
@@ -585,7 +594,7 @@ export const PREDEFINED_ROUTINES: Routine[] = [
         exercises: [
           { name: 'Sentadilla', sets: 5, reps: '5' },
           { name: 'Press banca', sets: 5, reps: '5' },
-          { name: 'Remo de pie', sets: 5, reps: '5' },
+          { name: 'Remo con barra', sets: 5, reps: '5' },
         ],
       },
       friday: {
@@ -593,7 +602,7 @@ export const PREDEFINED_ROUTINES: Routine[] = [
         exercises: [
           { name: 'Peso muerto', sets: 5, reps: '5' },
           { name: 'Press militar', sets: 5, reps: '5' },
-          { name: 'Jalón abierto', sets: 5, reps: '5' },
+          { name: 'Jalón al pecho', sets: 5, reps: '5' },
         ],
       },
       saturday: { name: 'Descanso', exercises: [] },
@@ -613,7 +622,7 @@ export const PREDEFINED_ROUTINES: Routine[] = [
           { name: 'Sentadilla', sets: 3, reps: '10-12' },
           { name: 'Press banca', sets: 3, reps: '10-12' },
           { name: 'Remo con mancuerna', sets: 3, reps: '10-12' },
-          { name: ' curl bíceps', sets: 2, reps: '12-15' },
+          { name: 'Curl bíceps mancuerna', sets: 2, reps: '12-15' },
         ],
       },
       tuesday: { name: 'Descanso', exercises: [] },
@@ -622,8 +631,8 @@ export const PREDEFINED_ROUTINES: Routine[] = [
         exercises: [
           { name: 'Sentadilla', sets: 3, reps: '10-12' },
           { name: 'Press militar', sets: 3, reps: '10-12' },
-          { name: 'Jalón abierto', sets: 3, reps: '10-12' },
-          { name: 'Extensión tríceps', sets: 2, reps: '12-15' },
+          { name: 'Jalón al pecho', sets: 3, reps: '10-12' },
+          { name: 'Press francés', sets: 2, reps: '12-15' },
         ],
       },
       thursday: { name: 'Descanso', exercises: [] },
@@ -633,7 +642,7 @@ export const PREDEFINED_ROUTINES: Routine[] = [
           { name: 'Sentadilla', sets: 3, reps: '10-12' },
           { name: 'Press banca', sets: 3, reps: '10-12' },
           { name: 'Remo con mancuerna', sets: 3, reps: '10-12' },
-          { name: ' curl bíceps', sets: 2, reps: '12-15' },
+          { name: 'Curl bíceps mancuerna', sets: 2, reps: '12-15' },
         ],
       },
       saturday: { name: 'Descanso', exercises: [] },
@@ -651,11 +660,11 @@ export const PREDEFINED_ROUTINES: Routine[] = [
         name: 'Upper A (Fuerza)',
         exercises: [
           { name: 'Press banca', sets: 4, reps: '5-6' },
-          { name: 'Remo de pie', sets: 4, reps: '6-8' },
+          { name: 'Remo con barra', sets: 4, reps: '6-8' },
           { name: 'Press militar', sets: 3, reps: '6-8' },
-          { name: 'Jalón abierto', sets: 3, reps: '8-10' },
-          { name: ' curl bíceps', sets: 3, reps: '10-12' },
-          { name: 'Extensión tríceps', sets: 3, reps: '10-12' },
+          { name: 'Jalón al pecho', sets: 3, reps: '8-10' },
+          { name: 'Curl bíceps mancuerna', sets: 3, reps: '10-12' },
+          { name: 'Press francés', sets: 3, reps: '10-12' },
         ],
       },
       tuesday: {
@@ -663,31 +672,31 @@ export const PREDEFINED_ROUTINES: Routine[] = [
         exercises: [
           { name: 'Sentadilla', sets: 4, reps: '5-6' },
           { name: 'Peso muerto rumano', sets: 3, reps: '6-8' },
-          { name: 'Prensa', sets: 3, reps: '8-10' },
-          { name: 'Femoral sentado', sets: 3, reps: '10-12' },
-          { name: 'Elevación gemelos', sets: 4, reps: '12-15' },
+          { name: 'Prensa de piernas', sets: 3, reps: '8-10' },
+          { name: 'Curl femoral sentado', sets: 3, reps: '10-12' },
+          { name: 'Gemelos de pie', sets: 4, reps: '12-15' },
         ],
       },
       wednesday: { name: 'Descanso', exercises: [] },
       thursday: {
         name: 'Upper B (Hipertrofia)',
         exercises: [
-          { name: 'Press inclinado', sets: 4, reps: '8-12' },
-          { name: 'Remo unilateral', sets: 4, reps: '10-12' },
+          { name: 'Press banca inclinado', sets: 4, reps: '8-12' },
+          { name: 'Remo a una mano', sets: 4, reps: '10-12' },
           { name: 'Elevaciones laterales', sets: 4, reps: '12-15' },
-          { name: 'Aperturas', sets: 3, reps: '12-15' },
-          { name: 'Martillo', sets: 3, reps: '12-15' },
-          { name: 'Tríceps cuerda', sets: 3, reps: '12-15' },
+          { name: 'Aperturas con mancuernas', sets: 3, reps: '12-15' },
+          { name: 'Curl martillo', sets: 3, reps: '12-15' },
+          { name: 'Tríceps polea', sets: 3, reps: '12-15' },
         ],
       },
       friday: {
         name: 'Lower B (Hipertrofia)',
         exercises: [
           { name: 'Peso muerto', sets: 4, reps: '6-8' },
-          { name: 'Prensa', sets: 4, reps: '12-15' },
-          { name: 'Extensiones cuádriceps', sets: 3, reps: '12-15' },
-          { name: 'Femoral sentado', sets: 3, reps: '12-15' },
-          { name: 'Elevación gemelos', sets: 4, reps: '15-20' },
+          { name: 'Prensa de piernas', sets: 4, reps: '12-15' },
+          { name: 'Extensiones de cuádriceps', sets: 3, reps: '12-15' },
+          { name: 'Curl femoral sentado', sets: 3, reps: '12-15' },
+          { name: 'Gemelos de pie', sets: 4, reps: '15-20' },
         ],
       },
       saturday: { name: 'Descanso', exercises: [] },
@@ -705,9 +714,9 @@ export const PREDEFINED_ROUTINES: Routine[] = [
         name: 'Press militar',
         exercises: [
           { name: 'Press militar', sets: 3, reps: '5/3/1' },
-          { name: 'Jalón abierto', sets: 5, reps: '10' },
+          { name: 'Jalón al pecho', sets: 5, reps: '10' },
           { name: 'Elevaciones laterales', sets: 4, reps: '12-15' },
-          { name: 'Extensión tríceps', sets: 3, reps: '12-15' },
+          { name: 'Press francés', sets: 3, reps: '12-15' },
         ],
       },
       tuesday: {
@@ -715,7 +724,7 @@ export const PREDEFINED_ROUTINES: Routine[] = [
         exercises: [
           { name: 'Peso muerto', sets: 3, reps: '5/3/1' },
           { name: 'Sentadilla', sets: 5, reps: '10' },
-          { name: 'Femoral sentado', sets: 4, reps: '12-15' },
+          { name: 'Curl femoral sentado', sets: 4, reps: '12-15' },
           { name: 'Plancha', sets: 3, reps: '30-60s' },
         ],
       },
@@ -725,8 +734,8 @@ export const PREDEFINED_ROUTINES: Routine[] = [
         exercises: [
           { name: 'Press banca', sets: 3, reps: '5/3/1' },
           { name: 'Press militar', sets: 5, reps: '10' },
-          { name: ' curl bíceps', sets: 4, reps: '12-15' },
-          { name: 'Tríceps cuerda', sets: 3, reps: '12-15' },
+          { name: 'Curl bíceps mancuerna', sets: 4, reps: '12-15' },
+          { name: 'Tríceps polea', sets: 3, reps: '12-15' },
         ],
       },
       friday: {
@@ -734,8 +743,8 @@ export const PREDEFINED_ROUTINES: Routine[] = [
         exercises: [
           { name: 'Sentadilla', sets: 3, reps: '5/3/1' },
           { name: 'Peso muerto rumano', sets: 5, reps: '10' },
-          { name: 'Prensa', sets: 4, reps: '12-15' },
-          { name: 'Elevación gemelos', sets: 4, reps: '15-20' },
+          { name: 'Prensa de piernas', sets: 4, reps: '12-15' },
+          { name: 'Gemelos de pie', sets: 4, reps: '15-20' },
         ],
       },
       saturday: { name: 'Descanso', exercises: [] },
@@ -866,10 +875,10 @@ export const PREDEFINED_ROUTINES: Routine[] = [
             reps: '6 por lado',
             notes: 'De rotación, con los pies plantados. Tan fuerte como puedas.',
           },
-          { name: 'Curl bíceps', sets: 3, reps: '12' },
-          { name: 'Extensión tríceps', sets: 3, reps: '12' },
+          { name: 'Curl bíceps mancuerna', sets: 3, reps: '12' },
+          { name: 'Press francés', sets: 3, reps: '12' },
           {
-            name: 'Oblicuos',
+            name: 'Russian twist',
             sets: 3,
             reps: '15 por lado',
             notes: 'Rotación con carga, controlando la vuelta.',
@@ -919,7 +928,7 @@ export const PREDEFINED_ROUTINES: Routine[] = [
             notes: 'Empieza al 72% y sube un 2,5% por semana. Deja 2 repeticiones en recámara.',
           },
           {
-            name: 'Sentadilla Parcial',
+            name: 'Sentadilla parcial',
             sets: 3,
             reps: '3',
             notes:
@@ -1009,7 +1018,7 @@ export const PREDEFINED_ROUTINES: Routine[] = [
             notes: 'Innegociable: el hombro que lanza necesita el trabajo de detrás.',
           },
           {
-            name: 'Curl bíceps',
+            name: 'Curl bíceps mancuerna',
             sets: 3,
             reps: '10',
             notes: 'Único día de bíceps de la semana. Más no aporta ni fuerza ni lanzamiento.',
@@ -1246,6 +1255,26 @@ export const useRoutineStore = create<RoutineStore>()(
       resetWeekPlan: () => {
         if (!get().weekPlan) return;
         set({ weekPlan: null, weekPlanUpdatedAt: new Date().toISOString() });
+      },
+
+      clearLocal: () => {
+        // Copia profunda: `defaultRoutines` es una constante de módulo y una
+        // edición futura no debe poder mutar la plantilla compartida.
+        set({
+          routines: defaultRoutines.map((routine) => structuredClone(routine)),
+          activeRoutineId: null,
+          activeRoutineUpdatedAt: null,
+          weekPlan: null,
+          weekPlanUpdatedAt: null,
+          schedule: {},
+          scheduleUpdatedAt: null,
+          hiddenRoutineIds: [],
+          hiddenRoutinesUpdatedAt: null,
+          lastScheduledApply: null,
+          lastBackup: null,
+          loading: false,
+          hydrated: false,
+        });
       },
 
       getWeekPlan: () => {

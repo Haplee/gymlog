@@ -14,6 +14,8 @@ interface CoachState {
   sync: (userId: string) => Promise<void>;
   enable: (userId: string) => Promise<void>;
   disable: () => Promise<void>;
+  /** Apaga el espejo local sin llamar al servidor (cierre de sesión / cambio de cuenta). */
+  clearLocal: () => void;
 }
 
 export const useCoachStore = create<CoachState>()(
@@ -44,6 +46,8 @@ export const useCoachStore = create<CoachState>()(
         await revokeCoachConsent();
         set({ enabled: false });
       },
+
+      clearLocal: () => set({ enabled: false, syncing: false }),
     }),
     {
       name: 'gymlog-coach',

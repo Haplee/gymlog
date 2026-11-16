@@ -581,7 +581,7 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
 
         const finishQueued = async (savedExercises: number, savedExerciseNames: string[]) => {
           set({ ...emptySession });
-          void useOutboxStore.getState().refresh();
+          void useOutboxStore.getState().refresh(userId);
           return {
             error: null,
             success: true,

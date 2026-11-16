@@ -12,7 +12,7 @@ describe('suggestProgression', () => {
       { reps: 12, weight: 100 },
       { reps: 12, weight: 100 },
     ]);
-    expect(s).toEqual({ weight: 102.5, reps: 8, action: 'increase-weight' });
+    expect(s).toEqual({ weight: 102.5, reps: 8, action: 'increase-weight', fatigueApplied: 0 });
   });
 
   it('suma 1 rep si no llega al techo', () => {
@@ -20,7 +20,7 @@ describe('suggestProgression', () => {
       { reps: 9, weight: 80 },
       { reps: 8, weight: 80 },
     ]);
-    expect(s).toEqual({ weight: 80, reps: 10, action: 'add-reps' });
+    expect(s).toEqual({ weight: 80, reps: 10, action: 'add-reps', fatigueApplied: 0 });
   });
 
   it('usa la mejor serie (mayor peso) como referencia', () => {
@@ -29,7 +29,7 @@ describe('suggestProgression', () => {
       { reps: 6, weight: 90 },
     ]);
     // top = 90×6, no llega a repMax → +1 rep
-    expect(s).toEqual({ weight: 90, reps: 7, action: 'add-reps' });
+    expect(s).toEqual({ weight: 90, reps: 7, action: 'add-reps', fatigueApplied: 0 });
   });
 
   it('respeta rango e incremento personalizados', () => {
@@ -38,6 +38,6 @@ describe('suggestProgression', () => {
       repMax: 5,
       incrementKg: 5,
     });
-    expect(s).toEqual({ weight: 145, reps: 3, action: 'increase-weight' });
+    expect(s).toEqual({ weight: 145, reps: 3, action: 'increase-weight', fatigueApplied: 0 });
   });
 });

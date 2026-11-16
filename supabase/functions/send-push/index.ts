@@ -23,6 +23,8 @@ interface PushPayload {
 const cors = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, content-type, x-send-secret',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Max-Age': '86400',
 };
 
 /** Lee una variable de entorno obligatoria o lanza. */

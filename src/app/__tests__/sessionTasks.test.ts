@@ -1,4 +1,6 @@
-// @vitest-environment node
+// @vitest-environment jsdom
+// El cierre de sesión toca APIs de navegador (localStorage vía Supabase,
+// Cache Storage), así que el test corre en jsdom y no en Node.
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { runSignOutPhase } from '@shared/lib/sessionLifecycle';
 

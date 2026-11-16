@@ -12,6 +12,58 @@ import { devError, devLog, devWarn } from '@shared/lib/devtools';
 // no acumulen múltiples listeners de onAuthStateChange.
 let _authSubscription: Subscription | null = null;
 
+/**
+ * Evita que el evento `SIGNED_OUT` de Supabase repita la limpieza que ya está
+ * haciendo `signOut()`. El evento llega antes de que termine la función y, sin
+ * esta marca, las tareas de cleanup correrían dos veces a la vez.
+ */
+let signOutInFlight = false;
+
+/**
+ * Aplica una identidad nueva con la garantía de que los datos locales de la
+ * anterior no se muestran ni un fotograma.
+ *
+ * Los stores persistidos (rutinas, progresión, cardio…) no guardan a quién
+ * pertenecen. Si el token caduca, lo revocan desde otro sitio o alguien entra
+ * con otra cuenta sin pasar por `signOut`, la única forma segura de arrancar es
+ * limpiar antes de exponer la sesión. `adoptAccount` compara con la marca de
+ * dueño del dispositivo y se salta la limpieza cuando la cuenta es la misma.
+ */
+async function syncIdentity(nextUser: User | null): Promise<void> {
+  const state = useAuthStore.getState();
+  const previous = state.user;
+
+  if (previous?.id === nextUser?.id) {
+    useAuthStore.setState({ user: nextUser, loading: false });
+    return;
+  }
+
+  // Se oculta la cuenta anterior mientras se limpia: dejar `previous` en
+  // pantalla mientras corre el borrado enseña datos de otra persona.
+  useAuthStore.setState({ user: null, loading: true });
+
+  try {
+    if (previous && !(nextUser === null && signOutInFlight)) {
+      // La sesión ya cambió, así que `pre-signout` no puede escribir nada:
+      // solo queda el borrado local.
+      await runSignOutPhase('cleanup', previous.id);
+    }
+
+    const { adoptAccount, writeDataOwner } = await import('@app/userDataCleanup');
+    if (nextUser) {
+      await adoptAccount(nextUser.id);
+    } else {
+      writeDataOwner(null);
+    }
+  } catch (err) {
+    // La limpieza es best-effort: si IndexedDB está bloqueado, se entra igual
+    // (los stores ya se han reseteado en memoria) pero queda rastro.
+    devError('[GymLog] Error limpiando datos al cambiar de cuenta:', err);
+  }
+
+  useAuthStore.setState({ user: nextUser, loading: false });
+}
+
 interface AuthState {
   user: User | null;
   loading: boolean;
@@ -50,12 +102,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      set({ user: session?.user ?? null, loading: false, initialized: true });
+      const initialUser = session?.user ?? null;
+      // Antes de pintar nada: ¿estos datos locales son de esta cuenta?
+      // Si el storage tiene datos de otra persona, se borran aquí.
+      try {
+        const { adoptAccount } = await import('@app/userDataCleanup');
+        await adoptAccount(initialUser?.id ?? null);
+      } catch (err) {
+        devError('[GymLog] Error comprobando el dueño de los datos locales:', err);
+      }
+      set({ user: initialUser, loading: false, initialized: true });
 
       const {
         data: { subscription },
       } = supabase.auth.onAuthStateChange((_event, session) => {
-        set({ user: session?.user ?? null, loading: false });
+        // `syncIdentity` es asíncrono y decide si hay que limpiar. No se puede
+        // hacer trabajo pesado dentro del callback: Supabase lo ejecuta en el
+        // hilo del evento y bloquearlo retrasa la propia sesión.
+        void syncIdentity(session?.user ?? null);
       });
 
       _authSubscription = subscription;
@@ -66,19 +130,28 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signIn: async (email, password) => {
-    devLog('[Auth] signIn started for:', email);
+    devLog('[Auth] signIn started');
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-      devError('[Auth] signIn error:', error.message, error.name);
+      // Sin el correo en el log: basta con el nombre del error para depurar.
+      devError('[Auth] signIn error:', error.name, error.message);
       return { error: new Error(getAuthErrorMessage(error)) };
     }
-    devLog('[Auth] signIn success, user:', data.user?.id);
+    if (data.user) {
+      try {
+        const { adoptAccount } = await import('@app/userDataCleanup');
+        await adoptAccount(data.user.id);
+      } catch (err) {
+        devError('[GymLog] Error preparando los datos locales al entrar:', err);
+      }
+    }
+    devLog('[Auth] signIn success');
     set({ user: data.user });
     return { error: null };
   },
 
   signUp: async (email, password, fullName, username) => {
-    devLog('[Auth] signUp started for:', email);
+    devLog('[Auth] signUp started');
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -127,6 +200,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     // Las tareas de cada feature viven en el registro (`shared/lib/
     // sessionLifecycle`), no aquí: este store no debe conocer a workout ni a
     // routine. Quién las registra: `src/app/sessionTasks.ts`.
+    signOutInFlight = true;
     try {
       const userId = get().user?.id ?? null;
 
@@ -136,10 +210,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       queryClient.clear();
       await runSignOutPhase('cleanup', userId);
 
+      // La marca de dueño se borra antes del signOut: si el borrado de la
+      // sesión falla, el siguiente arranque no debe creer que los datos
+      // (ya vaciados) siguen siendo de esta cuenta.
+      try {
+        const { writeDataOwner } = await import('@app/userDataCleanup');
+        writeDataOwner(null);
+      } catch (err) {
+        devError('[GymLog] No se pudo borrar la marca de cuenta local:', err);
+      }
+
       await supabase.auth.signOut();
     } catch (err) {
       devError('[GymLog] Error durante signOut:', err);
     } finally {
+      signOutInFlight = false;
       set({ user: null });
     }
   },

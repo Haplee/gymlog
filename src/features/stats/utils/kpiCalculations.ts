@@ -156,24 +156,6 @@ export function calculateAverageSessionDuration(workouts: WorkoutWithSets[]): nu
   return Math.round(durations.reduce((a, b) => a + b, 0) / durations.length);
 }
 
-export function calculateTotalPRs(
-  sets: { weight: number; reps: number; is_pr?: boolean | null }[],
-): number {
-  return sets.filter((s) => s.is_pr === true).length;
-}
-
-export function calculateTotalPRsFromRecords(
-  prs: { exercise_id: string; achieved_at: string | null }[],
-): number {
-  if (!prs || prs.length === 0) return 0;
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  return prs.filter((pr) => {
-    if (!pr.achieved_at) return false;
-    return new Date(pr.achieved_at) >= thirtyDaysAgo;
-  }).length;
-}
-
 export function calculateAllTimePRsCount(prs: { exercise_id: string }[]): number {
   return prs?.length ?? 0;
 }

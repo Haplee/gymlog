@@ -2,21 +2,21 @@
 
 ## Supported Versions
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
-
 | Version | Supported          |
 | ------- | ------------------ |
-| 5.6.x   | :white_check_mark: |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+| 5.15.x  | :white_check_mark: |
+| 5.10.x  | :white_check_mark: |
+| < 5.10  | :x:                |
 
 ## Reporting a Vulnerability
 
-Use this section to tell people how to report a vulnerability.
+Si descubres una vulnerabilidad de seguridad en GymLog:
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+1. **No abras un issue público.** Envía un reporte privado por email o canal seguro.
+2. **Incluye detalles**: descripción, pasos para reproducir, impacto potencial, entorno (web/nativo).
+3. **Respuesta**: Intentaremos responder en un plazo razonable y mantenerte informado.
+4. **Coordinación**: Trabajaremos contigo para validar y corregir el problema antes de su divulgación pública.
+
+## Security Hardening
+
+Consulta la documentación en `docs/security/` para detalles sobre controles, riesgos y procedimientos de respuesta a incidentes.

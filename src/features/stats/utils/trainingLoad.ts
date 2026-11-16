@@ -28,6 +28,7 @@
  */
 
 import type { LoadSuggestion } from './autoregulation';
+import { MS_PER_DAY } from '@shared/lib/time';
 
 /** Series semanales por debajo de las cuales el músculo no recibe estímulo. */
 export const MEV_WEEKLY_SETS = 6;
@@ -55,8 +56,6 @@ export const CHRONIC_WEEKS = 4;
  * quien más margen tiene para progresar.
  */
 const MIN_CHRONIC_SETS = 3;
-
-const DAY_MS = 86_400_000;
 
 /** Una serie de trabajo situada en el tiempo y atribuida a un músculo. */
 export interface VolumeSet {
@@ -131,7 +130,7 @@ export function buildVolumeContext(
     if (s.muscleGroup.trim().toLowerCase() !== target) continue;
     const ts = new Date(s.date).getTime();
     if (Number.isNaN(ts)) continue;
-    const days = (nowMs - ts) / DAY_MS;
+    const days = (nowMs - ts) / MS_PER_DAY;
     if (days < 0 || days > CHRONIC_WEEKS * 7) continue;
     chronicTotal++;
     if (days <= 7) acuteSets++;

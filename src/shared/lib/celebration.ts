@@ -338,8 +338,3 @@ export function celebrate(): void {
     if (engine) spawn(engine, { x: w * 0.88, y: h * 0.75, count: 45, power: 0.85 });
   }, 240);
 }
-
-/** Corta la celebración y limpia canvas, listeners y rAF. */
-export function stopCelebration(): void {
-  destroy();
-}

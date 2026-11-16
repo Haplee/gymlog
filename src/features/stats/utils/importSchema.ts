@@ -11,10 +11,7 @@
 // tipados en vez de repetir las mismas coacciones en dos sitios.
 
 import { z } from 'zod';
-
-/** Topes de cordura: fuera de esto no es un dato de entreno, es basura. */
-const MAX_REPS = 1000;
-const MAX_WEIGHT_KG = 2000;
+import { MAX_REPS, MAX_WEIGHT_KG } from './importLimits';
 
 const ImportedSetSchema = z.object({
   exercise: z.string().trim().min(1),

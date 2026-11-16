@@ -61,8 +61,6 @@ let ringing = false;
 /** Nodos del ciclo en curso: se paran uno a uno al silenciar. */
 let liveNodes: OscillatorNode[] = [];
 
-export const isAlarmRinging = (): boolean => ringing;
-
 function getContext(): AudioContext | null {
   const AudioCtx = window.AudioContext || window.webkitAudioContext;
   if (!AudioCtx) return null;

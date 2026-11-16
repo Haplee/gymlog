@@ -57,8 +57,3 @@ export async function runSignOutPhase(phase: SignOutPhase, userId: string | null
     }
   }
 }
-
-/** Solo para tests: deja el registro vacío entre casos. */
-export function resetSignOutTasks(): void {
-  tasks.length = 0;
-}

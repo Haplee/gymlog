@@ -23,6 +23,7 @@ import {
   nextAchievableLoad,
 } from '@shared/lib/loadStep';
 import { format, startOfWeek } from 'date-fns';
+import { MS_PER_DAY } from '@shared/lib/time';
 
 export { DEFAULT_LOAD_STEP_KG, MAX_INCREASE_RATIO };
 
@@ -57,8 +58,6 @@ const STALE_DAYS = 14;
  * no sobre la sesión anterior.
  */
 const WEEKLY_INCREASE_CAP = 0.06;
-
-const DAY_MS = 86_400_000;
 
 export interface AutoRegSet {
   weight: number;
@@ -249,7 +248,7 @@ function usableSessions(sessions: AutoRegSession[]): AutoRegSession[] {
 
 /** Días transcurridos entre dos sesiones. */
 function daysBetween(from: string, to: string): number {
-  return (new Date(to).getTime() - new Date(from).getTime()) / DAY_MS;
+  return (new Date(to).getTime() - new Date(from).getTime()) / MS_PER_DAY;
 }
 
 /**
@@ -725,7 +724,7 @@ export function detectStall(sessions: AutoRegSession[]): StallResult | null {
   const sessionsSinceBest = lastIdx - bestIdx;
   const daysSinceBest = Math.floor(
     (new Date(usable[lastIdx].date).getTime() - new Date(usable[bestIdx].date).getTime()) /
-      86_400_000,
+      MS_PER_DAY,
   );
 
   const stalled = sessionsSinceBest >= STALL_SESSIONS || daysSinceBest >= STALL_DAYS;
@@ -756,7 +755,7 @@ function probableCause(usable: AutoRegSession[]): StallCause {
     let totalGap = 0;
     for (let i = 1; i < recent.length; i++) {
       totalGap +=
-        (new Date(recent[i].date).getTime() - new Date(recent[i - 1].date).getTime()) / 86_400_000;
+        (new Date(recent[i].date).getTime() - new Date(recent[i - 1].date).getTime()) / MS_PER_DAY;
     }
     if (totalGap / (recent.length - 1) > 10) return 'frequency';
   }

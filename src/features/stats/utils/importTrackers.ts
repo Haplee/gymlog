@@ -19,6 +19,8 @@
  */
 
 import { parseImportDate } from './exportImport';
+import { MAX_REPS, MAX_WEIGHT_KG } from './importLimits';
+import { LB_TO_KG } from '@shared/lib/weight';
 
 /** Apps reconocidas. `generic` es el encaje flexible por cabeceras sueltas. */
 export type TrackerId = 'strong' | 'hevy' | 'fitnotes' | 'generic';
@@ -30,9 +32,6 @@ export const TRACKER_NAME: Record<TrackerId, string> = {
   generic: 'CSV genérico',
 };
 
-/** Una libra en kilos. GymLog guarda siempre kg. */
-const LB_TO_KG = 0.45359237;
-
 /**
  * Marca de orden de bytes que algunos exportadores ponen al principio del
  * fichero. Si se cuela, la primera cabecera lleva el BOM pegado y no casa con
@@ -40,10 +39,6 @@ const LB_TO_KG = 0.45359237;
  * valido.
  */
 const BOM = '\uFEFF';
-
-/** Topes de cordura, alineados con los de `importSchema`. */
-const MAX_REPS = 1000;
-const MAX_WEIGHT_KG = 2000;
 
 /* ----------------------------------------------------------------- CSV ---- */
 

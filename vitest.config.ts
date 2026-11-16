@@ -3,7 +3,7 @@ import { aliases } from './vite.aliases';
 
 /**
  * Las Edge Functions (`supabase/functions/`) corren en Deno e importan por URL
- * (`https://esm.sh/zod@3.24.2`). Vitest corre en Node: Vite deja los imports
+ * (`https://esm.sh/zod@4.6.7`). Vitest corre en Node: Vite deja los imports
  * http como externos y el runner acaba haciendo un `import()` nativo, que
  * revienta con «Only URLs with a scheme in: file and data are supported».
  *
@@ -12,7 +12,7 @@ import { aliases } from './vite.aliases';
  * llegan a ver las URLs porque Vite las marca como externas antes.
  *
  * Solo afecta a los tests. El código desplegado conserva la URL, que es lo que
- * Deno necesita, y la versión del zod local (^3.24.2) es la misma que pide.
+ * Deno necesita, y la versión del zod local (^4.6.7) es la misma que pide.
  */
 const denoUrlImports = {
   name: 'gymlog:deno-url-imports',
@@ -32,6 +32,9 @@ export default defineConfig({
   test: {
     exclude: ['**/e2e/**', '**/node_modules/**', '**/dist/**'],
     alias: aliases,
+    // Enlaza localStorage/sessionStorage al Storage de jsdom y lo vacía entre
+    // tests. Node 26 los declara en globalThis y deja el de jsdom sin efecto.
+    setupFiles: ['./src/test/setup.ts'],
     /**
      * Valores de relleno para que la suite no dependa del `.env` de cada
      * máquina. Los tests que hablan con Supabase mockean el módulo, pero
@@ -44,6 +47,14 @@ export default defineConfig({
     env: {
       VITE_SUPABASE_URL: 'http://localhost:54321',
       VITE_SUPABASE_KEY: 'clave-de-test',
+    },
+    coverage: {
+      thresholds: {
+        statements: 80,
+        branches: 70,
+        functions: 80,
+        lines: 80,
+      },
     },
   },
 });

@@ -402,6 +402,18 @@ export function WorkoutPage() {
    * `false`, el guard se cumplía otra vez y el diálogo se reabría en bucle.
    * «Guardar todas» no llegaba a guardar nunca.
    */
+  /**
+   * Guarda el entreno.
+   *
+   * `scope` presente = alcance ya decidido (es lo que pasan las dos ramas del
+   * diálogo). Sin `scope` hay que resolverlo, y puede acabar en preguntar.
+   *
+   * Antes esto era un único `onlyCompleted?: boolean`, y ese flag significaba a
+   * la vez «qué series guardar» y «aún no he preguntado». La confirmación no
+   * tenía forma de decir «guardar todas, ya está decidido»: volvía a entrar con
+   * `false`, el guard se cumplía otra vez y el diálogo se reabría en bucle.
+   * «Guardar todas» no llegaba a guardar nunca.
+   */
   const handleSave = async (opts: { scope?: SaveScope } = {}) => {
     if (!user || saving) return;
 
@@ -432,8 +444,14 @@ export function WorkoutPage() {
     const { selected, errors } = selectSetsForSave(sets, { onlyCompleted });
     setSetErrors(errors);
 
+    // FILTRO: quitamos el error de peso implausible de la comprobación de
+    // "filas incompletas", para que el guardado no se bloquee automáticamente.
+    // El error de peso implausible se muestra como aviso y el usuario debe
+    // confirmar explícitamente si quiere guardar ese valor.
+    const hasGenuineError = Object.keys(errors).some((key) => !key.includes('implausible_weight'));
+
     const failed = Object.keys(errors).map(Number);
-    if (failed.length > 0) {
+    if (failed.length > 0 && hasGenuineError) {
       void notificationHaptic(NotificationType.Error);
       // El error de cada fila solo se pintaba en la serie que estuviera abierta,
       // así que si la rota era otra el botón no hacía nada y no lo decía nadie:
@@ -511,6 +529,14 @@ export function WorkoutPage() {
           bodyweight: isBodyweightExercise,
           incrementKg: loadStepKg,
         },
+        [
+          {
+            name,
+            muscleGroup: selectedExercise?.muscle_group ?? undefined,
+            sets: valid.length,
+          },
+        ],
+        1,
       );
       void useProgressionStore.getState().saveToDb(user.id);
     };

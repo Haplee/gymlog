@@ -5,6 +5,7 @@ import { impact, ImpactStyle } from '@shared/lib/haptics';
 import { formatWeightInput } from '@shared/lib/weight';
 import { Check, Stickynote, X } from '@shared/components/icons';
 import { SegmentedControl } from '@shared/components/ui';
+import { RPE_OPTIONS } from '@shared/constants/rpe';
 import { WorkTimer } from './WorkTimer';
 
 type SetType = 'normal' | 'dropset' | 'rest_pause' | 'amrap';
@@ -50,7 +51,6 @@ function resumenSerie(s: SetData, weightUnit: string, peso: string): string {
   return `${peso || '0'} ${weightUnit} × ${s.reps || '0'}`;
 }
 
-const RPE_OPTIONS = ['6', '7', '8', '9', '10'] as const;
 const SET_TYPES: SetType[] = ['normal', 'dropset', 'rest_pause', 'amrap'];
 const SET_TYPE_BADGE: Record<Exclude<SetType, 'normal'>, string> = {
   dropset: 'DROP',

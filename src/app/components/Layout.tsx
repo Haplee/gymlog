@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router';
-import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@features/auth/stores/authStore';
 import { useWorkoutStore } from '@features/workout/stores/workoutStore';
@@ -9,16 +8,15 @@ import { fetchWorkoutsAndSets, fetchWorkouts, fetchRecentSets } from '@shared/ap
 import { m, AnimatePresence } from 'framer-motion';
 import {
   IconDumbbell,
-  IconFlame,
   IconHistory,
   IconChart,
   IconHome,
   IconMenu,
   IconPulse,
+  IconUser,
   Refresh,
   WifiOff,
 } from '@shared/components/icons';
-import { calculateCurrentStreak } from '@features/stats/utils/kpiCalculations';
 import { AppDrawer } from '@app/components/AppDrawer';
 import { useOutboxStore } from '@shared/stores/outboxStore';
 import { useRestAlarm } from '@features/workout/hooks/useRestAlarm';
@@ -156,17 +154,6 @@ export function Layout({ children }: LayoutProps) {
     return registerBackAction('layout-drawer', () => setMenuOpen(false));
   }, [menuOpen]);
 
-  // Racha para la cabecera. Comparte clave con la caché que ya alimenta
-  // Historial (y que `prefetchPageData` precalienta), así que no añade una
-  // petición propia salvo que nadie haya pedido los entrenos todavía.
-  const { data: streakWorkouts = [] } = useQuery({
-    queryKey: ['workouts', user?.id],
-    queryFn: () => fetchWorkouts(user?.id ?? ''),
-    enabled: !!user?.id,
-    staleTime: 1000 * 60 * 5,
-  });
-  const streak = calculateCurrentStreak(streakWorkouts);
-
   // Cinco pestañas: lo que se usa a diario entrenando. El resto (ajustes,
   // biblioteca, entrenador, wearables…) vive en el cajón de la hamburguesa.
   //
@@ -266,25 +253,9 @@ export function Layout({ children }: LayoutProps) {
             />
           </div>
 
-          {/* Racha en vez del acceso a Ajustes: el engranaje vive en el menú
-              hamburguesa, así que ese hueco puede llevar el dato que la app
-              quiere que mires. Sin racha viva no se enseña un cero
-              desmotivador; se deja el sitio reservado para que el wordmark no
-              se descentre. */}
-          {user && streak > 0 ? (
-            <Link
-              to="/stats"
-              aria-label={t('nav.streak_days', { count: streak })}
-              className="flex h-11 min-w-11 items-center justify-center gap-1 px-2 text-fg active:opacity-60"
-            >
-              <IconFlame className="h-4 w-4 text-accent" />
-              <span className="font-display text-base font-bold tabular leading-none">
-                {streak}
-              </span>
-            </Link>
-          ) : (
-            <span className="h-11 w-11" />
-          )}
+          <Link to="/settings" className="p-2 -mr-1" aria-label={t('nav.profile')}>
+            <IconUser className="w-6 h-6" />
+          </Link>
         </div>
       </header>
 
@@ -355,7 +326,7 @@ export function Layout({ children }: LayoutProps) {
           superior, icono + rótulo por pestaña y una barrita de acento sobre la
           activa. Se mantiene la altura y el safe-area de siempre. */}
       <nav
-        className="glass-3 glass-flush glass-flush-t flex flex-shrink-0 relative z-10"
+        className="bg-surface-2 border-t border-line-strong glass-flush glass-flush-t flex flex-shrink-0 relative z-10"
         style={{
           height:
             'calc(var(--bottom-nav-height) + var(--inset-bottom, env(safe-area-inset-bottom)))',

@@ -17,6 +17,8 @@
  * autocontenidas (`<Record ... />`), no un árbol que haya que recorrer.
  */
 
+import { LB_TO_KG } from '@shared/lib/weight';
+
 /** Tipo de registro de Apple Health que guarda el peso corporal. */
 const TIPO_PESO = 'HKQuantityTypeIdentifierBodyMass';
 
@@ -32,9 +34,6 @@ const TAMANO_TROZO = 4 * 1024 * 1024;
  * entero en memoria, que es justo lo que este lector existe para evitar.
  */
 const MAX_ARRASTRE = 64 * 1024;
-
-/** Una libra en kilos. */
-const LB_TO_KG = 0.45359237;
 
 /** Topes de cordura: fuera de esto no es un peso corporal humano. */
 const MIN_KG = 20;

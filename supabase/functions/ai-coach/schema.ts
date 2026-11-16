@@ -4,7 +4,7 @@
 // pruebas (scripts/coach-eval) hay modelos que lo rechazan con 400 y otros que
 // lo aceptan y aun así devuelven JSON envuelto en texto. La garantía es Zod.
 
-import { z } from 'https://esm.sh/zod@3.24.2';
+import { z } from 'https://esm.sh/zod@4.6.7';
 
 export const WORD_LIMITS = {
   summary: 60,

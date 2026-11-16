@@ -12,8 +12,9 @@ import { resolveExerciseRepRange } from '@shared/lib/exerciseTargets';
 import { normalizeExerciseName } from '@shared/lib/progressionCycle';
 import { isBodyweightLoad } from '@shared/lib/loadType';
 import { useLoadStep } from '@shared/hooks/useLoadStep';
-import type { AutoRegSession, LoadSuggestion, StallResult } from '../utils/autoregulation';
+import type { LoadSuggestion, StallResult } from '../utils/autoregulation';
 import { buildLoadAdvice } from '../utils/loadAdvisor';
+import { toSessionWindow } from '../utils/sessionWindow';
 import { buildVolumeContext, type VolumeContext, type VolumeSet } from '../utils/trainingLoad';
 
 /** Forma mínima que necesita el motor; evita acoplarse al tipo de la query. */
@@ -33,27 +34,6 @@ export interface ExerciseAdvice {
   stall: StallResult | null;
   /** Volumen semanal del grupo muscular, cuando se conoce. */
   volume?: VolumeContext | null;
-}
-
-/** Agrupa las series de un ejercicio en sesiones por día. */
-function toSessions(sets: SetLike[]): AutoRegSession[] {
-  const byDate = new Map<string, AutoRegSession>();
-  for (const s of sets) {
-    const startedAt = s.workout?.started_at;
-    if (!startedAt) continue;
-    const key = startedAt.slice(0, 10);
-    const session = byDate.get(key);
-    const set = {
-      weight: s.weight,
-      reps: s.reps,
-      rir: s.rir,
-      rpe: s.rpe,
-      is_warmup: s.is_warmup,
-    };
-    if (session) session.sets.push(set);
-    else byDate.set(key, { date: startedAt, sets: [set] });
-  }
-  return [...byDate.values()];
 }
 
 /**
@@ -142,7 +122,7 @@ export function useAutoregulation(sets: SetLike[], limit = 3): ExerciseAdvice[] 
 
     const advice: ExerciseAdvice[] = [];
     for (const [exercise, exerciseSets] of byExercise) {
-      const sessions = toSessions(exerciseSets);
+      const sessions = toSessionWindow(exerciseSets);
       const muscleGroup = exerciseSets.find((s) => s.exercise?.muscle_group)?.exercise
         ?.muscle_group;
       const volume = muscleGroup ? buildVolumeContext(volumeSets, muscleGroup) : null;
