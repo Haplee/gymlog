@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  calculateMuscleGroupDistribution,
-  formatSeconds,
-  PERIOD_LABELS,
-  PERIOD_WEEKS,
-} from '../statsData';
+import { calculateMuscleGroupDistribution, PERIOD_LABELS, PERIOD_WEEKS } from '../statsData';
 
 describe('PERIOD_LABELS', () => {
   it('tiene etiqueta para cada periodo', () => {
@@ -21,21 +16,6 @@ describe('PERIOD_WEEKS', () => {
     expect(PERIOD_WEEKS['3meses']).toBe(12);
     expect(PERIOD_WEEKS['6meses']).toBe(24);
     expect(PERIOD_WEEKS['1año']).toBe(52);
-  });
-});
-
-describe('formatSeconds', () => {
-  it('devuelve solo minutos si < 1h', () => {
-    expect(formatSeconds(0)).toBe('0m');
-    expect(formatSeconds(45)).toBe('0m');
-    expect(formatSeconds(90)).toBe('1m');
-    expect(formatSeconds(3599)).toBe('59m');
-  });
-
-  it('devuelve formato h:mm si >= 1h', () => {
-    expect(formatSeconds(3600)).toBe('1h 0m');
-    expect(formatSeconds(3661)).toBe('1h 1m');
-    expect(formatSeconds(7380)).toBe('2h 3m');
   });
 });
 

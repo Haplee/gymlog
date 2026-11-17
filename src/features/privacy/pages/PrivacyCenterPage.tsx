@@ -467,7 +467,7 @@ export function PrivacyCenterPage() {
               </Button>
             }
           />
-          <div className="glass-2 rounded-card overflow-hidden">
+          <div className="card">
             {loadingCounts && !counts ? (
               <div className="flex items-center justify-center gap-2 py-8 text-sm text-fg-subtle">
                 <Loader className="h-4 w-4 animate-spin" />
@@ -538,7 +538,7 @@ export function PrivacyCenterPage() {
             subtitle={t('privacy.sync_desc')}
             action={<SyncStatus online={online} />}
           />
-          <div className="glass-2 rounded-card overflow-hidden">
+          <div className="card">
             <div className="flex items-center justify-between gap-3 px-4 py-3.5">
               <div className="min-w-0">
                 <div className="text-sm text-fg">
@@ -684,6 +684,7 @@ export function PrivacyCenterPage() {
                   {t('privacy.local_clear_confirm')}
                 </Button>
               }
+              stacked
             />
             {healthConsent ? (
               <SettingRow

@@ -21,10 +21,14 @@
  * tranquilidad sin comprobar nada, así que no está.
  */
 import '@testing-library/jest-dom/vitest';
-import { render, screen, cleanup, waitFor, act } from '@testing-library/react';
+import { render, screen, cleanup, waitFor, act, fireEvent } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { describe, it, expect, afterEach, vi } from 'vitest';
+import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
 import { ExerciseSelector } from '../ExerciseSelector';
+
+const mocks = vi.hoisted(() => ({
+  fetchExercises: vi.fn(),
+}));
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (k: string) => k }),
@@ -33,26 +37,51 @@ vi.mock('react-i18next', () => ({
 vi.mock('@shared/lib/supabase', () => ({ supabase: { from: vi.fn() } }));
 
 vi.mock('@shared/api/queries', () => ({
-  fetchExercises: vi.fn().mockResolvedValue([
-    { id: '1', name: 'Press banca', muscle_group: 'Pecho', is_public: true },
-    { id: '2', name: 'Sentadilla', muscle_group: 'Pierna', is_public: true },
-  ]),
+  fetchExercises: mocks.fetchExercises,
 }));
 
-function montar(defaultOpen: boolean) {
+type SelectHandler = (exerciseId: string, isCustom: boolean) => void;
+
+function montar(
+  defaultOpen: boolean,
+  onSelect: SelectHandler = vi.fn(),
+  extra: { activeExerciseId?: string; excludeIds?: string[] } = {},
+) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 } },
   });
-  return render(
+  const result = render(
     <QueryClientProvider client={client}>
-      <ExerciseSelector userId="u1" onSelect={vi.fn()} defaultOpen={defaultOpen} />
+      <ExerciseSelector
+        userId="u1"
+        onSelect={onSelect}
+        defaultOpen={defaultOpen}
+        activeExerciseId={extra.activeExerciseId}
+        excludeIds={extra.excludeIds}
+      />
     </QueryClientProvider>,
   );
+  return { ...result, onSelect };
 }
 
-describe('ExerciseSelector — el desplegable no se sale de la pantalla', () => {
-  afterEach(cleanup);
+beforeEach(() => {
+  mocks.fetchExercises.mockReset();
+  mocks.fetchExercises.mockResolvedValue([
+    { id: '1', name: 'Press banca', muscle_group: 'Pecho', is_public: true, user_id: null },
+    { id: '2', name: 'Sentadilla', muscle_group: 'Pierna', is_public: true, user_id: null },
+    {
+      id: '3',
+      name: 'Press militar',
+      muscle_group: 'Hombro',
+      is_public: false,
+      user_id: 'u1',
+    },
+  ]);
+});
 
+afterEach(cleanup);
+
+describe('ExerciseSelector — el desplegable no se sale de la pantalla', () => {
   it('la lista puede desplazarse por dentro', async () => {
     montar(true);
     const lista = await screen.findByRole('listbox');
@@ -90,5 +119,78 @@ describe('ExerciseSelector — el desplegable no se sale de la pantalla', () => 
     // Sin este término la última fila («crear ejercicio propio») quedaba tapada
     // por la barra: se vio así en la APK antes de corregirlo.
     await waitFor(() => expect(lista.style.maxHeight).toContain('--bottom-nav-height'));
+  });
+});
+
+describe('ExerciseSelector — interacción', () => {
+  it('selecciona un ejercicio público y notifica que no es propio', async () => {
+    const onSelect = vi.fn();
+    montar(true, onSelect);
+
+    fireEvent.click(await screen.findByRole('option', { name: 'Press banca' }));
+
+    expect(onSelect).toHaveBeenCalledWith('1', false);
+  });
+
+  it('selecciona un ejercicio propio y lo registra como reciente', async () => {
+    const onSelect = vi.fn();
+    montar(true, onSelect);
+
+    fireEvent.click(await screen.findByRole('option', { name: /Press militar/ }));
+
+    expect(onSelect).toHaveBeenCalledWith('3', true);
+    expect(JSON.parse(localStorage.getItem('gymlog-recent-exercises') ?? '[]')).toEqual(['3']);
+  });
+
+  it('filtra los ejercicios con el texto de búsqueda', async () => {
+    montar(true);
+    const input = screen.getByLabelText('search.placeholder');
+
+    fireEvent.change(input, { target: { value: 'sentadilla' } });
+
+    await waitFor(
+      () => {
+        expect(screen.getByRole('option', { name: 'Sentadilla' })).toBeInTheDocument();
+        expect(screen.queryByRole('option', { name: 'Press banca' })).not.toBeInTheDocument();
+      },
+      { timeout: 2000 },
+    );
+  });
+
+  it('abre el editor del grupo muscular para un ejercicio propio', async () => {
+    montar(true);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'library.edit_muscle_group' }));
+
+    expect(screen.getByText('Guardar grupo muscular')).toBeInTheDocument();
+  });
+
+  it('cierra el desplegable con Escape y devuelve el foco al cuerpo', async () => {
+    montar(false);
+    const input = screen.getByLabelText('search.placeholder');
+    act(() => input.focus());
+    await screen.findByRole('listbox');
+
+    fireEvent.keyDown(input, { key: 'Escape' });
+
+    expect(input).not.toHaveFocus();
+    await waitFor(() => expect(screen.queryByRole('listbox')).not.toBeInTheDocument(), {
+      timeout: 2000,
+    });
+  });
+
+  it('cierra el desplegable al pulsar fuera', async () => {
+    const { container } = montar(false);
+    const input = screen.getByLabelText('search.placeholder');
+    act(() => input.focus());
+    await screen.findByRole('listbox');
+    const backdrop = container.querySelector('div.fixed.inset-0.z-40');
+    expect(backdrop).not.toBeNull();
+
+    fireEvent.click(backdrop as Element);
+
+    await waitFor(() => expect(screen.queryByRole('listbox')).not.toBeInTheDocument(), {
+      timeout: 2000,
+    });
   });
 });

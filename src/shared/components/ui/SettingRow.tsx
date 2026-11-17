@@ -14,6 +14,7 @@ export function SettingRow({
   control,
   icon,
   divider = true,
+  stacked = false,
 }: {
   label: string;
   desc?: string;
@@ -26,14 +27,16 @@ export function SettingRow({
    */
   icon?: ReactNode;
   divider?: boolean;
+  /** Stack label/desc above control on mobile (flex-col sm:flex-row) */
+  stacked?: boolean;
 }) {
   return (
     <div
-      className={`flex items-center justify-between gap-3 px-4 py-3.5 ${
+      className={`flex gap-3 px-4 py-3.5 ${
         divider ? 'hairline-separator' : ''
-      }`}
+      } ${stacked ? 'flex-col items-start sm:flex-row sm:items-center sm:justify-between' : 'flex items-center justify-between'}`}
     >
-      <div className="flex items-center gap-3 min-w-0">
+      <div className={`flex items-center gap-3 min-w-0 ${stacked ? 'w-full' : ''}`}>
         {icon && (
           <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-accent text-accent-fg">
             {icon}
@@ -44,7 +47,7 @@ export function SettingRow({
           {desc && <div className="text-xs mt-0.5 text-fg-subtle">{desc}</div>}
         </div>
       </div>
-      <div className="flex-shrink-0">{control}</div>
+      <div className={stacked ? 'w-full sm:w-auto' : 'flex-shrink-0'}>{control}</div>
     </div>
   );
 }

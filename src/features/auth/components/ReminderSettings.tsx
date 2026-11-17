@@ -99,7 +99,7 @@ export function ReminderSettings({ onTimesChanged }: Props) {
   return (
     <section>
       <SectionHeader title={t('settings.reminder_times')} />
-      <div className="glass-2 rounded-card overflow-hidden">
+      <div className="card">
         <SettingRow
           label={t('settings.reminder_routine')}
           desc={conflictDesc(reminderTimes.routine)}

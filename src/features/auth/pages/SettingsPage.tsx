@@ -404,7 +404,7 @@ export function SettingsPage({
         {/* Perfil */}
         {/* Cabecera de perfil del kit ("Progress Tracking"): banda rellena del
             acento con el avatar circular y el nombre en grande. */}
-        <div className="rounded-card overflow-hidden bg-surface border border-line">
+        <div className="card overflow-hidden">
           <div className="flex items-center gap-3 bg-accent p-4">
             <button
               type="button"
@@ -533,7 +533,7 @@ export function SettingsPage({
         {/* Entrenamiento */}
         <section>
           <SectionHeader title={t('settings.training')} />
-          <div className="glass-2 rounded-card overflow-hidden">
+          <div className="card">
             <SettingRow
               label={t('settings.training_reminders')}
               desc={t('settings.training_reminders_desc')}
@@ -700,7 +700,7 @@ export function SettingsPage({
         {/* Notificaciones */}
         <section>
           <SectionHeader title={t('settings.notifications')} />
-          <div className="glass-2 rounded-card overflow-hidden">
+          <div className="card">
             <SettingRow
               label={t('settings.notifications')}
               desc={t('settings.notifications_desc')}
@@ -765,7 +765,7 @@ export function SettingsPage({
         {/* Datos */}
         <section>
           <SectionHeader title={t('settings.data')} />
-          <div className="glass-2 rounded-card overflow-hidden">
+          <div className="card">
             <NavRow
               icon={<IconWatch className="w-4 h-4" />}
               label={t('settings.wearables')}

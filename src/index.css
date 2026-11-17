@@ -201,6 +201,59 @@ body {
 }
 
 /* ════════════════════════════════════════════════
+   Tarjetas unificadas (Fase 2): radio 18px, padding 16px,
+   borde sutil y elevación consistente.
+   Reemplaza usos ad-hoc de rounded-card/bg-surface/border-line
+   y glass-1/2/3 sin velo para superficies de contenido.
+   ═══════════════════════════════════════════════ */
+
+.card {
+  border-radius: var(--radius-card);
+  padding: var(--space-4);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+}
+
+.card-elevated {
+  border-radius: var(--radius-card);
+  padding: var(--space-4);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-md);
+}
+
+.card-interactive {
+  border-radius: var(--radius-card);
+  padding: var(--space-4);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+.card-interactive:hover {
+  background-color: var(--bg-surface-2);
+  border-color: var(--border-default);
+}
+.card-interactive:active {
+  background-color: var(--bg-surface-3);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Safe-area helpers para contenido que toca bordes de pantalla */
+.safe-top {
+  padding-top: calc(var(--space-4) + var(--inset-top));
+}
+.safe-bottom {
+  padding-bottom: calc(var(--space-4) + var(--inset-bottom));
+}
+.safe-horizontal {
+  padding-left: calc(var(--space-4) + var(--inset-left));
+  padding-right: calc(var(--space-4) + var(--inset-right));
+}
+
+/* ════════════════════════════════════════════════
    Material vidrio "Liquid Glass"
 
    Sin backdrop-filter, a propósito. La decisión y las mediciones que la
