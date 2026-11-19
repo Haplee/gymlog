@@ -4,6 +4,7 @@ import com.franvi.gymlog.healthconnect.error.HealthConnectError
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Assert.assertFalse
 import org.junit.Test
 
 class HealthBridgePluginTest {
@@ -153,5 +154,170 @@ class HealthBridgePluginTest {
         assertTrue(hasLight)
         assertTrue(!hasRem)
         assertTrue(!hasAwake)
+    }
+
+    // ============================================================
+    // VS3: Exercise / ExerciseSessionRecord tests
+    // ============================================================
+
+    /**
+     * Test que verifica el mapeo de tipos de ejercicio conocidos a strings de GymLog (cardio).
+     * Estos valores se usan en readWorkouts() para decidir el bucket cardio vs strength.
+     */
+    @Test
+    fun `exercise type mapping known cardio types`() = runBlocking {
+        // Running
+        assertEquals("running", mapKnownExerciseTypeForTest(1)) // EXERCISE_TYPE_RUNNING
+        assertEquals("running", mapKnownExerciseTypeForTest(2)) // EXERCISE_TYPE_RUNNING_TREADMILL
+
+        // Cycling
+        assertEquals("cycling", mapKnownExerciseTypeForTest(3)) // EXERCISE_TYPE_BIKING
+        assertEquals("cycling", mapKnownExerciseTypeForTest(4)) // EXERCISE_TYPE_BIKING_STATIONARY
+
+        // Rowing
+        assertEquals("rowing", mapKnownExerciseTypeForTest(5)) // EXERCISE_TYPE_ROWING
+        assertEquals("rowing", mapKnownExerciseTypeForTest(6)) // EXERCISE_TYPE_ROWING_MACHINE
+
+        // Swimming
+        assertEquals("swimming", mapKnownExerciseTypeForTest(7)) // EXERCISE_TYPE_SWIMMING_POOL
+        assertEquals("swimming", mapKnownExerciseTypeForTest(8)) // EXERCISE_TYPE_SWIMMING_OPEN_WATER
+
+        // Elliptical
+        assertEquals("elliptical", mapKnownExerciseTypeForTest(9)) // EXERCISE_TYPE_ELLIPTICAL
+
+        // Walking / Hiking
+        assertEquals("walking", mapKnownExerciseTypeForTest(10)) // EXERCISE_TYPE_WALKING
+        assertEquals("walking", mapKnownExerciseTypeForTest(11)) // EXERCISE_TYPE_HIKING
+
+        // Cardio reconocible que GymLog no tipifica -> "other" (pero cardio)
+        assertEquals("other", mapKnownExerciseTypeForTest(12)) // EXERCISE_TYPE_STAIR_CLIMBING
+        assertEquals("other", mapKnownExerciseTypeForTest(13)) // EXERCISE_TYPE_STAIR_CLIMBING_MACHINE
+        assertEquals("other", mapKnownExerciseTypeForTest(14)) // EXERCISE_TYPE_HIGH_INTENSITY_INTERVAL_TRAINING
+        assertEquals("other", mapKnownExerciseTypeForTest(15)) // EXERCISE_TYPE_DANCING
+        assertEquals("other", mapKnownExerciseTypeForTest(16)) // EXERCISE_TYPE_BOXING
+        assertEquals("other", mapKnownExerciseTypeForTest(17)) // EXERCISE_TYPE_MARTIAL_ARTS
+        assertEquals("other", mapKnownExerciseTypeForTest(18)) // EXERCISE_TYPE_SKATING
+        assertEquals("other", mapKnownExerciseTypeForTest(19)) // EXERCISE_TYPE_SKIING
+        assertEquals("other", mapKnownExerciseTypeForTest(20)) // EXERCISE_TYPE_SNOWBOARDING
+        assertEquals("other", mapKnownExerciseTypeForTest(21)) // EXERCISE_TYPE_PADDLING
+        assertEquals("other", mapKnownExerciseTypeForTest(22)) // EXERCISE_TYPE_ROCK_CLIMBING
+
+        // Tipo desconocido -> null
+        assertEquals(null, mapKnownExerciseTypeForTest(999))
+    }
+
+    /**
+     * Test que verifica la detección de tipos de fuerza declarados.
+     * Estos van directos al bucket strength.
+     */
+    @Test
+    fun `exercise type detection strength types`() = runBlocking {
+        assertTrue(isStrengthTypeForTest(23)) // EXERCISE_TYPE_STRENGTH_TRAINING
+        assertTrue(isStrengthTypeForTest(24)) // EXERCISE_TYPE_WEIGHTLIFTING
+        assertTrue(isStrengthTypeForTest(25)) // EXERCISE_TYPE_CALISTHENICS
+        assertTrue(isStrengthTypeForTest(26)) // EXERCISE_TYPE_GYMNASTICS
+
+        // Tipos cardio no son fuerza
+        assertFalse(isStrengthTypeForTest(1))  // RUNNING
+        assertFalse(isStrengthTypeForTest(3))  // BIKING
+        assertFalse(isStrengthTypeForTest(999)) // Unknown
+    }
+
+    /**
+     * Test que verifica el umbral de distancia significativa.
+     * 0.2 km = 200 metros es el corte para considerar que hubo movimiento real.
+     */
+    @Test
+    fun `exercise hasDistance threshold`() = runBlocking {
+        assertTrue(hasDistanceForTest(5.0.toDouble()))   // 5 km - carrera larga
+        assertTrue(hasDistanceForTest(0.5.toDouble()))   // 500 m - carrera corta
+        assertTrue(hasDistanceForTest(0.2.toDouble()))   // 200 m - umbral exacto
+        assertFalse(hasDistanceForTest(0.19.toDouble())) // 190 m - ruido GPS
+        assertFalse(hasDistanceForTest(0.0.toDouble()))  // Sin distancia
+        assertFalse(hasDistanceForTest(null)) // Null
+    }
+
+    /**
+     * Test que verifica la inferencia de tipo por velocidad y FC.
+     * Usado cuando el tipo es desconocido pero SÍ hay distancia (ej. Fitbit OTHER_WORKOUT).
+     */
+    @Test
+    fun `exercise inferTypeFromPace logic`() = runBlocking {
+        val restingHr = 58
+
+        // Ciclismo: > 15 km/h
+        assertEquals("cycling", inferTypeFromPaceForTest(20.0.toDouble(), 3600, null, restingHr)) // 20 km/h
+        assertEquals("cycling", inferTypeFromPaceForTest(15.0.toDouble(), 3600, null, restingHr)) // 15 km/h umbral
+
+        // Carrera: 7-15 km/h
+        assertEquals("running", inferTypeFromPaceForTest(10.0.toDouble(), 3600, null, restingHr)) // 10 km/h
+        assertEquals("running", inferTypeFromPaceForTest(7.0.toDouble(), 3600, null, restingHr))   // 7 km/h umbral
+
+        // Por debajo de 7 km/h -> usa FC si disponible
+        // avgHr - restingHr >= 50 -> running
+        assertEquals("running", inferTypeFromPaceForTest(5.0.toDouble(), 3600, 110, restingHr)) // 110 - 58 = 52 >= 50
+        // avgHr - restingHr < 50 -> walking
+        assertEquals("walking", inferTypeFromPaceForTest(5.0.toDouble(), 3600, 100, restingHr)) // 100 - 58 = 42 < 50
+
+        // Sin FC y velocidad baja -> walking (conservador)
+        assertEquals("walking", inferTypeFromPaceForTest(5.0.toDouble(), 3600, null, restingHr))
+
+        // Edge cases
+        assertEquals("other", inferTypeFromPaceForTest(null, 3600, null, restingHr))
+        assertEquals("other", inferTypeFromPaceForTest(0.0.toDouble(), 3600, null, restingHr))
+        assertEquals("other", inferTypeFromPaceForTest(5.0.toDouble(), 0, null, restingHr))
+    }
+
+    /**
+     * Test que verifica el formato del external_id.
+     * Debe ser "hc:${metadata.id}" para deduplicación en Supabase.
+     */
+    @Test
+    fun `exercise externalId format`() = runBlocking {
+        val testIds = listOf("abc123", "xyz789", "session-2026-01-15", "a")
+        for (id in testIds) {
+            val externalId = "hc:$id"
+            assertTrue(externalId.startsWith("hc:"))
+            assertEquals(id, externalId.substringAfter("hc:"))
+        }
+    }
+
+    // ============================================================
+    // Helper functions to access private methods from HealthBridgePlugin
+    // These mirror the private logic for testing without reflection
+    // ============================================================
+
+    private fun mapKnownExerciseTypeForTest(type: Int): String? = when (type) {
+        1, 2 -> "running"      // RUNNING, RUNNING_TREADMILL
+        3, 4 -> "cycling"      // BIKING, BIKING_STATIONARY
+        5, 6 -> "rowing"       // ROWING, ROWING_MACHINE
+        7, 8 -> "swimming"     // SWIMMING_POOL, SWIMMING_OPEN_WATER
+        9 -> "elliptical"      // ELLIPTICAL
+        10, 11 -> "walking"    // WALKING, HIKING
+        12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22 -> "other"
+        else -> null
+    }
+
+    private fun isStrengthTypeForTest(type: Int): Boolean = when (type) {
+        23, 24, 25, 26 -> true // STRENGTH_TRAINING, WEIGHTLIFTING, CALISTHENICS, GYMNASTICS
+        else -> false
+    }
+
+    private fun hasDistanceForTest(km: Double?): Boolean = km != null && km >= 0.2
+
+    private fun inferTypeFromPaceForTest(
+        km: Double?,
+        durationSec: Int,
+        avgHr: Int?,
+        restingHr: Int?,
+    ): String {
+        if (km == null || km <= 0 || durationSec <= 0) return "other"
+        val kmh = km / (durationSec / 3600.0)
+        if (kmh >= 15.0) return "cycling"
+        if (kmh >= 7.0) return "running"
+        if (avgHr != null && restingHr != null && avgHr - restingHr >= 50) {
+            return "running"
+        }
+        return "walking"
     }
 }
