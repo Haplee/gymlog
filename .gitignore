@@ -113,3 +113,4 @@ artifacts/verification/
 *.bak-*
 GymLog-*-artefactos.zip
 backups/routines/
+supabase/.branches/
