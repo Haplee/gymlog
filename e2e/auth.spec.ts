@@ -1,13 +1,4 @@
-import { test, expect } from '@playwright/test';
-
-// El modal de pre-permiso de notificaciones (PermissionRequests) se muestra
-// cuando Notification.permission === 'default' (WebKit móvil) e intercepta
-// clicks. Se siembra el flag para que no aparezca en e2e.
-test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => {
-    localStorage.setItem('gymlog_permissions_seen', 'true');
-  });
-});
+import { test, expect } from './fixtures';
 
 test('Debe cargar la página de login inicialmente', async ({ page }) => {
   await page.goto('/');

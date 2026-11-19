@@ -1,4 +1,5 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, E2E_CREDENTIALS } from './fixtures';
+import type { Page } from '@playwright/test';
 
 /**
  * Camino feliz con sesión iniciada: entrar → elegir ejercicio → anotar una serie
@@ -16,11 +17,8 @@ import { test, expect, type Page } from '@playwright/test';
  *
  * Usa una cuenta desechable, no la tuya: el test escribe un entreno real.
  */
-const EMAIL = process.env.E2E_EMAIL;
-const PASSWORD = process.env.E2E_PASSWORD;
-
-/** Nombre irrepetible para poder localizar y limpiar lo que crea este test. */
-const EXERCISE = `E2E Test ${Date.now()}`;
+const EMAIL = E2E_CREDENTIALS.email;
+const PASSWORD = E2E_CREDENTIALS.password;
 
 async function login(page: Page) {
   // El describe se salta sin credenciales, así que aquí ya están.
@@ -38,60 +36,55 @@ async function login(page: Page) {
  * formulario con su propio campo de nombre.
  */
 async function pickExercise(page: Page) {
-  await page.getByPlaceholder(/buscar ejercicio/i).click();
+  const exerciseName = `E2E Test ${test.info().project.name}-${test.info().repeatEachIndex}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const buscador = page.getByPlaceholder(/buscar ejercicio/i);
+  await expect(buscador).toBeVisible();
+  await buscador.focus();
+  await buscador.fill('');
   await page.getByRole('button', { name: /crear ejercicio personalizado/i }).click();
-  await page.getByPlaceholder(/nombre del ejercicio/i).fill(EXERCISE);
+  await page.getByPlaceholder(/nombre del ejercicio/i).fill(exerciseName);
   await page.getByRole('button', { name: /^crear$/i }).click();
   // Al crearlo queda seleccionado y aparece el editor de la serie 1.
   await expect(page.getByLabel(/^kg 1$/i)).toBeVisible({ timeout: 15000 });
 }
 
 test.describe('Sesión de entrenamiento (autenticado)', () => {
-  test.skip(
-    !EMAIL || !PASSWORD,
-    'Define E2E_EMAIL y E2E_PASSWORD para ejecutar el flujo autenticado.',
-  );
-
-  test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem('gymlog_permissions_seen', 'true');
-    });
-  });
-
-  // Este test y el siguiente describían una barra de cinco pestañas con «Stats»
-  // y «Ajustes». No existe: el reskin la dejó en cuatro y movió esos dos
-  // destinos al cajón. Nadie se enteró porque el fichero entero se salta sin
-  // E2E_EMAIL/E2E_PASSWORD, así que llevaban meses sin ejecutarse.
-  test('la barra inferior lleva a las cuatro pestañas', async ({ page }) => {
+  test('la barra inferior lleva a sus cinco destinos', async ({ page }) => {
     await login(page);
+
+    const barra = page
+      .locator('nav')
+      .filter({ has: page.getByRole('link', { name: 'Inicio', exact: true }) })
+      .first();
+    await expect(barra.getByRole('link')).toHaveCount(5);
 
     // Los rótulos son los del rediseño; si alguien renombra una pestaña sin
     // tocar la ruta, esto lo caza.
     for (const [name, path] of [
+      ['Inicio', '/'],
       ['Rutinas', '/routines'],
+      ['Progreso', '/user-stats'],
       ['Historial', '/history'],
       ['Cardio', '/cardio'],
-      ['Inicio', '/'],
     ] as const) {
-      await page.getByRole('link', { name, exact: true }).click();
+      await barra.getByRole('link', { name, exact: true }).click();
       await expect(page).toHaveURL(new RegExp(`${path === '/' ? '/$' : path}`));
     }
   });
 
-  test('el menú no repite destinos de la barra inferior', async ({ page }) => {
+  test('el menú ofrece también los destinos destacados de la barra', async ({ page }) => {
     await login(page);
 
     // Las rutas de la barra, leídas de la barra misma: así el test sigue
     // valiendo si mañana se añade o se quita una pestaña.
-    // La barra se monta con el Layout, después de que `login` resuelva.
-    await page.locator('nav a[href]').first().waitFor({ state: 'attached' });
-    const enLaBarra = await page.evaluate(() => {
-      const barra = [...document.querySelectorAll('nav')].find((n) => n.querySelector('a[href]'));
-      return [...(barra?.querySelectorAll('a[href]') ?? [])].map(
-        (a) => new URL((a as HTMLAnchorElement).href).pathname,
-      );
-    });
-    expect(enLaBarra.length).toBeGreaterThan(0);
+    const barra = page
+      .locator('nav')
+      .filter({ has: page.getByRole('link', { name: 'Inicio', exact: true }) })
+      .first();
+    await expect(barra.getByRole('link')).toHaveCount(5);
+    const enLaBarra = await barra
+      .getByRole('link')
+      .evaluateAll((as) => as.map((a) => new URL((a as HTMLAnchorElement).href).pathname));
 
     await page.getByRole('button', { name: /menú|menu/i }).click();
     const drawer = page.getByRole('dialog');
@@ -100,11 +93,11 @@ test.describe('Sesión de entrenamiento (autenticado)', () => {
     const enElCajon = await drawer
       .getByRole('link')
       .evaluateAll((as) => as.map((a) => new URL((a as HTMLAnchorElement).href).pathname));
-    const repetidos = enElCajon.filter((p) => enLaBarra.includes(p));
-    expect(repetidos, `el cajón repite destinos de la barra: ${repetidos.join(', ')}`).toEqual([]);
 
-    // Y sí debe ofrecer lo que la barra no tiene.
-    expect(enElCajon).toContain('/settings');
+    // Progreso e Historial están en ambos menús a propósito: la barra acelera
+    // el acceso diario y el cajón mantiene el mapa completo de la aplicación.
+    expect(enLaBarra).toEqual(['/', '/routines', '/user-stats', '/history', '/cardio']);
+    expect(enElCajon).toEqual(expect.arrayContaining(['/user-stats', '/history', '/settings']));
   });
 
   test('anota una serie y la guarda', async ({ page }) => {

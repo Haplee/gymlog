@@ -1,4 +1,5 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, E2E_CREDENTIALS } from './fixtures';
+import type { Page } from '@playwright/test';
 
 /**
  * Los discos del gimnasio se configuran una vez y se olvidan, pero durante un
@@ -10,8 +11,8 @@ import { test, expect, type Page } from '@playwright/test';
  * Necesita `E2E_EMAIL` / `E2E_PASSWORD` (p. ej. en `.env.local`, fuera de git).
  * Sin ellas se salta, para que CI siga en verde sin secretos.
  */
-const EMAIL = process.env.E2E_EMAIL;
-const PASSWORD = process.env.E2E_PASSWORD;
+const EMAIL = E2E_CREDENTIALS.email;
+const PASSWORD = E2E_CREDENTIALS.password;
 
 async function login(page: Page) {
   await page.goto('/login');
@@ -22,17 +23,6 @@ async function login(page: Page) {
 }
 
 test.describe('Discos del gimnasio', () => {
-  test.skip(
-    !EMAIL || !PASSWORD,
-    'Define E2E_EMAIL y E2E_PASSWORD para ejecutar el flujo autenticado.',
-  );
-
-  test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem('gymlog_permissions_seen', 'true');
-    });
-  });
-
   test('se configuran desde Ajustes y la selección persiste', async ({ page }) => {
     await login(page);
     await page.goto('/settings');
