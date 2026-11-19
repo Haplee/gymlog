@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=ffd93d&height=120&section=header&text=GymLog%20v5.15.4&fontSize=50&fontColor=0a0a0b&animation=fadeIn" alt="GymLog v5.15.4" />
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=ffd93d&height=120&section=header&text=GymLog%20v5.15.5&fontSize=50&fontColor=0a0a0b&animation=fadeIn" alt="GymLog v5.15.5" />
 
   <br>
 
@@ -7,7 +7,7 @@
 
   <br>
 
-  <a href="https://git.io/typing-svg"><img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=20&duration=3000&pause=1000&color=ffd93d&center=true&vCenter=true&width=650&lines=Entrenamiento+y+Sobrecarga+Progresiva;Seguimiento+de+Fuerza+y+Cardio;Anal%C3%ADticas+de+Rendimiento;Entrenador+IA+Opcional+y+Auditable;Arquitectura+Offline-First" alt="GymLog features" /></a>
+<a href="https://git.io/typing-svg"><img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=20&duration=3000&pause=1000&color=ffd93d&center=true&vCenter=true&width=650&lines=Entrenamiento+y+Sobrecarga+Progresiva;Seguimiento+de+Fuerza+y+Cardio;Anal%C3%ADticas+de+Rendimiento;Entrenador+IA+Opcional+y+Auditable;Arquitectura+Offline-First" alt="GymLog features" /></a>
 
   <p>
     Plataforma de entrenamiento <b>web y nativa para Android e iOS</b>, diseñada para registrar sesiones de fuerza y cardio, analizar el progreso y planificar rutinas. Construida con React, TypeScript, Capacitor y Supabase, con sincronización offline-first y herramientas de autorregulación.
@@ -124,56 +124,98 @@
   <img src="./docs/terminal-animation.svg" width="600" alt="GymLog development terminal" />
 </div>
 
-### 1. Development
+### 1. Preparación
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
-La aplicación estará disponible en `http://localhost:5173`.
+La aplicación estará disponible en `http://localhost:5173`. Copia `.env.example` a `.env.local` y configura las variables de Supabase antes de iniciar la aplicación.
 
-### 2. Verify
+### 2. Variables de entorno
+
+Las variables obligatorias son:
+
+```dotenv
+VITE_SUPABASE_URL=https://<tu-proyecto>.supabase.co
+VITE_SUPABASE_KEY=<tu-clave-publicable>
+```
+
+`.env.example` incluye también las opciones de ExerciseDB, push, Sentry, Cloudflare Analytics y el entrenador IA. Las variables `VITE_*` terminan dentro del bundle y de la APK, por lo que solo pueden contener datos públicos. Las claves privadas de proveedores de IA pertenecen a los secretos de la Edge Function y nunca deben incluirse en el cliente.
+
+### 3. Pruebas y cobertura
 
 ```bash
 npm run lint
 npm run type-check
 npm run test
-npx playwright test
+npm run test:coverage
+npm run test:e2e
 ```
 
-Los tests E2E que requieren una sesión iniciada necesitan `E2E_EMAIL` y `E2E_PASSWORD` en `.env.local`. Utiliza una cuenta de pruebas independiente, ya que algunas pruebas pueden escribir datos reales.
+`npm run test:coverage` aplica los umbrales globales del proyecto: 80% de statements, 70% de branches, 80% de functions y 80% de lines.
 
-### 3. Build
+`npm run test:e2e` genera un build de producción con `vite build --mode e2e` y ejecuta Playwright contra `http://localhost:4173`. La suite usa MSW para simular Supabase Auth, REST y RPC, por lo que no necesita un proyecto remoto ni credenciales reales. Cubre 54 casos en los perfiles iPhone 13 y Pixel 9a.
+
+Para ejecutar solo la sesión autenticada:
+
+```bash
+npx playwright test e2e/workout-session.spec.ts
+```
+
+### 4. Build web
 
 ```bash
 npm run build
-npm run build:android
-npm run apk
-npm run build:ios
 ```
 
-- `npm run build`: compila TypeScript y genera la aplicación web.
-- `npm run build:android`: compila y sincroniza los recursos con Android.
-- `npm run apk`: ejecuta la generación de la APK.
-- `npm run build:ios`: compila y sincroniza los recursos con iOS.
+El build escribe la aplicación en `dist/`. Si `SENTRY_AUTH_TOKEN` contiene un token válido, Vite genera y sube los source maps a Sentry. Sin token, no genera ni sube mapas.
 
-### 4. Environment
+### 5. Build Android
 
-Crea un archivo `.env.local` con las variables necesarias:
+Necesitas JDK 21 y el SDK de Android. En PowerShell:
 
-```dotenv
-VITE_SUPABASE_URL=<url>
-VITE_SUPABASE_KEY=<anon-key>
-VITE_SENTRY_DSN=<dsn>
-VITE_CLOUDFLARE_ANALYTICS_TOKEN=<token>
+```powershell
+npm run build
+npx cap sync android
+cd android
+.\gradlew.bat assembleDebug assembleRelease
 ```
 
-Las variables de Sentry y Cloudflare son opcionales según la configuración del entorno.
+En Linux o macOS, sustituye `.\gradlew.bat` por `./gradlew`. El build release usa la versión de `package.json` y deja `GymLog-v5.15.5.apk` en la raíz del repositorio.
 
-La aplicación necesita una configuración válida de Supabase para utilizar los servicios de autenticación y almacenamiento remoto.
+La firma release se configura mediante las claves `STORE_FILE`, `STORE_PASSWORD`, `KEY_ALIAS` y `KEY_PASSWORD` de `android/local.properties`. Ese archivo está ignorado por Git y no debe compartirse.
 
-> Las claves privadas de proveedores de IA nunca deben incluirse en variables `VITE_*`. Deben permanecer en los secretos del servidor y utilizarse desde la Edge Function correspondiente.
+Verifica la firma antes de distribuir el artefacto:
+
+```powershell
+apksigner verify --print-certs android/app/build/outputs/apk/release/app-release.apk
+```
+
+### 6. GitHub Actions
+
+El workflow `.github/workflows/ci.yml` ejecuta dos jobs:
+
+- `lint-type-test`: ESLint, TypeScript, cobertura, build web y análisis de secretos del bundle.
+- `e2e`: depende del job anterior, instala Chromium con sus dependencias del sistema y ejecuta la suite Playwright completa.
+
+Los secrets de GitHub Actions son `VITE_SUPABASE_URL`, `VITE_SUPABASE_KEY` y, opcionalmente, `SENTRY_AUTH_TOKEN`.
+
+---
+
+## Variables y overrides
+
+- `.env.local` sirve para configuración local y tiene prioridad sobre los valores guardados en `.env`.
+- El modo `e2e` fuerza Supabase a `http://localhost:54321`, desactiva Sentry y Cloudflare en el bundle e inicia MSW antes de renderizar React.
+- `E2E_EMAIL` y `E2E_PASSWORD` sustituyen la identidad virtual usada por MSW. No cambian el backend a un servicio remoto.
+- `VITE_E2E_MOCKS` es una variable interna del modo E2E. No debe configurarse manualmente para ejecutar la suite.
+- Un `SENTRY_AUTH_TOKEN` presente en el entorno tiene prioridad sobre el valor de `.env`. Si está vacío o contiene solo espacios, Sentry y la generación de source maps quedan desactivados.
+- `VITE_PUSH_ENABLED` activa las notificaciones push en el cliente. Déjalo desactivado hasta configurar el proyecto push y los permisos de plataforma.
+
+---
+
+## Project Activity
 
 ---
 
@@ -187,31 +229,31 @@ La aplicación necesita una configuración válida de Supabase para utilizar los
 
 ## Stack Tecnológico
 
-| Capa | Tecnología | Función |
-| :--- | :--- | :--- |
-| **Mobile Runtime** | Capacitor 8 | Integración nativa con Android e iOS |
-| **Frontend** | React 19, TypeScript 5.7 | Interfaz reactiva y tipada |
-| **Routing** | React Router 8 | Navegación y carga diferida de rutas |
-| **Estilos** | Tailwind CSS 4 | Sistema de estilos mediante CSS |
-| **Animaciones** | Framer Motion 12 | Transiciones y animaciones respetando el movimiento reducido |
-| **Data Flow** | TanStack Query 5 | Consultas, caché y sincronización |
-| **Global Store** | Zustand 5 | Estado local de entrenamientos, rutinas y ajustes |
-| **Gráficos** | Recharts 3 | Visualización de rendimiento y progresión |
-| **Iconos** | reicon-react | Biblioteca centralizada de iconos |
-| **Virtualización** | TanStack Virtual 3 | Listas eficientes para catálogos extensos |
-| **Validación** | Zod 3 | Validación de entradas y estructuras de datos |
-| **i18n** | i18next + react-i18next | Internacionalización |
-| **Backend** | Supabase | PostgreSQL, autenticación, RLS y RPC |
-| **Edge Functions** | Deno / Supabase | Lógica de servidor y notificaciones |
-| **PWA** | vite-plugin-pwa | Instalación web y service worker |
-| **Persistencia** | TanStack Query Persist + idb | Caché persistente y almacenamiento local |
-| **Drag & Drop** | dnd-kit | Reordenación de ejercicios |
-| **Errores** | Sentry | Diagnóstico de errores de aplicación |
-| **Wearables** | HealthBridge | Integración nativa con servicios de salud |
-| **Excel** | exceljs | Importación y exportación de archivos `.xlsx` |
-| **Testing** | Vitest + Playwright | Pruebas unitarias y E2E |
-| **CI/CD** | GitHub Actions | Automatización de validaciones y compilaciones |
-| **Bundler** | Vite 6 | Servidor de desarrollo y compilación optimizada |
+| Capa               | Tecnología                   | Función                                                      |
+| :----------------- | :--------------------------- | :----------------------------------------------------------- |
+| **Mobile Runtime** | Capacitor 8                  | Integración nativa con Android e iOS                         |
+| **Frontend**       | React 19, TypeScript 5.7     | Interfaz reactiva y tipada                                   |
+| **Routing**        | React Router 8               | Navegación y carga diferida de rutas                         |
+| **Estilos**        | Tailwind CSS 4               | Sistema de estilos mediante CSS                              |
+| **Animaciones**    | Framer Motion 12             | Transiciones y animaciones respetando el movimiento reducido |
+| **Data Flow**      | TanStack Query 5             | Consultas, caché y sincronización                            |
+| **Global Store**   | Zustand 5                    | Estado local de entrenamientos, rutinas y ajustes            |
+| **Gráficos**       | Recharts 3                   | Visualización de rendimiento y progresión                    |
+| **Iconos**         | reicon-react                 | Biblioteca centralizada de iconos                            |
+| **Virtualización** | TanStack Virtual 3           | Listas eficientes para catálogos extensos                    |
+| **Validación**     | Zod 3                        | Validación de entradas y estructuras de datos                |
+| **i18n**           | i18next + react-i18next      | Internacionalización                                         |
+| **Backend**        | Supabase                     | PostgreSQL, autenticación, RLS y RPC                         |
+| **Edge Functions** | Deno / Supabase              | Lógica de servidor y notificaciones                          |
+| **PWA**            | vite-plugin-pwa              | Instalación web y service worker                             |
+| **Persistencia**   | TanStack Query Persist + idb | Caché persistente y almacenamiento local                     |
+| **Drag & Drop**    | dnd-kit                      | Reordenación de ejercicios                                   |
+| **Errores**        | Sentry                       | Diagnóstico de errores de aplicación                         |
+| **Wearables**      | HealthBridge                 | Integración nativa con servicios de salud                    |
+| **Excel**          | exceljs                      | Importación y exportación de archivos `.xlsx`                |
+| **Testing**        | Vitest + Playwright          | Pruebas unitarias y E2E                                      |
+| **CI/CD**          | GitHub Actions               | Automatización de validaciones y compilaciones               |
+| **Bundler**        | Vite 6                       | Servidor de desarrollo y compilación optimizada              |
 
 ---
 
@@ -219,12 +261,12 @@ La aplicación necesita una configuración válida de Supabase para utilizar los
 
 GymLog utiliza el sistema visual **FitBody**, con superficies tipo **Liquid Glass**, temas claro y oscuro y acentos configurables.
 
-| Token | Valor |
-| :--- | :--- |
-| Acento predeterminado | `#ffd93d` |
-| Fondo y superficie | `#0a0a0b` / `#26262b` |
-| Tipografía | Inter + Space Grotesk |
-| Material | `glass-1`, `glass-2` y `glass-3` |
+| Token                 | Valor                            |
+| :-------------------- | :------------------------------- |
+| Acento predeterminado | `#ffd93d`                        |
+| Fondo y superficie    | `#0a0a0b` / `#26262b`            |
+| Tipografía            | Inter + Space Grotesk            |
+| Material              | `glass-1`, `glass-2` y `glass-3` |
 
 ### Principios visuales
 
@@ -417,14 +459,14 @@ Para consultar los cambios específicos y sus commits:
 
   <img src="https://github-readme-streak-stats.herokuapp.com/?user=Haplee&theme=radical&hide_border=true&background=0D1117&ring=ffd93d&fire=ffd93d&currStreakNum=FFFFFF" alt="GitHub Streak" />
 
-  <br><br>
+<br><br>
 
-  <a href="https://github.com/Haplee"><img src="https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white" alt="GitHub" /></a>
-  <a href="https://x.com/FranVidalMateo"><img src="https://img.shields.io/badge/X-000000?style=for-the-badge&logo=x&logoColor=white" alt="X" /></a>
-  <a href="https://www.instagram.com/franvidalmateo"><img src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white" alt="Instagram" /></a>
+<a href="https://github.com/Haplee"><img src="https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white" alt="GitHub" /></a>
+<a href="https://x.com/FranVidalMateo"><img src="https://img.shields.io/badge/X-000000?style=for-the-badge&logo=x&logoColor=white" alt="X" /></a>
+<a href="https://www.instagram.com/franvidalmateo"><img src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white" alt="Instagram" /></a>
 
-  <br><br>
+<br><br>
 
-  <b>GymLog v5.15.4</b> — <a href="https://github.com/Haplee">Francisco Vidal Mateo</a>
+<b>GymLog v5.15.4</b> — <a href="https://github.com/Haplee">Francisco Vidal Mateo</a>
 
 </div>

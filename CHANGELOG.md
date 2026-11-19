@@ -2,6 +2,37 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.15.5] - 2026-11-17
+
+### Added
+
+- Playwright E2E con MSW (Auth, REST, RPC mocks).
+- CI GitHub Actions: jobs `lint-type-test` y `e2e`.
+- Cobertura thresholds 80/70/80/80 en verde con 1563 tests.
+- Tests reales: `authStore`, `settingsStore`, `exerciseMutations`, `outboxStore`, `workoutOutbox`, `notificationsStore`, `progressionMetrics`, `GymIcons`, `EquipmentStepsEditor`, `alarm`, `backHandler` y `ExerciseSelector`.
+- Scripts `build:e2e` y `test:e2e`.
+
+### Fixed
+
+- Zod 4.6.7 en la Edge Function del entrenador IA.
+- Override de `brace-expansion` elevado a `^1.1.21`.
+- Eliminado el override redundante de `vite-plugin-pwa`.
+- E2E flaky tests estabilizados con locators estructurales, foco estable y nombres únicos.
+- `SENTRY_AUTH_TOKEN` no se sube en builds normales sin token válido.
+
+### Security
+
+- `npm audit` completo: 0 high, 12 moderate, 0 critical. Las alertas moderate pendientes corresponden a `glob` y `minimatch` en el tooling de build de Sentry, TypeScript ESLint, PWA y Workbox.
+- El 17 de noviembre, el registro npm reportaba además 19 high y 9 moderate por `GHSA-fc5q-39xc-vjpf` (`picomatch` ≤4.0.7). En la verificación final, npm ya no incluye ese advisory; GitHub todavía no publica una versión parcheada.
+- `npm audit --omit=dev`: 0 high, 0 moderate, 0 critical. `vite-plugin-pwa` se reclasificó como `devDependency` porque no se ejecuta en el runtime de producción.
+- No se aplicó `npm audit fix --force`, porque rompe el build y la PWA. Tampoco se adoptaron PRs no fusionados de picomatch.
+- Mitigación: superficie de producción limpia. Se conservaron las versiones compatibles del tooling de build y se descartaron las actualizaciones que aumentaban el riesgo.
+
+### Removed
+
+- Archivos residuales `comrpbvaciones1.md` y `merge.ps1`.
+- APKs duplicados, beta y debug de `apk_versions/`.
+
 ## [5.13.0](https://github.com/Haplee/gymlog/compare/v5.12.0...v5.13.0) (2026-09-02)
 
 ### Features
