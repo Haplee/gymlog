@@ -78,13 +78,22 @@ if (sentryDsn) {
   );
 }
 
-const container = document.getElementById('root');
-if (!container) throw new Error('Root element not found');
+async function bootstrap(): Promise<void> {
+  if (import.meta.env.VITE_E2E_MOCKS === 'true') {
+    const { startE2EMocks } = await import('./test/e2e/browser');
+    await startE2EMocks();
+  }
 
-createRoot(container).render(
-  <StrictMode>
-    <Providers>
-      <App />
-    </Providers>
-  </StrictMode>,
-);
+  const container = document.getElementById('root');
+  if (!container) throw new Error('Root element not found');
+
+  createRoot(container).render(
+    <StrictMode>
+      <Providers>
+        <App />
+      </Providers>
+    </StrictMode>,
+  );
+}
+
+void bootstrap();

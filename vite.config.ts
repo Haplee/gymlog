@@ -11,18 +11,23 @@ const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
-  const sbUrl = env.VITE_SUPABASE_URL;
-  const sbKey = env.VITE_SUPABASE_KEY;
-  const sentryAuthToken = env.SENTRY_AUTH_TOKEN;
+  const isE2e = mode === 'e2e';
+  const sbUrl = isE2e ? 'http://localhost:54321' : env.VITE_SUPABASE_URL;
+  const sbKey = isE2e ? 'e2e-anon-key' : env.VITE_SUPABASE_KEY;
+  const sentryAuthToken = isE2e
+    ? undefined
+    : Object.prototype.hasOwnProperty.call(process.env, 'SENTRY_AUTH_TOKEN')
+      ? process.env.SENTRY_AUTH_TOKEN?.trim() || undefined
+      : env.SENTRY_AUTH_TOKEN?.trim() || undefined;
 
   return {
     resolve: {
       alias: aliases,
     },
     build: {
-      // Sin auth token no se suben a Sentry, pero generarlos no tiene coste
-      // en runtime (Vite los deja fuera del bundle servido).
-      sourcemap: true,
+      // Los mapas solo se generan cuando hay token para subirlos. Sin token,
+      // Vercel podría servir los .map y exponer el código fuente sin minificar.
+      sourcemap: Boolean(sentryAuthToken),
       rollupOptions: {
         output: {
           manualChunks: {
@@ -39,6 +44,11 @@ export default defineConfig(({ mode }) => {
     define: {
       'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(sbUrl),
       'import.meta.env.VITE_SUPABASE_KEY': JSON.stringify(sbKey),
+      'import.meta.env.VITE_E2E_MOCKS': JSON.stringify(isE2e ? 'true' : 'false'),
+      'import.meta.env.VITE_SENTRY_DSN': JSON.stringify(isE2e ? '' : env.VITE_SENTRY_DSN),
+      'import.meta.env.VITE_CLOUDFLARE_ANALYTICS_TOKEN': JSON.stringify(
+        isE2e ? '' : env.VITE_CLOUDFLARE_ANALYTICS_TOKEN,
+      ),
       __APP_VERSION__: JSON.stringify(pkg.version),
       // Poda el código de depuración de Sentry, que es lo que arrastra el
       // bundle `dev/` de @sentry/browser — y con él la integración Spotlight,
@@ -50,6 +60,7 @@ export default defineConfig(({ mode }) => {
       react(),
       tailwindcss(),
       VitePWA({
+        disable: isE2e,
         registerType: 'autoUpdate',
         // El registro lo hace main.tsx a mano: en Capacitor los assets ya son
         // ficheros locales, así que el SW no aporta nada offline y sí servía
@@ -91,6 +102,7 @@ export default defineConfig(({ mode }) => {
           ],
         },
         workbox: {
+          sourcemap: false,
           cleanupOutdatedCaches: true,
           clientsClaim: true,
           skipWaiting: true,

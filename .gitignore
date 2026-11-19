@@ -106,3 +106,10 @@ supabase/backups/
 
 # Exportaciones locales con datos personales (GymLog y Google Health)
 exports/gym-log-full-export/
+exports/
+qa_results/
+artifacts/verification/
+*.bak
+*.bak-*
+GymLog-*-artefactos.zip
+backups/routines/
