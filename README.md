@@ -1,430 +1,260 @@
-<div align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=ffd93d&height=120&section=header&text=GymLog%20v5.15.5&fontSize=50&fontColor=0a0a0b&animation=fadeIn" alt="GymLog v5.15.5" />
+# GymLog
 
-  <br>
+> Registro de entrenamientos enfocado en fiabilidad, privacidad y experiencia nativa. Diseñado para levantar pesas, no para luchar contra la app.
 
-  <img src="./public/gimnasia.svg" alt="GymLog" width="130" />
+![GymLog banner](https://capsule-render.vercel.app/api?type=waving&color=ffd93d&height=200&section=header&text=GymLog&fontSize=70&fontAlignY=35&desc=Registro%20de%20entrenamientos%20nativo%2C%20privado%20y%20sin%20ruido&descAlignY=55&descAlign=50)
 
-  <br>
-
-<a href="https://git.io/typing-svg"><img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=20&duration=3000&pause=1000&color=ffd93d&center=true&vCenter=true&width=650&lines=Entrenamiento+y+Sobrecarga+Progresiva;Seguimiento+de+Fuerza+y+Cardio;Anal%C3%ADticas+de+Rendimiento;Entrenador+IA+Opcional+y+Auditable;Arquitectura+Offline-First" alt="GymLog features" /></a>
-
-  <p>
-    Plataforma de entrenamiento <b>web y nativa para Android e iOS</b>, diseñada para registrar sesiones de fuerza y cardio, analizar el progreso y planificar rutinas. Construida con React, TypeScript, Capacitor y Supabase, con sincronización offline-first y herramientas de autorregulación.
-  </p>
-
-  <p>
-    <a href="https://app.gymlog.dpdns.org"><img src="https://img.shields.io/badge/APP-WEB_DEMO-ffd93d?style=for-the-badge&logo=vercel&logoColor=0a0a0b" alt="Web demo" /></a>
-    <a href="https://gymlog.dpdns.org/download/gymlog.apk"><img src="https://img.shields.io/badge/ANDROID-DESCARGAR_APK-ffd93d?style=for-the-badge&logo=android&logoColor=0a0a0b" alt="Download APK" /></a>
-  </p>
-
-  <p>
-    <img src="https://img.shields.io/github/actions/workflow/status/Haplee/gymlog/android-build.yml?style=flat-square&label=Android%20Build&logo=github" alt="Android Build" />
-    <img src="https://img.shields.io/github/actions/workflow/status/Haplee/gymlog/ci.yml?style=flat-square&label=CI&logo=vitest" alt="CI" />
-    <img src="https://img.shields.io/github/last-commit/Haplee/gymlog?style=flat-square&label=Last%20commit&logo=git" alt="Last commit" />
-    <img src="https://img.shields.io/github/repo-size/Haplee/gymlog?style=flat-square&label=Repository%20size&logo=files" alt="Repository size" />
-    <img src="https://img.shields.io/github/license/Haplee/gymlog?style=flat-square&label=License&logo=opensourceinitiative" alt="License" />
-  </p>
-
-  <p>
-    <img src="https://img.shields.io/badge/React-19.2-61DAFB?style=flat-square&logo=react&logoColor=white" alt="React" />
-    <img src="https://img.shields.io/badge/TypeScript-5.7-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
-    <img src="https://img.shields.io/badge/Vite-6.2-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite" />
-    <img src="https://img.shields.io/badge/Tailwind_CSS-4.2-38BDF8?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
-    <img src="https://img.shields.io/badge/Capacitor-8.3-119EFF?style=flat-square&logo=capacitor&logoColor=white" alt="Capacitor" />
-    <img src="https://img.shields.io/badge/Supabase-Backend-3ECF8E?style=flat-square&logo=supabase&logoColor=white" alt="Supabase" />
-  </p>
-
-  <img src="https://visitor-badge.laobi.icu/badge?page_id=Haplee.gymlog&left_color=black&right_color=%23ffd93d&left_text=Visitantes" alt="Visitors" />
-</div>
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Platform: Capacitor](https://img.shields.io/badge/Platform-Capacitor-119EFF?logo=capacitor&logoColor=white)](https://capacitorjs.com/)
+[![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-6-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com/)
+[![Tests](https://img.shields.io/badge/Tests-1563%20passing-brightgreen)](https://github.com/Haplee/gymlog/actions)
 
 ---
 
-## Gallery
+## Qué ofrece GymLog
 
-<div align="center">
-  <table>
-    <tr>
-      <td><img src="./public/screens/workout.png" width="200" alt="Workout screen" /></td>
-      <td><img src="./public/screens/cardio.png" width="200" alt="Cardio screen" /></td>
-      <td><img src="./public/screens/stats.png" width="200" alt="Statistics screen" /></td>
-      <td><img src="./public/screens/history.png" width="200" alt="History screen" /></td>
-    </tr>
-    <tr>
-      <td align="center"><sub>Entrenamiento</sub></td>
-      <td align="center"><sub>Cardio</sub></td>
-      <td align="center"><sub>Progreso</sub></td>
-      <td align="center"><sub>Historial</sub></td>
-    </tr>
-  </table>
-</div>
+### Sesiones de fuerza
 
----
+- **Entrenamiento guiado** serie a serie con descansos, RPE/RIR y notas por serie.
+- **Rutinas predefinidas** (Full Body, PPL, Hipertrofia, Fuerza 5×5, Upper/Lower, 5/3/1, Balonmano+Fuerza, Pivote 5 días) y **rutinas personalizadas** con arrastrar-y-soltar.
+- **Progresión automática** por escalones de carga, calentamiento y peso de trabajo.
+- **Registros personales** por banda de repeticiones (1–3, 4–6, 7–10, 11–15, 16+).
+- **Historial navegable** con filtros por ejercicio, músculo, fecha y banda de repeticiones.
 
-## Core Features
+### Catálogo de ejercicios ampliado (v5.15.5+)
 
-<table>
-  <tr>
-    <td align="center" width="50%">
-      <b>Registro de fuerza</b>
-      <p>Control de series, peso, repeticiones, tiempo y esfuerzo. Detección de récords personales, estimación de 1RM y temporizador de descanso.</p>
-    </td>
-    <td align="center" width="50%">
-      <b>Seguimiento de cardio</b>
-      <p>Cronómetro con pausa y reanudación, ocho tipos de actividad, distancia, calorías, notas, historial y estadísticas semanales.</p>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" width="50%">
-      <b>Analíticas de rendimiento</b>
-      <p>Indicadores de actividad, volumen semanal, frecuencia de entrenamiento, evolución por ejercicio, distribución muscular y marcas personales.</p>
-    </td>
-    <td align="center" width="50%">
-      <b>Experiencia nativa</b>
-      <p>Aplicación Android e iOS mediante Capacitor, integración biométrica, háptica, notificaciones, enlaces profundos y funciones para compartir.</p>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" width="50%">
-      <b>Entrenador IA opcional</b>
-      <p>Recomendaciones de entrenamiento con controles de seguridad. La IA propone cambios y el usuario conserva el control sobre su aplicación.</p>
-    </td>
-    <td align="center" width="50%">
-      <b>Autorregulación local</b>
-      <p>Motor basado en RIR y RPE que ayuda a ajustar las cargas sin necesitar una llamada a un modelo de IA.</p>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" width="50%">
-      <b>Rutinas y progresión</b>
-      <p>Planificación semanal, rutinas personalizadas, superseries y sugerencias de carga adaptadas a los objetivos y al material configurado.</p>
-    </td>
-    <td align="center" width="50%">
-      <b>Arquitectura offline-first</b>
-      <p>Persistencia local, caché y cola de sincronización con reintentos para trabajar sin conexión y sincronizar al recuperar la red.</p>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" width="50%">
-      <b>Integración con salud</b>
-      <p>Conexión con Health Connect y HealthKit mediante HealthBridge, según los permisos y los datos que facilite cada dispositivo.</p>
-    </td>
-    <td align="center" width="50%">
-      <b>Importación y exportación</b>
-      <p>Herramientas para transferir entrenamientos y rutinas mediante Excel y cargar historiales compatibles de otras aplicaciones.</p>
-    </td>
-  </tr>
-</table>
+- **200+ ejercicios públicos** con nombres, grupos musculares, equipamiento, patrón de movimiento, bilateralidad, composición, descripciones técnicas y **aliases** (sinónimos/variantes ortográficas).
+- **129 ejercicios nuevos** añadidos: variantes de máquinas (Smith, Landmine), anillas/TRX, kettlebells, balón medicinal, trineo, pliometría (cajón, vallas, comba, cuerdas), olímpicos (Snatch, Clean & Jerk), core funcional (Dead Bug, Bird Dog, Copenhagen, Landmine rotations), manguito rotador, agarre/antebrazo y cuerpo libre avanzado (Muscle-Up, HSPU, Pistol Squat).
+- **10 nuevos tipos de equipamiento**: `Máquina Smith`, `Anillas / TRX`, `Landmine`, `Balón medicinal`, `Trineo`, `Cajón pliométrico`, `Vallas`, `Comba`, `Cuerdas` (además de `Barra`, `Mancuernas`, `Máquina`, `Polea`, `Peso corporal`, `Bandas`, `Kettlebell`, `Otro`).
+- **Búsqueda tolerante a tildes y erratas**: columna generada `search_text` con índice GIN `pg_trgm` + función `public.f_unaccent` + hook `useExerciseSearch` con normalización NFD (elimina diacríticos) y puntuación fuzzy (coincidencia exacta → prefijo → subsecuencia) sobre `name` y `aliases`.
+- **RPC `get_exercises_with_usage` actualizada** devuelve `aliases[]` junto con todas las columnas del ejercicio y `usage_count`.
 
----
+### Cardio y salud
 
-## Quick Start
+- **Sesiones de cardio** (correr, bici, natación, remo, elíptica, caminata) con distancia, tiempo, FC media/máx, RPE y notas.
+- **Integración Health Connect (Android) / HealthKit (iOS)**: pasos, FC, sueño, entrenamientos.
+- **Métricas wearables** (sueño, HRV, recuperación, carga) sincronizadas en segundo plano.
 
-<div align="center">
-  <img src="./docs/terminal-animation.svg" width="600" alt="GymLog development terminal" />
-</div>
+### Progresión y análisis
 
-### 1. Preparación
+- **Fatiga aguda/crónica** (ACWR), monótonía, strain.
+- **Readiness** diario combinando sueño, HRV, fatiga y enfermedad.
+- **Volumen semanal por grupo muscular** y **último entrenamiento por músculo**.
+- **Proyección 1RM** (Epley/Brzycki) y **e1RM por banda de repeticiones**.
 
-```bash
-npm ci
-npm run dev
-```
+### Experiencia de usuario
 
-La aplicación estará disponible en `http://localhost:5173`. Copia `.env.example` a `.env.local` y configura las variables de Supabase antes de iniciar la aplicación.
-
-### 2. Variables de entorno
-
-Las variables obligatorias son:
-
-```dotenv
-VITE_SUPABASE_URL=https://<tu-proyecto>.supabase.co
-VITE_SUPABASE_KEY=<tu-clave-publicable>
-```
-
-`.env.example` incluye también las opciones de ExerciseDB, push, Sentry, Cloudflare Analytics y el entrenador IA. Las variables `VITE_*` terminan dentro del bundle y de la APK, por lo que solo pueden contener datos públicos. Las claves privadas de proveedores de IA pertenecen a los secretos de la Edge Function y nunca deben incluirse en el cliente.
-
-### 3. Pruebas y cobertura
-
-```bash
-npm run lint
-npm run type-check
-npm run test
-npm run test:coverage
-npm run test:e2e
-```
-
-`npm run test:coverage` aplica los umbrales globales del proyecto: 80% de statements, 70% de branches, 80% de functions y 80% de lines.
-
-`npm run test:e2e` genera un build de producción con `vite build --mode e2e` y ejecuta Playwright contra `http://localhost:4173`. La suite usa MSW para simular Supabase Auth, REST y RPC, por lo que no necesita un proyecto remoto ni credenciales reales. Cubre 54 casos en los perfiles iPhone 13 y Pixel 9a.
-
-Para ejecutar solo la sesión autenticada:
-
-```bash
-npx playwright test e2e/workout-session.spec.ts
-```
-
-### 4. Build web
-
-```bash
-npm run build
-```
-
-El build escribe la aplicación en `dist/`. Si `SENTRY_AUTH_TOKEN` contiene un token válido, Vite genera y sube los source maps a Sentry. Sin token, no genera ni sube mapas.
-
-### 5. Build Android
-
-Necesitas JDK 21 y el SDK de Android. En PowerShell:
-
-```powershell
-npm run build
-npx cap sync android
-cd android
-.\gradlew.bat assembleDebug assembleRelease
-```
-
-En Linux o macOS, sustituye `.\gradlew.bat` por `./gradlew`. El build release usa la versión de `package.json` y deja `GymLog-v5.15.5.apk` en la raíz del repositorio.
-
-La firma release se configura mediante las claves `STORE_FILE`, `STORE_PASSWORD`, `KEY_ALIAS` y `KEY_PASSWORD` de `android/local.properties`. Ese archivo está ignorado por Git y no debe compartirse.
-
-Verifica la firma antes de distribuir el artefacto:
-
-```powershell
-apksigner verify --print-certs android/app/build/outputs/apk/release/app-release.apk
-```
-
-### 6. GitHub Actions
-
-El workflow `.github/workflows/ci.yml` ejecuta dos jobs:
-
-- `lint-type-test`: ESLint, TypeScript, cobertura, build web y análisis de secretos del bundle.
-- `e2e`: depende del job anterior, instala Chromium con sus dependencias del sistema y ejecuta la suite Playwright completa.
-
-Los secrets de GitHub Actions son `VITE_SUPABASE_URL`, `VITE_SUPABASE_KEY` y, opcionalmente, `SENTRY_AUTH_TOKEN`.
-
----
-
-## Variables y overrides
-
-- `.env.local` sirve para configuración local y tiene prioridad sobre los valores guardados en `.env`.
-- El modo `e2e` fuerza Supabase a `http://localhost:54321`, desactiva Sentry y Cloudflare en el bundle e inicia MSW antes de renderizar React.
-- `E2E_EMAIL` y `E2E_PASSWORD` sustituyen la identidad virtual usada por MSW. No cambian el backend a un servicio remoto.
-- `VITE_E2E_MOCKS` es una variable interna del modo E2E. No debe configurarse manualmente para ejecutar la suite.
-- Un `SENTRY_AUTH_TOKEN` presente en el entorno tiene prioridad sobre el valor de `.env`. Si está vacío o contiene solo espacios, Sentry y la generación de source maps quedan desactivados.
-- `VITE_PUSH_ENABLED` activa las notificaciones push en el cliente. Déjalo desactivado hasta configurar el proyecto push y los permisos de plataforma.
-
----
-
-## Project Activity
-
----
-
-## Project Activity
-
-<div align="center">
-  <img src="./docs/activity-graph.svg" width="720" alt="GitHub commit activity" />
-</div>
-
----
-
-## Stack Tecnológico
-
-| Capa               | Tecnología                   | Función                                                      |
-| :----------------- | :--------------------------- | :----------------------------------------------------------- |
-| **Mobile Runtime** | Capacitor 8                  | Integración nativa con Android e iOS                         |
-| **Frontend**       | React 19, TypeScript 5.7     | Interfaz reactiva y tipada                                   |
-| **Routing**        | React Router 8               | Navegación y carga diferida de rutas                         |
-| **Estilos**        | Tailwind CSS 4               | Sistema de estilos mediante CSS                              |
-| **Animaciones**    | Framer Motion 12             | Transiciones y animaciones respetando el movimiento reducido |
-| **Data Flow**      | TanStack Query 5             | Consultas, caché y sincronización                            |
-| **Global Store**   | Zustand 5                    | Estado local de entrenamientos, rutinas y ajustes            |
-| **Gráficos**       | Recharts 3                   | Visualización de rendimiento y progresión                    |
-| **Iconos**         | reicon-react                 | Biblioteca centralizada de iconos                            |
-| **Virtualización** | TanStack Virtual 3           | Listas eficientes para catálogos extensos                    |
-| **Validación**     | Zod 3                        | Validación de entradas y estructuras de datos                |
-| **i18n**           | i18next + react-i18next      | Internacionalización                                         |
-| **Backend**        | Supabase                     | PostgreSQL, autenticación, RLS y RPC                         |
-| **Edge Functions** | Deno / Supabase              | Lógica de servidor y notificaciones                          |
-| **PWA**            | vite-plugin-pwa              | Instalación web y service worker                             |
-| **Persistencia**   | TanStack Query Persist + idb | Caché persistente y almacenamiento local                     |
-| **Drag & Drop**    | dnd-kit                      | Reordenación de ejercicios                                   |
-| **Errores**        | Sentry                       | Diagnóstico de errores de aplicación                         |
-| **Wearables**      | HealthBridge                 | Integración nativa con servicios de salud                    |
-| **Excel**          | exceljs                      | Importación y exportación de archivos `.xlsx`                |
-| **Testing**        | Vitest + Playwright          | Pruebas unitarias y E2E                                      |
-| **CI/CD**          | GitHub Actions               | Automatización de validaciones y compilaciones               |
-| **Bundler**        | Vite 6                       | Servidor de desarrollo y compilación optimizada              |
-
----
-
-## Sistema de Diseño
-
-GymLog utiliza el sistema visual **FitBody**, con superficies tipo **Liquid Glass**, temas claro y oscuro y acentos configurables.
-
-| Token                 | Valor                            |
-| :-------------------- | :------------------------------- |
-| Acento predeterminado | `#ffd93d`                        |
-| Fondo y superficie    | `#0a0a0b` / `#26262b`            |
-| Tipografía            | Inter + Space Grotesk            |
-| Material              | `glass-1`, `glass-2` y `glass-3` |
-
-### Principios visuales
-
-- **Jerarquía clara:** cada superficie responde a una función concreta, sin capas decorativas innecesarias.
-- **Contraste y legibilidad:** los colores deben mantener el texto legible en los temas y acentos compatibles.
-- **Rendimiento móvil:** se evitan efectos de desenfoque costosos en el WebView.
-- **Tema independiente:** el usuario puede elegir entre modo claro y oscuro.
-- **Acentos configurables:** distintos colores con variantes adaptadas al tema.
-- **Iconografía coherente:** los componentes reutilizan una capa común de iconos.
-
-Los tokens principales se encuentran en `src/shared/styles/tokens.css`.
-
----
-
-## Funcionalidades Detalladas
-
-### Workout — Registro en vivo
-
-- **Selector de ejercicios:** búsqueda y filtros por grupo muscular y equipamiento.
-- **Biblioteca personal:** ejercicios predefinidos, favoritos y ejercicios personalizados.
-- **Registro de series:** peso, repeticiones, duración y modalidad de carga.
-- **Validación:** identificación de filas incompletas antes de guardar.
-- **Ejercicios sin lastre:** admite series con `0 kg` cuando no se utiliza carga externa.
-- **Tipos de serie:** series normales y variantes como dropset, rest-pause y AMRAP.
-- **Calentamiento:** permite diferenciar las series de aproximación del trabajo efectivo.
-- **Modalidad de carga:** peso corporal, carga externa o asistida, según el ejercicio.
-- **Récords personales:** detección de mejoras y estimación de 1RM.
-- **Temporizador de descanso:** cuenta atrás configurable, alarma y notificaciones compatibles.
-- **Última sesión:** consulta de los datos anteriores y reutilización de series.
-- **Calculadora de discos:** cálculo de la combinación de discos según el peso objetivo y la configuración del gimnasio.
-- **Notas de entrenamiento:** comentarios por ejercicio y valoración de la sesión.
-- **Persistencia:** recuperación de sesiones activas después de cerrar la aplicación.
-- **Guardado robusto:** gestión de los reintentos para evitar duplicar ejercicios ya guardados al finalizar una rutina.
-
-### Progresión y autorregulación
-
-- **Recomendaciones contextualizadas:** utiliza el historial y los parámetros del ejercicio para orientar la siguiente carga.
-- **Escalones reales de peso:** configuración de los incrementos disponibles en mancuernas y máquinas.
-- **Calentamiento progresivo:** propuesta de cargas de aproximación antes del peso de trabajo.
-- **RIR y RPE:** utiliza el esfuerzo registrado como referencia para evaluar la progresión.
-- **Control manual:** el usuario puede corregir las sugerencias antes de registrar el resultado.
-- **Seguimiento de la fatiga:** herramientas para observar la evolución y orientar los ajustes de carga.
-
-### Entrenador IA
-
-- **Activación voluntaria:** deshabilitado por defecto.
-- **Recomendaciones revisables:** el entrenador propone; el usuario decide si aplicar los cambios.
-- **Credenciales protegidas:** las claves del proveedor permanecen en el servidor.
-- **Validación de seguridad:** filtrado determinista de las propuestas.
-- **Memoria y auditoría:** herramientas para administrar el contexto y consultar el uso.
-- **Motor local alternativo:** las recomendaciones deterministas siguen disponibles sin activar el entrenador IA.
-
-### Cardio
-
-- **Ocho tipos de actividad:** running, cycling, walking, rowing, swimming, elliptical, jump rope y other.
-- **Cronómetro:** iniciar, pausar, reanudar y finalizar sesiones.
-- **Registro opcional:** distancia, calorías y notas.
-- **Resumen semanal:** sesiones, tiempo acumulado y distancia.
-- **Historial:** consulta y eliminación individual.
-- **Sincronización remota:** gestión de las sesiones y sus eliminaciones.
-
-### Estadísticas y progreso
-
-- **Indicadores de actividad:** racha, volumen semanal, frecuencia y duración media.
-- **Récords personales:** mejores marcas y estimaciones de 1RM.
-- **Tendencias:** evolución del volumen a lo largo de diferentes períodos.
-- **Distribución muscular:** seguimiento del trabajo por grupo muscular.
-- **Progresión por ejercicio:** comparación de cargas y resultados.
-- **Historial:** consulta de sesiones, series y datos asociados.
-- **Autorregulación:** acceso a recomendaciones y a la información que las respalda.
-
-### Rutinas y planificación
-
-- **Rutinas personalizadas** y plantillas predefinidas.
-- **Planificación semanal** de ejercicios y objetivos.
-- **Objetivos por repeticiones o duración**, incluidas las variantes por lado cuando corresponda.
-- **Superseries** y reordenación de ejercicios.
-- **Activación programada** de rutinas compatibles.
-- **Registro del entrenamiento real:** permite revisar el peso y las repeticiones propuestas antes de guardar.
-- **Rutinas compatibles con récords personales:** herramientas para incorporar ejercicios relevantes al plan.
-
-### Biblioteca de ejercicios
-
-- **Buscador** con filtros por músculo y equipamiento.
-- **Favoritos y ejercicios personalizados.**
-- **Listas virtualizadas** para mantener una navegación fluida.
-- **Modalidad de carga** identificada según el ejercicio.
-- **Material configurable** para adaptar las recomendaciones de peso al gimnasio.
-
-### Historial y transferencia de datos
-
-- Consulta de sesiones de fuerza y cardio.
-- Exportación e importación de datos compatibles mediante Excel.
-- Importación de historiales compatibles desde Strong, Hevy y FitNotes.
-- Compartición e impresión de rutinas mediante las funciones disponibles.
-- Herramientas de copia y recuperación según los formatos compatibles.
-
-### Integración con salud
-
-La integración se realiza mediante HealthBridge y depende de los permisos concedidos y de las capacidades de cada dispositivo.
-
-- **Android:** Health Connect.
-- **iOS:** HealthKit.
-- Acceso compatible a pasos, frecuencia cardiaca, sueño y entrenamientos.
-
-### Notificaciones
-
-- Recordatorios configurables desde los ajustes compatibles.
-- Notificaciones locales y remotas.
-- Historial de avisos y navegación a las secciones asociadas.
-- Integraciones nativas compatibles con Android.
+- **Modo oscuro/claro/sistema** con persistencia y transiciones suaves.
+- **Temporizadores de descanso** con cuenta atrás, vibración y sonido configurable.
+- **Wake Lock** opcional para mantener la pantalla encendida.
+- **Accesibilidad**: etiquetas ARIA, contraste AA, navegación por teclado, `prefers-reduced-motion`.
+- **PWA instalable** con Service Worker y sincronización en segundo plano (Workbox + IndexedDB outbox).
 
 ### Sincronización y privacidad
 
-- Autenticación con Google a través de Supabase Auth.
-- Restricciones de acceso a los datos mediante políticas RLS.
-- Persistencia local mediante IndexedDB.
-- Cola offline y reintentos de sincronización.
-- Identificadores estables para gestionar operaciones repetidas.
-- Captura de errores mediante Sentry.
-- Separación entre el código cliente y los secretos del servidor.
+- **Supabase (PostgreSQL + Auth + Realtime)**: datos en la nube del usuario, cifrados en tránsito y en reposo.
+- **RLS por usuario** en todas las tablas; catálogo público (`is_public = true`) legible por todos.
+- **Outbox local** para escrituras offline-first con reintento exponencial.
+- **Exportación/importación JSON** completa de entrenamientos, rutinas, ejercicios personales y ajustes.
+- **Eliminación de cuenta** con purga cascada (RGPD Art. 17).
 
 ---
 
-## Rendimiento en el WebView
+## Arquitectura técnica
 
-GymLog está diseñada para limitar operaciones costosas en dispositivos móviles.
+### Stack
 
-- Las escrituras persistentes deben agruparse cuando sea posible.
-- Los temporizadores deben respetar la visibilidad y el estado de la aplicación.
-- Los componentes deben suscribirse solo a las partes del estado que necesitan.
-- Los catálogos extensos deben aprovechar la virtualización.
-- Las animaciones deben respetar la preferencia de movimiento reducido.
-- El sonido de las alarmas debe centralizarse para evitar contextos de audio innecesarios.
+| Capa                 | Tecnología                                             |
+| -------------------- | ------------------------------------------------------ |
+| UI                   | React 19 + TypeScript + Vite 6                         |
+| Estilos              | Tailwind CSS 4 (CSS-first, `@theme`)                   |
+| Estado               | Zustand (stores) + TanStack Query v5 (server state)    |
+| Formularios          | React Hook Form + Zod                                  |
+| Internacionalización | i18next (ES/EN)                                        |
+| Animaciones          | Framer Motion (layout, shared layout, AnimatePresence) |
+| Notificaciones       | Sonner (toasts)                                        |
+| Base de datos        | Supabase (PostgreSQL 16)                               |
+| Auth                 | Supabase Auth (email/password, OAuth, MFA)             |
+| Realtime             | Supabase Realtime (cambios de rutinas/entrenamientos)  |
+| Storage              | Supabase Storage (avatares, medios de ejercicios)      |
+| Edge Functions       | Deno (webhooks, tareas programadas, Health sync)       |
+| Mobile               | Capacitor 6 (iOS/Android)                              |
+| CI/CD                | GitHub Actions (lint, type-check, test, build, deploy) |
+
+### Base de datos — tablas clave
+
+| Tabla                | Propósito                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `exercises`          | Catálogo público + personales (`user_id` nullable). Columnas: `id`, `name`, `muscle_group`, `muscle_detail`, `equipment`, `movement`, `is_bilateral`, `user_id`, `created_at`, `is_compound`, `description`, `is_public`, `media_url`, `is_bodyweight`, `load_type`, `aliases text[]`, `search_text` (generated). Índices: `search_text` GIN `pg_trgm`, `user_id`, `muscle_group`, `is_public`, `exercises_user_lower_name_uniq` (partial unique `lower(name)` por usuario). |
+| `exercise_muscles`   | Músculos ponderados por ejercicio (`exercise_id`, `muscle_group`, `role` primary/secondary, `weight 0–100`). RLS vía ejercicio padre.                                                                                                                                                                                                                                                                                                                                        |
+| `exercise_favorites` | Favoritos por usuario (`user_id`, `exercise_id`).                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `workouts`           | Cabecera de entrenamiento (`id`, `user_id`, `started_at`, `finished_at`, `routine_id`, `notes`, `rating`, `hash`).                                                                                                                                                                                                                                                                                                                                                           |
+| `workout_sets`       | Series (`id`, `workout_id`, `exercise_id`, `set_index`, `weight`, `reps`, `rir`, `weight_unit`, `is_warmup`, `is_completed`, `hash`).                                                                                                                                                                                                                                                                                                                                        |
+| `personal_records`   | PRs por banda de repeticiones (`user_id`, `exercise_id`, `rep_band`, `weight`, `reps`, `one_rm`, `achieved_at`). Único `(user_id, exercise_id, rep_band)`.                                                                                                                                                                                                                                                                                                                   |
+| `user_routines`      | Rutinas del usuario (JSONB versionado + `active_routine_id`).                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `profiles`           | Perfil público/privado (`id`, `username`, `avatar_url`, `preferences` JSONB).                                                                                                                                                                                                                                                                                                                                                                                                |
+| `cardio_sessions`    | Sesiones cardio (`user_id`, `type`, `started_at`, `duration`, `distance`, `hr_avg`, `hr_max`, `rpe`, `notes`, `hash`).                                                                                                                                                                                                                                                                                                                                                       |
+| `health_sessions`    | Datos Health Connect/HealthKit normalizados.                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `wearable_*`         | Métricas wearables (daily, sleep, connections).                                                                                                                                                                                                                                                                                                                                                                                                                              |
+
+### RPC destacadas
+
+| Función                                    | Descripción                                                                                                   |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| `get_exercises_with_usage(p_user_id uuid)` | Devuelve ejercicios (propios + públicos) con `usage_count` y **`aliases[]`**. Orden: uso descendente, nombre. |
+| `save_workout_with_sets(...)`              | Upsert idempotente de entrenamiento + series (hash por fila).                                                 |
+| `save_cardio_session(...)`                 | Upsert idempotente de cardio.                                                                                 |
+| `import_health_sessions(uuid, jsonb)`      | Ingesta Health Connect/HealthKit con deduplicación.                                                           |
+| `import_wearable_workouts(uuid, jsonb)`    | Ingesta wearables.                                                                                            |
 
 ---
 
-## iOS
+## Desarrollo local
 
-El proyecto incluye código nativo personalizado para las integraciones compatibles, como HealthKit y las capacidades biométricas.
+### Requisitos
 
-La sincronización y compilación se gestionan mediante Capacitor y los workflows disponibles en GitHub Actions.
+- Node.js 20+ (`.nvmrc`)
+- pnpm 9+
+- Docker Desktop / Docker Engine (para Supabase local)
+- Supabase CLI (`pnpm dlx supabase` o `npm i -g supabase`)
 
-## APK Android
+### Puesta en marcha
 
-Descarga de la APK disponible:
+```bash
+# 1. Clonar e instalar
+git clone https://github.com/Haplee/gymlog.git
+cd gymlog
+pnpm install
 
-**[Descargar GymLog para Android](https://gymlog.dpdns.org/download/gymlog.apk)**
+# 2. Variables de entorno
+cp .env.example .env.local
+# Rellenar VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY (o usar `supabase start`)
 
-También puedes acceder a la [aplicación web](https://app.gymlog.dpdns.org) o a la [página de GymLog](https://gymlog.dpdns.org).
+# 3. Supabase local (opcional)
+pnpm dlx supabase start
+# Aplica migraciones y expone: API http://127.0.0.1:54321, Studio http://127.0.0.1:54323
 
-> Antes de actualizar una instalación existente, comprueba que el identificador de aplicación y la firma sean compatibles. Es recomendable conservar una copia de seguridad de los datos importantes.
+# 4. Desarrollo
+pnpm dev          # Vite dev server (http://localhost:5173)
+pnpm test         # Vitest (unit + integration)
+pnpm typecheck    # tsc --noEmit
+pnpm lint         # ESLint + Prettier
+pnpm build        # Build producción (dist/)
+
+# 5. Mobile (Capacitor)
+pnpm cap sync
+pnpm cap open ios     # Xcode
+pnpm cap open android # Android Studio
+```
+
+### Migraciones
+
+```bash
+# Crear nueva migración
+pnpm dlx supabase migration new nombre_descriptivo
+
+# Aplicar local
+pnpm dlx supabase db reset    # reset + apply all
+pnpm dlx supabase db push     # apply pending
+
+# Subir a remoto (producción)
+pnpm dlx supabase db push --remote --yes
+```
+
+### Tests
+
+```bash
+pnpm test              # watch mode
+pnpm test -- --run     # CI mode (1563 tests)
+pnpm test -- --coverage
+```
+
+---
+
+## Despliegue
+
+### Web (Vercel/Netlify/Cloudflare Pages)
+
+- Build command: `pnpm build`
+- Output: `dist/`
+- Env vars: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
+- SPA fallback: `index.html`
+
+### Mobile (Capacitor)
+
+- iOS: `pnpm cap build ios` → Archive en Xcode → TestFlight / App Store
+- Android: `pnpm cap build android` → Bundle/APK en Android Studio → Play Console
+- **Auto-deploy**: GitHub Actions en push a `main` (build + test + deploy web + artifacts mobile)
+
+### Supabase (Producción)
+
+- Proyecto vinculado: `gymlog (eoltmipoklizewxdpzfa)`
+- Migraciones aplicadas vía `supabase db push --remote`
+- Edge Functions: `supabase functions deploy <name> --project-ref <ref>`
+- Secrets: `supabase secrets set KEY=value --project-ref <ref>`
+
+---
+
+## Variables de entorno
+
+| Variable                    | Descripción                  | Requerida    |
+| --------------------------- | ---------------------------- | ------------ |
+| `VITE_SUPABASE_URL`         | URL del proyecto Supabase    | Sí           |
+| `VITE_SUPABASE_ANON_KEY`    | Clave anónima (cliente)      | Sí           |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role (scripts/admin) | Solo scripts |
+| `GYMLOG_USER_ID`            | UUID usuario para seeds      | Solo seeds   |
+
+---
+
+## Scripts útiles
+
+```bash
+# Seed catálogo + rutinas predefinidas (requiere SUPABASE_SERVICE_ROLE_KEY)
+pnpm dlx tsx scripts/seed-rutinas.mjs
+
+# Actualizar rutinas en remoto
+pnpm dlx tsx scripts/maintenance/update-routines.mjs
+
+# Lint-staged (pre-commit)
+pnpm lint-staged
+
+# Type-check estricto
+pnpm typecheck
+```
+
+---
+
+## Contribuir
+
+1. Fork → rama `feat/descripcion-corta` o `fix/descripcion-corta`
+2. Commits convencionales (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`)
+3. `pnpm lint && pnpm typecheck && pnpm test -- --run` en verde
+4. PR a `main` con descripción y capturas si hay cambios visuales
+5. Revisión: al menos una aprobación + CI verde → merge squash
+
+---
+
+## Licencia
+
+MIT — ver [LICENSE](./LICENSE).
 
 ---
 
 ## Changelog
 
 El registro completo se encuentra en **[CHANGELOG.md](./CHANGELOG.md)**.
+
+### v5.15.5 — Catálogo de ejercicios ampliado y búsqueda inteligente
+
+- **Catálogo público**: +129 ejercicios (200+ total) con variantes de máquinas Smith, Landmine, anillas/TRX, kettlebells, balón medicinal, trineo, pliometría avanzada, olímpicos, core funcional, manguito rotador, agarre/antebrazo y cuerpo libre avanzado.
+- **Equipamiento**: 10 nuevos tipos (`Máquina Smith`, `Anillas / TRX`, `Landmine`, `Balón medicinal`, `Trineo`, `Cajón pliométrico`, `Vallas`, `Comba`, `Cuerdas`).
+- **Búsqueda tolerante a tildes/erratas**: `unaccent` + `pg_trgm`, columna generada `search_text` con índice GIN, función `public.f_unaccent` IMMUTABLE, hook `useExerciseSearch` con normalización NFD y fuzzy scoring sobre `name` + `aliases[]`.
+- **RPC `get_exercises_with_usage`** ahora devuelve `aliases[]` para autocompletado enriquecido.
+- **Migraciones**: `20261120150000_seed_additional_catalog_exercises.sql` (idempotente, `WHERE NOT EXISTS` con `lower(public.f_unaccent(name))`).
 
 ### v5.15.4 — Fiabilidad y progresión del entrenamiento
 
@@ -436,9 +266,7 @@ El registro completo se encuentra en **[CHANGELOG.md](./CHANGELOG.md)**.
 - **Calentamiento progresivo:** representación de los escalones de aproximación y del peso de trabajo.
 - **Recordatorios:** planificación de avisos según la fecha y la hora en que deben ejecutarse.
 - **Mejoras de experiencia:** mayor claridad sobre el plan de cada serie y los ajustes manuales de carga.
-
-Para consultar los cambios específicos y sus commits:
-
+  Para consultar los cambios específicos y sus commits:
 - [Historial de commits](https://github.com/Haplee/gymlog/commits/main/)
 - [Releases de GymLog](https://github.com/Haplee/gymlog/releases)
 - [Changelog completo](./CHANGELOG.md)
@@ -448,25 +276,15 @@ Para consultar los cambios específicos y sus commits:
 <div align="center">
   <img src="https://capsule-render.vercel.app/api?type=waving&color=ffd93d&height=100&section=footer" alt="GymLog footer" />
 </div>
-
 ## Autoría
-
 <div align="center">
-
   <img src="https://github-readme-stats.vercel.app/api?username=Haplee&show_icons=true&theme=radical&hide_border=true&bg_color=0D1117&icon_color=ffd93d&text_color=FFFFFF&title_color=ffd93d" alt="GitHub Stats" />
-
   <br>
-
   <img src="https://github-readme-streak-stats.herokuapp.com/?user=Haplee&theme=radical&hide_border=true&background=0D1117&ring=ffd93d&fire=ffd93d&currStreakNum=FFFFFF" alt="GitHub Streak" />
-
 <br><br>
-
 <a href="https://github.com/Haplee"><img src="https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white" alt="GitHub" /></a>
 <a href="https://x.com/FranVidalMateo"><img src="https://img.shields.io/badge/X-000000?style=for-the-badge&logo=x&logoColor=white" alt="X" /></a>
 <a href="https://www.instagram.com/franvidalmateo"><img src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white" alt="Instagram" /></a>
-
 <br><br>
-
-<b>GymLog v5.15.4</b> — <a href="https://github.com/Haplee">Francisco Vidal Mateo</a>
-
+<b>GymLog v5.15.5</b> — <a href="https://github.com/Haplee">Francisco Vidal Mateo</a>
 </div>
