@@ -1,5 +1,5 @@
 ﻿import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { WearableProvider } from '../types';
+import type { WearableProvider } from '../../types';
 
 // Hoisted mocks to avoid initialization order issues
 const { mockFrom, mockRpc, chain, mockHealthBridge, mockHasHealthConsent } = vi.hoisted(() => {
@@ -50,7 +50,7 @@ vi.mock('@features/privacy/consent/healthConsent', () => ({
 }));
 
 vi.mock('@capacitor/core', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual: Record<string, unknown> = await importOriginal();
   return {
     ...actual,
     Capacitor: {
@@ -214,7 +214,9 @@ describe('healthAggregator', () => {
       await healthAggregatorModule.syncAggregator(MOCK_USER_ID);
 
       const auditInsert = mockFrom.mock.results.find((r) => r.value.insert)?.value.insert;
-      const auditCall = auditInsert.mock.calls.find((c) => c[0]?.event_type === 'sync_complete');
+      const auditCall = auditInsert.mock.calls.find(
+        (c: unknown[]) => (c[0] as Record<string, unknown>)?.event_type === 'sync_complete',
+      );
 
       expect(auditCall).toBeDefined();
       const auditPayload = auditCall[0];
@@ -335,7 +337,9 @@ describe('healthAggregator', () => {
       await healthAggregatorModule.syncAggregator(MOCK_USER_ID);
 
       const auditInsert = mockFrom.mock.results.find((r) => r.value.insert)?.value.insert;
-      const auditCall = auditInsert.mock.calls.find((c) => c[0]?.event_type === 'sync_complete');
+      const auditCall = auditInsert.mock.calls.find(
+        (c: unknown[]) => (c[0] as Record<string, unknown>)?.event_type === 'sync_complete',
+      );
 
       expect(auditCall).toBeDefined();
       const auditPayload = auditCall[0];
