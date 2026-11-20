@@ -320,6 +320,14 @@ class HealthBridgePlugin : Plugin() {
             if (light > 0) o.put("light_min", light.toInt())
             if (rem > 0) o.put("rem_min", rem.toInt())
             if (awake > 0) o.put("awake_min", awake.toInt())
+
+            // Eficiencia del sueño: (deep + light + rem) / total * 100
+            // Solo etapas de "dormido" cuentan; awake/awake_in_bed reducen eficiencia
+            val asleepMin = deep + light + rem
+            if (totalMin > 0) {
+                val efficiency = (asleepMin * 100 / totalMin).toInt()
+                o.put("efficiency_pct", efficiency.coerceIn(0, 100))
+            }
             arr.put(o)
         }
         return arr

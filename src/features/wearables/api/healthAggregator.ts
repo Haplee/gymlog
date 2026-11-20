@@ -4,6 +4,51 @@ import { supabase } from '@shared/lib/supabase';
 import { devError } from '@shared/lib/devtools';
 import type { WearableProvider, WearableSyncResult } from '../types';
 
+// Códigos de error estandarizados (deben coincidir con HealthConnectError en Kotlin/TS)
+export type HealthConnectErrorCode =
+  | 'NOT_AVAILABLE'
+  | 'PROVIDER_UPDATE_REQUIRED'
+  | 'PERMISSION_DENIED'
+  | 'FEATURE_UNAVAILABLE'
+  | 'INVALID_TIME_RANGE'
+  | 'SYNC_INTERRUPTED'
+  | 'READ_FAILED'
+  | 'UNKNOWN_ERROR';
+
+/**
+ * Registra un evento de auditoría en health_connect_audit.
+ * Resiliente: falla en silencio (try/catch) para no romper el sync del usuario.
+ * No guarda PHI: ni valores fisiológicos, ni timestamps con dato, ni IDs externos.
+ */
+export async function logHealthConnectAudit(
+  userId: string,
+  eventType:
+    | 'permission_granted'
+    | 'permission_revoked'
+    | 'sync_start'
+    | 'sync_complete'
+    | 'sync_error'
+    | 'disconnect',
+  opts: {
+    recordTypes?: string[];
+    recordCount?: number;
+    errorCode?: HealthConnectErrorCode;
+  } = {},
+): Promise<void> {
+  try {
+    await supabase.from('health_connect_audit').insert({
+      user_id: userId,
+      event_type: eventType,
+      record_types: opts.recordTypes ?? [],
+      record_count: opts.recordCount ?? 0,
+      error_code: opts.errorCode ?? null,
+    });
+  } catch (e) {
+    // Auditoría no crítica: log y continúa
+    devError('[HealthAggregator] audit insert failed:', e);
+  }
+}
+
 // Sincroniza desde el agregador de salud nativo (Health Connect / HealthKit).
 // Por aquí entran Amazfit (vía Zepp), Samsung, Garmin, Apple Watch, etc.
 // Lee con el plugin nativo y upserta en Supabase como el usuario (RLS aplica).
@@ -83,82 +128,117 @@ export async function syncAggregator(userId: string, days = 7): Promise<Wearable
     if (!granted) throw new Error('no_permission');
   }
 
-  // Rango dinámico desde la última sync de esta conexión.
-  const { data: conn } = await supabase
-    .from('wearable_connections')
-    .select('last_sync_at')
-    .eq('user_id', userId)
-    .eq('provider', source)
-    .maybeSingle();
-  const windowDays = windowDaysFrom(conn?.last_sync_at, days);
+  // Auditoría: sync_start
+  await logHealthConnectAudit(userId, 'sync_start', { recordTypes: [] });
 
-  const end = new Date();
-  const start = new Date();
-  start.setDate(start.getDate() - (windowDays - 1));
-  const { daily, sleep, workouts, strengthSessions, errors } = await HealthBridge.readAll({
-    startDate: ymd(start),
-    endDate: ymd(end),
-  });
+  try {
+    // Rango dinámico desde la última sync de esta conexión.
+    const { data: conn } = await supabase
+      .from('wearable_connections')
+      .select('last_sync_at')
+      .eq('user_id', userId)
+      .eq('provider', source)
+      .maybeSingle();
+    const windowDays = windowDaysFrom(conn?.last_sync_at, days);
 
-  // Una sección que falla ya no vacía las demás, pero tampoco puede pasar
-  // desapercibida: sin esto, un permiso revocado se veía como "no hay datos".
-  if (errors?.length) devError('[HealthAggregator] lecturas fallidas:', errors);
-
-  const result: WearableSyncResult = { daily: 0, sleep: 0, workouts: 0, strength: 0 };
-
-  if (daily.length) {
-    const rows = daily.map((d) => ({ ...d, source }));
-    const { data, error } = await supabase.rpc('upsert_wearable_daily', {
-      p_user_id: userId,
-      p_rows: rows,
+    const end = new Date();
+    const start = new Date();
+    start.setDate(start.getDate() - (windowDays - 1));
+    const { daily, sleep, workouts, strengthSessions, errors } = await HealthBridge.readAll({
+      startDate: ymd(start),
+      endDate: ymd(end),
     });
-    if (error) throw new Error(`upsert_daily: ${error.message}`);
-    result.daily = (data as number) ?? rows.length;
-  }
 
-  if (sleep.length) {
-    const rows = sleep.map((s) => ({ ...s, source }));
-    const { data, error } = await supabase.rpc('upsert_wearable_sleep', {
-      p_user_id: userId,
-      p_rows: rows,
+    // Una sección que falla ya no vacía las demás, pero tampoco puede pasar
+    // desapercibida: sin esto, un permiso revocado se veía como "no hay datos".
+    if (errors?.length) devError('[HealthAggregator] lecturas fallidas:', errors);
+
+    const result: WearableSyncResult = { daily: 0, sleep: 0, workouts: 0, strength: 0 };
+
+    // Determinar record_types que se han procesado (para auditoría sin PHI)
+    const processedRecordTypes: string[] = [];
+    if (daily.length)
+      processedRecordTypes.push(
+        'resting_heart_rate',
+        'steps',
+        'distance',
+        'calories',
+        'heart_rate',
+      );
+    if (sleep.length) processedRecordTypes.push('sleep');
+    if (workouts.length) processedRecordTypes.push('exercise');
+    if (strengthSessions.length) processedRecordTypes.push('strength_session');
+
+    if (daily.length) {
+      const rows = daily.map((d) => ({ ...d, source }));
+      const { data, error } = await supabase.rpc('upsert_wearable_daily', {
+        p_user_id: userId,
+        p_rows: rows,
+      });
+      if (error) throw new Error(`upsert_daily: ${error.message}`);
+      result.daily = (data as number) ?? rows.length;
+    }
+
+    if (sleep.length) {
+      const rows = sleep.map((s) => ({ ...s, source }));
+      const { data, error } = await supabase.rpc('upsert_wearable_sleep', {
+        p_user_id: userId,
+        p_rows: rows,
+      });
+      if (error) throw new Error(`upsert_sleep: ${error.message}`);
+      result.sleep = (data as number) ?? rows.length;
+    }
+
+    if (workouts.length) {
+      const rows = workouts.map((w) => ({ ...w, source }));
+      const { data, error } = await supabase.rpc('import_wearable_workouts', {
+        p_user_id: userId,
+        p_rows: rows,
+      });
+      if (error) throw new Error(`import_workouts: ${error.message}`);
+      result.workouts = (data as number) ?? rows.length;
+    }
+
+    // Sesiones de gimnasio: tabla propia. No son cardio (ensuciaban las stats
+    // como "otro") ni encajan 1:1 con un workout — el reloj graba una sesión por
+    // visita al gimnasio y puede haber varios workouts dentro de esa ventana.
+    if (strengthSessions.length) {
+      const rows = strengthSessions.map((s) => ({ ...s, source }));
+      const { data, error } = await supabase.rpc('import_health_sessions', {
+        p_user_id: userId,
+        p_rows: rows,
+      });
+      if (error) throw new Error(`import_health_sessions: ${error.message}`);
+      result.strength = (data as number) ?? rows.length;
+    }
+
+    // Marca/actualiza la conexión del agregador.
+    await supabase.from('wearable_connections').upsert(
+      {
+        user_id: userId,
+        provider: source,
+        status: 'connected',
+        last_sync_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id,provider' },
+    );
+
+    // Auditoría: sync_complete
+    await logHealthConnectAudit(userId, 'sync_complete', {
+      recordTypes: processedRecordTypes,
+      recordCount: result.daily + result.sleep + result.workouts + result.strength,
     });
-    if (error) throw new Error(`upsert_sleep: ${error.message}`);
-    result.sleep = (data as number) ?? rows.length;
-  }
 
-  if (workouts.length) {
-    const rows = workouts.map((w) => ({ ...w, source }));
-    const { data, error } = await supabase.rpc('import_wearable_workouts', {
-      p_user_id: userId,
-      p_rows: rows,
+    return result;
+  } catch (e) {
+    // Auditoría: sync_error (sin PHI)
+    const errorCode =
+      e instanceof Error && e.message === 'no_permission' ? 'PERMISSION_DENIED' : 'UNKNOWN_ERROR';
+    await logHealthConnectAudit(userId, 'sync_error', {
+      recordTypes: [],
+      recordCount: 0,
+      errorCode,
     });
-    if (error) throw new Error(`import_workouts: ${error.message}`);
-    result.workouts = (data as number) ?? rows.length;
+    throw e;
   }
-
-  // Sesiones de gimnasio: tabla propia. No son cardio (ensuciaban las stats
-  // como "otro") ni encajan 1:1 con un workout — el reloj graba una sesión por
-  // visita al gimnasio y puede haber varios workouts dentro de esa ventana.
-  if (strengthSessions.length) {
-    const rows = strengthSessions.map((s) => ({ ...s, source }));
-    const { data, error } = await supabase.rpc('import_health_sessions', {
-      p_user_id: userId,
-      p_rows: rows,
-    });
-    if (error) throw new Error(`import_health_sessions: ${error.message}`);
-    result.strength = (data as number) ?? rows.length;
-  }
-
-  // Marca/actualiza la conexión del agregador.
-  await supabase.from('wearable_connections').upsert(
-    {
-      user_id: userId,
-      provider: source,
-      status: 'connected',
-      last_sync_at: new Date().toISOString(),
-    },
-    { onConflict: 'user_id,provider' },
-  );
-
-  return result;
 }

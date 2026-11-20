@@ -23,15 +23,46 @@ export function trackRecentExercise(id: string) {
   localStorage.setItem(RECENT_KEY, JSON.stringify(recent));
 }
 
+/**
+ * Normaliza texto para búsqueda: minúsculas, trim, elimina diacríticos básicos.
+ * En producción la BD usa `f_unaccent` + `pg_trgm`; aquí hacemos un fallback cliente.
+ */
+function normalizeForSearch(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // elimina marcas diacríticas (tildes, etc.)
+    .replace(/\s+/g, ' ');
+}
+
 function fuzzyScore(query: string, text: string): number {
-  const q = query.toLowerCase();
-  const t = text.toLowerCase();
-  if (t.includes(q)) return 2;
+  const q = normalizeForSearch(query);
+  const t = normalizeForSearch(text);
+  if (t.includes(q)) return 3;
+  if (t.startsWith(q)) return 2;
   let qi = 0;
   for (let i = 0; i < t.length && qi < q.length; i++) {
     if (t[i] === q[qi]) qi++;
   }
   return qi === q.length ? 1 : 0;
+}
+
+/**
+ * Busca en nombre + aliases (si existen) para coincidencia difusa.
+ */
+function matchExercise(query: string, ex: { name: string; aliases?: string[] }): number {
+  const nameScore = fuzzyScore(query, ex.name);
+  if (nameScore === 3) return 3; // coincidencia exacta en nombre
+  let best = nameScore;
+  if (ex.aliases?.length) {
+    for (const alias of ex.aliases) {
+      const aliasScore = fuzzyScore(query, alias);
+      if (aliasScore > best) best = aliasScore;
+      if (best === 3) break;
+    }
+  }
+  return best;
 }
 
 export function useExerciseSearch({ debounceMs = 250, userId }: UseExerciseSearchOptions) {
@@ -49,7 +80,8 @@ export function useExerciseSearch({ debounceMs = 250, userId }: UseExerciseSearc
   });
 
   const exercises = useMemo(() => {
-    if (!debouncedQuery.trim()) {
+    const trimmed = debouncedQuery.trim();
+    if (!trimmed) {
       const recentIds = getRecentExerciseIds();
       const recentSet = new Set(recentIds);
       const recent = recentIds
@@ -59,7 +91,7 @@ export function useExerciseSearch({ debounceMs = 250, userId }: UseExerciseSearc
       return [...recent, ...rest];
     }
     return allExercises
-      .map((ex) => ({ ex, score: fuzzyScore(debouncedQuery, ex.name) }))
+      .map((ex) => ({ ex, score: matchExercise(trimmed, ex) }))
       .filter(({ score }) => score > 0)
       .sort((a, b) => b.score - a.score)
       .map(({ ex }) => ex)
@@ -75,8 +107,9 @@ export function useExerciseSearch({ debounceMs = 250, userId }: UseExerciseSearc
   const handleSearchChange = useCallback(
     (value: string) => {
       setQuery(value);
+      const trimmed = value.trim();
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
-      debounceTimer.current = setTimeout(() => setDebouncedQuery(value), debounceMs);
+      debounceTimer.current = setTimeout(() => setDebouncedQuery(trimmed), debounceMs);
     },
     [debounceMs],
   );
