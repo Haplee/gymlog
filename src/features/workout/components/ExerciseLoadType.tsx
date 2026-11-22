@@ -6,14 +6,15 @@ import { LOAD_TYPES, type LoadType } from '@shared/lib/loadType';
 import { impact, ImpactStyle } from '@shared/lib/haptics';
 import { devError } from '@shared/lib/devtools';
 import { EquipmentIcon } from '@shared/components/icons/EquipmentIcons';
-// Los dos de Reicon, y los mismos que ya usa `LoadTypeBadge` para estos
-// conceptos en las listas: antes el selector dibujaba `IconUser` donde el badge
+// Los iconos del set propio de la app: antes el selector dibujaba `IconUser` donde el badge
 // dibuja `Man`, y `IconKettlebell` donde el badge dibuja `Backpack`. El mismo
 // tipo de carga se veía distinto según la pantalla, y encima la kettlebell
 // mentía: el lastre no es una kettlebell. La kettlebell propia sigue existiendo
 // para el equipamiento que sí lo es — Reicon no la trae con esa forma, ni
 // tampoco máquina, polea o banda.
 import { Backpack, Man } from '@shared/components/icons';
+import { IconBand } from '@shared/components/icons/EquipmentIcons';
+import { IconShoe } from '@shared/components/icons/GymIcons';
 
 const CONFIRMED_KEY = 'gymlog-loadtype-confirmed';
 
@@ -39,12 +40,15 @@ function markConfirmed(id: string): void {
  * Mini-selector de modalidad de carga del ejercicio activo. La primera vez que
  * se usa un ejercicio se muestra como pregunta destacada; después **se pliega a
  * un chip** que dice la modalidad vigente y se abre al tocarlo. Persiste en
- * `exercises.load_type`.
+ * `exercises.load_type` y en localStorage por `exerciseId`.
  *
  * Lo de plegarlo es de la pasada de UX: es un ajuste que se decide una vez por
  * ejercicio y ocupaba tres botones fijos por encima de las series, en la
  * pantalla que más se abre y justo donde hay que teclear. La pregunta sigue
  * saliendo entera la primera vez, que es cuando hay algo que decidir.
+ *
+ * Permite evolución natural: bodyweight → bodyweight_loaded → external, y soporta
+ * band_resistance y plyometrics para ejercicios no tradicionales.
  */
 export function ExerciseLoadType({
   exerciseId,
@@ -87,19 +91,24 @@ export function ExerciseLoadType({
   // Ya contestado y sin desplegar: una línea que dice qué modalidad está puesta
   // y se abre al tocarla.
   if (!desplegado) {
+    const iconForLoadType = (lt: LoadType) => {
+      if (lt === 'external')
+        return <EquipmentIcon equipment={equipment} className="h-4 w-4 flex-shrink-0" />;
+      if (lt === 'bodyweight')
+        return <Man className="h-4 w-4 flex-shrink-0 text-accent" aria-hidden="true" />;
+      if (lt === 'bodyweight_loaded')
+        return <Backpack className="h-4 w-4 flex-shrink-0 text-accent" aria-hidden="true" />;
+      if (lt === 'band_resistance')
+        return <IconBand className="h-4 w-4 flex-shrink-0 text-purple-400" aria-hidden="true" />;
+      return <IconShoe className="h-4 w-4 flex-shrink-0 text-orange-400" aria-hidden="true" />;
+    };
     return (
       <button
         type="button"
         onClick={() => setOpen(true)}
         className="label-caps mb-3 flex min-h-11 items-center gap-2 rounded-sm bg-surface-2 px-3 text-fg-muted transition-colors active:bg-hover"
       >
-        {loadType === 'external' ? (
-          <EquipmentIcon equipment={equipment} className="h-4 w-4 flex-shrink-0" />
-        ) : loadType === 'bodyweight' ? (
-          <Man className="h-4 w-4 flex-shrink-0 text-accent" aria-hidden="true" />
-        ) : (
-          <Backpack className="h-4 w-4 flex-shrink-0 text-accent" aria-hidden="true" />
-        )}
+        {iconForLoadType(loadType)}
         {t(`workout.load_type_${loadType}`)}
       </button>
     );
@@ -116,14 +125,23 @@ export function ExerciseLoadType({
           ? t('workout.load_type_prompt', { name: exerciseName })
           : t('workout.load_type_label')}
       </div>
-      {/* Los iconos salen del set propio de la app y no de lucide: `PersonStanding`
-          y `Weight` tenían otro grosor de trazo y otra caja, y al lado del icono
-          de material (que sí es del set) se veía como un pegote de otra librería.
-          Las etiquetas van a dos líneas si hace falta —«Peso corporal» no cabe
-          en un tercio de pantalla— en vez de recortarse. */}
+      {/* Los iconos salen del set propio de la app. Las etiquetas van a dos líneas
+          si hace falta —«Peso corporal + lastre» no cabe en un tercio de pantalla—
+          en vez de recortarse. */}
       <div className="flex gap-1.5" role="group" aria-label={t('workout.load_type_label')}>
         {LOAD_TYPES.map((value) => {
           const active = value === loadType;
+          const iconForValue = (v: LoadType) => {
+            if (v === 'external')
+              return <EquipmentIcon equipment={equipment} className="h-4 w-4 flex-shrink-0" />;
+            if (v === 'bodyweight')
+              return <Man className="h-4 w-4 flex-shrink-0" aria-hidden="true" />;
+            if (v === 'bodyweight_loaded')
+              return <Backpack className="h-4 w-4 flex-shrink-0" aria-hidden="true" />;
+            if (v === 'band_resistance')
+              return <IconBand className="h-4 w-4 flex-shrink-0" aria-hidden="true" />;
+            return <IconShoe className="h-4 w-4 flex-shrink-0" aria-hidden="true" />;
+          };
           return (
             <button
               key={value}
@@ -136,13 +154,7 @@ export function ExerciseLoadType({
                   : 'bg-surface border-line text-fg-muted'
               }`}
             >
-              {value === 'external' ? (
-                <EquipmentIcon equipment={equipment} className="h-4 w-4 flex-shrink-0" />
-              ) : value === 'bodyweight' ? (
-                <Man className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
-              ) : (
-                <Backpack className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
-              )}
+              {iconForValue(value)}
               <span className="w-full">{t(`workout.load_type_${value}`)}</span>
             </button>
           );

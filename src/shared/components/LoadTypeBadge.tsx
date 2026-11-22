@@ -1,18 +1,22 @@
 import { useTranslation } from 'react-i18next';
 import { Backpack, IconDumbbell, Man } from '@shared/components/icons';
+import { IconBand } from '@shared/components/icons/EquipmentIcons';
+import { IconShoe } from '@shared/components/icons/GymIcons';
 import type { LoadType } from '@shared/lib/loadType';
 
 /**
  * Distintivo de la modalidad de carga de un ejercicio, para reconocerla de un
  * vistazo en las listas sin abrir el detalle.
  *
- * Tres categorías, cada una con su icono:
- *   - external          → mancuerna (el kg es el peso levantado)
- *   - bodyweight        → figura (el kg, si lo hay, es lastre)
- *   - bodyweight_loaded → mochila/chaleco (el kg es el lastre)
+ * Categorías con su icono:
+ *   - external           → mancuerna (el kg es el peso levantado)
+ *   - bodyweight         → figura (el kg, si lo hay, es lastre)
+ *   - bodyweight_loaded  → mochila/chaleco (el kg es el lastre)
+ *   - band_resistance    → banda elástica (el kg es tensión de referencia)
+ *   - plyometrics        → zapatilla/salto (no hay peso)
  *
- * El acento se reserva para las variantes de peso corporal: son las que cambian
- * cómo se interpreta el kg que se teclea, y por tanto las que conviene notar.
+ * El acento se reserva para las variantes de peso corporal y bandas/plyo:
+ * son las que cambian cómo se interpreta el kg que se teclea.
  */
 export function LoadTypeBadge({
   loadType,
@@ -41,6 +45,16 @@ export function LoadTypeBadge({
       Icon: Backpack,
       label: t('workout.load_type_bodyweight_loaded'),
       tone: 'bg-accent/10 text-accent',
+    },
+    band_resistance: {
+      Icon: IconBand,
+      label: t('workout.load_type_band_resistance'),
+      tone: 'bg-purple-500/20 text-purple-400',
+    },
+    plyometrics: {
+      Icon: IconShoe,
+      label: t('workout.load_type_plyometrics'),
+      tone: 'bg-orange-500/20 text-orange-400',
     },
   }[type];
 

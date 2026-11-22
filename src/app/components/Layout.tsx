@@ -13,7 +13,6 @@ import {
   IconHome,
   IconMenu,
   IconPulse,
-  IconUser,
   Refresh,
   WifiOff,
 } from '@shared/components/icons';
@@ -28,6 +27,7 @@ import { registerBackAction } from '@shared/lib/backHandler';
 import { useCardioStore } from '@features/cardio/stores/cardioStore';
 import { useTrainingWakeLock } from '@app/hooks/useTrainingWakeLock';
 import { GymLogLogo } from '@shared/components/ui';
+import { useProfile } from '@features/auth/hooks/useProfile';
 
 interface LayoutProps {
   children: ReactNode;
@@ -105,6 +105,7 @@ export function Layout({ children }: LayoutProps) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const unreadCount = useNotificationsStore(selectUnreadCount);
+  const { avatarUrl, displayName } = useProfile();
   // Sincroniza con Health Connect/HealthKit al abrir la app (Layout envuelve
   // toda página autenticada), no solo al entrar en Ajustes > Wearables.
   useWearableSync();
@@ -254,7 +255,20 @@ export function Layout({ children }: LayoutProps) {
           </div>
 
           <Link to="/settings" className="p-2 -mr-1" aria-label={t('nav.profile')}>
-            <IconUser className="w-6 h-6" />
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt=""
+                width={24}
+                height={24}
+                decoding="async"
+                className="w-6 h-6 rounded-full object-cover border border-line-strong"
+              />
+            ) : (
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-accent text-accent-fg font-display font-bold text-xs uppercase">
+                {displayName?.slice(0, 1) || '?'}
+              </span>
+            )}
           </Link>
         </div>
       </header>

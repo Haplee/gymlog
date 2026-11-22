@@ -6,12 +6,44 @@ function escapeLikePattern(value: string): string {
 }
 
 /**
+ * Busca un ejercicio por nombre (case-insensitive) considerando tanto los
+ * ejercicios del usuario como los públicos (user_id IS NULL).
+ * Devuelve el del usuario si existe; si no, el público; si no, null.
+ */
+async function findExerciseByName(userId: string, name: string): Promise<string | null> {
+  const pattern = escapeLikePattern(name.trim());
+
+  // 1) Primero busca ejercicio del usuario
+  const { data: userEx, error: userErr } = await supabase
+    .from('exercises')
+    .select('id')
+    .eq('user_id', userId)
+    .ilike('name', pattern)
+    .maybeSingle();
+  if (userErr) throw userErr;
+  if (userEx?.id) return userEx.id;
+
+  // 2) Si no hay del usuario, busca ejercicio público (catálogo global)
+  const { data: publicEx, error: publicErr } = await supabase
+    .from('exercises')
+    .select('id')
+    .is('user_id', null)
+    .ilike('name', pattern)
+    .maybeSingle();
+  if (publicErr) throw publicErr;
+  if (publicEx?.id) return publicEx.id;
+
+  return null;
+}
+
+/**
  * Resuelve el id de un ejercicio custom por (usuario, nombre) o lo crea si no
- * existe. Idempotente: si un INSERT previo tuvo éxito en el servidor pero la
- * respuesta se perdió (corte de red) y se reintenta, la búsqueda previa —o la
- * unique violation 23505 en caso de carrera— devuelve el ejercicio ya creado
- * en vez de duplicarlo. La comparación es case-insensitive, respaldada por el
- * índice único `exercises_user_lower_name_uniq` (user_id, lower(name)).
+ * existe. Idempotente y seguro frente a restricciones únicas globales en `name`
+ * (p.ej. `exercises_name_unique_idx`):
+ * - Primero busca coincidencia en ejercicios del usuario o públicos.
+ * - Si no existe, intenta insertar el ejercicio del usuario.
+ * - Si el INSERT falla por clave duplicada (23505), vuelve a buscar y reutiliza
+ *   el ejercicio existente (del usuario o público) en lugar de lanzar error.
  */
 export async function resolveOrCreateExercise(
   userId: string,
@@ -19,35 +51,25 @@ export async function resolveOrCreateExercise(
   muscleGroup: string,
 ): Promise<string> {
   const trimmed = name.trim();
-  const pattern = escapeLikePattern(trimmed);
 
-  const { data: existing, error: findError } = await supabase
-    .from('exercises')
-    .select('id')
-    .eq('user_id', userId)
-    .ilike('name', pattern)
-    .maybeSingle();
-  if (findError) throw findError;
-  if (existing?.id) return existing.id;
+  // 1) Buscar ejercicio existente (usuario o público)
+  const existingId = await findExerciseByName(userId, trimmed);
+  if (existingId) return existingId;
 
+  // 2) No existe → insertar ejercicio del usuario
   const { data, error } = await supabase
     .from('exercises')
     .insert({ name: trimmed, user_id: userId, muscle_group: muscleGroup })
     .select('id')
     .single();
+
   if (!error && data?.id) return data.id;
 
-  // Carrera perdida: otro proceso (u otro flush concurrente) lo creó entre el
-  // select y el insert. Re-seleccionar y devolver el existente.
+  // 3) Conflicto de clave duplicada (p.ej. índice único global en `name` o
+  //    carrera con otro proceso). Re-buscar y reutilizar el existente.
   if (error?.code === '23505') {
-    const { data: raced, error: retryError } = await supabase
-      .from('exercises')
-      .select('id')
-      .eq('user_id', userId)
-      .ilike('name', pattern)
-      .maybeSingle();
-    if (retryError) throw retryError;
-    if (raced?.id) return raced.id;
+    const racedId = await findExerciseByName(userId, trimmed);
+    if (racedId) return racedId;
   }
 
   throw error ?? new Error('No se pudo crear el ejercicio');

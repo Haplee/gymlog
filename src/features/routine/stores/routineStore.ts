@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { supabase } from '@shared/lib/supabase';
 import { devError, devLog } from '@shared/lib/devtools';
+import type { LoadType } from '@shared/lib/loadType';
 
 export type DayOfWeek =
   'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
@@ -30,6 +31,22 @@ export interface RoutineExercise {
   perSide?: boolean;
   /** Segundos por serie cuando `mode === 'time'`. Ignorado en modo `reps`. */
   durationSeconds?: number;
+  /**
+   * Modalidad de carga del ejercicio. Permite distinguir entre carga externa,
+   * peso corporal, peso corporal + lastre, resistencia con gomas/bandas,
+   * pliometría, etc. Se usa para mostrar badges coherentes y para que la
+   * pantalla de ejecución sepa qué tipo de entrada esperar.
+   * Ausente = se infiere del catálogo (exercises.load_type) o 'external' por defecto.
+   */
+  load_type?: LoadType;
+  /**
+   * Peso/referencia objetivo para el ejercicio (en kg).
+   * - external: peso total a levantar
+   * - bodyweight_loaded: lastre objetivo
+   * - band_resistance: tensión/referencia de banda (opcional)
+   * - plyometrics: no aplica (opcional, p.ej. altura caja)
+   */
+  targetWeight?: number;
   /**
    * Superserie: los ejercicios **consecutivos** que compartan este id se hacen
    * encadenados, sin descanso entre ellos.

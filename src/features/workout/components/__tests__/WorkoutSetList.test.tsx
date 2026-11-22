@@ -226,6 +226,8 @@ describe('WorkoutSetList', () => {
       ],
     });
 
+    // El botón de borrar está dentro de "Más opciones", hay que abrirlo primero
+    await user.click(screen.getByRole('button', { name: 'workout.more_options_show' }));
     await user.click(screen.getByRole('button', { name: 'workout.session_remove_set 2' }));
     expect(removeSet).toHaveBeenCalledWith(1);
   });

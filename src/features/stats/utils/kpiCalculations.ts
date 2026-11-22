@@ -159,3 +159,15 @@ export function calculateAverageSessionDuration(workouts: WorkoutWithSets[]): nu
 export function calculateAllTimePRsCount(prs: { exercise_id: string }[]): number {
   return prs?.length ?? 0;
 }
+
+/**
+ * Formatea segundos en string legible: "45 s" o "m:ss".
+ * Igual que `formatoTiempo` en WorkoutSetList pero aquí para reutilizar.
+ */
+export function formatDuration(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds <= 0) return '0 s';
+  if (seconds < 60) return `${Math.round(seconds)} s`;
+  const m = Math.floor(seconds / 60);
+  const s = Math.round(seconds % 60);
+  return `${m}:${String(s).padStart(2, '0')}`;
+}

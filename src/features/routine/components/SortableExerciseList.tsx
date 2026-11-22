@@ -20,6 +20,7 @@ import { CSS } from '@dnd-kit/utilities';
 import type { RoutineExercise } from '@features/routine/stores/routineStore';
 import { formatSegundos, planDurationOf, planModeOf } from '@features/routine/utils/planTarget';
 import { Menu } from '@shared/components/icons';
+import { LoadTypeBadge } from '@shared/components/LoadTypeBadge';
 
 interface SortableExerciseListProps {
   exercises: RoutineExercise[];
@@ -66,6 +67,11 @@ function SortableRow({
     id: exercise.name,
   });
 
+  const mode = planModeOf(exercise);
+  const hasDuration =
+    mode === 'time' && exercise.durationSeconds != null && exercise.durationSeconds > 0;
+  const hasTargetWeight = exercise.targetWeight != null && exercise.targetWeight > 0;
+
   return (
     <div
       ref={setNodeRef}
@@ -85,8 +91,12 @@ function SortableRow({
           <Menu className="w-4 h-4" />
         </button>
         <div className="min-w-0">
-          <div className="flex items-center gap-1.5 min-w-0">
+          <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
             <div className="text-base font-medium text-fg truncate">{exercise.name}</div>
+            {/* Badge de modalidad de carga (v5.2) */}
+            {exercise.load_type && exercise.load_type !== 'external' && (
+              <LoadTypeBadge loadType={exercise.load_type} />
+            )}
             {encadenado && (
               <span className="label-caps flex-shrink-0 rounded-pill bg-accent/15 px-1.5 py-0.5 text-accent">
                 {t('routine.superset_label')}
@@ -94,8 +104,22 @@ function SortableRow({
             )}
           </div>
           {subtitulo(exercise, t('routine.target_per_side')) && (
-            <div className="text-xs mt-0.5 text-fg-subtle">
+            <div className="text-xs mt-0.5 text-fg-subtle flex items-center gap-1.5 flex-wrap">
               {subtitulo(exercise, t('routine.target_per_side'))}
+              {hasDuration && (
+                <span className="label-caps px-1.5 py-0.5 rounded-sm bg-surface-3 text-fg-muted">
+                  {t('routine.mode_time')}
+                </span>
+              )}
+              {hasTargetWeight && (
+                <span className="label-caps px-1.5 py-0.5 rounded-sm bg-surface-3 text-fg-muted">
+                  {exercise.load_type === 'bodyweight_loaded'
+                    ? `${t('routine.target_weight_lastre')}: ${exercise.targetWeight} kg`
+                    : exercise.load_type === 'band_resistance'
+                      ? `${t('routine.target_weight_band')}: ${exercise.targetWeight} kg`
+                      : `${t('routine.target_weight_bodyweight')}: ${exercise.targetWeight} kg`}
+                </span>
+              )}
             </div>
           )}
         </div>

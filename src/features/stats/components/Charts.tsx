@@ -18,6 +18,7 @@ import {
   Area,
 } from 'recharts';
 import { CHART_COLORS } from '../constants';
+import { formatDuration } from '../utils/kpiCalculations';
 
 export function MuscleGroupChart({ data }: { data: { name: string; value: number }[] }) {
   const { formatVol } = useWeight();
@@ -361,6 +362,77 @@ export function ProgressionChart({
           />
         </LineChart>
       </ResponsiveContainer>
+    </div>
+  );
+}
+
+export function TimeChart({ data }: { data: { week: string; seconds: number }[] }) {
+  const { t } = useTranslation();
+  if (data.length < 2 || data.every((d) => d.seconds === 0)) {
+    return (
+      <div className="text-center py-8 text-sm text-fg-subtle">
+        <svg
+          viewBox="0 0 24 24"
+          className="w-8 h-8 mx-auto mb-2 opacity-40"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <circle cx="12" cy="12" r="9" />
+          <polyline points="12,7 12,12 15.5,14.5" />
+        </svg>
+        <p>{t('stats.time_chart_needs_data')}</p>
+      </div>
+    );
+  }
+  const maxSeconds = Math.max(...data.map((d) => d.seconds), 1);
+
+  return (
+    <div>
+      <div className="h-[160px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data}>
+            <defs>
+              <linearGradient id="timeAreaGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="var(--purple-500)" stopOpacity={0.35} />
+                <stop offset="100%" stopColor="var(--purple-500)" stopOpacity={0.03} />
+              </linearGradient>
+            </defs>
+            <XAxis
+              dataKey="week"
+              tick={{ fill: 'var(--text-tertiary)', fontSize: 10 }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis hide domain={[0, maxSeconds * 1.15]} />
+            <Tooltip
+              contentStyle={{
+                background: 'var(--bg-surface-3)',
+                border: '1px solid var(--border-default)',
+                borderRadius: 10,
+                fontSize: 12,
+              }}
+              labelStyle={{ color: 'var(--text-secondary)' }}
+              formatter={(value) => {
+                const numVal = typeof value === 'number' ? value : Number(value);
+                return [
+                  !isNaN(numVal) && numVal > 0 ? formatDuration(numVal) : String(value),
+                  t('stats.time_chart_tooltip'),
+                ];
+              }}
+            />
+            <Area
+              type="monotone"
+              dataKey="seconds"
+              stroke="var(--purple-500)"
+              strokeWidth={2.5}
+              fill="url(#timeAreaGradient)"
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 }

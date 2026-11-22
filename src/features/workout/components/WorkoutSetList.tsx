@@ -3,10 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { m } from 'framer-motion';
 import { impact, ImpactStyle } from '@shared/lib/haptics';
 import { formatWeightInput } from '@shared/lib/weight';
-import { Check, Stickynote, X } from '@shared/components/icons';
+import { Check, Stickynote, ChevronDown } from '@shared/components/icons';
 import { SegmentedControl } from '@shared/components/ui';
 import { RPE_OPTIONS } from '@shared/constants/rpe';
-import { WorkTimer } from './WorkTimer';
 
 type SetType = 'normal' | 'dropset' | 'rest_pause' | 'amrap';
 
@@ -21,6 +20,8 @@ interface SetData {
   rpe?: string;
   setType?: SetType;
   completed?: boolean;
+  /** Modalidad de carga del ejercicio activo (para etiquetado correcto). */
+  loadType?: string;
 }
 
 /** `m:ss`, o `45 s` por debajo del minuto. Igual que en el plan de la rutina. */
@@ -63,6 +64,17 @@ const displayWeight = (weight: string, convert: (kg: number) => number) => {
   const n = Number(weight);
   if (!weight || Number.isNaN(n)) return '';
   return formatWeightInput(convert(n));
+};
+
+/** Etiqueta para el campo de peso según modalidad de carga. */
+const weightFieldLabel = (
+  loadType: string | undefined,
+  weightUnit: string,
+  t: (key: string) => string,
+) => {
+  if (loadType === 'bodyweight_loaded') return t('workout.load_label_lastre');
+  if (loadType === 'bodyweight') return t('workout.load_label_bodyweight');
+  return weightUnit;
 };
 
 interface LoggedSetRowProps {
@@ -165,6 +177,8 @@ interface WorkoutSetListProps {
    * `nonce` distingue dos peticiones seguidas sobre la misma serie.
    */
   focusSet?: { index: number; nonce: number } | null;
+  /** Modalidad de carga del ejercicio activo (para etiquetado y lógica de lastre). */
+  loadType?: string;
 }
 
 /**
@@ -197,6 +211,7 @@ export const WorkoutSetList = memo(function WorkoutSetList({
   loggingMode,
   onLoggingModeChange,
   focusSet,
+  loadType,
 }: WorkoutSetListProps) {
   const { t } = useTranslation();
   // `null` significa «la última serie», que es lo que hay que abrir al entrar y
@@ -205,6 +220,8 @@ export const WorkoutSetList = memo(function WorkoutSetList({
   const [pickedIndex, setPickedIndex] = useState<number | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [localWeight, setLocalWeight] = useState<string | null>(null);
+  // Plegado de controles secundarios: RPE, setType, notas, calentamiento.
+  const [showMoreOptions, setShowMoreOptions] = useState(false);
   // Tras confirmar una serie, la siguiente hereda el peso/reps y el foco vuelve
   // al campo de peso para ajustar sin un toque extra (patrón de Hevy/Strong).
   const weightRef = useRef<HTMLInputElement>(null);
@@ -313,11 +330,11 @@ export const WorkoutSetList = memo(function WorkoutSetList({
         />
       </div>
 
-      {/* Editor grande: KG, REPS y confirmar. */}
+      {/* Editor grande: KG/LASTRE, REPS y confirmar. */}
       <div className="mt-4 flex items-end gap-4">
         <div className="flex-1 min-w-0">
           <label className="label-caps block text-fg-subtle" htmlFor="active-set-weight">
-            {weightUnit}
+            {weightFieldLabel(loadType, weightUnit, t)}
           </label>
           <input
             id="active-set-weight"
@@ -450,141 +467,152 @@ export const WorkoutSetList = memo(function WorkoutSetList({
           niega a decidir y todo el mundo cae al respaldo de doble progresión, y
           la descarga no llega a proponerse nunca— y estaba detrás de un botón
           que anunciaba otra cosa. Sigue siendo opcional: se toca si se quiere. */}
-      {modo !== 'time' && (
-        <div className="mt-3">
-          <div className="label-caps mb-1.5 text-fg-subtle">
-            {t('workout.rpe_label')}
-            <span className="ml-1.5 normal-case tracking-normal text-fg-subtle">
-              {t('workout.rpe_optional')}
-            </span>
-          </div>
-          <div className="flex flex-wrap gap-1.5" role="group" aria-label={t('workout.rpe_label')}>
-            {RPE_OPTIONS.map((value) => {
-              const on = active.rpe === value;
-              return (
-                <button
-                  type="button"
-                  key={value}
-                  onClick={() => {
-                    void impact(ImpactStyle.Light);
-                    updateSet(activeIndex, { rpe: on ? '' : value });
-                  }}
-                  aria-pressed={on}
-                  aria-label={t('workout.rpe_option', { value })}
-                  className={`min-h-11 min-w-11 rounded-sm border px-2 text-sm font-medium transition-colors ${
-                    on
-                      ? 'border-accent bg-accent text-accent-fg'
-                      : 'border-line bg-surface text-fg-muted'
-                  }`}
-                >
-                  {value}
-                </button>
-              );
-            })}
-          </div>
-          {/* Qué significa el número, en una línea: «RPE 8» no le dice nada a
-              quien no viene de la sala de fuerza. */}
-          <p className="mt-1.5 text-xs text-fg-subtle">{t('workout.rpe_help')}</p>
-        </div>
-      )}
-
-      {modo === 'time' && (
-        // El cronómetro escribe en el campo de segundos, no guarda por su
-        // cuenta: el usuario sigue pudiendo corregir el número antes de
-        // confirmar la serie, que es lo que pasa cuando el móvil se queda
-        // debajo de la esterilla y se acepta el tiempo dos segundos tarde.
-        <div className="mt-3">
-          <WorkTimer
-            onAccept={(seconds) => {
-              updateSet(activeIndex, { durationSeconds: String(seconds), reps: '' });
-              if (error) onClearError(activeIndex);
-            }}
-          />
-        </div>
-      )}
-
-      {/* Controles de la serie activa que la maqueta no dibuja pero existen:
-          calentamiento, nota/RPE/tipo y borrar. */}
-      <div className="mt-3 flex items-center gap-2">
-        {showWarmupSets && (
-          <button
-            type="button"
-            onClick={() => {
-              void impact(ImpactStyle.Light);
-              updateSet(activeIndex, { isWarmup: !active.isWarmup });
-            }}
-            aria-pressed={active.isWarmup}
-            aria-label={`${t('workout.set_n', { n: activeIndex + 1 })}: ${t('workout.warmup')}`}
-            className={`label-caps min-h-11 rounded-sm border px-3 transition-colors active:opacity-60 ${
-              active.isWarmup
-                ? 'border-warning bg-warning text-fg-inverse'
-                : 'border-dashed border-line-strong text-fg-subtle'
-            }`}
-          >
-            {t('workout.warmup')}
-          </button>
-        )}
+      {/* Controles secundarios plegables: RPE, calentamiento, nota, tipo de serie. */}
+      <div className="mt-3">
         <button
           type="button"
-          onClick={() => setShowDetails((v) => !v)}
-          aria-expanded={showDetails}
-          className={`flex min-h-11 items-center gap-1.5 rounded-sm border px-3 label-caps transition-colors active:opacity-60 ${
-            hasDetails ? 'border-accent text-accent' : 'border-line text-fg-subtle'
-          }`}
+          onClick={() => setShowMoreOptions((v) => !v)}
+          aria-expanded={showMoreOptions}
+          className="label-caps flex items-center gap-1.5 text-fg-subtle active:opacity-60"
         >
-          <Stickynote className="h-4 w-4" />
-          {/* «Nota serie», no «Notas»: justo debajo está el chip de notas del
-              ejercicio y dos botones iguales seguidos confundían. */}
-          {t('workout.set_note')}
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            void impact(ImpactStyle.Medium);
-            removeSet(activeIndex);
-          }}
-          aria-label={`${t('workout.session_remove_set')} ${activeIndex + 1}`}
-          className="ml-auto flex h-11 w-11 items-center justify-center rounded-sm border border-line text-fg-subtle transition-opacity active:opacity-60"
-        >
-          <X className="h-4 w-4" />
+          {showMoreOptions ? (
+            <>
+              <ChevronDown className="h-3.5 w-3.5 rotate-180" aria-hidden="true" />
+              {t('workout.more_options_hide')}
+            </>
+          ) : (
+            <>
+              <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
+              {t('workout.more_options_show')}
+            </>
+          )}
         </button>
       </div>
 
-      {showDetails && (
+      {showMoreOptions && (
         <div className="mt-3 space-y-3">
-          <input
-            type="text"
-            placeholder={t('workout.set_note_placeholder')}
-            value={active.notes ?? ''}
-            onChange={(e) => updateSet(activeIndex, { notes: e.target.value.slice(0, 500) })}
-            className="w-full glass-2 rounded-card px-2 py-2 text-xs text-fg outline-none"
-          />
-          <div>
-            <div className="label-caps mb-1.5 text-fg-subtle">{t('workout.set_type_label')}</div>
-            <div className="flex flex-wrap gap-1.5">
-              {SET_TYPES.map((value) => {
-                const on = (active.setType ?? 'normal') === value;
-                return (
-                  <button
-                    type="button"
-                    key={value}
-                    onClick={() => {
-                      void impact(ImpactStyle.Light);
-                      updateSet(activeIndex, { setType: value });
-                    }}
-                    aria-pressed={on}
-                    className={`min-h-11 rounded-sm border px-2.5 text-xs font-medium ${
-                      on
-                        ? 'border-accent bg-accent text-accent-fg'
-                        : 'border-line bg-surface text-fg-muted'
-                    }`}
-                  >
-                    {t(`workout.set_type_${value}`)}
-                  </button>
-                );
-              })}
+          {/* RPE */}
+          {modo !== 'time' && (
+            <div>
+              <div className="label-caps mb-1.5 text-fg-subtle">
+                {t('workout.rpe_label')}
+                <span className="ml-1.5 normal-case tracking-normal text-fg-subtle">
+                  {t('workout.rpe_optional')}
+                </span>
+              </div>
+              <div
+                className="flex flex-wrap gap-1.5"
+                role="group"
+                aria-label={t('workout.rpe_label')}
+              >
+                {RPE_OPTIONS.map((value) => {
+                  const on = active.rpe === value;
+                  return (
+                    <button
+                      type="button"
+                      key={value}
+                      onClick={() => {
+                        void impact(ImpactStyle.Light);
+                        updateSet(activeIndex, { rpe: on ? '' : value });
+                      }}
+                      aria-pressed={on}
+                      aria-label={t('workout.rpe_option', { value })}
+                      className={`min-h-11 min-w-11 rounded-sm border px-2 text-sm font-medium transition-colors ${
+                        on
+                          ? 'border-accent bg-accent text-accent-fg'
+                          : 'border-line bg-surface text-fg-muted'
+                      }`}
+                    >
+                      {value}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-1.5 text-xs text-fg-subtle">{t('workout.rpe_help')}</p>
             </div>
-          </div>
+          )}
+          {/* Calentamiento */}
+          {showWarmupSets && (
+            <button
+              type="button"
+              onClick={() => {
+                void impact(ImpactStyle.Light);
+                updateSet(activeIndex, { isWarmup: !active.isWarmup });
+              }}
+              aria-pressed={active.isWarmup}
+              aria-label={`${t('workout.set_n', { n: activeIndex + 1 })}: ${t('workout.warmup')}`}
+              className={`label-caps min-h-11 w-full rounded-sm border px-3 transition-colors active:opacity-60 ${
+                active.isWarmup
+                  ? 'border-warning bg-warning text-fg-inverse'
+                  : 'border-dashed border-line-strong text-fg-subtle'
+              }`}
+            >
+              {t('workout.warmup')}
+            </button>
+          )}
+          {/* Nota de serie */}
+          <button
+            type="button"
+            onClick={() => setShowDetails((v) => !v)}
+            aria-expanded={showDetails}
+            className={`flex min-h-11 w-full items-center gap-1.5 rounded-sm border px-3 label-caps transition-colors active:opacity-60 ${
+              hasDetails ? 'border-accent text-accent' : 'border-line text-fg-subtle'
+            }`}
+          >
+            <Stickynote className="h-4 w-4" />
+            {t('workout.set_note')}
+          </button>
+          {showDetails && (
+            <div className="space-y-3">
+              <input
+                type="text"
+                placeholder={t('workout.set_note_placeholder')}
+                value={active.notes ?? ''}
+                onChange={(e) => updateSet(activeIndex, { notes: e.target.value.slice(0, 500) })}
+                className="w-full glass-2 rounded-card px-2 py-2 text-xs text-fg outline-none"
+              />
+              <div>
+                <div className="label-caps mb-1.5 text-fg-subtle">
+                  {t('workout.set_type_label')}
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {SET_TYPES.map((value) => {
+                    const on = (active.setType ?? 'normal') === value;
+                    return (
+                      <button
+                        type="button"
+                        key={value}
+                        onClick={() => {
+                          void impact(ImpactStyle.Light);
+                          updateSet(activeIndex, { setType: value });
+                        }}
+                        aria-pressed={on}
+                        className={`min-h-11 rounded-sm border px-2.5 text-xs font-medium ${
+                          on
+                            ? 'border-accent bg-accent text-accent-fg'
+                            : 'border-line bg-surface text-fg-muted'
+                        }`}
+                      >
+                        {t(`workout.set_type_${value}`)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+          {/* Borrar serie activa */}
+          <button
+            type="button"
+            onClick={() => {
+              void impact(ImpactStyle.Medium);
+              removeSet(activeIndex);
+            }}
+            aria-label={`${t('workout.session_remove_set')} ${activeIndex + 1}`}
+            className="w-full min-h-11 rounded-sm border border-error/30 text-error transition-colors active:bg-error/10"
+          >
+            {t('workout.session_remove_set')}
+          </button>{' '}
         </div>
       )}
 

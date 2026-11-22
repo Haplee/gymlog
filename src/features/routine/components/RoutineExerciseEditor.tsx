@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BottomSheet, Input, SegmentedControl, Toggle } from '@shared/components/ui';
 import type { RoutineExercise } from '@features/routine/stores/routineStore';
+import type { LoadType } from '@shared/lib/loadType';
+import { LOAD_TYPES } from '@shared/lib/loadType';
 import {
   MAX_DURACION_SEGUNDOS,
   MIN_DURACION_SEGUNDOS,
@@ -91,6 +93,12 @@ function Formulario({
       : String(DURACION_POR_DEFECTO),
   );
   const [perSide, setPerSide] = useState(() => exercise.perSide === true);
+  // Modalidad de carga del ejercicio (nuevo campo v5.2)
+  const [loadType, setLoadType] = useState<LoadType>(() => exercise.load_type ?? 'external');
+  // Peso/referencia objetivo según modalidad
+  const [targetWeight, setTargetWeight] = useState(() =>
+    exercise.targetWeight != null ? String(exercise.targetWeight) : '',
+  );
   // Encadenado con el anterior si comparten grupo. Sin ejercicio anterior no hay
   // nada que encadenar, así que la fila ni se ofrece.
   const puedeEncadenar = previous != null;
@@ -126,6 +134,11 @@ function Formulario({
       ...(mode === 'time' ? { mode: 'time' as const } : {}),
       ...(perSide ? { perSide: true } : {}),
       ...(mode === 'time' && duracionValida != null ? { durationSeconds: duracionValida } : {}),
+      // Modalidad de carga y peso objetivo (v5.2)
+      ...(loadType !== 'external' ? { load_type: loadType } : {}),
+      ...(targetWeight.trim() && loadType !== 'external' && loadType !== 'plyometrics'
+        ? { targetWeight: Number.parseFloat(targetWeight.replace(',', '.')) }
+        : {}),
       // Al encadenar se **hereda** el id del anterior, creándolo si aún no
       // tiene: así encadenar tres seguidos los mete a los tres en el mismo
       // grupo sin ningún paso extra.
@@ -184,6 +197,51 @@ function Formulario({
           />
         )}
       </div>
+
+      {/* Modalidad de carga (v5.2) */}
+      <div className="space-y-2">
+        <span className="label-caps text-fg-subtle">{t('routine.load_type')}</span>
+        <div className="flex flex-wrap gap-2">
+          {LOAD_TYPES.map((lt) => (
+            <button
+              key={lt}
+              type="button"
+              onClick={() => setLoadType(lt)}
+              aria-pressed={loadType === lt}
+              className={`label-caps min-h-11 rounded-sm border px-3 py-1.5 text-xs font-medium transition-colors ${
+                loadType === lt
+                  ? 'border-accent bg-accent text-accent-fg'
+                  : 'border-line bg-surface text-fg-muted'
+              }`}
+            >
+              {t(`workout.load_type_${lt}`)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Peso/referencia objetivo según modalidad */}
+      {loadType !== 'external' && loadType !== 'plyometrics' && (
+        <div className="space-y-2">
+          <span className="label-caps text-fg-subtle">
+            {loadType === 'bodyweight_loaded'
+              ? t('routine.target_weight_lastre')
+              : loadType === 'band_resistance'
+                ? t('routine.target_weight_band')
+                : t('routine.target_weight_bodyweight')}
+          </span>
+          <Input
+            label=""
+            type="number"
+            inputMode="decimal"
+            step="0.5"
+            min={0}
+            value={targetWeight}
+            onChange={(e) => setTargetWeight(e.target.value)}
+            placeholder={t('routine.target_weight_placeholder')}
+          />
+        </div>
+      )}
 
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">

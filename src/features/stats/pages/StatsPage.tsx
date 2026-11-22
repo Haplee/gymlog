@@ -20,13 +20,11 @@ import {
   deleteExerciseGoal,
 } from '@shared/api/queries';
 import { calcular1RM } from '@shared/lib/brzycki';
-import { onlyRepSets } from '@shared/lib/setShape';
+import { onlyRepSets, onlyTimedSets } from '@shared/lib/setShape';
 import { Skeleton } from '@shared/components/ui';
 import { KPICard } from '../components/KPICards';
 import { StatsSummary } from '../components/StatsSummary';
 import { CardioStatsSection } from '../components/CardioStatsSection';
-import { OneRmCalculator } from '../components/OneRmCalculator';
-import { ExerciseComparison } from '../components/ExerciseComparison';
 import { ProgressionSection } from '../components/ProgressionSection';
 import type { ChartView } from '../components/Charts';
 
@@ -36,6 +34,9 @@ const MuscleGroupChart = lazy(() =>
 );
 const VolumeChart = lazy(() =>
   import('../components/Charts').then((mod) => ({ default: mod.VolumeChart })),
+);
+const TimeChart = lazy(() =>
+  import('../components/Charts').then((mod) => ({ default: mod.TimeChart })),
 );
 
 function ChartFallback() {
@@ -65,7 +66,7 @@ import { toast } from 'sonner';
 import { m } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { devError } from '@shared/lib/devtools';
-import { Target, TrendUp } from '@shared/components/icons';
+import { Target, TrendUp, Clock } from '@shared/components/icons';
 
 /** Iniciales de lunes a domingo para la tira de volumen semanal. */
 const WEEKDAY_INITIALS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'] as const;
@@ -106,8 +107,7 @@ export function StatsPage() {
   const [chartView, setChartView] = useState<ChartView>('bar');
   const [showProgression, setShowProgression] = useState(true);
   const [goalInput, setGoalInput] = useState('');
-  const [compareA, setCompareA] = useState('');
-  const [compareB, setCompareB] = useState('');
+  const [showTimeChart, setShowTimeChart] = useState(false);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['workoutsAndSets', user?.id],
@@ -299,30 +299,40 @@ export function StatsPage() {
     return buildProgressionData(strengthSets, activeExercise, metricFilter);
   }, [strengthSets, activeExercise, metricFilter]);
 
-  // Comparador: mejor 1RM estimado por día para dos ejercicios, alineado por fecha.
-  const cmpA = compareA || uniqueExercises[0] || '';
-  const cmpB = compareB || uniqueExercises[1] || '';
-  const comparisonData = useMemo(() => {
-    if (!cmpA || !cmpB || cmpA === cmpB) return [];
-    const byDateA = new Map<string, number>();
-    const byDateB = new Map<string, number>();
-    for (const s of strengthSets) {
-      if ((s as { is_warmup?: boolean | null }).is_warmup) continue;
-      const name = s.exercise?.name;
-      const dateStr = s.workout?.started_at;
-      if (!name || !dateStr) continue;
-      const day = dateStr.slice(0, 10);
-      const e = calcular1RM(s.weight, s.reps);
-      if (name === cmpA) byDateA.set(day, Math.max(byDateA.get(day) ?? 0, e));
-      if (name === cmpB) byDateB.set(day, Math.max(byDateB.get(day) ?? 0, e));
-    }
-    const days = [...new Set([...byDateA.keys(), ...byDateB.keys()])].sort();
-    return days.map((day) => ({
-      date: day,
-      a: byDateA.has(day) ? Math.round(byDateA.get(day) as number) : null,
-      b: byDateB.has(day) ? Math.round(byDateB.get(day) as number) : null,
-    }));
-  }, [strengthSets, cmpA, cmpB]);
+  // Conjuntos por tiempo (planchas, pliometría, etc.) para métricas de duración
+  const timeSets = useMemo(() => onlyTimedSets(recentSets), [recentSets]);
+  const weeklyTimeData = useMemo(() => {
+    const weeks = PERIOD_WEEKS[periodFilter];
+    const now = new Date();
+    const start = subWeeks(now, weeks);
+    const weekStarts = eachWeekOfInterval({ start, end: now }).map((w) =>
+      startOfWeek(w, { weekStartsOn: 1 }),
+    );
+    return weekStarts
+      .map((weekStart, i) => {
+        const weekEnd = subDays(weekStart, -7);
+        const totalSeconds = timeSets
+          .filter((s) => !(s as { is_warmup?: boolean | null }).is_warmup)
+          .filter((s) => {
+            const dateStr = s.workout?.started_at ?? '';
+            if (!dateStr) return false;
+            const d = new Date(dateStr);
+            return d >= weekStart && d < weekEnd;
+          })
+          .reduce((sum, s) => sum + (s.duration_seconds ?? 0), 0);
+        return { week: `S${i + 1}`, seconds: totalSeconds };
+      })
+      .reverse();
+  }, [timeSets, periodFilter]);
+
+  // Total time all-time (for KPI)
+  const allTimeSeconds = useMemo(
+    () =>
+      timeSets
+        .filter((s) => !(s as { is_warmup?: boolean | null }).is_warmup)
+        .reduce((sum, s) => sum + (s.duration_seconds ?? 0), 0),
+    [timeSets],
+  );
 
   // Cardio stats
   const cardioStats = useMemo(() => {
@@ -348,17 +358,7 @@ export function StatsPage() {
   }, [cardioSessions]);
 
   // Total volume + notes count + best 1RM
-  const allTimeVolume = useMemo(
-    () =>
-      strengthSets
-        .filter((s) => !(s as { is_warmup?: boolean | null }).is_warmup)
-        .reduce((sum, s) => sum + s.reps * s.weight, 0),
-    [strengthSets],
-  );
-  const setNotesCount = useMemo(
-    () => recentSets.filter((s) => (s as { notes?: string | null }).notes).length,
-    [recentSets],
-  );
+
   const bestOneRm = useMemo(() => {
     let best = 0;
     for (const pr of personalRecords) {
@@ -496,10 +496,7 @@ export function StatsPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
           >
-            {/* Racha y volumen semanal ya son los dos números gigantes de la
-                portada: repetirlos aquí como tarjetas sobraba. La variación
-                respecto a la semana pasada, que solo estaba en esa tarjeta, se
-                conserva junto a la frecuencia. */}
+            {/* KPIs esenciales: variación semanal, frecuencia, duración media, tiempo total (si hay series por tiempo) */}
             <KPICard
               title={t('stats.kpi_vs_last_week')}
               value={`${volumeChange > 0 ? '+' : ''}${volumeChange}%`}
@@ -519,12 +516,14 @@ export function StatsPage() {
               subtitle={t('stats.kpi_per_session')}
               icon="duration"
             />
-            <KPICard
-              title={t('stats.kpi_total_volume')}
-              value={formatVol(allTimeVolume)}
-              subtitle={t('stats.kpi_all_time')}
-              icon="all-volume"
-            />
+            {allTimeSeconds > 0 && (
+              <KPICard
+                title={t('stats.kpi_total_time')}
+                value={`${Math.round(allTimeSeconds / 60)}m`}
+                subtitle={t('stats.kpi_all_time')}
+                icon="duration"
+              />
+            )}
             <KPICard
               title={t('stats.kpi_best_1rm')}
               value={bestOneRm > 0 ? formatKg(bestOneRm, 0) : '—'}
@@ -532,10 +531,10 @@ export function StatsPage() {
               icon="best-1rm"
             />
             <KPICard
-              title={t('stats.kpi_notes')}
-              value={setNotesCount}
-              subtitle={t('stats.kpi_noted_sets')}
-              icon="notes"
+              title={t('stats.kpi_prs_total')}
+              value={totalPRs}
+              subtitle={t('stats.kpi_all_time')}
+              icon="prs"
             />
           </m.div>
 
@@ -553,7 +552,7 @@ export function StatsPage() {
           Label={SectionLabel}
         />
 
-        {/* ── Volumen semanal ── */}
+        {/* ── Volumen semanal (fuerza) ── */}
         <section className="space-y-3">
           <SectionLabel>{t('stats.section_analysis')}</SectionLabel>
 
@@ -604,7 +603,52 @@ export function StatsPage() {
             </div>
           </m.div>
 
-          {/* Distribución muscular */}
+          {/* Volumen semanal (tiempo) — para planchas, pliometría, etc. */}
+          {timeSets.length > 0 && (
+            <m.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="rounded-card p-4 bg-surface"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-purple-400" />
+                  <span className="text-sm font-medium text-fg-muted">
+                    {t('stats.weekly_time')}
+                  </span>
+                </div>
+                <div className="flex gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setShowTimeChart(!showTimeChart)}
+                    className={`text-2xs px-2 py-1 rounded-sm transition-colors font-medium ${
+                      showTimeChart ? 'bg-accent text-accent-fg' : 'bg-surface-2 text-fg-subtle'
+                    }`}
+                  >
+                    {showTimeChart ? t('stats.time_chart_hide') : t('stats.time_chart_show')}
+                  </button>
+                </div>
+              </div>
+              {showTimeChart && (
+                <Suspense fallback={<ChartFallback />}>
+                  <TimeChart data={weeklyTimeData} />
+                </Suspense>
+              )}
+              <div className="mt-3 pt-3 flex items-center justify-between text-xs border-t border-line">
+                <span className="text-fg-subtle">
+                  {t('stats.total_time_for_period', { period: PERIOD_LABELS[periodFilter] })}
+                </span>
+                <span className="font-semibold text-fg">
+                  {t('stats.min', {
+                    count: Math.round(weeklyTimeData.reduce((s, d) => s + d.seconds, 0) / 60),
+                  })}
+                </span>
+              </div>
+            </m.div>
+          )}
+
+          {/* Distribución muscular (solo series de fuerza) */}
           {muscleGroupDistribution.length > 0 && (
             <m.div
               initial={{ opacity: 0, y: 10 }}
@@ -642,15 +686,6 @@ export function StatsPage() {
             onSaveGoal={handleSaveGoal}
             onClearGoal={handleClearGoal}
           />
-
-          <ExerciseComparison
-            exercises={uniqueExercises}
-            a={cmpA}
-            b={cmpB}
-            onChangeA={setCompareA}
-            onChangeB={setCompareB}
-            data={comparisonData}
-          />
         </section>
 
         {/* ── Recuperación ── */}
@@ -659,8 +694,6 @@ export function StatsPage() {
           daysSinceLastWorkout={daysSinceLast}
           suggestedGroup={suggestedGroup}
         />
-
-        <OneRmCalculator />
       </div>
     </Layout>
   );

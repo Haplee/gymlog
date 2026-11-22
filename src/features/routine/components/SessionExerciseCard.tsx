@@ -16,6 +16,7 @@ import { RPE_OPTIONS } from '@shared/constants/rpe';
 import { perSideCount, totalFromPerSide } from '@shared/lib/perSide';
 import { muscleGroupLabel } from '@shared/lib/muscleGroupLabel';
 import { equipmentLabel } from '@shared/lib/equipmentLabel';
+import { LoadTypeBadge } from '@shared/components/LoadTypeBadge';
 import {
   AlertTriangle,
   BookOpen,
@@ -188,7 +189,7 @@ export function SessionExerciseCard({
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="text-base font-display font-bold text-fg truncate">{exercise.name}</div>
-          {(muscleGroup || equipment) && (
+          {(muscleGroup || equipment || exercise.load_type) && (
             <div className="mt-1 flex flex-wrap gap-1.5">
               {muscleGroup && (
                 <span className="label-caps px-2 py-1 rounded-pill bg-surface-3 text-fg-muted">
@@ -201,8 +202,42 @@ export function SessionExerciseCard({
                   {equipmentLabel(equipment, t)}
                 </span>
               )}
+              {/* Badge de modalidad de carga (v5.2) */}
+              {exercise.load_type && exercise.load_type !== 'external' && (
+                <LoadTypeBadge loadType={exercise.load_type} />
+              )}
             </div>
           )}
+          {/* Indicadores de modo y perSide */}
+          {(esPorTiempo || exercise.perSide) && (
+            <div className="mt-1 flex flex-wrap gap-1.5">
+              {esPorTiempo && exercise.targetDurationSeconds && (
+                <span className="label-caps px-2 py-1 rounded-pill bg-surface-3 text-fg-muted">
+                  {t('routine.mode_time')}: {formatSegundos(exercise.targetDurationSeconds)}
+                </span>
+              )}
+              {exercise.perSide && (
+                <span className="label-caps px-2 py-1 rounded-pill bg-surface-3 text-fg-muted">
+                  {t('routine.per_side')}
+                </span>
+              )}
+            </div>
+          )}
+          {/* Peso objetivo del plan (v5.2) */}
+          {exercise.targetWeight != null &&
+            exercise.targetWeight > 0 &&
+            exercise.load_type !== 'external' &&
+            !esPorTiempo && (
+              <div className="mt-1">
+                <span className="label-caps px-2 py-1 rounded-pill bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                  {exercise.load_type === 'bodyweight_loaded'
+                    ? `${t('routine.target_weight_lastre')}: ${exercise.targetWeight} kg`
+                    : exercise.load_type === 'band_resistance'
+                      ? `${t('routine.target_weight_band')}: ${exercise.targetWeight} kg`
+                      : `${t('routine.target_weight_bodyweight')}: ${exercise.targetWeight} kg`}
+                </span>
+              </div>
+            )}
         </div>
         {exercise.targetSets && (
           <span className="flex-shrink-0 font-display text-lg font-bold px-2.5 py-1 rounded-pill bg-surface-3 text-fg-muted tabular">

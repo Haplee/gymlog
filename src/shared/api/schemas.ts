@@ -46,7 +46,11 @@ export const RemoteWorkoutSetSchema = z
     rpe: z.number().nullish(),
     rir: z.number().nullish(),
     exercise: z
-      .object({ name: z.string().nullish(), muscle_group: z.string().nullish() })
+      .object({
+        name: z.string().nullish(),
+        muscle_group: z.string().nullish(),
+        load_type: z.string().nullish(),
+      })
       .nullish(),
     workout: z.object({ started_at: z.string().nullish() }).nullish(),
   })
@@ -98,6 +102,7 @@ function toSetWithDetails(raw: z.infer<typeof RemoteWorkoutSetSchema>): WorkoutS
     exercise: {
       name: raw.exercise?.name ?? '',
       ...(raw.exercise?.muscle_group ? { muscle_group: raw.exercise.muscle_group } : {}),
+      ...(raw.exercise?.load_type ? { load_type: raw.exercise.load_type } : {}),
     },
     workout: { started_at: raw.workout?.started_at ?? null },
   } as WorkoutSetWithDetails;

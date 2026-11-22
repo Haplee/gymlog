@@ -16,14 +16,21 @@ interface ChainOptions {
   raced?: { id: string } | null;
 }
 
-function mockExerciseChain({ found = null, insertResult, raced = null }: ChainOptions) {
+function mockExerciseChain({
+  found = null,
+  insertResult,
+  raced = null,
+  publicFound = null,
+}: ChainOptions & { publicFound?: { id: string } | null }) {
   const maybeSingle = vi
     .fn()
-    .mockResolvedValueOnce({ data: found, error: null })
-    .mockResolvedValue({ data: raced, error: null });
+    .mockResolvedValueOnce({ data: found, error: null }) // first query (user exercise)
+    .mockResolvedValueOnce({ data: publicFound, error: null }) // second query (public exercise)
+    .mockResolvedValue({ data: raced, error: null }); // retry after 23505
   const ilike = vi.fn(() => ({ maybeSingle }));
   const eq = vi.fn(() => ({ ilike }));
-  const select = vi.fn(() => ({ eq }));
+  const is = vi.fn(() => ({ ilike }));
+  const select = vi.fn(() => ({ eq, is }));
 
   const single = vi.fn().mockResolvedValue(insertResult ?? { data: { id: 'new-id' }, error: null });
   const insertSelect = vi.fn(() => ({ single }));
@@ -32,7 +39,7 @@ function mockExerciseChain({ found = null, insertResult, raced = null }: ChainOp
   mockFrom.mockImplementation(
     () => ({ select, insert }) as unknown as ReturnType<typeof supabase.from>,
   );
-  return { insert, ilike, maybeSingle };
+  return { insert, ilike, maybeSingle, is, eq };
 }
 
 describe('resolveOrCreateExercise', () => {
@@ -60,21 +67,34 @@ describe('resolveOrCreateExercise', () => {
     });
   });
 
-  it('resuelve la carrera 23505 re-seleccionando el existente', async () => {
+  it('reutiliza ejercicio público si existe y no hay del usuario', async () => {
+    const { insert } = mockExerciseChain({
+      found: null,
+      publicFound: { id: 'public-id' },
+    });
+    const id = await resolveOrCreateExercise('user-1', 'Press Banca', 'Pecho');
+    expect(id).toBe('public-id');
+    expect(insert).not.toHaveBeenCalled();
+  });
+
+  it('resuelve la carrera 23505 re-seleccionando el existente (usuario o público)', async () => {
     // Escenario del bug §4.2: el INSERT previo tuvo éxito pero la respuesta se
     // perdió (o dos flush concurrentes) → el reintento choca con el índice único.
     const { maybeSingle } = mockExerciseChain({
       found: null,
+      publicFound: null,
       insertResult: { data: null, error: { code: '23505', message: 'duplicate key value' } },
       raced: { id: 'raced-id' },
     });
     const id = await resolveOrCreateExercise('user-1', 'Press banca', 'Pecho');
     expect(id).toBe('raced-id');
-    expect(maybeSingle).toHaveBeenCalledTimes(2);
+    expect(maybeSingle).toHaveBeenCalledTimes(3); // user + public + retry
   });
 
   it('propaga errores de insert que no son unique violation', async () => {
     mockExerciseChain({
+      found: null,
+      publicFound: null,
       insertResult: { data: null, error: { code: '23514', message: 'check constraint' } },
     });
     await expect(resolveOrCreateExercise('user-1', 'Press banca', 'Pecho')).rejects.toMatchObject({

@@ -47,7 +47,13 @@ describe('loadTypeFromEquipment', () => {
 });
 
 describe('LOAD_TYPES', () => {
-  it('expone las tres modalidades', () => {
-    expect(LOAD_TYPES).toEqual(['external', 'bodyweight', 'bodyweight_loaded']);
+  it('expone las cinco modalidades', () => {
+    expect(LOAD_TYPES).toEqual([
+      'external',
+      'bodyweight',
+      'bodyweight_loaded',
+      'band_resistance',
+      'plyometrics',
+    ]);
   });
 });

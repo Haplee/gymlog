@@ -14,7 +14,7 @@ export type BodyMeasurement = Tables<'body_measurements'>;
 export type Equipment = 'barbell' | 'dumbbell' | 'machine' | 'bodyweight' | 'cable' | 'other';
 
 export interface WorkoutSetWithDetails extends Omit<WorkoutSet, 'exercise' | 'workout'> {
-  exercise: { name: string; muscle_group?: string };
+  exercise: { name: string; muscle_group?: string; load_type?: string };
   workout: { started_at: string | null };
 }
 

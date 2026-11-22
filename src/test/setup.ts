@@ -16,6 +16,20 @@ import { beforeEach } from 'vitest';
  * memoria, fiel a la API `Storage`, en el entorno `node` (tests de stores).
  * En ningún caso se toca código de producción.
  */
+
+/**
+ * Mock global para `navigator` en entorno Node (vitest).
+ * Los tests de stores usan `Object.defineProperty(navigator, 'onLine', ...)`
+ * pero `navigator` no existe en Node. Lo definimos aquí una sola vez.
+ */
+if (typeof globalThis.navigator === 'undefined') {
+  Object.defineProperty(globalThis, 'navigator', {
+    configurable: true,
+    enumerable: true,
+    value: { onLine: true },
+    writable: true,
+  });
+}
 type StorageLike = Storage;
 
 /** Storage en memoria con la semántica de `Storage` (claves como strings). */

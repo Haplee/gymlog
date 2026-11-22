@@ -5,7 +5,6 @@ import { m } from 'framer-motion';
 import {
   Bell,
   IconBook,
-  IconChart,
   IconDumbbell,
   IconGear,
   IconHistory,
@@ -17,6 +16,7 @@ import {
 } from '@shared/components/icons';
 import { COACH_UI_ENABLED } from '@features/coach/lib/featureFlag';
 import { GymLogLogo } from '@shared/components/ui';
+import { useProfile } from '@features/auth/hooks/useProfile';
 
 /**
  * Cajón de navegación que abre la hamburguesa de la cabecera.
@@ -39,6 +39,7 @@ interface AppDrawerProps {
 
 export function AppDrawer({ onClose, onOpenSearch, unreadCount }: AppDrawerProps) {
   const { t } = useTranslation();
+  const { avatarUrl, displayName } = useProfile();
   const panelRef = useRef<HTMLDivElement>(null);
   // Escape cierra, y el foco entra en el panel para que el lector de pantalla no
   // siga leyendo la página de debajo.
@@ -60,9 +61,8 @@ export function AppDrawer({ onClose, onOpenSearch, unreadCount }: AppDrawerProps
     {
       title: t('nav.group_training'),
       links: [
-        { to: '/stats', Icon: IconChart, label: t('nav.stats') },
-        { to: '/exercises', Icon: IconDumbbell, label: t('library.title') },
         { to: '/user-stats', label: t('nav.progress'), Icon: IconTrophy },
+        { to: '/exercises', Icon: IconDumbbell, label: t('library.title') },
         { to: '/history', label: t('nav.history'), Icon: IconHistory },
       ],
     },
@@ -146,6 +146,28 @@ export function AppDrawer({ onClose, onOpenSearch, unreadCount }: AppDrawerProps
           >
             <X className="h-5 w-5" />
           </button>
+        </div>
+
+        {/* Perfil de usuario en la cabecera del cajón */}
+        <div className="px-4 py-3 flex items-center gap-3 border-b border-line">
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt=""
+              width={40}
+              height={40}
+              decoding="async"
+              className="w-10 h-10 rounded-full object-cover border border-line-strong"
+            />
+          ) : (
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-accent-fg font-display font-bold text-base uppercase">
+              {displayName?.slice(0, 1) || '?'}
+            </span>
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-fg truncate">{displayName}</p>
+            <p className="text-xs text-fg-subtle truncate">{t('nav.profile_subtitle')}</p>
+          </div>
         </div>
 
         <nav className="flex flex-col gap-0.5 px-2 pb-4">

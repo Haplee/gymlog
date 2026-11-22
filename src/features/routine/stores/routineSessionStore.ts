@@ -7,6 +7,7 @@ import { saveWorkoutOrQueue } from '@shared/lib/saveWorkout';
 import { useOutboxStore } from '@shared/stores/outboxStore';
 import { normalizeExerciseName } from '@shared/lib/progressionCycle';
 import type { DayOfWeek, DayRoutine, Routine } from './routineStore';
+import type { LoadType } from '@shared/lib/loadType';
 import { planDurationOf, planModeOf } from '../utils/planTarget';
 import { totalFromPerSide } from '@shared/lib/perSide';
 import {
@@ -70,6 +71,10 @@ export interface SessionExercise {
   targetDurationSeconds?: number;
   /** Grupo de superserie copiado del plan. Ver `RoutineExercise.supersetId`. */
   supersetId?: string;
+  /** Modalidad de carga copiada del plan (v5.2). */
+  load_type?: LoadType;
+  /** Peso/referencia objetivo copiado del plan (v5.2). */
+  targetWeight?: number;
   /**
    * Clave de idempotencia del guardado de este ejercicio.
    *
@@ -346,6 +351,11 @@ export const useRoutineSessionStore = create<RoutineSessionState>()(
               ...(ex.perSide ? { perSide: true } : {}),
               ...(duracion != null ? { targetDurationSeconds: duracion } : {}),
               ...(ex.supersetId ? { supersetId: ex.supersetId } : {}),
+              // Modalidad de carga y peso objetivo (v5.2)
+              ...(ex.load_type && ex.load_type !== 'external' ? { load_type: ex.load_type } : {}),
+              ...(ex.targetWeight != null && ex.targetWeight > 0
+                ? { targetWeight: ex.targetWeight }
+                : {}),
               // Una fila por serie objetivo, ya con el objetivo puesto: así
               // registrar la rutina tal cual sale es solo escribir los pesos. Si
               // hay auto-relleno, el peso de la última sesión ya viene escrito.

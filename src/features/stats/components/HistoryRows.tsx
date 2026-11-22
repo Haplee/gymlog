@@ -1,9 +1,41 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { isTimedSet } from '@shared/lib/setShape';
+import { isBodyweightLoad } from '@shared/lib/loadType';
+import { LoadTypeBadge } from '@shared/components/LoadTypeBadge';
 import type { WorkoutWithSets, WorkoutSetWithDetails } from '@shared/lib/types';
 import { groupSetsByExercise } from '../utils/historyHelpers';
 import { ChevronRight, Star, Trash2 } from '@shared/components/icons';
+
+/** Formato compacto para peso/lastre en filas de historial */
+function weightLabel(s: WorkoutSetWithDetails): string {
+  if (isTimedSet(s)) {
+    // En series por tiempo: si hay peso > 0 es lastre, si es 0 no se muestra
+    return s.weight > 0 ? `${s.weight} kg (lastre)` : '';
+  }
+  // Series por repeticiones
+  if (isBodyweightLoad(s.exercise?.load_type)) {
+    return s.weight > 0 ? `${s.weight} kg (lastre)` : '';
+  }
+  // Carga externa normal
+  return s.weight ? `${s.weight} kg` : '';
+}
+
+/** Badge para set_type en historial */
+function SetTypeBadge({ type }: { type: string | undefined }) {
+  if (!type || type === 'normal') return null;
+  const labels: Record<string, string> = {
+    dropset: 'DROP',
+    rest_pause: 'R-P',
+    amrap: 'AMRAP',
+  };
+  const label = labels[type] || type.toUpperCase();
+  return (
+    <span className="text-2xs px-1.5 py-0.5 rounded-sm font-bold uppercase bg-accent/15 text-accent">
+      {label}
+    </span>
+  );
+}
 
 export function ExerciseRow({
   exercise,
@@ -18,6 +50,9 @@ export function ExerciseRow({
   const [expanded, setExpanded] = useState(false);
   const sortedSets = [...sets].sort((a, b) => a.set_num - b.set_num);
   const firstSet = sortedSets[0];
+  // Determinar load_type del ejercicio (tomar del primer set que lo tenga)
+  const exerciseLoadType =
+    sortedSets.find((s) => s.exercise?.load_type)?.exercise?.load_type ?? 'external';
 
   return (
     <div className="last:border-b-0 border-b border-line">
@@ -36,7 +71,11 @@ export function ExerciseRow({
               transform: expanded ? 'rotate(90deg)' : 'none',
             }}
           />
-          <span className="text-base font-medium text-fg">{exercise}</span>
+          <span className="text-base font-medium text-fg truncate">{exercise}</span>
+          {/* LoadTypeBadge en cabecera del ejercicio */}
+          {exerciseLoadType !== 'external' && (
+            <LoadTypeBadge loadType={exerciseLoadType} className="!py-0.5 !px-1.5 !text-[10px]" />
+          )}
         </div>
         <div className="flex items-center gap-2">
           {/* Pill de dato del kit (su "Duration · 25 Mins"): relleno, no contorno. */}
@@ -84,10 +123,11 @@ export function ExerciseRow({
                       RPE {s.rpe}
                     </span>
                   )}
+                  <SetTypeBadge type={s.set_type} />
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="font-mono tabular-nums font-semibold text-sm text-accent">
-                    {s.weight} {t('stats.kg_unit')}
+                    {weightLabel(s)}
                   </span>
                   <button
                     type="button"
@@ -124,22 +164,31 @@ export function WorkoutSetsSummary({ sets }: { sets: WorkoutSetWithDetails[] }) 
   const groups = groupSetsByExercise(sets);
   if (!groups.length) return null;
 
-  return (
-    <div className="space-y-1.5">
-      {groups.map((g) => (
-        <div key={g.name} className="flex items-baseline justify-between gap-3">
-          <span className="min-w-0 truncate text-sm text-fg-muted">{g.name}</span>
-          <span className="flex-shrink-0 font-mono text-xs tabular-nums text-fg-subtle">
-            {/* Peso 0 = ejercicio de peso corporal: escribir "0 kg" era ruido. */}
-            {g.setCount > 0 && `${g.setCount}×${g.reps}`}
-            {g.setCount > 0 && g.timedSetCount > 0 && ' · '}
-            {g.timedSetCount > 0 && `${g.timedSetCount}×${g.duration}`}
-            {g.weight !== '0' && g.weight !== '' && ` · ${g.weight} ${t('stats.kg_unit')}`}
-          </span>
+  const summaryItems = groups.map((g) => {
+    // Determinar load_type del grupo (tomar del primer set que lo tenga)
+    const groupLoadType =
+      sets.find((s) => s.exercise?.name === g.name)?.exercise?.load_type ?? 'external';
+    return (
+      <div key={g.name} className="flex items-baseline justify-between gap-3">
+        <div className="min-w-0 flex items-center gap-1.5">
+          <span className="text-sm text-fg-muted truncate">{g.name}</span>
+          {groupLoadType !== 'external' && (
+            <LoadTypeBadge loadType={groupLoadType} className="!py-0.5 !px-1.5 !text-[10px]" />
+          )}
         </div>
-      ))}
-    </div>
-  );
+        <span className="flex-shrink-0 font-mono text-xs tabular-nums text-fg-subtle">
+          {/* Peso 0 = ejercicio de peso corporal: escribir "0 kg" era ruido. */}
+          {g.setCount > 0 && `${g.setCount}×${g.reps}`}
+          {g.setCount > 0 && g.timedSetCount > 0 && ' · '}
+          {g.timedSetCount > 0 && `${g.timedSetCount}×${g.duration}`}
+          {/* Mostrar peso solo si es carga externa o hay lastre > 0 */}
+          {g.weight !== '0' && g.weight !== '' && ` · ${g.weight} ${t('stats.kg_unit')}`}
+        </span>
+      </div>
+    );
+  });
+
+  return <div className="space-y-1.5">{summaryItems}</div>;
 }
 
 export function WorkoutMeta({ workout }: { workout: WorkoutWithSets }) {

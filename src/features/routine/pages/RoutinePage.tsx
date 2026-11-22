@@ -317,7 +317,12 @@ export function RoutinePage() {
    * Queda guardado en el plan y editable: la misma zancada se puede planificar
    * «12 por lado» o «12 en total alternando», y eso lo decide quien entrena.
    */
-  const addExerciseToDay = (day: DayOfWeek, exerciseName: string, isBilateral?: boolean | null) => {
+  const addExerciseToDay = (
+    day: DayOfWeek,
+    exerciseName: string,
+    isBilateral?: boolean | null,
+    loadType?: string,
+  ) => {
     const editableId = ensureEditableRoutine();
     if (!editableId) return;
 
@@ -329,6 +334,9 @@ export function RoutinePage() {
       sets: 3,
       reps: '10-12',
       ...(isBilateral === false ? { perSide: true } : {}),
+      ...(loadType && loadType !== 'external'
+        ? { load_type: loadType as RoutineExercise['load_type'] }
+        : {}),
     };
 
     const updatedDays = { ...routine.days };
@@ -382,7 +390,12 @@ export function RoutinePage() {
     const cached = queryClient.getQueryData<Exercise[]>(['exercises', user?.id]) ?? exercises;
     const exercise = cached.find((e) => e.id === exerciseId);
     if (!exercise) return;
-    addExerciseToDay(sourceDay ?? selectedDay, exercise.name, exercise.is_bilateral);
+    addExerciseToDay(
+      sourceDay ?? selectedDay,
+      exercise.name,
+      exercise.is_bilateral,
+      exercise.load_type,
+    );
     setShowExercisePicker(false);
   };
 
