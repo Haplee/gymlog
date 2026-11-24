@@ -3,6 +3,8 @@ import { persist } from 'zustand/middleware';
 import { supabase } from '@shared/lib/supabase';
 import { devError, devLog } from '@shared/lib/devtools';
 import type { LoadType } from '@shared/lib/loadType';
+import { useWorkoutStore } from '@features/workout/stores/workoutStore';
+import { useRoutineSessionStore } from './routineSessionStore';
 
 export type DayOfWeek =
   'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
@@ -349,6 +351,18 @@ interface RoutineStore {
   getSourceDay: (day: DayOfWeek) => DayOfWeek | null;
   getTodayRoutine: () => DayRoutine | null;
   getDayName: () => DayOfWeek;
+  /**
+   * Inicia una sesión de entreno desde una rutina concreta (día concreto).
+   *
+   * Hace un deep clone del día de la rutina:
+   * - Genera nuevos UUIDs para cada serie (evita colisiones de idempotencia).
+   * - Resetea flags de sesión (`completed`, `rpe`, `rir`, `notes`, `autofilled`).
+   * - Limpia estado de persistencia anterior (`clientId`, `finishedAt`, `saveFingerprint`).
+   * - Sincroniza `routineSessionStore.start(...)` para la pantalla de sesión de rutina.
+   *
+   * NO muta la plantilla original de la rutina.
+   */
+  startWorkoutFromRoutine: (routineId: string, day: DayOfWeek) => void;
 
   saveToDb: (userId: string) => Promise<boolean>;
   loadFromDb: (userId: string) => Promise<void>;
@@ -1319,6 +1333,84 @@ export const useRoutineStore = create<RoutineStore>()(
       },
 
       getTodayRoutine: () => get().getRoutineDay(get().getDayName()),
+
+      /**
+       * Inicia una sesión de entreno desde una rutina concreta (día concreto).
+       *
+       * Hace un deep clone del día de la rutina:
+       * - Genera nuevos UUIDs para cada serie (evita colisiones de idempotencia).
+       * - Resetea flags de sesión (`completed`, `rpe`, `rir`, `notes`, `autofilled`).
+       * - Limpia estado de persistencia anterior (`clientId`, `finishedAt`, `saveFingerprint`).
+       * - Sincroniza `routineSessionStore.start(...)` para la pantalla de sesión de rutina.
+       *
+       * NO muta la plantilla original de la rutina.
+       */
+      startWorkoutFromRoutine: (routineId: string, day: DayOfWeek) => {
+        const routine = get().routines.find((r) => r.id === routineId);
+        if (!routine) return;
+
+        const sourceDay = get().getSourceDay(day);
+        if (!sourceDay) return;
+
+        const dayRoutine = routine.days[sourceDay];
+        if (!dayRoutine?.exercises.length) return;
+
+        // Clonar profundamente los ejercicios del día con nuevos UUIDs y flags limpios
+        // ex.sets es number | undefined (cantidad de series objetivo), no un array
+        const clonedExercises = dayRoutine.exercises.map((ex) => {
+          const setCount = Math.max(1, Number(ex.sets) || 1);
+          return {
+            ...ex,
+            id: crypto.randomUUID(),
+            sets: Array.from({ length: setCount }, () => ({
+              id: crypto.randomUUID(),
+              reps: '',
+              weight: '',
+              durationSeconds: '',
+              isWarmup: false,
+              notes: '',
+              rpe: '',
+              rir: '',
+              setType: 'normal' as const,
+              completed: false,
+              autofilled: false,
+            })),
+            clientId: undefined,
+            savedAt: undefined,
+          };
+        });
+
+        // Limpiar estado de workoutStore anterior (sesión libre)
+        const { clearPersistedState, setSets } = useWorkoutStore.getState();
+        clearPersistedState();
+
+        // Setear las series clonadas en workoutStore
+        const initialSets = clonedExercises.flatMap((ex) =>
+          ex.sets.map((s) => ({
+            id: s.id,
+            reps: s.reps ?? '',
+            weight: s.weight ?? '',
+            durationSeconds: s.durationSeconds ?? '',
+            isWarmup: s.isWarmup ?? false,
+            notes: s.notes ?? '',
+            rpe: s.rpe ?? '',
+            rir: s.rir ?? '',
+            setType: s.setType ?? 'normal',
+            completed: false,
+            autofilled: false,
+            loadType: ex.load_type,
+          })),
+        );
+        setSets(initialSets);
+
+        // Iniciar la sesión de rutina para la pantalla RoutineSession
+        const { start } = useRoutineSessionStore.getState();
+        start(routine, day, dayRoutine);
+
+        // Activar la rutina si no lo estaba
+        const { setActiveRoutine } = get();
+        setActiveRoutine(routine.id);
+      },
 
       getDayName: () => {
         const dayIndex = new Date().getDay();

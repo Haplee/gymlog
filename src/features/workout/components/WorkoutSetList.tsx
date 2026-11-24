@@ -94,7 +94,6 @@ const SetRow = memo(function SetRow({ set: s, index: i, isActive, ctx }: SetRowP
   const modo: 'reps' | 'time' = Number(s.durationSeconds) > 0 && !s.reps ? 'time' : 'reps';
 
   const weightDisplay = displayWeight(s.weight, ctx.convert);
-  const repsDisplay = s.reps || (modo === 'time' ? formatoTiempo(Number(s.durationSeconds)) : '');
 
   const handleWeightChange = (val: string) => {
     const cleanForParse = val.replace(',', '.');
@@ -336,14 +335,13 @@ const SetRow = memo(function SetRow({ set: s, index: i, isActive, ctx }: SetRowP
       </span>
 
       <div className="flex items-center gap-2 flex-1 min-w-0">
-        {/* Peso display */}
-        <span className="w-20 text-right tabular-nums font-mono text-base text-fg">
-          {weightDisplay || '—'}
-        </span>
-
-        {/* Reps / Tiempo display */}
-        <span className="w-16 text-right tabular-nums font-mono text-base text-fg">
-          {repsDisplay || '—'}
+        {/* Peso × Reps / Tiempo display combinado */}
+        <span className="flex-1 text-right tabular-nums font-mono text-base text-fg">
+          {modo === 'time'
+            ? s.durationSeconds
+              ? formatoTiempo(Number(s.durationSeconds))
+              : '—'
+            : `${weightDisplay || '—'} × ${s.reps || '—'}`}
         </span>
 
         {/* RPE / RIR display */}

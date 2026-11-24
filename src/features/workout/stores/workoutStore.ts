@@ -202,21 +202,27 @@ export const useWorkoutStore = create<WorkoutState>()(
         set({
           activeExerciseId: exerciseId,
           customExerciseName: '',
+          customMuscleGroup: DEFAULT_MUSCLE_GROUP,
           // Entreno nuevo: la clave de idempotencia del anterior no vale aquí.
+          // Generamos nuevos UUIDs y reseteamos todos los flags de sesión.
           clientId: null,
           finishedAt: null,
           saveFingerprint: null,
           sets: sortedSets.map((s) => {
             const rpeVal = (s as { rpe?: number | null }).rpe;
+            const rirVal = (s as { rir?: number | null }).rir;
             return makeSet(
               String(s.reps),
               String(s.weight),
               !!(s as { is_warmup?: boolean | null }).is_warmup,
               (s as { notes?: string | null }).notes ?? '',
               rpeVal != null ? String(rpeVal) : '',
+              rirVal != null ? String(rirVal) : '',
             );
           }),
           startedAt: new Date().toISOString(),
+          sessionNotes: '',
+          sessionRating: null,
         });
       },
 

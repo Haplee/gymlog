@@ -16,7 +16,7 @@ import { formatWeightInput } from '@shared/lib/weight';
 import { toLocalDateKey } from '@shared/lib/dateKeys';
 import { calcular1RM } from '@shared/lib/brzycki';
 import { loadStepFromSettings } from '@shared/hooks/useLoadStep';
-import { useRoutineStore } from '@features/routine/stores/routineStore';
+import { useRoutineStore, type DayOfWeek } from '@features/routine/stores/routineStore';
 import { useRestTimerStore } from '@features/workout/stores/restTimerStore';
 import { Layout } from '@app/components/Layout';
 import { ConfirmDialog } from '@shared/components/ui/ConfirmDialog';
@@ -346,6 +346,8 @@ export function WorkoutPage() {
 
   // Día de la semana para el titular «Rutina · Lunes».
   const weekdayName = useMemo(() => format(new Date(), 'EEEE', { locale: es }), []);
+  // Día de la semana tipado para `startWorkoutFromRoutine` (requiere `DayOfWeek`).
+  const dayOfWeek = weekdayName.toLowerCase() as DayOfWeek;
 
   // Filas que el usuario ha escrito de verdad y que se pueden guardar. Los
   // contadores de la pantalla salen de aquí y no del array crudo: una fila a
@@ -941,6 +943,13 @@ export function WorkoutPage() {
             onRepeatLast={() => {
               if (lastWorkout) repeatWorkout(lastWorkout);
             }}
+            onStartRoutine={(routineId, day) => {
+              const { startWorkoutFromRoutine } = useRoutineStore.getState();
+              startWorkoutFromRoutine(routineId, day as DayOfWeek);
+            }}
+            routineId={activeRoutineId ?? ''}
+            day={dayOfWeek}
+            routineName={todayRoutine?.name}
           />
         ) : (
           <>

@@ -1,14 +1,30 @@
 import { useTranslation } from 'react-i18next';
 import type { WorkoutWithSets } from '@shared/lib/types';
-import { Plus, Repeat } from '@shared/components/icons';
+import { Plus, Repeat, Play } from '@shared/components/icons';
 
 interface EmptyWorkoutStateProps {
   onAddSet: () => void;
   lastWorkout: WorkoutWithSets | undefined;
   onRepeatLast: () => void;
+  /** Callback to start a workout from a routine. Receives (routineId, day). */
+  onStartRoutine?: (routineId: string, day: string) => void;
+  /** ID of the routine to start (if available). */
+  routineId?: string;
+  /** Day of the week (e.g., 'monday'). */
+  day?: string;
+  /** Name of the routine (for display). */
+  routineName?: string;
 }
 
-export function EmptyWorkoutState({ onAddSet, lastWorkout, onRepeatLast }: EmptyWorkoutStateProps) {
+export function EmptyWorkoutState({
+  onAddSet,
+  lastWorkout,
+  onRepeatLast,
+  onStartRoutine,
+  routineId,
+  day,
+  routineName,
+}: EmptyWorkoutStateProps) {
   const { t } = useTranslation();
   return (
     // `min-h` en vh, no relleno fijo: con relleno fijo (py-10) el bloque medía
@@ -41,6 +57,18 @@ export function EmptyWorkoutState({ onAddSet, lastWorkout, onRepeatLast }: Empty
           >
             <Repeat className="w-4 h-4" />
             {t('workout.repeat_last')}
+          </button>
+        )}
+        {onStartRoutine && routineId && day && (
+          <button
+            type="button"
+            onClick={() => onStartRoutine(routineId, day)}
+            className="w-full py-3 rounded-pill bg-accent text-accent-fg font-semibold shadow-btn-accent active:scale-[0.98]"
+          >
+            <Play className="w-4 h-4" aria-hidden="true" />
+            {routineName
+              ? `${t('workout.start_routine')} ${routineName}`
+              : t('workout.start_routine')}
           </button>
         )}
       </div>
