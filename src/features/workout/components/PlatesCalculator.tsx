@@ -9,6 +9,12 @@ interface PlatesCalculatorProps {
   /** Peso inicial sugerido en kg (p. ej. la mejor serie de la sesión). */
   initialTargetKg?: number;
   onClose: () => void;
+  /** ID del ejercicio (para preseleccionar barra/carga según loadType). */
+  exerciseId?: string;
+  /** Modalidad de carga del ejercicio ('external', 'bodyweight', 'bodyweight_loaded', etc.). */
+  loadType?: string;
+  /** Equipamiento del ejercicio ('Barra', 'Mancuernas', etc.). */
+  equipment?: string | null;
 }
 
 const BAR_OPTIONS = [DEFAULT_BAR_KG, 15, 10, 7] as const;
@@ -19,13 +25,33 @@ const BAR_OPTIONS = [DEFAULT_BAR_KG, 15, 10, 7] as const;
  *
  * El estado se siembra desde `initialTargetKg` vía `useState`; el padre debe
  * remontar el componente (prop `key`) al abrir para refrescar la sugerencia.
+ *
+ * Si se pasa `loadType`, se preselecciona la barra adecuada:
+ * - 'external' + equipment='Barra' → 20 kg (barra olímpica)
+ * - 'bodyweight' → 0 kg (peso corporal, sin barra)
+ * - 'bodyweight_loaded' → 0 kg (lastre sobre peso corporal)
+ * - otro → 20 kg por defecto
  */
-export function PlatesCalculator({ open, initialTargetKg, onClose }: PlatesCalculatorProps) {
+export function PlatesCalculator({
+  open,
+  initialTargetKg,
+  onClose,
+  loadType,
+  equipment,
+}: PlatesCalculatorProps) {
   const { t } = useTranslation();
+
+  // Derivar barra inicial desde props (evita setState en useEffect)
+  const initialBar = (() => {
+    if (loadType === 'bodyweight' || loadType === 'bodyweight_loaded') return 0;
+    if (loadType === 'external' && equipment === 'Barra') return DEFAULT_BAR_KG;
+    return DEFAULT_BAR_KG;
+  })();
+
   const [target, setTarget] = useState(
     initialTargetKg && initialTargetKg > 0 ? String(Math.round(initialTargetKg)) : '',
   );
-  const [bar, setBar] = useState<number>(DEFAULT_BAR_KG);
+  const [bar, setBar] = useState<number>(initialBar);
   const [editandoDiscos, setEditandoDiscos] = useState(false);
   const availablePlates = useSettingsStore((s) => s.availablePlatesKg);
 

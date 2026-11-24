@@ -1,0 +1,1 @@
+-- Applied directly via migration script: RLS policies, FKs, CHECKs, numeric types, indexes, PRs and workout triggers.

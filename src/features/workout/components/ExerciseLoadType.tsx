@@ -12,9 +12,10 @@ import { EquipmentIcon } from '@shared/components/icons/EquipmentIcons';
 // mentía: el lastre no es una kettlebell. La kettlebell propia sigue existiendo
 // para el equipamiento que sí lo es — Reicon no la trae con esa forma, ni
 // tampoco máquina, polea o banda.
-import { Backpack, Man } from '@shared/components/icons';
+import { Backpack, Man, Calculator } from '@shared/components/icons';
 import { IconBand } from '@shared/components/icons/EquipmentIcons';
 import { IconShoe } from '@shared/components/icons/GymIcons';
+import { PlatesCalculator } from './PlatesCalculator';
 
 const CONFIRMED_KEY = 'gymlog-loadtype-confirmed';
 
@@ -55,17 +56,22 @@ export function ExerciseLoadType({
   exerciseName,
   loadType,
   equipment,
+  /** Peso objetivo en kg para la calculadora (p. ej. mejor serie de la sesión). */
+  initialTargetKg,
 }: {
   exerciseId: string;
   exerciseName: string;
   loadType: LoadType;
   equipment?: string | null;
+  initialTargetKg?: number;
 }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [firstUse, setFirstUse] = useState(() => !readConfirmed().has(exerciseId));
   /** Selector desplegado. Ya confirmado, se abre solo si el usuario lo pide. */
   const [open, setOpen] = useState(false);
+  /** Calculadora de discos abierta. */
+  const [showPlates, setShowPlates] = useState(false);
 
   const mutation = useMutation({
     mutationFn: (next: LoadType) => updateExerciseLoadType(exerciseId, next),
@@ -102,64 +108,90 @@ export function ExerciseLoadType({
         return <IconBand className="h-4 w-4 flex-shrink-0 text-purple-400" aria-hidden="true" />;
       return <IconShoe className="h-4 w-4 flex-shrink-0 text-orange-400" aria-hidden="true" />;
     };
+
+    // Mostrar botón de calculadora solo si usa barra (external + Barra)
+    const showCalculator = loadType === 'external' && equipment === 'Barra';
+
     return (
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="label-caps mb-3 flex min-h-11 items-center gap-2 rounded-sm bg-surface-2 px-3 text-fg-muted transition-colors active:bg-hover"
-      >
-        {iconForLoadType(loadType)}
-        {t(`workout.load_type_${loadType}`)}
-      </button>
+      <div className="label-caps mb-3 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="flex-1 min-h-11 flex items-center gap-2 rounded-sm bg-surface-2 px-3 text-fg-muted transition-colors active:bg-hover"
+        >
+          {iconForLoadType(loadType)}
+          {t(`workout.load_type_${loadType}`)}
+        </button>
+        {showCalculator && (
+          <button
+            type="button"
+            onClick={() => setShowPlates(true)}
+            aria-label={t('workout.plates_calc')}
+            className="tap-44 flex h-11 w-11 items-center justify-center rounded-sm bg-surface-2 border border-line-interactive text-fg-muted transition-colors active:bg-surface-3"
+          >
+            <Calculator className="h-5 w-5" />
+          </button>
+        )}
+      </div>
     );
   }
 
   return (
-    <div
-      className={`mb-3 rounded-md p-2 ${
-        firstUse ? 'border border-accent bg-accent/5' : 'border border-line bg-surface-2'
-      }`}
-    >
-      <div className="text-2xs uppercase font-semibold mb-1.5 text-fg-subtle">
-        {firstUse
-          ? t('workout.load_type_prompt', { name: exerciseName })
-          : t('workout.load_type_label')}
+    <>
+      <div
+        className={`mb-3 rounded-md p-2 ${
+          firstUse ? 'border border-accent bg-accent/5' : 'border border-line bg-surface-2'
+        }`}
+      >
+        <div className="text-2xs uppercase font-semibold mb-1.5 text-fg-subtle">
+          {firstUse
+            ? t('workout.load_type_prompt', { name: exerciseName })
+            : t('workout.load_type_label')}
+        </div>
+        {/* Los iconos salen del set propio de la app. Las etiquetas van a dos líneas
+            si hace falta —«Peso corporal + lastre» no cabe en un tercio de pantalla—
+            en vez de recortarse. */}
+        <div className="flex gap-1.5" role="group" aria-label={t('workout.load_type_label')}>
+          {LOAD_TYPES.map((value) => {
+            const active = value === loadType;
+            const iconForValue = (v: LoadType) => {
+              if (v === 'external')
+                return <EquipmentIcon equipment={equipment} className="h-4 w-4 flex-shrink-0" />;
+              if (v === 'bodyweight')
+                return <Man className="h-4 w-4 flex-shrink-0" aria-hidden="true" />;
+              if (v === 'bodyweight_loaded')
+                return <Backpack className="h-4 w-4 flex-shrink-0" aria-hidden="true" />;
+              if (v === 'band_resistance')
+                return <IconBand className="h-4 w-4 flex-shrink-0" aria-hidden="true" />;
+              return <IconShoe className="h-4 w-4 flex-shrink-0" aria-hidden="true" />;
+            };
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={() => choose(value)}
+                aria-pressed={active}
+                className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-md border px-1.5 py-2 text-2xs font-medium leading-tight text-center min-h-11 transition-transform active:scale-95 ${
+                  active
+                    ? 'bg-accent border-accent text-accent-fg'
+                    : 'bg-surface border-line text-fg-muted'
+                }`}
+              >
+                {iconForValue(value)}
+                <span className="w-full">{t(`workout.load_type_${value}`)}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
-      {/* Los iconos salen del set propio de la app. Las etiquetas van a dos líneas
-          si hace falta —«Peso corporal + lastre» no cabe en un tercio de pantalla—
-          en vez de recortarse. */}
-      <div className="flex gap-1.5" role="group" aria-label={t('workout.load_type_label')}>
-        {LOAD_TYPES.map((value) => {
-          const active = value === loadType;
-          const iconForValue = (v: LoadType) => {
-            if (v === 'external')
-              return <EquipmentIcon equipment={equipment} className="h-4 w-4 flex-shrink-0" />;
-            if (v === 'bodyweight')
-              return <Man className="h-4 w-4 flex-shrink-0" aria-hidden="true" />;
-            if (v === 'bodyweight_loaded')
-              return <Backpack className="h-4 w-4 flex-shrink-0" aria-hidden="true" />;
-            if (v === 'band_resistance')
-              return <IconBand className="h-4 w-4 flex-shrink-0" aria-hidden="true" />;
-            return <IconShoe className="h-4 w-4 flex-shrink-0" aria-hidden="true" />;
-          };
-          return (
-            <button
-              key={value}
-              type="button"
-              onClick={() => choose(value)}
-              aria-pressed={active}
-              className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-md border px-1.5 py-2 text-2xs font-medium leading-tight text-center min-h-11 transition-transform active:scale-95 ${
-                active
-                  ? 'bg-accent border-accent text-accent-fg'
-                  : 'bg-surface border-line text-fg-muted'
-              }`}
-            >
-              {iconForValue(value)}
-              <span className="w-full">{t(`workout.load_type_${value}`)}</span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
+      <PlatesCalculator
+        open={showPlates}
+        onClose={() => setShowPlates(false)}
+        initialTargetKg={initialTargetKg}
+        exerciseId={exerciseId}
+        loadType={loadType}
+        equipment={equipment}
+      />
+    </>
   );
 }

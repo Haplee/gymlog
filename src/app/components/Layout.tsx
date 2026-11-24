@@ -12,7 +12,7 @@ import {
   IconChart,
   IconHome,
   IconMenu,
-  IconPulse,
+  IconShoe,
   Refresh,
   WifiOff,
 } from '@shared/components/icons';
@@ -170,7 +170,7 @@ export function Layout({ children }: LayoutProps) {
     // El punto de «cardio en marcha» vivía en el cajón, de cuando cardio no
     // tenía pestaña propia. Ahora la tiene, así que el aviso va donde está el
     // destino y el cajón deja de duplicarlo.
-    { path: '/cardio', Icon: IconPulse, label: t('nav.cardio'), badge: cardioActive },
+    { path: '/cardio', Icon: IconShoe, label: t('nav.cardio'), badge: cardioActive },
   ];
 
   // El descanso termina (y suena) aunque el usuario esté en otra pestaña.

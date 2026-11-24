@@ -760,6 +760,7 @@ export const resources = {
         add_set: '+ Serie',
         complete_set: 'Completar serie',
         previous_set: 'Anterior',
+        previous_set_short: 'Ant.',
         save_pending_title: 'Guardar entrenamiento',
         save_pending_body:
           'Tienes {{pending}} series sin marcar y {{completed}} completadas. ¿Guardar todas o solo las completadas?',
@@ -2214,6 +2215,7 @@ export const resources = {
         add_set: '+ Set',
         complete_set: 'Complete set',
         previous_set: 'Previous',
+        previous_set_short: 'Last',
         save_pending_title: 'Save workout',
         save_pending_body:
           'You have {{pending}} unchecked sets and {{completed}} completed. Save them all or only the completed ones?',

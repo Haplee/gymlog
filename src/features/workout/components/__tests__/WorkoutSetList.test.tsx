@@ -8,9 +8,10 @@
 // lo que se teclea se muestra tal cual (no reformateado desde kg) y el valor que
 // llega al store va SIEMPRE en kg, aunque el usuario vea libras.
 import '@testing-library/jest-dom/vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { render, screen, cleanup, type RenderOptions } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, afterEach, vi } from 'vitest';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WorkoutSetList } from '../WorkoutSetList';
 
 vi.mock('react-i18next', () => ({
@@ -19,10 +20,29 @@ vi.mock('react-i18next', () => ({
 
 vi.mock('@shared/lib/haptics', () => ({
   impact: vi.fn(),
+  tapSet: vi.fn(),
+  completeSet: vi.fn(),
+  startTimer: vi.fn(),
+  timerDone: vi.fn(),
+  newPR: vi.fn(),
   ImpactStyle: { Light: 'LIGHT', Medium: 'MEDIUM', Heavy: 'HEAVY' },
 }));
 
 const LB_PER_KG = 2.20462;
+
+// QueryClient de test: sin retry, sin cache, sin refetch
+const createTestQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: { retry: false, gcTime: 0, staleTime: 0 },
+      mutations: { retry: false },
+    },
+  });
+
+const renderWithProviders = (ui: React.ReactElement, options?: Omit<RenderOptions, 'wrapper'>) => {
+  const queryClient = createTestQueryClient();
+  return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>, options);
+};
 
 interface Overrides {
   sets?: { id: string; reps: string; weight: string; durationSeconds?: string }[];
@@ -40,7 +60,7 @@ function setup(overrides: Overrides = {}) {
   const setSetErrors = vi.fn();
   const onCommitSet = overrides.onCommitSet ?? vi.fn();
 
-  render(
+  renderWithProviders(
     <WorkoutSetList
       sets={overrides.sets ?? [{ id: 'a', reps: '8', weight: '100' }]}
       showWarmupSets={false}
@@ -63,14 +83,15 @@ function setup(overrides: Overrides = {}) {
   return { updateSet, removeSet, setSetErrors, onCommitSet };
 }
 
-const repsInput = (n = 1) => screen.getByLabelText(`workout.reps ${n}`);
-const weightInput = (unit = 'kg', n = 1) => screen.getByLabelText(`${unit} ${n}`);
+const repsInput = (n = 1) => screen.getAllByLabelText(`workout.reps ${n}`).at(-1)!;
+
+const weightInput = (unit = 'kg', n = 1) => screen.getAllByLabelText(`${unit} ${n}`).at(-1)!;
 
 describe('WorkoutSetList', () => {
   afterEach(cleanup);
 
   it('no dibuja nada sin series', () => {
-    const { container } = render(
+    const { container } = renderWithProviders(
       <WorkoutSetList
         sets={[]}
         showWarmupSets={false}
@@ -340,7 +361,9 @@ describe('WorkoutSetList — el modo lo manda el dato', () => {
       loggingMode: 'reps',
     });
 
-    await user.click(screen.getByRole('radio', { name: 'workout.mode_time' }));
+    // El componente usa un <select> (combobox), no radio buttons
+    const modeSelect = screen.getByRole('combobox');
+    await user.selectOptions(modeSelect, 'time');
 
     // Con reps Y segundos, `setShape.isRepSet` la contaría como serie de fuerza
     // y la plancha entraría en el volumen.
@@ -354,7 +377,9 @@ describe('WorkoutSetList — el modo lo manda el dato', () => {
       loggingMode: 'time',
     });
 
-    await user.click(screen.getByRole('radio', { name: 'workout.mode_reps' }));
+    // El componente usa un <select> (combobox), no radio buttons
+    const modeSelect = screen.getByRole('combobox');
+    await user.selectOptions(modeSelect, 'reps');
 
     expect(updateSet).toHaveBeenCalledWith(0, { durationSeconds: '' });
   });

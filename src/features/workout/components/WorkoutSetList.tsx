@@ -2,7 +2,7 @@ import { memo, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { m } from 'framer-motion';
-import { impact, ImpactStyle } from '@shared/lib/haptics';
+import { tapSet, completeSet, startTimer } from '@shared/lib/haptics';
 import { formatWeightInput } from '@shared/lib/weight';
 import { Check, ChevronDown, Dumbbell, IconDumbbell } from '@shared/components/icons';
 import { InputNumber } from '@shared/components/ui/InputNumber';
@@ -134,11 +134,11 @@ const SetRow = memo(function SetRow({ set: s, index: i, isActive, ctx }: SetRowP
     if (!ctx.onCommitSet) return;
     const mideAlgo = Number(s.reps) > 0 || Number(s.durationSeconds) > 0;
     if (!mideAlgo) {
-      void impact(ImpactStyle.Heavy);
+      void startTimer();
       ctx.setSetErrors((prev) => ({ ...prev, [i]: 'workout.errors.needs_measure' }));
       return;
     }
-    void impact(ImpactStyle.Medium);
+    void completeSet();
     ctx.updateSet(i, { completed: true });
     ctx.onSelect(null); // close details
     ctx.onCommitSet();
@@ -608,7 +608,7 @@ export const WorkoutSetList = memo(function WorkoutSetList({
                         key={val}
                         type="button"
                         onClick={() => {
-                          void impact(ImpactStyle.Light);
+                          void tapSet();
                           updateSet(activeIndex, { setType: val });
                         }}
                         aria-pressed={on}
@@ -631,7 +631,7 @@ export const WorkoutSetList = memo(function WorkoutSetList({
           <button
             type="button"
             onClick={() => {
-              void impact(ImpactStyle.Medium);
+              void completeSet();
               removeSet(activeIndex);
               setPickedIndex(null);
             }}
