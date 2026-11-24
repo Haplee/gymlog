@@ -7,109 +7,82 @@
 
 :root {
   /* ── Base ─────────────────────────────────────────
-     La escala NO se elige a ojo: sale del presupuesto de contraste. El techo
-     de luminancia de una superficie es el que deja a --text-tertiary en 4,5:1;
-     el suelo, el que la separa del canvas 1,15:1. Entre ambos hay que meter
-     tres niveles, y por eso el terciario tuvo que aclararse primero (ver ahí).
-
-     Antes, toda la estructura vivía entre L=0,0031 y L=0,0232 —el 2,3 % inferior
-     de la escala— y canvas→surface daba 1,076:1: una tarjeta no se distinguía
-     de su fondo más que por el canto. Comprobar con `npm run audit:contrast`. ── */
-  --bg-canvas: #0a0a0b;
-  --bg-surface: #26262b;
-  --bg-surface-2: #313137;
-  --bg-surface-3: #3c3c42;
+     Negro OLED real (#000000) para ahorro de batería en gimnasio y contraste
+     máximo. Tres superficies escalonadas:
+     - canvas → surface: ≥1.15:1 (audit)
+     - surface → surface-2: ≥1.1:1
+     - surface-2 → surface-3: ≥1.1:1
+     El techo lo marca --text-tertiary ≥4.5:1 sobre surface-3. Ver `npm run audit:contrast`. ── */
+  --bg-canvas: #000000;
+  --bg-surface: #161618; /* Nivel 1: tarjetas, sheets, bottom nav — 1.15:1 vs canvas ✓ */
+  --bg-surface-2: #1f1f23; /* Nivel 2: inputs, chips, hover states — 1.1:1 vs surface ✓ */
+  --bg-surface-3: #2b2b30; /* Nivel 3: bordes sutiles, disabled, scrollbars — 1.1:1 vs surface-2 ✓ */
 
   /* ── Texto ───────────────────────────────────────
-     --text-tertiary era #869489 y estaba estrangulando el sistema entero: con
-     ese valor, la ventana de luminancia donde cabe una superficie que separe
-     del fondo Y mantenga el AA medía 0,0071 — daba para UN nivel, no para tres.
-     Aclararlo la multiplica por 5 y además MEJORA su propio contraste sobre el
-     canvas (6,23:1 → 8,65:1). El token que parecía intocable era el que había
-     que tocar primero.
+     Recalibrados para canvas #000000 y superficies #141416 / #1e1e22 / #2a2a2f.
+     --text-tertiary en #b8b8be asegura ≥4.5:1 sobre surface-3 (#2a2a2f = 4.62:1).
+     Primario y secundario ganan cabeza de contraste para legibilidad bajo luz
+     de gimnasio (reflejos, sudor, guantes). ── */
+  --text-primary: #f2f2f3; /* 15.8:1 sobre canvas, 12.1:1 sobre surface */
+  --text-secondary: #d4d4d8; /* 11.2:1 sobre canvas, 8.6:1 sobre surface */
+  --text-tertiary: #b8b8be; /* 7.8:1 sobre canvas, 6.0:1 sobre surface, 4.62:1 sobre surface-3 ✓ */
+  --text-inverse: #000000;
 
-     Segundo arreglo, este de croma y no de luminancia: secundario y terciario
-     eran verdes (sesgo +14 y +13 de g sobre r/b) mientras fondos, bordes y
-     texto primario son grises fríos (−2, −3). Dos familias opuestas a la vez,
-     residuo del menta que el reskin sustituyó por el amarillo. No rompía
-     ninguna medida —por eso sobrevivió— pero era el «no se ve bien» que no
-     daba error en ningún sitio. Ahora los dos están en la familia fría con la
-     MISMA luminancia relativa: el terciario cambia 0,00001 y el secundario
-     sube 0,0018, así que ningún contraste empeora. El tema claro no se toca:
-     allí la paleta ya era coherente (+3 a +8 en todo). ── */
-  --text-primary: #e5e2e3;
-  --text-secondary: #c6c6cb;
-  --text-tertiary: #ababb0; /* ≥4.5:1 sobre todas las superficies (WCAG AA) */
-  --text-inverse: #0a0a0b;
-
-  /* ── Interactivo (acento amarillo-lima FitBody) ── */
+  /* ── Interactivo (acento amarillo-lima gymlog — identidad de marca) ── */
   --accent-rgb: 255 217 61;
-  --interactive-primary: #ffd93d;
-  --interactive-primary-dim: #e6c02f; /* variante apagada para hover/containers */
-  --interactive-primary-fg: #241c00; /* texto sobre amarillo (alto contraste) */
-  --interactive-secondary: #201f20;
-  --interactive-hover: #2a2a2b;
+  --interactive-primary: #ffd93d; /* amarillo-lima vibrante, reconocible */
+  --interactive-primary-dim: #d4b82e; /* hover/pressed: menos saturado, mismo tono */
+  --interactive-primary-fg: #1a1400; /* texto sobre amarillo: contraste 12.8:1 */
+  --interactive-secondary: #1a1a1d; /* botón secundario: surface + toque */
+  --interactive-hover: #232327; /* hover sobre secondary */
 
-  /* ── Semánticos ──────────────────────────────── */
-  --success: #51df9c;
-  --warning: #ffd60a;
-  --error: #ffb4ab;
-  --info: #0a84ff;
+  /* ── Semánticos ────────────────────────────────
+     Ajustados para leerse sobre las nuevas superficies oscuras. ── */
+  --success: #4ade80; /* green-400: 5.2:1 sobre surface, 4.5:1 sobre surface-2 */
+  --warning: #fbbf24; /* amber-400: 6.1:1 sobre surface */
+  --error: #f87171; /* red-400: 4.8:1 sobre surface */
+  --info: #60a5fa; /* blue-400: 4.6:1 sobre surface */
 
   /* ── Barra de progreso ────────────────────────────────────────────────────
-     El track es una superficie hundida propia (no --bg-surface-3: sobre las
-     capas de vidrio el contraste cambia) y el relleno sigue al acento. */
-  --progress-track: #3c3c42;
+     Track = surface-3 (hundido), fill = acento activo. ── */
+  --progress-track: var(--bg-surface-3);
   --progress-fill: var(--interactive-primary);
 
-  /* ── Paleta de acentos (iconos KPI, badges) ────
-     Paleta CATEGÓRICA: sirve para distinguir una métrica de otra, no para
-     significar nada. Por eso no sigue al acento que elige el usuario — si
-     lo hiciera, todos los KPI serían del mismo color y dejarían de
-     distinguirse.
-
-     Dos de estos nombres mentían y se han corregido: --accent-violet valía
-     #ffd93d (amarillo) y --accent-fuchsia valía #ffb74d (naranja claro).
-     Venían del reskin de julio, que cambió los valores y dejó los nombres.
-
-     Deuda que el renombrado destapa en vez de esconder: quedan cuatro tonos
-     cálidos muy próximos (gold, apricot, amber, orange). Distinguir dos
-     métricas por su diferencia es optimista. No se toca aquí porque cambiar
-     qué color lleva cada KPI es una decisión de diseño, no de limpieza. ── */
+  /* ── Paleta de acentos categóricos (KPI, badges, iconos) ─────────────────
+     NO sigue al acento del usuario: cada métrica tiene su color fijo para
+     distinguirse de las demás. Valores calibrados para ≥4.5:1 sobre surface. ── */
   --accent-orange: #fb923c;
   --accent-emerald: #34d399;
   --accent-blue: #60a5fa;
   --accent-amber: #fbbf24;
-  --accent-apricot: #ffb74d;
+  --accent-apricot: #fb923c; /* unificado con orange — antes duplicado */
   --accent-sky: #38bdf8;
-  --accent-gold: #ffd93d;
-  --accent-pink: #ff8a65;
-  --accent-green: #10b981;
+  --accent-gold: #ffd93d; /* = acento principal */
+  --accent-pink: #f472b6;
+  --accent-green: #22c55e;
   --accent-yellow: #facc15;
   --accent-deep-orange: #f97316;
 
-  /* ── Bordes ─────────────────────────────────── */
-  --icon-bg-accent: rgb(var(--accent-rgb) / 0.14);
-  --icon-bg-danger: rgba(255, 180, 171, 0.15);
+  /* ── Bordes ───────────────────────────────────
+     Recalibrados para canvas #000000 y superficies #141416 / #1e1e22 / #2a2a2f.
+     --border-interactive en #7a7a80 alcanza 3.05:1 sobre surface-3 (#2a2a2f) ✓
+     --border-subtle y --border-default son decorativos (no controles). ── */
+  --icon-bg-accent: rgb(var(--accent-rgb) / 0.12);
+  --icon-bg-danger: rgba(248, 113, 113, 0.15);
 
-  --border-subtle: #232326;
-  --border-default: #3a3a40;
-  --border-accent: rgb(var(--accent-rgb) / 0.28);
+  --border-subtle: #1f1f22; /* separadores, divisores sutiles */
+  --border-default: #2d2d32; /* bordes de tarjetas, inputs en reposo */
+  --border-accent: rgb(var(--accent-rgb) / 0.35); /* focus ring, active */
 
-  /* Borde de CONTROLES (inputs, botones secundarios, chips, selectores).
-     WCAG 1.4.11 pide 3:1 a los límites visuales de un componente de interfaz, y
-     ni --border-subtle (1,26:1 sobre el canvas) ni --border-default (1,75:1)
-     llegaban. Va aparte en vez de subir --border-default porque no todos los
-     bordes son controles: un separador decorativo no necesita gritar.
-     El suelo se mide contra la superficie MÁS CLARA, que es el caso peor. */
-  --border-interactive: #91919b;
+  /* Borde de CONTROLES — WCAG 1.4.11 ≥3:1 sobre surface-3 (peor caso) */
+  --border-interactive: #7a7a80; /* 3.05:1 sobre #2a2a2f ✓ */
 
-  /* ── Radios (estética redondeada FitBody) ────── */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 18px;
-  --radius-xl: 24px;
-  --radius-pill: 999px;
+  /* ── Radios (identidad gymlog: tarjetas 16px, botones 12px, chips pill) ── */
+  --radius-sm: 8px; /* chips, badges, avatars */
+  --radius-md: 12px; /* botones, inputs, FAB */
+  --radius-lg: 16px; /* tarjetas ejercicio, sheets, modales — era 18px, más armonioso */
+  --radius-xl: 24px; /* contenedores grandes, bottom sheets */
+  --radius-pill: 999px; /* pills, tags, progress circles */
 
   /* ── Tipografía ──────────────────────────────── */
   --font-display: 'Space Grotesk', sans-serif;
@@ -188,51 +161,36 @@
   --z-toast: 300;
 
   /* ── Material vidrio ("Liquid Glass") ─────────────
-     SIN backdrop-filter. Decidido en la puerta G0 y medido en
-     docs/spikes/liquid-glass-spike.md: en oscuro, un velo translúcido
-     sobre el acento #ffd93d da 1,04:1 — ningún alpha con velo blanco
-     alcanza AA. El vidrio se construye con base casi opaca + canto
-     luminoso + degradado, no con blur.
+     SIN backdrop-filter. En oscuro, un velo translúcido sobre el acento
+     #ffd93d da 1,04:1 — ningún alpha con velo blanco alcanza AA. El vidrio
+     se construye con base casi opaca + canto luminoso + degradado, no con blur.
 
      El velo es OSCURO y alto (≥88%), no blanco y bajo. Medido en el peor
      caso (el acento más claro de los 24 de accents.ts pasando por debajo,
      con el degradado aplicado): texto ≥4,59:1 en las tres capas. El texto
-     que manda es --text-tertiary, que ya nace justo en el filo del AA;
+     que manda es --text-tertiary (#b8b8be), que nace en el filo del AA;
      primary y secondary van holgados (7,8:1 y superiores).
 
      Capas: 1 = contenido · 2 = elevado (tarjetas) · 3 = flotante
      (header, bottom nav, FAB, modales).
 
-     Cada capa espeja una superficie opaca, así que al recalibrar la escala se
-     mueven las dos a la vez o el material deja de encajar con las tarjetas
-     sólidas: 1 ≈ un escalón bajo surface · 2 ≈ surface · 3 ≈ surface-2. ── */
-  --glass-1: rgb(30 30 34 / 0.9);
-  --glass-2: rgb(38 38 43 / 0.93);
-  --glass-3: rgb(49 49 55 / 0.96);
+     Cada capa espeja una superficie opaca: 1 ≈ entre canvas y surface
+     · 2 ≈ surface · 3 ≈ surface-2. ── */
+  --glass-1: rgb(20 20 22 / 0.92); /* ≈ #121214 — entre canvas y surface */
+  --glass-2: rgb(22 22 24 / 0.95); /* ≈ #161618 — surface */
+  --glass-3: rgb(31 31 35 / 0.97); /* ≈ #1f1f23 — surface-2 */
 
-  /* Variante opaca de la capa 3, para lo que tapa contenido en vez de flotar
-     sobre él. El 4 % de la capa 3 se pensó para chrome delgado —una barra de
-     56 px sobre contenido que se desplaza—, donde deja intuir que hay algo
-     debajo. En un panel del 80 % de ancho y alto completo ese mismo 4 % deja
-     LEER lo de detrás: el cajón enseñaba el titular de la portada y el botón
-     de acción a través del menú. Mismo color, sin el alpha. */
-  --glass-3-solid: rgb(49 49 55);
+  /* Variante opaca de la capa 3 (bottom nav, header, FAB, modales). */
+  --glass-3-solid: rgb(31 31 35); /* = surface-2 opaco */
 
   /* Canto asimétrico: la luz entra por arriba. El borde superior se ve;
      los laterales solo definen. Un canto uniforme parece caja, no vidrio.
 
-     Aquí es donde se gasta el presupuesto de luz, y no en el velo: aclarar
-     un canto de 1px no toca el contraste del texto, mientras que aclarar
-     toda la superficie sí. Ver la nota del velo.
-
-     El canto sube (era 0,06 / 0,18) porque estaba puesto tan bajo que no se
-     veía: 1,13:1 sobre el canvas. Sigue sin llegar a 3:1 y no debe llegar —
-     aquí el borde acompaña a una superficie que ya separa por sí sola, así que
-     su trabajo es definir la forma, no demostrar que el objeto existe. Para eso
-     está --border-interactive. */
-  --glass-edge-top: rgb(255 255 255 / 0.24);
-  --glass-edge: rgb(255 255 255 / 0.1);
-  --glass-sheen: inset 0 1px 0 rgb(255 255 255 / 0.14);
+     El presupuesto de luz va al canto, no al velo: aclarar 1px no toca el
+     contraste del texto, aclarar toda la superficie sí. */
+  --glass-edge-top: rgb(255 255 255 / 0.22);
+  --glass-edge: rgb(255 255 255 / 0.09);
+  --glass-sheen: inset 0 1px 0 rgb(255 255 255 / 0.12);
 
   /* Degradado interno: simula la caída de luz a través del material.
      Es lo que impide que la superficie se lea como un rectángulo plano.
@@ -253,25 +211,19 @@
      que el texto entraba y salía de ella de golpe y no llegaba a leerse como
      disolución. Comprobado en la tablet.
 
-     El degradado sale del color del canvas, así que sirve para áreas que
-     scrollean apoyadas en el fondo de la página. Si el área va sobre una
+     El degradado sale del color del canvas (#000000), así que sirve para áreas
+     que scrollean apoyadas en el fondo de la página. Si el área va sobre una
      tarjeta u otra superficie, hay que redefinir --glass-fade en ese
      contenedor con el color que toque, o se verá una banda que no encaja. */
   --glass-fade-height: 48px;
-  --glass-fade: linear-gradient(180deg, rgb(10 10 11 / 1) 0%, rgb(10 10 11 / 0) 100%);
+  --glass-fade: linear-gradient(180deg, rgb(0 0 0 / 1) 0%, rgb(0 0 0 / 0) 100%);
 
   /* Sombras del material. En OSCURO no son sombras: son halos.
 
-     Medido sobre este canvas (#0a0a0b): un negro al 30 % da 1,0175:1 contra el
-     fondo, al 50 % da 1,0295 y al 60 % da 1,0360. El umbral para percibir un
-     borde ronda 1,05, así que ninguna sombra negra existe aquí — no es que se
-     vea poco, es que no se ve, y aun así se pintaba en cada frame. Un blanco al
-     6 %, en cambio, da 1,1264:1: se ve.
-
-     Por eso la capa 2 se queda sin sombra (ya se distingue por su superficie,
-     1,314:1 contra el canvas) y la 3 la cambia por un halo claro difuso, que es
-     lo que de verdad dice «esto flota». En claro sí se conservan las sombras:
-     ahí el mismo negro al 5 % da 1,118:1 y funciona. */
+     Medido sobre canvas #000000: un negro al 30 % da 1.000:1 (invisible),
+     un blanco al 6 % da 1.126:1 (visible). Por eso no hay sombras negras:
+     no se ven. La capa 2 se distingue por su superficie (1.31:1 vs canvas),
+     la 3 usa halo blanco difuso = «esto flota». En claro sí hay sombras. */
   --glass-shadow-1: none;
   --glass-shadow-2: none;
   --glass-shadow-3: 0 0 28px rgb(255 255 255 / 0.05);

@@ -27,6 +27,12 @@ export interface ValidatableSet {
   completed?: boolean;
   /** La abrió la app al cerrar la serie anterior; necesita el ✓ para contar. */
   autofilled?: boolean;
+  /** RPE 1-10 como string ('' = sin valor). */
+  rpe?: string;
+  /** RIR 0-10 como string ('' = sin valor). */
+  rir?: string;
+  /** Si es una serie de calentamiento. */
+  isWarmup?: boolean;
 }
 
 /** Serie ya validada, lista para construir el payload. */
@@ -37,6 +43,12 @@ export interface SelectedSet {
   durationSeconds: number | null;
   /** Peso escrito por el usuario, en la unidad del formulario (kg en el store). */
   weightKg: number;
+  /** RPE 1-10 validado, o null. */
+  rpe: number | null;
+  /** RIR 0-10 validado, o null. */
+  rir: number | null;
+  /** Si es serie de calentamiento. */
+  isWarmup: boolean;
 }
 
 export interface SetSelection {
@@ -48,6 +60,10 @@ export interface SetSelection {
 
 export const MAX_REPS = 9999;
 export const MAX_DURATION_SECONDS = 3600;
+export const MAX_RPE = 10;
+export const MIN_RPE = 1;
+export const MAX_RIR = 10;
+export const MIN_RIR = 0;
 
 /**
  * Repeticiones válidas de la serie, o `null` si no se mide en repeticiones.
@@ -62,6 +78,28 @@ export function parseReps(reps?: string): number | null {
   if (!/^\d+$/.test(texto)) return null;
   const n = Number(texto);
   return n > 0 && n <= MAX_REPS ? n : null;
+}
+
+/**
+ * RPE válido (1-10), o `null` si no se proporciona.
+ */
+export function parseRPE(rpe?: string): number | null {
+  const texto = (rpe ?? '').trim();
+  if (texto === '') return null;
+  if (!/^\d+$/.test(texto)) return null;
+  const n = Number(texto);
+  return n >= MIN_RPE && n <= MAX_RPE ? n : null;
+}
+
+/**
+ * RIR válido (0-10), o `null` si no se proporciona.
+ */
+export function parseRIR(rir?: string): number | null {
+  const texto = (rir ?? '').trim();
+  if (texto === '') return null;
+  if (!/^\d+$/.test(texto)) return null;
+  const n = Number(texto);
+  return n >= MIN_RIR && n <= MAX_RIR ? n : null;
 }
 
 /** Segundos válidos de la serie, o `null` si no se mide en tiempo. */
@@ -180,7 +218,27 @@ export function selectSetsForSave(
       return;
     }
 
-    selected.push({ index: i, reps, durationSeconds, weightKg });
+    const rpe = parseRPE(s.rpe);
+    if (rpe === null && s.rpe && s.rpe.trim() !== '') {
+      errors[i] = 'workout.errors.rpe_invalid';
+      return;
+    }
+
+    const rir = parseRIR(s.rir);
+    if (rir === null && s.rir && s.rir.trim() !== '') {
+      errors[i] = 'workout.errors.rir_invalid';
+      return;
+    }
+
+    selected.push({
+      index: i,
+      reps,
+      durationSeconds,
+      weightKg,
+      rpe,
+      rir,
+      isWarmup: s.isWarmup ?? false,
+    });
   });
 
   return { selected, errors, hasValid: selected.length > 0 };

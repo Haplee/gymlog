@@ -277,9 +277,9 @@ describe('alarm', () => {
     expect(audioContexts).toHaveLength(0);
   });
 
-  it('reproduce los chimes de éxito y de ajustes y suspende al terminar', async () => {
+  it('reproduce los chimes de éxito, ajustes y fin de temporizador y suspende al terminar', async () => {
     audioContextState = 'suspended';
-    const { playSuccessChime, playSettingsChime } = await loadAlarm();
+    const { playSuccessChime, playSettingsChime, playTimerComplete } = await loadAlarm();
 
     playSuccessChime();
     const context = audioContexts[0];
@@ -290,6 +290,12 @@ describe('alarm', () => {
     expect(context?.createOscillator).toHaveBeenCalledTimes(5);
     expect(context?.oscillators.map((oscillator) => oscillator.frequency.value)).toEqual([
       660, 880, 1200, 1500, 1800,
+    ]);
+
+    playTimerComplete();
+    expect(context?.createOscillator).toHaveBeenCalledTimes(8);
+    expect(context?.oscillators.slice(-3).map((oscillator) => oscillator.frequency.value)).toEqual([
+      880, 1109, 1318,
     ]);
 
     vi.advanceTimersByTime(1000);

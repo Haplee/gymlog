@@ -110,7 +110,17 @@ describe('selectSetsForSave', () => {
 
     expect(errors).toEqual({});
     expect(hasValid).toBe(true);
-    expect(selected).toEqual([{ index: 0, reps: 12, durationSeconds: null, weightKg: 0 }]);
+    expect(selected).toEqual([
+      {
+        index: 0,
+        reps: 12,
+        durationSeconds: null,
+        weightKg: 0,
+        rpe: null,
+        rir: null,
+        isWarmup: false,
+      },
+    ]);
   });
 
   it('acepta una serie por tiempo sin peso y con reps vacías', () => {
@@ -119,7 +129,17 @@ describe('selectSetsForSave', () => {
     ]);
 
     expect(errors).toEqual({});
-    expect(selected).toEqual([{ index: 0, reps: null, durationSeconds: 48, weightKg: 0 }]);
+    expect(selected).toEqual([
+      {
+        index: 0,
+        reps: null,
+        durationSeconds: 48,
+        weightKg: 0,
+        rpe: null,
+        rir: null,
+        isWarmup: false,
+      },
+    ]);
   });
 
   it('marca cada fila mal escrita con su motivo, sin descartarla en silencio', () => {

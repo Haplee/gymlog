@@ -55,6 +55,8 @@ function setup(overrides: Overrides = {}) {
       weightUnit={overrides.weightUnit ?? 'kg'}
       convert={overrides.convert ?? ((kg) => kg)}
       convertToKg={overrides.convertToKg ?? ((local) => local)}
+      userId="test-user"
+      exerciseId="test-exercise"
     />,
   );
 
@@ -82,6 +84,8 @@ describe('WorkoutSetList', () => {
         weightUnit="kg"
         convert={(kg) => kg}
         convertToKg={(l) => l}
+        userId="test-user"
+        exerciseId="test-exercise"
       />,
     );
     expect(container).toBeEmptyDOMElement();

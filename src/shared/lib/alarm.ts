@@ -45,6 +45,13 @@ const SETTINGS_CHIME: readonly ChimeNote[] = [
   { freq: 1800, at: 0.3, dur: 0.35, gain: 0.9 },
 ];
 
+/** Fin de temporizador: tres notas ascendentes, claras pero no persistentes. */
+const TIMER_COMPLETE_CHIME: readonly ChimeNote[] = [
+  { freq: 880, at: 0, dur: 0.13, gain: 0.6 },
+  { freq: 1109, at: 0.16, dur: 0.13, gain: 0.65 },
+  { freq: 1318, at: 0.32, dur: 0.24, gain: 0.7 },
+];
+
 /** Margen tras la última nota antes de suspender el contexto. */
 const CHIME_TAIL_MS = 120;
 
@@ -212,4 +219,9 @@ export function playSuccessChime(): void {
 /** Prueba del sonido al activar el toggle en Ajustes. */
 export function playSettingsChime(): void {
   playChime(SETTINGS_CHIME);
+}
+
+/** Aviso sonoro de fin de temporizador. La vibración se gestiona con `timerDone`. */
+export function playTimerComplete(): void {
+  playChime(TIMER_COMPLETE_CHIME);
 }

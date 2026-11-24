@@ -678,6 +678,7 @@ export function WorkoutPage() {
           notes: '',
           isWarmup: false,
           rpe: '',
+          rir: '',
           setType: 'normal' as const,
           completed: false,
           // Copiadas a propósito por el usuario: son suyas desde el minuto uno.
@@ -971,6 +972,8 @@ export function WorkoutPage() {
               loggingMode={loggingMode}
               onLoggingModeChange={setLoggingMode}
               focusSet={focusSet}
+              userId={user?.id ?? ''}
+              exerciseId={activeExerciseId ?? ''}
             />
 
             {/* Chips de la maqueta: calculadora de discos, 1RM estimado y notas

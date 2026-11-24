@@ -33,6 +33,8 @@ interface SetData {
   notes: string;
   // RPE 1-10 como string ('' = sin valor). Validado a SMALLINT en la RPC.
   rpe: string;
+  // RIR 0-10 como string ('' = sin valor). Validado a SMALLINT en la RPC.
+  rir: string;
   // Tipo de serie avanzado. 'normal' por defecto.
   setType: 'normal' | 'dropset' | 'rest_pause' | 'amrap';
   // Marcar con ✓. Solo importa durante la sesión: al guardar decide qué series
@@ -139,6 +141,7 @@ const makeSet = (
   isWarmup = false,
   notes = '',
   rpe = '',
+  rir = '',
   durationSeconds = '',
 ): SetData => ({
   id: crypto.randomUUID(),
@@ -148,6 +151,7 @@ const makeSet = (
   isWarmup,
   notes,
   rpe,
+  rir,
   setType: 'normal',
   completed: false,
   autofilled: false,
@@ -159,6 +163,7 @@ const TOUCH_FIELDS = [
   'weight',
   'durationSeconds',
   'rpe',
+  'rir',
   'notes',
   'isWarmup',
   'setType',

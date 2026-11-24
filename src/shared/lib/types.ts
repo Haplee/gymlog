@@ -33,3 +33,19 @@ export interface ExerciseMuscle {
   role: 'primary' | 'secondary';
   weight: number;
 }
+
+/** Forma de una fila de serie en el store de entreno (local). */
+export interface SetData {
+  id?: string;
+  reps: string;
+  weight: string;
+  durationSeconds?: string;
+  isWarmup?: boolean;
+  notes?: string;
+  rpe?: string;
+  rir?: string;
+  setType?: 'normal' | 'dropset' | 'rest_pause' | 'amrap';
+  completed?: boolean;
+  loadType?: string;
+  autofilled?: boolean;
+}

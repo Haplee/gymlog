@@ -6,3 +6,6 @@
  * hacerse dos veces.
  */
 export const RPE_OPTIONS = ['6', '7', '8', '9', '10'] as const;
+
+/** Escala de RIR (Reps In Reserve) — 0 a 10. */
+export const RIR_OPTIONS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'] as const;

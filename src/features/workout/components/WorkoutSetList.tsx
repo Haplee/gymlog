@@ -1,11 +1,13 @@
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
 import { m } from 'framer-motion';
 import { impact, ImpactStyle } from '@shared/lib/haptics';
 import { formatWeightInput } from '@shared/lib/weight';
-import { Check, Stickynote, ChevronDown } from '@shared/components/icons';
-import { SegmentedControl } from '@shared/components/ui';
-import { RPE_OPTIONS } from '@shared/constants/rpe';
+import { Check, ChevronDown, Dumbbell, IconDumbbell } from '@shared/components/icons';
+import { InputNumber } from '@shared/components/ui/InputNumber';
+import { RPE_OPTIONS, RIR_OPTIONS } from '@shared/constants/rpe';
+import { fetchLastExerciseSets } from '@shared/api/queries';
 
 type SetType = 'normal' | 'dropset' | 'rest_pause' | 'amrap';
 
@@ -18,38 +20,13 @@ interface SetData {
   isWarmup?: boolean;
   notes?: string;
   rpe?: string;
+  rir?: string;
   setType?: SetType;
   completed?: boolean;
   /** Modalidad de carga del ejercicio activo (para etiquetado correcto). */
   loadType?: string;
-}
-
-/** `m:ss`, o `45 s` por debajo del minuto. Igual que en el plan de la rutina. */
-function formatoTiempo(segundos: number): string {
-  if (segundos < 60) return `${segundos} s`;
-  return `${Math.floor(segundos / 60)}:${String(segundos % 60).padStart(2, '0')}`;
-}
-
-/**
- * ¿La serie mide algo? Repeticiones o segundos, uno de los dos.
- *
- * Es la misma regla que `setSchema` en la pantalla y que el
- * `CHECK workout_sets_measured` de la base de datos, aplicada ya al marcar el ✓
- * para que nunca llegue a la lista una serie que el guardado va a rechazar.
- */
-function midePorAlgo(s: SetData): boolean {
-  return Number(s.reps) > 0 || Number(s.durationSeconds) > 0;
-}
-
-/** Lo que se lee en la fila de una serie ya anotada. */
-function resumenSerie(s: SetData, weightUnit: string, peso: string): string {
-  const segundos = Number.parseInt(s.durationSeconds ?? '', 10);
-  if (Number.isFinite(segundos) && segundos > 0 && !s.reps) {
-    // Una plancha sin lastre no enseña «0 kg»: el cero ahí es ruido, no dato.
-    const lastre = Number(s.weight) > 0 ? `${peso} ${weightUnit} · ` : '';
-    return `${lastre}${formatoTiempo(segundos)}`;
-  }
-  return `${peso || '0'} ${weightUnit} × ${s.reps || '0'}`;
+  /** La abrió la app al cerrar la serie anterior; necesita el ✓ para contar. */
+  autofilled?: boolean;
 }
 
 const SET_TYPES: SetType[] = ['normal', 'dropset', 'rest_pause', 'amrap'];
@@ -66,87 +43,341 @@ const displayWeight = (weight: string, convert: (kg: number) => number) => {
   return formatWeightInput(convert(n));
 };
 
-/** Etiqueta para el campo de peso según modalidad de carga. */
-const weightFieldLabel = (
-  loadType: string | undefined,
-  weightUnit: string,
-  t: (key: string) => string,
-) => {
-  if (loadType === 'bodyweight_loaded') return t('workout.load_label_lastre');
-  if (loadType === 'bodyweight') return t('workout.load_label_bodyweight');
-  return weightUnit;
+/** `m:ss`, o `45 s` por debajo del minuto. */
+function formatoTiempo(segundos: number): string {
+  if (segundos < 60) return `${segundos} s`;
+  return `${Math.floor(segundos / 60)}:${String(segundos % 60).padStart(2, '0')}`;
+}
+
+/** Icono de grupo muscular según loadType. */
+const muscleIcon = (loadType: string | undefined) => {
+  if (loadType === 'bodyweight' || loadType === 'bodyweight_loaded')
+    return <Dumbbell className="h-4 w-4" />;
+  return <IconDumbbell className="h-4 w-4" />;
 };
 
-interface LoggedSetRowProps {
+interface SetRowProps {
   set: SetData;
   index: number;
-  isPR: boolean;
-  onSelect: (index: number) => void;
-  weightUnit: string;
-  convert: (kg: number) => number;
-  label: string;
-  warmupLabel: string;
-  /** Esta serie es la que impide guardar. Sin esto el fallo era invisible. */
-  errorText?: string;
+  isActive: boolean;
+  /** Contexto compartido para la fila */
+  ctx: {
+    checkIsNewPR: (weight: string, reps: string) => boolean;
+    convert: (kg: number) => number;
+    convertToKg: (local: number) => number;
+    weightUnit: string;
+    t: (key: string) => string;
+    setErrors: Record<number, string>;
+    onClearError: (index: number) => void;
+    updateSet: (index: number, data: Partial<SetData>) => void;
+    removeSet: (index: number) => void;
+    onCommitSet: (() => void) | undefined;
+    showWarmupSets: boolean;
+    onSelect: (index: number | null) => void;
+    setSetErrors: React.Dispatch<React.SetStateAction<Record<number, string>>>;
+    lastSet?: {
+      reps: number;
+      weight: number;
+      set_num: number;
+      workout_started_at: string | null;
+    } | null;
+  };
 }
 
 /**
- * Serie ya anotada: fila de una línea, de solo lectura, que se pulsa para
- * volver a editarla en el campo grande. Memoizada porque editar la serie activa
- * no cambia ninguna de estas.
+ * Fila de serie individual — editable si `isActive`, solo lectura si no.
+ * Altura fija 48dp (min-h-[48px]) para touch targets y densidad.
  */
-const LoggedSetRow = memo(function LoggedSetRow({
-  set: s,
-  index: i,
-  isPR,
-  onSelect,
-  weightUnit,
-  convert,
-  label,
-  warmupLabel,
-  errorText,
-}: LoggedSetRowProps) {
+const SetRow = memo(function SetRow({ set: s, index: i, isActive, ctx }: SetRowProps) {
+  const isPR = ctx.checkIsNewPR(s.weight, s.reps);
+  const rowError = ctx.setErrors[i];
+  const modo: 'reps' | 'time' = Number(s.durationSeconds) > 0 && !s.reps ? 'time' : 'reps';
+
+  const weightDisplay = displayWeight(s.weight, ctx.convert);
+  const repsDisplay = s.reps || (modo === 'time' ? formatoTiempo(Number(s.durationSeconds)) : '');
+
+  const handleWeightChange = (val: string) => {
+    const cleanForParse = val.replace(',', '.');
+    if (cleanForParse === '' || cleanForParse === '.') {
+      ctx.updateSet(i, { weight: '' });
+    } else {
+      const display = parseFloat(cleanForParse);
+      if (Number.isNaN(display)) {
+        ctx.updateSet(i, { weight: '' });
+      } else {
+        const kgValue = ctx.convertToKg(display);
+        ctx.updateSet(i, { weight: Number.isFinite(kgValue) ? kgValue.toString() : '' });
+      }
+    }
+    if (rowError) ctx.onClearError(i);
+  };
+
+  const handleRepsChange = (val: string) => {
+    ctx.updateSet(i, { reps: val, durationSeconds: '' });
+    if (rowError) ctx.onClearError(i);
+  };
+
+  const handleDurationChange = (val: string) => {
+    ctx.updateSet(i, { durationSeconds: val, reps: '' });
+    if (rowError) ctx.onClearError(i);
+  };
+
+  const handleRPEChange = (val: string) => {
+    ctx.updateSet(i, { rpe: s.rpe === val ? '' : val });
+  };
+
+  const handleRIRChange = (val: string) => {
+    ctx.updateSet(i, { rir: s.rir === val ? '' : val });
+  };
+
+  const handleComplete = () => {
+    if (!ctx.onCommitSet) return;
+    const mideAlgo = Number(s.reps) > 0 || Number(s.durationSeconds) > 0;
+    if (!mideAlgo) {
+      void impact(ImpactStyle.Heavy);
+      ctx.setSetErrors((prev) => ({ ...prev, [i]: 'workout.errors.needs_measure' }));
+      return;
+    }
+    void impact(ImpactStyle.Medium);
+    ctx.updateSet(i, { completed: true });
+    ctx.onSelect(null); // close details
+    ctx.onCommitSet();
+  };
+
+  const isWarmup = s.isWarmup && ctx.showWarmupSets;
+  const warmupBadge = isWarmup ? (
+    <span className="label-caps rounded-sm bg-warning/15 px-2 py-0.5 text-warning border border-warning/30">
+      {ctx.t('workout.warmup')}
+    </span>
+  ) : null;
+
+  const setTypeBadge =
+    s.setType && s.setType !== 'normal' ? (
+      <span className="label-caps rounded-sm bg-accent/15 px-2 py-0.5 text-accent border border-accent/30">
+        {SET_TYPE_BADGE[s.setType]}
+      </span>
+    ) : null;
+
+  const prBadge = isPR ? (
+    <span className="label-caps rounded-sm bg-accent px-2 py-0.5 text-accent-fg">PR</span>
+  ) : null;
+
+  // Estilo base para filas de calentamiento: opacidad reducida + fondo distinto
+  const warmupRowClass = isWarmup
+    ? 'opacity-60 bg-warning/5 border-warning/20'
+    : 'bg-surface border border-line';
+
+  // Fila en modo edición (activa)
+  if (isActive) {
+    return (
+      <div
+        key={s.id ?? `active-${i}`}
+        className={`flex items-center gap-2 min-h-[48px] px-3 py-2 rounded-lg transition-colors ${
+          rowError ? 'bg-error/5 border border-error/20' : warmupRowClass
+        }`}
+      >
+        <span className="w-6 text-center text-fg-subtle tabular-nums font-mono text-sm">
+          {i + 1}
+        </span>
+
+        {/* PESO */}
+        <InputNumber
+          label={`${ctx.weightUnit} ${i + 1}`}
+          value={s.weight}
+          onChange={handleWeightChange}
+          step={0.5}
+          min={0}
+          max={500}
+          decimals={1}
+          disabled={s.completed}
+          error={!!rowError}
+          className="w-20"
+        />
+
+        {/* REPS / TIEMPO */}
+        {modo === 'time' ? (
+          <InputNumber
+            label={`${ctx.t('workout.seconds')} ${i + 1}`}
+            value={s.durationSeconds ?? ''}
+            onChange={handleDurationChange}
+            step={5}
+            min={0}
+            max={3600}
+            decimals={0}
+            disabled={s.completed}
+            error={!!rowError}
+            className="w-20"
+          />
+        ) : (
+          <InputNumber
+            label={`${ctx.t('workout.reps')} ${i + 1}`}
+            value={s.reps}
+            onChange={handleRepsChange}
+            step={1}
+            min={0}
+            max={999}
+            decimals={0}
+            disabled={s.completed}
+            error={!!rowError}
+            className="w-16"
+          />
+        )}
+
+        {/* RPE / RIR — solo en modo reps */}
+        {modo !== 'time' && (
+          <div
+            className="flex items-center gap-1 ml-1"
+            role="group"
+            aria-label={`${ctx.t('workout.rpe_label')} / ${ctx.t('workout.rir_label')}`}
+          >
+            {/* RPE chips */}
+            <div
+              className="flex items-center gap-1"
+              role="group"
+              aria-label={ctx.t('workout.rpe_label')}
+            >
+              {RPE_OPTIONS.map((val) => (
+                <button
+                  key={`rpe-${val}`}
+                  type="button"
+                  onClick={() => handleRPEChange(val)}
+                  aria-pressed={s.rpe === val}
+                  aria-label={`${ctx.t('workout.rpe_option')} ${val}`}
+                  className={`min-h-[44px] min-w-[44px] rounded-md px-2 text-sm font-medium transition-colors ${
+                    s.rpe === val
+                      ? 'bg-accent text-accent-fg border border-accent'
+                      : 'bg-surface-2 text-fg-muted border border-line-interactive'
+                  }`}
+                >
+                  {val}
+                </button>
+              ))}
+            </div>
+
+            {/* Separador visual */}
+            <span className="text-fg-subtle px-1" aria-hidden="true">
+              |
+            </span>
+
+            {/* RIR chips */}
+            <div
+              className="flex items-center gap-1"
+              role="group"
+              aria-label={ctx.t('workout.rir_label')}
+            >
+              {RIR_OPTIONS.map((val) => (
+                <button
+                  key={`rir-${val}`}
+                  type="button"
+                  onClick={() => handleRIRChange(val)}
+                  aria-pressed={s.rir === val}
+                  aria-label={`${ctx.t('workout.rir_option')} ${val}`}
+                  className={`min-h-[44px] min-w-[44px] rounded-md px-2 text-sm font-medium transition-colors ${
+                    s.rir === val
+                      ? 'bg-warning text-fg-inverse border border-warning'
+                      : 'bg-surface-2 text-fg-muted border border-line-interactive'
+                  }`}
+                >
+                  {val}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* BADGES (warmup, setType, PR) */}
+        <div className="flex items-center gap-1.5 ml-auto">
+          {warmupBadge}
+          {setTypeBadge}
+          {prBadge}
+        </div>
+
+        {/* BOTÓN ✓ COMPLETAR */}
+        <button
+          type="button"
+          onClick={handleComplete}
+          disabled={s.completed}
+          aria-label={s.completed ? ctx.t('workout.set_completed') : ctx.t('workout.complete_set')}
+          className={[
+            'flex min-h-[48px] min-w-[48px] items-center justify-center rounded-md',
+            'transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed',
+            s.completed ? 'bg-success text-fg-inverse cursor-default' : 'bg-accent text-accent-fg',
+          ].join(' ')}
+        >
+          <Check className="h-5 w-5" strokeWidth={3} />
+        </button>
+      </div>
+    );
+  }
+
+  // Fila en modo solo lectura (loggeada)
+  const warmupRowClassRO = isWarmup
+    ? 'opacity-60 bg-warning/5 border-warning/20'
+    : 'bg-surface border border-line';
+
   return (
     <button
+      key={s.id ?? String(i)}
       type="button"
-      onClick={() => onSelect(i)}
-      aria-label={`${label} ${i + 1}`}
-      aria-invalid={errorText ? true : undefined}
-      className={`w-full hairline-separator flex min-h-11 items-center gap-3 py-3 text-left transition-opacity active:opacity-60 ${
-        errorText ? 'border-l-2 border-l-error pl-3' : isPR ? 'border-l-2 border-l-accent pl-3' : ''
+      onClick={() => ctx.onSelect(i)}
+      aria-label={`${ctx.t('workout.edit_set')} ${i + 1}`}
+      aria-invalid={rowError ? true : undefined}
+      className={`w-full flex items-center gap-2 min-h-[48px] px-3 py-2 rounded-lg transition-opacity active:opacity-60 ${
+        rowError
+          ? 'bg-error/5 border-l-2 border-l-error'
+          : isPR
+            ? 'border-l-2 border-l-accent'
+            : warmupRowClassRO
       }`}
     >
-      <span
-        className={`flex items-center gap-1.5 tabular text-base ${
-          errorText ? 'text-error' : isPR ? 'text-accent' : 'text-fg-subtle'
-        }`}
-      >
+      <span className="w-6 text-center text-fg-subtle tabular-nums font-mono text-sm">
         {i + 1}
-        {s.completed && <Check className="h-3.5 w-3.5 text-success" strokeWidth={3} />}
+        {s.completed && <Check className="h-3.5 w-3.5 text-success ml-1" strokeWidth={3} />}
       </span>
 
-      {s.isWarmup && (
-        <span className="label-caps rounded-sm bg-surface-2 px-2 py-1 text-fg-muted">
-          {warmupLabel}
+      <div className="flex items-center gap-2 flex-1 min-w-0">
+        {/* Peso display */}
+        <span className="w-20 text-right tabular-nums font-mono text-base text-fg">
+          {weightDisplay || '—'}
         </span>
-      )}
-      {isPR && <span className="label-caps rounded-sm bg-accent px-2 py-1 text-accent-fg">PR</span>}
-      {s.setType && s.setType !== 'normal' && (
-        <span className="label-caps rounded-sm bg-accent/15 px-2 py-1 text-accent">
-          {SET_TYPE_BADGE[s.setType]}
-        </span>
-      )}
 
-      <span
-        className={`ml-auto tabular text-base font-medium ${
-          errorText ? 'text-error' : isPR ? 'text-accent' : 'text-fg-muted'
-        }`}
-      >
-        {errorText ? errorText : resumenSerie(s, weightUnit, displayWeight(s.weight, convert))}
-      </span>
+        {/* Reps / Tiempo display */}
+        <span className="w-16 text-right tabular-nums font-mono text-base text-fg">
+          {repsDisplay || '—'}
+        </span>
+
+        {/* RPE / RIR display */}
+        {modo !== 'time' && (
+          <>
+            <span className="w-24 text-center text-sm font-medium text-fg-subtle">
+              {s.rpe ? `RPE ${s.rpe}` : '—'}
+            </span>
+            <span className="w-20 text-center text-sm font-medium text-fg-subtle">
+              {s.rir !== undefined && s.rir !== '' ? `RIR ${s.rir}` : '—'}
+            </span>
+          </>
+        )}
+
+        {/* Previous session inline — "Last: 80×8" */}
+        {modo !== 'time' && ctx.lastSet && (
+          <span className="w-28 text-right text-xs text-fg-subtle/70 font-mono">
+            {ctx.t('workout.previous_set_short')}:{' '}
+            {displayWeight(String(ctx.lastSet.weight), ctx.convert)}×{ctx.lastSet.reps}
+          </span>
+        )}
+
+        {/* Badges */}
+        <div className="flex items-center gap-1.5 ml-auto">
+          {warmupBadge}
+          {setTypeBadge}
+          {prBadge}
+        </div>
+      </div>
     </button>
   );
 });
+
+SetRow.displayName = 'SetRow';
 
 interface WorkoutSetListProps {
   sets: SetData[];
@@ -179,21 +410,18 @@ interface WorkoutSetListProps {
   focusSet?: { index: number; nonce: number } | null;
   /** Modalidad de carga del ejercicio activo (para etiquetado y lógica de lastre). */
   loadType?: string;
+  /** Usuario actual para query de sesión anterior. */
+  userId: string;
+  /** Ejercicio activo para query de sesión anterior. */
+  exerciseId: string;
 }
 
 /**
- * Bloque de series de la referencia visual (`public/screens/workout.png`).
+ * Bloque de series — filas inline compactas a 48dp.
  *
- * Un solo editor grande —KG y REPS a tamaño de titular, con subrayado y botón
- * de confirmar en el acento— y debajo las series ya anotadas como filas de una
- * línea. No se pierde nada respecto a la rejilla anterior: cualquier fila se
- * pulsa para volver a editarla arriba, y RPE, tipo de serie, nota y borrado
- * siguen ahí, plegados tras el botón de nota.
- *
- * Memoizado: cada tecla en KG/REPS llama a `updateSet`, el padre re-renderiza y
- * la fila activa es la única que debe cambiar. Con `memo`, los re-renders del
- * padre por causas ajenas (query de consejo, timer, foco) no reconstruyen el
- * editor ni el bucle de filas; cada `LoggedSetRow` ya está memoizada de suyo.
+ * Cada fila: Peso · Reps · RPE · ✓ (y badges warmup/setType).
+ * La serie activa es editable; las loggeadas son de solo lectura pero misma estructura visual.
+ * Memoizado: cada tecla llama a `updateSet`, el padre re-renderiza y solo la fila activa cambia.
  */
 export const WorkoutSetList = memo(function WorkoutSetList({
   sets,
@@ -212,34 +440,32 @@ export const WorkoutSetList = memo(function WorkoutSetList({
   onLoggingModeChange,
   focusSet,
   loadType,
+  userId,
+  exerciseId,
 }: WorkoutSetListProps) {
   const { t } = useTranslation();
-  // `null` significa «la última serie», que es lo que hay que abrir al entrar y
-  // también después de confirmar una: guardar el índice fijo dejaría el editor
-  // anclado a una serie vieja en cuanto se añade otra.
   const [pickedIndex, setPickedIndex] = useState<number | null>(null);
   const [showDetails, setShowDetails] = useState(false);
-  const [localWeight, setLocalWeight] = useState<string | null>(null);
-  // Plegado de controles secundarios: RPE, setType, notas, calentamiento.
-  const [showMoreOptions, setShowMoreOptions] = useState(false);
-  // Tras confirmar una serie, la siguiente hereda el peso/reps y el foco vuelve
-  // al campo de peso para ajustar sin un toque extra (patrón de Hevy/Strong).
-  const weightRef = useRef<HTMLInputElement>(null);
 
-  const onSelect = useCallback((index: number) => {
+  // Query de la última sesión de este ejercicio (para mostrar "Last: 80×8" inline)
+  const { data: lastExerciseSets = [] } = useQuery({
+    queryKey: ['lastExerciseSets', userId, exerciseId],
+    queryFn: () => fetchLastExerciseSets(userId, exerciseId),
+    staleTime: 1000 * 60 * 5,
+    enabled: !!userId && !!exerciseId,
+  });
+  const lastSet = lastExerciseSets[0];
+
+  const onSelect = useCallback((index: number | null) => {
     setPickedIndex(index);
-    setLocalWeight(null);
     setShowDetails(false);
   }, []);
 
-  // La pantalla manda abrir la serie que falla al guardar.
   const focusIndex = focusSet?.index;
   const focusNonce = focusSet?.nonce;
   useEffect(() => {
     if (focusIndex != null) onSelect(focusIndex);
-    // `focusNonce` es lo que hace que dos guardados seguidos vuelvan a abrirla.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focusNonce]);
+  }, [focusIndex, focusNonce, onSelect]);
 
   const onClearError = useCallback(
     (index: number) =>
@@ -257,343 +483,142 @@ export const WorkoutSetList = memo(function WorkoutSetList({
     pickedIndex !== null && pickedIndex < sets.length ? pickedIndex : sets.length - 1;
   const active = sets[activeIndex];
   const error = setErrors[activeIndex];
-  // El RPE ya no cuenta aquí: se marca en su propia fila, a la vista, así que
-  // encender el botón de «Nota serie» por él señalaba a un panel donde ya no
-  // está.
   const hasDetails = !!(active.notes || (active.setType && active.setType !== 'normal'));
-
-  const shownWeight = localWeight ?? displayWeight(active.weight, convert);
-
-  /**
-   * El modo que se pinta **manda el dato, no el estado de la pantalla**.
-   *
-   * `loggingMode` vive en el padre y vuelve a `reps` al cambiar de ejercicio o al
-   * reabrir la app. Eso está bien para una serie en blanco, pero con una serie ya
-   * medida en segundos hacía que la app dijera «REPS 0» encima de un dato de 48
-   * segundos que seguía guardado: el dato correcto y la lectura mintiendo.
-   * Se vio en la APK, donde reabrir la app a mitad de entreno es lo normal.
-   *
-   * Con la serie vacía manda lo que haya elegido el usuario, que es lo único que
-   * hay para decidir.
-   */
-  const modo: 'reps' | 'time' =
-    Number(active.durationSeconds) > 0 && !active.reps
-      ? 'time'
-      : active.reps
-        ? 'reps'
-        : loggingMode;
 
   // Recordatorio efímero del valor de la serie anterior: solo aparece cuando la
   // fila activa está vacía (recién abierta o tras borrar lo heredado).
   const prev = activeIndex > 0 ? sets[activeIndex - 1] : null;
   const previousHint =
     prev && prev.reps && prev.weight && !active.reps && !active.weight
-      ? `${t('workout.previous_set')}: ${displayWeight(prev.weight, convert)} ${weightUnit} × ${
-          prev.reps
-        }`
+      ? `${t('workout.previous_set')}: ${displayWeight(prev.weight, convert)} ${weightUnit} × ${prev.reps}`
       : null;
 
-  const inputClass = `w-full bg-transparent border-b pb-1 text-display font-display tabular text-fg outline-none transition-colors focus:border-accent ${
-    error ? 'border-error' : 'border-line'
-  }`;
+  // Contexto compartido para las filas
+  const rowCtx = {
+    checkIsNewPR,
+    convert,
+    convertToKg,
+    weightUnit,
+    t,
+    setErrors,
+    onClearError,
+    updateSet,
+    removeSet,
+    onCommitSet,
+    showWarmupSets,
+    onSelect,
+    setSetErrors,
+    lastSet,
+  };
 
   return (
-    <div>
-      <div className="flex items-baseline justify-between gap-3">
-        {exerciseName && (
-          <span className="text-2xl font-display font-bold tracking-tight text-fg truncate">
-            {exerciseName}
-          </span>
-        )}
-        <span className="label-caps flex-shrink-0 text-fg-subtle">
-          {t('workout.set_n', { n: activeIndex + 1 })}
-        </span>
-      </div>
+    <div className="space-y-3">
+      {/* HEADER EJERCICIO — compacto con icono músculo */}
+      <div className="flex items-center justify-between gap-3 px-1">
+        <div className="flex items-center gap-2 min-w-0">
+          {muscleIcon(loadType)}
+          {exerciseName && (
+            <span className="text-lg font-display font-semibold tracking-tight text-fg truncate">
+              {exerciseName}
+            </span>
+          )}
+        </div>
 
-      <div className="mt-3">
-        <SegmentedControl
-          ariaLabel={t('workout.mode_time')}
-          value={modo}
-          onChange={(siguiente) => {
-            onLoggingModeChange(siguiente);
-            // Se limpia el dato del modo que se abandona: si no, la serie
-            // guardaría reps y segundos a la vez y `setShape.isRepSet` la
-            // contaría como serie de fuerza — una plancha entrando en el volumen.
-            if (siguiente === 'time') updateSet(activeIndex, { reps: '' });
-            else updateSet(activeIndex, { durationSeconds: '' });
-            if (error) onClearError(activeIndex);
-          }}
-          options={[
-            { value: 'reps', label: t('workout.mode_reps') },
-            { value: 'time', label: t('workout.mode_time') },
-          ]}
-        />
-      </div>
-
-      {/* Editor grande: KG/LASTRE, REPS y confirmar. */}
-      <div className="mt-4 flex items-end gap-4">
-        <div className="flex-1 min-w-0">
-          <label className="label-caps block text-fg-subtle" htmlFor="active-set-weight">
-            {weightFieldLabel(loadType, weightUnit, t)}
-          </label>
-          <input
-            id="active-set-weight"
-            ref={weightRef}
-            type="text"
-            inputMode="decimal"
-            aria-label={`${weightUnit} ${activeIndex + 1}`}
-            pattern="[0-9]*[.,]?[0-9]*"
-            placeholder="0"
-            value={shownWeight}
+        {/* Selector modo reps/time — compacto */}
+        <div className="flex-shrink-0">
+          <select
+            value={loggingMode}
             onChange={(e) => {
-              const raw = e.target.value.replace(/[^\d.,]/g, '');
-              // Evitar múltiples separadores decimales
-              const parts = raw.split(/[.,]/);
-              const cleanLocal =
-                parts[0] +
-                (parts.length > 1 ? (raw.includes(',') ? ',' : '.') + parts.slice(1).join('') : '');
-
-              setLocalWeight(cleanLocal);
-
-              const cleanForParse = cleanLocal.replace(',', '.');
-              if (cleanForParse === '' || cleanForParse === '.') {
-                updateSet(activeIndex, { weight: '' });
-              } else {
-                const display = parseFloat(cleanForParse);
-                if (Number.isNaN(display)) {
-                  updateSet(activeIndex, { weight: '' });
-                } else {
-                  const kgValue = convertToKg(display);
-                  updateSet(activeIndex, {
-                    weight: Number.isFinite(kgValue) ? kgValue.toString() : '',
-                  });
-                }
-              }
+              const next = e.target.value as 'reps' | 'time';
+              onLoggingModeChange(next);
+              // Limpiar dato del modo que se abandona
+              if (next === 'time') updateSet(activeIndex, { reps: '' });
+              else updateSet(activeIndex, { durationSeconds: '' });
               if (error) onClearError(activeIndex);
             }}
-            onBlur={() => setLocalWeight(null)}
-            className={inputClass}
+            className="label-caps px-2 py-1.5 rounded-md bg-surface-2 border border-line-interactive text-fg-subtle text-xs appearance-none cursor-pointer focus:outline-none focus:border-accent"
+          >
+            <option value="reps">{t('workout.mode_reps')}</option>
+            <option value="time">{t('workout.mode_time')}</option>
+          </select>
+        </div>
+      </div>
+
+      {/* FILAS DE SERIES */}
+      <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-2">
+        {sets.map((s, i) => (
+          <SetRow
+            key={s.id ?? String(i)}
+            set={s}
+            index={i}
+            isActive={i === activeIndex}
+            ctx={rowCtx}
           />
-        </div>
+        ))}
+      </m.div>
 
-        <div className="flex-1 min-w-0">
-          <label
-            className="label-caps block text-fg-subtle"
-            htmlFor={modo === 'time' ? 'active-set-duration' : 'active-set-reps'}
-          >
-            {modo === 'time' ? t('workout.seconds') : t('workout.reps')}
-          </label>
-          {modo === 'time' ? (
-            <input
-              id="active-set-duration"
-              type="text"
-              inputMode="numeric"
-              aria-label={`${t('workout.seconds')} ${activeIndex + 1}`}
-              pattern="[0-9]*"
-              placeholder="0"
-              value={active.durationSeconds ?? ''}
-              onChange={(e) => {
-                // Las reps se borran a la vez: una serie es de repeticiones o de
-                // tiempo, y dejar las dos haría que `isRepSet` la contase como de
-                // fuerza y la plancha entrase en el volumen.
-                updateSet(activeIndex, {
-                  durationSeconds: e.target.value.replace(/[^\d]/g, ''),
-                  reps: '',
-                });
-                if (error) onClearError(activeIndex);
-              }}
-              className={inputClass}
-            />
-          ) : (
-            <input
-              id="active-set-reps"
-              type="text"
-              inputMode="numeric"
-              aria-label={`${t('workout.reps')} ${activeIndex + 1}`}
-              pattern="[0-9]*"
-              placeholder="0"
-              value={active.reps}
-              onChange={(e) => {
-                updateSet(activeIndex, {
-                  reps: e.target.value.replace(/[^\d]/g, ''),
-                  durationSeconds: '',
-                });
-                if (error) onClearError(activeIndex);
-              }}
-              className={inputClass}
-            />
-          )}
-        </div>
+      {/* Previous hint */}
+      {previousHint && <div className="text-xs text-fg-subtle px-1">{previousHint}</div>}
 
-        {onCommitSet && (
-          <button
-            type="button"
-            onClick={() => {
-              // Una serie sin repeticiones ni segundos no es una serie hecha.
-              // Marcarla dejaba en la lista un «125 kg × 0» que luego frenaba
-              // el guardado del entreno entero, y el aviso llegaba al final.
-              if (!midePorAlgo(active)) {
-                void impact(ImpactStyle.Heavy);
-                setSetErrors((prev) => ({
-                  ...prev,
-                  [activeIndex]: 'workout.errors.needs_measure',
-                }));
-                return;
-              }
-              void impact(ImpactStyle.Medium);
-              // El ✓ significa «serie hecha»: se marca como completada y, si
-              // aplica, arranca el descanso (lo decide onCommitSet).
-              updateSet(activeIndex, { completed: true });
-              setPickedIndex(null);
-              setLocalWeight(null);
-              onCommitSet();
-              // La serie nueva se monta con el valor heredado; devolver el foco
-              // al peso permite corregirlo sin salir del flujo.
-              requestAnimationFrame(() => weightRef.current?.focus());
-            }}
-            aria-label={t('workout.complete_set')}
-            className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-md bg-accent text-accent-fg transition-transform active:scale-95"
-          >
-            <Check className="h-7 w-7" strokeWidth={3} />
-          </button>
-        )}
-      </div>
+      {/* Error de la fila activa */}
+      {error && <div className="text-xs text-error px-1">{t(error)}</div>}
 
-      {error && <div className="mt-2 text-xs text-error">{t(error)}</div>}
-      {previousHint && <div className="mt-1.5 text-xs text-fg-muted">{previousHint}</div>}
-
-      {/* Esfuerzo percibido, a la vista y no dentro del panel de «Nota serie».
-          Es la única señal que enciende la autorregulación —sin ella el motor se
-          niega a decidir y todo el mundo cae al respaldo de doble progresión, y
-          la descarga no llega a proponerse nunca— y estaba detrás de un botón
-          que anunciaba otra cosa. Sigue siendo opcional: se toca si se quiere. */}
-      {/* Controles secundarios plegables: RPE, calentamiento, nota, tipo de serie. */}
-      <div className="mt-3">
-        <button
-          type="button"
-          onClick={() => setShowMoreOptions((v) => !v)}
-          aria-expanded={showMoreOptions}
-          className="label-caps flex items-center gap-1.5 text-fg-subtle active:opacity-60"
+      {/* Detalles plegables (nota, tipo de serie, borrar) — solo para la activa */}
+      {pickedIndex !== null && (
+        <m.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+          className="mt-3 space-y-3 overflow-hidden"
         >
-          {showMoreOptions ? (
-            <>
-              <ChevronDown className="h-3.5 w-3.5 rotate-180" aria-hidden="true" />
-              {t('workout.more_options_hide')}
-            </>
-          ) : (
-            <>
-              <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
-              {t('workout.more_options_show')}
-            </>
-          )}
-        </button>
-      </div>
-
-      {showMoreOptions && (
-        <div className="mt-3 space-y-3">
-          {/* RPE */}
-          {modo !== 'time' && (
-            <div>
-              <div className="label-caps mb-1.5 text-fg-subtle">
-                {t('workout.rpe_label')}
-                <span className="ml-1.5 normal-case tracking-normal text-fg-subtle">
-                  {t('workout.rpe_optional')}
-                </span>
-              </div>
-              <div
-                className="flex flex-wrap gap-1.5"
-                role="group"
-                aria-label={t('workout.rpe_label')}
-              >
-                {RPE_OPTIONS.map((value) => {
-                  const on = active.rpe === value;
-                  return (
-                    <button
-                      type="button"
-                      key={value}
-                      onClick={() => {
-                        void impact(ImpactStyle.Light);
-                        updateSet(activeIndex, { rpe: on ? '' : value });
-                      }}
-                      aria-pressed={on}
-                      aria-label={t('workout.rpe_option', { value })}
-                      className={`min-h-11 min-w-11 rounded-sm border px-2 text-sm font-medium transition-colors ${
-                        on
-                          ? 'border-accent bg-accent text-accent-fg'
-                          : 'border-line bg-surface text-fg-muted'
-                      }`}
-                    >
-                      {value}
-                    </button>
-                  );
-                })}
-              </div>
-              <p className="mt-1.5 text-xs text-fg-subtle">{t('workout.rpe_help')}</p>
-            </div>
-          )}
-          {/* Calentamiento */}
-          {showWarmupSets && (
-            <button
-              type="button"
-              onClick={() => {
-                void impact(ImpactStyle.Light);
-                updateSet(activeIndex, { isWarmup: !active.isWarmup });
-              }}
-              aria-pressed={active.isWarmup}
-              aria-label={`${t('workout.set_n', { n: activeIndex + 1 })}: ${t('workout.warmup')}`}
-              className={`label-caps min-h-11 w-full rounded-sm border px-3 transition-colors active:opacity-60 ${
-                active.isWarmup
-                  ? 'border-warning bg-warning text-fg-inverse'
-                  : 'border-dashed border-line-strong text-fg-subtle'
-              }`}
-            >
-              {t('workout.warmup')}
-            </button>
-          )}
           {/* Nota de serie */}
           <button
             type="button"
             onClick={() => setShowDetails((v) => !v)}
             aria-expanded={showDetails}
-            className={`flex min-h-11 w-full items-center gap-1.5 rounded-sm border px-3 label-caps transition-colors active:opacity-60 ${
+            className={`flex min-h-11 w-full items-center gap-1.5 rounded-md border px-3 label-caps transition-colors active:opacity-60 ${
               hasDetails ? 'border-accent text-accent' : 'border-line text-fg-subtle'
             }`}
           >
-            <Stickynote className="h-4 w-4" />
+            <Check className="h-4 w-4" strokeWidth={3} />
             {t('workout.set_note')}
+            <ChevronDown
+              className={`ml-auto h-3.5 w-3.5 transition-transform ${showDetails ? 'rotate-180' : ''}`}
+            />
           </button>
           {showDetails && (
-            <div className="space-y-3">
+            <div className="space-y-3 pl-10">
               <input
                 type="text"
                 placeholder={t('workout.set_note_placeholder')}
                 value={active.notes ?? ''}
                 onChange={(e) => updateSet(activeIndex, { notes: e.target.value.slice(0, 500) })}
-                className="w-full glass-2 rounded-card px-2 py-2 text-xs text-fg outline-none"
+                className="w-full glass-2 rounded-md px-3 py-2 text-sm text-fg outline-none border border-line-interactive focus:border-accent"
               />
+              {/* Tipo de serie */}
               <div>
                 <div className="label-caps mb-1.5 text-fg-subtle">
                   {t('workout.set_type_label')}
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                  {SET_TYPES.map((value) => {
-                    const on = (active.setType ?? 'normal') === value;
+                  {SET_TYPES.map((val) => {
+                    const on = (active.setType ?? 'normal') === val;
                     return (
                       <button
+                        key={val}
                         type="button"
-                        key={value}
                         onClick={() => {
                           void impact(ImpactStyle.Light);
-                          updateSet(activeIndex, { setType: value });
+                          updateSet(activeIndex, { setType: val });
                         }}
                         aria-pressed={on}
-                        className={`min-h-11 rounded-sm border px-2.5 text-xs font-medium ${
+                        className={`min-h-10 rounded-md border px-2.5 text-xs font-medium transition-colors ${
                           on
                             ? 'border-accent bg-accent text-accent-fg'
                             : 'border-line bg-surface text-fg-muted'
                         }`}
                       >
-                        {t(`workout.set_type_${value}`)}
+                        {t(`workout.set_type_${val}`)}
                       </button>
                     );
                   })}
@@ -601,40 +626,22 @@ export const WorkoutSetList = memo(function WorkoutSetList({
               </div>
             </div>
           )}
+
           {/* Borrar serie activa */}
           <button
             type="button"
             onClick={() => {
               void impact(ImpactStyle.Medium);
               removeSet(activeIndex);
+              setPickedIndex(null);
             }}
             aria-label={`${t('workout.session_remove_set')} ${activeIndex + 1}`}
-            className="w-full min-h-11 rounded-sm border border-error/30 text-error transition-colors active:bg-error/10"
+            className="w-full min-h-11 rounded-md border border-error/30 text-error transition-colors active:bg-error/10 label-caps"
           >
             {t('workout.session_remove_set')}
-          </button>{' '}
-        </div>
+          </button>
+        </m.div>
       )}
-
-      {/* Series ya anotadas. */}
-      <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-5">
-        {sets.map((s, i) =>
-          i === activeIndex ? null : (
-            <LoggedSetRow
-              key={s.id ?? String(i)}
-              set={s}
-              index={i}
-              isPR={checkIsNewPR(s.weight, s.reps)}
-              onSelect={onSelect}
-              weightUnit={weightUnit}
-              convert={convert}
-              label={t('workout.edit_set')}
-              warmupLabel={t('workout.warmup')}
-              errorText={setErrors[i] ? t(setErrors[i]) : undefined}
-            />
-          ),
-        )}
-      </m.div>
     </div>
   );
 });
