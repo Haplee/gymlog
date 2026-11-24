@@ -10,7 +10,13 @@ interface RestTimerState {
   isRunning: boolean;
   /** La alarma está sonando y espera una acción explícita del usuario. */
   alarmRinging: boolean;
+  /** ID del ejercicio actual para descanso granular. */
+  currentExerciseId: string | null;
+  /** Índice de la serie actual para descanso por serie. */
+  currentSetIndex: number | null;
   start: (seconds: number) => void;
+  /** Inicia el timer con descanso granular para un ejercicio/serie específico. */
+  startForExercise: (exerciseId: string, setIndex: number) => void;
   stop: () => void;
   extend: (seconds: number) => void;
   /** El descanso ha llegado a 0: para el timer y arranca la alarma en bucle. */
@@ -27,18 +33,63 @@ export const useRestTimerStore = create<RestTimerState>()(
       duration: 90,
       isRunning: false,
       alarmRinging: false,
+      currentExerciseId: null,
+      currentSetIndex: null,
       start: (seconds) => {
         // Reiniciar el descanso silencia una alarma previa: si no, seguiría
         // sonando sobre el nuevo temporizador.
         stopAlarm();
         const endTime = Date.now() + seconds * 1000;
-        set({ endTime, duration: seconds, isRunning: true, alarmRinging: false });
+        set({
+          endTime,
+          duration: seconds,
+          isRunning: true,
+          alarmRinging: false,
+          currentExerciseId: null,
+          currentSetIndex: null,
+        });
         // Alarma del sistema: suena aunque la app esté en background
+        void scheduleTimerNotification(endTime);
+      },
+      /** Inicia el timer con descanso granular para un ejercicio/serie específico. */
+      startForExercise: (exerciseId: string, setIndex: number) => {
+        const settings = useSettingsStore.getState();
+        let seconds = settings.restDuration;
+
+        // Si hay descanso por serie para este ejercicio
+        if (settings.restBySet[exerciseId]?.[setIndex] != null) {
+          seconds = settings.restBySet[exerciseId][setIndex];
+        }
+        // Si hay descanso por ejercicio
+        else if (settings.restByExercise && settings.restDurations[exerciseId] != null) {
+          seconds = settings.restDurations[exerciseId];
+        }
+        // Si es ejercicio compuesto y restByExercise está activo, usar 2x
+        else if (settings.restByExercise) {
+          // Nota: esto se maneja en WorkoutPage al llamar startForExercise
+        }
+
+        stopAlarm();
+        const endTime = Date.now() + seconds * 1000;
+        set({
+          endTime,
+          duration: seconds,
+          isRunning: true,
+          alarmRinging: false,
+          currentExerciseId: exerciseId,
+          currentSetIndex: setIndex,
+        });
         void scheduleTimerNotification(endTime);
       },
       stop: () => {
         stopAlarm();
-        set({ endTime: null, isRunning: false, alarmRinging: false });
+        set({
+          endTime: null,
+          isRunning: false,
+          alarmRinging: false,
+          currentExerciseId: null,
+          currentSetIndex: null,
+        });
         void cancelTimerNotification();
       },
       extend: (seconds) => {

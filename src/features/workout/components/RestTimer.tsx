@@ -13,7 +13,7 @@ import {
 import { playTimerComplete, resumeIfRinging } from '@shared/lib/alarm';
 import { useVisibilityPausedInterval } from '@shared/hooks/useVisibilityPausedInterval';
 import { m, AnimatePresence } from 'framer-motion';
-import { Minus, Plus, Timer, X } from '@shared/components/icons';
+import { Minus, Plus, Timer, X, Bookmark } from '@shared/components/icons';
 
 const CIRCLE_RADIUS = 44; // 88px diameter
 const CIRCLE_CIRCUMFERENCE = 2 * Math.PI * CIRCLE_RADIUS; // ~276
@@ -31,6 +31,7 @@ export function RestTimer() {
     remaining,
     alarmRinging,
     dismissAlarm,
+    currentExerciseId,
   } = useRestTimerStore(
     useShallow((s) => ({
       endTime: s.endTime,
@@ -42,11 +43,13 @@ export function RestTimer() {
       remaining: s.remaining,
       alarmRinging: s.alarmRinging,
       dismissAlarm: s.dismissAlarm,
+      currentExerciseId: s.currentExerciseId,
     })),
   );
 
   const restAutoStart = useSettingsStore((s) => s.restAutoStart);
   const soundEnabled = useSettingsStore((s) => s.sound);
+  const setRestDurationForExercise = useSettingsStore((s) => s.setRestDurationForExercise);
   const [display, setDisplay] = useState(() => remaining());
   const [expanded, setExpanded] = useState(false);
 
@@ -227,6 +230,20 @@ export function RestTimer() {
                     >
                       <X className="h-5 w-5" />
                     </button>
+                    {/* Guardar como descanso predeterminado para este ejercicio */}
+                    {currentExerciseId && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setRestDurationForExercise(currentExerciseId, duration);
+                          void impact(ImpactStyle.Light);
+                        }}
+                        aria-label={t('workout.rest_save_as_default')}
+                        className="tap-44 flex h-11 w-11 items-center justify-center rounded-pill bg-surface-2 text-fg-muted active:bg-surface-3 transition-colors"
+                      >
+                        <Bookmark className="h-5 w-5" />
+                      </button>
+                    )}
                   </div>
                 </m.div>
               )}

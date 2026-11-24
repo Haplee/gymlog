@@ -152,6 +152,7 @@ export function WorkoutPage() {
   const activeRoutineId = useRoutineStore((s) => s.activeRoutineId);
   const { unit: weightUnit, convert, convertFromDisplay: convertToKg } = useWeight();
   const startRestTimer = useRestTimerStore((s) => s.start);
+  const startForExercise = useRestTimerStore((s) => s.startForExercise);
   const restTimerRunning = useRestTimerStore((s) => s.isRunning);
 
   const [message, setMessage] = useState('');
@@ -632,11 +633,17 @@ export function WorkoutPage() {
     addSet();
     if (restAutoStart && lastHasData && !restTimerRunning && defaultRest > 0) {
       // Ejercicios compuestos descansan más (≈2×), capado a 10 min.
-      const rest =
+      const fallbackRest =
         restByExercise && selectedExercise?.is_compound
           ? Math.min(defaultRest * 2, 600)
           : defaultRest;
-      startRestTimer(rest);
+      // Usar descanso granular si hay ejercicio activo, sino fallback global
+      if (activeExerciseId) {
+        const setIndex = sets.length; // La nueva serie se añade al final
+        startForExercise(activeExerciseId, setIndex);
+      } else {
+        startRestTimer(fallbackRest);
+      }
     }
   }, [
     sets,
@@ -646,7 +653,9 @@ export function WorkoutPage() {
     defaultRest,
     restByExercise,
     selectedExercise,
+    activeExerciseId,
     startRestTimer,
+    startForExercise,
   ]);
 
   /**

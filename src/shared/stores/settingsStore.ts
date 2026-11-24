@@ -65,6 +65,10 @@ interface SettingsState {
   restAutoStart: boolean;
   restDuration: number;
   restByExercise: boolean;
+  /** Tiempos de descanso por ejercicio (clave: exerciseId, valor: segundos). */
+  restDurations: Record<string, number>;
+  /** Tiempos de descanso por serie por ejercicio (clave: exerciseId, valor: array de segundos por serie). */
+  restBySet: Record<string, number[]>;
   /** Precargar el peso de la última sesión al empezar una rutina. */
   autoFillWeights: boolean;
   wearablesSyncOnOpen: boolean;
@@ -162,6 +166,8 @@ export const useSettingsStore = create<SettingsState>()(
       restAutoStart: false,
       restDuration: 90,
       restByExercise: true,
+      restDurations: {},
+      restBySet: {},
       autoFillWeights: true,
       wearablesSyncOnOpen: true,
       keepScreenAwake: true,
@@ -264,6 +270,23 @@ export const useSettingsStore = create<SettingsState>()(
       setRestAutoStart: (restAutoStart) => set({ restAutoStart }),
       setRestDuration: (restDuration) => set({ restDuration }),
       setRestByExercise: (restByExercise) => set({ restByExercise }),
+      /** Establece el descanso para un ejercicio específico (en segundos). */
+      setRestDurationForExercise: (exerciseId: string, seconds: number) =>
+        set((state) => ({
+          restDurations: { ...state.restDurations, [exerciseId]: seconds },
+        })),
+      /** Elimina el descanso personalizado de un ejercicio, volviendo al global. */
+      removeRestDurationForExercise: (exerciseId: string) =>
+        set((state) => {
+          const next = { ...state.restDurations };
+          delete next[exerciseId];
+          return { restDurations: next };
+        }),
+      /** Establece los tiempos de descanso por serie para un ejercicio. */
+      setRestBySetForExercise: (exerciseId: string, secondsArray: number[]) =>
+        set((state) => ({
+          restBySet: { ...state.restBySet, [exerciseId]: secondsArray },
+        })),
       setAutoFillWeights: (autoFillWeights) => set({ autoFillWeights }),
       setWearablesSyncOnOpen: (wearablesSyncOnOpen) => set({ wearablesSyncOnOpen }),
       setKeepScreenAwake: (keepScreenAwake) => set({ keepScreenAwake }),
