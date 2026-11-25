@@ -1,0 +1,1121 @@
+[
+  {
+    "routine_id": "9d299ac6-1feb-4996-83f5-dc60b923f0a2",
+    "name": "B1 · Lunes — Pierna y Pruebas Tropa",
+    "hevy_synthetic_date": "2026-09-01 10:00:00",
+    "notes": "Semana 4 (14-20 dic): mitad de series. Sin rueda abdominal.",
+    "exercises": [
+      {
+        "exercise_id": "54cd2e58-fe74-4fb6-bc1a-6df3df075ccc",
+        "gym_log_name": "Rotaciones externas en calentamiento",
+        "hevy_name": "Rotaciones externas en calentamiento",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "30-45 s",
+        "superset_id": null,
+        "notes": "Incluir en calentamiento junto a movilidad y control escapular"
+      },
+      {
+        "exercise_id": "edceebc0-a888-4396-b2cd-944b77d1b351",
+        "gym_log_name": "Sentadilla trasera o goblet",
+        "hevy_name": "Sentadilla trasera o goblet",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "120-180 s",
+        "superset_id": null,
+        "notes": "Semana 4: 2x6"
+      },
+      {
+        "exercise_id": "cb8bf559-4e28-4cca-b2c3-2a43e75ce315",
+        "gym_log_name": "Press banca barra",
+        "hevy_name": "Press banca barra",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "120 s",
+        "superset_id": null,
+        "notes": "Semana 4: 2x6"
+      },
+      {
+        "exercise_id": "e8c82c72-243c-4a6a-a640-78baedba43d5",
+        "gym_log_name": "Flexo-extensiones (almohadilla 10 cm)",
+        "hevy_name": "Flexo-extensiones (almohadilla 10 cm)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "90 s",
+        "superset_id": null,
+        "notes": "Semana 4: 1 serie técnica"
+      },
+      {
+        "exercise_id": "11251dcd-4d63-4fa7-8bec-7b93258ebd25",
+        "gym_log_name": "Plancha isométrica estricta (protocolo BOE)",
+        "hevy_name": "Plancha isométrica estricta (protocolo BOE)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "60 s",
+        "superset_id": null,
+        "notes": "Semana 4: 2x30 s. Sin rueda abdominal"
+      },
+      {
+        "exercise_id": "c080e02f-28ae-4e69-98e3-9a55f4686d42",
+        "gym_log_name": "Remo con barra o máquina pecho apoyado",
+        "hevy_name": "Remo con barra o máquina pecho apoyado",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "90 s",
+        "superset_id": null,
+        "notes": "Semana 4: 2x8"
+      }
+    ]
+  },
+  {
+    "routine_id": "a70daaf2-68a4-4d07-bc28-743e9a04078d",
+    "name": "B1 · Martes — Press de Banca y Flexiones 10 cm",
+    "hevy_synthetic_date": "2026-09-02 10:00:00",
+    "notes": "Enfoque principal de empuje horizontal y estabilidad escapular.",
+    "exercises": []
+  },
+  {
+    "routine_id": "893ae2af-4458-4bce-b343-ea7552b9162f",
+    "name": "B1 · Miércoles — Pliometría, 7 Conos y Base Aeróbica",
+    "hevy_synthetic_date": "2026-09-03 10:00:00",
+    "notes": "Pliometría los miércoles. Sem 1: 20 min Z2; Sem 2-3: 4x500 m; Sem 4: 15 min Z2.",
+    "exercises": [
+      {
+        "exercise_id": "8161c0f8-c1f5-4e38-809c-7b3ad0c9b375",
+        "gym_log_name": "Pliometría base (cajón / horizontal controlado)",
+        "hevy_name": "Pliometría base (cajón / horizontal controlado)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "120 s",
+        "superset_id": null,
+        "notes": "Pliometría los miércoles. Semana 4: 2x3"
+      },
+      {
+        "exercise_id": "25cde904-7632-4f4b-8223-fd5d140428c6",
+        "gym_log_name": "Circuito de agilidad 7 conos (salida de espaldas)",
+        "hevy_name": "Circuito de agilidad 7 conos (salida de espaldas)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "120 s",
+        "superset_id": null,
+        "notes": "Semana 4: 2 pasadas"
+      },
+      {
+        "exercise_id": "ad5818f4-6453-41fc-9da7-16537b4aeda6",
+        "gym_log_name": "Carrera aeróbica base / HIIT 2.000 m",
+        "hevy_name": "Carrera aeróbica base / HIIT 2.000 m",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "60 s",
+        "superset_id": null,
+        "notes": "Semana 4: 15 min Z2"
+      }
+    ]
+  },
+  {
+    "routine_id": "64f095c2-2c4e-47b7-ba88-c19de1093395",
+    "name": "B1 · Jueves — Espalda y Extra Bíceps",
+    "hevy_synthetic_date": "2026-09-04 10:00:00",
+    "notes": "Trabajo extra de bíceps los jueves.",
+    "exercises": [
+      {
+        "exercise_id": "54cd2e58-fe74-4fb6-bc1a-6df3df075ccc",
+        "gym_log_name": "Rotaciones externas en calentamiento",
+        "hevy_name": "Rotaciones externas en calentamiento",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "30-45 s",
+        "superset_id": null,
+        "notes": "Antes del trabajo de bíceps y pista"
+      },
+      {
+        "exercise_id": "86d2b668-74fd-4754-9a9b-bb4ba3f3101e",
+        "gym_log_name": "Curl de bíceps con barra o mancuernas",
+        "hevy_name": "Curl de bíceps con barra o mancuernas",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "75-90 s",
+        "superset_id": null,
+        "notes": "Extra de bíceps los jueves"
+      },
+      {
+        "exercise_id": "dbc6d0a6-6841-47db-9af3-9a304eaabb29",
+        "gym_log_name": "Curl martillo o polea",
+        "hevy_name": "Curl martillo o polea",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "60-75 s",
+        "superset_id": null,
+        "notes": "Extra de bíceps los jueves"
+      }
+    ]
+  },
+  {
+    "routine_id": "50ad12a8-1fee-4a7f-9dd7-374dfff023de",
+    "name": "B1 · Viernes — Peso Rumano, Militar y Prevención",
+    "hevy_synthetic_date": "2026-09-05 10:00:00",
+    "notes": "Sin rueda abdominal.",
+    "exercises": [
+      {
+        "exercise_id": "c640af24-147c-4953-87ac-231445b583e5",
+        "gym_log_name": "Plancha Copenhagen corta (rodilla apoyada)",
+        "hevy_name": "Plancha Copenhagen corta (rodilla apoyada)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "60 s",
+        "superset_id": null,
+        "notes": "Prevención ingle/cadera"
+      },
+      {
+        "exercise_id": "e65689f4-4770-44f5-a356-ae8c1665e552",
+        "gym_log_name": "Peso muerto rumano",
+        "hevy_name": "Romanian Deadlift (Barbell)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "120 s",
+        "superset_id": null,
+        "notes": "Semana 4: 2x6"
+      },
+      {
+        "exercise_id": "bd775819-4bbb-4daa-866a-e2b094c34f73",
+        "gym_log_name": "Zancada atrás o sentadilla búlgara ligera",
+        "hevy_name": "Zancada atrás o sentadilla búlgara ligera",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "90 s",
+        "superset_id": null,
+        "notes": "Semana 4: 2x6/pierna"
+      },
+      {
+        "exercise_id": "9d2688da-7882-433e-9e8e-ce08b9228d6d",
+        "gym_log_name": "Press militar con mancuerna a una rodilla",
+        "hevy_name": "Press militar con mancuerna a una rodilla",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "90 s",
+        "superset_id": null,
+        "notes": "Semana 4: 2x6/brazo"
+      },
+      {
+        "exercise_id": "19a15b57-3efe-4a5e-8a81-232a5a7f99ae",
+        "gym_log_name": "Elevación de gemelos de pie (excéntrico 3 s)",
+        "hevy_name": "Elevación de gemelos de pie (excéntrico 3 s)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "60 s",
+        "superset_id": null,
+        "notes": "Semana 4: 2x10"
+      }
+    ]
+  },
+  {
+    "routine_id": "abe7e796-d7b6-4bdd-995e-8cf78bb7926e",
+    "name": "B1 · Sábado — Pliometría Adaptativa (Drop Jumps, Cajón y Salto)",
+    "hevy_synthetic_date": "2026-09-06 10:00:00",
+    "notes": "Sin enfoque de partido: adaptación progresiva a futuros partidos de balonmano y playa.",
+    "exercises": [
+      {
+        "exercise_id": "b7cd3eb3-cae6-4884-953a-24542a172d35",
+        "gym_log_name": "Salto al cajón",
+        "hevy_name": "Box Jump",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "120 s",
+        "superset_id": null,
+        "notes": "Pliometría sábado para adaptación a futuros partidos/playa"
+      },
+      {
+        "exercise_id": "cb04eaf1-4f89-42af-a6d8-e2313253d866",
+        "gym_log_name": "Drop jumps (caída y rebote)",
+        "hevy_name": "Drop jumps (caída y rebote)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "120 s",
+        "superset_id": null,
+        "notes": "Adaptación pliométrica sin enfoque de partido"
+      },
+      {
+        "exercise_id": "a68a57aa-5674-4afb-96f9-0f6e7d3c10f2",
+        "gym_log_name": "Saltos laterales / skater con estabilización",
+        "hevy_name": "Saltos laterales / skater con estabilización",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "90 s",
+        "superset_id": null,
+        "notes": "Transferencia a desplazamientos laterales"
+      }
+    ]
+  },
+  {
+    "routine_id": "b668dea8-d5ed-42a2-83ff-980c3af5ac37",
+    "name": "B2 · Lunes — Pierna (Fuerza Máxima) y Plancha BOE",
+    "hevy_synthetic_date": "2026-09-07 10:00:00",
+    "notes": "Sem 8 descarga (11-17 ene): mitad de series.",
+    "exercises": [
+      {
+        "exercise_id": "54cd2e58-fe74-4fb6-bc1a-6df3df075ccc",
+        "gym_log_name": "Rotaciones externas en calentamiento",
+        "hevy_name": "Rotaciones externas en calentamiento",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "30-45 s",
+        "superset_id": null,
+        "notes": "Cadena escapular y manguito"
+      },
+      {
+        "exercise_id": "db18d8ba-fea6-46b8-8bd6-7793e7ea7aab",
+        "gym_log_name": "Sentadilla trasera",
+        "hevy_name": "Squat (Barbell)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "150-180 s",
+        "superset_id": null,
+        "notes": "Sem 8 descarga: 2x4. Corte al perder velocidad"
+      },
+      {
+        "exercise_id": "cb8bf559-4e28-4cca-b2c3-2a43e75ce315",
+        "gym_log_name": "Press banca barra",
+        "hevy_name": "Press banca barra",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "120-180 s",
+        "superset_id": null,
+        "notes": "Sem 8 descarga: 2x4"
+      },
+      {
+        "exercise_id": "e8c82c72-243c-4a6a-a640-78baedba43d5",
+        "gym_log_name": "Flexo-extensiones (almohadilla 10 cm)",
+        "hevy_name": "Flexo-extensiones (almohadilla 10 cm)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "90 s",
+        "superset_id": null,
+        "notes": "Sem 8 descarga: 2x50% máx."
+      },
+      {
+        "exercise_id": "11251dcd-4d63-4fa7-8bec-7b93258ebd25",
+        "gym_log_name": "Plancha isométrica estricta (protocolo BOE)",
+        "hevy_name": "Plancha isométrica estricta (protocolo BOE)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "75 s",
+        "superset_id": null,
+        "notes": "Sem 8 descarga: 2x40 s"
+      }
+    ]
+  },
+  {
+    "routine_id": "bcca8976-fc14-48fc-811f-4be056dc21dd",
+    "name": "B2 · Martes — Press de Banca y Flexiones 10 cm",
+    "hevy_synthetic_date": "2026-09-08 10:00:00",
+    "notes": "Corte por pérdida de velocidad.",
+    "exercises": []
+  },
+  {
+    "routine_id": "d6e2b069-2bba-4d38-b2db-d63de0dcf5ba",
+    "name": "B2 · Miércoles — Pliometría, 7 Conos, SIT 8s y HIIT",
+    "hevy_synthetic_date": "2026-09-09 10:00:00",
+    "notes": "Sem 8: Test Control 1 y Test 2.000 m.",
+    "exercises": [
+      {
+        "exercise_id": "85059d86-b0c2-4c83-b9da-67e6b18d308e",
+        "gym_log_name": "Pliometría miércoles (cajón / reactiva)",
+        "hevy_name": "Pliometría miércoles (cajón / reactiva)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "120 s",
+        "superset_id": null,
+        "notes": "Pliometría los miércoles"
+      },
+      {
+        "exercise_id": "25cde904-7632-4f4b-8223-fd5d140428c6",
+        "gym_log_name": "Circuito de agilidad 7 conos (salida de espaldas)",
+        "hevy_name": "Circuito de agilidad 7 conos (salida de espaldas)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "150-180 s",
+        "superset_id": null,
+        "notes": "Sem 8: 2 intentos Test Control 1"
+      },
+      {
+        "exercise_id": "399ca2fb-06bf-427b-ab77-ebde5d4665ff",
+        "gym_log_name": "SIT desde sentado de espaldas (8 s)",
+        "hevy_name": "SIT desde sentado de espaldas (8 s)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "90 s",
+        "superset_id": null,
+        "notes": "Microdosis SIT <= 10 s"
+      },
+      {
+        "exercise_id": "ad5818f4-6453-41fc-9da7-16537b4aeda6",
+        "gym_log_name": "Carrera aeróbica base / HIIT 2.000 m",
+        "hevy_name": "Carrera aeróbica base / HIIT 2.000 m",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "120 s",
+        "superset_id": null,
+        "notes": "Sem 8: Test 2.000 m"
+      }
+    ]
+  },
+  {
+    "routine_id": "d7fbc908-b9c0-475f-95cc-b82a1b4fb7ff",
+    "name": "B2 · Jueves — Espalda y Extra Bíceps",
+    "hevy_synthetic_date": "2026-09-10 10:00:00",
+    "notes": "Trabajo extra de bíceps los jueves.",
+    "exercises": [
+      {
+        "exercise_id": "54cd2e58-fe74-4fb6-bc1a-6df3df075ccc",
+        "gym_log_name": "Rotaciones externas en calentamiento",
+        "hevy_name": "Rotaciones externas en calentamiento",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "30-45 s",
+        "superset_id": null,
+        "notes": "Previo a bíceps y pista"
+      },
+      {
+        "exercise_id": "86d2b668-74fd-4754-9a9b-bb4ba3f3101e",
+        "gym_log_name": "Curl de bíceps con barra o mancuernas",
+        "hevy_name": "Curl de bíceps con barra o mancuernas",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "90 s",
+        "superset_id": null,
+        "notes": "Extra de bíceps los jueves"
+      },
+      {
+        "exercise_id": "dbc6d0a6-6841-47db-9af3-9a304eaabb29",
+        "gym_log_name": "Curl martillo o polea",
+        "hevy_name": "Curl martillo o polea",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "60-75 s",
+        "superset_id": null,
+        "notes": "Extra de bíceps los jueves"
+      }
+    ]
+  },
+  {
+    "routine_id": "00bd7dda-929c-4a0c-87e1-b64b82902968",
+    "name": "B2 · Viernes — Peso Rumano, Militar, Nórdico y Pallof",
+    "hevy_synthetic_date": "2026-09-11 10:00:00",
+    "notes": "Tope semanal curl nórdico: 24-36 reps.",
+    "exercises": [
+      {
+        "exercise_id": "86a8fb1b-e624-4cbb-85bf-a54d6e7fd542",
+        "gym_log_name": "Curl nórdico asistido",
+        "hevy_name": "Curl nórdico asistido",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "90 s",
+        "superset_id": null,
+        "notes": "Respetar tope 24-36 reps/sem"
+      },
+      {
+        "exercise_id": "100ec252-bf22-4235-9454-56012f4db10c",
+        "gym_log_name": "Peso muerto tradicional o hexagonal",
+        "hevy_name": "Peso muerto tradicional o hexagonal",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "150-180 s",
+        "superset_id": null,
+        "notes": "Sem 8 descarga: 2x4"
+      },
+      {
+        "exercise_id": "cd597e01-729c-42cb-bb1c-f5ed1b432fe8",
+        "gym_log_name": "Dominadas o jalón al pecho",
+        "hevy_name": "Dominadas o jalón al pecho",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "120 s",
+        "superset_id": null,
+        "notes": "Sem 8 descarga: 2x6"
+      },
+      {
+        "exercise_id": "db2299de-435b-429c-b804-b9fa004b889c",
+        "gym_log_name": "Sentadilla búlgara con mancuernas",
+        "hevy_name": "Sentadilla búlgara con mancuernas",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "90 s",
+        "superset_id": null,
+        "notes": "Sem 8 descarga: 2x5/pierna"
+      },
+      {
+        "exercise_id": "d64a9ca1-370a-48cc-84fc-918edd091b58",
+        "gym_log_name": "Press Pallof (polea o goma)",
+        "hevy_name": "Press Pallof (polea o goma)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "60 s",
+        "superset_id": null,
+        "notes": "Sem 8 descarga: 2x8/lado"
+      }
+    ]
+  },
+  {
+    "routine_id": "28bd9667-4d9a-4b76-b18f-a486dd6745dd",
+    "name": "B2 · Sábado — Pliometría Adaptativa (Drop Jumps, Cajón y Salto)",
+    "hevy_synthetic_date": "2026-09-12 10:00:00",
+    "notes": "Adaptación a futuros partidos/playa sin enfoque de partido.",
+    "exercises": [
+      {
+        "exercise_id": "b7cd3eb3-cae6-4884-953a-24542a172d35",
+        "gym_log_name": "Salto al cajón",
+        "hevy_name": "Box Jump",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "120 s",
+        "superset_id": null,
+        "notes": "Pliometría sábado para adaptación a futuros partidos/playa"
+      },
+      {
+        "exercise_id": "cb04eaf1-4f89-42af-a6d8-e2313253d866",
+        "gym_log_name": "Drop jumps (caída y rebote)",
+        "hevy_name": "Drop jumps (caída y rebote)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "120 s",
+        "superset_id": null,
+        "notes": "Adaptación pliométrica"
+      },
+      {
+        "exercise_id": "a68a57aa-5674-4afb-96f9-0f6e7d3c10f2",
+        "gym_log_name": "Saltos laterales / skater con estabilización",
+        "hevy_name": "Saltos laterales / skater con estabilización",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "90 s",
+        "superset_id": null,
+        "notes": "Transferencia lateral"
+      }
+    ]
+  },
+  {
+    "routine_id": "634c4a44-9966-4923-a951-47bb5f9ea974",
+    "name": "B3 · Lunes — Pierna (Potencia) y Plancha BOE",
+    "hevy_synthetic_date": "2026-09-13 10:00:00",
+    "notes": "Sem 12 descarga (8-14 feb).",
+    "exercises": [
+      {
+        "exercise_id": "54cd2e58-fe74-4fb6-bc1a-6df3df075ccc",
+        "gym_log_name": "Rotaciones externas en calentamiento",
+        "hevy_name": "Rotaciones externas en calentamiento",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "30-45 s",
+        "superset_id": null,
+        "notes": "Cadena escapular y manguito"
+      },
+      {
+        "exercise_id": "7b0e60cf-1890-42a6-978b-39d3dc851b13",
+        "gym_log_name": "Sentadilla rápida",
+        "hevy_name": "Sentadilla rápida",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "150-180 s",
+        "superset_id": null,
+        "notes": "Sem 12 descarga: 2x3"
+      },
+      {
+        "exercise_id": "3d164193-cdd3-4ef6-b597-ed0aaccb254e",
+        "gym_log_name": "Press banca rápido",
+        "hevy_name": "Press banca rápido",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "120 s",
+        "superset_id": null,
+        "notes": "Sem 12 descarga: 2x3"
+      },
+      {
+        "exercise_id": "e8c82c72-243c-4a6a-a640-78baedba43d5",
+        "gym_log_name": "Flexo-extensiones (almohadilla 10 cm)",
+        "hevy_name": "Flexo-extensiones (almohadilla 10 cm)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "90 s",
+        "superset_id": null,
+        "notes": "Sem 12 descarga: 1x8"
+      },
+      {
+        "exercise_id": "11251dcd-4d63-4fa7-8bec-7b93258ebd25",
+        "gym_log_name": "Plancha isométrica estricta (protocolo BOE)",
+        "hevy_name": "Plancha isométrica estricta (protocolo BOE)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "90 s",
+        "superset_id": null,
+        "notes": "Sem 12 descarga: 2x45 s"
+      }
+    ]
+  },
+  {
+    "routine_id": "a1375e14-3c92-4643-83ba-6145dcc777ac",
+    "name": "B3 · Martes — Press Banca Rápido y Ritmo Tropa",
+    "hevy_synthetic_date": "2026-09-14 10:00:00",
+    "notes": "Máxima intención concéntrica.",
+    "exercises": []
+  },
+  {
+    "routine_id": "f5576bee-9725-4521-9e1a-206a177be1b4",
+    "name": "B3 · Miércoles — Pliometría, 7 Conos y HIIT 400m",
+    "hevy_synthetic_date": "2026-09-15 10:00:00",
+    "notes": "Sem 12: Simulacro completo (11-13 feb).",
+    "exercises": [
+      {
+        "exercise_id": "85059d86-b0c2-4c83-b9da-67e6b18d308e",
+        "gym_log_name": "Pliometría miércoles (cajón / reactiva)",
+        "hevy_name": "Pliometría miércoles (cajón / reactiva)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "120 s",
+        "superset_id": null,
+        "notes": "Pliometría los miércoles"
+      },
+      {
+        "exercise_id": "25cde904-7632-4f4b-8223-fd5d140428c6",
+        "gym_log_name": "Circuito de agilidad 7 conos (salida de espaldas)",
+        "hevy_name": "Circuito de agilidad 7 conos (salida de espaldas)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "180 s",
+        "superset_id": null,
+        "notes": "Sem 12: 2 intentos Simulacro"
+      },
+      {
+        "exercise_id": "ad5818f4-6453-41fc-9da7-16537b4aeda6",
+        "gym_log_name": "Carrera aeróbica base / HIIT 2.000 m",
+        "hevy_name": "Carrera aeróbica base / HIIT 2.000 m",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "120 s",
+        "superset_id": null,
+        "notes": "Sem 12: Simulacro completo (11-13 feb)"
+      }
+    ]
+  },
+  {
+    "routine_id": "002c8609-91b6-491b-8d3f-745baf45f0c1",
+    "name": "B3 · Jueves — Espalda y Extra Bíceps",
+    "hevy_synthetic_date": "2026-09-16 10:00:00",
+    "notes": "Trabajo extra de bíceps los jueves.",
+    "exercises": [
+      {
+        "exercise_id": "54cd2e58-fe74-4fb6-bc1a-6df3df075ccc",
+        "gym_log_name": "Rotaciones externas en calentamiento",
+        "hevy_name": "Rotaciones externas en calentamiento",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "30-45 s",
+        "superset_id": null,
+        "notes": "Previo a bíceps y pista"
+      },
+      {
+        "exercise_id": "86d2b668-74fd-4754-9a9b-bb4ba3f3101e",
+        "gym_log_name": "Curl de bíceps con barra o mancuernas",
+        "hevy_name": "Curl de bíceps con barra o mancuernas",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "90 s",
+        "superset_id": null,
+        "notes": "Extra de bíceps los jueves"
+      },
+      {
+        "exercise_id": "dbc6d0a6-6841-47db-9af3-9a304eaabb29",
+        "gym_log_name": "Curl martillo o polea",
+        "hevy_name": "Curl martillo o polea",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "60-75 s",
+        "superset_id": null,
+        "notes": "Extra de bíceps los jueves"
+      }
+    ]
+  },
+  {
+    "routine_id": "2d6319b6-407e-45e7-98cc-ace4b9c2d1dc",
+    "name": "B3 · Viernes — Peso Rumano, Militar, Balón Medicinal y Nórdico",
+    "hevy_synthetic_date": "2026-09-17 10:00:00",
+    "notes": "Tope semanal curl nórdico: 24-36 reps.",
+    "exercises": [
+      {
+        "exercise_id": "86a8fb1b-e624-4cbb-85bf-a54d6e7fd542",
+        "gym_log_name": "Curl nórdico asistido",
+        "hevy_name": "Curl nórdico asistido",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "90 s",
+        "superset_id": null,
+        "notes": "Tope semanal 24-36 reps"
+      },
+      {
+        "exercise_id": "3e4a3e62-673c-46b1-b8fc-5a28a52e8342",
+        "gym_log_name": "Lanzamiento de balón medicinal (3-5 kg)",
+        "hevy_name": "Lanzamiento de balón medicinal (3-5 kg)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "90 s",
+        "superset_id": null,
+        "notes": "Sem 12 descarga: 2x4"
+      },
+      {
+        "exercise_id": "724b9961-523c-4744-a5d8-c9593a733973",
+        "gym_log_name": "Remo explosivo",
+        "hevy_name": "Remo explosivo",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "90 s",
+        "superset_id": null,
+        "notes": "Sem 12 descarga: 2x5"
+      }
+    ]
+  },
+  {
+    "routine_id": "2c45465a-4935-45b5-84ad-f6ba724e024a",
+    "name": "B3 · Sábado — Pliometría Adaptativa (Drop Jumps, Cajón y Salto)",
+    "hevy_synthetic_date": "2026-09-18 10:00:00",
+    "notes": "Adaptación a futuros partidos/playa.",
+    "exercises": [
+      {
+        "exercise_id": "b7cd3eb3-cae6-4884-953a-24542a172d35",
+        "gym_log_name": "Salto al cajón",
+        "hevy_name": "Box Jump",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "120 s",
+        "superset_id": null,
+        "notes": "Pliometría sábado para adaptación a futuros partidos/playa"
+      },
+      {
+        "exercise_id": "cb04eaf1-4f89-42af-a6d8-e2313253d866",
+        "gym_log_name": "Drop jumps (caída y rebote)",
+        "hevy_name": "Drop jumps (caída y rebote)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "120 s",
+        "superset_id": null,
+        "notes": "Adaptación pliométrica"
+      },
+      {
+        "exercise_id": "a68a57aa-5674-4afb-96f9-0f6e7d3c10f2",
+        "gym_log_name": "Saltos laterales / skater con estabilización",
+        "hevy_name": "Saltos laterales / skater con estabilización",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "90 s",
+        "superset_id": null,
+        "notes": "Transferencia lateral"
+      }
+    ]
+  },
+  {
+    "routine_id": "4fb36678-9bc0-4c1f-ad42-16c8a7794f0f",
+    "name": "B4 · Tapering y Fase 2 Tropa (Ventana 14 Días)",
+    "hevy_synthetic_date": "2026-09-19 10:00:00",
+    "notes": "Ajustar a los 14 días previos a la cita oficial BOE.",
+    "exercises": [
+      {
+        "exercise_id": "54cd2e58-fe74-4fb6-bc1a-6df3df075ccc",
+        "gym_log_name": "Rotaciones externas en calentamiento",
+        "hevy_name": "Rotaciones externas en calentamiento",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "30 s",
+        "superset_id": null,
+        "notes": "Mantener en calentamiento"
+      },
+      {
+        "exercise_id": "db18d8ba-fea6-46b8-8bd6-7793e7ea7aab",
+        "gym_log_name": "Sentadilla trasera",
+        "hevy_name": "Squat (Barbell)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "150 s",
+        "superset_id": null,
+        "notes": "D-14 a D-8 (-40% volumen); evitar cargas pesadas 72-96h pre-examen"
+      },
+      {
+        "exercise_id": "cb8bf559-4e28-4cca-b2c3-2a43e75ce315",
+        "gym_log_name": "Press banca barra",
+        "hevy_name": "Press banca barra",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "120 s",
+        "superset_id": null,
+        "notes": "D-14 a D-8"
+      },
+      {
+        "exercise_id": "e8c82c72-243c-4a6a-a640-78baedba43d5",
+        "gym_log_name": "Flexo-extensiones (almohadilla 10 cm)",
+        "hevy_name": "Flexo-extensiones (almohadilla 10 cm)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "90 s",
+        "superset_id": null,
+        "notes": "D-14 a D-4"
+      },
+      {
+        "exercise_id": "11251dcd-4d63-4fa7-8bec-7b93258ebd25",
+        "gym_log_name": "Plancha isométrica estricta (protocolo BOE)",
+        "hevy_name": "Plancha isométrica estricta (protocolo BOE)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "75 s",
+        "superset_id": null,
+        "notes": "D-14 a D-8"
+      },
+      {
+        "exercise_id": "85059d86-b0c2-4c83-b9da-67e6b18d308e",
+        "gym_log_name": "Pliometría miércoles (cajón / reactiva)",
+        "hevy_name": "Pliometría miércoles (cajón / reactiva)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "90 s",
+        "superset_id": null,
+        "notes": "Pliometría miércoles ligera"
+      },
+      {
+        "exercise_id": "9d4a0268-93dd-4981-9fe1-67c945ae9a9d",
+        "gym_log_name": "Pliometría sábado (activación / reactiva partido)",
+        "hevy_name": "Pliometría sábado (activación / reactiva partido)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "90 s",
+        "superset_id": null,
+        "notes": "Pliometría sábado ligera"
+      },
+      {
+        "exercise_id": "86d2b668-74fd-4754-9a9b-bb4ba3f3101e",
+        "gym_log_name": "Curl de bíceps con barra o mancuernas",
+        "hevy_name": "Curl de bíceps con barra o mancuernas",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "60 s",
+        "superset_id": null,
+        "notes": "Extra de bíceps jueves suave"
+      },
+      {
+        "exercise_id": "25cde904-7632-4f4b-8223-fd5d140428c6",
+        "gym_log_name": "Circuito de agilidad 7 conos (salida de espaldas)",
+        "hevy_name": "Circuito de agilidad 7 conos (salida de espaldas)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "180 s",
+        "superset_id": null,
+        "notes": "D-7 a D-4"
+      }
+    ]
+  },
+  {
+    "routine_id": "19b44407-9e77-43b5-8198-d0180226ea4b",
+    "name": "B5 · Consolidación y Adaptación",
+    "hevy_synthetic_date": "2026-09-20 10:00:00",
+    "notes": "Descargas en Sem 20 y Sem 24.",
+    "exercises": [
+      {
+        "exercise_id": "54cd2e58-fe74-4fb6-bc1a-6df3df075ccc",
+        "gym_log_name": "Rotaciones externas en calentamiento",
+        "hevy_name": "Rotaciones externas en calentamiento",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "30-45 s",
+        "superset_id": null,
+        "notes": "Incluyendo OSTRC / Shoulder Control"
+      },
+      {
+        "exercise_id": "db18d8ba-fea6-46b8-8bd6-7793e7ea7aab",
+        "gym_log_name": "Sentadilla trasera",
+        "hevy_name": "Squat (Barbell)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "150-180 s",
+        "superset_id": null,
+        "notes": "Día 1 fuerza (sin fatiga 48-72 h pre-partido)"
+      },
+      {
+        "exercise_id": "cb8bf559-4e28-4cca-b2c3-2a43e75ce315",
+        "gym_log_name": "Press banca barra",
+        "hevy_name": "Press banca barra",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "120-180 s",
+        "superset_id": null,
+        "notes": "Día 1 fuerza"
+      },
+      {
+        "exercise_id": "3e4a3e62-673c-46b1-b8fc-5a28a52e8342",
+        "gym_log_name": "Lanzamiento de balón medicinal (3-5 kg)",
+        "hevy_name": "Lanzamiento de balón medicinal (3-5 kg)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "90 s",
+        "superset_id": null,
+        "notes": "Día 2 potencia"
+      },
+      {
+        "exercise_id": "85059d86-b0c2-4c83-b9da-67e6b18d308e",
+        "gym_log_name": "Pliometría miércoles (cajón / reactiva)",
+        "hevy_name": "Pliometría miércoles (cajón / reactiva)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "120 s",
+        "superset_id": null,
+        "notes": "Pliometría miércoles"
+      },
+      {
+        "exercise_id": "9d4a0268-93dd-4981-9fe1-67c945ae9a9d",
+        "gym_log_name": "Pliometría sábado (activación / reactiva partido)",
+        "hevy_name": "Pliometría sábado (activación / reactiva partido)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "90 s",
+        "superset_id": null,
+        "notes": "Pliometría sábado"
+      },
+      {
+        "exercise_id": "86d2b668-74fd-4754-9a9b-bb4ba3f3101e",
+        "gym_log_name": "Curl de bíceps con barra o mancuernas",
+        "hevy_name": "Curl de bíceps con barra o mancuernas",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "75-90 s",
+        "superset_id": null,
+        "notes": "Extra de bíceps jueves"
+      }
+    ]
+  },
+  {
+    "routine_id": "db4cdeec-fefa-4003-a53f-b39f10ea985c",
+    "name": "B6 · Transición Arena y Playa",
+    "hevy_synthetic_date": "2026-09-21 10:00:00",
+    "notes": "Descargas en Sem 28 y Sem 32.",
+    "exercises": [
+      {
+        "exercise_id": "54cd2e58-fe74-4fb6-bc1a-6df3df075ccc",
+        "gym_log_name": "Rotaciones externas en calentamiento",
+        "hevy_name": "Rotaciones externas en calentamiento",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "30-45 s",
+        "superset_id": null,
+        "notes": "Cadena escapular y lanzador"
+      },
+      {
+        "exercise_id": "19a15b57-3efe-4a5e-8a81-232a5a7f99ae",
+        "gym_log_name": "Elevación de gemelos de pie (excéntrico 3 s)",
+        "hevy_name": "Elevación de gemelos de pie (excéntrico 3 s)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "60-90 s",
+        "superset_id": null,
+        "notes": "Transición progresiva a arena (mín. 3 sem antes de torneos junio)"
+      },
+      {
+        "exercise_id": "03393ff5-3e2f-4154-a00c-65b13eff11ec",
+        "gym_log_name": "Aceleraciones en arena y trabajo de playa",
+        "hevy_name": "Aceleraciones en arena y trabajo de playa",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "90-120 s",
+        "superset_id": null,
+        "notes": "Cuidar volumen y DOMS"
+      },
+      {
+        "exercise_id": "97842d1e-7b76-4e1b-9436-a365a3c217ee",
+        "gym_log_name": "Microdosis reactiva en suelo duro (Pogo jumps)",
+        "hevy_name": "Microdosis reactiva en suelo duro (Pogo jumps)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "90 s",
+        "superset_id": null,
+        "notes": "1 vez/semana en suelo duro para proteger RSI"
+      },
+      {
+        "exercise_id": "85059d86-b0c2-4c83-b9da-67e6b18d308e",
+        "gym_log_name": "Pliometría miércoles (cajón / reactiva)",
+        "hevy_name": "Pliometría miércoles (cajón / reactiva)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "120 s",
+        "superset_id": null,
+        "notes": "Pliometría miércoles"
+      },
+      {
+        "exercise_id": "9d4a0268-93dd-4981-9fe1-67c945ae9a9d",
+        "gym_log_name": "Pliometría sábado (activación / reactiva partido)",
+        "hevy_name": "Pliometría sábado (activación / reactiva partido)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "90 s",
+        "superset_id": null,
+        "notes": "Pliometría sábado"
+      },
+      {
+        "exercise_id": "86d2b668-74fd-4754-9a9b-bb4ba3f3101e",
+        "gym_log_name": "Curl de bíceps con barra o mancuernas",
+        "hevy_name": "Curl de bíceps con barra o mancuernas",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "75 s",
+        "superset_id": null,
+        "notes": "Extra de bíceps jueves"
+      }
+    ]
+  },
+  {
+    "routine_id": "c8e6d0db-316c-4a62-83fd-044ba976b17b",
+    "name": "B7 · Pico Competitivo Playa",
+    "hevy_synthetic_date": "2026-09-22 10:00:00",
+    "notes": "Taper corto de 4-6 días antes de torneos clave.",
+    "exercises": [
+      {
+        "exercise_id": "54cd2e58-fe74-4fb6-bc1a-6df3df075ccc",
+        "gym_log_name": "Rotaciones externas en calentamiento",
+        "hevy_name": "Rotaciones externas en calentamiento",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "30 s",
+        "superset_id": null,
+        "notes": "Antes de sesión/torneo"
+      },
+      {
+        "exercise_id": "03393ff5-3e2f-4154-a00c-65b13eff11ec",
+        "gym_log_name": "Aceleraciones en arena y trabajo de playa",
+        "hevy_name": "Aceleraciones en arena y trabajo de playa",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "90-120 s",
+        "superset_id": null,
+        "notes": "Taper corto de 4-6 días antes de torneos clave"
+      },
+      {
+        "exercise_id": "97842d1e-7b76-4e1b-9436-a365a3c217ee",
+        "gym_log_name": "Microdosis reactiva en suelo duro (Pogo jumps)",
+        "hevy_name": "Microdosis reactiva en suelo duro (Pogo jumps)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "90 s",
+        "superset_id": null,
+        "notes": "Mantener RSI durante verano"
+      },
+      {
+        "exercise_id": "85059d86-b0c2-4c83-b9da-67e6b18d308e",
+        "gym_log_name": "Pliometría miércoles (cajón / reactiva)",
+        "hevy_name": "Pliometría miércoles (cajón / reactiva)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "90 s",
+        "superset_id": null,
+        "notes": "Pliometría miércoles"
+      },
+      {
+        "exercise_id": "9d4a0268-93dd-4981-9fe1-67c945ae9a9d",
+        "gym_log_name": "Pliometría sábado (activación / reactiva partido)",
+        "hevy_name": "Pliometría sábado (activación / reactiva partido)",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "90 s",
+        "superset_id": null,
+        "notes": "Pliometría sábado"
+      },
+      {
+        "exercise_id": "86d2b668-74fd-4754-9a9b-bb4ba3f3101e",
+        "gym_log_name": "Curl de bíceps con barra o mancuernas",
+        "hevy_name": "Curl de bíceps con barra o mancuernas",
+        "sets": 3,
+        "target_reps": 10,
+        "target_weight_kg": 0,
+        "rest_seconds": "75 s",
+        "superset_id": null,
+        "notes": "Extra de bíceps jueves"
+      }
+    ]
+  }
+]

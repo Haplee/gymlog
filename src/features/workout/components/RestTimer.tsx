@@ -49,7 +49,14 @@ export function RestTimer() {
 
   const restAutoStart = useSettingsStore((s) => s.restAutoStart);
   const soundEnabled = useSettingsStore((s) => s.sound);
-  const setRestDurationForExercise = useSettingsStore((s) => s.setRestDurationForExercise);
+  const setRestDurationForExercise = useSettingsStore(
+    (s) =>
+      (
+        s as unknown as {
+          setRestDurationForExercise: (exerciseId: string, duration: number) => void;
+        }
+      ).setRestDurationForExercise,
+  );
   const [display, setDisplay] = useState(() => remaining());
   const [expanded, setExpanded] = useState(false);
 

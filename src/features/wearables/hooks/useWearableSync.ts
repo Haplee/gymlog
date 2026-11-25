@@ -87,10 +87,51 @@ export function useWearableSync() {
         }
       } catch (e) {
         devError('[Wearables] sync failed:', e);
-        setError(String(e));
+        const errMsg = e instanceof Error ? e.message : String(e);
+        setError(errMsg);
         if (!opts.silent) {
-          const noPermission = e instanceof Error && e.message === 'no_permission';
-          toast.error(t(noPermission ? 'wearables.permission_needed' : 'wearables.sync_error'));
+          let toastKey = 'wearables.sync_error';
+          // Mapear códigos de error específicos a claves de traducción
+          if (e instanceof Error) {
+            switch (e.message) {
+              case 'no_permission':
+                toastKey = 'wearables.permission_needed';
+                break;
+              case 'no_aggregator':
+                toastKey = 'wearables.sync_error_not_available';
+                break;
+              case 'PERMISSION_DENIED':
+                toastKey = 'wearables.sync_error_permission';
+                break;
+              case 'PROVIDER_UPDATE_REQUIRED':
+                toastKey = 'wearables.sync_error_provider_update';
+                break;
+              case 'FEATURE_UNAVAILABLE':
+                toastKey = 'wearables.sync_error_feature_unavailable';
+                break;
+              case 'INVALID_TIME_RANGE':
+                toastKey = 'wearables.sync_error_invalid_range';
+                break;
+              case 'SYNC_INTERRUPTED':
+                toastKey = 'wearables.sync_error_interrupted';
+                break;
+              case 'READ_FAILED':
+                toastKey = 'wearables.sync_error_read_failed';
+                break;
+              default:
+                if (
+                  e.message.includes('upsert_daily') ||
+                  e.message.includes('upsert_sleep') ||
+                  e.message.includes('import_workouts') ||
+                  e.message.includes('import_health_sessions')
+                ) {
+                  toastKey = 'wearables.sync_error_supabase';
+                } else {
+                  toastKey = 'wearables.sync_error_unknown';
+                }
+            }
+          }
+          toast.error(t(toastKey));
         }
       }
     },

@@ -23,7 +23,6 @@ export function EmptyWorkoutState({
   onStartRoutine,
   routineId,
   day,
-  routineName,
 }: EmptyWorkoutStateProps) {
   const { t } = useTranslation();
   return (
@@ -63,12 +62,10 @@ export function EmptyWorkoutState({
           <button
             type="button"
             onClick={() => onStartRoutine(routineId, day)}
-            className="w-full py-3 rounded-pill bg-accent text-accent-fg font-semibold shadow-btn-accent active:scale-[0.98]"
+            className="w-full py-3 rounded-pill bg-accent text-accent-fg font-semibold shadow-btn-accent active:scale-[0.98] inline-flex items-center justify-center gap-2 whitespace-nowrap"
           >
-            <Play className="w-4 h-4" aria-hidden="true" />
-            {routineName
-              ? `${t('workout.start_routine')} ${routineName}`
-              : t('workout.start_routine')}
+            <Play className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
+            <span>{t('workout.start_routine')}</span>
           </button>
         )}
       </div>

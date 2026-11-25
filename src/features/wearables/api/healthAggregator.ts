@@ -53,6 +53,48 @@ export async function logHealthConnectAudit(
 // Por aquí entran Amazfit (vía Zepp), Samsung, Garmin, Apple Watch, etc.
 // Lee con el plugin nativo y upserta en Supabase como el usuario (RLS aplica).
 
+/**
+ * Mapea los errores devueltos por el plugin nativo (en el array `errors`)
+ * a códigos de error estandarizados (HealthConnectErrorCode).
+ * El plugin nativo devuelve strings como "sleep: SecurityException: ...".
+ */
+function mapNativeErrorsToCode(errors: string[]): HealthConnectErrorCode | null {
+  const joined = errors.join(' ').toLowerCase();
+  if (joined.includes('securityexception') || joined.includes('permission')) {
+    if (
+      joined.includes('read_health_data_in_background') ||
+      joined.includes('maybeenforceonlycallingpackagedatarequested')
+    ) {
+      return 'PERMISSION_DENIED';
+    }
+    return 'PERMISSION_DENIED';
+  }
+  if (
+    joined.includes('sdk') ||
+    joined.includes('provider') ||
+    joined.includes('not available') ||
+    joined.includes('unavailable')
+  ) {
+    return 'NOT_AVAILABLE';
+  }
+  if (joined.includes('provider update') || joined.includes('update required')) {
+    return 'PROVIDER_UPDATE_REQUIRED';
+  }
+  if (joined.includes('feature') || joined.includes('unsupported')) {
+    return 'FEATURE_UNAVAILABLE';
+  }
+  if (joined.includes('time range') || joined.includes('timerangefilter')) {
+    return 'INVALID_TIME_RANGE';
+  }
+  if (joined.includes('interrupt') || joined.includes('cancel')) {
+    return 'SYNC_INTERRUPTED';
+  }
+  if (joined.includes('read') || joined.includes('failed') || joined.includes('error')) {
+    return 'READ_FAILED';
+  }
+  return null;
+}
+
 export function aggregatorSource(): WearableProvider | null {
   const p = Capacitor.getPlatform();
   if (p === 'android') return 'health_connect';
@@ -148,6 +190,19 @@ export async function syncAggregator(userId: string, days = 7): Promise<Wearable
       startDate: ymd(start),
       endDate: ymd(end),
     });
+
+    // Convertir errores del plugin nativo a códigos estandarizados para auditoría y UI
+    const nativeErrorCode = mapNativeErrorsToCode(errors ?? []);
+    if (nativeErrorCode) {
+      // Auditoría: sync_error con código específico
+      await logHealthConnectAudit(userId, 'sync_error', {
+        recordTypes: [],
+        recordCount: 0,
+        errorCode: nativeErrorCode,
+      });
+      // Lanzar error tipado para que la UI muestre el toast específico
+      throw new Error(nativeErrorCode);
+    }
 
     // Una sección que falla ya no vacía las demás, pero tampoco puede pasar
     // desapercibida: sin esto, un permiso revocado se veía como "no hay datos".
